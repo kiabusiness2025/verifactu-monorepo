@@ -13,6 +13,10 @@ import { clearChatGptChannelIdentity } from '@/lib/integrations/channelIdentityS
 import { getConfirmedCompanyNotificationEmail } from '@/lib/integrations/companyNotificationEmailStore';
 import { resetHoldedConnectorOperationalStateOnDisconnect } from '@/lib/integrations/holdedConnectorTraceService';
 import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+} from '@/lib/integrations/holdedConnectorRequest';
+import {
   buildConnectorEvent,
   getConnectorRequestId,
   logConnectorEvent,
@@ -41,18 +45,11 @@ function buildCanonicalReconnectUrl(entryChannel: 'chatgpt' | 'dashboard') {
   return reconnectUrl.toString();
 }
 
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
 export async function POST(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: { source: 'holded-disconnect' },
@@ -69,10 +66,7 @@ export async function POST(request: NextRequest) {
         error: auth.error,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
-      requestId
-    );
+    return respond(NextResponse.json({ error: auth.error, requestId }, { status: auth.status }));
   }
 
   try {
@@ -89,12 +83,11 @@ export async function POST(request: NextRequest) {
         outcome: 'admin_access_required',
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { ok: false, error: getHoldedConnectorAdminNotice(), requestId },
         { status: 403 }
-      ),
-      requestId
+      )
     );
   }
 
@@ -111,12 +104,11 @@ export async function POST(request: NextRequest) {
         outcome: 'missing_reauth',
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { ok: false, error: 'Debes confirmar la accion antes de desconectar Holded.', requestId },
         { status: 400 }
-      ),
-      requestId
+      )
     );
   }
 
@@ -290,7 +282,7 @@ export async function POST(request: NextRequest) {
     })
   );
 
-  return withConnectorRequestId(
+  return respond(
     NextResponse.json({
       ok: true,
       provider: 'holded',
@@ -309,7 +301,6 @@ export async function POST(request: NextRequest) {
       }),
       operationalReset,
       requestId,
-    }),
-    requestId
+    })
   );
 }

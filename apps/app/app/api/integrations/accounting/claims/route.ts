@@ -7,6 +7,10 @@ import {
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+} from '@/lib/integrations/holdedConnectorRequest';
+import {
   createClaim,
   getTenantHoldedContext,
   listClaims,
@@ -19,18 +23,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
 export async function GET(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: { source: 'holded-claims-list' },
@@ -48,10 +45,7 @@ export async function GET(request: NextRequest) {
         error: auth.error,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
-      requestId
-    );
+    return respond(NextResponse.json({ error: auth.error, requestId }, { status: auth.status }));
   }
 
   try {
@@ -68,9 +62,8 @@ export async function GET(request: NextRequest) {
         outcome: 'admin_access_required',
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ error: getHoldedConnectorAdminNotice(), requestId }, { status: 403 }),
-      requestId
+    return respond(
+      NextResponse.json({ error: getHoldedConnectorAdminNotice(), requestId }, { status: 403 })
     );
   }
 
@@ -93,19 +86,20 @@ export async function GET(request: NextRequest) {
     })
   );
 
-  return withConnectorRequestId(
+  return respond(
     NextResponse.json({
       items,
       availableActions: context.availableActions,
       requestId,
-    }),
-    requestId
+    })
   );
 }
 
 export async function POST(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: { source: 'holded-claim-create' },
@@ -123,9 +117,8 @@ export async function POST(request: NextRequest) {
         error: auth.error,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ ok: false, error: auth.error, requestId }, { status: auth.status }),
-      requestId
+    return respond(
+      NextResponse.json({ ok: false, error: auth.error, requestId }, { status: auth.status })
     );
   }
 
@@ -143,12 +136,11 @@ export async function POST(request: NextRequest) {
         outcome: 'admin_access_required',
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { ok: false, error: getHoldedConnectorAdminNotice(), requestId },
         { status: 403 }
-      ),
-      requestId
+      )
     );
   }
 
@@ -166,9 +158,8 @@ export async function POST(request: NextRequest) {
         error: 'reason es obligatorio',
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ ok: false, error: 'reason es obligatorio', requestId }, { status: 400 }),
-      requestId
+    return respond(
+      NextResponse.json({ ok: false, error: 'reason es obligatorio', requestId }, { status: 400 })
     );
   }
 
@@ -186,7 +177,7 @@ export async function POST(request: NextRequest) {
         error: currentContext.availableActions.openClaim.reason,
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         {
           ok: false,
@@ -198,8 +189,7 @@ export async function POST(request: NextRequest) {
           requestId,
         },
         { status: 409 }
-      ),
-      requestId
+      )
     );
   }
 
@@ -246,15 +236,14 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json({
         ok: true,
         claim,
         governanceFlags: context.governanceFlags,
         notified,
         requestId,
-      }),
-      requestId
+      })
     );
   } catch (error) {
     const message =
@@ -277,9 +266,6 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
-      NextResponse.json({ ok: false, error: message, requestId }, { status: 400 }),
-      requestId
-    );
+    return respond(NextResponse.json({ ok: false, error: message, requestId }, { status: 400 }));
   }
 }

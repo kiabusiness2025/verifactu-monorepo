@@ -270,7 +270,7 @@ describe('POST /api/integrations/accounting/disconnect', () => {
       'https://app.verifactu.business/api/integrations/accounting/disconnect',
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-isaak-entry-channel': 'dashboard' },
+        headers: { 'content-type': 'application/json', 'x-holded-entry-channel': 'dashboard' },
         body: JSON.stringify({ reauthConfirmed: true }),
       }
     );
@@ -386,7 +386,7 @@ describe('POST /api/integrations/accounting/disconnect', () => {
     const response = await POST(
       new NextRequest('https://app.verifactu.business/api/integrations/accounting/disconnect', {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-isaak-entry-channel': 'dashboard' },
+        headers: { 'content-type': 'application/json', 'x-holded-entry-channel': 'dashboard' },
         body: JSON.stringify({ reauthConfirmed: true }),
       })
     );

@@ -2,7 +2,7 @@
 
 Paquete compartido para integraciones externas y piezas reutilizables de conexion entre productos del monorepo.
 
-No publica rutas HTTP ni es el runtime del conector MCP. Su trabajo es concentrar logica compartida para que `apps/app`, `apps/holded`, `apps/isaak` y otras capas no dupliquen criptografia, persistencia, snapshots, diagnosticos o continuidad conversacional.
+No publica rutas HTTP ni es el runtime del conector MCP. Su trabajo es concentrar logica compartida para que `apps/app`, `apps/holded` y otras capas no dupliquen criptografia, persistencia, snapshots, diagnosticos o continuidad conversacional.
 
 ## Que problema resuelve
 
@@ -11,14 +11,14 @@ Este paquete evita que cada app implemente su propia version de:
 - conexion y cifrado de credenciales externas
 - lectura de estado de una integracion
 - snapshots o probes compartidos
-- helpers de onboarding de Isaak
+- helpers de onboarding heredados del asistente interno
 - historial y memoria conversacional reutilizable
 - clientes ligeros para proveedores externos
 
 ## Que si vive aqui
 
 - logica compartida de Holded
-- logica compartida de onboarding y chat de Isaak
+- logica compartida de onboarding y chat heredada del asistente interno
 - clientes auxiliares de Stripe, Resend, Vercel, GitHub y eInforma
 - helpers reutilizables de uso transversal entre apps
 
@@ -29,15 +29,15 @@ Este paquete evita que cada app implemente su propia version de:
 - metadata OAuth o `/.well-known/*`
 - catalogo MCP visible a OpenAI
 - copy publico de producto o de onboarding
-- UI especifica de `apps/holded`, `apps/isaak` o `apps/app`
+- UI especifica de `apps/holded` o `apps/app`
 
 ## Mapa rapido del paquete
 
 - `index.ts` -> exports publicos del paquete
 - `holded/connection.ts` -> cifrado, guardado, probe y snapshot de la conexion Holded
 - `holded/diagnostics.ts` -> resumenes y diagnosticos legibles de modulos soportados
-- `isaak/onboarding.ts` -> estado y guardado de onboarding compartido de Isaak
-- `isaak/chat.ts` -> conversaciones, memoria y continuidad conversacional
+- `isaak/onboarding.ts` -> estado y guardado del onboarding compartido heredado
+- `isaak/chat.ts` -> conversaciones, memoria y continuidad conversacional heredada
 - `stripe.ts`, `resend.ts`, `vercel.ts`, `github.ts`, `einforma.ts` -> clientes auxiliares externos
 - `usage-events.ts` -> eventos de uso canonicos
 
@@ -46,7 +46,6 @@ Este paquete evita que cada app implemente su propia version de:
 La parte de Holded de este paquete es la base comun que reutilizan distintas superficies:
 
 - `apps/holded` para validar y guardar la API key
-- `apps/isaak` para leer el estado de conexion y reutilizar contexto
 - `apps/app` para resolver conexiones compartidas y exponer el conector MCP
 
 Responsabilidades principales:
@@ -63,9 +62,9 @@ Archivos clave:
 - [holded/connection.ts](./holded/connection.ts)
 - [holded/diagnostics.ts](./holded/diagnostics.ts)
 
-## Capa compartida de Isaak
+## Capa compartida heredada
 
-La parte de Isaak de este paquete encapsula la continuidad entre sesiones, onboarding y memoria, para que la app principal no cargue toda esa logica en componentes o routes.
+Parte del paquete sigue usando naming `isaak/*` por compatibilidad interna de storage y runtime. Ese naming no forma parte del contrato publico del conector `ChatGPT + Holded`.
 
 Responsabilidades principales:
 
@@ -90,8 +89,8 @@ Ejemplos de familias exportadas:
 
 - Holded: `probeHoldedConnection`, `saveHoldedConnection`, `fetchHoldedSnapshot`
 - Diagnosticos: `buildHoldedProbeSummary`, `buildStoredHoldedConnectionSummary`
-- Isaak onboarding: `getIsaakOnboardingState`, `saveIsaakOnboardingDraft`, `completeIsaakOnboarding`
-- Isaak chat: `ensureTenantConversation`, `appendTenantConversationMessage`, `storeTenantMemoryFact`
+- Compat heredada de onboarding: `getIsaakOnboardingState`, `saveIsaakOnboardingDraft`, `completeIsaakOnboarding`
+- Compat heredada de chat: `ensureTenantConversation`, `appendTenantConversationMessage`, `storeTenantMemoryFact`
 
 Regla practica:
 
@@ -134,7 +133,7 @@ Ejemplos claros:
 
 - cambiar como se cifra o persiste una conexion Holded
 - ampliar el snapshot o el probe compartido de Holded
-- mejorar la continuidad de conversaciones o memoria de Isaak
+- mejorar la continuidad de conversaciones o memoria compartida heredada
 - centralizar una integracion externa usada por varias apps
 
 No lo toques si el cambio es solo:
@@ -148,7 +147,6 @@ No lo toques si el cambio es solo:
 
 - [../../apps/app/README.md](../../apps/app/README.md) -> core compartido y runtime MCP/OAuth
 - [../../apps/holded/README.md](../../apps/holded/README.md) -> app publica Holded-first
-- [../../apps/isaak/README.md](../../apps/isaak/README.md) -> producto principal Isaak
 - [../../docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md](../../docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md) -> arquitectura de conexion compartida
 - [../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md) -> alcance funcional objetivo de Holded
 - [../../docs/engineering/ai/HOLDED_DEMO_REGRESSION.md](../../docs/engineering/ai/HOLDED_DEMO_REGRESSION.md) -> smoke, semantica real y huecos tecnicos
@@ -158,5 +156,5 @@ No lo toques si el cambio es solo:
 - `packages/integrations` no expone el conector MCP; lo alimenta
 - `apps/app` publica el contrato visible
 - `apps/holded` conecta al usuario
-- `apps/isaak` reutiliza conexion y continuidad
+- el naming `isaak/*` que queda aqui es interno y heredado
 - si una logica de integracion sirve a varias apps, probablemente debe vivir aqui

@@ -7,6 +7,10 @@ import {
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+} from '@/lib/integrations/holdedConnectorRequest';
+import {
   appendSyncLog,
   createSyncConflict,
   getIntegrationMapByRemote,
@@ -17,15 +21,6 @@ import { quoteCreate, quoteFindFirst, quoteUpdate } from '@/lib/quotes/repo';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
-
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
 
 type RemoteQuote = {
   remoteId: string;
@@ -58,7 +53,9 @@ function parseItems(input: unknown): RemoteQuote[] {
 
 export async function POST(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: { source: 'holded-sync-pull' },
@@ -75,10 +72,7 @@ export async function POST(request: NextRequest) {
         error: auth.error,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
-      requestId
-    );
+    return respond(NextResponse.json({ error: auth.error, requestId }, { status: auth.status }));
   }
   try {
     const enabled = await canBidirectionalQuotes(auth.tenantId);
@@ -94,16 +88,15 @@ export async function POST(request: NextRequest) {
           outcome: 'plan_access_denied',
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             error:
-              'La sincronización bidireccional de presupuestos está disponible en Empresa y PRO.',
+              'La sincronizaciÃ³n bidireccional de presupuestos estÃ¡ disponible en Empresa y PRO.',
             requestId,
           },
           { status: 403 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -121,9 +114,8 @@ export async function POST(request: NextRequest) {
           error: 'entity must be quotes',
         })
       );
-      return withConnectorRequestId(
-        NextResponse.json({ error: 'entity must be quotes', requestId }, { status: 400 }),
-        requestId
+      return respond(
+        NextResponse.json({ error: 'entity must be quotes', requestId }, { status: 400 })
       );
     }
 
@@ -151,10 +143,7 @@ export async function POST(request: NextRequest) {
           conflicts: 0,
         })
       );
-      return withConnectorRequestId(
-        NextResponse.json({ ok: true, pulled: 0, conflicts: 0, from, requestId }),
-        requestId
-      );
+      return respond(NextResponse.json({ ok: true, pulled: 0, conflicts: 0, from, requestId }));
     }
 
     let pulled = 0;
@@ -282,10 +271,7 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
-      NextResponse.json({ ok: true, pulled, conflicts, from, requestId }),
-      requestId
-    );
+    return respond(NextResponse.json({ ok: true, pulled, conflicts, from, requestId }));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     logConnectorEvent(
@@ -300,12 +286,11 @@ export async function POST(request: NextRequest) {
         error: message,
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { error: 'No se pudo ejecutar la sincronizacion pull.', requestId },
         { status: 500 }
-      ),
-      requestId
+      )
     );
   }
 }

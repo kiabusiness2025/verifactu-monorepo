@@ -7,6 +7,10 @@ import {
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
 import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+} from '@/lib/integrations/holdedConnectorRequest';
+import {
   appendSyncLog,
   getPendingOutbox,
   markOutboxDone,
@@ -18,18 +22,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
 export async function POST(request: NextRequest) {
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
   const requestId = getConnectorRequestId(request);
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: {
@@ -48,10 +45,7 @@ export async function POST(request: NextRequest) {
         error: auth.error,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
-      requestId
-    );
+    return respond(NextResponse.json({ error: auth.error, requestId }, { status: auth.status }));
   }
   const enabled = await canUseAccountingIntegration(auth.tenantId);
   if (!enabled) {
@@ -66,16 +60,15 @@ export async function POST(request: NextRequest) {
         outcome: 'plan_access_denied',
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         {
           error:
-            'La sincronización con programa contable vía API está disponible en Empresa y PRO.',
+            'La sincronizaciÃ³n con programa contable vÃ­a API estÃ¡ disponible en Empresa y PRO.',
           requestId,
         },
         { status: 403 }
-      ),
-      requestId
+      )
     );
   }
 
@@ -138,7 +131,7 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json({
         ok: failed === 0,
         runId,
@@ -148,8 +141,7 @@ export async function POST(request: NextRequest) {
           failed,
         },
         requestId,
-      }),
-      requestId
+      })
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -165,12 +157,11 @@ export async function POST(request: NextRequest) {
         error: message,
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { error: 'No se pudo ejecutar la sincronizacion manual.', requestId },
         { status: 500 }
-      ),
-      requestId
+      )
     );
   }
 }

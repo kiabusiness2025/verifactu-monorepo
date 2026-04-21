@@ -25,6 +25,8 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Deploy + QA del conector directo: `docs/product/ISAAK_FOR_HOLDED_DEPLOY_QA_CHECKLIST.md`
 - Estado y cambios 2026-04-01: `docs/product/ISAAK_FOR_HOLDED_STATUS_2026-04-01.md`
 - Demo: `docs/product/DEMO_FLOW.md`, `docs/product/DEMO_QA_CHECKLIST.md`
+- Holded refresh publico: `docs/product/holded/HOLDED_REFRESH_2026-04-21.md`
+- Cleanup legacy del conector Holded: `docs/product/holded/HOLDED_CONNECTOR_LEGACY_CLEANUP_2026-04-21.md`
 - Precios: `docs/product/pricing/`
 - Onboarding: `docs/product/onboarding/`
 - Issues/sprints: `docs/product/issues/`

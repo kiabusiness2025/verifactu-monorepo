@@ -290,8 +290,8 @@ describe('POST /api/integrations/accounting/connect', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
-          'x-isaak-tenant-id': 'tenant-demo',
+          'x-holded-entry-channel': 'chatgpt',
+          'x-holded-tenant-id': 'tenant-demo',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -391,7 +391,7 @@ describe('POST /api/integrations/accounting/connect', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: ' demo-key ',
@@ -438,7 +438,7 @@ describe('POST /api/integrations/accounting/connect', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -470,7 +470,7 @@ describe('POST /api/integrations/accounting/connect', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -545,7 +545,7 @@ describe('POST /api/integrations/accounting/connect', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -580,7 +580,7 @@ describe('POST /api/integrations/accounting/connect', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: ' demo-\nkey \t 123 ',
@@ -606,6 +606,31 @@ describe('POST /api/integrations/accounting/connect', () => {
       expect.objectContaining({
         apiKeyEnc: 'encrypted-demo-key',
       })
+    );
+  });
+
+  it('keeps accepting legacy isaak headers but marks them as deprecated', async () => {
+    const response = await POST(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/connect', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+          'x-isaak-tenant-id': 'tenant-demo',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('deprecation')).toBe('true');
+    expect(response.headers.get('x-verifactu-compatibility-mode')).toBe('legacy-isaak-headers');
+    expect(response.headers.get('x-verifactu-deprecated-headers')).toBe(
+      'x-isaak-entry-channel,x-isaak-tenant-id'
     );
   });
 });

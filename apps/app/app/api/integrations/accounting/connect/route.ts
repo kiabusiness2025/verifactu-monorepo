@@ -28,6 +28,11 @@ import {
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
 import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+  resolveHoldedConnectorTenantIdHint,
+} from '@/lib/integrations/holdedConnectorRequest';
+import {
   assertHoldedConnectorAdminSessionAccess,
   getHoldedConnectorAdminNotice,
 } from '@/lib/holdedConnectorAdmin';
@@ -75,28 +80,10 @@ function describeConnectError(error: unknown) {
   return String(error || 'Unknown Holded connection error');
 }
 
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
-function getTenantIdHint(request: NextRequest) {
-  return (
-    request.headers.get('x-holded-tenant-id')?.trim() ||
-    request.headers.get('x-isaak-tenant-id')?.trim() ||
-    request.nextUrl.searchParams.get('tenant_id')?.trim() ||
-    null
-  );
-}
-
 export async function POST(request: NextRequest) {
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
   const requestId = getConnectorRequestId(request);
-  const tenantIdHint = getTenantIdHint(request);
+  const tenantIdHint = resolveHoldedConnectorTenantIdHint(request);
   const onboardingToken = getHoldedOnboardingTokenFromHeaders(request.headers);
   const onboardingSession = onboardingToken
     ? await resolveHoldedOnboardingSessionFromHeaders(request.headers)
@@ -105,6 +92,8 @@ export async function POST(request: NextRequest) {
   let tenantId: string | null = null;
   let resolvedUserId: string | null = null;
   let sessionUid: string | null = null;
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
 
   try {
     if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
@@ -119,7 +108,7 @@ export async function POST(request: NextRequest) {
           outcome: 'identity_verification_required',
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             ok: false,
@@ -134,8 +123,7 @@ export async function POST(request: NextRequest) {
             reason: 'identity_verification_required',
           },
           { status: 403 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -160,7 +148,7 @@ export async function POST(request: NextRequest) {
           error: auth.error,
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             ok: false,
@@ -175,8 +163,7 @@ export async function POST(request: NextRequest) {
             reason: 'auth_error',
           },
           { status: auth.status }
-        ),
-        requestId
+        )
       );
     }
 
@@ -195,7 +182,7 @@ export async function POST(request: NextRequest) {
             outcome: 'admin_access_required',
           })
         );
-        return withConnectorRequestId(
+        return respond(
           NextResponse.json(
             {
               ok: false,
@@ -210,8 +197,7 @@ export async function POST(request: NextRequest) {
               reason: 'admin_access_required',
             },
             { status: 403 }
-          ),
-          requestId
+          )
         );
       }
     }
@@ -235,7 +221,7 @@ export async function POST(request: NextRequest) {
           planCode: access.planCode ?? null,
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             ok: false,
@@ -254,8 +240,7 @@ export async function POST(request: NextRequest) {
             reason: 'plan_access_denied',
           },
           { status: 403 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -280,7 +265,7 @@ export async function POST(request: NextRequest) {
           error: 'apiKey es obligatorio',
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             ok: false,
@@ -295,8 +280,7 @@ export async function POST(request: NextRequest) {
             reason: 'invalid_input',
           },
           { status: 400 }
-        ),
-        requestId
+        )
       );
     }
     if (!acceptedTerms || !acceptedPrivacy) {
@@ -311,7 +295,7 @@ export async function POST(request: NextRequest) {
           outcome: 'legal_acceptance_required',
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             ok: false,
@@ -327,8 +311,7 @@ export async function POST(request: NextRequest) {
             reason: 'legal_acceptance_required',
           },
           { status: 400 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -499,7 +482,7 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json({
         ok: probe.ok,
         provider: 'holded',
@@ -515,8 +498,7 @@ export async function POST(request: NextRequest) {
         lastError: connection.lastError,
         keyMasked: connection.keyMasked,
         mode,
-      }),
-      requestId
+      })
     );
   } catch (error) {
     const detail = describeConnectError(error);
@@ -537,7 +519,7 @@ export async function POST(request: NextRequest) {
       reason: 'connect_failed',
     });
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         {
           ok: false,
@@ -554,8 +536,7 @@ export async function POST(request: NextRequest) {
           debug: `${genericError} [${stage}] ${detail}`,
         },
         { status: 500 }
-      ),
-      requestId
+      )
     );
   }
 }

@@ -165,7 +165,7 @@ describe('GET /api/integrations/accounting/status', () => {
 
     const response = await GET(
       new NextRequest('https://app.verifactu.business/api/integrations/accounting/status', {
-        headers: { 'x-isaak-entry-channel': 'dashboard' },
+        headers: { 'x-holded-entry-channel': 'dashboard' },
       })
     );
     const payload = await response.json();
@@ -209,7 +209,7 @@ describe('GET /api/integrations/accounting/status', () => {
 
     const response = await GET(
       new NextRequest('https://app.verifactu.business/api/integrations/accounting/status', {
-        headers: { 'x-isaak-entry-channel': 'dashboard' },
+        headers: { 'x-holded-entry-channel': 'dashboard' },
       })
     );
     const payload = await response.json();
@@ -247,8 +247,8 @@ describe('GET /api/integrations/accounting/status', () => {
         'https://app.verifactu.business/api/integrations/accounting/status?channel=chatgpt&tenant_id=tenant-demo',
         {
           headers: {
-            'x-isaak-entry-channel': 'chatgpt',
-            'x-isaak-tenant-id': 'tenant-demo',
+            'x-holded-entry-channel': 'chatgpt',
+            'x-holded-tenant-id': 'tenant-demo',
             'x-holded-onboarding-token': 'onboarding-token-123',
           },
         }
@@ -298,7 +298,7 @@ describe('GET /api/integrations/accounting/status', () => {
 
     const response = await GET(
       new NextRequest('https://app.verifactu.business/api/integrations/accounting/status', {
-        headers: { 'x-isaak-entry-channel': 'dashboard' },
+        headers: { 'x-holded-entry-channel': 'dashboard' },
       })
     );
     const payload = await response.json();
@@ -322,7 +322,7 @@ describe('GET /api/integrations/accounting/status', () => {
 
     const response = await GET(
       new NextRequest('https://app.verifactu.business/api/integrations/accounting/status', {
-        headers: { 'x-isaak-entry-channel': 'chatgpt' },
+        headers: { 'x-holded-entry-channel': 'chatgpt' },
       })
     );
     const payload = await response.json();

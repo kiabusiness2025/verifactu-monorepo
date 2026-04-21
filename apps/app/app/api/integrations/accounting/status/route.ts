@@ -7,6 +7,11 @@ import {
   withConnectorRequestId,
   buildConnectorEvent,
 } from '@/lib/integrations/connectorObservability';
+import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+  resolveHoldedConnectorTenantIdHint,
+} from '@/lib/integrations/holdedConnectorRequest';
 import { getHoldedOnboardingTokenFromHeaders } from '@/lib/integrations/holdedOnboardingSession';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { buildHoldedSummaries } from '@/lib/integrations/holdedGovernanceService';
@@ -18,31 +23,14 @@ import {
 
 export const runtime = 'nodejs';
 
-function getEntryChannel(request: NextRequest) {
-  const query = request.nextUrl.searchParams.get('channel')?.trim().toLowerCase();
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return query === 'chatgpt' || header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
-function getTenantIdHint(request: NextRequest) {
-  return (
-    request.headers.get('x-holded-tenant-id')?.trim() ||
-    request.headers.get('x-isaak-tenant-id')?.trim() ||
-    request.nextUrl.searchParams.get('tenant_id')?.trim() ||
-    null
-  );
-}
-
 export async function GET(request: NextRequest) {
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request, { allowQueryChannel: true });
   const requestId = getConnectorRequestId(request);
-  const tenantIdHint = getTenantIdHint(request);
+  const tenantIdHint = resolveHoldedConnectorTenantIdHint(request);
   const onboardingToken = getHoldedOnboardingTokenFromHeaders(request.headers);
   let stage: 'auth' | 'access' | 'lookup' = 'auth';
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
 
   try {
     const auth = await requireTenantContext({
@@ -67,7 +55,7 @@ export async function GET(request: NextRequest) {
         })
       );
       if (entryChannel === 'chatgpt') {
-        return withConnectorRequestId(
+        return respond(
           NextResponse.json({
             provider: 'holded',
             connection: null,
@@ -87,14 +75,12 @@ export async function GET(request: NextRequest) {
             requestId,
             failureStage: 'auth',
             failureReason: auth.status === 401 ? 'auth_required' : 'tenant_context_missing',
-          }),
-          requestId
+          })
         );
       }
 
-      return withConnectorRequestId(
-        NextResponse.json({ error: auth.error, requestId, stage: 'auth' }, { status: auth.status }),
-        requestId
+      return respond(
+        NextResponse.json({ error: auth.error, requestId, stage: 'auth' }, { status: auth.status })
       );
     }
 
@@ -151,7 +137,7 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json({
         provider: 'holded',
         connection,
@@ -172,8 +158,7 @@ export async function GET(request: NextRequest) {
         connectionMode: access.connectionMode,
         degraded,
         requestId,
-      }),
-      requestId
+      })
     );
   } catch (error) {
     logConnectorEvent('api/integrations/accounting/status', 'error', {
@@ -185,7 +170,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (entryChannel === 'chatgpt') {
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json({
           provider: 'holded',
           connection: null,
@@ -210,12 +195,11 @@ export async function GET(request: NextRequest) {
               : stage === 'access'
                 ? 'plan_access_lookup_failed'
                 : 'connection_status_lookup_failed',
-        }),
-        requestId
+        })
       );
     }
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         {
           error: 'No se pudo cargar el estado de Holded',
@@ -223,8 +207,7 @@ export async function GET(request: NextRequest) {
           stage,
         },
         { status: 500 }
-      ),
-      requestId
+      )
     );
   }
 }

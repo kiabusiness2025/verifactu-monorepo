@@ -108,7 +108,7 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -140,7 +140,7 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: ' demo-\nkey \t 123 ',
@@ -177,7 +177,7 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -205,7 +205,7 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'dashboard',
+          'x-holded-entry-channel': 'dashboard',
         },
         body: JSON.stringify({
           apiKey: 'demo-key',
@@ -243,7 +243,7 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
           'x-holded-onboarding-token': 'onboarding-token-123',
         },
         body: JSON.stringify({
@@ -280,7 +280,7 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
           'x-holded-onboarding-token': 'onboarding-token-123',
         },
         body: JSON.stringify({
@@ -314,7 +314,7 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
           'x-holded-onboarding-token': 'onboarding-token-123',
         },
         body: JSON.stringify({
@@ -349,8 +349,8 @@ describe('POST /api/integrations/accounting/validate', () => {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
-          'x-isaak-entry-channel': 'chatgpt',
-          'x-isaak-tenant-id': 'tenant-demo',
+          'x-holded-entry-channel': 'chatgpt',
+          'x-holded-tenant-id': 'tenant-demo',
           'x-holded-onboarding-token': 'onboarding-token-123',
         },
         body: JSON.stringify({
@@ -372,6 +372,30 @@ describe('POST /api/integrations/accounting/validate', () => {
         tenantIdHint: 'tenant-demo',
         onboardingToken: 'onboarding-token-123',
       })
+    );
+  });
+
+  it('still accepts legacy isaak headers and returns deprecation metadata', async () => {
+    const response = await POST(
+      new NextRequest('https://app.verifactu.business/api/integrations/accounting/validate', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-isaak-entry-channel': 'chatgpt',
+          'x-isaak-tenant-id': 'tenant-demo',
+        },
+        body: JSON.stringify({
+          apiKey: 'demo-key',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+        }),
+      })
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get('deprecation')).toBe('true');
+    expect(response.headers.get('x-verifactu-deprecated-headers')).toBe(
+      'x-isaak-entry-channel,x-isaak-tenant-id'
     );
   });
 });

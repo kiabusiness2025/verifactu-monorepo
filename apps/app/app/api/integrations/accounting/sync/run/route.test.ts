@@ -47,7 +47,7 @@ describe('POST /api/integrations/accounting/sync/run', () => {
       {
         method: 'POST',
         headers: {
-          'x-isaak-entry-channel': 'chatgpt',
+          'x-holded-entry-channel': 'chatgpt',
         },
       }
     );

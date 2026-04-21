@@ -10,7 +10,6 @@ Dominios y ownership:
 
 - `verifactu.business` -> `apps/landing`
 - `holded.verifactu.business` -> `apps/holded`
-- `isaak.verifactu.business` -> `apps/isaak`
 - `app.verifactu.business` -> `apps/app`
 - `admin.verifactu.business` -> `apps/admin`
 
@@ -18,7 +17,7 @@ Lo importante:
 
 - `apps/holded` es el dominio publico del conector Holded
 - `apps/app` sigue siendo backend compartido, persistencia y parte del runtime OAuth/MCP
-- `apps/isaak` no forma parte del flujo publico del conector
+- el contrato publico del conector no depende de branding ni rutas de `Isaak`
 
 ## Que problema resuelve
 
@@ -50,7 +49,7 @@ En otras palabras:
 
 - `apps/holded` expone la cara publica del conector
 - `apps/app` soporta el backend compartido
-- `apps/isaak` queda fuera de este flujo
+- cualquier naming historico `isaak_*` queda interno y fuera del contrato del conector
 
 ## Flujo funcional actual
 
@@ -76,7 +75,7 @@ No la toques si el cambio real es:
 
 - scopes, tools o schemas del conector MCP
 - logica de negocio interna del backend compartido en `apps/app`
-- producto conversacional de `apps/isaak`
+- producto conversacional ajeno al conector directo Holded
 
 En esos casos, el ownership suele estar en `apps/app` o fuera del conector.
 
@@ -120,7 +119,13 @@ La API key de Holded:
 - se valida primero sin persistir
 - se guarda cifrada
 - se asocia al `tenantId`
-- se reutiliza despues desde `isaak` y desde el MCP del core
+- se reutiliza despues desde el runtime compartido del conector y desde el MCP del core
+
+Compatibilidad de headers:
+
+- canonicos: `x-holded-entry-channel`, `x-holded-tenant-id`
+- legacy aceptado temporalmente: `x-isaak-entry-channel`, `x-isaak-tenant-id`
+- si un cliente sigue usando headers legacy, la API responde con `x-verifactu-deprecated-headers`
 
 Documentacion tecnica:
 
@@ -137,7 +142,6 @@ Documentacion tecnica:
 - Quiero entender la conexion compartida -> [HOLDED_CONNECTION_ARCHITECTURE.md](./HOLDED_CONNECTION_ARCHITECTURE.md)
 - Quiero publicar el conector directo Fase I en OpenAI -> [HOLDED_CHATGPT_DIRECT_CONNECTOR_PHASE1.md](./HOLDED_CHATGPT_DIRECT_CONNECTOR_PHASE1.md)
 - Quiero ver detalles extendidos o historicos del setup -> [HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md](./HOLDED_CHATGPT_MCP_CONNECTOR_SETUP.md)
-- Quiero entender la app principal Isaak -> [../isaak/README.md](../isaak/README.md)
 - Quiero ver el alcance de API que queremos cubrir -> [../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](../../docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md)
 
 ## Estructura relevante
@@ -247,7 +251,7 @@ Antes de probar el flujo publico:
 3. `holded.verifactu.business` dado de alta como authorized domain en Firebase.
 4. Si App Check esta activo, `NEXT_PUBLIC_HOLDED_RECAPTCHA_SITE_KEY` configurada y valida.
 5. Si pruebas en local con debug token, registrarlo en Firebase App Check y usar `NEXT_PUBLIC_HOLDED_FIREBASE_APP_CHECK_DEBUG_TOKEN`.
-6. `SESSION_SECRET` compartido con `isaak` si se quiere handoff sin login repetido.
+6. `SESSION_SECRET` compartido entre `apps/holded` y `apps/app` si se quiere continuidad de sesion en el handoff.
 7. Holded conectado desde el flujo de onboarding.
 
 ## Ayuda oficial de Holded

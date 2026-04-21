@@ -11,6 +11,10 @@ import {
 } from '@/lib/integrations/connectorObservability';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
 import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+} from '@/lib/integrations/holdedConnectorRequest';
 import { verifyHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
 import {
@@ -29,18 +33,11 @@ export const runtime = 'nodejs';
 const HOLDED_CONNECTION_LEGAL_VERSION =
   process.env.HOLDED_CONNECTION_LEGAL_VERSION?.trim() || 'holded_connection_v1';
 
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
 export async function POST(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: { source: 'holded-rotate-key' },
@@ -58,9 +55,8 @@ export async function POST(request: NextRequest) {
         error: auth.error,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ ok: false, error: auth.error, requestId }, { status: auth.status }),
-      requestId
+    return respond(
+      NextResponse.json({ ok: false, error: auth.error, requestId }, { status: auth.status })
     );
   }
 
@@ -78,12 +74,11 @@ export async function POST(request: NextRequest) {
         outcome: 'admin_access_required',
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { ok: false, error: getHoldedConnectorAdminNotice(), requestId },
         { status: 403 }
-      ),
-      requestId
+      )
     );
   }
 
@@ -104,12 +99,11 @@ export async function POST(request: NextRequest) {
         outcome: 'missing_reauth',
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { ok: false, error: 'Debes confirmar la accion antes de rotar la API key.', requestId },
         { status: 400 }
-      ),
-      requestId
+      )
     );
   }
 
@@ -126,9 +120,8 @@ export async function POST(request: NextRequest) {
         error: 'apiKey es obligatorio',
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ ok: false, error: 'apiKey es obligatorio', requestId }, { status: 400 }),
-      requestId
+    return respond(
+      NextResponse.json({ ok: false, error: 'apiKey es obligatorio', requestId }, { status: 400 })
     );
   }
 
@@ -189,7 +182,7 @@ export async function POST(request: NextRequest) {
     })
   );
 
-  return withConnectorRequestId(
+  return respond(
     NextResponse.json({
       ok: probe.ok,
       connection,
@@ -197,7 +190,6 @@ export async function POST(request: NextRequest) {
       event: 'api_rotated',
       requestId,
       error: probe.ok ? null : normalizedError,
-    } satisfies AccountingRotateKeyResponse & { requestId: string; error: string | null }),
-    requestId
+    } satisfies AccountingRotateKeyResponse & { requestId: string; error: string | null })
   );
 }

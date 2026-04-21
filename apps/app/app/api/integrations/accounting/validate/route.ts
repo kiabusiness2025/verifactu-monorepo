@@ -13,6 +13,11 @@ import {
   isVerifiedHoldedOnboardingIdentity,
   resolveHoldedOnboardingSessionFromHeaders,
 } from '@/lib/integrations/holdedOnboardingSession';
+import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+  resolveHoldedConnectorTenantIdHint,
+} from '@/lib/integrations/holdedConnectorRequest';
 import { mintHoldedValidationToken } from '@/lib/integrations/holdedValidationToken';
 import { getSessionPayload } from '@/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
@@ -47,30 +52,14 @@ function describeValidateError(error: unknown) {
   return String(error || 'Unknown Holded validation error');
 }
 
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
-function getTenantIdHint(request: NextRequest) {
-  return (
-    request.headers.get('x-holded-tenant-id')?.trim() ||
-    request.headers.get('x-isaak-tenant-id')?.trim() ||
-    request.nextUrl.searchParams.get('tenant_id')?.trim() ||
-    null
-  );
-}
-
 export async function POST(request: NextRequest) {
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
   const requestId = getConnectorRequestId(request);
   const onboardingToken = getHoldedOnboardingTokenFromHeaders(request.headers);
-  const tenantIdHint = getTenantIdHint(request);
+  const tenantIdHint = resolveHoldedConnectorTenantIdHint(request);
   let stage: 'auth' | 'access' | 'body' | 'probe' = 'auth';
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
 
   try {
     const signedSession = await getSessionPayload();
@@ -80,7 +69,7 @@ export async function POST(request: NextRequest) {
         : null;
 
     if (onboardingSession && !isVerifiedHoldedOnboardingIdentity(onboardingSession)) {
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             error: 'Debes verificar tu identidad antes de validar la API key de Holded.',
@@ -89,8 +78,7 @@ export async function POST(request: NextRequest) {
             reason: 'identity_verification_required',
           },
           { status: 403 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -119,12 +107,11 @@ export async function POST(request: NextRequest) {
           error: auth.error,
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           { error: auth.error, requestId, stage, reason: 'auth_error' },
           { status: auth.status }
-        ),
-        requestId
+        )
       );
     }
 
@@ -147,7 +134,7 @@ export async function POST(request: NextRequest) {
             planCode: access.planCode ?? null,
           })
         );
-        return withConnectorRequestId(
+        return respond(
           NextResponse.json(
             {
               error:
@@ -160,17 +147,15 @@ export async function POST(request: NextRequest) {
               reason: 'plan_access_denied',
             },
             { status: 403 }
-          ),
-          requestId
+          )
         );
       }
     } else if (!onboardingSession) {
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           { error: 'Unauthorized', requestId, stage, reason: 'auth_error' },
           { status: 401 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -193,12 +178,11 @@ export async function POST(request: NextRequest) {
           error: 'apiKey es obligatorio',
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           { error: 'apiKey es obligatorio', requestId, stage, reason: 'invalid_input' },
           { status: 400 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -214,7 +198,7 @@ export async function POST(request: NextRequest) {
           outcome: 'legal_acceptance_required',
         })
       );
-      return withConnectorRequestId(
+      return respond(
         NextResponse.json(
           {
             error:
@@ -224,8 +208,7 @@ export async function POST(request: NextRequest) {
             reason: 'legal_acceptance_required',
           },
           { status: 400 }
-        ),
-        requestId
+        )
       );
     }
 
@@ -254,7 +237,7 @@ export async function POST(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json({
         ok: probe.ok,
         provider: 'holded',
@@ -262,8 +245,7 @@ export async function POST(request: NextRequest) {
         probe,
         validationToken,
         requestId,
-      }),
-      requestId
+      })
     );
   } catch (error) {
     const detail = describeValidateError(error);
@@ -276,7 +258,7 @@ export async function POST(request: NextRequest) {
       detail,
     });
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         {
           error: 'No se pudo validar la API key de Holded',
@@ -287,8 +269,7 @@ export async function POST(request: NextRequest) {
           debug: `No se pudo validar la API key de Holded [${stage}] ${detail}`,
         },
         { status: 500 }
-      ),
-      requestId
+      )
     );
   }
 }

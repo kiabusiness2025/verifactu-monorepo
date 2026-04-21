@@ -177,3 +177,9 @@ Si se quiere dejar el repositorio completamente alineado con la nueva nomenclatu
 - revisar exports y mocks de test
 - revisar campos legacy como `isaak_tone`
 - limpiar assets y directorios antiguos no usados
+
+## Seguimiento posterior
+
+El cierre especifico del legacy del conector directo `ChatGPT + Holded` se ha documentado aparte en:
+
+- [HOLDED_CONNECTOR_LEGACY_CLEANUP_2026-04-21.md](./HOLDED_CONNECTOR_LEGACY_CLEANUP_2026-04-21.md)

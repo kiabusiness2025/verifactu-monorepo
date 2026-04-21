@@ -5,6 +5,10 @@ import {
   logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
+import {
+  applyHoldedConnectorCompatibilityHeaders,
+  resolveHoldedConnectorEntryChannel,
+} from '@/lib/integrations/holdedConnectorRequest';
 import { listAccessRequests } from '@/lib/integrations/holdedGovernanceService';
 import {
   assertHoldedConnectorAdminSessionAccess,
@@ -14,18 +18,11 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-function getEntryChannel(request: NextRequest) {
-  const header = (
-    request.headers.get('x-holded-entry-channel') || request.headers.get('x-isaak-entry-channel')
-  )
-    ?.trim()
-    .toLowerCase();
-  return header === 'chatgpt' ? 'chatgpt' : 'dashboard';
-}
-
 export async function GET(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
-  const entryChannel = getEntryChannel(request);
+  const entryChannel = resolveHoldedConnectorEntryChannel(request);
+  const respond = (response: NextResponse) =>
+    applyHoldedConnectorCompatibilityHeaders(withConnectorRequestId(response, requestId), request);
   const auth = await requireTenantContext({
     channelType: entryChannel,
     metadata: { source: 'holded-access-requests-list' },
@@ -43,10 +40,7 @@ export async function GET(request: NextRequest) {
         error: auth.error,
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ error: auth.error, requestId }, { status: auth.status }),
-      requestId
-    );
+    return respond(NextResponse.json({ error: auth.error, requestId }, { status: auth.status }));
   }
 
   try {
@@ -63,9 +57,8 @@ export async function GET(request: NextRequest) {
         outcome: 'admin_access_required',
       })
     );
-    return withConnectorRequestId(
-      NextResponse.json({ error: getHoldedConnectorAdminNotice(), requestId }, { status: 403 }),
-      requestId
+    return respond(
+      NextResponse.json({ error: getHoldedConnectorAdminNotice(), requestId }, { status: 403 })
     );
   }
 
@@ -88,12 +81,11 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json({
         items,
         requestId,
-      }),
-      requestId
+      })
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -109,12 +101,11 @@ export async function GET(request: NextRequest) {
         error: message,
       })
     );
-    return withConnectorRequestId(
+    return respond(
       NextResponse.json(
         { error: 'No se pudo cargar la lista de solicitudes de acceso.', requestId },
         { status: 500 }
-      ),
-      requestId
+      )
     );
   }
 }
