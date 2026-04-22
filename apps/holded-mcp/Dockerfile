@@ -1,20 +1,22 @@
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json tsconfig.json .npmrc ./
-RUN npm install --no-save --legacy-peer-deps 2>/dev/null || npm install --no-save
-COPY src ./src
-RUN npm run build
+RUN npm install -g pnpm@10.27.0
+COPY pnpm-lock.yaml package.json tsconfig.json .npmrc ./
+COPY apps/holded-mcp ./apps/holded-mcp
+RUN pnpm install --frozen-lockfile
+RUN cd apps/holded-mcp && pnpm run build
 
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package.json .npmrc ./
-RUN npm install --omit=dev --no-save --legacy-peer-deps 2>/dev/null || npm install --omit=dev --no-save
-RUN npm cache clean --force
+RUN npm install -g pnpm@10.27.0
+COPY pnpm-lock.yaml package.json .npmrc ./
+COPY apps/holded-mcp/package.json ./apps/holded-mcp/
+RUN pnpm install --frozen-lockfile --prod && pnpm store prune
 
-COPY --from=builder /app/dist ./dist
-COPY public ./public 2>/dev/null || true
+COPY --from=builder /app/apps/holded-mcp/dist ./dist
+COPY apps/holded-mcp/public ./public 2>/dev/null || true
 
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s \
