@@ -1,7 +1,8 @@
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
+dockerfilePath = "apps/holded-mcp/Dockerfile"
 buildCache = false
+context = "."
 
 [deploy]
 restartPolicyType = "ON_FAILURE"
