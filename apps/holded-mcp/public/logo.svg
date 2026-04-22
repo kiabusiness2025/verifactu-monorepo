@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#f1f5f9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background square -->
+  <rect width="200" height="200" rx="40" fill="url(#bg)"/>
+  <rect width="200" height="200" rx="40" fill="none" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Holded H pill (left) -->
+  <rect x="16" y="60" width="78" height="80" rx="20" fill="#1D9E75"/>
+  <text x="55" y="115" font-family="-apple-system,Helvetica Neue,Arial,sans-serif"
+        font-size="52" font-weight="800" fill="white" text-anchor="middle"
+        dominant-baseline="auto">H</text>
+
+  <!-- Claude C pill (right) -->
+  <rect x="106" y="60" width="78" height="80" rx="20" fill="#D97706"/>
+  <text x="145" y="115" font-family="-apple-system,Helvetica Neue,Arial,sans-serif"
+        font-size="52" font-weight="800" fill="white" text-anchor="middle"
+        dominant-baseline="auto">C</text>
+
+  <!-- Link arrows -->
+  <path d="M96 96 L104 96 M100 92 L104 96 L100 100" stroke="#94a3b8" stroke-width="2.2"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

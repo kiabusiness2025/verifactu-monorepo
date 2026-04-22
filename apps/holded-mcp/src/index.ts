@@ -1,4 +1,6 @@
 import './config.js'; // valida .env al arrancar
+import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import helmet from 'helmet';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -23,12 +25,23 @@ import { registerContactsTools } from './tools/contacts.js';
 
 // ── Express app ──────────────────────────────────────────────────────────────
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.resolve(__dirname, '../public');
+
 const app = express();
 
 app.use(helmet());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
+
+// ── Static assets (logo, favicon) ────────────────────────────────────────────
+app.use(express.static(publicDir));
+app.get('/favicon.ico', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'favicon.ico'), (err) => {
+    if (err) res.sendFile(path.join(publicDir, 'logo.svg'));
+  });
+});
 
 // ── OAuth routes (sin autenticación Bearer, son públicas) ────────────────────
 app.use('/oauth', oauthRouter);
