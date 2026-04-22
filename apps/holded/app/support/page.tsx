@@ -33,6 +33,25 @@ const supportOptions = [
   },
 ];
 
+const connectorLinks = [
+  {
+    label: 'ChatGPT',
+    color: 'text-[#ff5460]',
+    border: 'border-[#ff5460]/20',
+    bg: 'bg-[#ff5460]/5',
+    docsHref: '/docs/chatgpt',
+    connectHref: '/acceso',
+  },
+  {
+    label: 'Claude',
+    color: 'text-amber-600',
+    border: 'border-amber-200',
+    bg: 'bg-amber-50',
+    docsHref: '/docs/claude',
+    connectHref: '/claude',
+  },
+];
+
 type PageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
@@ -93,7 +112,27 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
           </div>
         </div>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
+        {/* ── Conector links ── */}
+        <div className="mt-8 grid gap-4 sm:grid-cols-2">
+          {connectorLinks.map((c) => (
+            <div
+              key={c.label}
+              className={`flex items-center justify-between rounded-2xl border ${c.border} ${c.bg} px-5 py-4`}
+            >
+              <p className={`text-sm font-semibold ${c.color}`}>Conector {c.label}</p>
+              <div className="flex gap-3 text-xs font-semibold">
+                <Link href={c.docsHref} className="text-slate-600 hover:text-slate-900">
+                  Docs →
+                </Link>
+                <Link href={c.connectHref} className={`${c.color} hover:opacity-80`}>
+                  Conectar →
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
           {supportOptions.map((item) => (
             <article
               key={item.title}

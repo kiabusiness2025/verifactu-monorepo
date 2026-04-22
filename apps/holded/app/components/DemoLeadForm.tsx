@@ -217,6 +217,10 @@ export default function DemoLeadForm() {
           Acepto el tratamiento de mis datos para gestionar esta solicitud conforme a la{' '}
           <a href="/privacy" className="underline hover:text-slate-700">
             politica de privacidad
+          </a>{' '}
+          y el{' '}
+          <a href="/dpa" className="underline hover:text-slate-700">
+            DPA
           </a>
           .
         </span>

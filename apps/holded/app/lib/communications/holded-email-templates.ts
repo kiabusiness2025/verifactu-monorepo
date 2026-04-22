@@ -30,7 +30,7 @@ type HoldedConnectedEmailInput = {
   settingsUrl: string;
   profileCompletionUrl?: string;
   supportedModules: string[];
-  channel?: 'dashboard' | 'chatgpt';
+  channel?: 'dashboard' | 'chatgpt' | 'claude';
   returnUrl?: string | null;
   adminPanelUrl?: string | null;
 };
@@ -96,6 +96,44 @@ function brandHeader(label: string) {
           </td>
         </tr>
       </table>
+    </div>
+  `.trim();
+}
+
+function brandHeaderClaude(label: string) {
+  const siteUrl = holdedSiteUrl();
+  const holdedLogo = `${siteUrl}/brand/holded/holded-diamond-logo.png`;
+
+  return `
+    <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 55%,#ecfdf5 100%);border-radius:24px 24px 0 0;border:1px solid #fde68a;border-bottom:none;">
+      <table role="presentation" width="100%" style="border-collapse:collapse;">
+        <tr>
+          <td style="vertical-align:middle;">
+            <div style="display:inline-flex;align-items:center;gap:10px;padding:7px 14px;border-radius:999px;background:#ffffff;border:1px solid #fde68a;color:#92400e;font-size:12px;font-weight:700;letter-spacing:0.04em;">
+              <img src="${holdedLogo}" alt="Holded" width="18" height="18" style="display:block;border:0;" />
+              ${label}
+            </div>
+          </td>
+          <td align="right" style="vertical-align:middle;color:#d97706;font-size:12px;font-weight:700;letter-spacing:0.04em;">
+            Conector Claude
+          </td>
+        </tr>
+      </table>
+    </div>
+  `.trim();
+}
+
+function cardLayoutClaude(input: { label: string; title: string; body: string; footer?: string }) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+      <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+        ${brandHeaderClaude(input.label)}
+        <div style="padding:28px;">
+          <h1 style="font-size:28px;line-height:1.15;margin:0 0 12px;">${input.title}</h1>
+          ${input.body}
+          ${input.footer || ''}
+        </div>
+      </div>
     </div>
   `.trim();
 }
@@ -232,12 +270,20 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
   const modules = input.supportedModules.join(', ') || 'sin detalle';
   const profileCompletionUrl = input.profileCompletionUrl || input.settingsUrl;
   const isChatgptFlow = input.channel === 'chatgpt';
+  const isClaudeFlow = input.channel === 'claude';
+  const isAiFlow = isChatgptFlow || isClaudeFlow;
+  const aiLabel = isClaudeFlow ? 'Claude' : 'ChatGPT';
   const primaryUrl = input.returnUrl || input.chatUrl;
-  const primaryLabel = isChatgptFlow ? 'Volver a ChatGPT' : 'Abrir panel de control';
-  const recommendedSteps = isChatgptFlow
+  const primaryLabel = isChatgptFlow
+    ? 'Volver a ChatGPT'
+    : isClaudeFlow
+      ? 'Volver a Claude'
+      : 'Abrir panel de control';
+  const primaryColor = isClaudeFlow ? '#d97706' : '#ff5460';
+  const recommendedSteps = isAiFlow
     ? `
           <ol style="padding-left:18px;margin:0;">
-            <li style="margin:0 0 6px;">Vuelve a ChatGPT para terminar la autorizacion.</li>
+            <li style="margin:0 0 6px;">Vuelve a ${aiLabel} para terminar la autorizacion.</li>
             <li style="margin:0 0 6px;">Prueba una consulta real con tus datos de Holded.</li>
             <li style="margin:0;">Si mas adelante necesitas soporte, responde a este correo.</li>
           </ol>
@@ -249,20 +295,24 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
             <li style="margin:0;">Completa datos pendientes si quieres dejar el contexto mas afinado.</li>
           </ol>
         `;
-  const secondaryCta = isChatgptFlow
+  const secondaryCta = isAiFlow
     ? ''
     : `<a href="${escapeHtml(profileCompletionUrl)}" style="display:inline-block;margin-left:12px;background:#ffffff;color:#b4233c;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Completar datos</a>`;
-  const nextStepsText = isChatgptFlow
-    ? `Siguientes pasos:\n1) Vuelve a ChatGPT\n2) Prueba una consulta con tus datos\n3) Si necesitas ayuda, responde a este correo`
+  const nextStepsText = isAiFlow
+    ? `Siguientes pasos:\n1) Vuelve a ${aiLabel}\n2) Prueba una consulta con tus datos\n3) Si necesitas ayuda, responde a este correo`
     : `Siguientes pasos:\n1) Abre tu panel de control\n2) Revisa el estado de la conexion\n3) Completa datos pendientes si lo necesitas`;
+  const layout = isClaudeFlow ? cardLayoutClaude : cardLayout;
+  const titleText = isChatgptFlow
+    ? 'Holded ya esta disponible en ChatGPT'
+    : isClaudeFlow
+      ? 'Holded ya esta disponible en Claude'
+      : 'Tu conexion de Holded ya esta activa';
 
   return {
     subject: `Holded conectado en ${company}`,
-    html: cardLayout({
+    html: layout({
       label: 'Conexion activa',
-      title: isChatgptFlow
-        ? 'Holded ya esta disponible en ChatGPT'
-        : 'Tu conexion de Holded ya esta activa',
+      title: titleText,
       body: `
         <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
         <p style="margin:0 0 14px;">La conexion de Holded para <strong>${escapeHtml(company)}</strong> ya esta activa.</p>
@@ -271,12 +321,12 @@ export function buildHoldedConnectedEmail(input: HoldedConnectedEmailInput): Ema
           <div style="font-weight:700;margin:0 0 8px;">Siguientes pasos recomendados</div>
           ${recommendedSteps}
         </div>
-        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">${primaryLabel}</a>
+        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:${primaryColor};color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">${primaryLabel}</a>
         ${secondaryCta}
       `,
       footer: legalFooter(),
     }),
-    text: `${hello}\n\nLa conexion de Holded para ${company} ya esta activa.\n\n${nextStepsText}\n\n${primaryLabel}: ${primaryUrl}${isChatgptFlow ? '' : `\nCompletar datos: ${profileCompletionUrl}`}`,
+    text: `${hello}\n\nLa conexion de Holded para ${company} ya esta activa.\n\n${nextStepsText}\n\n${primaryLabel}: ${primaryUrl}${isAiFlow ? '' : `\nCompletar datos: ${profileCompletionUrl}`}`,
   };
 }
 
@@ -304,7 +354,8 @@ export function buildHoldedConnectedAdminEmail(input: HoldedConnectedEmailInput)
   const company = sanitizeCompanyName(input.companyName);
   const modules = input.supportedModules.join(', ') || 'sin detalle';
   const isChatgptFlow = input.channel === 'chatgpt';
-  const channelLabel = isChatgptFlow ? 'ChatGPT' : 'Panel';
+  const isClaudeFlow = input.channel === 'claude';
+  const channelLabel = isChatgptFlow ? 'ChatGPT' : isClaudeFlow ? 'Claude' : 'Panel';
   const adminPanelUrl = input.adminPanelUrl || null;
   const now = new Date().toLocaleString('es-ES', {
     timeZone: 'Europe/Madrid',
@@ -378,6 +429,51 @@ export function buildHoldedWelcomeChatgptEmail(input: {
   };
 }
 
+const claudePromptExamples = [
+  '¿Cual es el resultado neto de este trimestre?',
+  '¿Que clientes tienen facturas pendientes de cobro?',
+  'Resume el libro diario de esta semana.',
+  '¿Cuales son mis gastos mas grandes del mes?',
+  'Prepara un borrador de factura para [nombre del cliente].',
+];
+
+export function buildHoldedWelcomeClaudeEmail(input: {
+  name: string;
+  returnUrl?: string | null;
+  profileCompletionUrl: string;
+}): EmailTemplate {
+  const hello = greeting(input.name);
+  const primaryUrl = input.returnUrl || 'https://claude.ai';
+  const promptRows = claudePromptExamples
+    .map(
+      (p, i) =>
+        `<div style="padding:10px 16px;${i < claudePromptExamples.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}font-size:13px;color:#334155;"><span style="color:#d97706;font-weight:700;margin-right:8px;">›</span>${escapeHtml(p)}</div>`
+    )
+    .join('');
+
+  return {
+    subject: 'Tu conexion de Holded ya esta lista en Claude',
+    html: cardLayoutClaude({
+      label: 'Primera conexion Claude',
+      title: 'Ya puedes consultar Holded desde Claude',
+      body: `
+        <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
+        <p style="margin:0 0 18px;">Tu cuenta de Holded ya esta conectada a Claude. Puedes empezar ahora mismo con preguntas como estas:</p>
+        <div style="margin:0 0 22px;background:#fffbeb;border-radius:16px;border:1px solid #fde68a;overflow:hidden;">
+          ${promptRows}
+        </div>
+        <p style="margin:0 0 18px;font-size:13px;color:#64748b;">El conector accede a la API oficial de Holded. Solo prepara borradores de factura cuando tu lo confirmas explicitamente. Todo lo demas es lectura.</p>
+        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#d97706;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;margin-right:10px;">Ir a Claude ahora</a>
+        <a href="${escapeHtml(input.profileCompletionUrl)}" style="display:inline-block;background:#ffffff;color:#92400e;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;border:1px solid #fde68a;">Completar contexto</a>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
+        <p style="font-size:12px;color:#64748b;margin:0;">Si necesitas ayuda, responde a este correo o escribe a <a href="mailto:soporte@verifactu.business" style="color:#d97706;">soporte@verifactu.business</a></p>
+      `,
+      footer: legalFooter(),
+    }),
+    text: `${hello}\n\nTu cuenta de Holded ya esta conectada a Claude.\n\nPreguntas que puedes hacer ahora:\n${claudePromptExamples.map((p) => `• ${p}`).join('\n')}\n\nIr a Claude: ${primaryUrl}\nCompletar contexto: ${input.profileCompletionUrl}`,
+  };
+}
+
 export function buildHoldedProfileCompletionEmail(input: {
   name: string;
   profileCompletionUrl: string;
@@ -428,12 +524,13 @@ export function buildHoldedProfileCompletionEmail(input: {
 export function buildHoldedDisconnectedEmail(input: {
   name: string;
   companyName: string;
-  channel: 'dashboard' | 'chatgpt';
+  channel: 'dashboard' | 'chatgpt' | 'claude';
   reconnectUrl: string;
 }): EmailTemplate {
   const hello = greeting(input.name);
   const company = sanitizeCompanyName(input.companyName);
-  const channelLabel = input.channel === 'chatgpt' ? 'ChatGPT' : 'el panel';
+  const channelLabel =
+    input.channel === 'chatgpt' ? 'ChatGPT' : input.channel === 'claude' ? 'Claude' : 'el panel';
 
   return {
     subject: `Has desconectado Holded de ${channelLabel}`,
@@ -465,11 +562,12 @@ export function buildHoldedDisconnectedAdminEmail(input: {
   name: string;
   userEmail: string;
   companyName: string;
-  channel: 'dashboard' | 'chatgpt';
+  channel: 'dashboard' | 'chatgpt' | 'claude';
   adminPanelUrl: string;
 }): EmailTemplate {
   const company = sanitizeCompanyName(input.companyName);
-  const channelLabel = input.channel === 'chatgpt' ? 'ChatGPT' : 'Panel';
+  const channelLabel =
+    input.channel === 'chatgpt' ? 'ChatGPT' : input.channel === 'claude' ? 'Claude' : 'Panel';
   const now = new Date().toLocaleString('es-ES', {
     timeZone: 'Europe/Madrid',
     dateStyle: 'short',
@@ -516,7 +614,7 @@ export function buildHoldedDisconnectedAdminEmail(input: {
 export function buildHoldedWeeklyAdminSummaryEmail(input: {
   weekLabel: string;
   newConnections: number;
-  newConnectionsByChannel: { chatgpt: number; dashboard: number };
+  newConnectionsByChannel: { chatgpt: number; dashboard: number; claude?: number };
   disconnections: number;
   totalActive: number;
   adminPanelUrl: string;
@@ -534,7 +632,12 @@ export function buildHoldedWeeklyAdminSummaryEmail(input: {
     { label: 'Nuevas conexiones', value: String(newConnections), highlight: newConnections > 0 },
     { label: '— via ChatGPT', value: String(newConnectionsByChannel.chatgpt), highlight: false },
     {
-      label: '- via Panel',
+      label: '— via Claude',
+      value: String(newConnectionsByChannel.claude ?? 0),
+      highlight: false,
+    },
+    {
+      label: '— via Panel',
       value: String(newConnectionsByChannel.dashboard),
       highlight: false,
     },

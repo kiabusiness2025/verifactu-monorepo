@@ -3,6 +3,7 @@ import {
   ArrowRight,
   BarChart3,
   BookOpen,
+  Bot,
   Building2,
   CheckCircle2,
   ChevronRight,
@@ -742,6 +743,104 @@ export default function HoldedHomePage() {
             {roleCards.map((role) => (
               <RolePanel key={role.title} {...role} />
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Dos plataformas ── */}
+      <section className="border-y border-slate-200/80 bg-white py-14 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-2xl">
+            <SectionPill icon={Bot}>Dos plataformas, un conector</SectionPill>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
+              Conecta Holded desde ChatGPT o desde Claude.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              El conector está disponible para las dos principales plataformas de IA. Cada una usa
+              su protocolo nativo: GPT Action para ChatGPT, MCP para Claude.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-2">
+            <div className="flex flex-col rounded-[2rem] border border-emerald-200 bg-[linear-gradient(180deg,#f0fdf4_0%,#ffffff_100%)] p-7 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Activo en producción
+              </div>
+              <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
+                Conector Holded para ChatGPT
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Conéctate mediante GPT Action (OpenAI) introduciendo tu API key de Holded.
+                Disponible desde ChatGPT Plus y Team.
+              </p>
+              <ul className="mt-5 space-y-2">
+                {[
+                  'Facturación, gastos, contactos y proyectos.',
+                  'Balance, IVA y contabilidad en lenguaje claro.',
+                  'Borradores de factura con tu confirmación.',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto flex gap-3 pt-6">
+                <Link
+                  href="/acceso"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
+                >
+                  Conectar con ChatGPT
+                </Link>
+                <Link
+                  href="/docs/chatgpt"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Documentación
+                </Link>
+              </div>
+            </div>
+
+            <div className="flex flex-col rounded-[2rem] border border-amber-200/60 bg-[linear-gradient(180deg,#fffbeb_0%,#ffffff_100%)] p-7 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                <Sparkles className="h-3.5 w-3.5" />
+                Nuevo — en revisión en el directorio Anthropic
+              </div>
+              <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
+                Conector Holded para Claude
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Conéctate mediante MCP (Model Context Protocol) de Anthropic. Funciona en Claude.ai,
+                Claude Desktop y la API de Anthropic.
+              </p>
+              <ul className="mt-5 space-y-2">
+                {[
+                  'Las mismas capacidades que en ChatGPT.',
+                  'Protocolo MCP nativo — más integrado con Claude.',
+                  'OAuth 2.0 estándar, sin guardar API keys en texto.',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto flex gap-3 pt-6">
+                <Link
+                  href="/claude"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-600"
+                >
+                  Ver el conector Claude
+                </Link>
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                >
+                  Solicitar acceso
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

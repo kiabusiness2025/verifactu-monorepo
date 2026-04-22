@@ -173,6 +173,18 @@ export default function HoldedSiteChrome({ children }: Props) {
               <Link href="/demo-recording" className="hover:text-slate-900">
                 Demo grabada
               </Link>
+              <Link href="/docs/chatgpt" className="hover:text-slate-900">
+                Docs ChatGPT
+              </Link>
+              <Link href="/docs/claude" className="hover:text-slate-900">
+                Docs Claude
+              </Link>
+              <Link href="/claude" className="hover:text-slate-900">
+                Conector Claude
+              </Link>
+              <Link href="/dpa" className="hover:text-slate-900">
+                DPA
+              </Link>
               <Link href="/legal" className="hover:text-slate-900">
                 Aviso legal
               </Link>

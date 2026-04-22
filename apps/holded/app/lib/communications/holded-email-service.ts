@@ -12,6 +12,7 @@ import {
   buildHoldedOnboardingGuideEmail,
   buildHoldedProfileCompletionEmail,
   buildHoldedWeeklyAdminSummaryEmail,
+  buildHoldedWelcomeClaudeEmail,
   buildHoldedWelcomeChatgptEmail,
   buildHoldedWelcomeEmail,
 } from './holded-email-templates';
@@ -36,7 +37,7 @@ type ConnectedPayload = {
   supportedModules: string[];
   profileCompletionUrl?: string | null;
   companyEmailVerificationUrl?: string | null;
-  channel?: 'dashboard' | 'chatgpt';
+  channel?: 'dashboard' | 'chatgpt' | 'claude';
   returnUrl?: string | null;
   isFirstConnection?: boolean;
 };
@@ -264,12 +265,19 @@ export async function sendHoldedConnectedCommunication(input: ConnectedPayload) 
     normalizedCompanyEmail &&
     normalizedCompanyEmail.toLowerCase() !== input.userEmail.toLowerCase();
 
-  if (input.isFirstConnection && input.channel === 'chatgpt') {
-    const welcomeTemplate = buildHoldedWelcomeChatgptEmail({
-      name: input.name,
-      returnUrl: input.returnUrl,
-      profileCompletionUrl,
-    });
+  if (input.isFirstConnection && (input.channel === 'chatgpt' || input.channel === 'claude')) {
+    const welcomeTemplate =
+      input.channel === 'claude'
+        ? buildHoldedWelcomeClaudeEmail({
+            name: input.name,
+            returnUrl: input.returnUrl,
+            profileCompletionUrl,
+          })
+        : buildHoldedWelcomeChatgptEmail({
+            name: input.name,
+            returnUrl: input.returnUrl,
+            profileCompletionUrl,
+          });
     const profileTemplate = buildHoldedProfileCompletionEmail({
       name: input.name,
       profileCompletionUrl,
@@ -305,7 +313,7 @@ export async function sendHoldedDisconnectedCommunication(input: {
   name: string;
   userEmail: string;
   companyName: string;
-  channel: 'dashboard' | 'chatgpt';
+  channel: 'dashboard' | 'chatgpt' | 'claude';
 }) {
   const { resend, from, replyTo } = createResendTransport();
 
@@ -411,7 +419,7 @@ export async function sendHoldedContactNotification(input: {
 export async function sendHoldedWeeklySummaryAdminEmail(input: {
   weekLabel: string;
   newConnections: number;
-  newConnectionsByChannel: { chatgpt: number; dashboard: number };
+  newConnectionsByChannel: { chatgpt: number; dashboard: number; claude?: number };
   disconnections: number;
   totalActive: number;
 }) {

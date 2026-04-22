@@ -184,6 +184,13 @@ function consentPage(redirectUri: string, state: string, error = false): string 
       <p class="hint">La encuentras en Holded → Ajustes → Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">¿Cómo generarla?</a></p>
       <button type="submit">Conectar Holded</button>
     </form>
+    <p style="margin-top:20px;font-size:11px;color:#9ca3af;text-align:center;">
+      Al conectar, aceptas el
+      <a href="https://holded.verifactu.business/dpa" target="_blank" rel="noopener" style="color:#D97706;">Acuerdo de tratamiento de datos (DPA)</a>
+      y la
+      <a href="https://holded.verifactu.business/privacy" target="_blank" rel="noopener" style="color:#D97706;">Política de privacidad</a>.
+      Documentación: <a href="https://holded.verifactu.business/docs/claude" target="_blank" rel="noopener" style="color:#D97706;">docs/claude</a>.
+    </p>
   </div>
 </body>
 </html>`;
