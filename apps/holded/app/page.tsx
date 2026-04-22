@@ -7,10 +7,13 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock3,
+  FileSearch,
   FileText,
   FolderKanban,
   MessageCircleMore,
   PlayCircle,
+  Receipt,
+  Scale,
   ShieldCheck,
   Sparkles,
   Users,
@@ -22,9 +25,9 @@ import HoldedHeroVisual from './components/HoldedHeroVisual';
 import { buildAuthUrl } from './lib/holded-navigation';
 
 export const metadata: Metadata = {
-  title: 'Holded | Controla tu facturación y contabilidad sin complicarte',
+  title: 'Holded | Entiende tu contabilidad y controla tu negocio con ChatGPT',
   description:
-    'Habla con tus datos de Holded en lenguaje claro. Entiende cobros, IVA y gastos sin aprender el ERP ni esperar al gestor.',
+    'Conecta Holded con ChatGPT y entiende tu balance, IVA, modelos fiscales y cobros en lenguaje claro. Sin aprender el ERP, sin esperar al gestor.',
 };
 
 type FeatureGroup = {
@@ -49,6 +52,12 @@ type PainItem = {
   icon: LucideIcon;
 };
 
+type UseCaseGroup = {
+  label: string;
+  icon: LucideIcon;
+  items: string[];
+};
+
 const pains: PainItem[] = [
   {
     problem: 'No sabes qué revisar primero',
@@ -71,20 +80,42 @@ const pains: PainItem[] = [
   {
     problem: 'Los datos están en Holded pero no los interpretas',
     solution:
-      'Transforma los registros de tu cuenta en respuestas útiles con contexto y criterio de negocio.',
+      'Transforma el balance, el diario y los registros de tu cuenta en respuestas útiles con criterio de negocio.',
     icon: BarChart3,
   },
 ];
 
-const useCases = [
-  'Ver qué facturas deberías revisar hoy',
-  'Detectar cobros pendientes y clientes con riesgo',
-  'Entender el IVA del trimestre sin tecnicismos',
-  'Revisar gastos por proveedor o periodo',
-  'Identificar clientes con seguimiento pendiente',
-  'Leer el diario contable en lenguaje claro',
-  'Preparar borradores de factura con tu confirmación',
-  'Llegar a la reunión con tu gestor sabiendo qué preguntar',
+const useCaseGroups: UseCaseGroup[] = [
+  {
+    label: 'Entiende tu negocio',
+    icon: BarChart3,
+    items: [
+      'Ver qué facturas deberías revisar hoy y detectar cobros en riesgo.',
+      'Revisar gastos por proveedor, categoría o periodo.',
+      'Consultar la revisión de tesorería y saldos disponibles en Holded.',
+      'Identificar clientes con seguimiento o cobro pendiente.',
+    ],
+  },
+  {
+    label: 'Entiende tu contabilidad',
+    icon: BookOpen,
+    items: [
+      'Leer el diario contable en lenguaje claro, sin tecnicismos.',
+      'Interpretar el balance y la cuenta de resultados del ejercicio.',
+      'Revisar el cierre trimestral antes de la reunión con el gestor.',
+      'Entender qué hay detrás de los asientos de IVA o amortización.',
+    ],
+  },
+  {
+    label: 'Revisa impuestos y documentación',
+    icon: Receipt,
+    items: [
+      'Entender el IVA del trimestre y los datos detrás del modelo 303.',
+      'Revisar facturas y gastos que afectan al modelo 349, 130 o 390.',
+      'Preparar el contexto para el Impuesto sobre Sociedades.',
+      'Preparar borradores de factura, siempre con tu confirmación.',
+    ],
+  },
 ];
 
 const metrics = [
@@ -144,12 +175,35 @@ const featureGroups: FeatureGroup[] = [
     badge: 'Solo consulta',
     badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
     icon: BookOpen,
-    summary: 'Lee diario, cuentas y movimientos para convertir asientos en criterio de negocio.',
-    outcome: 'Pensado para dirección y finanzas que necesitan contexto sin tecnicismos.',
+    summary:
+      'Interpreta balance, cuenta de resultados, diario contable y asientos para convertir los números en criterio de negocio.',
+    outcome:
+      'Para dirección, finanzas o quien trabaja con gestor y quiere entender qué hay detrás de cada movimiento.',
     capabilities: [
-      'Consultar plan contable, libro diario y movimientos registrados.',
-      'Entender IVA repercutido, soportado y saldos en lenguaje normal.',
-      'Revisar cuentas de tesorería y saldos financieros disponibles en Holded.',
+      'Consultar el balance de situación y entender activo, pasivo y patrimonio en lenguaje claro.',
+      'Revisar la cuenta de resultados (PyG) y el resultado del ejercicio en el periodo que necesites.',
+      'Leer el diario contable y entender los asientos sin ser contable.',
+      'Revisar IVA repercutido y soportado, cuotas pendientes de liquidar.',
+      'Consultar la revisión de tesorería: cuentas y saldos financieros registrados en Holded.',
+      'Preparar contexto para el cierre trimestral o el Impuesto sobre Sociedades.',
+    ],
+  },
+  {
+    title: 'Impuestos y documentación',
+    badge: 'Solo consulta',
+    badgeClassName: 'border-sky-100 bg-sky-50 text-sky-700',
+    icon: Receipt,
+    summary:
+      'Revisa los datos que alimentan tus modelos fiscales y llega con contexto a cada presentación.',
+    outcome:
+      'Útil para preparar la información antes de trabajar con tu gestor en los modelos fiscales trimestrales o anuales.',
+    capabilities: [
+      'Revisar los datos de IVA que alimentan el modelo 303 de cada trimestre.',
+      'Consultar operaciones intracomunitarias para el modelo 349.',
+      'Entender qué hay detrás del modelo 130 (pagos fraccionados IRPF).',
+      'Preparar el contexto para los modelos 390, 111, 180 o 190.',
+      'Revisar el resultado contable como base para el Impuesto sobre Sociedades.',
+      'Detectar facturas o asientos que pueden afectar a la declaración.',
     ],
   },
   {
@@ -220,7 +274,7 @@ const journeySteps = [
   {
     step: '02',
     title: 'Consultas en lenguaje claro',
-    body: 'Pregunta sobre facturas, clientes, IVA, gastos o proyectos y obtén respuestas directas con contexto de negocio.',
+    body: 'Pregunta sobre facturas, contabilidad, IVA, gastos o proyectos y obtén respuestas directas con contexto de negocio.',
   },
   {
     step: '03',
@@ -231,9 +285,24 @@ const journeySteps = [
 
 const faqItems = [
   {
-    question: '¿Qué puedo consultar?',
+    question: '¿Qué puedo consultar exactamente?',
     answer:
-      'Facturas emitidas, gastos, contabilidad, clientes y proyectos. Puedes preguntar sobre cobros pendientes, IVA del trimestre, situación de clientes o carga de trabajo en proyectos activos. Todo en lenguaje claro, sin necesidad de conocer el ERP.',
+      'Facturas emitidas, gastos, contabilidad (balance, cuenta de resultados, diario), clientes y proyectos. También puedes revisar el IVA del trimestre, entender qué datos afectan a los modelos fiscales (303, 349, 130, 390, 111, 180, 190...) y preparar el contexto para el cierre o el Impuesto sobre Sociedades. Todo en lenguaje claro, sin conocer el ERP.',
+  },
+  {
+    question: '¿Solo puedo ver facturas o también la contabilidad?',
+    answer:
+      'También la contabilidad. Puedes consultar el balance de situación, la cuenta de resultados (PyG), el diario contable y los saldos de cuentas. No necesitas ser contable: lo explica en términos claros con contexto de negocio.',
+  },
+  {
+    question: '¿Puede ayudarme con los modelos fiscales como el 303 o el IS?',
+    answer:
+      'Te ayuda a entender los datos que alimentan esos modelos y a detectar qué conviene revisar antes de presentarlos. No presenta modelos fiscales automáticamente ni sustituye la validación de tu gestor, pero te permite llegar con más contexto y menos dudas a cada presentación.',
+  },
+  {
+    question: '¿Puedo usarlo para contrastar archivos o extractos externos?',
+    answer:
+      'Sí. ChatGPT puede analizar archivos que tú subas (Excel, CSV, PDFs de extractos) y contrastarlos con los datos de Holded. Es útil para reconciliaciones, revisiones de tesorería o preparar información para tu gestor.',
   },
   {
     question: '¿Puede modificar datos en mi cuenta de Holded?',
@@ -241,24 +310,9 @@ const faqItems = [
       'No realiza cambios en tu cuenta de Holded. El único cambio posible es generar borradores de facturas emitidas, y siempre con tu confirmación explícita antes de crear nada.',
   },
   {
-    question: '¿Necesito saber de contabilidad para usarlo?',
+    question: '¿Sustituye a mi gestor o asesoría?',
     answer:
-      'No. Está pensado exactamente para lo contrario: que puedas entender tus números sin ser contable. Responde en lenguaje cotidiano y traduce los tecnicismos cuando aparecen.',
-  },
-  {
-    question: '¿Funciona bien si trabajo con un gestor o asesoría?',
-    answer:
-      'Sí, y encaja muy bien en ese flujo. Te ayuda a llegar a las reuniones con contexto: qué revisar, qué preguntar, qué incidencias hay antes del cierre. No reemplaza al gestor, lo complementa.',
-  },
-  {
-    question: '¿Puedo preparar facturas desde el chat?',
-    answer:
-      'Sí. Puedes pedirle que prepare un borrador de factura emitida. Lo muestra para que lo revises y lo confirmes antes de crear nada. Siempre requiere tu aprobación explícita.',
-  },
-  {
-    question: '¿Qué necesito para empezar y cuánto cuesta?',
-    answer:
-      'Tu correo y una API key de Holded. El proceso de alta es guiado y gratuito. El acceso es gratuito para usuarios de ChatGPT.',
+      'No, y no está pensado para eso. Te ayuda a entender mejor tus números para que las conversaciones con tu gestor sean más útiles. La validación profesional de declaraciones fiscales, cierres y auditorías sigue siendo responsabilidad del gestor.',
   },
 ];
 
@@ -397,8 +451,8 @@ export default function HoldedHomePage() {
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-                Habla con tus datos de Holded en lenguaje claro. Entiende cobros, IVA y gastos sin
-                aprender el ERP ni esperar al gestor.
+                Habla con tus datos de Holded en lenguaje claro. Entiende cobros, contabilidad e
+                impuestos sin aprender el ERP ni esperar al gestor.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -482,6 +536,60 @@ export default function HoldedHomePage() {
         </div>
       </section>
 
+      {/* ── Posicionamiento ── */}
+      <section className="border-y border-slate-200/80 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_55%,#f6fbff_100%)] py-14 sm:py-18">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-3xl">
+            <SectionPill icon={Scale}>Más que acceso a Holded</SectionPill>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
+              Una forma diferente de entender tu contabilidad e impuestos.
+            </h2>
+            <p className="mt-5 text-base leading-8 text-slate-600">
+              No es solo consultar datos del ERP. Es poder <strong>interpretar tu balance</strong>,
+              revisar la cuenta de resultados, leer el diario contable en lenguaje claro, y entender
+              qué datos de Holded alimentan tus modelos fiscales trimestrales.
+            </p>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              Antes de decidir, antes de hablar con el gestor, antes de presentar nada: revisa y
+              entiende qué hay detrás de tus números. Sin tecnicismos, sin esperas.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                icon: BookOpen,
+                title: 'Contabilidad',
+                desc: 'Balance, PyG, diario, cierre trimestral e IS en lenguaje claro.',
+              },
+              {
+                icon: Receipt,
+                title: 'Modelos fiscales',
+                desc: 'Datos para el 303, 349, 130, 390, 111, 180 y 190 con contexto.',
+              },
+              {
+                icon: FileSearch,
+                title: 'Archivos externos',
+                desc: 'Contrasta Excel, extractos o documentos con tus datos de Holded.',
+              },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                className="flex items-start gap-3 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#ff5460]/10">
+                  <Icon className="h-4 w-4 text-[#ff5460]" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">{title}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-600">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ── Qué podrás hacer ── */}
       <section className="bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
@@ -517,17 +625,46 @@ export default function HoldedHomePage() {
               <h3 className="text-lg font-bold tracking-tight text-slate-950">
                 Consultas que puedes hacer hoy
               </h3>
-              <ul className="mt-5 space-y-3">
-                {useCases.map((useCase) => (
-                  <li
-                    key={useCase}
-                    className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                  >
-                    <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-500" />
-                    {useCase}
-                  </li>
-                ))}
-              </ul>
+
+              <div className="mt-5 space-y-5">
+                {useCaseGroups.map((group) => {
+                  const Icon = group.icon;
+                  return (
+                    <div key={group.label}>
+                      <div className="mb-2.5 flex items-center gap-2">
+                        <Icon className="h-3.5 w-3.5 text-[#ff5460]" />
+                        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                          {group.label}
+                        </span>
+                      </div>
+                      <ul className="space-y-2">
+                        {group.items.map((item) => (
+                          <li
+                            key={item}
+                            className="flex items-start gap-3 text-sm leading-6 text-slate-700"
+                          >
+                            <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-500" />
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 flex items-start gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 px-4 py-3.5">
+                <FileSearch className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+                <div>
+                  <p className="text-xs font-semibold text-slate-700">
+                    También puedes subir archivos
+                  </p>
+                  <p className="mt-0.5 text-xs leading-5 text-slate-500">
+                    Excel, extractos bancarios o documentos externos. ChatGPT los analiza y los
+                    contrasta con tus datos de Holded.
+                  </p>
+                </div>
+              </div>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Link
@@ -571,8 +708,17 @@ export default function HoldedHomePage() {
           <div className="mt-8 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm">
             <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
             <span>
-              El alcance cubre facturación, gastos, contabilidad, clientes y proyectos. La consulta
-              de tesorería está disponible para revisar cuentas y saldos registrados en Holded.
+              El alcance cubre facturación, gastos, contabilidad, impuestos, clientes y proyectos.
+              La revisión de tesorería está disponible para consultar cuentas y saldos registrados
+              en Holded.
+            </span>
+          </div>
+
+          <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/70 px-5 py-4 text-sm leading-6 text-slate-600">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
+            <span>
+              La herramienta ayuda a entender, revisar y preparar mejor la información contable y
+              fiscal, pero no sustituye la validación profesional cuando corresponda.
             </span>
           </div>
         </div>
@@ -694,8 +840,8 @@ export default function HoldedHomePage() {
                   con criterio.
                 </h2>
                 <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">
-                  Sin aprender el ERP. Sin esperar al gestor. Con respuestas claras y control sobre
-                  lo que ocurre en tu negocio.
+                  Sin aprender el ERP. Sin esperar al gestor. Con respuestas claras sobre tu
+                  contabilidad, tus impuestos y lo que ocurre en tu negocio.
                 </p>
               </div>
 

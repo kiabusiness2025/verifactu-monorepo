@@ -127,46 +127,36 @@ const conversations: Message[][] = [
     },
   ],
   [
-    { role: 'user', content: '¿Qué clientes tienen pagos pendientes?' },
+    { role: 'user', content: '¿Cómo va el resultado del ejercicio este trimestre?' },
     {
       role: 'assistant',
       content: (
         <div className="space-y-2 text-xs">
           <p className="text-slate-700">
-            Hay <span className="font-semibold text-slate-900">3 clientes</span> con facturas sin
-            cobrar:
+            Resultado acumulado a cierre de <span className="font-semibold text-slate-900">T1</span>
+            :
           </p>
           <div className="overflow-hidden rounded-lg border border-slate-200">
-            <table className="w-full text-[11px]">
-              <thead>
-                <tr className="bg-slate-50 text-left text-slate-500">
-                  <th className="px-2.5 py-1.5 font-medium">Cliente</th>
-                  <th className="px-2.5 py-1.5 font-medium">Pendiente</th>
-                  <th className="px-2.5 py-1.5 font-medium">Riesgo</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                <tr>
-                  <td className="px-2.5 py-1.5">Muebles Durán</td>
-                  <td className="px-2.5 py-1.5 font-semibold">4.350 EUR</td>
-                  <td className="px-2.5 py-1.5 text-red-600">Alto</td>
-                </tr>
-                <tr>
-                  <td className="px-2.5 py-1.5">Grupo Ferrer</td>
-                  <td className="px-2.5 py-1.5 font-semibold">2.100 EUR</td>
-                  <td className="px-2.5 py-1.5 text-amber-600">Medio</td>
-                </tr>
-                <tr>
-                  <td className="px-2.5 py-1.5">Clínica Romero</td>
-                  <td className="px-2.5 py-1.5 font-semibold">870 EUR</td>
-                  <td className="px-2.5 py-1.5 text-slate-500">Bajo</td>
-                </tr>
-              </tbody>
-            </table>
+            <div className="flex justify-between px-3 py-1.5 text-slate-700">
+              <span>Ingresos</span>
+              <span className="font-semibold">38.420 EUR</span>
+            </div>
+            <div className="flex justify-between border-t border-slate-100 px-3 py-1.5 text-slate-700">
+              <span>Gastos operativos</span>
+              <span className="font-semibold text-red-600">− 24.810 EUR</span>
+            </div>
+            <div className="flex justify-between border-t border-slate-100 px-3 py-1.5 text-slate-700">
+              <span>Amortizaciones</span>
+              <span className="font-semibold text-red-600">− 1.200 EUR</span>
+            </div>
+            <div className="flex justify-between border-t border-slate-100 bg-slate-50 px-3 py-2 font-semibold text-slate-900">
+              <span>Resultado neto</span>
+              <span className="text-emerald-700">12.410 EUR</span>
+            </div>
           </div>
           <p className="text-slate-500">
-            Empezaría por <span className="font-medium text-slate-700">Muebles Durán</span>: mayor
-            importe y más tiempo sin respuesta.
+            El margen mejoró un <span className="font-medium text-slate-700">8%</span> respecto a T1
+            del año anterior. Principal cambio: gasto en personal.
           </p>
         </div>
       ),
@@ -227,7 +217,7 @@ export default function HoldedHeroVisual() {
 
       <div className="rounded-2xl border border-slate-100 bg-[linear-gradient(180deg,#f8fafc_0%,#ffffff_100%)] p-4">
         <div className="mb-4 flex flex-wrap gap-2">
-          {['Facturación', 'Clientes', 'IVA', 'Cobros'].map((badge) => (
+          {['Facturación', 'Contabilidad', 'IVA', 'Cobros'].map((badge) => (
             <span
               key={badge}
               className="rounded-full border border-slate-200 bg-white px-3 py-1 text-[11px] font-semibold text-slate-600"
