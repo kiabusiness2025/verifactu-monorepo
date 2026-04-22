@@ -1,26 +1,21 @@
-FROM node:20-alpine
+# Dockerfile para Holded MCP Server (monorepo)
+# Construye desde apps/holded-mcp
 
-RUN npm install -g pnpm@10.27.0
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY apps/holded-mcp/package*.json apps/holded-mcp/tsconfig.json ./
+RUN npm ci
+COPY apps/holded-mcp/src ./src
+RUN npm run build
 
-WORKDIR /usr/src/app
-
-# Create and use a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-RUN chown -R appuser:appgroup /usr/src/app
-USER appuser
-
-# Copy package files and set ownership
-COPY --chown=appuser:appgroup package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-# Install production dependencies as the non-root user
-RUN pnpm install --frozen-lockfile --prod
-
-# Copy the rest of the application code and set ownership
-COPY --chown=appuser:appgroup . .
-# Set environment variables
+FROM node:20-alpine AS runner
+WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=8080
-
-# Expose port and define command
-EXPOSE 8080
-CMD ["pnpm", "start"]
+COPY apps/holded-mcp/package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+COPY --from=builder /app/dist ./dist
+EXPOSE 3000
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s \
+  CMD wget -qO- http://localhost:3000/health || exit 1
+USER node
+CMD ["node", "dist/index.js"]
