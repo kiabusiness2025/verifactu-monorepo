@@ -1,0 +1,20 @@
+services:
+  holded-mcp:
+    build: .
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    labels:
+      # Traefik labels — ajusta al dominio real
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.holded-mcp.rule=Host(`claude.verifactu.business`)'
+      - 'traefik.http.routers.holded-mcp.tls=true'
+      - 'traefik.http.routers.holded-mcp.tls.certresolver=letsencrypt'
+      - 'traefik.http.services.holded-mcp.loadbalancer.server.port=3000'
