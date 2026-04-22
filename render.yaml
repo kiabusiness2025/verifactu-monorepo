@@ -4,8 +4,8 @@ services:
     runtime: node
     plan: free
     workingDirectory: apps/holded-mcp
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: npm install -g pnpm@10.27.0 && pnpm install --frozen-lockfile && pnpm run build
+    startCommand: pnpm start
     envVars:
       - key: NODE_ENV
         value: production
