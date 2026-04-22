@@ -10,9 +10,12 @@ export const metadata: Metadata = {
   description:
     'Conector para entender ventas, gastos y beneficio con tus datos reales de Holded en un flujo simple.',
   icons: {
-    icon: [{ url: '/brand/holded/holded-diamond-logo.png?v=20260416', type: 'image/png' }],
-    shortcut: ['/brand/holded/holded-diamond-logo.png?v=20260416'],
-    apple: [{ url: '/brand/holded/holded-diamond-logo.png?v=20260416', type: 'image/png' }],
+    icon: [
+      { url: '/Holded/Corporativo/Holded logo.svg', type: 'image/svg+xml' },
+      { url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' },
+    ],
+    shortcut: ['/Holded/Corporativo/Holded logo.svg'],
+    apple: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
   },
 };
 
