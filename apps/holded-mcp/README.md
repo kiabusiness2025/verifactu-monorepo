@@ -124,14 +124,14 @@ Once the server is in production and tested:
 
 ## Pre-submission checklist
 
-- [ ] All tools have `readOnlyHint: true` or `destructiveHint: true/false`
-- [ ] Server publicly accessible via HTTPS
-- [ ] `/.well-known/oauth-authorization-server` responds correctly
-- [ ] Privacy Policy URL active
-- [ ] DPA URL active
+- [x] All tools have `readOnlyHint: true` or `destructiveHint: true/false`
+- [x] Server publicly accessible via HTTPS (`https://claude.verifactu.business`)
+- [x] `/.well-known/oauth-authorization-server` responds correctly
+- [x] Privacy Policy URL active (`https://holded.verifactu.business/privacy`)
+- [x] DPA URL active (`https://holded.verifactu.business/dpa`)
 - [ ] Test account prepared with dummy data
-- [ ] Rate limiting configured
-- [ ] Production logs working
+- [x] Rate limiting configured
+- [x] Production logs working
 
 ## Environment variables
 
@@ -149,17 +149,13 @@ Once the server is in production and tested:
 | `RATE_LIMIT_MAX_REQUESTS`         | Max requests per window        | `100`                               |
 | `LOG_LEVEL`                       | Log verbosity                  | `info`                              |
 
-## ⚠️ Production: use Redis for token storage
+## Stateless token architecture
 
-The current server stores tokens in memory (`Map`). For production with multiple instances, replace `auth.ts` to use **Redis** or **PostgreSQL**:
+Tokens are **self-contained JWTs** — the Holded API key is embedded (signed, not encrypted) directly in the access and refresh tokens. No server-side store is needed, which means:
 
-```typescript
-// Example with Redis (install: pnpm add ioredis)
-import Redis from 'ioredis';
-const redis = new Redis(process.env.REDIS_URL);
-// tokenStore.set(userId, record) → redis.setex(userId, TTL, JSON.stringify(record))
-// tokenStore.get(userId) → JSON.parse(await redis.get(userId))
-```
+- ✅ Survives container restarts and redeployments
+- ✅ Horizontally scalable without shared state
+- ⚠️ Token revocation is best-effort (tokens expire naturally). Add a Redis blocklist to `auth.ts` if immediate revocation is required.
 
 ## License
 
