@@ -16,7 +16,7 @@ COPY apps/holded-mcp/package.json ./apps/holded-mcp/
 RUN pnpm install --frozen-lockfile --prod && pnpm store prune
 
 COPY --from=builder /app/apps/holded-mcp/dist ./dist
-COPY apps/holded-mcp/public ./public 2>/dev/null || true
+COPY apps/holded-mcp/public ./public
 
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s \
