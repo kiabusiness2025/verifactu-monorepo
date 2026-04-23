@@ -138,8 +138,7 @@ function consentPage(redirectUri: string, state: string, error = false): string 
     body { font-family: -apple-system, sans-serif; background: #f5f5f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
     .card { background: white; border-radius: 12px; padding: 40px; max-width: 440px; width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
     .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
-    .logo { width: 40px; height: 40px; border-radius: 8px; background: #1D9E75; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 18px; }
-    .logo.claude { background: #D97706; }
+    .logo-img { width: 40px; height: 40px; object-fit: contain; }
     .arrow { color: #9ca3af; font-size: 20px; }
     h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: #111; }
     p { color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
@@ -159,9 +158,9 @@ function consentPage(redirectUri: string, state: string, error = false): string 
 <body>
   <div class="card">
     <div class="logo-row">
-      <div class="logo">H</div>
+      <img src="/logo.svg" alt="Holded" class="logo-img">
       <span class="arrow">↔</span>
-      <div class="logo claude">C</div>
+      <img src="/claude.svg" alt="Claude" class="logo-img" onerror="this.style.display='none'">
     </div>
     <h1>Conectar Holded con Claude</h1>
     <p>Claude necesita acceder a tu cuenta de Holded para consultar tus datos y ayudarte con facturas, contactos, proyectos y contabilidad.</p>
