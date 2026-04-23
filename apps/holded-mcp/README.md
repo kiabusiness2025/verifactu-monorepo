@@ -129,7 +129,7 @@ Once the server is in production and tested:
 - [x] `/.well-known/oauth-authorization-server` responds correctly
 - [x] Privacy Policy URL active (`https://holded.verifactu.business/privacy`)
 - [x] DPA URL active (`https://holded.verifactu.business/dpa`)
-- [ ] Test account prepared with dummy data
+- [x] Test account prepared with dummy data (`Nova Gestión` — seed via `scripts/seed-demo.mjs`)
 - [x] Rate limiting configured
 - [x] Production logs working
 
