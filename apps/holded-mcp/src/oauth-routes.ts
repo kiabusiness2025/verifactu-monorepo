@@ -13,11 +13,21 @@ import { HoldedClient } from './holded-client.js';
 
 export const oauthRouter: Router = Router();
 
+// ── Dynamic client registration store (RFC 7591) ─────────────────────────────
+// En memoria: Claude.ai se re-registra si el servidor reinicia. Aceptable
+// porque los access/refresh tokens son JWT stateless y siguen siendo válidos.
+const registeredClients = new Map<string, { client_secret: string; redirect_uris: string[] }>();
+
+// Pre-registramos el cliente estático del .env para compatibilidad
+registeredClients.set(config.OAUTH_CLIENT_ID, {
+  client_secret: config.OAUTH_CLIENT_SECRET,
+  redirect_uris: [],
+});
+
 function codeSecret() {
   return new TextEncoder().encode(config.OAUTH_JWT_SECRET);
 }
 
-/** Genera un auth code como JWT firmado (10 min, single-use semántico). */
 async function createAuthCode(holdedApiKey: string): Promise<string> {
   return new SignJWT({ hak: holdedApiKey })
     .setProtectedHeader({ alg: 'HS256' })
@@ -28,7 +38,6 @@ async function createAuthCode(holdedApiKey: string): Promise<string> {
     .sign(codeSecret());
 }
 
-/** Verifica y extrae el holdedApiKey del auth code JWT. */
 async function consumeAuthCode(code: string): Promise<string | null> {
   try {
     const { payload } = await jwtVerify(code, codeSecret(), {
@@ -41,8 +50,39 @@ async function consumeAuthCode(code: string): Promise<string | null> {
   }
 }
 
+// ── POST /oauth/register — Dynamic Client Registration (RFC 7591) ────────────
+oauthRouter.post('/register', (req: Request, res: Response) => {
+  const { redirect_uris, client_name } = req.body;
+
+  if (!redirect_uris || !Array.isArray(redirect_uris) || redirect_uris.length === 0) {
+    res.status(400).json({
+      error: 'invalid_client_metadata',
+      error_description: 'redirect_uris requerido',
+    });
+    return;
+  }
+
+  const client_id = `holded-mcp-${crypto.randomUUID()}`;
+  const client_secret =
+    crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+
+  registeredClients.set(client_id, { client_secret, redirect_uris });
+
+  logger.info(`Cliente registrado: ${client_name ?? 'unknown'} (${client_id})`);
+
+  res.status(201).json({
+    client_id,
+    client_secret,
+    client_id_issued_at: Math.floor(Date.now() / 1000),
+    client_secret_expires_at: 0,
+    redirect_uris,
+    grant_types: ['authorization_code', 'refresh_token'],
+    response_types: ['code'],
+    token_endpoint_auth_method: 'client_secret_post',
+  });
+});
+
 // ── GET /oauth/authorize ─────────────────────────────────────────────────────
-// Claude redirige al usuario aquí para iniciar el flujo OAuth
 oauthRouter.get('/authorize', (req: Request, res: Response) => {
   const { client_id, redirect_uri, state, response_type } = req.query;
 
@@ -51,17 +91,17 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
     return;
   }
 
-  if (client_id !== config.OAUTH_CLIENT_ID) {
-    res.status(400).send('client_id no reconocido');
+  if (!registeredClients.has(String(client_id ?? ''))) {
+    res
+      .status(400)
+      .send('client_id no reconocido. El cliente debe registrarse primero en /oauth/register.');
     return;
   }
 
-  // Sirve la página de consentimiento donde el usuario introduce su API key
   res.send(consentPage(String(redirect_uri ?? ''), String(state ?? '')));
 });
 
 // ── POST /oauth/authorize ────────────────────────────────────────────────────
-// El usuario envía su API key de Holded; generamos un authorization code
 oauthRouter.post('/authorize', async (req: Request, res: Response) => {
   const { holded_api_key, redirect_uri, state } = req.body;
 
@@ -70,7 +110,6 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
     return;
   }
 
-  // Validamos la API key contra Holded antes de continuar
   const client = new HoldedClient(holded_api_key);
   const valid = await client.validateApiKey();
 
@@ -79,9 +118,7 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
     return;
   }
 
-  // Generamos un authorization code de un solo uso (10 minutos), firmado como JWT
   const code = await createAuthCode(holded_api_key);
-
   logger.info(`Authorization code generado`);
 
   const callbackUrl = new URL(redirect_uri);
@@ -92,12 +129,11 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
 });
 
 // ── POST /oauth/token ────────────────────────────────────────────────────────
-// Claude canjea el authorization code por access_token + refresh_token
 oauthRouter.post('/token', async (req: Request, res: Response) => {
   const { grant_type, code, client_id, client_secret } = req.body;
 
-  // Verificar credenciales del cliente (Claude)
-  if (client_id !== config.OAUTH_CLIENT_ID || client_secret !== config.OAUTH_CLIENT_SECRET) {
+  const clientRecord = registeredClients.get(String(client_id ?? ''));
+  if (!clientRecord || clientRecord.client_secret !== String(client_secret ?? '')) {
     res.status(401).json({ error: 'invalid_client' });
     return;
   }
