@@ -131,12 +131,29 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       ? req.body.redirect_uri
       : null;
   const bodyState = typeof req.body?.state === 'string' ? req.body.state : '';
+  const queryClientId =
+    typeof req.query?.client_id === 'string' && req.query.client_id.length > 0
+      ? req.query.client_id
+      : null;
+  const queryRedirectUri =
+    typeof req.query?.redirect_uri === 'string' && req.query.redirect_uri.length > 0
+      ? req.query.redirect_uri
+      : null;
+  const queryState = typeof req.query?.state === 'string' ? req.query.state : '';
 
   if (bodyClientId && bodyRedirectUri) {
     return {
       clientId: bodyClientId,
       redirectUri: bodyRedirectUri,
       state: bodyState,
+    };
+  }
+
+  if (queryClientId && queryRedirectUri) {
+    return {
+      clientId: queryClientId,
+      redirectUri: queryRedirectUri,
+      state: bodyState || queryState,
     };
   }
 
@@ -214,6 +231,17 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
   const authorizeContext = resolveAuthorizeContext(req);
 
   if (!holdedApiKey || !authorizeContext) {
+    logger.warn('POST /oauth/authorize sin contexto suficiente', {
+      hasHoldedApiKey: holdedApiKey.length > 0,
+      hasBodyClientId: typeof req.body?.client_id === 'string' && req.body.client_id.length > 0,
+      hasBodyRedirectUri:
+        typeof req.body?.redirect_uri === 'string' && req.body.redirect_uri.length > 0,
+      hasQueryClientId: typeof req.query?.client_id === 'string' && req.query.client_id.length > 0,
+      hasQueryRedirectUri:
+        typeof req.query?.redirect_uri === 'string' && req.query.redirect_uri.length > 0,
+      hasReferer: Boolean(req.get('referer')),
+      contentType: req.get('content-type') ?? '',
+    });
     res.status(400).json({ error: 'Faltan parametros' });
     return;
   }
@@ -366,6 +394,11 @@ oauthRouter.post('/revoke', async (req: Request, res: Response) => {
 });
 
 function consentPage(clientId: string, redirectUri: string, state: string, error = false): string {
+  const actionUrl = new URL('/oauth/authorize', config.BASE_URL);
+  actionUrl.searchParams.set('client_id', clientId);
+  actionUrl.searchParams.set('redirect_uri', redirectUri);
+  if (state) actionUrl.searchParams.set('state', state);
+
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -416,7 +449,7 @@ function consentPage(clientId: string, redirectUri: string, state: string, error
       <div class="scope">Crear borradores de factura (con tu confirmacion)</div>
     </div>
 
-    <form method="POST" action="/oauth/authorize">
+    <form method="POST" action="${actionUrl.toString()}">
       <input type="hidden" name="client_id" value="${clientId}">
       <input type="hidden" name="redirect_uri" value="${redirectUri}">
       <input type="hidden" name="state" value="${state}">
