@@ -1,7 +1,7 @@
 {
   "name": "holded-mcp-server",
   "version": "1.0.0",
-  "description": "Official Holded MCP connector for Claude — claude.verifactu.business",
+  "description": "Official Holded MCP connector for Claude",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

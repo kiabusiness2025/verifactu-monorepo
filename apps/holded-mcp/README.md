@@ -159,4 +159,4 @@ Tokens are **self-contained JWTs** — the Holded API key is embedded (signed, n
 
 ## License
 
-MIT — verifactu.business
+MIT
