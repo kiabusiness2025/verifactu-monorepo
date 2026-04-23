@@ -4,7 +4,7 @@ import { logger } from './logger.js';
 import { createAccessToken, createRefreshToken, verifyAccessToken, revokeToken } from './auth.js';
 import { HoldedClient } from './holded-client.js';
 
-export const oauthRouter = Router();
+export const oauthRouter: Router = Router();
 
 // Estado temporal de códigos de autorización (en producción: Redis con TTL)
 const authCodes = new Map<string, { holdedApiKey: string; expiresAt: number }>();
