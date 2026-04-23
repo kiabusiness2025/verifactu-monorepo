@@ -242,12 +242,9 @@ function consentPage(redirectUri: string, state: string, error = false): string 
 <body>
   <div class="card">
     <div class="logo-row">
-      <img src="/logo.svg" alt="Holded" class="logo-img">
+      <img src="/holded-diamond-logo.png" alt="Holded" class="logo-img">
       <span class="arrow">↔</span>
-      <svg class="logo-img" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Claude">
-        <rect width="40" height="40" rx="8" fill="#D97706"/>
-        <text x="20" y="27" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="20" font-weight="700" fill="white">C</text>
-      </svg>
+      <img src="/claude.svg" alt="Claude" class="logo-img">
     </div>
     <h1>Conectar Holded con Claude</h1>
     <p>Claude necesita acceder a tu cuenta de Holded para consultar tus datos y ayudarte con facturas, contactos, proyectos y contabilidad.</p>
