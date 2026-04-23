@@ -29,16 +29,19 @@ Canonical Holded logo source:
 Runtime branding files served by `holded-mcp`:
 
 - `apps/holded-mcp/public/holded-diamond-logo.png`
-- `apps/holded-mcp/public/favicon.png`
 - `apps/holded-mcp/public/logo.svg`
 - `apps/holded-mcp/public/claude.svg`
 
 Branding rules:
 
 - the OAuth consent page and landing page must render Holded branding from these runtime files
-- `favicon.png` and `holded-diamond-logo.png` are intentionally identical
+- `/favicon.ico` and `/favicon.png` are aliases to `holded-diamond-logo.png`
 - `logo.svg` is also aligned to Holded branding to cover clients that probe `/logo.svg`
 - the server also serves Holded icon aliases on `/logo.png`, `/icon.png`, `/icon.svg`, and `/apple-touch-icon.png`
+
+Brand sync:
+
+- run `pnpm --dir apps/holded-mcp sync:brand` to refresh `public/` from the canonical Holded and Claude source assets in the monorepo
 
 Observed Claude behavior on `2026-04-23`:
 
