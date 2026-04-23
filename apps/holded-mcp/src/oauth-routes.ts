@@ -1,35 +1,83 @@
-import { Router, Request, Response } from 'express';
+import { Request, Response, Router } from 'express';
 import { SignJWT, jwtVerify } from 'jose';
 import { config } from './config.js';
 import { logger } from './logger.js';
 import {
   createAccessToken,
   createRefreshToken,
+  revokeToken,
   verifyAccessToken,
   verifyRefreshToken,
-  revokeToken,
 } from './auth.js';
 import { HoldedClient } from './holded-client.js';
 
 export const oauthRouter: Router = Router();
 
-// ── Dynamic client registration store (RFC 7591) ─────────────────────────────
-// En memoria: Claude.ai se re-registra si el servidor reinicia. Aceptable
-// porque los access/refresh tokens son JWT stateless y siguen siendo válidos.
-const registeredClients = new Map<string, { client_secret: string; redirect_uris: string[] }>();
+interface ClientRecord {
+  clientId: string;
+  redirectUris: string[];
+}
 
-// Pre-registramos el cliente estático del .env para compatibilidad
-registeredClients.set(config.OAUTH_CLIENT_ID, {
-  client_secret: config.OAUTH_CLIENT_SECRET,
-  redirect_uris: [],
-});
+interface AuthCodePayload {
+  holdedApiKey: string;
+  clientId: string;
+  redirectUri: string;
+}
 
 function codeSecret() {
   return new TextEncoder().encode(config.OAUTH_JWT_SECRET);
 }
 
-async function createAuthCode(holdedApiKey: string): Promise<string> {
-  return new SignJWT({ hak: holdedApiKey })
+async function createDynamicClientSecret(
+  clientId: string,
+  redirectUris: string[]
+): Promise<string> {
+  return new SignJWT({
+    cid: clientId,
+    rus: redirectUris,
+    type: 'client_secret',
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('365d')
+    .setIssuer(config.BASE_URL)
+    .setAudience('holded-mcp-client')
+    .sign(codeSecret());
+}
+
+async function verifyClientCredentials(
+  clientId: string,
+  clientSecret: string
+): Promise<ClientRecord | null> {
+  if (clientId === config.OAUTH_CLIENT_ID && clientSecret === config.OAUTH_CLIENT_SECRET) {
+    return { clientId, redirectUris: [] };
+  }
+
+  try {
+    const { payload } = await jwtVerify(clientSecret, codeSecret(), {
+      issuer: config.BASE_URL,
+      audience: 'holded-mcp-client',
+    });
+
+    if (payload['type'] !== 'client_secret') return null;
+    if (payload['cid'] !== clientId) return null;
+
+    const redirectUris = Array.isArray(payload['rus'])
+      ? payload['rus'].filter((value): value is string => typeof value === 'string')
+      : [];
+
+    return { clientId, redirectUris };
+  } catch {
+    return null;
+  }
+}
+
+async function createAuthCode(payload: AuthCodePayload): Promise<string> {
+  return new SignJWT({
+    hak: payload.holdedApiKey,
+    cid: payload.clientId,
+    ru: payload.redirectUri,
+  })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('10m')
@@ -38,20 +86,36 @@ async function createAuthCode(holdedApiKey: string): Promise<string> {
     .sign(codeSecret());
 }
 
-async function consumeAuthCode(code: string): Promise<string | null> {
+async function consumeAuthCode(code: string): Promise<AuthCodePayload | null> {
   try {
     const { payload } = await jwtVerify(code, codeSecret(), {
       issuer: config.BASE_URL,
       audience: 'holded-mcp-code',
     });
-    return (payload['hak'] as string | undefined) ?? null;
+
+    const holdedApiKey = payload['hak'];
+    const clientId = payload['cid'];
+    const redirectUri = payload['ru'];
+
+    if (
+      typeof holdedApiKey !== 'string' ||
+      typeof clientId !== 'string' ||
+      typeof redirectUri !== 'string'
+    ) {
+      return null;
+    }
+
+    return {
+      holdedApiKey,
+      clientId,
+      redirectUri,
+    };
   } catch {
     return null;
   }
 }
 
-// ── POST /oauth/register — Dynamic Client Registration (RFC 7591) ────────────
-oauthRouter.post('/register', (req: Request, res: Response) => {
+oauthRouter.post('/register', async (req: Request, res: Response) => {
   const { redirect_uris, client_name } = req.body;
 
   if (!redirect_uris || !Array.isArray(redirect_uris) || redirect_uris.length === 0) {
@@ -62,17 +126,14 @@ oauthRouter.post('/register', (req: Request, res: Response) => {
     return;
   }
 
-  const client_id = `holded-mcp-${crypto.randomUUID()}`;
-  const client_secret =
-    crypto.randomUUID().replace(/-/g, '') + crypto.randomUUID().replace(/-/g, '');
+  const clientId = `holded-mcp-${crypto.randomUUID()}`;
+  const clientSecret = await createDynamicClientSecret(clientId, redirect_uris);
 
-  registeredClients.set(client_id, { client_secret, redirect_uris });
-
-  logger.info(`Cliente registrado: ${client_name ?? 'unknown'} (${client_id})`);
+  logger.info(`Cliente registrado: ${client_name ?? 'unknown'} (${clientId})`);
 
   res.status(201).json({
-    client_id,
-    client_secret,
+    client_id: clientId,
+    client_secret: clientSecret,
     client_id_issued_at: Math.floor(Date.now() / 1000),
     client_secret_expires_at: 0,
     redirect_uris,
@@ -82,7 +143,6 @@ oauthRouter.post('/register', (req: Request, res: Response) => {
   });
 });
 
-// ── GET /oauth/authorize ─────────────────────────────────────────────────────
 oauthRouter.get('/authorize', (req: Request, res: Response) => {
   const { client_id, redirect_uri, state, response_type } = req.query;
 
@@ -91,65 +151,101 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
     return;
   }
 
-  if (!registeredClients.has(String(client_id ?? ''))) {
-    res
-      .status(400)
-      .send('client_id no reconocido. El cliente debe registrarse primero en /oauth/register.');
+  if (!client_id || !redirect_uri) {
+    res.status(400).send('client_id y redirect_uri son obligatorios.');
     return;
   }
 
-  res.send(consentPage(String(redirect_uri ?? ''), String(state ?? '')));
+  res.send(consentPage(String(client_id), String(redirect_uri), String(state ?? '')));
 });
 
-// ── POST /oauth/authorize ────────────────────────────────────────────────────
 oauthRouter.post('/authorize', async (req: Request, res: Response) => {
-  const { holded_api_key, redirect_uri, state } = req.body;
+  const { holded_api_key, client_id, redirect_uri, state } = req.body;
 
-  if (!holded_api_key || !redirect_uri) {
-    res.status(400).json({ error: 'Faltan parámetros' });
+  if (!holded_api_key || !client_id || !redirect_uri) {
+    res.status(400).json({ error: 'Faltan parametros' });
     return;
   }
 
-  const client = new HoldedClient(holded_api_key);
+  const client = new HoldedClient(String(holded_api_key));
   const valid = await client.validateApiKey();
 
   if (!valid) {
-    res.status(400).send(consentPage(redirect_uri, state, true));
+    res
+      .status(400)
+      .send(consentPage(String(client_id), String(redirect_uri), String(state ?? ''), true));
     return;
   }
 
-  const code = await createAuthCode(holded_api_key);
-  logger.info(`Authorization code generado`);
+  const code = await createAuthCode({
+    holdedApiKey: String(holded_api_key),
+    clientId: String(client_id),
+    redirectUri: String(redirect_uri),
+  });
+  logger.info(`Authorization code generado para ${String(client_id)}`);
 
-  const callbackUrl = new URL(redirect_uri);
+  const callbackUrl = new URL(String(redirect_uri));
   callbackUrl.searchParams.set('code', code);
-  if (state) callbackUrl.searchParams.set('state', state);
+  if (state) callbackUrl.searchParams.set('state', String(state));
 
   res.redirect(callbackUrl.toString());
 });
 
-// ── POST /oauth/token ────────────────────────────────────────────────────────
 oauthRouter.post('/token', async (req: Request, res: Response) => {
-  const { grant_type, code, client_id, client_secret } = req.body;
+  const { grant_type, code, client_id, client_secret, redirect_uri } = req.body;
 
-  const clientRecord = registeredClients.get(String(client_id ?? ''));
-  if (!clientRecord || clientRecord.client_secret !== String(client_secret ?? '')) {
-    res.status(401).json({ error: 'invalid_client' });
+  const clientId = String(client_id ?? '');
+  const clientSecret = String(client_secret ?? '');
+  const clientRecord = await verifyClientCredentials(clientId, clientSecret);
+
+  if (!clientRecord) {
+    res.status(401).json({
+      error: 'invalid_client',
+      error_description: 'Cliente OAuth invalido',
+    });
     return;
   }
 
   if (grant_type === 'authorization_code') {
-    const holdedApiKey = await consumeAuthCode(code);
-    if (!holdedApiKey) {
-      res
-        .status(400)
-        .json({ error: 'invalid_grant', error_description: 'Código expirado o inválido' });
+    const authCodePayload = await consumeAuthCode(String(code ?? ''));
+    if (!authCodePayload) {
+      res.status(400).json({
+        error: 'invalid_grant',
+        error_description: 'Codigo expirado o invalido',
+      });
+      return;
+    }
+
+    if (authCodePayload.clientId !== clientRecord.clientId) {
+      res.status(400).json({
+        error: 'invalid_grant',
+        error_description: 'El codigo no pertenece a este cliente OAuth',
+      });
+      return;
+    }
+
+    if (
+      clientRecord.redirectUris.length > 0 &&
+      !clientRecord.redirectUris.includes(authCodePayload.redirectUri)
+    ) {
+      res.status(400).json({
+        error: 'invalid_grant',
+        error_description: 'redirect_uri no autorizado para este cliente',
+      });
+      return;
+    }
+
+    if (redirect_uri && authCodePayload.redirectUri !== String(redirect_uri)) {
+      res.status(400).json({
+        error: 'invalid_grant',
+        error_description: 'redirect_uri no coincide con el codigo de autorizacion',
+      });
       return;
     }
 
     const [accessToken, refreshTokenStr] = await Promise.all([
-      createAccessToken(holdedApiKey),
-      createRefreshToken(holdedApiKey),
+      createAccessToken(authCodePayload.holdedApiKey),
+      createRefreshToken(authCodePayload.holdedApiKey),
     ]);
 
     res.json({
@@ -169,11 +265,12 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
       return;
     }
 
-    const holdedApiKey = await verifyRefreshToken(refresh_token);
+    const holdedApiKey = await verifyRefreshToken(String(refresh_token));
     if (!holdedApiKey) {
-      res
-        .status(400)
-        .json({ error: 'invalid_grant', error_description: 'Refresh token expirado o inválido' });
+      res.status(400).json({
+        error: 'invalid_grant',
+        error_description: 'Refresh token expirado o invalido',
+      });
       return;
     }
 
@@ -195,21 +292,20 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
   res.status(400).json({ error: 'unsupported_grant_type' });
 });
 
-// ── POST /oauth/revoke ───────────────────────────────────────────────────────
 oauthRouter.post('/revoke', async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    res.status(200).send(); // RFC 7009: siempre 200
+    res.status(200).send();
     return;
   }
+
   const token = authHeader.slice(7);
   const record = await verifyAccessToken(token);
   if (record) await revokeToken(record.userId);
   res.status(200).send();
 });
 
-// ── Página de consentimiento HTML ────────────────────────────────────────────
-function consentPage(redirectUri: string, state: string, error = false): string {
+function consentPage(clientId: string, redirectUri: string, state: string, error = false): string {
   return `<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -249,7 +345,7 @@ function consentPage(redirectUri: string, state: string, error = false): string 
     <h1>Conectar Holded con Claude</h1>
     <p>Claude necesita acceder a tu cuenta de Holded para consultar tus datos y ayudarte con facturas, contactos, proyectos y contabilidad.</p>
 
-    ${error ? '<div class="error">API key inválida o sin permisos. Comprueba que es correcta y que tu plan de Holded está activo.</div>' : ''}
+    ${error ? '<div class="error">API key invalida o sin permisos. Comprueba que es correcta y que tu plan de Holded esta activo.</div>' : ''}
 
     <div class="scopes">
       <div class="scope">Leer facturas, presupuestos y documentos</div>
@@ -257,22 +353,23 @@ function consentPage(redirectUri: string, state: string, error = false): string 
       <div class="scope">Leer productos e inventario</div>
       <div class="scope">Leer proyectos y tareas</div>
       <div class="scope">Leer contabilidad y diario</div>
-      <div class="scope">Crear borradores de factura (con tu confirmación)</div>
+      <div class="scope">Crear borradores de factura (con tu confirmacion)</div>
     </div>
 
     <form method="POST" action="/oauth/authorize">
+      <input type="hidden" name="client_id" value="${clientId}">
       <input type="hidden" name="redirect_uri" value="${redirectUri}">
       <input type="hidden" name="state" value="${state}">
       <label for="holded_api_key">Tu API key de Holded</label>
-      <input type="password" id="holded_api_key" name="holded_api_key" placeholder="Pega aquí tu API key…" required autocomplete="off">
-      <p class="hint">La encuentras en Holded → Ajustes → Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">¿Cómo generarla?</a></p>
+      <input type="password" id="holded_api_key" name="holded_api_key" placeholder="Pega aqui tu API key..." required autocomplete="off">
+      <p class="hint">La encuentras en Holded → Ajustes → Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">¿Como generarla?</a></p>
       <button type="submit">Conectar Holded</button>
     </form>
     <p style="margin-top:20px;font-size:11px;color:#9ca3af;text-align:center;">
       Al conectar, aceptas el
       <a href="https://holded.verifactu.business/dpa" target="_blank" rel="noopener" style="color:#D97706;">Acuerdo de tratamiento de datos</a>
       y la
-      <a href="https://holded.verifactu.business/privacy" target="_blank" rel="noopener" style="color:#D97706;">Política de privacidad</a>.
+      <a href="https://holded.verifactu.business/privacy" target="_blank" rel="noopener" style="color:#D97706;">Politica de privacidad</a>.
     </p>
   </div>
 </body>
