@@ -33,11 +33,7 @@ const app = express();
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
-    contentSecurityPolicy: {
-      directives: {
-        formAction: ["'self'", config.BASE_URL],
-      },
-    },
+    contentSecurityPolicy: false,
   })
 );
 app.use(express.json());
