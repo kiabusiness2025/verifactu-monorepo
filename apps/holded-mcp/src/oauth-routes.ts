@@ -406,6 +406,10 @@ function consentPage(clientId: string, redirectUri: string, state: string, error
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conectar Holded con Claude</title>
   <link rel="icon" type="image/png" href="/favicon.png">
+  <link rel="apple-touch-icon" href="/holded-diamond-logo.png">
+  <link rel="mask-icon" href="/logo.svg" color="#ff5454">
+  <meta property="og:image" content="/holded-diamond-logo.png">
+  <meta name="twitter:image" content="/holded-diamond-logo.png">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, sans-serif; background: #f5f5f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }

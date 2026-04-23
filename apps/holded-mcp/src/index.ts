@@ -48,6 +48,18 @@ app.get('/favicon.ico', (_req, res) => {
 app.get('/favicon.png', (_req, res) => {
   res.sendFile(path.join(publicDir, 'favicon.png'));
 });
+app.get('/logo.png', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
+});
+app.get('/icon.png', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
+});
+app.get('/icon.svg', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'logo.svg'));
+});
+app.get('/apple-touch-icon.png', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
+});
 
 // ── OAuth routes (sin autenticación Bearer, son públicas) ────────────────────
 app.use('/oauth', oauthRouter);

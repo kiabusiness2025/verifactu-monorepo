@@ -1,162 +1,111 @@
-# Holded MCP Server — claude.verifactu.business
+# Holded MCP Server
 
-Official Holded connector for Claude, built on the **Model Context Protocol (MCP)** by Anthropic.
-Lets Claude users access their Holded account data directly from the conversation.
+Remote MCP server for Claude at `https://claude.verifactu.business`.
 
-## Architecture
+## Runtime
 
-```
-Claude (claude.ai / Desktop / Mobile / API)
-        │ POST /mcp  (Bearer token)
-        ▼
-claude.verifactu.business   ← this server
-        │ key: {holded_api_key}
-        ▼
-api.holded.com
-```
+- MCP endpoint: `https://claude.verifactu.business/mcp`
+- OAuth metadata: `https://claude.verifactu.business/.well-known/oauth-authorization-server`
+- OAuth authorize: `https://claude.verifactu.business/oauth/authorize`
+- OAuth token: `https://claude.verifactu.business/oauth/token`
+- OAuth register: `https://claude.verifactu.business/oauth/register`
 
-## Available modules
+## Tools
 
-| Module         | Tools                                                                     | Mode         |
-| -------------- | ------------------------------------------------------------------------- | ------------ |
-| Invoicing      | `list_documents`, `get_document`, `create_invoice_draft`                  | Read + Draft |
-| Contacts / CRM | `list_contacts`, `get_contact`, `list_crm_funnels`, `list_leads`          | Read-only    |
-| Products       | `list_products`, `get_product`, `list_warehouses`                         | Read-only    |
-| Projects       | `list_projects`, `get_project`, `list_project_tasks`, `list_time_records` | Read-only    |
-| Accounting     | `get_chart_of_accounts`, `get_journal`, `get_daily_book`                  | Read-only    |
-| Team           | `list_employees`, `get_employee`                                          | Read-only    |
-| Treasury       | `list_treasury_accounts`                                                  | Read-only    |
+- Invoicing: `list_documents`, `get_document`, `create_invoice_draft`
+- Contacts / CRM: `list_contacts`, `get_contact`, `list_crm_funnels`, `list_leads`
+- Products: `list_products`, `get_product`, `list_warehouses`
+- Projects: `list_projects`, `get_project`, `list_project_tasks`, `list_time_records`
+- Accounting: `get_chart_of_accounts`, `get_journal`, `get_daily_book`
+- Team: `list_employees`, `get_employee`
+- Treasury: `list_treasury_accounts`
 
-## Quick start
+## Branding
 
-### 1. Clone and configure
+Canonical Holded logo source:
+
+- `apps/holded/public/brand/holded/holded-diamond-logo.png`
+
+Runtime branding files served by `holded-mcp`:
+
+- `apps/holded-mcp/public/holded-diamond-logo.png`
+- `apps/holded-mcp/public/favicon.png`
+- `apps/holded-mcp/public/logo.svg`
+- `apps/holded-mcp/public/claude.svg`
+
+Branding rules:
+
+- the OAuth consent page and landing page must render Holded branding from these runtime files
+- `favicon.png` and `holded-diamond-logo.png` are intentionally identical
+- `logo.svg` is also aligned to Holded branding to cover clients that probe `/logo.svg`
+- the server also serves Holded icon aliases on `/logo.png`, `/icon.png`, `/icon.svg`, and `/apple-touch-icon.png`
+
+Observed Claude behavior on `2026-04-23`:
+
+- the OAuth page can show the correct Holded + Claude logos while Claude still renders a generic shield icon in the connector list/details view
+- we did not find a documented server-side icon metadata field in the Anthropic custom connector flow for URL-based custom connectors
+- until Anthropic documents icon metadata support, treat the generic shield tile as a Claude UI fallback rather than a runtime branding regression
+
+## Local development
 
 ```bash
 git clone https://github.com/verifactu/verifactu-monorepo
 cd apps/holded-mcp
 cp .env.example .env
-# Edit .env with your real values
-```
-
-### 2. Generate secure secrets
-
-```bash
-# OAUTH_JWT_SECRET (minimum 32 chars)
-openssl rand -hex 32
-
-# OAUTH_CLIENT_SECRET
-openssl rand -hex 24
-```
-
-### 3. Local development
-
-```bash
 pnpm install
 pnpm dev
-# Server at http://localhost:3000
 ```
-
-### 4. Production with Docker
-
-```bash
-docker compose up -d
-```
-
-### 5. Configure subdomain
-
-Add to your DNS:
-
-```
-claude.verifactu.business  CNAME  your-server.com
-```
-
-Traefik (see `docker-compose.yml`) handles TLS with Let's Encrypt automatically.
-
-## Endpoints
-
-| Endpoint                                      | Description                                |
-| --------------------------------------------- | ------------------------------------------ |
-| `GET /health`                                 | Server health check                        |
-| `GET /.well-known/oauth-authorization-server` | OAuth discovery (required by Anthropic)    |
-| `GET /oauth/authorize`                        | User consent page                          |
-| `POST /oauth/authorize`                       | Processes the form and generates auth code |
-| `POST /oauth/token`                           | Exchanges auth code for access token       |
-| `POST /oauth/revoke`                          | Revokes a token                            |
-| `POST /mcp`                                   | Main MCP endpoint (requires Bearer token)  |
-
-## Manual test
-
-```bash
-# 1. Health check
-curl https://claude.verifactu.business/health
-
-# 2. OAuth discovery
-curl https://claude.verifactu.business/.well-known/oauth-authorization-server
-
-# 3. Simulate MCP call (with valid token)
-curl -X POST https://claude.verifactu.business/mcp \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
-```
-
-## Testing in Claude (before submitting to directory)
-
-1. Go to `claude.ai/settings/connectors`
-2. Click **"Add custom connector"**
-3. Name: `Holded (verifactu.business)`
-4. URL: `https://claude.verifactu.business/mcp`
-5. OAuth Client ID: value of `OAUTH_CLIENT_ID` in your `.env`
-6. OAuth Client Secret: value of `OAUTH_CLIENT_SECRET`
-7. Click **Add** → follow the OAuth flow → enter your Holded API key
-
-## Submitting to the official Anthropic directory
-
-Once the server is in production and tested:
-
-1. Make sure you meet all requirements in the [MCP Directory Policy](https://support.claude.ai/en/articles/11697096-anthropic-mcp-directory-policy)
-2. Prepare:
-   - Public MCP server URL (`https://claude.verifactu.business/mcp`)
-   - Privacy Policy at HTTPS URL (`https://holded.verifactu.business/privacy`)
-   - Data Processing Agreement URL (`https://holded.verifactu.business/dpa`)
-   - Test Holded account with dummy data for Anthropic QA
-3. Submit the [directory submission form](https://docs.google.com/forms/d/e/1FAIpQLSeafJF2NDI7oYx1r8o0ycivCSVLNq92Mpc1FPxMKSw1CzDkqA/viewform)
-
-## Pre-submission checklist
-
-- [x] All tools have `readOnlyHint: true` or `destructiveHint: true/false`
-- [x] Server publicly accessible via HTTPS (`https://claude.verifactu.business`)
-- [x] `/.well-known/oauth-authorization-server` responds correctly
-- [x] Privacy Policy URL active (`https://holded.verifactu.business/privacy`)
-- [x] DPA URL active (`https://holded.verifactu.business/dpa`)
-- [x] Test account prepared with dummy data (`Nova Gestión` — seed via `scripts/seed-demo.mjs`)
-- [x] Rate limiting configured
-- [x] Production logs working
 
 ## Environment variables
 
-| Variable                          | Description                    | Example                             |
-| --------------------------------- | ------------------------------ | ----------------------------------- |
-| `PORT`                            | Server port                    | `3000`                              |
-| `BASE_URL`                        | Public server URL              | `https://claude.verifactu.business` |
-| `OAUTH_JWT_SECRET`                | JWT signing secret (≥32 chars) | `openssl rand -hex 32`              |
-| `OAUTH_TOKEN_TTL_SECONDS`         | Access token TTL               | `3600`                              |
-| `OAUTH_REFRESH_TOKEN_TTL_SECONDS` | Refresh token TTL              | `2592000`                           |
-| `OAUTH_CLIENT_ID`                 | Client ID for Claude           | `claude-holded-connector`           |
-| `OAUTH_CLIENT_SECRET`             | Client secret for Claude       | `openssl rand -hex 24`              |
-| `HOLDED_API_BASE`                 | Holded API base URL            | `https://api.holded.com`            |
-| `RATE_LIMIT_WINDOW_MS`            | Rate limit window              | `60000`                             |
-| `RATE_LIMIT_MAX_REQUESTS`         | Max requests per window        | `100`                               |
-| `LOG_LEVEL`                       | Log verbosity                  | `info`                              |
+| Variable                          | Description                                   |
+| --------------------------------- | --------------------------------------------- |
+| `PORT`                            | Server port                                   |
+| `BASE_URL`                        | Public server URL                             |
+| `OAUTH_JWT_SECRET`                | JWT signing secret                            |
+| `OAUTH_TOKEN_TTL_SECONDS`         | Access token TTL                              |
+| `OAUTH_REFRESH_TOKEN_TTL_SECONDS` | Refresh token TTL                             |
+| `OAUTH_CLIENT_ID`                 | Legacy static client ID for compatibility     |
+| `OAUTH_CLIENT_SECRET`             | Legacy static client secret for compatibility |
+| `HOLDED_API_BASE`                 | Holded API base URL                           |
+| `RATE_LIMIT_WINDOW_MS`            | Rate limit window                             |
+| `RATE_LIMIT_MAX_REQUESTS`         | Max requests per window                       |
+| `LOG_LEVEL`                       | Log verbosity                                 |
 
-## Stateless token architecture
+## Claude setup
 
-Tokens are **self-contained JWTs** — the Holded API key is embedded (signed, not encrypted) directly in the access and refresh tokens. No server-side store is needed, which means:
+Current setup in Claude custom connectors:
 
-- ✅ Survives container restarts and redeployments
-- ✅ Horizontally scalable without shared state
-- ⚠️ Token revocation is best-effort (tokens expire naturally). Add a Redis blocklist to `auth.ts` if immediate revocation is required.
+1. Open `claude.ai/settings/connectors`.
+2. Add a custom connector.
+3. Use only the MCP server URL: `https://claude.verifactu.business/mcp`.
+4. Let Claude discover OAuth dynamically from server metadata.
+5. Complete the OAuth page and enter the Holded API key.
 
-## License
+Expected behavior:
 
-MIT
+- Claude discovers OAuth endpoints from `/.well-known/oauth-authorization-server`
+- the consent page is served from `https://claude.verifactu.business/oauth/authorize`
+- the consent page shows Holded on the left and Claude on the right
+- tool permissions can be configured in Claude after connecting
+
+Operational recovery:
+
+- if Claude reuses stale OAuth state, remove and recreate the connector
+- if the tile still shows a generic shield after recreation, do not treat that alone as a server branding failure unless the OAuth page is also wrong
+
+## Permissions
+
+Observed in Claude:
+
+- Claude exposes per-tool permission controls after connect
+
+Practical implication for this server:
+
+- keep tool names stable
+- keep read/write boundaries explicit
+- keep annotations and descriptions narrow so permission UIs stay understandable
+
+## Stateless OAuth
+
+Access tokens and refresh tokens are self-contained JWTs embedding the Holded API key. Dynamic client registration is also stateless, so OAuth does not depend on in-memory client storage across redeploys.

@@ -139,6 +139,34 @@ What changed:
 - Google and email verification are part of the same direct onboarding path
 - popup-window orchestration is not part of the public flow
 
+### 10. 2026-04-23 action control and scoped rollout
+
+This matters for future `Isaak` and for any broader MCP publication in ChatGPT.
+
+Current OpenAI position from official docs:
+
+- custom connectors are available in ChatGPT Plus, Pro, Business, Enterprise, and Edu
+- ChatGPT developer mode currently provides full MCP support for both read and write tools
+- supported custom MCP transport in developer mode includes SSE and streaming HTTP
+- supported authentication in developer mode includes OAuth, no authentication, and mixed authentication
+- in Business, Enterprise, and Edu workspaces, owners and admins manage app availability; Enterprise and Edu can also apply RBAC for apps
+- for API integrations outside the ChatGPT UI, OpenAI recommends approval flows and `allowed_tools` restrictions for sensitive actions
+
+Recommended product interpretation:
+
+- for a future `Isaak` app in ChatGPT, action-level rollout is viable
+- Business / Enterprise / Edu are the cleanest workspace targets when we want centralized rollout and admin control
+- for the direct Holded connector in ChatGPT, we should keep the current narrow read-mostly surface until there is a business reason to open more actions
+- when opening write actions, do it by family and not as a full catalog release
+- even with read-only annotations, assume sensitive actions still need human review because OpenAI explicitly recommends approvals for sensitive MCP actions
+
+Recommended technical pattern:
+
+- stable tool ids and descriptions
+- explicit separation between read, draft/write, and destructive actions
+- keep high-risk actions in separate tools so ChatGPT action control stays legible
+- use `allowed_tools` and approval patterns in OpenAI API integrations when we need tighter orchestration outside ChatGPT UI
+
 Mobile handoff hardening:
 
 - connector flow now preserves `source`, `channel`, `next`, and `onboarding_token`
