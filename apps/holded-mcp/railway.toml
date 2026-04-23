@@ -1,7 +1,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "apps/holded-mcp/Dockerfile"
-buildContext = "../.."
+buildContext = "apps/holded-mcp"
 buildCache = false
 
 [deploy]
