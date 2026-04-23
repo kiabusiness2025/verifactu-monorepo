@@ -24,6 +24,12 @@ interface AuthCodePayload {
   redirectUri: string;
 }
 
+interface AuthorizeContext {
+  clientId: string;
+  redirectUri: string;
+  state: string;
+}
+
 function codeSecret() {
   return new TextEncoder().encode(config.OAUTH_JWT_SECRET);
 }
@@ -115,6 +121,48 @@ async function consumeAuthCode(code: string): Promise<AuthCodePayload | null> {
   }
 }
 
+function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
+  const bodyClientId =
+    typeof req.body?.client_id === 'string' && req.body.client_id.length > 0
+      ? req.body.client_id
+      : null;
+  const bodyRedirectUri =
+    typeof req.body?.redirect_uri === 'string' && req.body.redirect_uri.length > 0
+      ? req.body.redirect_uri
+      : null;
+  const bodyState = typeof req.body?.state === 'string' ? req.body.state : '';
+
+  if (bodyClientId && bodyRedirectUri) {
+    return {
+      clientId: bodyClientId,
+      redirectUri: bodyRedirectUri,
+      state: bodyState,
+    };
+  }
+
+  const referer = req.get('referer');
+  if (!referer) return null;
+
+  try {
+    const refererUrl = new URL(referer);
+    const refererClientId = refererUrl.searchParams.get('client_id');
+    const refererRedirectUri = refererUrl.searchParams.get('redirect_uri');
+    const refererState = refererUrl.searchParams.get('state') ?? '';
+
+    if (!refererClientId || !refererRedirectUri) {
+      return null;
+    }
+
+    return {
+      clientId: refererClientId,
+      redirectUri: refererRedirectUri,
+      state: bodyState || refererState,
+    };
+  } catch {
+    return null;
+  }
+}
+
 oauthRouter.post('/register', async (req: Request, res: Response) => {
   const { redirect_uris, client_name } = req.body;
 
@@ -145,6 +193,7 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
 
 oauthRouter.get('/authorize', (req: Request, res: Response) => {
   const { client_id, redirect_uri, state, response_type } = req.query;
+  res.set('Cache-Control', 'no-store');
 
   if (response_type !== 'code') {
     res.status(400).send('response_type debe ser "code"');
@@ -160,33 +209,44 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
 });
 
 oauthRouter.post('/authorize', async (req: Request, res: Response) => {
-  const { holded_api_key, client_id, redirect_uri, state } = req.body;
+  res.set('Cache-Control', 'no-store');
+  const holdedApiKey = typeof req.body?.holded_api_key === 'string' ? req.body.holded_api_key : '';
+  const authorizeContext = resolveAuthorizeContext(req);
 
-  if (!holded_api_key || !client_id || !redirect_uri) {
+  if (!holdedApiKey || !authorizeContext) {
     res.status(400).json({ error: 'Faltan parametros' });
     return;
   }
 
-  const client = new HoldedClient(String(holded_api_key));
+  const client = new HoldedClient(holdedApiKey);
   const valid = await client.validateApiKey();
 
   if (!valid) {
     res
       .status(400)
-      .send(consentPage(String(client_id), String(redirect_uri), String(state ?? ''), true));
+      .send(
+        consentPage(
+          authorizeContext.clientId,
+          authorizeContext.redirectUri,
+          authorizeContext.state,
+          true
+        )
+      );
     return;
   }
 
   const code = await createAuthCode({
-    holdedApiKey: String(holded_api_key),
-    clientId: String(client_id),
-    redirectUri: String(redirect_uri),
+    holdedApiKey,
+    clientId: authorizeContext.clientId,
+    redirectUri: authorizeContext.redirectUri,
   });
-  logger.info(`Authorization code generado para ${String(client_id)}`);
+  logger.info(`Authorization code generado para ${authorizeContext.clientId}`);
 
-  const callbackUrl = new URL(String(redirect_uri));
+  const callbackUrl = new URL(authorizeContext.redirectUri);
   callbackUrl.searchParams.set('code', code);
-  if (state) callbackUrl.searchParams.set('state', String(state));
+  if (authorizeContext.state) {
+    callbackUrl.searchParams.set('state', authorizeContext.state);
+  }
 
   res.redirect(callbackUrl.toString());
 });
