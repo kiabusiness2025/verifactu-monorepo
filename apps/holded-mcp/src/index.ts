@@ -38,9 +38,10 @@ app.use(requestLogger);
 // ── Static assets (logo, favicon) ────────────────────────────────────────────
 app.use(express.static(publicDir));
 app.get('/favicon.ico', (_req, res) => {
-  res.sendFile(path.join(publicDir, 'favicon.ico'), (err) => {
-    if (err) res.sendFile(path.join(publicDir, 'logo.svg'));
-  });
+  res.sendFile(path.join(publicDir, 'favicon.png'));
+});
+app.get('/favicon.png', (_req, res) => {
+  res.sendFile(path.join(publicDir, 'favicon.png'));
 });
 
 // ── OAuth routes (sin autenticación Bearer, son públicas) ────────────────────
