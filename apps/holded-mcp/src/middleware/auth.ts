@@ -4,6 +4,8 @@ import { verifyAccessToken, TokenRecord } from '../auth.js';
 import { config } from '../config.js';
 import { logger } from '../logger.js';
 
+const WWW_AUTH = `Bearer realm="${config.BASE_URL}", resource_metadata="${config.BASE_URL}/.well-known/oauth-protected-resource"`;
+
 // Extendemos el tipo Request para que TypeScript conozca holdedRecord
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -19,6 +21,7 @@ declare global {
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
+    res.set('WWW-Authenticate', WWW_AUTH);
     res.status(401).json({
       error: 'unauthorized',
       error_description: 'Se requiere Bearer token',
@@ -30,6 +33,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
   const record = await verifyAccessToken(token);
 
   if (!record) {
+    res.set('WWW-Authenticate', `${WWW_AUTH}, error="invalid_token"`);
     res.status(401).json({
       error: 'invalid_token',
       error_description: 'Token inválido o expirado',

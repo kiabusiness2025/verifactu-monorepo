@@ -30,7 +30,11 @@ const publicDir = path.resolve(__dirname, '../public');
 
 const app = express();
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
@@ -63,6 +67,16 @@ app.get('/.well-known/oauth-authorization-server', (_req, res) => {
     grant_types_supported: ['authorization_code', 'refresh_token'],
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['client_secret_post'],
+    scopes_supported: ['holded:read', 'holded:write'],
+  });
+});
+
+// ── Protected resource metadata (RFC 9728 — requerido por MCP auth spec) ─────
+app.get('/.well-known/oauth-protected-resource', (_req, res) => {
+  res.json({
+    resource: config.BASE_URL,
+    authorization_servers: [config.BASE_URL],
+    bearer_methods_supported: ['header'],
     scopes_supported: ['holded:read', 'holded:write'],
   });
 });
