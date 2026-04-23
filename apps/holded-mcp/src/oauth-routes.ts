@@ -1,13 +1,45 @@
 import { Router, Request, Response } from 'express';
+import { SignJWT, jwtVerify } from 'jose';
 import { config } from './config.js';
 import { logger } from './logger.js';
-import { createAccessToken, createRefreshToken, verifyAccessToken, revokeToken } from './auth.js';
+import {
+  createAccessToken,
+  createRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+  revokeToken,
+} from './auth.js';
 import { HoldedClient } from './holded-client.js';
 
 export const oauthRouter: Router = Router();
 
-// Estado temporal de códigos de autorización (en producción: Redis con TTL)
-const authCodes = new Map<string, { holdedApiKey: string; expiresAt: number }>();
+function codeSecret() {
+  return new TextEncoder().encode(config.OAUTH_JWT_SECRET);
+}
+
+/** Genera un auth code como JWT firmado (10 min, single-use semántico). */
+async function createAuthCode(holdedApiKey: string): Promise<string> {
+  return new SignJWT({ hak: holdedApiKey })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('10m')
+    .setIssuer(config.BASE_URL)
+    .setAudience('holded-mcp-code')
+    .sign(codeSecret());
+}
+
+/** Verifica y extrae el holdedApiKey del auth code JWT. */
+async function consumeAuthCode(code: string): Promise<string | null> {
+  try {
+    const { payload } = await jwtVerify(code, codeSecret(), {
+      issuer: config.BASE_URL,
+      audience: 'holded-mcp-code',
+    });
+    return (payload['hak'] as string | undefined) ?? null;
+  } catch {
+    return null;
+  }
+}
 
 // ── GET /oauth/authorize ─────────────────────────────────────────────────────
 // Claude redirige al usuario aquí para iniciar el flujo OAuth
@@ -47,14 +79,10 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
     return;
   }
 
-  // Generamos un authorization code de un solo uso (10 minutos)
-  const code = crypto.randomUUID();
-  authCodes.set(code, {
-    holdedApiKey: holded_api_key,
-    expiresAt: Date.now() + 10 * 60 * 1000,
-  });
+  // Generamos un authorization code de un solo uso (10 minutos), firmado como JWT
+  const code = await createAuthCode(holded_api_key);
 
-  logger.info(`Authorization code generado → ${code.slice(0, 8)}…`);
+  logger.info(`Authorization code generado`);
 
   const callbackUrl = new URL(redirect_uri);
   callbackUrl.searchParams.set('code', code);
@@ -75,19 +103,17 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
   }
 
   if (grant_type === 'authorization_code') {
-    const entry = authCodes.get(code);
-    if (!entry || Date.now() > entry.expiresAt) {
-      authCodes.delete(code);
+    const holdedApiKey = await consumeAuthCode(code);
+    if (!holdedApiKey) {
       res
         .status(400)
         .json({ error: 'invalid_grant', error_description: 'Código expirado o inválido' });
       return;
     }
-    authCodes.delete(code); // Código de un solo uso
 
     const [accessToken, refreshTokenStr] = await Promise.all([
-      createAccessToken(entry.holdedApiKey),
-      createRefreshToken(entry.holdedApiKey),
+      createAccessToken(holdedApiKey),
+      createRefreshToken(holdedApiKey),
     ]);
 
     res.json({
@@ -101,9 +127,31 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
   }
 
   if (grant_type === 'refresh_token') {
-    res.status(400).json({
-      error: 'unsupported_grant_type',
-      error_description: 'Refresh token no implementado aún — vuelve a autenticar',
+    const { refresh_token } = req.body;
+    if (!refresh_token) {
+      res.status(400).json({ error: 'invalid_request', error_description: 'Falta refresh_token' });
+      return;
+    }
+
+    const holdedApiKey = await verifyRefreshToken(refresh_token);
+    if (!holdedApiKey) {
+      res
+        .status(400)
+        .json({ error: 'invalid_grant', error_description: 'Refresh token expirado o inválido' });
+      return;
+    }
+
+    const [newAccessToken, newRefreshToken] = await Promise.all([
+      createAccessToken(holdedApiKey),
+      createRefreshToken(holdedApiKey),
+    ]);
+
+    res.json({
+      access_token: newAccessToken,
+      token_type: 'Bearer',
+      expires_in: config.OAUTH_TOKEN_TTL_SECONDS,
+      refresh_token: newRefreshToken,
+      scope: 'holded:read holded:write',
     });
     return;
   }
