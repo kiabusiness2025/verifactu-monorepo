@@ -11,6 +11,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
   BASE_URL: z.string().url(),
+  CORS_ALLOWED_ORIGINS: z.string().optional(),
   DATABASE_URL: z.string().url().optional(),
   OAUTH_JWT_SECRET: z.string().min(32),
   OAUTH_DATA_ENCRYPTION_SECRET: z.string().min(32).optional(),

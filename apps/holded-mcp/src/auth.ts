@@ -1,8 +1,7 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'node:crypto';
-import type { Prisma, PrismaClient } from '@prisma/client';
 import { SignJWT, jwtVerify } from 'jose';
 import { config } from './config.js';
-import { getPrisma } from './db.js';
+import { DbClient, execute, getDbPool, queryRows, withDbTransaction } from './db.js';
 import { logger } from './logger.js';
 
 const AUTHORIZATION_CODES_TABLE = 'holded_mcp_oauth_authorization_codes';
@@ -35,8 +34,6 @@ export interface TokenPair {
   scope: string;
   expiresIn: number;
 }
-
-type RawDbClient = PrismaClient | Prisma.TransactionClient;
 
 type DbAuthorizationCodeRow = {
   client_id: string;
@@ -129,21 +126,23 @@ function logStatelessFallback() {
 }
 
 function getPersistentClient() {
-  const prisma = getPrisma();
-  if (!prisma) {
+  const db = getDbPool();
+  if (!db) {
     logStatelessFallback();
     return null;
   }
 
-  return prisma;
+  return db;
 }
 
-async function ensurePersistentStore(client: RawDbClient) {
+async function ensurePersistentStore(client: DbClient) {
   if (storeEnsured) {
     return;
   }
 
-  await client.$executeRawUnsafe(`
+  await execute(
+    client,
+    `
     CREATE TABLE IF NOT EXISTS ${AUTHORIZATION_CODES_TABLE} (
       code_hash text PRIMARY KEY,
       user_id text NOT NULL,
@@ -157,12 +156,18 @@ async function ensurePersistentStore(client: RawDbClient) {
       consumed_at timestamptz,
       created_at timestamptz NOT NULL DEFAULT now()
     )
-  `);
-  await client.$executeRawUnsafe(`
+  `
+  );
+  await execute(
+    client,
+    `
     CREATE INDEX IF NOT EXISTS ${AUTHORIZATION_CODES_TABLE}_expires_at_idx
     ON ${AUTHORIZATION_CODES_TABLE} (expires_at)
-  `);
-  await client.$executeRawUnsafe(`
+  `
+  );
+  await execute(
+    client,
+    `
     CREATE TABLE IF NOT EXISTS ${ACCESS_TOKENS_TABLE} (
       token_hash text PRIMARY KEY,
       session_id text NOT NULL,
@@ -175,12 +180,18 @@ async function ensurePersistentStore(client: RawDbClient) {
       created_at timestamptz NOT NULL DEFAULT now(),
       last_used_at timestamptz
     )
-  `);
-  await client.$executeRawUnsafe(`
+  `
+  );
+  await execute(
+    client,
+    `
     CREATE INDEX IF NOT EXISTS ${ACCESS_TOKENS_TABLE}_session_id_idx
     ON ${ACCESS_TOKENS_TABLE} (session_id)
-  `);
-  await client.$executeRawUnsafe(`
+  `
+  );
+  await execute(
+    client,
+    `
     CREATE TABLE IF NOT EXISTS ${REFRESH_TOKENS_TABLE} (
       token_hash text PRIMARY KEY,
       session_id text NOT NULL,
@@ -194,11 +205,15 @@ async function ensurePersistentStore(client: RawDbClient) {
       created_at timestamptz NOT NULL DEFAULT now(),
       last_used_at timestamptz
     )
-  `);
-  await client.$executeRawUnsafe(`
+  `
+  );
+  await execute(
+    client,
+    `
     CREATE INDEX IF NOT EXISTS ${REFRESH_TOKENS_TABLE}_session_id_idx
     ON ${REFRESH_TOKENS_TABLE} (session_id)
-  `);
+  `
+  );
 
   storeEnsured = true;
 }
@@ -217,7 +232,7 @@ function mapDbTokenRow(row: DbTokenRow): TokenRecord {
 }
 
 async function issuePersistentTokenPair(
-  client: RawDbClient,
+  client: DbClient,
   input: {
     sessionId: string;
     userId: string;
@@ -232,36 +247,42 @@ async function issuePersistentTokenPair(
   const refreshTokenHash = buildOpaqueTokenHash(refreshToken);
   const encryptedApiKey = encryptSensitiveValue(input.holdedApiKey);
 
-  await client.$executeRawUnsafe(
+  await execute(
+    client,
     `
       INSERT INTO ${ACCESS_TOKENS_TABLE}
         (token_hash, session_id, user_id, client_id, holded_api_key_enc, scope, expires_at)
       VALUES
         ($1, $2, $3, $4, $5, $6, $7)
     `,
-    accessTokenHash,
-    input.sessionId,
-    input.userId,
-    input.clientId,
-    encryptedApiKey,
-    input.scope,
-    new Date(Date.now() + config.OAUTH_TOKEN_TTL_SECONDS * 1000)
+    [
+      accessTokenHash,
+      input.sessionId,
+      input.userId,
+      input.clientId,
+      encryptedApiKey,
+      input.scope,
+      new Date(Date.now() + config.OAUTH_TOKEN_TTL_SECONDS * 1000),
+    ]
   );
 
-  await client.$executeRawUnsafe(
+  await execute(
+    client,
     `
       INSERT INTO ${REFRESH_TOKENS_TABLE}
         (token_hash, session_id, user_id, client_id, holded_api_key_enc, scope, expires_at)
       VALUES
         ($1, $2, $3, $4, $5, $6, $7)
     `,
-    refreshTokenHash,
-    input.sessionId,
-    input.userId,
-    input.clientId,
-    encryptedApiKey,
-    input.scope,
-    new Date(Date.now() + config.OAUTH_REFRESH_TOKEN_TTL_SECONDS * 1000)
+    [
+      refreshTokenHash,
+      input.sessionId,
+      input.userId,
+      input.clientId,
+      encryptedApiKey,
+      input.scope,
+      new Date(Date.now() + config.OAUTH_REFRESH_TOKEN_TTL_SECONDS * 1000),
+    ]
   );
 
   return {
@@ -291,22 +312,25 @@ export async function createAuthorizationCode(input: AuthorizationCodePayload): 
     await ensurePersistentStore(prisma);
 
     const code = createOpaqueToken();
-    await prisma.$executeRawUnsafe(
+    await execute(
+      prisma,
       `
         INSERT INTO ${AUTHORIZATION_CODES_TABLE}
           (code_hash, user_id, client_id, redirect_uri, holded_api_key_enc, scope, code_challenge, code_challenge_method, expires_at)
         VALUES
           ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       `,
-      buildOpaqueTokenHash(code),
-      await hashApiKey(input.holdedApiKey),
-      input.clientId,
-      input.redirectUri,
-      encryptSensitiveValue(input.holdedApiKey),
-      input.scope,
-      input.codeChallenge,
-      input.codeChallengeMethod,
-      new Date(Date.now() + config.OAUTH_AUTH_CODE_TTL_SECONDS * 1000)
+      [
+        buildOpaqueTokenHash(code),
+        await hashApiKey(input.holdedApiKey),
+        input.clientId,
+        input.redirectUri,
+        encryptSensitiveValue(input.holdedApiKey),
+        input.scope,
+        input.codeChallenge,
+        input.codeChallengeMethod,
+        new Date(Date.now() + config.OAUTH_AUTH_CODE_TTL_SECONDS * 1000),
+      ]
     );
 
     return code;
@@ -335,10 +359,11 @@ export async function consumeAuthorizationCode(
   if (prisma) {
     await ensurePersistentStore(prisma);
 
-    const rows = await prisma.$transaction(async (tx) => {
+    const rows = await withDbTransaction(async (tx) => {
       await ensurePersistentStore(tx);
 
-      return tx.$queryRawUnsafe<DbAuthorizationCodeRow[]>(
+      return queryRows<DbAuthorizationCodeRow>(
+        tx,
         `
           UPDATE ${AUTHORIZATION_CODES_TABLE}
           SET consumed_at = now()
@@ -347,7 +372,7 @@ export async function consumeAuthorizationCode(
             AND expires_at > now()
           RETURNING client_id, redirect_uri, holded_api_key_enc, scope, code_challenge, code_challenge_method
         `,
-        buildOpaqueTokenHash(code)
+        [buildOpaqueTokenHash(code)]
       );
     });
 
@@ -411,7 +436,7 @@ export async function createTokenPair(input: {
   if (prisma) {
     await ensurePersistentStore(prisma);
 
-    const pair = await prisma.$transaction(async (tx) => {
+    const pair = await withDbTransaction(async (tx) => {
       await ensurePersistentStore(tx);
       return issuePersistentTokenPair(tx, {
         sessionId: randomUUID(),
@@ -470,7 +495,8 @@ export async function verifyAccessToken(token: string): Promise<TokenRecord | nu
   if (prisma) {
     await ensurePersistentStore(prisma);
 
-    const rows = await prisma.$queryRawUnsafe<DbTokenRow[]>(
+    const rows = await queryRows<DbTokenRow>(
+      prisma,
       `
         SELECT session_id, user_id, client_id, holded_api_key_enc, scope, created_at, expires_at
         FROM ${ACCESS_TOKENS_TABLE}
@@ -479,7 +505,7 @@ export async function verifyAccessToken(token: string): Promise<TokenRecord | nu
           AND expires_at > now()
         LIMIT 1
       `,
-      buildOpaqueTokenHash(token)
+      [buildOpaqueTokenHash(token)]
     );
 
     const row = rows[0];
@@ -487,16 +513,15 @@ export async function verifyAccessToken(token: string): Promise<TokenRecord | nu
       return null;
     }
 
-    prisma
-      .$executeRawUnsafe(
-        `
+    execute(
+      prisma,
+      `
           UPDATE ${ACCESS_TOKENS_TABLE}
           SET last_used_at = now()
           WHERE token_hash = $1
         `,
-        buildOpaqueTokenHash(token)
-      )
-      .catch(() => {});
+      [buildOpaqueTokenHash(token)]
+    ).catch(() => {});
 
     return mapDbTokenRow(row);
   }
@@ -545,17 +570,18 @@ export async function rotateRefreshToken(
   if (prisma) {
     await ensurePersistentStore(prisma);
 
-    return prisma.$transaction(async (tx) => {
+    return withDbTransaction(async (tx) => {
       await ensurePersistentStore(tx);
 
-      const rows = await tx.$queryRawUnsafe<DbRefreshTokenRow[]>(
+      const rows = await queryRows<DbRefreshTokenRow>(
+        tx,
         `
           SELECT token_hash, session_id, user_id, client_id, holded_api_key_enc, scope, created_at, expires_at, revoked_at
           FROM ${REFRESH_TOKENS_TABLE}
           WHERE token_hash = $1
           FOR UPDATE
         `,
-        buildOpaqueTokenHash(refreshToken)
+        [buildOpaqueTokenHash(refreshToken)]
       );
 
       const current = rows[0];
@@ -568,14 +594,15 @@ export async function rotateRefreshToken(
         return null;
       }
 
-      await tx.$executeRawUnsafe(
+      await execute(
+        tx,
         `
           UPDATE ${ACCESS_TOKENS_TABLE}
           SET revoked_at = now()
           WHERE session_id = $1
             AND revoked_at IS NULL
         `,
-        current.session_id
+        [current.session_id]
       );
 
       const pair = await issuePersistentTokenPair(tx, {
@@ -586,14 +613,14 @@ export async function rotateRefreshToken(
         scope: current.scope,
       });
 
-      await tx.$executeRawUnsafe(
+      await execute(
+        tx,
         `
           UPDATE ${REFRESH_TOKENS_TABLE}
           SET revoked_at = now(), replaced_by_token_hash = $2, last_used_at = now()
           WHERE token_hash = $1
         `,
-        current.token_hash,
-        pair.refreshTokenHash
+        [current.token_hash, pair.refreshTokenHash]
       );
 
       return pair;
@@ -637,26 +664,28 @@ export async function revokeToken(record: TokenRecord): Promise<void> {
   if (prisma && record.persistence === 'db') {
     await ensurePersistentStore(prisma);
 
-    await prisma.$transaction(async (tx) => {
+    await withDbTransaction(async (tx) => {
       await ensurePersistentStore(tx);
 
-      await tx.$executeRawUnsafe(
+      await execute(
+        tx,
         `
           UPDATE ${ACCESS_TOKENS_TABLE}
           SET revoked_at = now()
           WHERE session_id = $1
             AND revoked_at IS NULL
         `,
-        record.sessionId
+        [record.sessionId]
       );
-      await tx.$executeRawUnsafe(
+      await execute(
+        tx,
         `
           UPDATE ${REFRESH_TOKENS_TABLE}
           SET revoked_at = now()
           WHERE session_id = $1
             AND revoked_at IS NULL
         `,
-        record.sessionId
+        [record.sessionId]
       );
     });
 
@@ -672,10 +701,11 @@ export async function revokeTokenValue(token: string): Promise<void> {
     await ensurePersistentStore(prisma);
 
     const tokenHash = buildOpaqueTokenHash(token);
-    await prisma.$transaction(async (tx) => {
+    await withDbTransaction(async (tx) => {
       await ensurePersistentStore(tx);
 
-      const sessionRows = await tx.$queryRawUnsafe<{ session_id: string }[]>(
+      const sessionRows = await queryRows<{ session_id: string }>(
+        tx,
         `
           SELECT session_id
           FROM ${ACCESS_TOKENS_TABLE}
@@ -686,7 +716,7 @@ export async function revokeTokenValue(token: string): Promise<void> {
           WHERE token_hash = $1
           LIMIT 1
         `,
-        tokenHash
+        [tokenHash]
       );
 
       const sessionId = sessionRows[0]?.session_id;
@@ -694,23 +724,25 @@ export async function revokeTokenValue(token: string): Promise<void> {
         return;
       }
 
-      await tx.$executeRawUnsafe(
+      await execute(
+        tx,
         `
           UPDATE ${ACCESS_TOKENS_TABLE}
           SET revoked_at = now()
           WHERE session_id = $1
             AND revoked_at IS NULL
         `,
-        sessionId
+        [sessionId]
       );
-      await tx.$executeRawUnsafe(
+      await execute(
+        tx,
         `
           UPDATE ${REFRESH_TOKENS_TABLE}
           SET revoked_at = now()
           WHERE session_id = $1
             AND revoked_at IS NULL
         `,
-        sessionId
+        [sessionId]
       );
     });
 

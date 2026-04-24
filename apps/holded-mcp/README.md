@@ -1,131 +1,232 @@
 # Holded MCP Server
 
-Remote MCP server for Claude at `https://claude.verifactu.business`.
+Remote HTTPS MCP server for Claude.ai and Anthropic MCP Directory submission.
 
-Reset runbook:
+- Public base URL: `https://claude.verifactu.business`
+- MCP endpoint: `https://claude.verifactu.business/mcp`
+- OAuth metadata: `https://claude.verifactu.business/.well-known/oauth-authorization-server`
+- Public docs: `https://claude.verifactu.business/docs`
+- Privacy Policy: `https://claude.verifactu.business/privacy`
+- Terms of Service: `https://claude.verifactu.business/terms`
+- Support: `mailto:soporte@verifactu.business`
+
+Operational runbook:
 
 - `apps/holded-mcp/CLAUDE_CONNECTOR_RESET_RUNBOOK.md`
 
-## Runtime
+Submission checklist:
 
-- MCP endpoint: `https://claude.verifactu.business/mcp`
-- OAuth metadata: `https://claude.verifactu.business/.well-known/oauth-authorization-server`
-- OAuth authorize: `https://claude.verifactu.business/oauth/authorize`
-- OAuth token: `https://claude.verifactu.business/oauth/token`
-- OAuth register: `https://claude.verifactu.business/oauth/register`
+- `docs/engineering/ai/HOLDED_MCP_DIRECTORY_SUBMISSION_CHECKLIST.md`
 
-## Tools
+## Overview
 
-- Invoicing: `list_documents`, `get_document`, `create_invoice_draft`
-- Contacts / CRM: `list_contacts`, `get_contact`, `list_crm_funnels`, `list_leads`
-- Products: `list_products`, `get_product`, `list_warehouses`
-- Projects: `list_projects`, `get_project`, `list_project_tasks`, `list_time_records`
-- Accounting: `get_chart_of_accounts`, `get_journal`, `get_daily_book`
-- Team: `list_employees`, `get_employee`
-- Treasury: `list_treasury_accounts`
+This server connects Claude to a user's own Holded account through OAuth 2.0 and a user-provided Holded API key.
+
+Safety scope:
+
+- most tools are read-only
+- the only write-capable tool is `create_invoice_draft`
+- `create_invoice_draft` creates a draft invoice only
+- the server does not expose payment execution, money movement, crypto, destructive operations, or cross-service automation
+
+## Public Surface
+
+Runtime endpoints:
+
+- `GET /health`
+- `GET /.well-known/oauth-authorization-server`
+- `GET /.well-known/oauth-protected-resource`
+- `GET /docs`
+- `GET /privacy`
+- `GET /terms`
+- `GET /support`
+- `GET|POST /oauth/authorize`
+- `POST /oauth/register`
+- `POST /oauth/token`
+- `POST /oauth/revoke`
+- `POST /mcp`
+
+## Exposed Tools
+
+Read-only tools:
+
+- `list_documents`: list invoices, quotes, orders and other Holded documents
+- `get_document`: read one document in detail
+- `list_contacts`: list Holded contacts
+- `get_contact`: read one contact in detail
+- `list_crm_funnels`: list CRM funnels
+- `list_leads`: list CRM leads or opportunities
+- `list_products`: list products and services
+- `get_product`: read one product in detail
+- `list_warehouses`: list warehouses and stock
+- `list_projects`: list projects
+- `get_project`: read one project in detail
+- `list_project_tasks`: list project tasks
+- `list_time_records`: list project time records
+- `get_chart_of_accounts`: read the chart of accounts
+- `get_journal`: read journal entries
+- `get_daily_book`: read the daily accounting book
+- `list_employees`: list employees
+- `get_employee`: read one employee in detail
+- `list_treasury_accounts`: list treasury accounts and balances
+
+Write-capable tool:
+
+- `create_invoice_draft`: create a draft invoice only; it does not issue, send, pay, delete, finalize, or destructively modify invoices, and the user must review the draft in Holded before taking any further action
+
+Not exposed:
+
+- invoice delete/update/send/finalize tools
+- payment tools
+- money transfer tools
+- crypto tools
+- cross-service automation tools
+
+## Authentication
+
+All Holded tools require OAuth 2.0.
+
+Current behavior:
+
+- unauthenticated `POST /mcp` requests fail with `401`
+- invalid bearer tokens fail with `401`
+- the authorization page validates the Holded API key before issuing an authorization code
+- dynamic client registration is available at `POST /oauth/register`
+- authorization code flow supports PKCE `S256`
+- token exchange is available at `POST /oauth/token`
+- token revocation is available at `POST /oauth/revoke`
+
+OAuth storage modes:
+
+- with `DATABASE_URL`, authorization codes plus access and refresh tokens are stored in PostgreSQL, refresh rotation is real, and revocation invalidates the session
+- without `DATABASE_URL`, the server falls back to stateless JWT tokens for compatibility
+
+Security notes:
+
+- Holded API keys stored for OAuth sessions are encrypted at rest with `OAUTH_DATA_ENCRYPTION_SECRET`
+- if `OAUTH_DATA_ENCRYPTION_SECRET` is not set, the server falls back to `OAUTH_JWT_SECRET`
+
+## CORS
+
+Browser auth compatibility is enabled for Claude origins while staying narrow by default.
+
+Allowed origins:
+
+- same origin from `BASE_URL`
+- `https://claude.ai`
+- `https://app.claude.ai`
+- any extra origins listed in `CORS_ALLOWED_ORIGINS`
+
+Handled headers and methods include:
+
+- `Authorization`
+- `Content-Type`
+- `Mcp-Session-Id`
+- `Mcp-Protocol-Version`
+- `Last-Event-ID`
+- `GET`, `POST`, `OPTIONS`, `DELETE`
 
 ## Branding
 
-Canonical Holded logo source:
+Canonical Holded brand source:
 
 - `apps/holded/public/brand/holded/holded-diamond-logo.png`
 
-Runtime branding files served by `holded-mcp`:
+Runtime brand assets served by this app:
 
-- `apps/holded-mcp/public/holded-diamond-logo.png`
-- `apps/holded-mcp/public/logo.svg`
-- `apps/holded-mcp/public/claude.svg`
-
-Branding rules:
-
-- the OAuth consent page and landing page must render Holded branding from these runtime files
-- `/favicon.ico` and `/favicon.png` are aliases to `holded-diamond-logo.png`
-- `logo.svg` is also aligned to Holded branding to cover clients that probe `/logo.svg`
-- the server also serves Holded icon aliases on `/logo.png`, `/icon.png`, `/icon.svg`, and `/apple-touch-icon.png`
+- `public/holded-diamond-logo.png`
+- `public/logo.svg`
+- `public/claude.svg`
+- `public/favicon.ico`
 
 Brand sync:
 
-- run `pnpm --dir apps/holded-mcp sync:brand` to refresh `public/` from the canonical Holded and Claude source assets in the monorepo
+- `pnpm --dir apps/holded-mcp sync:brand`
 
 Observed Claude behavior on `2026-04-23`:
 
-- the OAuth page can show the correct Holded + Claude logos while Claude still renders a generic shield icon in the connector list/details view
-- we did not find a documented server-side icon metadata field in the Anthropic custom connector flow for URL-based custom connectors
-- until Anthropic documents icon metadata support, treat the generic shield tile as a Claude UI fallback rather than a runtime branding regression
+- the OAuth page can show the correct Holded and Claude logos while Claude still renders a generic shield icon in some connector list or tool call surfaces
+- treat that shield as a Claude UI fallback unless the assets served by `claude.verifactu.business` are also wrong
 
-## Local development
+## Local Development
 
 ```bash
-git clone https://github.com/verifactu/verifactu-monorepo
 cd apps/holded-mcp
 cp .env.example .env
 pnpm install
 pnpm dev
 ```
 
-## Environment variables
+## Environment Variables
 
-| Variable                          | Description                                   |
-| --------------------------------- | --------------------------------------------- |
-| `PORT`                            | Server port                                   |
-| `BASE_URL`                        | Public server URL                             |
-| `DATABASE_URL`                    | Enables persistent OAuth store in PostgreSQL  |
-| `OAUTH_JWT_SECRET`                | JWT signing secret                            |
-| `OAUTH_DATA_ENCRYPTION_SECRET`    | Secret used to encrypt stored Holded API keys |
-| `OAUTH_AUTH_CODE_TTL_SECONDS`     | Authorization code TTL                        |
-| `OAUTH_TOKEN_TTL_SECONDS`         | Access token TTL                              |
-| `OAUTH_REFRESH_TOKEN_TTL_SECONDS` | Refresh token TTL                             |
-| `OAUTH_CLIENT_ID`                 | Legacy static client ID for compatibility     |
-| `OAUTH_CLIENT_SECRET`             | Legacy static client secret for compatibility |
-| `HOLDED_API_BASE`                 | Holded API base URL                           |
-| `RATE_LIMIT_WINDOW_MS`            | Rate limit window                             |
-| `RATE_LIMIT_MAX_REQUESTS`         | Max requests per window                       |
-| `LOG_LEVEL`                       | Log verbosity                                 |
+| Variable                          | Description                                            |
+| --------------------------------- | ------------------------------------------------------ |
+| `PORT`                            | Server port                                            |
+| `NODE_ENV`                        | `development`, `production` or `test`                  |
+| `BASE_URL`                        | Canonical public base URL                              |
+| `CORS_ALLOWED_ORIGINS`            | Extra comma-separated origins allowed for browser auth |
+| `DATABASE_URL`                    | PostgreSQL URL for persistent OAuth state              |
+| `OAUTH_JWT_SECRET`                | Signing secret for stateless OAuth artifacts           |
+| `OAUTH_DATA_ENCRYPTION_SECRET`    | Secret used to encrypt stored Holded API keys          |
+| `OAUTH_AUTH_CODE_TTL_SECONDS`     | Authorization code TTL                                 |
+| `OAUTH_TOKEN_TTL_SECONDS`         | Access token TTL                                       |
+| `OAUTH_REFRESH_TOKEN_TTL_SECONDS` | Refresh token TTL                                      |
+| `OAUTH_CLIENT_ID`                 | Static compatibility client ID                         |
+| `OAUTH_CLIENT_SECRET`             | Static compatibility client secret                     |
+| `HOLDED_API_BASE`                 | Holded API base URL                                    |
+| `RATE_LIMIT_WINDOW_MS`            | Rate limit window                                      |
+| `RATE_LIMIT_MAX_REQUESTS`         | Max requests per window                                |
+| `LOG_LEVEL`                       | `debug`, `info`, `warn` or `error`                     |
 
-## Claude setup
-
-Current setup in Claude custom connectors:
+## Claude.ai Setup
 
 1. Open `claude.ai/settings/connectors`.
 2. Add a custom connector.
-3. Use only the MCP server URL: `https://claude.verifactu.business/mcp`.
-4. Let Claude discover OAuth dynamically from server metadata.
-5. Complete the OAuth page and enter the Holded API key.
+3. Use only `https://claude.verifactu.business/mcp`.
+4. Let Claude discover OAuth dynamically from `/.well-known/oauth-authorization-server`.
+5. Complete the authorization page with the user's own Holded API key.
 
-Expected behavior:
+Expected result:
 
-- Claude discovers OAuth endpoints from `/.well-known/oauth-authorization-server`
-- the consent page is served from `https://claude.verifactu.business/oauth/authorize`
-- the consent page shows Holded on the left and Claude on the right
-- tool permissions can be configured in Claude after connecting
+- Claude discovers the tool list automatically
+- Claude shows per-tool permissions
+- most tools appear as read-only
+- `create_invoice_draft` remains the only write-capable tool
 
-Operational recovery:
+## Testing
 
-- if Claude reuses stale OAuth state, remove and recreate the connector
-- if the tile still shows a generic shield after recreation, do not treat that alone as a server branding failure unless the OAuth page is also wrong
+Run locally:
 
-## Permissions
+```bash
+pnpm --dir apps/holded-mcp exec tsc --noEmit --pretty false
+pnpm --dir apps/holded-mcp build
+pnpm --dir apps/holded-mcp test
+```
 
-Observed in Claude:
+Current automated coverage:
 
-- Claude exposes per-tool permission controls after connect
+- exact production tool surface
+- safety annotations for every exposed tool
+- draft-only description and non-destructive annotations
+- unauthenticated and invalid auth failures
+- canonical OAuth metadata URLs
+- CORS preflight for OAuth and MCP endpoints
+- dynamic client registration and token exchange
+- invalid Holded API key failure path
 
-Practical implication for this server:
+## Deployment Notes
 
-- keep tool names stable
-- keep read/write boundaries explicit
-- keep annotations and descriptions narrow so permission UIs stay understandable
+Before Anthropic submission, production should have:
 
-## OAuth Storage
+- `BASE_URL=https://claude.verifactu.business`
+- a real `DATABASE_URL`
+- a real `OAUTH_DATA_ENCRYPTION_SECRET`
+- a real `OAUTH_JWT_SECRET`
+- a real `OAUTH_CLIENT_SECRET`
 
-Dynamic client registration remains stateless.
+Recommended after deploy:
 
-OAuth runtime modes:
-
-- with `DATABASE_URL`, authorization codes plus access and refresh tokens are stored in PostgreSQL, refresh rotation is real, and revocation invalidates the current session
-- without `DATABASE_URL`, the server falls back to stateless JWT tokens for compatibility
-
-Security notes:
-
-- authorization code flow supports PKCE `S256`
-- stored Holded API keys are encrypted at rest using `OAUTH_DATA_ENCRYPTION_SECRET` or, if missing, `OAUTH_JWT_SECRET`
+- verify `GET /.well-known/oauth-authorization-server`
+- verify `GET /docs`, `/privacy`, `/terms`
+- verify `https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64`
+- reconnect the Claude custom connector once if external icon caches are stale
