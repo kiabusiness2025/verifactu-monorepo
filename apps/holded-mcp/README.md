@@ -69,7 +69,10 @@ pnpm dev
 | --------------------------------- | --------------------------------------------- |
 | `PORT`                            | Server port                                   |
 | `BASE_URL`                        | Public server URL                             |
+| `DATABASE_URL`                    | Enables persistent OAuth store in PostgreSQL  |
 | `OAUTH_JWT_SECRET`                | JWT signing secret                            |
+| `OAUTH_DATA_ENCRYPTION_SECRET`    | Secret used to encrypt stored Holded API keys |
+| `OAUTH_AUTH_CODE_TTL_SECONDS`     | Authorization code TTL                        |
 | `OAUTH_TOKEN_TTL_SECONDS`         | Access token TTL                              |
 | `OAUTH_REFRESH_TOKEN_TTL_SECONDS` | Refresh token TTL                             |
 | `OAUTH_CLIENT_ID`                 | Legacy static client ID for compatibility     |
@@ -113,6 +116,16 @@ Practical implication for this server:
 - keep read/write boundaries explicit
 - keep annotations and descriptions narrow so permission UIs stay understandable
 
-## Stateless OAuth
+## OAuth Storage
 
-Access tokens and refresh tokens are self-contained JWTs embedding the Holded API key. Dynamic client registration is also stateless, so OAuth does not depend on in-memory client storage across redeploys.
+Dynamic client registration remains stateless.
+
+OAuth runtime modes:
+
+- with `DATABASE_URL`, authorization codes plus access and refresh tokens are stored in PostgreSQL, refresh rotation is real, and revocation invalidates the current session
+- without `DATABASE_URL`, the server falls back to stateless JWT tokens for compatibility
+
+Security notes:
+
+- authorization code flow supports PKCE `S256`
+- stored Holded API keys are encrypted at rest using `OAUTH_DATA_ENCRYPTION_SECRET` or, if missing, `OAUTH_JWT_SECRET`

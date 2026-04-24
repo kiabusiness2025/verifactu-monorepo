@@ -41,7 +41,7 @@ app.use(requestLogger);
 // Static assets (logo, favicon)
 app.use(express.static(publicDir));
 app.get('/favicon.ico', (_req, res) => {
-  res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
+  res.sendFile(path.join(publicDir, 'favicon.ico'));
 });
 app.get('/favicon.png', (_req, res) => {
   res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));

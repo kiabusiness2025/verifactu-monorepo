@@ -3,11 +3,16 @@ import { SignJWT, jwtVerify } from 'jose';
 import { config } from './config.js';
 import { logger } from './logger.js';
 import {
-  createAccessToken,
-  createRefreshToken,
+  consumeAuthorizationCode,
+  createAuthorizationCode,
+  createTokenPair,
+  isValidPkceCodeChallenge,
+  isValidPkceCodeVerifier,
   revokeToken,
+  revokeTokenValue,
+  rotateRefreshToken,
   verifyAccessToken,
-  verifyRefreshToken,
+  verifyPkceCodeVerifier,
 } from './auth.js';
 import { HoldedClient } from './holded-client.js';
 
@@ -18,16 +23,13 @@ interface ClientRecord {
   redirectUris: string[];
 }
 
-interface AuthCodePayload {
-  holdedApiKey: string;
-  clientId: string;
-  redirectUri: string;
-}
-
 interface AuthorizeContext {
   clientId: string;
   redirectUri: string;
   state: string;
+  scope: string;
+  codeChallenge: string | null;
+  codeChallengeMethod: 'S256' | null;
 }
 
 function codeSecret() {
@@ -78,49 +80,6 @@ async function verifyClientCredentials(
   }
 }
 
-async function createAuthCode(payload: AuthCodePayload): Promise<string> {
-  return new SignJWT({
-    hak: payload.holdedApiKey,
-    cid: payload.clientId,
-    ru: payload.redirectUri,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('10m')
-    .setIssuer(config.BASE_URL)
-    .setAudience('holded-mcp-code')
-    .sign(codeSecret());
-}
-
-async function consumeAuthCode(code: string): Promise<AuthCodePayload | null> {
-  try {
-    const { payload } = await jwtVerify(code, codeSecret(), {
-      issuer: config.BASE_URL,
-      audience: 'holded-mcp-code',
-    });
-
-    const holdedApiKey = payload['hak'];
-    const clientId = payload['cid'];
-    const redirectUri = payload['ru'];
-
-    if (
-      typeof holdedApiKey !== 'string' ||
-      typeof clientId !== 'string' ||
-      typeof redirectUri !== 'string'
-    ) {
-      return null;
-    }
-
-    return {
-      holdedApiKey,
-      clientId,
-      redirectUri,
-    };
-  } catch {
-    return null;
-  }
-}
-
 function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
   const bodyClientId =
     typeof req.body?.client_id === 'string' && req.body.client_id.length > 0
@@ -131,6 +90,15 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       ? req.body.redirect_uri
       : null;
   const bodyState = typeof req.body?.state === 'string' ? req.body.state : '';
+  const bodyScope =
+    typeof req.body?.scope === 'string' && req.body.scope.trim() ? req.body.scope.trim() : null;
+  const bodyCodeChallenge =
+    typeof req.body?.code_challenge === 'string' && req.body.code_challenge.trim()
+      ? req.body.code_challenge.trim()
+      : null;
+  const bodyCodeChallengeMethod =
+    req.body?.code_challenge_method === 'S256' ? ('S256' as const) : null;
+
   const queryClientId =
     typeof req.query?.client_id === 'string' && req.query.client_id.length > 0
       ? req.query.client_id
@@ -140,12 +108,23 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       ? req.query.redirect_uri
       : null;
   const queryState = typeof req.query?.state === 'string' ? req.query.state : '';
+  const queryScope =
+    typeof req.query?.scope === 'string' && req.query.scope.trim() ? req.query.scope.trim() : null;
+  const queryCodeChallenge =
+    typeof req.query?.code_challenge === 'string' && req.query.code_challenge.trim()
+      ? req.query.code_challenge.trim()
+      : null;
+  const queryCodeChallengeMethod =
+    req.query?.code_challenge_method === 'S256' ? ('S256' as const) : null;
 
   if (bodyClientId && bodyRedirectUri) {
     return {
       clientId: bodyClientId,
       redirectUri: bodyRedirectUri,
       state: bodyState,
+      scope: bodyScope || queryScope || 'holded:read holded:write',
+      codeChallenge: bodyCodeChallenge || queryCodeChallenge,
+      codeChallengeMethod: bodyCodeChallengeMethod || queryCodeChallengeMethod,
     };
   }
 
@@ -154,6 +133,9 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       clientId: queryClientId,
       redirectUri: queryRedirectUri,
       state: bodyState || queryState,
+      scope: bodyScope || queryScope || 'holded:read holded:write',
+      codeChallenge: bodyCodeChallenge || queryCodeChallenge,
+      codeChallengeMethod: bodyCodeChallengeMethod || queryCodeChallengeMethod,
     };
   }
 
@@ -174,6 +156,11 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       clientId: refererClientId,
       redirectUri: refererRedirectUri,
       state: bodyState || refererState,
+      scope: bodyScope || refererUrl.searchParams.get('scope') || 'holded:read holded:write',
+      codeChallenge: bodyCodeChallenge || refererUrl.searchParams.get('code_challenge'),
+      codeChallengeMethod:
+        bodyCodeChallengeMethod ||
+        (refererUrl.searchParams.get('code_challenge_method') === 'S256' ? 'S256' : null),
     };
   } catch {
     return null;
@@ -216,7 +203,15 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
 });
 
 oauthRouter.get('/authorize', (req: Request, res: Response) => {
-  const { client_id, redirect_uri, state, response_type } = req.query;
+  const {
+    client_id,
+    redirect_uri,
+    state,
+    response_type,
+    scope,
+    code_challenge,
+    code_challenge_method,
+  } = req.query;
   res.set('Cache-Control', 'no-store');
 
   if (response_type !== 'code') {
@@ -229,7 +224,31 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
     return;
   }
 
-  res.send(consentPage(String(client_id), String(redirect_uri), String(state ?? '')));
+  if (code_challenge_method && code_challenge_method !== 'S256') {
+    res.status(400).send('code_challenge_method debe ser "S256"');
+    return;
+  }
+
+  if (
+    typeof code_challenge === 'string' &&
+    code_challenge &&
+    !isValidPkceCodeChallenge(code_challenge)
+  ) {
+    res.status(400).send('code_challenge invalido');
+    return;
+  }
+
+  res.send(
+    consentPage(
+      String(client_id),
+      String(redirect_uri),
+      String(state ?? ''),
+      false,
+      typeof scope === 'string' && scope.trim() ? scope.trim() : 'holded:read holded:write',
+      typeof code_challenge === 'string' ? code_challenge : null,
+      code_challenge_method === 'S256' ? 'S256' : null
+    )
+  );
 });
 
 oauthRouter.post('/authorize', async (req: Request, res: Response) => {
@@ -264,16 +283,22 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
           authorizeContext.clientId,
           authorizeContext.redirectUri,
           authorizeContext.state,
-          true
+          true,
+          authorizeContext.scope,
+          authorizeContext.codeChallenge,
+          authorizeContext.codeChallengeMethod
         )
       );
     return;
   }
 
-  const code = await createAuthCode({
+  const code = await createAuthorizationCode({
     holdedApiKey,
     clientId: authorizeContext.clientId,
     redirectUri: authorizeContext.redirectUri,
+    scope: authorizeContext.scope,
+    codeChallenge: authorizeContext.codeChallenge,
+    codeChallengeMethod: authorizeContext.codeChallengeMethod,
   });
   logger.info(`Authorization code generado para ${authorizeContext.clientId}`);
 
@@ -303,7 +328,7 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
   }
 
   if (grant_type === 'authorization_code') {
-    const authCodePayload = await consumeAuthCode(String(code ?? ''));
+    const authCodePayload = await consumeAuthorizationCode(String(code ?? ''));
     if (!authCodePayload) {
       res.status(400).json({
         error: 'invalid_grant',
@@ -339,30 +364,56 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
       return;
     }
 
-    const [accessToken, refreshTokenStr] = await Promise.all([
-      createAccessToken(authCodePayload.holdedApiKey),
-      createRefreshToken(authCodePayload.holdedApiKey),
-    ]);
+    if (authCodePayload.codeChallenge) {
+      const codeVerifier =
+        typeof req.body?.code_verifier === 'string' ? req.body.code_verifier.trim() : '';
+
+      if (!codeVerifier || !isValidPkceCodeVerifier(codeVerifier)) {
+        res.status(400).json({
+          error: 'invalid_request',
+          error_description: 'Falta code_verifier valido',
+        });
+        return;
+      }
+
+      if (
+        authCodePayload.codeChallengeMethod !== 'S256' ||
+        !verifyPkceCodeVerifier(codeVerifier, authCodePayload.codeChallenge)
+      ) {
+        res.status(400).json({
+          error: 'invalid_grant',
+          error_description: 'PKCE invalido',
+        });
+        return;
+      }
+    }
+
+    const tokenPair = await createTokenPair({
+      holdedApiKey: authCodePayload.holdedApiKey,
+      clientId: clientRecord.clientId,
+      scope: authCodePayload.scope,
+    });
 
     res.json({
-      access_token: accessToken,
+      access_token: tokenPair.accessToken,
       token_type: 'Bearer',
-      expires_in: config.OAUTH_TOKEN_TTL_SECONDS,
-      refresh_token: refreshTokenStr,
-      scope: 'holded:read holded:write',
+      expires_in: tokenPair.expiresIn,
+      refresh_token: tokenPair.refreshToken,
+      scope: tokenPair.scope,
     });
     return;
   }
 
   if (grant_type === 'refresh_token') {
-    const { refresh_token } = req.body;
-    if (!refresh_token) {
+    const refreshToken =
+      typeof req.body?.refresh_token === 'string' ? req.body.refresh_token.trim() : '';
+    if (!refreshToken) {
       res.status(400).json({ error: 'invalid_request', error_description: 'Falta refresh_token' });
       return;
     }
 
-    const holdedApiKey = await verifyRefreshToken(String(refresh_token));
-    if (!holdedApiKey) {
+    const rotatedPair = await rotateRefreshToken(refreshToken, clientRecord.clientId);
+    if (!rotatedPair) {
       res.status(400).json({
         error: 'invalid_grant',
         error_description: 'Refresh token expirado o invalido',
@@ -370,17 +421,12 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
       return;
     }
 
-    const [newAccessToken, newRefreshToken] = await Promise.all([
-      createAccessToken(holdedApiKey),
-      createRefreshToken(holdedApiKey),
-    ]);
-
     res.json({
-      access_token: newAccessToken,
+      access_token: rotatedPair.accessToken,
       token_type: 'Bearer',
-      expires_in: config.OAUTH_TOKEN_TTL_SECONDS,
-      refresh_token: newRefreshToken,
-      scope: 'holded:read holded:write',
+      expires_in: rotatedPair.expiresIn,
+      refresh_token: rotatedPair.refreshToken,
+      scope: rotatedPair.scope,
     });
     return;
   }
@@ -389,6 +435,13 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
 });
 
 oauthRouter.post('/revoke', async (req: Request, res: Response) => {
+  const requestedToken = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
+  if (requestedToken) {
+    await revokeTokenValue(requestedToken);
+    res.status(200).send();
+    return;
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
     res.status(200).send();
@@ -397,15 +450,29 @@ oauthRouter.post('/revoke', async (req: Request, res: Response) => {
 
   const token = authHeader.slice(7);
   const record = await verifyAccessToken(token);
-  if (record) await revokeToken(record.userId);
+  if (record) {
+    await revokeToken(record);
+  }
+
   res.status(200).send();
 });
 
-function consentPage(clientId: string, redirectUri: string, state: string, error = false): string {
+function consentPage(
+  clientId: string,
+  redirectUri: string,
+  state: string,
+  error = false,
+  scope = 'holded:read holded:write',
+  codeChallenge: string | null = null,
+  codeChallengeMethod: 'S256' | null = null
+): string {
   const actionUrl = new URL('/oauth/authorize', config.BASE_URL);
   actionUrl.searchParams.set('client_id', clientId);
   actionUrl.searchParams.set('redirect_uri', redirectUri);
   if (state) actionUrl.searchParams.set('state', state);
+  actionUrl.searchParams.set('scope', scope);
+  if (codeChallenge) actionUrl.searchParams.set('code_challenge', codeChallenge);
+  if (codeChallengeMethod) actionUrl.searchParams.set('code_challenge_method', codeChallengeMethod);
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -413,6 +480,7 @@ function consentPage(clientId: string, redirectUri: string, state: string, error
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Conectar Holded con Claude</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="icon" type="image/png" href="/favicon.png">
   <link rel="apple-touch-icon" href="/holded-diamond-logo.png">
   <link rel="mask-icon" href="/logo.svg" color="#ff5454">
@@ -465,6 +533,9 @@ function consentPage(clientId: string, redirectUri: string, state: string, error
       <input type="hidden" name="client_id" value="${clientId}">
       <input type="hidden" name="redirect_uri" value="${redirectUri}">
       <input type="hidden" name="state" value="${state}">
+      <input type="hidden" name="scope" value="${scope}">
+      <input type="hidden" name="code_challenge" value="${codeChallenge ?? ''}">
+      <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod ?? ''}">
       <label for="holded_api_key">Tu API key de Holded</label>
       <input type="password" id="holded_api_key" name="holded_api_key" placeholder="Pega aqui tu API key..." required autocomplete="off">
       <p class="hint">La encuentras en Holded &rarr; Ajustes &rarr; Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">&iquest;Como generarla?</a></p>
