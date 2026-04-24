@@ -181,9 +181,16 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
 }
 
 oauthRouter.post('/register', async (req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store');
   const { redirect_uris, client_name } = req.body;
 
-  if (!redirect_uris || !Array.isArray(redirect_uris) || redirect_uris.length === 0) {
+  const redirectUris = Array.isArray(redirect_uris)
+    ? redirect_uris.filter(
+        (value): value is string => typeof value === 'string' && value.length > 0
+      )
+    : [];
+
+  if (redirectUris.length === 0) {
     res.status(400).json({
       error: 'invalid_client_metadata',
       error_description: 'redirect_uris requerido',
@@ -192,7 +199,7 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
   }
 
   const clientId = `holded-mcp-${crypto.randomUUID()}`;
-  const clientSecret = await createDynamicClientSecret(clientId, redirect_uris);
+  const clientSecret = await createDynamicClientSecret(clientId, redirectUris);
 
   logger.info(`Cliente registrado: ${client_name ?? 'unknown'} (${clientId})`);
 
@@ -201,7 +208,7 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
     client_secret: clientSecret,
     client_id_issued_at: Math.floor(Date.now() / 1000),
     client_secret_expires_at: 0,
-    redirect_uris,
+    redirect_uris: redirectUris,
     grant_types: ['authorization_code', 'refresh_token'],
     response_types: ['code'],
     token_endpoint_auth_method: 'client_secret_post',
@@ -280,6 +287,7 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
 });
 
 oauthRouter.post('/token', async (req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store');
   const { grant_type, code, client_id, client_secret, redirect_uri } = req.body;
 
   const clientId = String(client_id ?? '');
@@ -429,14 +437,14 @@ function consentPage(clientId: string, redirectUri: string, state: string, error
     .error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
     .scopes { background: #f9fafb; border-radius: 8px; padding: 14px; margin-bottom: 20px; }
     .scope { font-size: 13px; color: #374151; padding: 3px 0; }
-    .scope::before { content: '✓ '; color: #1D9E75; }
+    .scope::before { content: '\\2713 '; color: #1D9E75; }
   </style>
 </head>
 <body>
   <div class="card">
     <div class="logo-row">
       <img src="/holded-diamond-logo.png" alt="Holded" class="logo-img">
-      <span class="arrow">↔</span>
+      <span class="arrow">&harr;</span>
       <img src="/claude.svg" alt="Claude" class="logo-img">
     </div>
     <h1>Conectar Holded con Claude</h1>
@@ -459,7 +467,7 @@ function consentPage(clientId: string, redirectUri: string, state: string, error
       <input type="hidden" name="state" value="${state}">
       <label for="holded_api_key">Tu API key de Holded</label>
       <input type="password" id="holded_api_key" name="holded_api_key" placeholder="Pega aqui tu API key..." required autocomplete="off">
-      <p class="hint">La encuentras en Holded → Ajustes → Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">¿Como generarla?</a></p>
+      <p class="hint">La encuentras en Holded &rarr; Ajustes &rarr; Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">&iquest;Como generarla?</a></p>
       <button type="submit">Conectar Holded</button>
     </form>
     <p style="margin-top:20px;font-size:11px;color:#9ca3af;text-align:center;">

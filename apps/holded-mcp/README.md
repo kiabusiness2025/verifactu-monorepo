@@ -2,6 +2,10 @@
 
 Remote MCP server for Claude at `https://claude.verifactu.business`.
 
+Reset runbook:
+
+- `apps/holded-mcp/CLAUDE_CONNECTOR_RESET_RUNBOOK.md`
+
 ## Runtime
 
 - MCP endpoint: `https://claude.verifactu.business/mcp`

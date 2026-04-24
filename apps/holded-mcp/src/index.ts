@@ -9,7 +9,6 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { config } from './config.js';
 import { logger } from './logger.js';
 import { oauthRouter } from './oauth-routes.js';
-import { verifyAccessToken } from './auth.js';
 import { HoldedClient } from './holded-client.js';
 import { requireAuth, apiRateLimit, requestLogger } from './middleware/auth.js';
 
@@ -23,8 +22,7 @@ import {
 } from './tools/other.js';
 import { registerContactsTools } from './tools/contacts.js';
 
-// ── Express app ──────────────────────────────────────────────────────────────
-
+// Express app
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, '../public');
 
@@ -40,7 +38,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestLogger);
 
-// ── Static assets (logo, favicon) ────────────────────────────────────────────
+// Static assets (logo, favicon)
 app.use(express.static(publicDir));
 app.get('/favicon.ico', (_req, res) => {
   res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
@@ -61,15 +59,15 @@ app.get('/apple-touch-icon.png', (_req, res) => {
   res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
 });
 
-// ── OAuth routes (sin autenticación Bearer, son públicas) ────────────────────
+// OAuth routes (sin autenticacion Bearer, son publicas)
 app.use('/oauth', oauthRouter);
 
-// ── Health check ─────────────────────────────────────────────────────────────
+// Health check
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', service: 'holded-mcp', version: '1.0.0' });
 });
 
-// ── OAuth discovery (requerido por el directorio de Anthropic) ───────────────
+// OAuth discovery (requerido por el directorio de Anthropic)
 app.get('/.well-known/oauth-authorization-server', (_req, res) => {
   res.json({
     issuer: config.BASE_URL,
@@ -85,7 +83,7 @@ app.get('/.well-known/oauth-authorization-server', (_req, res) => {
   });
 });
 
-// ── Protected resource metadata (RFC 9728 — requerido por MCP auth spec) ─────
+// Protected resource metadata (RFC 9728, requerido por MCP auth spec)
 app.get('/.well-known/oauth-protected-resource', (_req, res) => {
   res.json({
     resource: config.BASE_URL,
@@ -95,19 +93,16 @@ app.get('/.well-known/oauth-protected-resource', (_req, res) => {
   });
 });
 
-// ── MCP endpoint (requiere Bearer token válido) ───────────────────────────────
+// MCP endpoint (requiere Bearer token valido)
 app.post('/mcp', apiRateLimit, requireAuth, async (req, res) => {
-  // Obtenemos el record del usuario (contiene la API key de Holded)
   const record = req.holdedRecord!;
   const holdedClient = new HoldedClient(record.holdedApiKey);
 
-  // Creamos una instancia de McpServer por petición (stateless)
   const mcpServer = new McpServer({
     name: 'holded-mcp',
     version: '1.0.0',
   });
 
-  // Registramos todas las tools pasando el cliente ya autenticado
   const getClient = () => holdedClient;
 
   registerInvoicingTools(mcpServer, getClient);
@@ -118,9 +113,8 @@ app.post('/mcp', apiRateLimit, requireAuth, async (req, res) => {
   registerTeamTools(mcpServer, getClient);
   registerTreasuryTools(mcpServer, getClient);
 
-  // Usamos Streamable HTTP transport (recomendado por Anthropic para nuevos servidores)
   const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined, // stateless — sin sesiones persistentes
+    sessionIdGenerator: undefined, // stateless, sin sesiones persistentes
   });
 
   res.on('close', () => {
@@ -132,24 +126,23 @@ app.post('/mcp', apiRateLimit, requireAuth, async (req, res) => {
   await transport.handleRequest(req, res, req.body);
 });
 
-// ── GET /mcp — para SSE legacy (compatibilidad) ───────────────────────────────
-app.get('/mcp', apiRateLimit, requireAuth, async (req, res) => {
-  // Devuelve 405 con mensaje claro: este servidor usa Streamable HTTP
+// GET /mcp, para SSE legacy (compatibilidad)
+app.get('/mcp', apiRateLimit, requireAuth, async (_req, res) => {
   res.status(405).json({
     error: 'method_not_allowed',
     message: 'Este servidor MCP usa Streamable HTTP. Usa POST /mcp.',
   });
 });
 
-// ── Error handler global ──────────────────────────────────────────────────────
+// Error handler global
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   logger.error('Error no capturado:', err);
   res.status(500).json({ error: 'internal_error', message: err.message });
 });
 
-// ── Start ─────────────────────────────────────────────────────────────────────
+// Start
 app.listen(config.PORT, () => {
-  logger.info(`🚀 Holded MCP Server arrancado en puerto ${config.PORT}`);
+  logger.info(`Holded MCP Server arrancado en puerto ${config.PORT}`);
   logger.info(`   MCP endpoint: ${config.BASE_URL}/mcp`);
   logger.info(`   OAuth auth:   ${config.BASE_URL}/oauth/authorize`);
   logger.info(`   Discovery:    ${config.BASE_URL}/.well-known/oauth-authorization-server`);

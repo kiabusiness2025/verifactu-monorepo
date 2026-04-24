@@ -1,4 +1,11 @@
+import process from 'node:process';
 import { z } from 'zod';
+
+try {
+  process.loadEnvFile?.();
+} catch {
+  // Railway y los contenedores suelen inyectar variables directamente.
+}
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3000),
@@ -18,10 +25,11 @@ const envSchema = z.object({
 function loadConfig() {
   const result = envSchema.safeParse(process.env);
   if (!result.success) {
-    console.error('❌ Variables de entorno inválidas:');
+    console.error('Variables de entorno invalidas:');
     console.error(result.error.flatten().fieldErrors);
     process.exit(1);
   }
+
   return result.data;
 }
 
