@@ -6,11 +6,15 @@ import { logger } from '../logger.js';
 
 const WWW_AUTH = `Bearer realm="${config.BASE_URL}", resource_metadata="${config.BASE_URL}/.well-known/oauth-protected-resource"`;
 
-declare module 'express-serve-static-core' {
-  interface Request {
-    holdedRecord?: TokenRecord;
+/* eslint-disable @typescript-eslint/no-namespace */
+declare global {
+  namespace Express {
+    interface Request {
+      holdedRecord?: TokenRecord;
+    }
   }
 }
+/* eslint-enable @typescript-eslint/no-namespace */
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
