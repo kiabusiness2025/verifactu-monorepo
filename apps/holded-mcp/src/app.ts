@@ -28,6 +28,9 @@ const publicDir = path.resolve(__dirname, '../public');
 export function createApp() {
   const app = express();
 
+  // Trust proxy (Railway, Vercel, etc. set X-Forwarded-For)
+  app.set('trust proxy', 1);
+
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
