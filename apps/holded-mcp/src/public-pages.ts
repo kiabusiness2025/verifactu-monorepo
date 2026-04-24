@@ -419,8 +419,9 @@ function pageTemplateClaude(title: string, body: string, theme: 'light' | 'dark'
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(title)}</title>
+    <link rel="icon" href="/claude.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.png" type="image/png" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
     <style>
       :root {
         --bg: ${isDark ? '#0f172a' : '#ffffff'};
