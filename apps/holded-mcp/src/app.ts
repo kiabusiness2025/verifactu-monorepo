@@ -15,6 +15,10 @@ import {
   renderPrivacyPage,
   renderSupportPage,
   renderTermsPage,
+  renderLandingPage,
+  renderDocsPageClaude,
+  renderPrivacyPageClaude,
+  renderDpaPageClaude,
 } from './public-pages.js';
 import { registerProductionTools } from './tools/index.js';
 
@@ -55,16 +59,31 @@ export function createApp() {
     res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
   });
 
+  // Claude landing & documentation
+  app.get('/', (_req, res) => {
+    res.type('html').send(renderLandingPage(config.BASE_URL));
+  });
   app.get('/docs', (_req, res) => {
-    res.type('html').send(renderDocsPage(config.BASE_URL));
+    res.type('html').send(renderDocsPageClaude(config.BASE_URL));
   });
   app.get('/privacy', (_req, res) => {
+    res.type('html').send(renderPrivacyPageClaude());
+  });
+  app.get('/dpa', (_req, res) => {
+    res.type('html').send(renderDpaPageClaude());
+  });
+
+  // Holded MCP documentation (for reference)
+  app.get('/mcp-docs', (_req, res) => {
+    res.type('html').send(renderDocsPage(config.BASE_URL));
+  });
+  app.get('/mcp-privacy', (_req, res) => {
     res.type('html').send(renderPrivacyPage());
   });
-  app.get('/terms', (_req, res) => {
+  app.get('/mcp-terms', (_req, res) => {
     res.type('html').send(renderTermsPage());
   });
-  app.get('/support', (_req, res) => {
+  app.get('/mcp-support', (_req, res) => {
     res.type('html').send(renderSupportPage());
   });
 
