@@ -44,19 +44,19 @@ export function createApp() {
     res.sendFile(path.join(publicDir, 'favicon.ico'));
   });
   app.get('/favicon.png', (_req, res) => {
-    res.sendFile(path.join(publicDir, 'holded-logo.png'));
+    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/logo.png', (_req, res) => {
-    res.sendFile(path.join(publicDir, 'holded-logo.png'));
+    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/icon.png', (_req, res) => {
-    res.sendFile(path.join(publicDir, 'holded-logo.png'));
+    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/icon.svg', (_req, res) => {
-    res.sendFile(path.join(publicDir, 'logo.svg'));
+    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/apple-touch-icon.png', (_req, res) => {
-    res.sendFile(path.join(publicDir, 'holded-logo.png'));
+    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
 
   // Claude landing & documentation
