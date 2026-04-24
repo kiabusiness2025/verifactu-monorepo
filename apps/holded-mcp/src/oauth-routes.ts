@@ -543,9 +543,9 @@ function consentPage(
     </form>
     <p style="margin-top:20px;font-size:11px;color:#9ca3af;text-align:center;">
       Al conectar, aceptas el
-      <a href="${config.BASE_URL}/terms" target="_blank" rel="noopener" style="color:#D97706;">Terms of Service</a>
+      <a href="https://holded.verifactu.business/dpa" target="_blank" rel="noopener" style="color:#D97706;">Acuerdo de tratamiento de datos</a>
       y la
-      <a href="${config.BASE_URL}/privacy" target="_blank" rel="noopener" style="color:#D97706;">Privacy Policy</a>.
+      <a href="https://holded.verifactu.business/privacy" target="_blank" rel="noopener" style="color:#D97706;">Politica de privacidad</a>.
     </p>
   </div>
 </body>

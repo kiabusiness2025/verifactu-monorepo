@@ -155,6 +155,60 @@ const faqs = [
   },
 ];
 
+const realUsageExamples = [
+  {
+    title: 'Factura PDF + borrador de email',
+    prompt: 'Sí, y muéstrame factura en PDF para descargar',
+    body: 'Claude puede leer la factura en Holded, resumirla y generar un PDF descargable como artefacto. Si el usuario quiere acompañarla con un email, Claude puede redactar el texto, pero cualquier borrador o envío sigue siendo controlado por el usuario y no forma parte de movimiento de dinero.',
+    highlights: [
+      'Factura FAC-2025-0043 · Total 2722,50 EUR',
+      'Emisor: Nova Gestión · Cliente: Arrendataria Costa Azul SL',
+      'El conector no envía facturas automáticamente',
+    ],
+  },
+  {
+    title: 'Dashboard HTML de ventas y gastos',
+    prompt: '¿Puedes generar facturas de venta y contabilizar gastos desde imágenes o PDFs?',
+    body: 'Claude puede explicar que crea borradores de factura para revisión y que también extrae proveedor, fecha, importe, IVA y concepto desde documentos de gasto adjuntos. La lectura es automática, pero ni la emisión de factura ni el cierre contable se ejecutan automáticamente.',
+    highlights: [
+      'Facturación total: 45050 EUR',
+      'Gastos registrados: 4367 EUR',
+      'Beneficio estimado: 40683 EUR',
+    ],
+  },
+  {
+    title: 'Resumen anual 2025 + comparativa Q1',
+    prompt:
+      'Sí y crea Resumen 2025 y una comparativa (ventas, gastos y beneficio) del 1 trimestre en dashboard 2025 vs 2026',
+    body: 'Claude puede comparar periodos, calcular margen y explicar la evolución con lenguaje natural. Es una consulta analítica sobre datos de Holded, no una automatización contable.',
+    highlights: [
+      'Q1 2025: ventas 10250 · gastos 2500 · beneficio 7750',
+      'Q1 2026: ventas 20100 · gastos 4367 · beneficio 15733',
+      'Q1 2026 casi duplica las ventas de Q1 2025 (+96%)',
+    ],
+  },
+  {
+    title: 'Informe financiero PDF',
+    prompt: 'Genera un informe financiero 2025 con comparativa Q1 2025 vs 2026',
+    body: 'Claude puede transformar los datos de Holded en un informe PDF revisable por el usuario, por ejemplo "Informe financiero 2025", con KPIs, tablas y comparativas trimestrales.',
+    highlights: [
+      'Ventas totales: 36700 EUR',
+      'Gastos totales: 9387 EUR',
+      'Beneficio neto: 27313 EUR · Margen 74,4%',
+    ],
+  },
+  {
+    title: 'Resumen PyG en lenguaje natural',
+    prompt: 'Hazme un resumen de PyG en 2025',
+    body: 'Claude puede recuperar los datos financieros, filtrar por 2025 y resumir el PyG destacando margen, mejor trimestre y peso relativo de costes operativos como AWS y Microsoft 365. Después puede ofrecer una comparación con 2026 o exportar el resultado.',
+    highlights: [
+      'Margen neto aproximado: 74%',
+      'Q1 es el mejor trimestre',
+      'AWS + Microsoft 365 superan el 50% de los costes operativos',
+    ],
+  },
+];
+
 export default function ClaudeDocsPage() {
   return (
     <main className="page-enter min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fffbf0_45%,#ffffff_100%)] text-slate-900">
@@ -337,6 +391,51 @@ export default function ClaudeDocsPage() {
             </Link>{' '}
             para información sobre subprocesadores y cumplimiento RGPD.
           </p>
+        </article>
+
+        <article className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <FileText className="h-4 w-4 text-amber-500" />
+            Real usage examples
+          </div>
+          <p className="mt-3 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+            Demo data based on tested Claude.ai workflows.
+          </p>
+          <p className="mt-4 text-sm leading-7 text-slate-600">
+            Estos ejemplos son públicos y usan datos demo. Sirven para enseñar cómo Claude consulta
+            Holded, genera artefactos y explica resultados sin exponer datos reales ni prometer
+            automatizaciones fuera del alcance del conector.
+          </p>
+          <div className="mt-5 space-y-4">
+            {realUsageExamples.map((example) => (
+              <div
+                key={example.title}
+                className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4"
+              >
+                <p className="text-sm font-semibold text-slate-900">{example.title}</p>
+                <p className="mt-1 text-xs font-mono text-amber-700">{example.prompt}</p>
+                <p className="mt-2 text-sm leading-7 text-slate-600">{example.body}</p>
+                <ul className="mt-3 space-y-1 text-sm leading-6 text-slate-600">
+                  {example.highlights.map((item) => (
+                    <li key={item} className="flex gap-2">
+                      <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">
+            <strong>Safety and permissions.</strong> Claude.ai muestra permisos por herramienta.
+            Este conector es mayoritariamente de solo lectura y la única acción de escritura es{' '}
+            <code className="rounded bg-white px-1 py-0.5 text-xs text-amber-700">
+              create_invoice_draft
+            </code>
+            , que crea borradores revisables por el usuario. No envía emails automáticamente, no
+            emite ni cobra facturas, no mueve dinero, no borra registros y no cierra asientos
+            contables de forma autónoma.
+          </div>
         </article>
 
         {/* ── FAQ ── */}

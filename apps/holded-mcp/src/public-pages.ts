@@ -258,8 +258,9 @@ export function renderDocsPage(baseUrl: string) {
       <h2>Support and Legal</h2>
       <p>Support contact: <a href="mailto:${escapeHtml(SUPPORT_EMAIL)}">${escapeHtml(SUPPORT_EMAIL)}</a></p>
       <div class="footer-links">
-        <a href="/privacy">Privacy Policy</a>
-        <a href="/terms">Terms of Service</a>
+        <a href="https://holded.verifactu.business/claude">Canonical docs</a>
+        <a href="https://holded.verifactu.business/privacy">Privacy Policy</a>
+        <a href="https://holded.verifactu.business/dpa">DPA</a>
         <a href="/support">Support</a>
       </div>
     `

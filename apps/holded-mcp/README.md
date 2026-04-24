@@ -5,9 +5,9 @@ Remote HTTPS MCP server for Claude.ai and Anthropic MCP Directory submission.
 - Public base URL: `https://claude.verifactu.business`
 - MCP endpoint: `https://claude.verifactu.business/mcp`
 - OAuth metadata: `https://claude.verifactu.business/.well-known/oauth-authorization-server`
-- Public docs: `https://claude.verifactu.business/docs`
-- Privacy Policy: `https://claude.verifactu.business/privacy`
-- Terms of Service: `https://claude.verifactu.business/terms`
+- Public docs: `https://holded.verifactu.business/claude`
+- Privacy Policy: `https://holded.verifactu.business/privacy`
+- Data Processing Agreement: `https://holded.verifactu.business/dpa`
 - Support: `mailto:soporte@verifactu.business`
 
 Operational runbook:
@@ -227,6 +227,6 @@ Before Anthropic submission, production should have:
 Recommended after deploy:
 
 - verify `GET /.well-known/oauth-authorization-server`
-- verify `GET /docs`, `/privacy`, `/terms`
+- verify `GET /docs` on the MCP server and the canonical public docs at `https://holded.verifactu.business/claude`
 - verify `https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64`
 - reconnect the Claude custom connector once if external icon caches are stale

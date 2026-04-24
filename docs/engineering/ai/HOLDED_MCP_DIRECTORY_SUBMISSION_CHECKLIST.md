@@ -45,17 +45,18 @@ MCP endpoint:
 - [x] OAuth flow documented
 - [x] Public tool list with human-readable descriptions
 - [x] Safety model documented
+- [x] Public documentation link published
 - [x] Privacy Policy link published
-- [x] Terms of Service link published
+- [x] DPA link published where applicable
 - [x] Support contact published
 - [x] Troubleshooting section published
 
 Public pages:
 
-- `https://claude.verifactu.business/docs`
-- `https://claude.verifactu.business/privacy`
-- `https://claude.verifactu.business/terms`
-- `https://claude.verifactu.business/support`
+- `https://holded.verifactu.business/claude`
+- `https://holded.verifactu.business/privacy`
+- `https://holded.verifactu.business/dpa`
+- `mailto:soporte@verifactu.business`
 
 ## Testing Requirements Checklist
 
@@ -120,5 +121,8 @@ Write-capable:
 
 - Anthropic form should declare that resources are not exposed.
 - Anthropic form should declare that prompts are not exposed.
+- Anthropic public documentation link should use `https://holded.verifactu.business/claude`.
+- Anthropic privacy link should use `https://holded.verifactu.business/privacy`.
+- Anthropic DPA link should use `https://holded.verifactu.business/dpa`.
 - Server Logo URL should be verified against `https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64`.
 - If the Google favicon is stale, wait for recrawl after the latest favicon deploy before submission.
