@@ -40,37 +40,55 @@ export function createApp() {
   app.use(requestLogger);
 
   app.use(express.static(publicDir));
+
+  // Favicon with cache-busting headers
   app.get('/favicon.ico', (_req, res) => {
+    res.set({
+      'Cache-Control': 'public, max-age=3600, must-revalidate',
+      'Content-Type': 'image/x-icon',
+    });
     res.sendFile(path.join(publicDir, 'favicon.ico'));
   });
   app.get('/favicon.png', (_req, res) => {
+    res.set({
+      'Cache-Control': 'public, max-age=3600, must-revalidate',
+      'Content-Type': 'image/svg+xml',
+    });
     res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/logo.png', (_req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
     res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/icon.png', (_req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
     res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/icon.svg', (_req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
     res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
   app.get('/apple-touch-icon.png', (_req, res) => {
+    res.set('Content-Type', 'image/svg+xml');
     res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
 
   // Claude landing & documentation
   app.get('/', (_req, res) => {
-    res.type('html').send(renderLandingPage(config.BASE_URL));
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(renderLandingPage(config.BASE_URL));
   });
   app.get('/docs', (_req, res) => {
-    res.type('html').send(renderDocsPageClaude(config.BASE_URL));
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(renderDocsPageClaude(config.BASE_URL));
   });
   app.get('/privacy', (_req, res) => {
-    res.type('html').send(renderPrivacyPageClaude());
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(renderPrivacyPageClaude());
   });
   app.get('/dpa', (_req, res) => {
-    res.type('html').send(renderDpaPageClaude());
+    res.set('Content-Type', 'text/html; charset=utf-8');
+    res.send(renderDpaPageClaude());
   });
 
   // Holded MCP documentation (for reference)
