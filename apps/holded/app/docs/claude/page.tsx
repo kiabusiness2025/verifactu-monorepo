@@ -102,7 +102,7 @@ const steps = [
         En <strong className="text-slate-800">claude.ai → Ajustes → Conectores</strong>, haz clic en
         «Añadir conector personalizado» e introduce la URL{' '}
         <code className="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-mono text-amber-700">
-          https://claude.verifactu.business/mcp
+          https://holded.verifactu.business/api/mcp/holded
         </code>
         .
       </>
@@ -143,11 +143,11 @@ const faqs = [
   },
   {
     q: '¿Dónde se almacena mi API key?',
-    a: 'Tu API key se cifra y se almacena en nuestra base de datos segura (claude.verifactu.business). Nunca se envía a Anthropic ni a terceros. Puedes revocar el acceso en cualquier momento.',
+    a: 'Tu API key se cifra y se almacena protegida en el backend de Verifactu Business. Nunca se envía a Anthropic ni a terceros. Puedes revocar el acceso en cualquier momento.',
   },
   {
     q: '¿El servidor MCP está en producción?',
-    a: 'El servidor está operativo en claude.verifactu.business. La inclusión en el directorio oficial de Anthropic está en proceso de revisión — ya puedes añadirlo como conector personalizado.',
+    a: 'El endpoint MCP está operativo bajo holded.verifactu.business. La inclusión en el directorio oficial de Anthropic está en proceso de revisión — ya puedes añadirlo como conector personalizado.',
   },
   {
     q: '¿Qué pasa si mi API key caduca o la cambio?',
@@ -230,7 +230,7 @@ export default function ClaudeDocsPage() {
           </div>
           <div className="flex shrink-0 flex-col gap-3">
             <Link
-              href="/claude"
+              href="/conectores/claude"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600"
             >
               <PlugZap className="h-4 w-4" />
@@ -252,7 +252,7 @@ export default function ClaudeDocsPage() {
           </span>
           <p className="text-sm leading-6 text-amber-800">
             El conector ya está operativo en{' '}
-            <code className="font-mono text-amber-700">claude.verifactu.business</code>. La
+            <code className="font-mono text-amber-700">holded.verifactu.business</code>. La
             inclusión en el directorio oficial de Anthropic está en proceso de revisión. Mientras
             tanto, puedes añadirlo como conector personalizado siguiendo los pasos a continuación.
           </p>
@@ -386,7 +386,10 @@ export default function ClaudeDocsPage() {
           </div>
           <p className="mt-4 text-sm text-slate-500">
             Consulta el{' '}
-            <Link href="/dpa" className="font-medium text-amber-600 underline underline-offset-4">
+            <Link
+              href="/conectores/claude/dpa"
+              className="font-medium text-amber-600 underline underline-offset-4"
+            >
               Acuerdo de tratamiento de datos (DPA)
             </Link>{' '}
             para información sobre subprocesadores y cumplimiento RGPD.
@@ -468,7 +471,7 @@ export default function ClaudeDocsPage() {
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link
-              href="/claude"
+              href="/conectores/claude"
               className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-600"
             >
               <PlugZap className="h-4 w-4" />

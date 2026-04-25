@@ -27,6 +27,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Demo: `docs/product/DEMO_FLOW.md`, `docs/product/DEMO_QA_CHECKLIST.md`
 - Holded refresh publico: `docs/product/holded/HOLDED_REFRESH_2026-04-21.md`
 - Cleanup legacy del conector Holded: `docs/product/holded/HOLDED_CONNECTOR_LEGACY_CLEANUP_2026-04-21.md`
+- Plan publico de landings por conector: `docs/product/holded/HOLDED_CONNECTORS_PUBLIC_ARCHITECTURE_PLAN_2026-04-25.md`
 - Precios: `docs/product/pricing/`
 - Onboarding: `docs/product/onboarding/`
 - Issues/sprints: `docs/product/issues/`

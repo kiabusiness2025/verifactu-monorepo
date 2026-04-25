@@ -47,8 +47,8 @@ const connectorLinks = [
     color: 'text-amber-600',
     border: 'border-amber-200',
     bg: 'bg-amber-50',
-    docsHref: '/docs/claude',
-    connectHref: '/claude',
+    docsHref: '/conectores/claude/docs',
+    connectHref: '/conectores/claude',
   },
 ];
 
