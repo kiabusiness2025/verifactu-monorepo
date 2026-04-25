@@ -63,7 +63,7 @@ const capabilities: Capability[] = [
 
 const steps = [
   {
-    title: 'Anade el conector en Claude',
+    title: 'Añade el conector en Claude',
     body: 'Usa la documentacion MCP para registrar el conector personalizado y revisar los permisos antes de autorizarlo.',
     icon: PlugZap,
   },
@@ -117,57 +117,27 @@ function CapabilityCard({ capability }: { capability: Capability }) {
   );
 }
 
-function ProductPreview() {
+function HeroScreenshot() {
   return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-4 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.48)]">
-      <div className="rounded-[1.5rem] border border-slate-200 bg-slate-950 p-4 text-white">
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white">
-              <Image
-                src="/brand/holded/holded-diamond-logo.png"
-                alt="Holded"
-                width={22}
-                height={22}
-                className="h-[22px] w-[22px] object-contain"
-              />
-            </div>
-            <div>
-              <p className="text-sm font-semibold">Holded MCP</p>
-              <p className="text-xs text-slate-400">Canal Claude</p>
-            </div>
-          </div>
-          <div className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
-            OAuth activo
-          </div>
-        </div>
-
-        <div className="space-y-4 py-5">
-          <div className="max-w-[82%] rounded-2xl rounded-tl-sm bg-white/8 p-4">
-            <p className="text-sm leading-6 text-slate-200">
-              Resume el PyG de 2025 y dime que trimestre tuvo mejor margen.
+    <div className="rounded-[2rem] border border-slate-200 bg-white p-3 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.48)]">
+      <div className="relative overflow-hidden rounded-[1.4rem]">
+        <Image
+          src="/screens/claude/claude-informe.png"
+          alt="Informe financiero 2025 generado por Claude con datos reales de Holded — resumen anual, cuenta de PyG y comparativa trimestral"
+          width={1200}
+          height={750}
+          className="w-full object-cover object-top"
+          priority
+        />
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950/70 to-transparent px-4 pb-4 pt-12">
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-emerald-400/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+              Real
+            </span>
+            <p className="text-xs font-medium text-white/90">
+              Informe financiero 2025 generado desde datos reales de Holded
             </p>
           </div>
-          <div className="ml-auto max-w-[88%] rounded-2xl rounded-tr-sm bg-amber-100 p-4 text-slate-900">
-            <p className="text-sm font-semibold">Resultado estimado</p>
-            <p className="mt-2 text-sm leading-6 text-slate-700">
-              Q1 concentra el mejor margen. Ventas 36.700 EUR, gastos 9.387 EUR y margen neto
-              aproximado del 74,4%.
-            </p>
-          </div>
-        </div>
-
-        <div className="grid gap-3 border-t border-white/10 pt-4 sm:grid-cols-3">
-          {[
-            ['Facturas', 'Solo lectura'],
-            ['Contabilidad', 'Consulta'],
-            ['Borradores', 'Revision'],
-          ].map(([label, value]) => (
-            <div key={label} className="rounded-2xl bg-white/6 p-3">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-slate-500">{label}</p>
-              <p className="mt-1 text-sm font-semibold text-white">{value}</p>
-            </div>
-          ))}
         </div>
       </div>
     </div>
@@ -211,7 +181,7 @@ export default function ClaudeConnectorPage() {
             </div>
           </div>
 
-          <ProductPreview />
+          <HeroScreenshot />
         </div>
       </section>
 
@@ -240,6 +210,67 @@ export default function ClaudeConnectorPage() {
                 </article>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-slate-200 bg-white py-14 sm:py-18">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-2xl">
+            <Pill icon={Sparkles}>Resultados reales</Pill>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950">
+              Visto en acción con datos de Holded.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              Capturas reales de Claude consultando Holded — informes PDF, dashboards HTML, facturas
+              y análisis financiero en lenguaje natural.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {[
+              {
+                src: '/screens/claude/claude-dashboard.png',
+                caption: 'Dashboard HTML con ventas, gastos y beneficio por mes y cliente',
+                label: 'Visualización',
+              },
+              {
+                src: '/screens/claude/claude-kpi.png',
+                caption: 'KPIs consolidados: 45.050 € facturación, 40.683 € beneficio estimado',
+                label: 'KPIs',
+              },
+              {
+                src: '/screens/claude/claude-factura.png',
+                caption: 'Factura PDF generada como borrador revisable — FAC-2025-0043, 2.722,50 €',
+                label: 'Facturación',
+              },
+              {
+                src: '/screens/claude/claude-informe-detalle.png',
+                caption: 'Informe financiero PDF con evolución trimestral y tabla de resultados',
+                label: 'Informes',
+              },
+            ].map(({ src, caption, label }) => (
+              <div
+                key={src}
+                className="overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm"
+              >
+                <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
+                  <Image
+                    src={src}
+                    alt={caption}
+                    width={800}
+                    height={500}
+                    className="h-full w-full object-cover object-top"
+                  />
+                </div>
+                <div className="flex items-center gap-3 px-5 py-3.5">
+                  <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                    {label}
+                  </span>
+                  <p className="text-xs leading-5 text-slate-500">{caption}</p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
