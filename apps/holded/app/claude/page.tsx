@@ -43,6 +43,37 @@ export default function ClaudePage() {
   const [apiKey, setApiKey] = useState('');
   const [connected, setConnected] = useState(false);
   const [input, setInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Lógica de conexión adaptada
+  const handleConnect = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/holded/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey, channel: 'claude' }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error || 'Error de conexión');
+
+      // Si requiere onboarding, redirige automáticamente
+      if (data?.nextStep === 'onboarding_required') {
+        // Redirige a onboarding conversacional, pasando el destino final
+        const next = encodeURIComponent('/claude');
+        window.location.assign(`/onboarding/profile?next=${next}`);
+        return;
+      }
+
+      setConnected(true);
+    } catch (e: any) {
+      setError(e?.message || 'Error de conexión');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-slate-50 font-sans text-slate-900">
@@ -74,17 +105,23 @@ export default function ClaudePage() {
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="API Key de Holded..."
                 className="w-56 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-700 placeholder:text-slate-400 focus:border-[#1D9E75] focus:outline-none focus:ring-2 focus:ring-[#1D9E75]/20"
+                disabled={loading}
               />
               <button
-                onClick={() => apiKey.length > 8 && setConnected(true)}
-                disabled={apiKey.length < 8}
+                onClick={handleConnect}
+                disabled={apiKey.length < 8 || loading}
                 className="inline-flex items-center gap-1.5 rounded-full bg-[#1D9E75] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#0F7A5C] disabled:opacity-40"
               >
-                <PlugZap className="h-3.5 w-3.5" />
-                Conectar
+                {loading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <PlugZap className="h-3.5 w-3.5" />
+                )}
+                {loading ? 'Conectando...' : 'Conectar'}
               </button>
             </>
           )}
+          {error && <span className="ml-3 text-xs text-rose-600">{error}</span>}
         </div>
       </header>
 
