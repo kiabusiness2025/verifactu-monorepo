@@ -273,6 +273,8 @@ async function runIntro() {
   // ── Phase 5: Hold ──
   await sleep(4200);
 
+  if (window.__pipelineOnce) { window.markSceneDone(); return; }
+
   // ── Phase 6: Fade out ──
   overlay.style.opacity = '1';
   await sleep(1000);
@@ -282,5 +284,6 @@ async function runIntro() {
 
 runIntro();
 </script>
+<script src="/demo/pipeline-utils.js"></script>
 </body>
 </html>

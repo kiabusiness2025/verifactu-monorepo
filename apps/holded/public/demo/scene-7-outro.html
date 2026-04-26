@@ -256,6 +256,8 @@ async function runOutro() {
   // ── Phase 6: Hold ──
   await sleep(5000);
 
+  if (window.__pipelineOnce) { window.markSceneDone(); return; }
+
   // ── Phase 7: Fade out ──
   overlay.style.opacity = '1';
   await sleep(1000);
@@ -265,5 +267,6 @@ async function runOutro() {
 
 runOutro();
 </script>
+<script src="/demo/pipeline-utils.js"></script>
 </body>
 </html>

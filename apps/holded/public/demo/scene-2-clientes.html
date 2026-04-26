@@ -185,6 +185,7 @@ async function runScene() {
   }
 
   await sleep(5000);
+  if (window.__pipelineOnce) { window.markSceneDone(); return; }
   overlay.style.opacity = '1';
   await sleep(900);
   runScene();
@@ -192,5 +193,6 @@ async function runScene() {
 
 runScene();
 </script>
+<script src="/demo/pipeline-utils.js"></script>
 </body>
 </html>
