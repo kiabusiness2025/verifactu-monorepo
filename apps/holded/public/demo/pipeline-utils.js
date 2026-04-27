@@ -41,6 +41,32 @@
     const _hst = document.createElement('style');
     _hst.textContent = heroCSS;
     (document.head || document.documentElement).appendChild(_hst);
+
+    if (mode === 'chat') {
+      // Compress "waiting" delays (≥1000ms) to 400ms so the conversation
+      // flows without long blank gaps. UI transitions (<1000ms) stay natural.
+      const _origST = window.setTimeout;
+      window.setTimeout = function (fn, delay) {
+        const d = typeof delay === 'number' ? delay : 0;
+        const adjusted = d >= 1000 ? 400 : d;
+        return _origST(fn, adjusted);
+      };
+
+      // Auto-scroll .messages whenever new content is added so the full
+      // response is always visible without manual scrolling.
+      const attachScrollObserver = function () {
+        const msgs = document.querySelector('.messages');
+        if (!msgs) return;
+        new MutationObserver(function () {
+          msgs.scrollTop = msgs.scrollHeight;
+        }).observe(msgs, { childList: true, subtree: true });
+      };
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachScrollObserver);
+      } else {
+        attachScrollObserver();
+      }
+    }
   }
 
   // ── Light theme — inject CSS before first paint ──────────
