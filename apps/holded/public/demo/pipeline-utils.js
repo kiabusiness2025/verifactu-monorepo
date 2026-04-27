@@ -17,20 +17,26 @@
   // On mobile (≤520px): claude shows ONLY the artifact panel full-height (no split);
   // chatgpt has no artifact panel so the chat fills full height.
   if (window.parent !== window) {
-    // Mobile: show only the user question as a slim strip; artifact fills the rest.
-    // The AI response is already visualised in the artifact panel so the text is redundant.
+    // Mobile: chat floats as semi-transparent overlay over the artifact panel.
+    // Artifact fills 100% height (chat removed from flex flow via position:absolute).
+    // No split — user sees the graphic immediately and question+answer overlay on top.
     const mobilePanelCSS =
       connector === 'claude'
         ? [
-            // Slim question strip: ~22% height
-            '.chat{flex:0 0 22%!important;overflow:hidden}',
-            // Hide chat header and AI response rows — keep only user question
+            'body{position:relative!important}',
+            // Float chat over artifact — removed from flex flow
+            '.chat{',
+            'position:absolute!important;top:0;left:0;right:0;z-index:10!important;',
+            'flex:none!important;max-height:42%!important;overflow:hidden!important;',
+            'background:rgba(248,249,252,0.93)!important;',
+            'border-bottom:1px solid rgba(229,231,235,0.85)!important;',
+            '}',
             '.chat-header{display:none!important}',
-            '.msg-row.assistant{display:none!important}',
-            // Compact the question bubble
-            '.messages{padding:10px 12px!important;gap:6px!important}',
-            '.avatar{width:22px!important;height:22px!important;font-size:10px!important}',
-            '.bubble.u{font-size:11px!important;padding:6px 10px!important;line-height:1.4!important}',
+            '.messages{padding:8px 10px!important;gap:5px!important}',
+            '.avatar{width:20px!important;height:20px!important;font-size:9px!important}',
+            '.bubble{font-size:11px!important;padding:5px 8px!important;line-height:1.4!important}',
+            // Artifact fills full height since chat is out of flex flow
+            '.artifact-panel{flex:1!important;border-top:none!important}',
           ].join('')
         : '.chat{flex:1!important;border-bottom:none!important}';
 
