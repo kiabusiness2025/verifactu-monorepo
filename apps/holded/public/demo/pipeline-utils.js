@@ -43,29 +43,23 @@
     (document.head || document.documentElement).appendChild(_hst);
 
     if (mode === 'chat') {
-      // Compress "waiting" delays (≥1000ms) to 400ms so the conversation
-      // flows without long blank gaps. UI transitions (<1000ms) stay natural.
+      // Compress only the long end-pause (≥2000ms) to 600ms.
+      // Thinking dots (1900ms) and tool badge (1500ms) stay natural and readable.
       const _origST = window.setTimeout;
       window.setTimeout = function (fn, delay) {
         const d = typeof delay === 'number' ? delay : 0;
-        const adjusted = d >= 1000 ? 400 : d;
+        const adjusted = d >= 2000 ? 600 : d;
         return _origST(fn, adjusted);
       };
 
-      // Auto-scroll .messages whenever new content is added so the full
-      // response is always visible without manual scrolling.
-      const attachScrollObserver = function () {
-        const msgs = document.querySelector('.messages');
-        if (!msgs) return;
-        new MutationObserver(function () {
-          msgs.scrollTop = msgs.scrollHeight;
-        }).observe(msgs, { childList: true, subtree: true });
-      };
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', attachScrollObserver);
-      } else {
-        attachScrollObserver();
-      }
+      // Make message-row and card transitions instant so there is no blank
+      // gap between the tool-badge part and the response blocks.
+      const chatTransCSS =
+        '.msg-row{transition-duration:0.001s!important;transition-delay:0s!important}' +
+        '.bubble>div{transition-duration:0.12s!important;transition-delay:0s!important}';
+      const _cst = document.createElement('style');
+      _cst.textContent = chatTransCSS;
+      (document.head || document.documentElement).appendChild(_cst);
     }
   }
 
