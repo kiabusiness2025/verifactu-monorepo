@@ -58,13 +58,9 @@ export function DemoIframeHero({ connector, className = '' }: Props) {
         key={src}
         src={src}
         onLoad={() => setLoaded(true)}
-        className="block h-[520px] sm:h-[600px] lg:h-[700px] w-full border-none"
+        className={`block h-[520px] sm:h-[600px] lg:h-[700px] w-full border-none transition-opacity duration-500 ${loaded ? 'opacity-100' : 'opacity-0'}`}
         title={`Demo Holded ${connector}`}
         allow="autoplay"
-      />
-      {/* White overlay — hides dark flash while iframe paints its light theme */}
-      <div
-        className={`absolute inset-0 bg-[#f5f7fa] pointer-events-none transition-opacity duration-500 ${loaded ? 'opacity-0' : 'opacity-100'}`}
       />
       {/* Scene progress dots */}
       <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
