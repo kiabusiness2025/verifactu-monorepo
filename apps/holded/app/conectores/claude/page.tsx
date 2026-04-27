@@ -15,8 +15,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
+import { DemoIframeHero } from '@/app/components/DemoIframeHero';
 
 export const metadata: Metadata = {
   title: 'Conector Holded para Claude | Verifactu Business',
@@ -161,94 +161,6 @@ function CapabilityCard({ capability }: { capability: Capability }) {
         ))}
       </ul>
     </article>
-  );
-}
-
-// ── Hero: conversación real con datos de Nova Gestión ──────────────────────────
-function HeroConversationMockup() {
-  const maxC = TOP_CLIENTS[0].total;
-  return (
-    <div className="rounded-[2rem] border border-slate-200 bg-white p-3 shadow-[0_30px_80px_-48px_rgba(15,23,42,0.48)]">
-      <div className="rounded-[1.4rem] bg-slate-950 p-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white">
-              <Image
-                src="/brand/holded/holded-diamond-logo.png"
-                alt="Holded"
-                width={18}
-                height={18}
-                className="h-[18px] w-[18px] object-contain"
-                priority
-              />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-white">Holded MCP</p>
-              <p className="text-[10px] text-slate-400">Nova Gestión</p>
-            </div>
-          </div>
-          <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-bold text-emerald-300">
-            ● OAuth activo
-          </span>
-        </div>
-
-        <div className="space-y-3 py-4">
-          <div className="ml-auto max-w-[75%] rounded-2xl rounded-tr-sm bg-amber-400/15 px-3.5 py-2.5">
-            <p className="text-[11px] leading-5 text-amber-100">
-              ¿Cuáles son los clientes con más facturación?
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-            <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded bg-amber-500/20 text-[8px] font-bold text-amber-400">
-              H
-            </span>
-            Usó la integración Holded ·{' '}
-            <code className="font-mono text-slate-600">list_documents</code>
-          </div>
-
-          <div className="rounded-2xl rounded-tl-sm bg-white/[0.06] p-3.5">
-            <p className="mb-3 text-[11px] font-semibold text-slate-200">
-              Top clientes por facturación total:
-            </p>
-            <div className="space-y-2.5">
-              {TOP_CLIENTS.map((c, i) => (
-                <div key={c.name} className="flex items-center gap-2">
-                  <span className="w-4 shrink-0 text-[10px] text-slate-500">#{i + 1}</span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] text-slate-400">{c.name}</p>
-                    <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-white/10">
-                      <div
-                        className="h-full rounded-full bg-amber-400"
-                        style={{ width: `${(c.total / maxC) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <span className="shrink-0 text-[10px] font-semibold tabular-nums text-amber-300">
-                    {fmt(c.total)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 border-t border-white/10 pt-3">
-          {(
-            [
-              ['Facturas', '11'],
-              ['Total', '47.069 €'],
-              ['Clientes', '8'],
-            ] as const
-          ).map(([label, value]) => (
-            <div key={label} className="rounded-xl bg-white/[0.06] px-2.5 py-2">
-              <p className="text-[9px] uppercase tracking-wider text-slate-500">{label}</p>
-              <p className="mt-0.5 text-[11px] font-bold text-white">{value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
   );
 }
 
@@ -499,7 +411,7 @@ export default function ClaudeConnectorPage() {
             </div>
           </div>
 
-          <HeroConversationMockup />
+          <DemoIframeHero connector="claude" />
         </div>
       </section>
 

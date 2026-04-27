@@ -17,6 +17,11 @@ Plataforma SaaS para facturacion y cumplimiento VeriFactu. Este monorepo contien
 - Rol: experiencia publica dedicada a la compatibilidad y onboarding Holded-first
 - Regla: Holded tiene identidad publica propia, aunque comparta backend con el resto
 
+#### Documentación de ampliación del conector Holded
+
+- [Roadmap de expansión y prioridades](docs/product/HOLDED_DIRECT_CONNECTOR_EXPANSION_ROADMAP_2026.md)
+- [Plan de implementación por bloques](docs/product/HOLDED_DIRECT_CONNECTOR_EXPANSION_IMPLEMENTATION_PLAN_2026.md)
+
 ### Proyecto 3: Isaak
 
 - Dominio publico: `https://isaak.verifactu.business`
@@ -129,6 +134,15 @@ La documentacion detallada de variables esta en:
 - Integracion de guias demo/tour con prefill de preguntas para reducir friccion de uso.
 - Documentacion actualizada en README raiz, docs index y guias especificas de app/admin/client/landing.
 
+## Changelog May 2026
+
+- Pipeline de video demo implementado en `scripts/video-pipeline/`: Holded API + Claude API + Playwright + FFmpeg + Sora (opcional).
+- 6 escenas HTML animadas autocontenidas con dual-layout (Claude: 2 columnas + panel artefacto / ChatGPT: 1 columna con tablas enriquecidas).
+- Tema claro universal inyectado desde `pipeline-utils.js` con overrides CSS `!important`.
+- Soporte de 3 formatos de exportacion: 16:9 (YouTube/LinkedIn), 9:16 (Reels/TikTok), 1:1 (Instagram).
+- Componente `DemoIframeHero` para embeber las escenas animadas como iframe en los Heros de las landings de cada conector.
+- Documentacion completa del pipeline en `scripts/video-pipeline/README.md`.
+
 ## Changelog Abr 2026
 
 - El conector directo `ChatGPT <-> Holded` en `apps/app` se ha estabilizado con onboarding por pasos, sesion temporal propia para `channel=chatgpt` e identidad verificada antes de pedir la API key.
@@ -140,6 +154,42 @@ La documentacion detallada de variables esta en:
 - Se ha reforzado la compatibilidad con entornos legacy: `tenant_profiles` se lee y escribe segun disponibilidad real de columnas, y se corrigieron incidencias de produccion por columnas ausentes y por SQL mal formado en `holdedConnectionResolver`.
 - El perimetro publico del conector queda ahora mas claro: eInforma sale de la surface publica del conector y el preset publico por defecto `openai_review_v2` mantiene una exposicion limitada y revisable.
 - La capacidad publica validada hoy del conector queda centrada en facturas, contactos, cuentas contables, diario, bookings y proyectos; el detalle operativo del preset actual esta documentado en `apps/app/README.md`.
+
+## Pipeline de video demo (automatizacion de marketing)
+
+Sistema Python en `scripts/video-pipeline/` que genera videos de demostracion del conector Holded+IA de forma completamente automatizada.
+
+**Flujo:** Holded API (datos reales) → Claude API (guiones Q&A) → Playwright (graba escenas HTML animadas) → FFmpeg (monta video final)
+
+**Escenas HTML** (en `apps/holded/public/demo/`):
+
+- 6 escenas animadas autocontenidas: P&G, clientes, facturas, dashboard, borrador de factura, comparativa
+- Dual-layout por conector: `?connector=claude` → 2 columnas (chat + panel artefacto blanco animado) / `?connector=chatgpt` → 1 columna ancho completo con tablas enriquecidas
+- `?once=1` → Playwright graba un ciclo y el HTML llama a `window.signalDone()` al terminar
+- Tema claro inyectado automaticamente desde `pipeline-utils.js` (fondo `#f5f7fa`, texto oscuro)
+
+**Comando rapido (sin instalar Sora):**
+
+```bash
+pip install anthropic openai playwright requests python-dotenv
+python -m playwright install chromium
+winget install --id Gyan.FFmpeg -e
+
+cd scripts/video-pipeline
+python run.py --connector claude --skip-sora        # Video Claude 16:9
+python run.py --all-connectors --all-formats --skip-sora  # 6 videos (2 conectores x 3 formatos)
+```
+
+**Formatos de salida:** `16x9` (YouTube/LinkedIn) · `9x16` (Reels/TikTok) · `1x1` (Instagram)
+
+**Variables de entorno necesarias** (en `.env.local` raiz):
+
+- `ANTHROPIC_API_KEY` — para generar guiones con Claude
+- `ISAAK_NEW_OPENAI_API_KEY` o `SORA_API_KEY` — para fondos Sora (opcional con `--skip-sora`)
+
+**Documentacion completa:** [scripts/video-pipeline/README.md](scripts/video-pipeline/README.md)
+
+**Embed en Hero de landings:** componente `DemoIframeHero` cicla las 6 escenas como iframe en las landings de `/conectores/claude` y `/conectores/chatgpt`.
 
 ## Siguientes pasos (prioridad)
 

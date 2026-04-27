@@ -12,6 +12,24 @@
   const once = params.get('once') === '1';
   const connector = params.get('connector') || 'claude';
 
+  // ── Hero/iframe mode: vertical stacked layout ───────────────
+  // Hide sidebar. Stack chat (top ~52%) + artifact panel (bottom ~48%) vertically.
+  // This lets the iframe be wide and readable without any side-by-side split.
+  if (window.parent !== window) {
+    const heroCSS = [
+      '.sidebar{display:none!important}',
+      // Flip main axis to column so chat + artifact stack vertically
+      'body{flex-direction:column!important}',
+      // Chat takes upper portion, no right border
+      '.chat{flex:0 0 52%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}',
+      // Artifact panel fills the rest below — force visible for all connectors
+      '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:1px solid #e5e7eb!important;min-height:0!important}',
+    ].join('');
+    const _hst = document.createElement('style');
+    _hst.textContent = heroCSS;
+    (document.head || document.documentElement).appendChild(_hst);
+  }
+
   // ── Light theme — inject CSS before first paint ──────────
   const lightCSS = [
     // Layout backgrounds
@@ -149,6 +167,14 @@
       // Signal to Playwright recorder if the function was exposed
       if (typeof window.signalDone === 'function') {
         window.signalDone();
+      }
+      // Signal parent frame for iframe embed cycling
+      try {
+        if (window.parent !== window) {
+          window.parent.postMessage({ holded: 'sceneDone' }, '*');
+        }
+      } catch (_) {
+        /* cross-origin postMessage blocked — safe to ignore */
       }
     }
   };
