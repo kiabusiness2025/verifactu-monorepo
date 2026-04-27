@@ -12,27 +12,32 @@
   const once = params.get('once') === '1';
   const connector = params.get('connector') || 'claude';
 
-  // ── Hero/iframe mode: vertical stacked layout ───────────────
-  // Hide sidebar. Stack chat (top ~45%) + artifact panel (bottom ~55%) vertically.
-  // On mobile (≤520px): claude shows ONLY the artifact panel full-height (no split);
-  // chatgpt has no artifact panel so the chat fills full height.
+  // ── Hero/iframe mode ──────────────────────────────────────────
+  // URL param ?mode controls which panel is shown:
+  //   mode=chat    → chat full-height, artifact hidden  (slide A)
+  //   mode=visual  → artifact full-height, chat hidden  (slide B)
+  //   (default)    → split 45/55 desktop, visual-only mobile
   if (window.parent !== window) {
-    // Mobile: artifact panel fills 100% height, chat hidden.
-    const mobilePanelCSS =
-      connector === 'claude'
-        ? '.chat{display:none!important}.artifact-panel{flex:1!important;border-top:none!important}'
-        : '.chat{flex:1!important;border-bottom:none!important}';
+    const mode = params.get('mode') || 'split';
 
-    const heroCSS = [
-      '.sidebar{display:none!important}',
-      'body{flex-direction:column!important}',
-      // Desktop/tablet split: chat 45%, artifact 55%
-      '.chat{flex:0 0 45%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}',
-      '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:1px solid #e5e7eb!important;min-height:0!important}',
-      // Mobile: single panel, no split
-      '@media(max-width:520px){' + mobilePanelCSS + '}',
-    ].join('');
+    let panelCSS;
+    if (mode === 'chat') {
+      panelCSS =
+        '.chat{flex:1!important;min-width:0!important;border-right:none!important;border-bottom:none!important}' +
+        '.artifact-panel{display:none!important}';
+    } else if (mode === 'visual') {
+      panelCSS =
+        '.chat{display:none!important}' +
+        '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:none!important;min-height:0!important}';
+    } else {
+      panelCSS =
+        '.chat{flex:0 0 45%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}' +
+        '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:1px solid #e5e7eb!important;min-height:0!important}' +
+        '@media(max-width:520px){.chat{display:none!important}.artifact-panel{border-top:none!important}}';
+    }
 
+    const heroCSS =
+      '.sidebar{display:none!important}body{flex-direction:column!important}' + panelCSS;
     const _hst = document.createElement('style');
     _hst.textContent = heroCSS;
     (document.head || document.documentElement).appendChild(_hst);

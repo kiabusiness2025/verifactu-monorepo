@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-const SCENES = [
+const SCENE_NAMES = [
   'scene-1-pyg',
   'scene-2-clientes',
   'scene-3-facturas',
@@ -11,7 +11,14 @@ const SCENES = [
   'scene-6-comparativa',
 ] as const;
 
-const SCENE_FALLBACK_MS = 32_000; // max wait before forcing advance
+// Each scene has 2 slides: chat (conversation) then visual (graphic)
+const SLIDES = SCENE_NAMES.flatMap((scene) => [
+  { scene, mode: 'chat' as const },
+  { scene, mode: 'visual' as const },
+]);
+
+const CHAT_FALLBACK_MS = 12_000; // chat slides advance after 12s max
+const VISUAL_FALLBACK_MS = 28_000; // visual slides play full animation
 
 interface Props {
   connector: 'claude' | 'chatgpt';
@@ -28,7 +35,7 @@ export function DemoIframeHero({ connector, className = '' }: Props) {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (fallbackRef.current) clearTimeout(fallbackRef.current);
     setLoaded(false);
-    setIndex((i) => (i + 1) % SCENES.length);
+    setIndex((i) => (i + 1) % SLIDES.length);
   }, []);
 
   useEffect(() => {
@@ -38,7 +45,8 @@ export function DemoIframeHero({ connector, className = '' }: Props) {
       }
     };
     window.addEventListener('message', handler);
-    fallbackRef.current = setTimeout(advance, SCENE_FALLBACK_MS);
+    const fallbackMs = SLIDES[index].mode === 'chat' ? CHAT_FALLBACK_MS : VISUAL_FALLBACK_MS;
+    fallbackRef.current = setTimeout(advance, fallbackMs);
 
     return () => {
       window.removeEventListener('message', handler);
@@ -47,8 +55,11 @@ export function DemoIframeHero({ connector, className = '' }: Props) {
     };
   }, [advance, index]);
 
-  const src = `/demo/${SCENES[index]}.html?connector=${connector}&once=1`;
+  const slide = SLIDES[index];
+  const src = `/demo/${slide.scene}.html?connector=${connector}&once=1&mode=${slide.mode}`;
   const dotActive = connector === 'claude' ? 'bg-amber-500' : 'bg-emerald-500';
+  // Active dot = which scene pair we're on (0–5)
+  const activeDot = Math.floor(index / 2);
 
   return (
     <div
@@ -62,15 +73,15 @@ export function DemoIframeHero({ connector, className = '' }: Props) {
         title={`Demo Holded ${connector}`}
         allow="autoplay"
       />
-      {/* Scene progress dots */}
+      {/* Scene progress dots — one per scene pair */}
       <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
-        {SCENES.map((_, i) => (
+        {SCENE_NAMES.map((_, i) => (
           <button
             type="button"
             key={i}
-            onClick={() => setIndex(i)}
+            onClick={() => setIndex(i * 2)}
             className={`h-1.5 rounded-full transition-all duration-300 pointer-events-auto ${
-              i === index ? `w-5 ${dotActive}` : 'w-1.5 bg-slate-300 hover:bg-slate-400'
+              i === activeDot ? `w-5 ${dotActive}` : 'w-1.5 bg-slate-300 hover:bg-slate-400'
             }`}
             aria-label={`Escena ${i + 1}`}
           />
