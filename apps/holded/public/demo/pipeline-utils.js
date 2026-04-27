@@ -17,27 +17,10 @@
   // On mobile (≤520px): claude shows ONLY the artifact panel full-height (no split);
   // chatgpt has no artifact panel so the chat fills full height.
   if (window.parent !== window) {
-    // Mobile: chat floats as semi-transparent overlay over the artifact panel.
-    // Artifact fills 100% height (chat removed from flex flow via position:absolute).
-    // No split — user sees the graphic immediately and question+answer overlay on top.
+    // Mobile: artifact panel fills 100% height, chat hidden.
     const mobilePanelCSS =
       connector === 'claude'
-        ? [
-            'body{position:relative!important}',
-            // Float chat over artifact — removed from flex flow
-            '.chat{',
-            'position:absolute!important;top:0;left:0;right:0;z-index:10!important;',
-            'flex:none!important;max-height:42%!important;overflow:hidden!important;',
-            'background:rgba(248,249,252,0.93)!important;',
-            'border-bottom:1px solid rgba(229,231,235,0.85)!important;',
-            '}',
-            '.chat-header{display:none!important}',
-            '.messages{padding:8px 10px!important;gap:5px!important}',
-            '.avatar{width:20px!important;height:20px!important;font-size:9px!important}',
-            '.bubble{font-size:11px!important;padding:5px 8px!important;line-height:1.4!important}',
-            // Artifact fills full height since chat is out of flex flow
-            '.artifact-panel{flex:1!important;border-top:none!important}',
-          ].join('')
+        ? '.chat{display:none!important}.artifact-panel{flex:1!important;border-top:none!important}'
         : '.chat{flex:1!important;border-bottom:none!important}';
 
     const heroCSS = [
