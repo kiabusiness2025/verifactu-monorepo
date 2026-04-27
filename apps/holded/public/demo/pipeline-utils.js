@@ -20,46 +20,49 @@
   if (window.parent !== window) {
     const mode = params.get('mode') || 'split';
 
-    let panelCSS;
-    if (mode === 'chat') {
-      panelCSS =
-        '.chat{flex:1!important;min-width:0!important;border-right:none!important;border-bottom:none!important}' +
-        '.artifact-panel{display:none!important}';
-    } else if (mode === 'visual') {
-      panelCSS =
-        '.chat{display:none!important}' +
-        '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:none!important;min-height:0!important}';
-    } else {
-      panelCSS =
-        '.chat{flex:0 0 45%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}' +
-        '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:1px solid #e5e7eb!important;min-height:0!important}' +
-        '@media(max-width:520px){.chat{display:none!important}.artifact-panel{border-top:none!important}}';
-    }
+    // mode=full: render native scene layout (sidebar + horizontal panels) for scaled dual-panel embed
+    if (mode !== 'full') {
+      let panelCSS;
+      if (mode === 'chat') {
+        panelCSS =
+          '.chat{flex:1!important;min-width:0!important;border-right:none!important;border-bottom:none!important}' +
+          '.artifact-panel{display:none!important}';
+      } else if (mode === 'visual') {
+        panelCSS =
+          '.chat{display:none!important}' +
+          '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:none!important;min-height:0!important}';
+      } else {
+        panelCSS =
+          '.chat{flex:0 0 45%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}' +
+          '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:1px solid #e5e7eb!important;min-height:0!important}' +
+          '@media(max-width:520px){.chat{display:none!important}.artifact-panel{border-top:none!important}}';
+      }
 
-    const heroCSS =
-      '.sidebar{display:none!important}body{flex-direction:column!important}' + panelCSS;
-    const _hst = document.createElement('style');
-    _hst.textContent = heroCSS;
-    (document.head || document.documentElement).appendChild(_hst);
+      const heroCSS =
+        '.sidebar{display:none!important}body{flex-direction:column!important}' + panelCSS;
+      const _hst = document.createElement('style');
+      _hst.textContent = heroCSS;
+      (document.head || document.documentElement).appendChild(_hst);
 
-    if (mode === 'chat') {
-      // Compress only the long end-pause (≥2000ms) to 600ms.
-      // Thinking dots (1900ms) and tool badge (1500ms) stay natural and readable.
-      const _origST = window.setTimeout;
-      window.setTimeout = function (fn, delay) {
-        const d = typeof delay === 'number' ? delay : 0;
-        const adjusted = d >= 2000 ? 600 : d;
-        return _origST(fn, adjusted);
-      };
+      if (mode === 'chat') {
+        // Compress only the long end-pause (≥2000ms) to 600ms.
+        // Thinking dots (1900ms) and tool badge (1500ms) stay natural and readable.
+        const _origST = window.setTimeout;
+        window.setTimeout = function (fn, delay) {
+          const d = typeof delay === 'number' ? delay : 0;
+          const adjusted = d >= 2000 ? 600 : d;
+          return _origST(fn, adjusted);
+        };
 
-      // Make message-row and card transitions instant so there is no blank
-      // gap between the tool-badge part and the response blocks.
-      const chatTransCSS =
-        '.msg-row{transition-duration:0.001s!important;transition-delay:0s!important}' +
-        '.bubble>div{transition-duration:0.12s!important;transition-delay:0s!important}';
-      const _cst = document.createElement('style');
-      _cst.textContent = chatTransCSS;
-      (document.head || document.documentElement).appendChild(_cst);
+        // Make message-row and card transitions instant so there is no blank
+        // gap between the tool-badge part and the response blocks.
+        const chatTransCSS =
+          '.msg-row{transition-duration:0.001s!important;transition-delay:0s!important}' +
+          '.bubble>div{transition-duration:0.12s!important;transition-delay:0s!important}';
+        const _cst = document.createElement('style');
+        _cst.textContent = chatTransCSS;
+        (document.head || document.documentElement).appendChild(_cst);
+      }
     }
   }
 

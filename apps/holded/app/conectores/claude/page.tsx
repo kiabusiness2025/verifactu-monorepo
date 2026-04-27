@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { DemoIframeHero } from '@/app/components/DemoIframeHero';
+import { DualConnectorHero } from '@/app/components/DualConnectorHero';
 
 export const metadata: Metadata = {
   title: 'Conector Holded para Claude | Verifactu Business',
@@ -378,40 +378,41 @@ export default function ClaudeConnectorPage() {
     <main className="page-enter min-h-screen bg-white text-slate-900">
       {/* ── Hero ── */}
       <section className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] py-16 sm:py-20">
-        <div className="mx-auto grid max-w-6xl gap-12 px-4 lg:grid-cols-[1fr_0.92fr] lg:items-center">
-          <div>
+        <div className="mx-auto max-w-6xl px-4">
+          {/* Text */}
+          <div className="mx-auto max-w-3xl text-center">
             <Pill icon={Sparkles}>Conector Holded para Claude</Pill>
-            <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.25rem] sm:leading-[1.05]">
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.25rem] sm:leading-[1.05]">
               Consulta Holded desde Claude con permisos acotados y control del usuario.
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600">
+            <p className="mt-6 text-lg leading-8 text-slate-600">
               Conecta tu cuenta de Holded mediante MCP y OAuth para consultar facturacion,
               contabilidad, clientes, proyectos e informes directamente desde Claude.
             </p>
-
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
               <Link
                 href="/conectores/claude/docs"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_18px_45px_-24px_rgba(245,158,11,0.7)] transition hover:bg-amber-600"
+                className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-6 py-3.5 text-sm font-semibold text-white shadow-[0_18px_45px_-24px_rgba(245,158,11,0.7)] transition hover:bg-amber-600"
               >
                 Ver documentacion MCP
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/support"
-                className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
               >
                 Soporte del conector
               </Link>
             </div>
-
-            <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-950">
-              <strong>Estado:</strong> operativo como conector personalizado. La presencia en el
-              directorio oficial de Anthropic puede depender de revision externa.
-            </div>
           </div>
 
-          <DemoIframeHero connector="claude" />
+          {/* Dual-connector live demo */}
+          <DualConnectorHero className="mt-12" />
+
+          <p className="mt-4 text-center text-xs text-slate-400">
+            Estado: operativo como conector personalizado. La presencia en el directorio oficial de
+            Anthropic puede depender de revision externa.
+          </p>
         </div>
       </section>
 
