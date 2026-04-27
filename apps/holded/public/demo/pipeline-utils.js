@@ -23,14 +23,18 @@
       // Default: chat 45%, artifact 55%
       '.chat{flex:0 0 45%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}',
       '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:1px solid #e5e7eb!important;min-height:0!important}',
-      // Narrow viewports (mobile): give artifact 62% and compact its content
+      // Narrow viewports (mobile): artifact gets 70%, user question collapses after 2.5s
       '@media(max-width:520px){',
-      '.chat{flex:0 0 38%!important}',
+      '.chat{flex:0 0 30%!important}',
       '.messages{padding:14px 12px!important;gap:14px!important}',
       '.bubble{font-size:12px!important;padding:8px 11px!important;line-height:1.5!important}',
       '.chat-header{padding:9px 14px!important}',
       '.artifact-header{padding:7px 12px!important}',
       '.artifact-content{zoom:0.82!important;padding:14px 16px!important}',
+      // Collapse the user question bubble after it has been shown
+      '.msg-row.user{max-height:160px;overflow:hidden}',
+      '.msg-row.user.show{animation:collapse-question 0.4s ease 2.5s forwards}',
+      '@keyframes collapse-question{to{max-height:0;opacity:0;margin:0}}',
       '}',
     ].join('');
     const _hst = document.createElement('style');
