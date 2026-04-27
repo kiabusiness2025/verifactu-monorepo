@@ -13,17 +13,25 @@
   const connector = params.get('connector') || 'claude';
 
   // ── Hero/iframe mode: vertical stacked layout ───────────────
-  // Hide sidebar. Stack chat (top ~52%) + artifact panel (bottom ~48%) vertically.
-  // This lets the iframe be wide and readable without any side-by-side split.
+  // Hide sidebar. Stack chat (top) + artifact panel (bottom) vertically.
+  // On narrow viewports (<= 520px) the artifact content is scaled down (zoom:0.82)
+  // so the graphics compact automatically without clipping.
   if (window.parent !== window) {
     const heroCSS = [
       '.sidebar{display:none!important}',
-      // Flip main axis to column so chat + artifact stack vertically
       'body{flex-direction:column!important}',
-      // Chat takes upper portion, no right border
-      '.chat{flex:0 0 52%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}',
-      // Artifact panel fills the rest below — force visible for all connectors
+      // Default: chat 45%, artifact 55%
+      '.chat{flex:0 0 45%!important;min-width:0!important;border-right:none!important;border-bottom:1px solid #e5e7eb!important}',
       '.artifact-panel{display:flex!important;flex:1!important;border-left:none!important;border-top:1px solid #e5e7eb!important;min-height:0!important}',
+      // Narrow viewports (mobile): give artifact 62% and compact its content
+      '@media(max-width:520px){',
+      '.chat{flex:0 0 38%!important}',
+      '.messages{padding:14px 12px!important;gap:14px!important}',
+      '.bubble{font-size:12px!important;padding:8px 11px!important;line-height:1.5!important}',
+      '.chat-header{padding:9px 14px!important}',
+      '.artifact-header{padding:7px 12px!important}',
+      '.artifact-content{zoom:0.82!important;padding:14px 16px!important}',
+      '}',
     ].join('');
     const _hst = document.createElement('style');
     _hst.textContent = heroCSS;

@@ -55,7 +55,7 @@ export function DemoIframeHero({ connector, className = '' }: Props) {
       <iframe
         key={src}
         src={src}
-        className="block h-[440px] sm:h-[560px] lg:h-[680px] w-full border-none"
+        className="block h-[520px] sm:h-[600px] lg:h-[700px] w-full border-none"
         title={`Demo Holded ${connector}`}
         allow="autoplay"
       />
