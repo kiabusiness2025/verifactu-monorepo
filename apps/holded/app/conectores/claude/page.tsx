@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { DualConnectorHero } from '@/app/components/DualConnectorHero';
+import { SingleSceneHero } from '@/app/components/SingleSceneHero';
 
 export const metadata: Metadata = {
   title: 'Conector Holded para Claude | Verifactu Business',
@@ -377,10 +377,13 @@ export default function ClaudeConnectorPage() {
   return (
     <main className="page-enter min-h-screen bg-white text-slate-900">
       {/* ── Hero ── */}
-      <section className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] py-16 sm:py-20">
+      <section className="border-b border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#fffbeb_100%)] pt-10 pb-16 sm:pb-20">
         <div className="mx-auto max-w-6xl px-4">
+          {/* Demo first on desktop, after title on mobile */}
+          <SingleSceneHero connector="claude" className="hidden lg:block" />
+
           {/* Text */}
-          <div className="mx-auto max-w-3xl text-center">
+          <div className="mx-auto max-w-3xl text-center lg:mt-12">
             <Pill icon={Sparkles}>Conector Holded para Claude</Pill>
             <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-950 sm:text-[3.25rem] sm:leading-[1.05]">
               Consulta Holded desde Claude con permisos acotados y control del usuario.
@@ -406,8 +409,8 @@ export default function ClaudeConnectorPage() {
             </div>
           </div>
 
-          {/* Dual-connector live demo */}
-          <DualConnectorHero className="mt-12" />
+          {/* Demo after title on mobile */}
+          <SingleSceneHero connector="claude" className="mt-10 lg:hidden" />
 
           <p className="mt-4 text-center text-xs text-slate-400">
             Estado: operativo como conector personalizado. La presencia en el directorio oficial de
