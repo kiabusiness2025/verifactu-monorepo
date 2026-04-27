@@ -21,17 +21,17 @@
     .status-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.18);color:#34d399;font-size:11px;font-weight:600;padding:4px 11px;border-radius:100px}
     .status-dot{width:5px;height:5px;background:#34d399;border-radius:50%;animation:blink-dot 2s ease-in-out infinite}
     @keyframes blink-dot{0%,100%{opacity:1}50%{opacity:.4}}
-    .messages{flex:1;overflow-y:auto;padding:36px 28px;display:flex;flex-direction:column;gap:24px}
+    .messages{flex:1;overflow-y:auto;padding:32px 24px;display:flex;flex-direction:column;gap:24px}
     .messages::-webkit-scrollbar{width:4px}
     .messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
     .msg-row{display:flex;gap:12px;align-items:flex-start;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease}
     .msg-row.show{opacity:1;transform:translateY(0)}
-    .msg-row.user{flex-direction:row-reverse;align-self:flex-end;max-width:580px}
-    .msg-row.assistant{max-width:720px}
+    .msg-row.user{flex-direction:row-reverse;align-self:flex-end;max-width:520px}
+    .msg-row.assistant{max-width:100%}
     .avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:2px}
     .avatar.u{background:#1f2937;color:#9ca3af}
     .avatar.a{background:linear-gradient(135deg,#f97316,#dc2626);color:white}
-    .bubble{padding:12px 16px;font-size:14px;line-height:1.65}
+    .bubble{padding:12px 16px;font-size:14px;line-height:1.65;flex:1;min-width:0}
     .bubble.u{background:#1f2937;color:#e5e7eb;border-radius:14px 2px 14px 14px}
     .bubble.a{background:#1a1a24;color:#d1d5db;border-radius:2px 14px 14px 14px;border:1px solid rgba(255,255,255,0.04)}
     .cursor{display:inline-block;width:2px;height:1.1em;background:currentColor;margin-left:1px;vertical-align:text-bottom;animation:blink-cur .75s step-end infinite}
@@ -43,7 +43,6 @@
     @keyframes td-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
     .tool-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;opacity:0;transform:translateY(4px);transition:opacity .3s ease,transform .3s ease;margin-top:8px}
     .tool-badge.show{opacity:1;transform:translateY(0)}
-    /* Response */
     .r-intro{color:#d1d5db;margin-bottom:14px;font-size:14px;line-height:1.65}
     .r-intro strong{color:#f3f4f6}
     .r-chart{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:16px 14px;margin-bottom:10px}
@@ -60,6 +59,50 @@
     .r-stat-lbl{font-size:11px;color:#6b7280;margin-top:2px}
     .r-note{font-size:13px;line-height:1.65;color:#9ca3af;margin-top:4px}
     .r-note strong{color:#f3f4f6}
+    /* ChatGPT enhanced */
+    .r-table{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:10px;overflow:hidden;margin-bottom:10px}
+    .r-thead{display:flex;background:rgba(255,255,255,0.04);padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .r-th{font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.06em;flex:1;text-align:right}
+    .r-th:first-child{text-align:left;flex:1.5}
+    .r-tbody-row{display:flex;padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.04);align-items:center}
+    .r-tbody-row:last-child{border-bottom:none}
+    .r-td{font-size:13px;color:#d1d5db;flex:1;text-align:right}
+    .r-td:first-child{color:#9ca3af;text-align:left;flex:1.5}
+    .r-td.up{color:#34d399;font-weight:700}
+    .r-td.down{color:#f87171;font-weight:700}
+    .r-tbody-row.best-row{background:rgba(249,115,22,0.05)}
+    .r-total-row{display:flex;padding:10px 14px;background:rgba(255,255,255,0.04);border-top:1px solid rgba(255,255,255,0.08)}
+    .r-total-td{font-size:13px;font-weight:700;color:#f3f4f6;flex:1;text-align:right}
+    .r-total-td:first-child{text-align:left;flex:1.5}
+    /* Layout */
+    body[data-connector="claude"] .chat{flex:0 0 56%;border-right:1px solid rgba(255,255,255,0.06)}
+    body[data-connector="claude"] .artifact-panel{display:flex}
+    body[data-connector="chatgpt"] .msg-row.user{max-width:640px}
+    .artifact-panel{display:none;flex:1;flex-direction:column;background:#ffffff;overflow:hidden;opacity:0;transition:opacity .6s ease}
+    .artifact-panel.show{opacity:1}
+    .artifact-header{padding:10px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .artifact-title{font-size:12px;font-weight:600;color:#374151;display:flex;align-items:center;gap:6px}
+    .artifact-badge{font-size:10px;background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:100px;font-weight:500;border:1px solid #e5e7eb}
+    .artifact-actions{display:flex;gap:6px}
+    .artifact-btn{width:26px;height:26px;border:1px solid #e5e7eb;border-radius:6px;background:white;cursor:default;display:flex;align-items:center;justify-content:center;font-size:13px;color:#6b7280}
+    .artifact-content{flex:1;overflow-y:auto;padding:20px 24px}
+    .art-section-title{font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px}
+    /* Art bar chart */
+    .art-bar-chart{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px}
+    .art-bars{display:flex;align-items:flex-end;gap:14px;height:140px;margin-bottom:12px}
+    .art-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%}
+    .art-bar-val-top{font-size:10px;font-weight:700;color:#374151;text-align:center;line-height:1.2}
+    .art-bar-wrap{flex:1;width:100%;display:flex;align-items:flex-end}
+    .art-vbar{width:100%;border-radius:5px 5px 0 0;transition:height 1s cubic-bezier(0.4,0,0.2,1);height:0}
+    .art-bar-lbl{font-size:12px;color:#6b7280;font-weight:600}
+    .art-divider{height:1px;background:#e5e7eb;margin:16px 0}
+    .art-kpi-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px}
+    .art-kpi{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:14px 10px;text-align:center}
+    .art-kpi-val{font-size:15px;font-weight:800;color:#111827;line-height:1}
+    .art-kpi-lbl{font-size:10px;color:#9ca3af;margin-top:5px;line-height:1.3}
+    .art-trend-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px}
+    .art-trend-lbl{font-size:12px;font-weight:600;color:#166534;margin-bottom:4px}
+    .art-trend-text{font-size:12px;color:#15803d;line-height:1.5}
     #overlay{position:fixed;inset:0;background:#0f0f14;opacity:0;pointer-events:none;z-index:999;transition:opacity .7s ease}
   </style>
 </head>
@@ -89,11 +132,79 @@
   <div class="messages" id="msgs"></div>
 </main>
 
+<section class="artifact-panel" id="artifact">
+  <div class="artifact-header">
+    <div class="artifact-title">
+      📈 Dashboard Ventas — Ene–Abr 2025
+      <span class="artifact-badge">Nova Gestión</span>
+    </div>
+    <div class="artifact-actions">
+      <div class="artifact-btn">⎘</div>
+      <div class="artifact-btn">↓</div>
+    </div>
+  </div>
+  <div class="artifact-content">
+    <div class="art-section-title">Facturación mensual acumulada</div>
+    <div class="art-bar-chart">
+      <div class="art-bars">
+        <div class="art-bar-col">
+          <div class="art-bar-val-top">14.883 €</div>
+          <div class="art-bar-wrap">
+            <div class="art-vbar" id="vb1" style="background:linear-gradient(180deg,#f97316,#ea580c)"></div>
+          </div>
+          <div class="art-bar-lbl">Ene</div>
+        </div>
+        <div class="art-bar-col">
+          <div class="art-bar-val-top">6.958 €</div>
+          <div class="art-bar-wrap">
+            <div class="art-vbar" id="vb2" style="background:linear-gradient(180deg,#fbbf24,#f59e0b)"></div>
+          </div>
+          <div class="art-bar-lbl">Feb</div>
+        </div>
+        <div class="art-bar-col">
+          <div class="art-bar-val-top">12.826 €</div>
+          <div class="art-bar-wrap">
+            <div class="art-vbar" id="vb3" style="background:linear-gradient(180deg,#f97316,#ea580c)"></div>
+          </div>
+          <div class="art-bar-lbl">Mar</div>
+        </div>
+        <div class="art-bar-col">
+          <div class="art-bar-val-top">12.403 €</div>
+          <div class="art-bar-wrap">
+            <div class="art-vbar" id="vb4" style="background:linear-gradient(180deg,#fbbf24,#f59e0b)"></div>
+          </div>
+          <div class="art-bar-lbl">Abr</div>
+        </div>
+      </div>
+    </div>
+    <div class="art-kpi-row">
+      <div class="art-kpi">
+        <div class="art-kpi-val">47.070 €</div>
+        <div class="art-kpi-lbl">Total facturado</div>
+      </div>
+      <div class="art-kpi">
+        <div class="art-kpi-val">11.768 €</div>
+        <div class="art-kpi-lbl">Media mensual</div>
+      </div>
+      <div class="art-kpi">
+        <div class="art-kpi-val" style="color:#ea580c">Ene 2025</div>
+        <div class="art-kpi-lbl">Mejor mes</div>
+      </div>
+    </div>
+    <div class="art-trend-box">
+      <div class="art-trend-lbl">📊 Tendencia</div>
+      <div class="art-trend-text">Recuperación sólida tras la caída de febrero. Marzo y abril se mantienen estables por encima de los <strong>12.000 €</strong> mensuales.</div>
+    </div>
+  </div>
+</section>
+
 <script>
+const connector = new URLSearchParams(location.search).get('connector') || 'claude';
+document.body.dataset.connector = connector;
+
 const USER_MSG = "Dame el dashboard de ventas mensuales del primer trimestre";
 const TOOL_USE  = "list_documents · get_journal";
 
-// Heights as % of max (14883)
 const MONTHS = [
   { label:'Ene', val:'14.883 €', raw:14883, pct:100, color:'#f97316' },
   { label:'Feb', val:'6.958 €',  raw:6958,  pct:47,  color:'#fbbf24' },
@@ -104,7 +215,7 @@ const MONTHS = [
 const CHART_BLOCK = `<div class="r-chart">
   <div class="r-chart-title">📊 Ventas mensuales — Ene–Abr 2025</div>
   <div class="r-bars">
-    ${MONTHS.map(m=>`<div class="r-bar-col">
+    ${MONTHS.map(m => `<div class="r-bar-col">
       <div class="r-bar-val">${m.val}</div>
       <div class="r-bar-wrap"><div class="r-bar" style="height:${m.pct}%;background:${m.color};opacity:.85"></div></div>
       <div class="r-bar-label">${m.label}</div>
@@ -112,27 +223,80 @@ const CHART_BLOCK = `<div class="r-chart">
   </div>
 </div>`;
 
-const BLOCKS = [
-  `<div class="r-intro">Aquí tienes el <strong>dashboard de ventas mensuales</strong> de Nova Gestión para el Q1 + Abr 2025:</div>`,
-
-  CHART_BLOCK,
-
+const BLOCKS_CLAUDE = [
+  `<div class="r-intro">Aquí tienes el <strong>dashboard de ventas</strong> de Nova Gestión para Ene–Abr 2025. El gráfico ampliado está en el panel de análisis:</div>`,
   `<div class="r-stats">
     <div class="r-stat"><div class="r-stat-val">47.070 €</div><div class="r-stat-lbl">Total facturado</div></div>
     <div class="r-stat"><div class="r-stat-val">11.768 €</div><div class="r-stat-lbl">Media mensual</div></div>
     <div class="r-stat"><div class="r-stat-val">Ene 2025</div><div class="r-stat-lbl">Mejor mes</div></div>
   </div>`,
-
-  `<div class="r-note">Febrero fue el mes más bajo (<strong>6.958 €</strong>), probablemente por menos días laborables. Marzo recuperó con fuerza hasta <strong>12.826 €</strong>. La tendencia es estable. ¿Añado la comparativa con 2024? 📈</div>`,
+  `<div class="r-note">Febrero fue el mes más bajo (<strong>6.958 €</strong>). Marzo y abril se recuperaron con fuerza. ¿Añado la comparativa con 2024? 📈</div>`,
 ];
 
+const BLOCKS_CHATGPT = [
+  `<div class="r-intro">Aquí tienes el <strong>dashboard de ventas mensuales</strong> de Nova Gestión para Q1 + Abr 2025:</div>`,
+  CHART_BLOCK,
+  `<div class="r-table">
+    <div class="r-thead">
+      <div class="r-th" style="flex:1.5;text-align:left">Mes</div>
+      <div class="r-th">Facturado</div>
+      <div class="r-th">MoM %</div>
+      <div class="r-th">vs Media</div>
+    </div>
+    <div class="r-tbody-row best-row">
+      <div class="r-td" style="flex:1.5">⭐ Enero</div>
+      <div class="r-td">14.883 €</div>
+      <div class="r-td" style="color:#9ca3af">—</div>
+      <div class="r-td up">+26,4%</div>
+    </div>
+    <div class="r-tbody-row">
+      <div class="r-td" style="flex:1.5">Febrero</div>
+      <div class="r-td">6.958 €</div>
+      <div class="r-td down">−53,3%</div>
+      <div class="r-td down">−40,9%</div>
+    </div>
+    <div class="r-tbody-row">
+      <div class="r-td" style="flex:1.5">Marzo</div>
+      <div class="r-td">12.826 €</div>
+      <div class="r-td up">+84,3%</div>
+      <div class="r-td up">+8,9%</div>
+    </div>
+    <div class="r-tbody-row">
+      <div class="r-td" style="flex:1.5">Abril</div>
+      <div class="r-td">12.403 €</div>
+      <div class="r-td down">−3,3%</div>
+      <div class="r-td up">+5,4%</div>
+    </div>
+    <div class="r-total-row">
+      <div class="r-total-td" style="flex:1.5">Total / Media</div>
+      <div class="r-total-td" style="color:#34d399">47.070 €</div>
+      <div class="r-total-td">—</div>
+      <div class="r-total-td">11.768 €</div>
+    </div>
+  </div>`,
+  `<div class="r-stats">
+    <div class="r-stat"><div class="r-stat-val">47.070 €</div><div class="r-stat-lbl">Total facturado</div></div>
+    <div class="r-stat"><div class="r-stat-val">11.768 €</div><div class="r-stat-lbl">Media mensual</div></div>
+    <div class="r-stat"><div class="r-stat-val">Ene 2025</div><div class="r-stat-lbl">Mejor mes</div></div>
+  </div>`,
+  `<div class="r-note">Febrero fue el más bajo (<strong>6.958 €</strong>), posiblemente por menos días hábiles. Marzo recuperó con <strong>+84%</strong> MoM. La tendencia de Q2 apunta estable. ¿Añado comparativa con 2024? 📈</div>`,
+];
+
+const BLOCKS = connector === 'chatgpt' ? BLOCKS_CHATGPT : BLOCKS_CLAUDE;
 const msgs    = document.getElementById('msgs');
 const overlay = document.getElementById('overlay');
+const artifact = document.getElementById('artifact');
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 async function runScene() {
   msgs.innerHTML = '';
   overlay.style.opacity = '0';
+  if (artifact) artifact.classList.remove('show');
+  // Reset art bars
+  ['vb1','vb2','vb3','vb4'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.height = '0';
+  });
   await sleep(800);
 
   const uRow = document.createElement('div');
@@ -140,8 +304,7 @@ async function runScene() {
   uRow.innerHTML = '<div class="avatar u">U</div><div class="bubble u" id="ub"></div>';
   msgs.appendChild(uRow);
   await sleep(20); uRow.classList.add('show');
-
-  const ub  = document.getElementById('ub');
+  const ub = document.getElementById('ub');
   const cur = document.createElement('span');
   cur.className = 'cursor';
   ub.appendChild(cur);
@@ -160,7 +323,7 @@ async function runScene() {
   await sleep(20); tRow.classList.add('show');
   await sleep(1900);
 
-  const tb   = document.getElementById('tb');
+  const tb = document.getElementById('tb');
   const tool = document.createElement('div');
   tool.className = 'tool-badge';
   tool.textContent = '🔌 Consultando Holded · ' + TOOL_USE;
@@ -174,6 +337,11 @@ async function runScene() {
   aRow.innerHTML = '<div class="avatar a">C</div><div class="bubble a" id="ab"></div>';
   msgs.appendChild(aRow);
   await sleep(20); aRow.classList.add('show');
+
+  if (connector === 'claude' && artifact) {
+    artifact.classList.add('show');
+    setTimeout(animateArtifact, 400);
+  }
 
   const ab = document.getElementById('ab');
   for (const html of BLOCKS) {
@@ -191,6 +359,14 @@ async function runScene() {
   overlay.style.opacity = '1';
   await sleep(900);
   runScene();
+}
+
+function animateArtifact() {
+  const bars = [{id:'vb1',pct:100},{id:'vb2',pct:47},{id:'vb3',pct:86},{id:'vb4',pct:83}];
+  bars.forEach((b, i) => setTimeout(() => {
+    const el = document.getElementById(b.id);
+    if (el) el.style.height = b.pct + '%';
+  }, i * 150));
 }
 
 runScene();

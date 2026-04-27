@@ -21,17 +21,17 @@
     .status-pill{display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.18);color:#34d399;font-size:11px;font-weight:600;padding:4px 11px;border-radius:100px}
     .status-dot{width:5px;height:5px;background:#34d399;border-radius:50%;animation:blink-dot 2s ease-in-out infinite}
     @keyframes blink-dot{0%,100%{opacity:1}50%{opacity:.4}}
-    .messages{flex:1;overflow-y:auto;padding:36px 28px;display:flex;flex-direction:column;gap:24px}
+    .messages{flex:1;overflow-y:auto;padding:32px 24px;display:flex;flex-direction:column;gap:24px}
     .messages::-webkit-scrollbar{width:4px}
     .messages::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:2px}
     .msg-row{display:flex;gap:12px;align-items:flex-start;opacity:0;transform:translateY(6px);transition:opacity .35s ease,transform .35s ease}
     .msg-row.show{opacity:1;transform:translateY(0)}
-    .msg-row.user{flex-direction:row-reverse;align-self:flex-end;max-width:640px}
-    .msg-row.assistant{max-width:720px}
+    .msg-row.user{flex-direction:row-reverse;align-self:flex-end;max-width:560px}
+    .msg-row.assistant{max-width:100%}
     .avatar{width:30px;height:30px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;margin-top:2px}
     .avatar.u{background:#1f2937;color:#9ca3af}
     .avatar.a{background:linear-gradient(135deg,#f97316,#dc2626);color:white}
-    .bubble{padding:12px 16px;font-size:14px;line-height:1.65}
+    .bubble{padding:12px 16px;font-size:14px;line-height:1.65;flex:1;min-width:0}
     .bubble.u{background:#1f2937;color:#e5e7eb;border-radius:14px 2px 14px 14px}
     .bubble.a{background:#1a1a24;color:#d1d5db;border-radius:2px 14px 14px 14px;border:1px solid rgba(255,255,255,0.04)}
     .cursor{display:inline-block;width:2px;height:1.1em;background:currentColor;margin-left:1px;vertical-align:text-bottom;animation:blink-cur .75s step-end infinite}
@@ -43,7 +43,6 @@
     @keyframes td-bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-8px)}}
     .tool-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.15);color:#f59e0b;font-size:11px;font-weight:600;padding:4px 10px;border-radius:6px;opacity:0;transform:translateY(4px);transition:opacity .3s ease,transform .3s ease;margin-top:8px}
     .tool-badge.show{opacity:1;transform:translateY(0)}
-    /* Response */
     .r-intro{color:#d1d5db;margin-bottom:14px;font-size:14px;line-height:1.65}
     .r-intro strong{color:#f3f4f6}
     .r-invoice-doc{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-left:3px solid #34d399;border-radius:10px;padding:14px 16px;margin-bottom:10px}
@@ -51,7 +50,7 @@
     .r-inv-from{font-size:11px;color:#6b7280}
     .r-inv-company{font-size:14px;font-weight:700;color:#f3f4f6;margin-top:2px}
     .r-inv-num{font-size:11px;color:#f59e0b;font-weight:600;background:rgba(245,158,11,0.08);padding:3px 8px;border-radius:4px}
-    .r-inv-to{font-size:11px;color:#6b7280;margin-bottom:6px}
+    .r-inv-to{font-size:11px;color:#6b7280;margin-bottom:4px}
     .r-inv-client-name{font-size:13px;font-weight:600;color:#f3f4f6}
     .r-line-items{margin:10px 0}
     .r-line{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;color:#d1d5db;border-bottom:1px solid rgba(255,255,255,0.04)}
@@ -67,6 +66,51 @@
     .r-badge.ready{background:rgba(52,211,153,0.1);color:#34d399;border:1px solid rgba(52,211,153,0.2)}
     .r-note{font-size:13px;line-height:1.65;color:#9ca3af;margin-top:4px}
     .r-note strong{color:#f3f4f6}
+    /* ChatGPT action cards */
+    .r-actions{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px}
+    .r-action-card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:12px;text-align:center;cursor:default}
+    .r-action-icon{font-size:20px;margin-bottom:5px}
+    .r-action-label{font-size:11px;font-weight:600;color:#d1d5db}
+    .r-action-sub{font-size:10px;color:#6b7280;margin-top:2px}
+    /* Layout */
+    body[data-connector="claude"] .chat{flex:0 0 56%;border-right:1px solid rgba(255,255,255,0.06)}
+    body[data-connector="claude"] .artifact-panel{display:flex}
+    body[data-connector="chatgpt"] .msg-row.user{max-width:680px}
+    .artifact-panel{display:none;flex:1;flex-direction:column;background:#ffffff;overflow:hidden;opacity:0;transition:opacity .6s ease}
+    .artifact-panel.show{opacity:1}
+    .artifact-header{padding:10px 16px;background:#f9fafb;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .artifact-title{font-size:12px;font-weight:600;color:#374151;display:flex;align-items:center;gap:6px}
+    .artifact-badge{font-size:10px;background:#f3f4f6;color:#6b7280;padding:2px 8px;border-radius:100px;font-weight:500;border:1px solid #e5e7eb}
+    .artifact-actions{display:flex;gap:6px}
+    .artifact-btn{width:26px;height:26px;border:1px solid #e5e7eb;border-radius:6px;background:white;cursor:default;display:flex;align-items:center;justify-content:center;font-size:13px;color:#6b7280}
+    .artifact-content{flex:1;overflow-y:auto;padding:20px 24px}
+    /* Art invoice (white-bg PDF style) */
+    .art-inv-doc{background:#ffffff;border:1px solid #e5e7eb;border-radius:10px;padding:20px;font-size:13px;color:#111827}
+    .art-inv-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:14px;border-bottom:2px solid #f3f4f6}
+    .art-inv-from-lbl{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em}
+    .art-inv-company{font-size:16px;font-weight:800;color:#111827;margin-top:4px}
+    .art-inv-company-sub{font-size:11px;color:#6b7280;margin-top:2px}
+    .art-inv-num-box{text-align:right}
+    .art-inv-num{font-size:11px;font-weight:600;background:#fff7ed;color:#ea580c;border:1px solid #fed7aa;padding:4px 10px;border-radius:6px;display:inline-block}
+    .art-inv-date{font-size:11px;color:#9ca3af;margin-top:6px}
+    .art-inv-to-section{margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid #f3f4f6}
+    .art-inv-to-lbl{font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+    .art-inv-to-name{font-size:14px;font-weight:700;color:#111827}
+    .art-inv-to-detail{font-size:11px;color:#6b7280;margin-top:2px}
+    .art-inv-items{margin-bottom:14px}
+    .art-inv-item-header{display:flex;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.06em;padding:0 0 6px;border-bottom:1px solid #f3f4f6}
+    .art-inv-item-row{display:flex;padding:8px 0;border-bottom:1px solid #f9fafb;align-items:center}
+    .art-inv-item-desc{flex:1;font-size:12px;color:#374151}
+    .art-inv-item-qty{width:50px;text-align:right;font-size:12px;color:#374151}
+    .art-inv-item-price{width:70px;text-align:right;font-size:12px;color:#374151}
+    .art-inv-item-total{width:80px;text-align:right;font-size:12px;font-weight:600;color:#111827}
+    .art-inv-totals{border-top:1px solid #e5e7eb;padding-top:10px}
+    .art-inv-subtotal-row{display:flex;justify-content:space-between;font-size:12px;color:#6b7280;padding:2px 0}
+    .art-inv-grand-row{display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:#111827;margin-top:8px;padding-top:8px;border-top:2px solid #111827}
+    .art-inv-badges{display:flex;gap:6px;margin-top:12px}
+    .art-inv-badge{font-size:11px;padding:3px 10px;border-radius:100px;font-weight:600}
+    .art-inv-badge.draft{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
+    .art-inv-badge.ready{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0}
     #overlay{position:fixed;inset:0;background:#0f0f14;opacity:0;pointer-events:none;z-index:999;transition:opacity .7s ease}
   </style>
 </head>
@@ -96,13 +140,83 @@
   <div class="messages" id="msgs"></div>
 </main>
 
+<section class="artifact-panel" id="artifact">
+  <div class="artifact-header">
+    <div class="artifact-title">
+      📄 Borrador · ABR-2025-012
+      <span class="artifact-badge">Listo para enviar</span>
+    </div>
+    <div class="artifact-actions">
+      <div class="artifact-btn">✏</div>
+      <div class="artifact-btn">↓</div>
+    </div>
+  </div>
+  <div class="artifact-content">
+    <div class="art-inv-doc">
+      <div class="art-inv-top">
+        <div>
+          <div class="art-inv-from-lbl">Emisor</div>
+          <div class="art-inv-company">Nova Gestión S.L.</div>
+          <div class="art-inv-company-sub">NIF B-28991234 · Madrid</div>
+        </div>
+        <div class="art-inv-num-box">
+          <div class="art-inv-num">BORRADOR · ABR-2025-012</div>
+          <div class="art-inv-date">Fecha: 25 abr 2025</div>
+        </div>
+      </div>
+      <div class="art-inv-to-section">
+        <div class="art-inv-to-lbl">Destinatario</div>
+        <div class="art-inv-to-name">Tech Solutions Madrid S.L.</div>
+        <div class="art-inv-to-detail">NIF B-28471293 · C/ Gran Vía 45, 28013 Madrid</div>
+      </div>
+      <div class="art-inv-items">
+        <div class="art-inv-item-header">
+          <div style="flex:1">Descripción</div>
+          <div style="width:50px;text-align:right">Uds</div>
+          <div style="width:70px;text-align:right">Precio</div>
+          <div style="width:80px;text-align:right">Total</div>
+        </div>
+        <div class="art-inv-item-row">
+          <div class="art-inv-item-desc">Servicios de desarrollo software · Abril 2025</div>
+          <div class="art-inv-item-qty">60 h</div>
+          <div class="art-inv-item-price">120,00 €</div>
+          <div class="art-inv-item-total">7.200,00 €</div>
+        </div>
+      </div>
+      <div class="art-inv-totals">
+        <div class="art-inv-subtotal-row"><span>Base imponible</span><span>7.200,00 €</span></div>
+        <div class="art-inv-subtotal-row"><span>IVA 21%</span><span>1.512,00 €</span></div>
+        <div class="art-inv-grand-row"><span>Total factura</span><span>8.712,00 €</span></div>
+      </div>
+      <div class="art-inv-badges">
+        <span class="art-inv-badge draft">Borrador</span>
+        <span class="art-inv-badge ready">✓ Listo para enviar</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 <script>
+const connector = new URLSearchParams(location.search).get('connector') || 'claude';
+document.body.dataset.connector = connector;
+
 const USER_MSG = "Crea un borrador de factura para Tech Solutions Madrid: 60 horas de desarrollo a 120 € la hora";
 const TOOL_USE  = "get_contact · create_invoice_draft";
 
-const BLOCKS = [
-  `<div class="r-intro">Borrador creado en Holded para <strong>Tech Solutions Madrid S.L.</strong> Revísalo antes de enviarlo:</div>`,
+const BLOCKS_CLAUDE = [
+  `<div class="r-intro">Borrador creado en Holded para <strong>Tech Solutions Madrid S.L.</strong> Puedes revisarlo en el panel lateral:</div>`,
+  `<div class="r-badge-row" style="margin-bottom:12px">
+    <span class="r-badge draft">BORRADOR · ABR-2025-012</span>
+    <span class="r-badge ready">✓ Listo para enviar</span>
+  </div>
+  <div class="r-subtotal" style="font-size:14px;padding:4px 0"><span>Base imponible</span><span>7.200,00 €</span></div>
+  <div class="r-subtotal" style="font-size:14px;padding:4px 0"><span>IVA 21%</span><span>1.512,00 €</span></div>
+  <div class="r-grand" style="margin-top:10px">Total factura &nbsp;·&nbsp; 8.712,00 €</div>`,
+  `<div class="r-note" style="margin-top:10px">El borrador está guardado en Holded. ¿Ajusto algún concepto, añado IRPF o lo envío directamente al cliente? ✅</div>`,
+];
 
+const BLOCKS_CHATGPT = [
+  `<div class="r-intro">Borrador creado en Holded para <strong>Tech Solutions Madrid S.L.</strong> Revísalo antes de enviarlo:</div>`,
   `<div class="r-invoice-doc">
     <div class="r-inv-header">
       <div>
@@ -115,14 +229,8 @@ const BLOCKS = [
     <div class="r-inv-client-name">Tech Solutions Madrid S.L.</div>
     <div class="r-inv-to" style="margin-top:4px">NIF B-28471293 · C/ Gran Vía 45, Madrid</div>
     <div class="r-line-items">
-      <div class="r-line">
-        <span class="r-line-desc">Servicios de desarrollo software · Abril 2025</span>
-        <span></span>
-      </div>
-      <div class="r-line">
-        <span class="r-line-desc">60 h × 120,00 €/h</span>
-        <span class="r-line-val">7.200,00 €</span>
-      </div>
+      <div class="r-line"><span class="r-line-desc">Servicios de desarrollo software · Abril 2025</span><span></span></div>
+      <div class="r-line"><span class="r-line-desc">60 h × 120,00 €/h</span><span class="r-line-val">7.200,00 €</span></div>
     </div>
     <div class="r-totals-block">
       <div class="r-subtotal"><span>Base imponible</span><span>7.200,00 €</span></div>
@@ -134,17 +242,36 @@ const BLOCKS = [
       <span class="r-badge ready">Listo para enviar</span>
     </div>
   </div>`,
-
-  `<div class="r-note">El borrador está guardado en Holded. Puedes revisarlo, añadir notas o enviarlo directamente desde el panel. ¿Quieres que ajuste algún concepto o añada más líneas? ✅</div>`,
+  `<div class="r-actions">
+    <div class="r-action-card">
+      <div class="r-action-icon">✉</div>
+      <div class="r-action-label">Enviar al cliente</div>
+      <div class="r-action-sub">Via email Holded</div>
+    </div>
+    <div class="r-action-card">
+      <div class="r-action-icon">📄</div>
+      <div class="r-action-label">Descargar PDF</div>
+      <div class="r-action-sub">Formato estándar</div>
+    </div>
+    <div class="r-action-card">
+      <div class="r-action-icon">✏</div>
+      <div class="r-action-label">Editar borrador</div>
+      <div class="r-action-sub">Añadir líneas</div>
+    </div>
+  </div>`,
+  `<div class="r-note">El borrador está guardado en Holded. ¿Añado IRPF, ajusto conceptos o lo envío directamente a <strong>Tech Solutions Madrid</strong>? ✅</div>`,
 ];
 
+const BLOCKS = connector === 'chatgpt' ? BLOCKS_CHATGPT : BLOCKS_CLAUDE;
 const msgs    = document.getElementById('msgs');
 const overlay = document.getElementById('overlay');
+const artifact = document.getElementById('artifact');
 const sleep   = ms => new Promise(r => setTimeout(r, ms));
 
 async function runScene() {
   msgs.innerHTML = '';
   overlay.style.opacity = '0';
+  if (artifact) artifact.classList.remove('show');
   await sleep(800);
 
   const uRow = document.createElement('div');
@@ -152,8 +279,7 @@ async function runScene() {
   uRow.innerHTML = '<div class="avatar u">U</div><div class="bubble u" id="ub"></div>';
   msgs.appendChild(uRow);
   await sleep(20); uRow.classList.add('show');
-
-  const ub  = document.getElementById('ub');
+  const ub = document.getElementById('ub');
   const cur = document.createElement('span');
   cur.className = 'cursor';
   ub.appendChild(cur);
@@ -172,7 +298,7 @@ async function runScene() {
   await sleep(20); tRow.classList.add('show');
   await sleep(2100);
 
-  const tb   = document.getElementById('tb');
+  const tb = document.getElementById('tb');
   const tool = document.createElement('div');
   tool.className = 'tool-badge';
   tool.textContent = '🔌 Consultando Holded · ' + TOOL_USE;
@@ -186,6 +312,10 @@ async function runScene() {
   aRow.innerHTML = '<div class="avatar a">C</div><div class="bubble a" id="ab"></div>';
   msgs.appendChild(aRow);
   await sleep(20); aRow.classList.add('show');
+
+  if (connector === 'claude' && artifact) {
+    artifact.classList.add('show');
+  }
 
   const ab = document.getElementById('ab');
   for (const html of BLOCKS) {
