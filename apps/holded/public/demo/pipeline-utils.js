@@ -12,6 +12,69 @@
   const once = params.get('once') === '1';
   const connector = params.get('connector') || 'claude';
 
+  // ── Light theme — inject CSS before first paint ──────────
+  const lightCSS = [
+    // Layout backgrounds
+    'body{background:#f5f7fa!important;color:#374151!important}',
+    '.sidebar{background:#ffffff!important;border-right:1px solid #e5e7eb!important}',
+    '.sb-top{border-bottom:1px solid #e5e7eb!important}',
+    '.chat{background:#f8f9fc!important}',
+    '.chat-header{background:#ffffff!important;border-bottom:1px solid #e5e7eb!important}',
+    '#overlay{background:#f5f7fa!important}',
+    // Sidebar text
+    '.sb-name{color:#111827!important}',
+    '.sb-sub,.sb-label,.ch-project{color:#9ca3af!important}',
+    '.sb-item{color:#6b7280!important}',
+    '.sb-item.active{background:rgba(0,0,0,0.05)!important;color:#111827!important}',
+    '.ch-model{color:#111827!important}',
+    // Scrollbar + thinking dots
+    '.messages::-webkit-scrollbar-thumb{background:rgba(0,0,0,.09)!important}',
+    '.td{background:#d1d5db!important}',
+    // Avatars + bubbles
+    '.avatar.u{background:#e2e8f0!important;color:#64748b!important}',
+    '.bubble.u{background:#2563eb!important;color:#ffffff!important}',
+    '.bubble.a{background:#ffffff!important;color:#374151!important;border:1px solid #e5e7eb!important}',
+    // Response text
+    '.r-intro{color:#374151!important}',
+    '.r-intro strong,.r-note strong{color:#111827!important}',
+    '.r-note{color:#6b7280!important}',
+    // Cards / containers (use border-color so amber/red left-borders stay)
+    '.r-card{background:#f9fafb!important;border-right-color:#e5e7eb!important;border-top-color:#e5e7eb!important;border-bottom-color:#e5e7eb!important}',
+    '.r-client,.r-invoice,.r-invoice-doc,.r-total,.r-chart,.r-stat,.r-kpi,.r-aging-card,.r-action-card,.r-insights,.r-margin-bar{background:#f9fafb!important;border-color:#e5e7eb!important}',
+    '.r-metric{background:#f9fafb!important;border-color:#e5e7eb!important;color:#374151!important}',
+    '.r-row{color:#6b7280!important;border-bottom-color:#f3f4f6!important}',
+    '.r-row-val{color:#374151!important}',
+    '.r-divider{border-top-color:#e5e7eb!important}',
+    // Tables
+    '.r-table{background:#f9fafb!important;border-color:#e5e7eb!important}',
+    '.r-thead{background:#f3f4f6!important;border-bottom-color:#e5e7eb!important}',
+    '.r-th{color:#9ca3af!important}',
+    '.r-tbody-row{border-bottom-color:#f3f4f6!important}',
+    '.r-td{color:#374151!important}',
+    '.r-td:first-child{color:#6b7280!important}',
+    '.r-total-row{background:#f3f4f6!important;border-top-color:#e5e7eb!important}',
+    '.r-total-td:not(.green):not(.red):not(.highlight){color:#111827!important}',
+    '.r-section-label{color:#9ca3af!important;border-top-color:#e5e7eb!important;background:#f9fafb!important}',
+    // Card text elements
+    '.r-client-name,.r-inv-client,.r-inv-company,.r-inv-client-name,.r-inv-amount,.r-stat-val,.r-total-val{color:#111827!important}',
+    '.r-client-meta,.r-inv-concept,.r-inv-from,.r-inv-to,.r-stat-lbl,.r-kpi-lbl,.r-aging-lbl,.r-action-sub,.r-bar-label,.r-bar-val{color:#9ca3af!important}',
+    '.r-inv-header{border-bottom-color:#e5e7eb!important}',
+    '.r-line{color:#374151!important;border-bottom-color:#f3f4f6!important}',
+    '.r-line-desc{color:#6b7280!important}',
+    '.r-totals-block{border-top-color:#e5e7eb!important}',
+    '.r-subtotal,.r-total-lbl{color:#6b7280!important}',
+    '.r-bar-track{background:rgba(0,0,0,0.07)!important}',
+    '.r-margin-label{color:#6b7280!important}',
+    '.r-margin-track{background:rgba(0,0,0,.06)!important}',
+    '.r-insights-title{color:#9ca3af!important}',
+    '.r-insight-row{color:#374151!important;border-bottom-color:#f3f4f6!important}',
+    '.r-action-label{color:#374151!important}',
+    '.r-inv-num{background:rgba(180,83,9,0.08)!important;color:#b45309!important}',
+  ].join('');
+  const _st = document.createElement('style');
+  _st.textContent = lightCSS;
+  (document.head || document.documentElement).appendChild(_st);
+
   // ── Connector themes ─────────────────────────────────────
   const THEMES = {
     claude: {
