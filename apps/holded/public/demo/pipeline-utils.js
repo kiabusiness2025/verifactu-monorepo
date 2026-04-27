@@ -17,9 +17,21 @@
   // On mobile (≤520px): claude shows ONLY the artifact panel full-height (no split);
   // chatgpt has no artifact panel so the chat fills full height.
   if (window.parent !== window) {
+    // Mobile: show only the user question as a slim strip; artifact fills the rest.
+    // The AI response is already visualised in the artifact panel so the text is redundant.
     const mobilePanelCSS =
       connector === 'claude'
-        ? '.chat{display:none!important}.artifact-panel{border-top:none!important}'
+        ? [
+            // Slim question strip: ~22% height
+            '.chat{flex:0 0 22%!important;overflow:hidden}',
+            // Hide chat header and AI response rows — keep only user question
+            '.chat-header{display:none!important}',
+            '.msg-row.assistant{display:none!important}',
+            // Compact the question bubble
+            '.messages{padding:10px 12px!important;gap:6px!important}',
+            '.avatar{width:22px!important;height:22px!important;font-size:10px!important}',
+            '.bubble.u{font-size:11px!important;padding:6px 10px!important;line-height:1.4!important}',
+          ].join('')
         : '.chat{flex:1!important;border-bottom:none!important}';
 
     const heroCSS = [
