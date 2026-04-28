@@ -254,7 +254,10 @@ export function IsaakWidget({ page = 'generic' }: Props) {
         imageCount: attachments.length || undefined,
       };
 
-      setMessages((prev) => prev.map((m) => ({ ...m, suggestions: undefined })).concat(userMsg));
+      setMessages((prev) => [
+        ...prev.map((m): Message => ({ ...m, suggestions: undefined })),
+        userMsg,
+      ]);
       setInput('');
       setError(null);
       setLoading(true);
