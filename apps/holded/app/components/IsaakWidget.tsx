@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 type Message = {
@@ -34,6 +35,19 @@ function fileToBase64(file: File): Promise<ImageAttachment> {
     reader.onerror = reject;
     reader.readAsDataURL(file);
   });
+}
+
+function IsaakAvatar({ size = 28, className = '' }: { size?: number; className?: string }) {
+  return (
+    <Image
+      src="/isaak-avatar.png"
+      alt="Isaak"
+      width={size}
+      height={size}
+      className={`rounded-full object-cover ${className}`}
+      priority
+    />
+  );
 }
 
 export function IsaakWidget({ page = 'generic' }: Props) {
@@ -168,20 +182,16 @@ export function IsaakWidget({ page = 'generic' }: Props) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label={open ? 'Cerrar Isaak' : 'Abrir Isaak — Asistente de Verifactu'}
-        className="isaak-gradient fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center rounded-full shadow-lg ring-1 ring-white/20 transition hover:scale-105 active:scale-95"
+        className="fixed bottom-6 right-6 z-50 flex h-14 w-14 items-center justify-center overflow-hidden rounded-full shadow-lg ring-2 ring-white transition hover:scale-105 active:scale-95"
       >
         {open ? (
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M4 4l12 12M16 4L4 16" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+          <div className="isaak-gradient flex h-full w-full items-center justify-center">
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+              <path d="M3 3l12 12M15 3L3 15" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
         ) : (
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M12 2C6.48 2 2 6.48 2 12c0 1.85.5 3.58 1.38 5.07L2 22l4.93-1.38A9.96 9.96 0 0012 22c5.52 0 10-4.48 10-10S17.52 2 12 2z"
-              fill="#fff"
-              opacity=".9"
-            />
-          </svg>
+          <IsaakAvatar size={56} />
         )}
         <span className="sr-only">Isaak</span>
       </button>
@@ -192,8 +202,8 @@ export function IsaakWidget({ page = 'generic' }: Props) {
           {/* Header */}
           <div className="isaak-gradient flex items-center justify-between px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/20 text-base font-bold text-white">
-                I
+              <div className="overflow-hidden rounded-full ring-2 ring-white/30">
+                <IsaakAvatar size={36} />
               </div>
               <div>
                 <div className="text-sm font-bold text-white">Isaak</div>
@@ -225,8 +235,8 @@ export function IsaakWidget({ page = 'generic' }: Props) {
                 className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
               >
                 {msg.role === 'assistant' ? (
-                  <div className="isaak-gradient mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
-                    I
+                  <div className="mt-0.5 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200">
+                    <IsaakAvatar size={28} />
                   </div>
                 ) : null}
                 <div
@@ -264,8 +274,8 @@ export function IsaakWidget({ page = 'generic' }: Props) {
 
             {loading ? (
               <div className="flex gap-2">
-                <div className="isaak-gradient mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white">
-                  I
+                <div className="mt-0.5 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-200">
+                  <IsaakAvatar size={28} />
                 </div>
                 <div className="flex items-center gap-1 rounded-2xl bg-slate-100 px-4 py-3">
                   <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-slate-400 [animation-delay:0ms]" />
@@ -276,12 +286,12 @@ export function IsaakWidget({ page = 'generic' }: Props) {
             ) : null}
 
             {showRegisterHint ? (
-              <div className="rounded-2xl border border-[#ff5460]/20 bg-[#ff5460]/5 p-3 text-xs leading-5 text-slate-600">
-                <span className="font-semibold text-[#ff5460]">Guarda tu historial.</span>{' '}
+              <div className="rounded-2xl border border-[#2361d8]/20 bg-[#2361d8]/5 p-3 text-xs leading-5 text-slate-600">
+                <span className="font-semibold text-[#2361d8]">Guarda tu historial.</span>{' '}
                 Regístrate en Verifactu Business y Isaak recordará esta y tus próximas consultas.{' '}
                 <a
                   href="/auth/holded"
-                  className="font-semibold text-[#ff5460] underline hover:no-underline"
+                  className="font-semibold text-[#2361d8] underline hover:no-underline"
                 >
                   Registrarse gratis →
                 </a>
