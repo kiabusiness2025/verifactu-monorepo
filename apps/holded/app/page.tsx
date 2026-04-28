@@ -1,322 +1,28 @@
 import {
-  AlertCircle,
   ArrowRight,
-  BarChart3,
-  BookOpen,
   Bot,
-  Building2,
   CheckCircle2,
   ChevronRight,
-  Clock3,
-  FileSearch,
-  FileText,
-  FolderKanban,
+  GraduationCap,
+  Layers,
   MessageCircleMore,
   PlayCircle,
-  Receipt,
-  Scale,
+  Settings2,
   ShieldCheck,
   Sparkles,
   Users,
+  Zap,
   type LucideIcon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import HoldedHeroVisual from './components/HoldedHeroVisual';
-import { HoldedConnectForm } from './components/HoldedConnectForm';
-import { buildAuthUrl } from './lib/holded-navigation';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
-  title: 'Holded | Entiende tu contabilidad y controla tu negocio con ChatGPT',
+  title: 'Holded con IA — Claude y ChatGPT | Verifactu Business',
   description:
-    'Conecta Holded con ChatGPT y entiende tu balance, IVA, modelos fiscales y cobros en lenguaje claro. Sin aprender el ERP, sin esperar al gestor.',
+    'Conecta Holded con Claude o ChatGPT. Consulta contabilidad, facturas e impuestos en lenguaje claro. Dos conectores en producción.',
 };
-
-type FeatureGroup = {
-  title: string;
-  badge: string;
-  badgeClassName: string;
-  icon: LucideIcon;
-  summary: string;
-  outcome: string;
-  capabilities: string[];
-};
-
-type RoleCard = {
-  title: string;
-  body: string;
-  bullets: string[];
-};
-
-type PainItem = {
-  problem: string;
-  solution: string;
-  icon: LucideIcon;
-};
-
-type UseCaseGroup = {
-  label: string;
-  icon: LucideIcon;
-  items: string[];
-};
-
-const pains: PainItem[] = [
-  {
-    problem: 'No sabes qué revisar primero',
-    solution:
-      'Señala las facturas vencidas, cobros en riesgo y gastos que necesitan atención, ordenados por prioridad.',
-    icon: AlertCircle,
-  },
-  {
-    problem: 'Dependes del gestor para entender los números',
-    solution:
-      'Obtén respuestas claras sobre IVA, gastos y contabilidad sin esperar a la próxima reunión.',
-    icon: Users,
-  },
-  {
-    problem: 'Tardas demasiado en entender cobros e IVA',
-    solution:
-      'Consulta cualquier dato de Holded en lenguaje normal, sin navegar entre pantallas ni entender el ERP.',
-    icon: Clock3,
-  },
-  {
-    problem: 'Los datos están en Holded pero no los interpretas',
-    solution:
-      'Transforma el balance, el diario y los registros de tu cuenta en respuestas útiles con criterio de negocio.',
-    icon: BarChart3,
-  },
-];
-
-const useCaseGroups: UseCaseGroup[] = [
-  {
-    label: 'Entiende tu negocio',
-    icon: BarChart3,
-    items: [
-      'Ver qué facturas deberías revisar hoy y detectar cobros en riesgo.',
-      'Revisar gastos por proveedor, categoría o periodo.',
-      'Consultar la revisión de tesorería y saldos disponibles en Holded.',
-      'Identificar clientes con seguimiento o cobro pendiente.',
-    ],
-  },
-  {
-    label: 'Entiende tu contabilidad',
-    icon: BookOpen,
-    items: [
-      'Leer el diario contable en lenguaje claro, sin tecnicismos.',
-      'Interpretar el balance y la cuenta de resultados del ejercicio.',
-      'Revisar el cierre trimestral antes de la reunión con el gestor.',
-      'Entender qué hay detrás de los asientos de IVA o amortización.',
-    ],
-  },
-  {
-    label: 'Revisa impuestos y documentación',
-    icon: Receipt,
-    items: [
-      'Entender el IVA del trimestre y los datos detrás del modelo 303.',
-      'Revisar facturas y gastos que afectan al modelo 349, 130 o 390.',
-      'Preparar el contexto para el Impuesto sobre Sociedades.',
-      'Preparar borradores de factura, siempre con tu confirmación.',
-    ],
-  },
-];
-
-const metrics = [
-  {
-    icon: ShieldCheck,
-    value: 'Sin cambios',
-    label: 'No modifica tu cuenta de Holded. Solo genera borradores con tu confirmación explícita.',
-  },
-  {
-    icon: BarChart3,
-    value: 'Decide hoy',
-    label: 'Detecta qué factura cobrar, qué gasto revisar y qué llevar al gestor.',
-  },
-  {
-    icon: MessageCircleMore,
-    value: 'Lenguaje claro',
-    label: 'Respuestas en español, sin jerga contable ni tecnicismos.',
-  },
-  {
-    icon: Sparkles,
-    value: '0 EUR',
-    label: 'Acceso gratuito para usuarios de ChatGPT.',
-  },
-];
-
-const featureGroups: FeatureGroup[] = [
-  {
-    title: 'Facturación',
-    badge: 'Consulta y borradores',
-    badgeClassName: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    icon: FileText,
-    summary:
-      'Consulta lo emitido, detecta cobros en riesgo y prepara borradores sin salir de la conversación.',
-    outcome: 'Ideal para saber qué revisar hoy y reducir el tiempo entre decisión y emisión.',
-    capabilities: [
-      'Ver facturas emitidas por cliente, fecha, estado o importe.',
-      'Detectar vencidas, pendientes de cobro y facturas con seguimiento pendiente.',
-      'Entender una factura concreta con IVA, vencimiento y contexto de cliente.',
-      'Preparar borradores de factura nuevos, siempre con confirmación explícita.',
-    ],
-  },
-  {
-    title: 'Gastos y compras',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: Building2,
-    summary: 'Revisa proveedores, gastos e IVA soportado para entender dónde se va el margen.',
-    outcome: 'Ayuda a controlar el gasto, pagos pendientes y estructura de proveedores.',
-    capabilities: [
-      'Consultar facturas de proveedor y gastos por categoría o cuenta.',
-      'Revisar pagos pendientes y analizar gasto por periodo o proveedor.',
-      'Entender el IVA soportado y deducible en términos claros.',
-    ],
-  },
-  {
-    title: 'Contabilidad',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: BookOpen,
-    summary:
-      'Interpreta balance, cuenta de resultados, diario contable y asientos para convertir los números en criterio de negocio.',
-    outcome:
-      'Para dirección, finanzas o quien trabaja con gestor y quiere entender qué hay detrás de cada movimiento.',
-    capabilities: [
-      'Consultar el balance de situación y entender activo, pasivo y patrimonio en lenguaje claro.',
-      'Revisar la cuenta de resultados (PyG) y el resultado del ejercicio en el periodo que necesites.',
-      'Leer el diario contable y entender los asientos sin ser contable.',
-      'Revisar IVA repercutido y soportado, cuotas pendientes de liquidar.',
-      'Consultar la revisión de tesorería: cuentas y saldos financieros registrados en Holded.',
-      'Preparar contexto para el cierre trimestral o el Impuesto sobre Sociedades.',
-    ],
-  },
-  {
-    title: 'Impuestos y documentación',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-sky-100 bg-sky-50 text-sky-700',
-    icon: Receipt,
-    summary:
-      'Revisa los datos que alimentan tus modelos fiscales y llega con contexto a cada presentación.',
-    outcome:
-      'Útil para preparar la información antes de trabajar con tu gestor en los modelos fiscales trimestrales o anuales.',
-    capabilities: [
-      'Revisar los datos de IVA que alimentan el modelo 303 de cada trimestre.',
-      'Consultar operaciones intracomunitarias para el modelo 349.',
-      'Entender qué hay detrás del modelo 130 (pagos fraccionados IRPF).',
-      'Preparar el contexto para los modelos 390, 111, 180 o 190.',
-      'Revisar el resultado contable como base para el Impuesto sobre Sociedades.',
-      'Detectar facturas o asientos que pueden afectar a la declaración.',
-    ],
-  },
-  {
-    title: 'Clientes y CRM',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: Users,
-    summary:
-      'Cruza clientes, actividad comercial y facturación para saber a quién llamar o revisar primero.',
-    outcome: 'Muy útil para seguimiento de cobros y gestión comercial.',
-    capabilities: [
-      'Ver clientes y contactos por nombre, NIF o actividad reciente.',
-      'Identificar cuentas con más riesgo de cobro o seguimiento pendiente.',
-      'Relacionar contactos con facturas pendientes y oportunidades.',
-    ],
-  },
-  {
-    title: 'Proyectos y tareas',
-    badge: 'Solo consulta',
-    badgeClassName: 'border-slate-200 bg-slate-100 text-slate-700',
-    icon: FolderKanban,
-    summary: 'Lee carga operativa, tareas pendientes y proyectos activos con vista priorizada.',
-    outcome: 'Ayuda a coordinar operaciones sin perder el hilo financiero.',
-    capabilities: [
-      'Ver proyectos activos, estado, tareas y prioridades.',
-      'Cruzar proyectos con clientes y facturación asociada.',
-      'Detectar bloqueos y trabajo en curso con más contexto.',
-    ],
-  },
-];
-
-const roleCards: RoleCard[] = [
-  {
-    title: 'Si llevas la gestión por tu cuenta',
-    body: 'Resuelve dudas sobre facturas, cobros, IVA y gastos sin depender de entender la contabilidad como un técnico.',
-    bullets: [
-      'Qué facturas deberías cobrar esta semana.',
-      'Cómo va el trimestre en gastos e ingresos.',
-      'Qué borradores tienes listos para revisar.',
-    ],
-  },
-  {
-    title: 'Si trabajas con gestor o asesoría',
-    body: 'Llega con contexto a cada reunión. Detecta incidencias antes y controla mejor qué revisar sin depender de informes.',
-    bullets: [
-      'Detectar puntos de revisión antes del cierre.',
-      'Entender qué hay detrás de cada movimiento.',
-      'Preparar preguntas concretas para tu gestor.',
-    ],
-  },
-  {
-    title: 'Si diriges una pyme',
-    body: 'Ten una visión clara de ventas, cobros, gastos e IVA sin pedir exportaciones cada vez.',
-    bullets: [
-      'Lectura rápida de cobros y situación de caja.',
-      'Qué clientes concentran más riesgo.',
-      'Cómo va el negocio sin leer un informe técnico.',
-    ],
-  },
-];
-
-const journeySteps = [
-  {
-    step: '01',
-    title: 'Te conectas en menos de 1 minuto',
-    body: 'Solo necesitas tu correo y la API key de Holded. El alta es guiada y valida la conexión antes de que entres.',
-  },
-  {
-    step: '02',
-    title: 'Consultas en lenguaje claro',
-    body: 'Pregunta sobre facturas, contabilidad, IVA, gastos o proyectos y obtén respuestas directas con contexto de negocio.',
-  },
-  {
-    step: '03',
-    title: 'Revisas antes de actuar',
-    body: 'Si necesitas preparar una factura, el sistema te muestra el borrador para que lo revises y confirmes antes de guardar nada.',
-  },
-];
-
-const faqItems = [
-  {
-    question: '¿Qué puedo consultar exactamente?',
-    answer:
-      'Facturas emitidas, gastos, contabilidad (balance, cuenta de resultados, diario), clientes y proyectos. También puedes revisar el IVA del trimestre, entender qué datos afectan a los modelos fiscales (303, 349, 130, 390, 111, 180, 190...) y preparar el contexto para el cierre o el Impuesto sobre Sociedades. Todo en lenguaje claro, sin conocer el ERP.',
-  },
-  {
-    question: '¿Solo puedo ver facturas o también la contabilidad?',
-    answer:
-      'También la contabilidad. Puedes consultar el balance de situación, la cuenta de resultados (PyG), el diario contable y los saldos de cuentas. No necesitas ser contable: lo explica en términos claros con contexto de negocio.',
-  },
-  {
-    question: '¿Puede ayudarme con los modelos fiscales como el 303 o el IS?',
-    answer:
-      'Te ayuda a entender los datos que alimentan esos modelos y a detectar qué conviene revisar antes de presentarlos. No presenta modelos fiscales automáticamente ni sustituye la validación de tu gestor, pero te permite llegar con más contexto y menos dudas a cada presentación.',
-  },
-  {
-    question: '¿Puedo usarlo para contrastar archivos o extractos externos?',
-    answer:
-      'Sí. ChatGPT puede analizar archivos que tú subas (Excel, CSV, PDFs de extractos) y contrastarlos con los datos de Holded. Es útil para reconciliaciones, revisiones de tesorería o preparar información para tu gestor.',
-  },
-  {
-    question: '¿Puede modificar datos en mi cuenta de Holded?',
-    answer:
-      'No realiza cambios en tu cuenta de Holded. El único cambio posible es generar borradores de facturas emitidas, y siempre con tu confirmación explícita antes de crear nada.',
-  },
-  {
-    question: '¿Sustituye a mi gestor o asesoría?',
-    answer:
-      'No, y no está pensado para eso. Te ayuda a entender mejor tus números para que las conversaciones con tu gestor sean más útiles. La validación profesional de declaraciones fiscales, cierres y auditorías sigue siendo responsabilidad del gestor.',
-  },
-];
 
 function SectionPill({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
   return (
@@ -327,626 +33,441 @@ function SectionPill({ icon: Icon, children }: { icon: LucideIcon; children: Rea
   );
 }
 
-function MetricCard({
-  icon: Icon,
-  value,
-  label,
-}: {
-  icon: LucideIcon;
-  value: string;
-  label: string;
-}) {
-  return (
-    <article className="rounded-[1.75rem] border border-slate-200 bg-white p-5 shadow-[0_20px_55px_-42px_rgba(15,23,42,0.55)]">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff5460]/10">
-        <Icon className="h-5 w-5 text-[#ff5460]" />
-      </div>
-      <div className="mt-4 text-2xl font-bold tracking-tight text-slate-950">{value}</div>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{label}</p>
-    </article>
-  );
-}
+const connectorFeatures = [
+  'Contabilidad, balance y PyG',
+  'Facturas, gastos e IVA',
+  'Clientes y proyectos',
+  'Borradores de factura con tu confirmación',
+];
 
-function PainCard({ item }: { item: PainItem }) {
-  const Icon = item.icon;
-  return (
-    <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.35)]">
-      <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100">
-        <Icon className="h-5 w-5 text-slate-500" />
-      </div>
-      <h3 className="mt-4 text-base font-bold tracking-tight text-slate-900">{item.problem}</h3>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{item.solution}</p>
-    </article>
-  );
-}
+const whyItems = [
+  {
+    icon: ShieldCheck,
+    title: 'Solo lectura',
+    desc: 'No modifica nada en Holded. El único cambio posible es crear borradores de factura, siempre con tu confirmación explícita antes.',
+  },
+  {
+    icon: Zap,
+    title: 'Especialistas en Holded',
+    desc: 'Diseñados específicamente para Holded. Conocemos el ERP, sus módulos y lo que realmente necesitan sus usuarios.',
+  },
+  {
+    icon: Users,
+    title: 'Soporte real incluido',
+    desc: 'Isaak te ayuda al instante en cualquier página. Y si necesitas soporte humano, el equipo de Verifactu Business está disponible.',
+  },
+];
 
-function FeatureAccordion({
-  feature,
-  defaultOpen = false,
-}: {
-  feature: FeatureGroup;
-  defaultOpen?: boolean;
-}) {
-  const Icon = feature.icon;
-
-  return (
-    <details
-      className="holded-accordion group rounded-[1.85rem] border border-slate-200 bg-white p-6 shadow-[0_20px_55px_-42px_rgba(15,23,42,0.45)]"
-      open={defaultOpen}
-    >
-      <summary className="flex cursor-pointer list-none items-start justify-between gap-4">
-        <div className="flex gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#ff5460]/10">
-            <Icon className="h-5 w-5 text-[#ff5460]" />
-          </div>
-          <div>
-            <div
-              className={`inline-flex items-center rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ${feature.badgeClassName}`}
-            >
-              {feature.badge}
-            </div>
-            <h3 className="mt-3 text-xl font-bold tracking-tight text-slate-950">
-              {feature.title}
-            </h3>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">{feature.summary}</p>
-          </div>
-        </div>
-
-        <span className="holded-accordion-chevron mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition group-hover:border-[#ff5460]/30 group-hover:text-[#ff5460]">
-          <ChevronRight className="h-4 w-4" />
-        </span>
-      </summary>
-
-      <div className="mt-5 border-t border-slate-100 pt-5">
-        <ul className="space-y-2.5">
-          {feature.capabilities.map((capability) => (
-            <li
-              key={capability}
-              className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-            >
-              <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-500" />
-              {capability}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-4 text-sm italic text-slate-500">{feature.outcome}</p>
-      </div>
-    </details>
-  );
-}
-
-function RolePanel({ title, body, bullets }: RoleCard) {
-  return (
-    <article className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.5)]">
-      <h3 className="text-lg font-bold tracking-tight text-slate-950">{title}</h3>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{body}</p>
-      <ul className="mt-5 space-y-2.5">
-        {bullets.map((bullet) => (
-          <li key={bullet} className="flex items-start gap-3 text-sm leading-6 text-slate-700">
-            <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-[#ff5460]" />
-            {bullet}
-          </li>
-        ))}
-      </ul>
-    </article>
-  );
-}
+const serviceItems = [
+  {
+    icon: Settings2,
+    title: 'Onboarding de Holded',
+    desc: 'Configuración guiada de tu cuenta de Holded. Empiezas a usarlo bien desde el primer día, sin atascos.',
+  },
+  {
+    icon: Layers,
+    title: 'Migración de datos',
+    desc: 'Migración de ejercicios fiscales completos, inventario y productos desde tu software actual a Holded.',
+  },
+  {
+    icon: GraduationCap,
+    title: 'Formación personalizada',
+    desc: 'Sesiones adaptadas a tu equipo y al uso real que hacéis de Holded en tu empresa.',
+  },
+];
 
 export default function HoldedHomePage() {
   return (
     <main className="page-enter min-h-screen text-slate-900">
-      {/* ── Hero ── */}
-      <section id="solucion" className="relative overflow-hidden pb-16 pt-12 sm:pt-16">
+      {/* ── HERO ── */}
+      <section className="relative overflow-hidden pb-16 pt-12 sm:pt-20">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-[-8rem] top-[-4rem] h-[20rem] w-[20rem] rounded-full bg-[#ff5460]/10 blur-3xl" />
-          <div className="absolute right-[-6rem] top-[8rem] h-[18rem] w-[18rem] rounded-full bg-sky-200/35 blur-3xl" />
-          <div className="absolute bottom-[-8rem] left-[24%] h-[16rem] w-[16rem] rounded-full bg-amber-200/30 blur-3xl" />
+          <div className="absolute left-[-8rem] top-[-4rem] h-[22rem] w-[22rem] rounded-full bg-[#ff5460]/8 blur-3xl" />
+          <div className="absolute right-[-6rem] top-[6rem] h-[18rem] w-[18rem] rounded-full bg-sky-200/30 blur-3xl" />
+          <div className="absolute bottom-[-6rem] left-[30%] h-[16rem] w-[16rem] rounded-full bg-violet-200/22 blur-3xl" />
         </div>
 
         <div className="relative mx-auto max-w-6xl px-4">
-          <div className="grid gap-12 lg:grid-cols-[1.02fr_0.98fr] lg:items-center">
+          <div className="grid gap-12 lg:grid-cols-[1fr_0.92fr] lg:items-center">
+            {/* Left: copy */}
             <div>
-              <SectionPill icon={Sparkles}>Conector Holded para ChatGPT</SectionPill>
+              <SectionPill icon={Sparkles}>Verifactu Business</SectionPill>
 
-              <h1 className="mt-6 max-w-3xl text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-[3.5rem] sm:leading-[1.0]">
-                Controla tu facturación y contabilidad sin complicarte.
+              <h1 className="mt-6 max-w-2xl text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-[3.25rem] sm:leading-[1.05]">
+                Conecta Holded con la IA que ya usas.
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-                Habla con tus datos de Holded en lenguaje claro. Entiende cobros, contabilidad e
-                impuestos sin aprender el ERP ni esperar al gestor.
+                Dos conectores en producción — Claude MCP y ChatGPT Plugin. Consulta tu
+                contabilidad, facturas e impuestos en lenguaje claro, sin aprender el ERP.
               </p>
 
-              <HoldedConnectForm />
-
-              <div className="mt-6 flex items-start gap-2.5 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm leading-6 text-slate-700 backdrop-blur">
-                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                <span>
-                  No realiza cambios en tu cuenta de Holded. Solo puede generar borradores de
-                  facturas emitidas, y siempre con tu confirmación explícita.
-                </span>
-              </div>
-
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
-                  href={buildAuthUrl('holded_home_existing')}
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white/85 px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-white"
+                  href="/conectores/claude"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(35,97,216,0.55)] transition hover:bg-[#1f55c0]"
                 >
-                  Ya tengo acceso
+                  Conector para Claude
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/contacto"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-200 bg-white/85 px-5 py-2.5 text-sm font-medium text-slate-600 transition hover:bg-white"
+                  href="/conectores/chatgpt"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#10a37f] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(16,163,127,0.45)] transition hover:bg-[#0d9270]"
                 >
-                  Hablar con un especialista
+                  Conector para ChatGPT
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
+
+              <p className="mt-5 flex items-center gap-2 text-sm text-slate-500">
+                <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
+                Solo lectura — no modifica tu cuenta de Holded
+              </p>
             </div>
 
+            {/* Right: dual connector status card */}
             <div className="lg:pl-4">
-              <HoldedHeroVisual />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Métricas ── */}
-      <section className="relative border-y border-slate-200/80 bg-white/80 py-8 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {metrics.map((metric) => (
-              <MetricCard key={metric.value} {...metric} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Problemas reales ── */}
-      <section className="py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-2xl">
-            <SectionPill icon={AlertCircle}>Problemas que resuelve</SectionPill>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              Si usas Holded, probablemente ya has vivido esto.
-            </h2>
-            <p className="mt-4 text-base leading-8 text-slate-600">
-              El problema no es no tener datos. Es tardar demasiado en entender qué mirar, qué
-              significa y qué conviene hacer ahora.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {pains.map((item) => (
-              <PainCard key={item.problem} item={item} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Posicionamiento ── */}
-      <section className="border-y border-slate-200/80 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_55%,#f6fbff_100%)] py-14 sm:py-18">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-3xl">
-            <SectionPill icon={Scale}>Más que acceso a Holded</SectionPill>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              Una forma diferente de entender tu contabilidad e impuestos.
-            </h2>
-            <p className="mt-5 text-base leading-8 text-slate-600">
-              No es solo consultar datos del ERP. Es poder <strong>interpretar tu balance</strong>,
-              revisar la cuenta de resultados, leer el diario contable en lenguaje claro, y entender
-              qué datos de Holded alimentan tus modelos fiscales trimestrales.
-            </p>
-            <p className="mt-4 text-base leading-8 text-slate-600">
-              Antes de decidir, antes de hablar con el gestor, antes de presentar nada: revisa y
-              entiende qué hay detrás de tus números. Sin tecnicismos, sin esperas.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-4 sm:grid-cols-3">
-            {[
-              {
-                icon: BookOpen,
-                title: 'Contabilidad',
-                desc: 'Balance, PyG, diario, cierre trimestral e IS en lenguaje claro.',
-              },
-              {
-                icon: Receipt,
-                title: 'Modelos fiscales',
-                desc: 'Datos para el 303, 349, 130, 390, 111, 180 y 190 con contexto.',
-              },
-              {
-                icon: FileSearch,
-                title: 'Archivos externos',
-                desc: 'Contrasta Excel, extractos o documentos con tus datos de Holded.',
-              },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div
-                key={title}
-                className="flex items-start gap-3 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#ff5460]/10">
-                  <Icon className="h-4 w-4 text-[#ff5460]" />
+              <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_32px_80px_-40px_rgba(15,23,42,0.18)]">
+                {/* Header */}
+                <div className="mb-4 flex items-center gap-2">
+                  <Image
+                    src="/brand/holded/holded-diamond-logo.png"
+                    alt="Holded"
+                    width={18}
+                    height={18}
+                    className="h-[18px] w-[18px]"
+                  />
+                  <span className="text-xs font-semibold text-slate-600">Holded conectado con</span>
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">{title}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-600">{desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
 
-      {/* ── Qué podrás hacer ── */}
-      <section className="bg-white py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="grid gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-            <div>
-              <SectionPill icon={Sparkles}>Qué podrás hacer</SectionPill>
-              <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.4rem]">
-                Tus datos en Holded, por fin entendibles.
-              </h2>
-              <p className="mt-5 text-base leading-8 text-slate-600">
-                No tienes que aprender a usar el ERP. Solo pregunta, y obtén la respuesta que
-                necesitas para decidir con más criterio.
-              </p>
-
-              <div className="mt-8 space-y-3">
-                {[
-                  'Menos saltos entre menús, filtros y pantallas.',
-                  'Menos dependencia de explicaciones técnicas para entender tus números.',
-                  'Más velocidad para detectar cobros, gastos y focos de revisión.',
-                ].map((item) => (
-                  <div
-                    key={item}
-                    className="flex items-start gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/60 px-4 py-3.5 text-sm leading-6 text-slate-700"
-                  >
-                    <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-[#ff5460]" />
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] p-7 shadow-[0_28px_70px_-52px_rgba(255,84,96,0.45)] sm:p-8">
-              <h3 className="text-lg font-bold tracking-tight text-slate-950">
-                Consultas que puedes hacer hoy
-              </h3>
-
-              <div className="mt-5 space-y-5">
-                {useCaseGroups.map((group) => {
-                  const Icon = group.icon;
-                  return (
-                    <div key={group.label}>
-                      <div className="mb-2.5 flex items-center gap-2">
-                        <Icon className="h-3.5 w-3.5 text-[#ff5460]" />
-                        <span className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                          {group.label}
-                        </span>
+                {/* Claude */}
+                <div className="rounded-[1.5rem] border border-[#2361d8]/20 bg-[#2361d8]/[0.05] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2361d8]">
+                        <span className="text-sm font-bold text-white">C</span>
                       </div>
-                      <ul className="space-y-2">
-                        {group.items.map((item) => (
-                          <li
-                            key={item}
-                            className="flex items-start gap-3 text-sm leading-6 text-slate-700"
-                          >
-                            <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-emerald-500" />
-                            {item}
-                          </li>
-                        ))}
-                      </ul>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">Claude</p>
+                        <p className="text-[11px] text-slate-500">MCP · OAuth 2.0</p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-6 flex items-start gap-3 rounded-[1.35rem] border border-slate-200 bg-slate-50/70 px-4 py-3.5">
-                <FileSearch className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-                <div>
-                  <p className="text-xs font-semibold text-slate-700">
-                    También puedes subir archivos
-                  </p>
-                  <p className="mt-0.5 text-xs leading-5 text-slate-500">
-                    Excel, extractos bancarios o documentos externos. ChatGPT los analiza y los
-                    contrasta con tus datos de Holded.
-                  </p>
+                    <span className="flex items-center gap-1.5 rounded-full border border-[#2361d8]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#2361d8]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#2361d8]" />
+                      Activo
+                    </span>
+                  </div>
+                  <ul className="mt-3 space-y-1.5">
+                    {['Contabilidad y balance', 'Facturas e IVA', 'Clientes y proyectos'].map(
+                      (f) => (
+                        <li key={f} className="flex items-center gap-2 text-[11px] text-slate-600">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#2361d8]" />
+                          {f}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                  <Link
+                    href="/conectores/claude"
+                    className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#2361d8] hover:underline"
+                  >
+                    Ver conector <ChevronRight className="h-3 w-3" />
+                  </Link>
                 </div>
-              </div>
 
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/demo"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
-                >
-                  Ver demo
-                  <PlayCircle className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/acceso"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                >
-                  Solicitar acceso anticipado
-                </Link>
+                <div className="my-3 flex items-center gap-3 text-[11px] text-slate-400">
+                  <div className="h-px flex-1 bg-slate-100" />o también
+                  <div className="h-px flex-1 bg-slate-100" />
+                </div>
+
+                {/* ChatGPT */}
+                <div className="rounded-[1.5rem] border border-[#10a37f]/20 bg-[#10a37f]/[0.05] p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#10a37f]">
+                        <span className="text-sm font-bold text-white">G</span>
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">ChatGPT</p>
+                        <p className="text-[11px] text-slate-500">GPT Action · API key</p>
+                      </div>
+                    </div>
+                    <span className="flex items-center gap-1.5 rounded-full border border-[#10a37f]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#10a37f]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#10a37f]" />
+                      Activo
+                    </span>
+                  </div>
+                  <ul className="mt-3 space-y-1.5">
+                    {['Contabilidad y balance', 'Facturas e IVA', 'Análisis de archivos'].map(
+                      (f) => (
+                        <li key={f} className="flex items-center gap-2 text-[11px] text-slate-600">
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#10a37f]" />
+                          {f}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                  <Link
+                    href="/conectores/chatgpt"
+                    className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#10a37f] hover:underline"
+                  >
+                    Ver conector <ChevronRight className="h-3 w-3" />
+                  </Link>
+                </div>
+
+                <p className="mt-4 text-center text-[10px] text-slate-400">
+                  Verifactu Business — No somos Holded
+                </p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ── Capacidades por área ── */}
-      <section id="capacidades" className="py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-3xl">
-            <SectionPill icon={FileText}>Capacidades por área</SectionPill>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.7rem]">
-              Lo que puedes controlar desde hoy.
-            </h2>
-            <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
-              Descripción honesta de qué puedes consultar en cada área y qué te ayuda a decidir.
-            </p>
-          </div>
-
-          <div className="mt-10 space-y-4">
-            {featureGroups.map((feature, index) => (
-              <FeatureAccordion key={feature.title} feature={feature} defaultOpen={index === 0} />
-            ))}
-          </div>
-
-          <div className="mt-8 flex items-start gap-2.5 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm leading-6 text-slate-600 shadow-sm">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-            <span>
-              El alcance cubre facturación, gastos, contabilidad, impuestos, clientes y proyectos.
-              La revisión de tesorería está disponible para consultar cuentas y saldos registrados
-              en Holded.
-            </span>
-          </div>
-
-          <div className="mt-4 flex items-start gap-2.5 rounded-2xl border border-amber-100 bg-amber-50/70 px-5 py-4 text-sm leading-6 text-slate-600">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
-            <span>
-              La herramienta ayuda a entender, revisar y preparar mejor la información contable y
-              fiscal, pero no sustituye la validación profesional cuando corresponda.
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Para quién encaja ── */}
-      <section className="bg-white py-16 sm:py-20">
+      {/* ── DOS CONECTORES ── */}
+      <section className="border-y border-slate-200/80 bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="max-w-2xl">
-            <SectionPill icon={Users}>Para quién encaja</SectionPill>
+            <SectionPill icon={Bot}>Dos conectores</SectionPill>
             <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              No hace falta saber de contabilidad para sacarle partido.
-            </h2>
-            <p className="mt-5 text-base leading-8 text-slate-600">
-              Está pensado para quien trabaja con Holded pero quiere entender mejor sus números, no
-              para quien quiere convertirse en experto del ERP.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-5 lg:grid-cols-3">
-            {roleCards.map((role) => (
-              <RolePanel key={role.title} {...role} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Dos plataformas ── */}
-      <section className="border-y border-slate-200/80 bg-white py-14 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-2xl">
-            <SectionPill icon={Bot}>Dos plataformas, un conector</SectionPill>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              Conecta Holded desde ChatGPT o desde Claude.
+              Elige la plataforma con la que ya trabajas.
             </h2>
             <p className="mt-4 text-base leading-8 text-slate-600">
-              El conector está disponible para las dos principales plataformas de IA. Cada una usa
-              su protocolo nativo: GPT Action para ChatGPT, MCP para Claude.
+              Ambos conectores dan acceso a las mismas capacidades de Holded. La diferencia está en
+              el protocolo y el flujo de conexión.
             </p>
           </div>
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
-            <div className="flex flex-col rounded-[2rem] border border-emerald-200 bg-[linear-gradient(180deg,#f0fdf4_0%,#ffffff_100%)] p-7 shadow-sm">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            {/* Claude */}
+            <div className="flex flex-col rounded-[2rem] border border-[#2361d8]/20 bg-[linear-gradient(160deg,#eef2ff_0%,#ffffff_100%)] p-7 shadow-sm">
+              <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#2361d8]/25 bg-white px-3 py-1 text-xs font-semibold text-[#2361d8]">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                Activo en producción
+                En producción
               </div>
               <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
-                Conector Holded para ChatGPT
+                Holded para Claude
               </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Conéctate mediante GPT Action (OpenAI) introduciendo tu API key de Holded.
-                Disponible desde ChatGPT Plus y Team.
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Conéctate mediante MCP (Model Context Protocol) de Anthropic. Usa OAuth 2.0 — sin
+                introducir API keys en texto.
               </p>
               <ul className="mt-5 space-y-2">
                 {[
-                  'Facturación, gastos, contactos y proyectos.',
-                  'Balance, IVA y contabilidad en lenguaje claro.',
-                  'Borradores de factura con tu confirmación.',
+                  'Claude.ai Desktop y Web',
+                  'OAuth 2.0 — acceso seguro sin guardar claves',
+                  'Protocolo MCP nativo de Anthropic',
+                  ...connectorFeatures.slice(2),
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-[#2361d8]" />
                     {item}
                   </li>
                 ))}
               </ul>
               <div className="mt-auto flex gap-3 pt-6">
                 <Link
-                  href="/acceso"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
+                  href="/conectores/claude"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f55c0]"
                 >
-                  Conectar con ChatGPT
+                  Ver conector Claude
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/docs/chatgpt"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  href="/docs/claude"
+                  className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Documentación
                 </Link>
               </div>
             </div>
 
-            <div className="flex flex-col rounded-[2rem] border border-amber-200/60 bg-[linear-gradient(180deg,#fffbeb_0%,#ffffff_100%)] p-7 shadow-sm">
-              <div className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
-                <Sparkles className="h-3.5 w-3.5" />
-                Nuevo — en revisión en el directorio Anthropic
+            {/* ChatGPT */}
+            <div className="flex flex-col rounded-[2rem] border border-[#10a37f]/20 bg-[linear-gradient(160deg,#f0fdf9_0%,#ffffff_100%)] p-7 shadow-sm">
+              <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#10a37f]/25 bg-white px-3 py-1 text-xs font-semibold text-[#10a37f]">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                En producción
               </div>
               <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
-                Conector Holded para Claude
+                Holded para ChatGPT
               </h3>
-              <p className="mt-3 text-sm leading-6 text-slate-600">
-                Conéctate mediante MCP (Model Context Protocol) de Anthropic. Funciona en Claude.ai,
-                Claude Desktop y la API de Anthropic.
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Conéctate mediante GPT Action (OpenAI) introduciendo tu API key de Holded.
+                Disponible desde ChatGPT Plus y Team.
               </p>
               <ul className="mt-5 space-y-2">
                 {[
-                  'Las mismas capacidades que en ChatGPT.',
-                  'Protocolo MCP nativo — más integrado con Claude.',
-                  'OAuth 2.0 estándar, sin guardar API keys en texto.',
+                  'ChatGPT Plus y Team',
+                  'Conexión con API key de Holded',
+                  'Sube y contrasta archivos externos',
+                  connectorFeatures[3],
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-amber-500" />
+                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-[#10a37f]" />
                     {item}
                   </li>
                 ))}
               </ul>
               <div className="mt-auto flex gap-3 pt-6">
                 <Link
-                  href="/claude"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-600"
+                  href="/conectores/chatgpt"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#10a37f] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0d9270]"
                 >
-                  Ver el conector Claude
-                </Link>
-                <Link
-                  href="/demo"
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-                >
-                  Solicitar acceso
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Cómo funciona ── */}
-      <section id="recorrido" className="py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-2xl">
-            <SectionPill icon={ShieldCheck}>Cómo funciona</SectionPill>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              Tres pasos, sin configuración técnica.
-            </h2>
-          </div>
-
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {journeySteps.map((step) => (
-              <article
-                key={step.step}
-                className="rounded-[1.85rem] border border-slate-200 bg-white p-7 shadow-[0_18px_48px_-42px_rgba(15,23,42,0.4)]"
-              >
-                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                  Paso {step.step}
-                </div>
-                <h3 className="mt-3 text-lg font-bold tracking-tight text-slate-950">
-                  {step.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{step.body}</p>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/acceso"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_18px_45px_-24px_rgba(255,84,96,0.65)] transition hover:bg-[#ef4654]"
-            >
-              Solicitar acceso anticipado
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/demo"
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Ver demo guiada
-              <PlayCircle className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/contacto"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Hablar con el equipo
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ── */}
-      <section id="faq" className="bg-white py-16 sm:py-20">
-        <div className="mx-auto max-w-4xl px-4">
-          <div className="text-center">
-            <SectionPill icon={ShieldCheck}>FAQ</SectionPill>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              Lo importante, respondido de forma directa.
-            </h2>
-          </div>
-
-          <div className="mt-10 space-y-3">
-            {faqItems.map((item, index) => (
-              <details
-                key={item.question}
-                className="holded-accordion group rounded-[1.5rem] border border-slate-200 bg-white px-6 py-2 shadow-[0_18px_46px_-42px_rgba(15,23,42,0.45)]"
-                open={index === 0}
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-4 text-left text-base font-semibold text-slate-900">
-                  {item.question}
-                  <span className="holded-accordion-chevron flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-500 transition">
-                    <ChevronRight className="h-4 w-4" />
-                  </span>
-                </summary>
-                <p className="pb-5 text-sm leading-7 text-slate-600">{item.answer}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA final ── */}
-      <section className="pb-16 pt-4 sm:pb-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="rounded-[2.25rem] border border-slate-200 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_55%,#f6fbff_100%)] p-8 shadow-[0_32px_85px_-58px_rgba(15,23,42,0.58)] sm:p-10">
-            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-              <div>
-                <SectionPill icon={Sparkles}>Empieza hoy</SectionPill>
-                <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.6rem]">
-                  Si Holded ya guarda tus datos, esta es la forma más clara de entenderlos y actuar
-                  con criterio.
-                </h2>
-                <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600">
-                  Sin aprender el ERP. Sin esperar al gestor. Con respuestas claras sobre tu
-                  contabilidad, tus impuestos y lo que ocurre en tu negocio.
-                </p>
-              </div>
-
-              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
-                <Link
-                  href="/acceso"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
-                >
-                  Solicitar acceso anticipado
+                  Ver conector ChatGPT
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/demo-recording"
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                  href="/docs/chatgpt"
+                  className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Ver demo grabada
-                  <PlayCircle className="h-4 w-4" />
+                  Documentación
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Comparison helper */}
+          <div className="mt-6 flex items-start gap-3 rounded-2xl border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600 shadow-sm">
+            <MessageCircleMore className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+            <p>
+              <strong className="text-slate-900">¿No sabes cuál elegir?</strong> Si ya usas
+              Claude.ai en tu trabajo, elige el conector Claude. Si usas ChatGPT Plus, elige
+              ChatGPT. Ambos ofrecen las mismas capacidades de Holded.{' '}
+              <Link href="/contacto" className="font-medium text-[#ff5460] hover:underline">
+                Pregúntanos →
+              </Link>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── POR QUÉ VERIFACTU BUSINESS ── */}
+      <section className="py-14 sm:py-18">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="mb-10 max-w-xl">
+            <SectionPill icon={ShieldCheck}>Por qué Verifactu Business</SectionPill>
+            <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950 sm:text-[2rem]">
+              Especialistas en Holded. Con soporte real.
+            </h2>
+          </div>
+          <div className="grid gap-5 md:grid-cols-3">
+            {whyItems.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                className="rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff5460]/10">
+                  <Icon className="h-5 w-5 text-[#ff5460]" />
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-950">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── SERVICIOS ── */}
+      <section className="border-y border-slate-200/80 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_55%,#f6fbff_100%)] py-14 sm:py-20">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="max-w-2xl">
+            <SectionPill icon={GraduationCap}>Servicios para Holded</SectionPill>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
+              Más allá del conector.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              Si estás empezando con Holded, migrando desde otro software o necesitas sacarle más
+              partido, te ayudamos.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-5 md:grid-cols-3">
+            {serviceItems.map(({ icon: Icon, title, desc }) => (
+              <div
+                key={title}
+                className="flex flex-col rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm"
+              >
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff5460]/10">
+                  <Icon className="h-5 w-5 text-[#ff5460]" />
+                </div>
+                <h3 className="mt-4 text-base font-bold text-slate-950">{title}</h3>
+                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{desc}</p>
+                <div className="mt-5">
+                  <Link
+                    href="/contacto"
+                    className="inline-flex items-center gap-1 text-sm font-semibold text-[#ff5460] transition hover:underline"
+                  >
+                    Más información <ChevronRight className="h-3.5 w-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── DEMO ── */}
+      <section className="py-14 sm:py-18">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="rounded-[2.25rem] border border-slate-200 bg-white p-8 shadow-[0_24px_70px_-52px_rgba(15,23,42,0.3)] sm:p-10">
+            <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+              <div>
+                <SectionPill icon={PlayCircle}>Demo guiada</SectionPill>
+                <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950 sm:text-[2rem]">
+                  Mira cómo funciona antes de conectar.
+                </h2>
+                <p className="mt-4 max-w-xl text-base leading-8 text-slate-600">
+                  Una demo real con datos de Holded: facturas vencidas, resumen de IVA, balance del
+                  ejercicio. Sin registro, sin configuración previa.
+                </p>
+              </div>
+              <div className="shrink-0">
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center gap-2.5 rounded-full bg-[#ff5460] px-7 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_-20px_rgba(255,84,96,0.6)] transition hover:bg-[#ef4654]"
+                >
+                  <PlayCircle className="h-5 w-5" />
+                  Ver demo gratis
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA FINAL ── */}
+      <section className="border-t border-slate-200/80 bg-white pb-16 pt-14 sm:pb-20">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <SectionPill icon={Sparkles}>Empieza hoy</SectionPill>
+          <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
+            Tu Holded, por fin en lenguaje claro.
+          </h2>
+          <p className="mt-5 mx-auto max-w-2xl text-base leading-8 text-slate-600">
+            Sin aprender el ERP. Sin esperar al gestor. Elige el conector para la IA que ya usas y
+            empieza a entender tus números hoy.
+          </p>
+
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Link
+              href="/conectores/claude"
+              className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(35,97,216,0.55)] transition hover:bg-[#1f55c0]"
+            >
+              Conector para Claude
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/conectores/chatgpt"
+              className="inline-flex items-center gap-2 rounded-full bg-[#10a37f] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(16,163,127,0.45)] transition hover:bg-[#0d9270]"
+            >
+              Conector para ChatGPT
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/contacto"
+              className="inline-flex items-center rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            >
+              Hablar con el equipo
+            </Link>
           </div>
         </div>
       </section>
