@@ -17,6 +17,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { SingleSceneHero } from './SingleSceneHero';
@@ -51,6 +52,7 @@ interface ConnectorConfig {
   dpaHref: string;
   status: string;
   aiName: string; // "Claude" | "ChatGPT"
+  logoSrc: string;
 }
 
 // ── Themes ─────────────────────────────────────────────────────────────────
@@ -100,6 +102,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     dpaHref: '/conectores/claude/dpa',
     status: 'Operativo · Conector personalizado MCP · Anthropic',
     aiName: 'Claude',
+    logoSrc: '/brand/claude-logo.svg',
   },
   chatgpt: {
     id: 'chatgpt',
@@ -114,6 +117,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     dpaHref: '/conectores/chatgpt/dpa',
     status: 'Operativo · Plugin OAuth · OpenAI',
     aiName: 'ChatGPT',
+    logoSrc: '/brand/chatgpt-logo.png',
   },
 };
 
@@ -422,6 +426,29 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className={`border-b border-slate-200 ${t.gradient} pb-20 pt-16 sm:pt-20`}>
         <div className="mx-auto max-w-4xl px-4 text-center">
+          {/* Logo lockup */}
+          <div className="mb-6 flex items-center justify-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <Image
+                src="/brand/holded/holded-diamond-logo.png"
+                alt="Holded"
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
+            </div>
+            <span className="text-lg font-light text-slate-300">+</span>
+            <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <Image
+                src={cfg.logoSrc}
+                alt={cfg.aiName}
+                width={32}
+                height={32}
+                className="h-8 w-8 object-contain"
+              />
+            </div>
+          </div>
+
           {/* Badge */}
           <div
             className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${t.pillBg} ${t.pillText}`}

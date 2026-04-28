@@ -144,8 +144,14 @@ export default function HoldedHomePage() {
                 <div className="rounded-[1.5rem] border border-[#D4570C]/20 bg-[#D4570C]/[0.05] p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D4570C]">
-                        <span className="text-sm font-bold text-white">C</span>
+                      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <Image
+                          src="/brand/claude-logo.svg"
+                          alt="Claude"
+                          width={26}
+                          height={26}
+                          className="h-[26px] w-[26px] object-contain"
+                        />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-slate-900">Claude</p>
@@ -184,8 +190,14 @@ export default function HoldedHomePage() {
                 <div className="rounded-[1.5rem] border border-[#10a37f]/20 bg-[#10a37f]/[0.05] p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#10a37f]">
-                        <span className="text-sm font-bold text-white">G</span>
+                      <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        <Image
+                          src="/brand/chatgpt-logo.png"
+                          alt="ChatGPT"
+                          width={26}
+                          height={26}
+                          className="h-[26px] w-[26px] object-contain"
+                        />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-slate-900">ChatGPT</p>
@@ -241,9 +253,20 @@ export default function HoldedHomePage() {
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {/* Claude */}
             <div className="flex flex-col rounded-[2rem] border border-[#D4570C]/20 bg-[linear-gradient(160deg,#fff7ed_0%,#ffffff_100%)] p-7 shadow-sm">
-              <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#D4570C]/25 bg-white px-3 py-1 text-xs font-semibold text-[#D4570C]">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                En producción
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <Image
+                    src="/brand/claude-logo.svg"
+                    alt="Claude"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 object-contain"
+                  />
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#D4570C]/25 bg-white px-3 py-1 text-xs font-semibold text-[#D4570C]">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  En producción
+                </div>
               </div>
               <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
                 Holded para Claude
@@ -284,9 +307,20 @@ export default function HoldedHomePage() {
 
             {/* ChatGPT */}
             <div className="flex flex-col rounded-[2rem] border border-[#10a37f]/20 bg-[linear-gradient(160deg,#f0fdf9_0%,#ffffff_100%)] p-7 shadow-sm">
-              <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#10a37f]/25 bg-white px-3 py-1 text-xs font-semibold text-[#10a37f]">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                En producción
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                  <Image
+                    src="/brand/chatgpt-logo.png"
+                    alt="ChatGPT"
+                    width={28}
+                    height={28}
+                    className="h-7 w-7 object-contain"
+                  />
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-[#10a37f]/25 bg-white px-3 py-1 text-xs font-semibold text-[#10a37f]">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  En producción
+                </div>
               </div>
               <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
                 Holded para ChatGPT
