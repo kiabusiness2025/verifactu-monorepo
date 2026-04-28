@@ -5,9 +5,10 @@ import ContactForm from '../components/ContactForm';
 const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 
 export const metadata: Metadata = {
-  title: 'Contacto | Holded',
+  title: 'Contacto y soporte | Verifactu Business',
   description:
-    'Formulario corto de contacto y soporte para resolver dudas comerciales o destrabar el onboarding de Holded.',
+    'Formulario de contacto y soporte para resolver dudas sobre los conectores Claude y ChatGPT, servicios de migración y formación en Holded.',
+  alternates: { canonical: '/contacto' },
 };
 
 const supportCards = [

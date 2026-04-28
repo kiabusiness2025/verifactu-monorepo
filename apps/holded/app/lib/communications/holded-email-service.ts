@@ -379,6 +379,7 @@ export async function sendHoldedDisconnectedCommunication(input: {
 export async function sendHoldedContactNotification(input: {
   name: string;
   email: string;
+  subject?: string;
   cif?: string;
   sector?: string;
   role?: string;
@@ -387,7 +388,7 @@ export async function sendHoldedContactNotification(input: {
   const { resend, from, replyTo } = createResendTransport();
   const recipient = readOptionalEnv('HOLDED_CONTACT_EMAIL', 'info@verifactu.business');
 
-  const internalTemplate = buildHoldedInternalContactEmail(input);
+  const internalTemplate = buildHoldedInternalContactEmail({ ...input });
   const confirmationTemplate = buildHoldedContactConfirmationEmail({ name: input.name });
 
   const [internalResult] = await Promise.all([

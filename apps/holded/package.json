@@ -11,6 +11,7 @@
     "test:watch": "jest --config jest.config.mjs --watch"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
     "@prisma/client": "5.22.0",
     "@prisma/extension-accelerate": "^3.0.1",
     "@verifactu/auth": "file:../../packages/auth",

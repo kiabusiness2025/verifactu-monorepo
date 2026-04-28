@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json().catch(() => ({}));
     const name = normalizeString(body?.name);
     const email = normalizeString(body?.email).toLowerCase();
+    const subject = normalizeString(body?.subject) || undefined;
     const cif = normalizeString(body?.cif) || undefined;
     const sector = normalizeString(body?.sector) || undefined;
     const role = normalizeString(body?.role) || undefined;
@@ -82,7 +83,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await sendHoldedContactNotification({ name, email, cif, sector, role, message });
+    await sendHoldedContactNotification({ name, email, subject, cif, sector, role, message });
 
     return NextResponse.json({
       ok: true,

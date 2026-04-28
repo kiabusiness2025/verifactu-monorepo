@@ -5,13 +5,25 @@ import { useState } from 'react';
 type ContactFormState = {
   name: string;
   email: string;
+  subject: string;
   message: string;
   consent: boolean;
 };
 
+const SUBJECT_OPTIONS = [
+  { value: '', label: 'Selecciona un asunto' },
+  { value: 'claude', label: 'Conector Claude (MCP)' },
+  { value: 'chatgpt', label: 'Conector ChatGPT (Plugin)' },
+  { value: 'servicios', label: 'Servicios y migración' },
+  { value: 'formacion', label: 'Formación en Holded' },
+  { value: 'demo', label: 'Demo gratuita de Holded' },
+  { value: 'otro', label: 'Otro' },
+];
+
 const initialState: ContactFormState = {
   name: '',
   email: '',
+  subject: '',
   message: '',
   consent: false,
 };
@@ -76,6 +88,28 @@ export default function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label
+          htmlFor="contact-subject"
+          className="mb-1.5 block text-sm font-semibold text-slate-700"
+        >
+          Asunto <span className="text-[#ff5460]">*</span>
+        </label>
+        <select
+          id="contact-subject"
+          required
+          value={form.subject}
+          onChange={(event) => set('subject', event.target.value)}
+          className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-[#ff5460] focus:outline-none focus:ring-2 focus:ring-[#ff5460]/20"
+        >
+          {SUBJECT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value} disabled={opt.value === ''}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="mb-1.5 block text-sm font-semibold text-slate-700">

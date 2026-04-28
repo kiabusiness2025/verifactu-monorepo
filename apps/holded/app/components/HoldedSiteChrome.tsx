@@ -5,16 +5,17 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { buildAuthUrl } from '../lib/holded-navigation';
+import { IsaakWidget } from './IsaakWidget';
 
 type Props = {
   children: React.ReactNode;
 };
 
 const navLinks = [
-  { href: '/#solucion', label: 'Solucion' },
+  { href: '/#solucion', label: 'Solución' },
   { href: '/#capacidades', label: 'Capacidades' },
-  { href: '/#recorrido', label: 'Recorrido' },
-  { href: '/demo', label: 'Demo' },
+  { href: '/conectores/claude', label: 'Claude' },
+  { href: '/conectores/chatgpt', label: 'ChatGPT' },
   { href: '/contacto', label: 'Contacto' },
 ];
 
@@ -81,7 +82,7 @@ export default function HoldedSiteChrome({ children }: Props) {
               <button
                 type="button"
                 aria-label={menuOpen ? 'Cerrar menu' : 'Abrir menu'}
-                aria-expanded={menuOpen ? 'true' : 'false'}
+                aria-expanded={menuOpen}
                 onClick={() => setMenuOpen((value) => !value)}
                 className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50 lg:hidden"
               >
@@ -141,7 +142,7 @@ export default function HoldedSiteChrome({ children }: Props) {
 
       <footer className="border-t border-slate-200 bg-white/92">
         <div className="mx-auto max-w-6xl px-4 py-8">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-2">
               <div className="text-sm text-slate-600">
                 Powered by{' '}
@@ -155,49 +156,84 @@ export default function HoldedSiteChrome({ children }: Props) {
                 </a>
               </div>
               <div className="max-w-xl text-xs leading-5 text-slate-400">
-                Solution Partner autorizado de Holded. No somos Holded S.L. Esta experiencia usa la
-                API de Holded para ofrecer una capa de lectura y operativa mas clara.
+                Solution Partner autorizado de Holded. No somos Holded. Esta experiencia usa la API
+                de Holded para ofrecer una capa de lectura y operativa más clara.
+              </div>
+              <div className="pt-1">
+                <a
+                  href="https://verifactu.business"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  ↗ Hub principal — verifactu.business
+                </a>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 text-xs font-semibold text-slate-500 sm:text-sm">
-              <Link href="/demo" className="hover:text-slate-900">
-                Demo
-              </Link>
-              <Link href="/contacto" className="hover:text-slate-900">
-                Contacto
-              </Link>
-              <Link href="/capacidades" className="hover:text-slate-900">
-                Capacidades
-              </Link>
-              <Link href="/demo-recording" className="hover:text-slate-900">
-                Demo grabada
-              </Link>
-              <Link href="/docs/chatgpt" className="hover:text-slate-900">
-                Docs ChatGPT
-              </Link>
-              <Link href="/docs/claude" className="hover:text-slate-900">
-                Docs Claude
-              </Link>
-              <Link href="/claude" className="hover:text-slate-900">
-                Conector Claude
-              </Link>
-              <Link href="/dpa" className="hover:text-slate-900">
-                DPA
-              </Link>
-              <Link href="/legal" className="hover:text-slate-900">
-                Aviso legal
-              </Link>
-              <Link href="/privacy" className="hover:text-slate-900">
-                Privacidad
-              </Link>
-              <Link href="/terms" className="hover:text-slate-900">
-                Terminos
-              </Link>
+            <div className="flex flex-wrap gap-x-8 gap-y-4 text-xs">
+              <div className="space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Conectores
+                </div>
+                <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
+                  <Link href="/conectores/claude" className="hover:text-slate-900">
+                    Conector Claude
+                  </Link>
+                  <Link href="/conectores/chatgpt" className="hover:text-slate-900">
+                    Conector ChatGPT
+                  </Link>
+                  <Link href="/conectores/claude/docs" className="hover:text-slate-900">
+                    Docs Claude
+                  </Link>
+                  <Link href="/conectores/chatgpt/docs" className="hover:text-slate-900">
+                    Docs ChatGPT
+                  </Link>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Soporte
+                </div>
+                <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
+                  <Link href="/demo" className="hover:text-slate-900">
+                    Demo gratuita
+                  </Link>
+                  <Link href="/contacto" className="hover:text-slate-900">
+                    Contacto
+                  </Link>
+                  <Link href="/capacidades" className="hover:text-slate-900">
+                    Capacidades
+                  </Link>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                  Legal
+                </div>
+                <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
+                  <Link href="/dpa" className="hover:text-slate-900">
+                    DPA
+                  </Link>
+                  <Link href="/legal" className="hover:text-slate-900">
+                    Aviso legal
+                  </Link>
+                  <Link href="/privacy" className="hover:text-slate-900">
+                    Privacidad
+                  </Link>
+                  <Link href="/terms" className="hover:text-slate-900">
+                    Términos
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </footer>
+
+      <IsaakWidget page="generic" />
     </>
   );
 }

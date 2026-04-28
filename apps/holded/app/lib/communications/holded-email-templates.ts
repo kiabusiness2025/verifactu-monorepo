@@ -683,11 +683,16 @@ export function buildHoldedWeeklyAdminSummaryEmail(input: {
 export function buildHoldedInternalContactEmail(input: {
   name: string;
   email: string;
+  subject?: string;
   cif?: string;
   sector?: string;
   role?: string;
   message: string;
 }): EmailTemplate {
+  const subjectRow = input.subject
+    ? `<p style="margin:0 0 8px;"><strong>Asunto:</strong> ${escapeHtml(input.subject)}</p>`
+    : '';
+
   const extraRows = [
     input.cif
       ? `<p style="margin:0 0 8px;"><strong>CIF:</strong> ${escapeHtml(input.cif)}</p>`
@@ -701,6 +706,7 @@ export function buildHoldedInternalContactEmail(input: {
   ].join('');
 
   const extraText = [
+    input.subject ? `Asunto: ${input.subject}` : '',
     input.cif ? `CIF: ${input.cif}` : '',
     input.sector ? `Sector: ${input.sector}` : '',
     input.role ? `Rol: ${input.role}` : '',
@@ -708,13 +714,18 @@ export function buildHoldedInternalContactEmail(input: {
     .filter(Boolean)
     .join('\n');
 
+  const emailSubject = input.subject
+    ? `Contacto [${input.subject}]: ${input.name}`
+    : `Solicitud de contacto: ${input.name}`;
+
   return {
-    subject: `Solicitud de contacto: ${input.name}`,
+    subject: emailSubject,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff;">
         <h2 style="margin:0 0 12px;">Nueva solicitud de contacto (holded.verifactu.business)</h2>
         <p style="margin:0 0 8px;"><strong>Nombre:</strong> ${escapeHtml(input.name)}</p>
         <p style="margin:0 0 8px;"><strong>Email:</strong> <a href="mailto:${escapeHtml(input.email)}">${escapeHtml(input.email)}</a></p>
+        ${subjectRow}
         ${extraRows}
         <p style="margin:8px 0 6px;"><strong>Mensaje:</strong></p>
         <blockquote style="margin:0 0 0 8px;padding:10px 16px;border-left:3px solid #e2e8f0;color:#334155;font-size:14px;">${escapeHtml(input.message).replace(/\n/g, '<br>')}</blockquote>

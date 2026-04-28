@@ -176,3 +176,12 @@ button:focus-visible {
     0 0 0 4px rgba(255, 84, 96, 0.55);
   border-radius: 12px;
 }
+
+/* Isaak widget */
+.isaak-gradient {
+  background: linear-gradient(135deg, #ff5460 0%, #c73a45 100%);
+}
+
+.isaak-panel {
+  height: min(560px, calc(100vh - 8rem));
+}
