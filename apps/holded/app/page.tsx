@@ -105,7 +105,7 @@ export default function HoldedHomePage() {
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href="/conectores/claude"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(35,97,216,0.55)] transition hover:bg-[#1f55c0]"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#D4570C] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(212,87,12,0.55)] transition hover:bg-[#B84509]"
                 >
                   Conector para Claude
                   <ArrowRight className="h-4 w-4" />
@@ -141,10 +141,10 @@ export default function HoldedHomePage() {
                 </div>
 
                 {/* Claude */}
-                <div className="rounded-[1.5rem] border border-[#2361d8]/20 bg-[#2361d8]/[0.05] p-4">
+                <div className="rounded-[1.5rem] border border-[#D4570C]/20 bg-[#D4570C]/[0.05] p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#2361d8]">
+                      <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#D4570C]">
                         <span className="text-sm font-bold text-white">C</span>
                       </div>
                       <div>
@@ -152,8 +152,8 @@ export default function HoldedHomePage() {
                         <p className="text-[11px] text-slate-500">MCP · OAuth 2.0</p>
                       </div>
                     </div>
-                    <span className="flex items-center gap-1.5 rounded-full border border-[#2361d8]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#2361d8]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-[#2361d8]" />
+                    <span className="flex items-center gap-1.5 rounded-full border border-[#D4570C]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#D4570C]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#D4570C]" />
                       Activo
                     </span>
                   </div>
@@ -161,7 +161,7 @@ export default function HoldedHomePage() {
                     {['Contabilidad y balance', 'Facturas e IVA', 'Clientes y proyectos'].map(
                       (f) => (
                         <li key={f} className="flex items-center gap-2 text-[11px] text-slate-600">
-                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#2361d8]" />
+                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#D4570C]" />
                           {f}
                         </li>
                       )
@@ -169,7 +169,7 @@ export default function HoldedHomePage() {
                   </ul>
                   <Link
                     href="/conectores/claude"
-                    className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#2361d8] hover:underline"
+                    className="mt-3 flex items-center gap-1 text-[11px] font-semibold text-[#D4570C] hover:underline"
                   >
                     Ver conector <ChevronRight className="h-3 w-3" />
                   </Link>
@@ -240,8 +240,8 @@ export default function HoldedHomePage() {
 
           <div className="mt-10 grid gap-5 md:grid-cols-2">
             {/* Claude */}
-            <div className="flex flex-col rounded-[2rem] border border-[#2361d8]/20 bg-[linear-gradient(160deg,#eef2ff_0%,#ffffff_100%)] p-7 shadow-sm">
-              <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#2361d8]/25 bg-white px-3 py-1 text-xs font-semibold text-[#2361d8]">
+            <div className="flex flex-col rounded-[2rem] border border-[#D4570C]/20 bg-[linear-gradient(160deg,#fff7ed_0%,#ffffff_100%)] p-7 shadow-sm">
+              <div className="inline-flex items-center gap-2 self-start rounded-full border border-[#D4570C]/25 bg-white px-3 py-1 text-xs font-semibold text-[#D4570C]">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 En producción
               </div>
@@ -260,7 +260,7 @@ export default function HoldedHomePage() {
                   ...connectorFeatures.slice(2),
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-[#2361d8]" />
+                    <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-[#D4570C]" />
                     {item}
                   </li>
                 ))}
@@ -268,7 +268,7 @@ export default function HoldedHomePage() {
               <div className="mt-auto flex gap-3 pt-6">
                 <Link
                   href="/conectores/claude"
-                  className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1f55c0]"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#D4570C] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#B84509]"
                 >
                   Ver conector Claude
                   <ArrowRight className="h-4 w-4" />
@@ -450,7 +450,7 @@ export default function HoldedHomePage() {
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/conectores/claude"
-              className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(35,97,216,0.55)] transition hover:bg-[#1f55c0]"
+              className="inline-flex items-center gap-2 rounded-full bg-[#D4570C] px-6 py-3.5 text-sm font-semibold text-white shadow-[0_12px_30px_-14px_rgba(212,87,12,0.55)] transition hover:bg-[#B84509]"
             >
               Conector para Claude
               <ArrowRight className="h-4 w-4" />
