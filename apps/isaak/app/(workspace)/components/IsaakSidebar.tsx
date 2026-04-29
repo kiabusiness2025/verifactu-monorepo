@@ -188,7 +188,7 @@ export default function IsaakSidebar({
           {settingsOpen && (
             <div
               ref={settingsRef}
-              className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-xl border border-white/10 bg-slate-900 py-1 shadow-2xl"
+              className="absolute bottom-full left-3 right-3 mb-2 overflow-hidden rounded-xl border border-white/10 bg-[#0f1e50] py-1 shadow-2xl"
             >
               {SETTINGS_ITEMS.map(({ href, label }) => (
                 <Link

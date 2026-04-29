@@ -12,7 +12,7 @@ export default function AuthPage() {
   const loginUrl = buildHoldedAuthUrl('isaak_auth_page', `${ISAAK_PUBLIC_URL}/chat`);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-slate-950 px-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[#0b1a40] px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-3">

@@ -22,7 +22,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-950 font-sans">
+    <div className="flex h-screen overflow-hidden bg-[#0b1a40] font-sans">
       <IsaakSidebar user={user} conversations={conversations} />
       <main className="relative flex flex-1 flex-col overflow-hidden bg-white">{children}</main>
     </div>
