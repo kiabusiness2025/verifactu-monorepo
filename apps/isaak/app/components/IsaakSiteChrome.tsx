@@ -12,7 +12,13 @@ type Props = {
 
 export default function IsaakSiteChrome({ children }: Props) {
   const pathname = usePathname();
-  const isWorkspaceRoute = pathname?.startsWith('/chat');
+  const isWorkspaceRoute =
+    pathname?.startsWith('/chat') ||
+    pathname?.startsWith('/resumen') ||
+    pathname?.startsWith('/ventas') ||
+    pathname?.startsWith('/gastos') ||
+    pathname?.startsWith('/contactos') ||
+    pathname?.startsWith('/equipo');
 
   if (isWorkspaceRoute) {
     return <>{children}</>;

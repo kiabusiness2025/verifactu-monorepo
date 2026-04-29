@@ -22,7 +22,7 @@ const navLinks = [
 export default function HoldedSiteChrome({ children }: Props) {
   const pathname = usePathname();
   const isAuthRoute = pathname?.startsWith('/auth/') ?? false;
-  const isIsaakApp = pathname?.startsWith('/isaak') ?? false;
+  const isIsaakApp = false;
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {

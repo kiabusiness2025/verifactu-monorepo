@@ -1,30 +1,22 @@
-import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { prisma } from '@/app/lib/prisma';
+import { listHoldedConversations } from '@/app/lib/holded-chat';
+import { buildHoldedAuthUrl } from '@/app/lib/isaak-navigation';
 import IsaakSidebar from './components/IsaakSidebar';
 
-export const metadata: Metadata = {
-  title: 'Isaak — Tu asistente de negocio',
-  description: 'Habla con tu empresa. Datos reales de Holded en lenguaje natural.',
-};
-
-export default async function IsaakLayout({ children }: { children: React.ReactNode }) {
+export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const session = await getHoldedSession();
 
-  if (!session?.tenantId) {
-    redirect(`/auth/holded?next=${encodeURIComponent('/isaak/chat')}`);
+  if (!session?.tenantId || !session.userId) {
+    redirect(
+      buildHoldedAuthUrl('workspace_requires_session', 'https://isaak.verifactu.business/chat')
+    );
   }
 
-  // Load last 20 conversations for sidebar history
-  const conversations = await prisma.isaakConversation
-    .findMany({
-      where: { tenantId: session.tenantId, context: 'holded_chat' },
-      orderBy: { lastActivity: 'desc' },
-      take: 20,
-      select: { id: true, title: true, lastActivity: true, messageCount: true },
-    })
-    .catch(() => []);
+  const conversations = await listHoldedConversations({
+    tenantId: session.tenantId,
+    userId: session.userId,
+  }).catch(() => []);
 
   const user = {
     name: session.name ?? 'Usuario',
