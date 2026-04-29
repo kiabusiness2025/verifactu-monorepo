@@ -199,7 +199,10 @@ export async function POST(request: NextRequest) {
         conversationId: activeConversationId,
         role: 'assistant',
         content: finalReply,
-        metadata: Object.keys(assistantMetadata).length > 0 ? assistantMetadata : undefined,
+        metadata:
+          Object.keys(assistantMetadata).length > 0
+            ? (assistantMetadata as import('@prisma/client').Prisma.InputJsonValue)
+            : undefined,
       },
     }),
     prisma.isaakConversation.update({
