@@ -3,265 +3,216 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Intro — Holded para ChatGPT</title>
+  <title>Intro — ChatGPT para Holded</title>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-    :root {
-      --green:  #10a37f;
-      --red:    #ff5460;
-      --navy:   #011c67;
-      --blue:   #2361d8;
-      --white:  #ffffff;
-      --light:  #f0faf7;
-    }
-
-    /* Escala la raíz para que todo sea proporcional al viewport */
-    html {
-      font-size: clamp(10px, 1.4vw, 18px);
-    }
+    html { font-size: clamp(10px, 1.35vw, 18px); }
 
     body {
       width: 100vw;
       height: 100vh;
-      background: var(--white);
+      background: linear-gradient(175deg, #ffffff 0%, #f0fdf4 100%);
       overflow: hidden;
       font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: clamp(24px, 4.5vh, 60px);
     }
 
-    /* ── Background: diagonal gradient que va del blanco al verde muy suave ── */
-    .bg {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, #ffffff 0%, #f0faf7 40%, #e8f7f3 70%, #ffffff 100%);
-    }
-
-    /* Glow central */
-    .bg-glow {
-      position: absolute;
-      width: 60vw;
-      height: 60vh;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(16,163,127,0.10) 0%, transparent 70%);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%) scale(0);
-      animation: glow-expand 0.9s ease-out 1.6s forwards;
-    }
-
-    /* ── Stage ── */
-    .stage {
+    /* ─── Logo row ──────────────────────────────────────── */
+    .logo-row {
       position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: clamp(20px, 3vw, 48px);
+    }
+
+    /* logos share same size */
+    .logo {
+      width:  clamp(60px, 8vw, 116px);
+      height: clamp(60px, 8vw, 116px);
+      flex-shrink: 0;
+    }
+
+    .logo img {
       width: 100%;
       height: 100%;
-    }
-
-    /* ── Holded (enter from left) ── */
-    .logo-holded {
-      position: absolute;
-      left: 50%;
-      transform: translateX(calc(-50% - 22vw)) translateY(-12%) scale(0.7);
-      opacity: 0;
-      animation:
-        holded-enter 0.65s cubic-bezier(0.34,1.5,0.64,1) 0.15s forwards,
-        holded-merge  0.45s cubic-bezier(0.4,0,0.2,1) 1.55s forwards;
-    }
-    .holded-img {
-      width: clamp(80px, 12vw, 180px);
-      height: clamp(80px, 12vw, 180px);
       object-fit: contain;
-      drop-shadow: 0 8px 24px rgba(255,84,96,0.20);
-      filter: drop-shadow(0 6px 20px rgba(255,84,96,0.18));
+      display: block;
     }
 
-    /* ── ChatGPT (enter from right) ── */
+    /*
+      ChatGPT enters from far left, drifts toward center (overlapping),
+      pauses, then settles gently to the left of its final flex position.
+      3 phases, single animation:
+        0-60%  → enter + drift to overlap
+        60-72% → hold (overlap moment)
+        72-100% → settle to resting position (translateX 0)
+    */
     .logo-chatgpt {
-      position: absolute;
-      right: 50%;
-      transform: translateX(calc(50% + 22vw)) translateY(-12%) scale(0.7);
       opacity: 0;
-      animation:
-        chatgpt-enter 0.65s cubic-bezier(0.34,1.5,0.64,1) 0.4s forwards,
-        chatgpt-merge  0.45s cubic-bezier(0.4,0,0.2,1) 1.55s forwards;
+      animation: a-chatgpt 3.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
     }
-    .chatgpt-img {
-      width: clamp(80px, 12vw, 180px);
-      height: clamp(80px, 12vw, 180px);
-      object-fit: contain;
-      filter: drop-shadow(0 6px 20px rgba(16,163,127,0.20));
+    @keyframes a-chatgpt {
+      0%    { opacity: 0;   transform: translateX(-32vw); }
+      6%    { opacity: 0; }
+      60%   { opacity: 1;   transform: translateX(4.5vw); }   /* overlap */
+      72%   { opacity: 1;   transform: translateX(4.5vw); }   /* hold    */
+      100%  { opacity: 1;   transform: translateX(0);     }   /* settle  */
     }
 
-    /* ── Flash ── */
-    .flash {
-      position: absolute;
-      inset: 0;
-      background: var(--white);
+    /* Holded mirrors — enters from right */
+    .logo-holded {
       opacity: 0;
-      pointer-events: none;
-      animation: flash 0.35s ease-out 1.98s forwards;
+      animation: a-holded 3.4s cubic-bezier(0.16, 1, 0.3, 1) 0.5s both;
+    }
+    @keyframes a-holded {
+      0%    { opacity: 0;   transform: translateX(32vw); }
+      6%    { opacity: 0; }
+      60%   { opacity: 1;   transform: translateX(-4.5vw); }
+      72%   { opacity: 1;   transform: translateX(-4.5vw); }
+      100%  { opacity: 1;   transform: translateX(0);      }
     }
 
-    /* ── Merged row (aparece después del flash) ── */
-    .merged {
-      position: absolute;
-      top: 38%;
-      left: 50%;
-      transform: translateX(-50%) scale(0.6) translateY(-50%);
-      opacity: 0;
-      display: flex;
-      align-items: center;
-      gap: clamp(10px, 1.8vw, 28px);
-      animation: merged-appear 0.5s cubic-bezier(0.34,1.4,0.64,1) 2.2s forwards;
-    }
-    .merged-logo {
-      width: clamp(42px, 5.5vw, 80px);
-      height: clamp(42px, 5.5vw, 80px);
-      object-fit: contain;
-    }
-    .merged-plus {
-      font-size: clamp(20px, 2.8vw, 40px);
+    /* "+" separator — visible only after settle */
+    .plus {
+      flex-shrink: 0;
+      font-size: clamp(14px, 2vw, 28px);
       font-weight: 300;
-      color: #ccc;
+      color: #d1d5db;
+      opacity: 0;
+      /* appear when logos are about 80% through their settle (0.5 + 0.78*3.4 ≈ 3.15s) */
+      animation: fade-up 0.45s ease 3.15s forwards;
     }
 
-    /* ── Title ── */
-    .title-block {
+    /* Fusion glow — radial pulse at overlap moment */
+    .glow {
       position: absolute;
-      top: 52%;
-      left: 50%;
-      transform: translateX(-50%) translateY(10px);
+      width: clamp(80px, 11vw, 150px);
+      height: clamp(80px, 11vw, 150px);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,163,127,0.22) 0%, transparent 68%);
+      pointer-events: none;
+      opacity: 0;
+      /* peaks at overlap moment ≈ 0.5 + 0.60*3.4 = 2.54s */
+      animation: glow-pulse 1.1s ease-in-out 2.3s forwards;
+    }
+    @keyframes glow-pulse {
+      0%   { opacity: 0; transform: scale(0.35); }
+      45%  { opacity: 1; transform: scale(1);    }
+      100% { opacity: 0; transform: scale(1.9);  }
+    }
+
+    /* ─── Text block ────────────────────────────────────── */
+    .text-block {
       text-align: center;
       opacity: 0;
-      white-space: nowrap;
-      animation: title-appear 0.6s ease-out 2.65s forwards;
+      transform: translateY(10px);
+      /* appears after logos settle ≈ 3.5s + small delay */
+      animation: fade-up 0.8s ease-out 3.55s both;
     }
-    .title-main {
-      font-size: clamp(22px, 4.2vw, 68px);
-      font-weight: 800;
-      color: var(--navy);
-      letter-spacing: -0.02em;
-      line-height: 1;
-    }
-    .title-main .green { color: var(--green); }
-    .title-sub {
-      margin-top: 0.5em;
-      font-size: clamp(11px, 1.6vw, 24px);
-      font-weight: 500;
-      color: #888;
-      letter-spacing: 0.02em;
-    }
-    .title-sub .brand { color: var(--blue); font-weight: 700; }
 
-    /* ── Progress bar ── */
+    .title {
+      font-size: clamp(22px, 3.8vw, 58px);
+      font-weight: 800;
+      color: #0c1c50;
+      letter-spacing: -0.025em;
+      line-height: 1.06;
+    }
+    .title .green { color: #10a37f; }
+
+    .desc {
+      margin-top: clamp(10px, 1.8vh, 22px);
+      font-size: clamp(9px, 1.2vw, 17px);
+      color: #6b7280;
+      max-width: clamp(260px, 46vw, 650px);
+      line-height: 1.72;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .url {
+      display: inline-block;
+      margin-top: clamp(8px, 1.2vh, 14px);
+      font-size: clamp(9px, 0.95vw, 14px);
+      color: #10a37f;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      opacity: 0;
+      animation: fade-up 0.5s ease 4.2s forwards;
+    }
+
+    /* ─── Progress bar ──────────────────────────────────── */
     .progress {
-      position: absolute;
-      bottom: 8%;
+      position: fixed;
+      bottom: 7%;
       left: 50%;
       transform: translateX(-50%);
-      width: clamp(160px, 24vw, 360px);
-      height: 3px;
+      width: clamp(100px, 18vw, 280px);
+      height: 2px;
       background: #e5e7eb;
       border-radius: 2px;
       overflow: hidden;
       opacity: 0;
-      animation: fade-in 0.4s ease 2.8s forwards;
+      animation: fade-up 0.3s ease 4.1s forwards;
     }
     .progress-bar {
       height: 100%;
       width: 0%;
-      background: linear-gradient(90deg, var(--green), var(--blue));
+      background: linear-gradient(90deg, #10a37f, #2361d8);
       border-radius: 2px;
-      animation: progress-fill 1.4s ease 2.9s forwards;
+      animation: fill-bar 1.9s ease 4.2s forwards;
     }
 
-    /* ── Keyframes ── */
-    @keyframes holded-enter {
-      to { opacity: 1; transform: translateX(calc(-50% - 20vw)) translateY(-12%) scale(1); }
+    /* ─── Shared keyframes ──────────────────────────────── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0);   }
     }
-    @keyframes chatgpt-enter {
-      to { opacity: 1; transform: translateX(calc(50% + 20vw)) translateY(-12%) scale(1); }
-    }
-    @keyframes holded-merge {
-      to { opacity: 0; transform: translateX(-50%) translateY(-12%) scale(0.4); }
-    }
-    @keyframes chatgpt-merge {
-      to { opacity: 0; transform: translateX(50%) translateY(-12%) scale(0.4); }
-    }
-    @keyframes glow-expand {
-      to { transform: translate(-50%, -50%) scale(1); }
-    }
-    @keyframes flash {
-      0%   { opacity: 0.7; }
-      100% { opacity: 0; }
-    }
-    @keyframes merged-appear {
-      to { opacity: 1; transform: translateX(-50%) scale(1) translateY(-50%); }
-    }
-    @keyframes title-appear {
-      from { opacity: 0; transform: translateX(-50%) translateY(18px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-    @keyframes fade-in {
-      to { opacity: 1; }
-    }
-    @keyframes progress-fill {
+    @keyframes fill-bar {
       to { width: 100%; }
     }
   </style>
 </head>
 <body>
-  <div class="bg"></div>
-  <div class="bg-glow"></div>
-  <div class="flash"></div>
 
-  <div class="stage">
-    <!-- Holded entra desde la izquierda -->
-    <div class="logo-holded">
-      <img class="holded-img"
-           src="../../apps/holded/public/brand/holded/holded-diamond-logo.png"
-           alt="Holded" />
+  <!-- Logos -->
+  <div class="logo-row">
+    <div class="glow"></div>
+
+    <div class="logo logo-chatgpt">
+      <img src="../../apps/holded/public/brand/chatgpt-logo.png" alt="ChatGPT" />
     </div>
 
-    <!-- ChatGPT entra desde la derecha con logo oficial -->
-    <div class="logo-chatgpt">
-      <img class="chatgpt-img"
-           src="../../apps/holded/public/brand/chatgpt-logo.png"
-           alt="ChatGPT" />
-    </div>
+    <span class="plus">+</span>
 
-    <!-- Logos pequeños fusionados -->
-    <div class="merged">
-      <img class="merged-logo"
-           src="../../apps/holded/public/brand/holded/holded-diamond-logo.png"
-           alt="Holded" />
-      <span class="merged-plus">+</span>
-      <img class="merged-logo"
-           src="../../apps/holded/public/brand/chatgpt-logo.png"
-           alt="ChatGPT" />
+    <div class="logo logo-holded">
+      <img src="../../apps/holded/public/brand/holded/holded-diamond-logo.png" alt="Holded" />
     </div>
   </div>
 
-  <!-- Título -->
-  <div class="title-block">
-    <div class="title-main">Holded para <span class="green">ChatGPT</span></div>
-    <div class="title-sub">by <span class="brand">verifactu.business</span></div>
+  <!-- Text -->
+  <div class="text-block">
+    <h1 class="title"><span class="green">ChatGPT</span> para Holded</h1>
+    <p class="desc">
+      Conecta tu cuenta de Holded a ChatGPT y trabaja con datos reales de tu negocio en lenguaje natural. Consulta facturas, contactos, contabilidad y libro diario, y crea borradores de factura con confirmación explícita.
+    </p>
+    <span class="url">holded.verifactu.business/conectores/chatgpt</span>
   </div>
 
-  <!-- Barra de progreso -->
+  <!-- Progress bar -->
   <div class="progress">
     <div class="progress-bar"></div>
   </div>
 
   <script>
-    // Duración total: ~4.5 s
-    // Para grabar: F11 (pantalla completa) → Win+Alt+R / OBS
-    // Escala automáticamente a cualquier resolución gracias a clamp() + vw/vh
+    // Duración total: ~6.1s (4.2s inicio barra + 1.9s relleno)
+    // Grabar: F11 pantalla completa → Win+Alt+R o OBS
+    // Escala a cualquier resolución via clamp() + vw/vh
   </script>
 </body>
 </html>
