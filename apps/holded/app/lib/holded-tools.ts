@@ -1,9 +1,6 @@
 import type Anthropic from '@anthropic-ai/sdk';
 
-// Re-export from holded-mcp using a direct import so we don't introduce a
-// workspace dependency — the holded-mcp package lives in the same repo.
-// The HoldedClient constructor takes a plain API key string.
-import { HoldedClient } from '../../../holded-mcp/src/holded-client.js';
+import { HoldedClient } from './holded-api-client';
 
 // ─── Tool definitions (Anthropic Tool format) ────────────────────────────────
 
