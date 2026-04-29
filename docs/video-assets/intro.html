@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intro — Holded para ChatGPT</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #06112b;
+      overflow: hidden;
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Background glow ── */
+    .bg-glow {
+      position: absolute;
+      width: 800px;
+      height: 800px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(35,97,216,0.18) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0);
+      animation: glow-expand 1s ease-out 1.8s forwards;
+    }
+
+    /* ── Logos container ── */
+    .stage {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* ── Holded logo (left) ── */
+    .logo-holded {
+      position: absolute;
+      left: 50%;
+      transform: translateX(calc(-50% - 240px)) scale(0.6);
+      opacity: 0;
+      animation:
+        holded-enter 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.2s forwards,
+        holded-merge  0.5s cubic-bezier(0.4,0,0.2,1) 1.6s forwards;
+    }
+
+    .holded-diamond {
+      width: 160px;
+      height: 160px;
+    }
+
+    /* ── ChatGPT logo (right) ── */
+    .logo-chatgpt {
+      position: absolute;
+      right: 50%;
+      transform: translateX(calc(50% + 240px)) scale(0.6);
+      opacity: 0;
+      animation:
+        chatgpt-enter 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.5s forwards,
+        chatgpt-merge  0.5s cubic-bezier(0.4,0,0.2,1) 1.6s forwards;
+    }
+
+    .chatgpt-circle {
+      width: 160px;
+      height: 160px;
+      background: #10a37f;
+      border-radius: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Flash overlay ── */
+    .flash {
+      position: absolute;
+      inset: 0;
+      background: white;
+      opacity: 0;
+      pointer-events: none;
+      animation: flash 0.4s ease-out 2.05s forwards;
+    }
+
+    /* ── Merged badge ── */
+    .merged {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      opacity: 0;
+      transform: scale(0.7);
+      animation: merged-appear 0.5s cubic-bezier(0.34,1.56,0.64,1) 2.3s forwards;
+    }
+
+    .merged-holded { width: 80px; height: 80px; }
+    .merged-plus {
+      font-size: 36px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.4);
+    }
+    .merged-chatgpt {
+      width: 80px;
+      height: 80px;
+      background: #10a37f;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Title ── */
+    .title-block {
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      opacity: 0;
+      animation: title-appear 0.6s ease-out 2.7s forwards;
+    }
+
+    .title-main {
+      font-size: 52px;
+      font-weight: 800;
+      color: white;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .title-sub {
+      margin-top: 12px;
+      font-size: 22px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.5px;
+    }
+
+    .title-sub span {
+      color: #2361d8;
+    }
+
+    /* ── Progress bar ── */
+    .progress {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 320px;
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+      opacity: 0;
+      animation: progress-show 0.3s ease 2.9s forwards;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #2361d8, #10a37f);
+      border-radius: 2px;
+      animation: progress-fill 1.5s ease 3s forwards;
+    }
+
+    /* ── Keyframes ── */
+    @keyframes holded-enter {
+      to { opacity: 1; transform: translateX(calc(-50% - 220px)) scale(1); }
+    }
+    @keyframes chatgpt-enter {
+      to { opacity: 1; transform: translateX(calc(50% + 220px)) scale(1); }
+    }
+    @keyframes holded-merge {
+      to { opacity: 0; transform: translateX(-50%) scale(0.5); }
+    }
+    @keyframes chatgpt-merge {
+      to { opacity: 0; transform: translateX(50%) scale(0.5); }
+    }
+    @keyframes glow-expand {
+      to { transform: translate(-50%, -50%) scale(1); }
+    }
+    @keyframes flash {
+      0%   { opacity: 0.9; }
+      100% { opacity: 0; }
+    }
+    @keyframes merged-appear {
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes title-appear {
+      from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    @keyframes progress-show {
+      to { opacity: 1; }
+    }
+    @keyframes progress-fill {
+      to { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <div class="flash"></div>
+
+  <div class="stage">
+    <!-- Holded logo entrando desde la izquierda -->
+    <div class="logo-holded">
+      <img class="holded-diamond" src="../../apps/holded/public/brand/holded/holded-diamond-logo.png" alt="Holded" />
+    </div>
+
+    <!-- ChatGPT logo entrando desde la derecha -->
+    <div class="logo-chatgpt">
+      <div class="chatgpt-circle">
+        <!-- ChatGPT icon SVG -->
+        <svg width="88" height="88" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835 9.964 9.964 0 0 0-6.212-2.843 10.078 10.078 0 0 0-9.49 6.967 9.967 9.967 0 0 0-6.188 4.83 10.079 10.079 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 6.212 2.843 10.078 10.078 0 0 0 9.49-6.967 9.966 9.966 0 0 0 6.188-4.831 10.079 10.079 0 0 0-1.24-11.816zm-17.453 24.588a7.464 7.464 0 0 1-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 0 0 .655-1.134V19.054l3.366 1.944a.12.12 0 0 1 .066.092v9.299a7.505 7.505 0 0 1-7.49 7.069zM4.708 34.151a7.469 7.469 0 0 1-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 0 0 1.308 0l9.724-5.614v3.888a.12.12 0 0 1-.048.103L14.854 37.28a7.505 7.505 0 0 1-10.146-3.13zM3.39 13.503A7.469 7.469 0 0 1 7.29 9.89c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 0 0 .654 1.132l9.723 5.614-3.366 1.944a.12.12 0 0 1-.114.012L5.765 23.082a7.505 7.505 0 0 1-2.375-9.579zm27.658 6.437l-9.724-5.615 3.367-1.943a.121.121 0 0 1 .114-.012l8.418 4.865a7.504 7.504 0 0 1-1.158 13.528v-9.476a1.293 1.293 0 0 0-.017-.347zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 0 0-1.308 0l-9.723 5.614v-3.888a.12.12 0 0 1 .048-.103l8.144-4.703a7.498 7.498 0 0 1 11.04 7.822zm-21.063 6.929l-3.367-1.944a.12.12 0 0 1-.065-.092v-9.299a7.497 7.497 0 0 1 12.293-5.756 6.94 6.94 0 0 0-.236.134l-7.965 4.6a1.294 1.294 0 0 0-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.5v4.999l-4.331 2.5-4.331-2.5V17.883z" fill="white"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Badge fusionado (aparece después del flash) -->
+    <div class="merged">
+      <img class="merged-holded" src="../../apps/holded/public/brand/holded/holded-diamond-logo.png" alt="Holded" />
+      <span class="merged-plus">+</span>
+      <div class="merged-chatgpt">
+        <svg width="44" height="44" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835 9.964 9.964 0 0 0-6.212-2.843 10.078 10.078 0 0 0-9.49 6.967 9.967 9.967 0 0 0-6.188 4.83 10.079 10.079 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 6.212 2.843 10.078 10.078 0 0 0 9.49-6.967 9.966 9.966 0 0 0 6.188-4.831 10.079 10.079 0 0 0-1.24-11.816zm-17.453 24.588a7.464 7.464 0 0 1-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 0 0 .655-1.134V19.054l3.366 1.944a.12.12 0 0 1 .066.092v9.299a7.505 7.505 0 0 1-7.49 7.069zM4.708 34.151a7.469 7.469 0 0 1-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 0 0 1.308 0l9.724-5.614v3.888a.12.12 0 0 1-.048.103L14.854 37.28a7.505 7.505 0 0 1-10.146-3.13zM3.39 13.503A7.469 7.469 0 0 1 7.29 9.89c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 0 0 .654 1.132l9.723 5.614-3.366 1.944a.12.12 0 0 1-.114.012L5.765 23.082a7.505 7.505 0 0 1-2.375-9.579zm27.658 6.437l-9.724-5.615 3.367-1.943a.121.121 0 0 1 .114-.012l8.418 4.865a7.504 7.504 0 0 1-1.158 13.528v-9.476a1.293 1.293 0 0 0-.017-.347zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 0 0-1.308 0l-9.723 5.614v-3.888a.12.12 0 0 1 .048-.103l8.144-4.703a7.498 7.498 0 0 1 11.04 7.822zm-21.063 6.929l-3.367-1.944a.12.12 0 0 1-.065-.092v-9.299a7.497 7.497 0 0 1 12.293-5.756 6.94 6.94 0 0 0-.236.134l-7.965 4.6a1.294 1.294 0 0 0-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.5v4.999l-4.331 2.5-4.331-2.5V17.883z" fill="white"/>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Título principal -->
+  <div class="title-block">
+    <div class="title-main">Holded para ChatGPT</div>
+    <div class="title-sub">by <span>verifactu.business</span></div>
+  </div>
+
+  <!-- Barra de progreso -->
+  <div class="progress">
+    <div class="progress-bar"></div>
+  </div>
+
+  <script>
+    // Duración total de la animación: ~4.5 segundos
+    // Para grabar: abre en navegador a pantalla completa (F11) y graba con OBS
+    // Resolución recomendada: 1920x1080
+    console.log('Intro duration: ~4.5s | Press F11 for fullscreen before recording');
+  </script>
+</body>
+</html>

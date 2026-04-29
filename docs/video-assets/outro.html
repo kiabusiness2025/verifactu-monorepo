@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outro — Powered by verifactu.business</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 1920px;
+      height: 1080px;
+      background: #06112b;
+      overflow: hidden;
+      font-family: -apple-system, 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Particle dots background ── */
+    .particles {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: rgba(35,97,216,0.3);
+      animation: float linear infinite;
+    }
+
+    /* ── Center glow ── */
+    .glow {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(35,97,216,0.12) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    /* ── Logos row ── */
+    .logos {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      opacity: 0;
+      transform: translateY(16px);
+      animation: fade-up 0.8s ease-out 0.4s forwards;
+    }
+
+    .logo-holded {
+      width: 52px;
+      height: 52px;
+    }
+
+    .divider {
+      width: 1px;
+      height: 36px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .logo-chatgpt {
+      width: 44px;
+      height: 44px;
+      background: #10a37f;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Powered by text ── */
+    .powered {
+      margin-top: 32px;
+      opacity: 0;
+      animation: fade-up 0.8s ease-out 0.8s forwards;
+      text-align: center;
+    }
+
+    .powered-label {
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.35);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .powered-brand {
+      margin-top: 10px;
+      font-size: 56px;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1;
+    }
+
+    .brand-verifactu { color: white; }
+    .brand-dot { color: rgba(255,255,255,0.3); }
+    .brand-business { color: #2361d8; }
+
+    /* ── Subtitle ── */
+    .subtitle {
+      margin-top: 20px;
+      opacity: 0;
+      animation: fade-up 0.8s ease-out 1.3s forwards;
+      text-align: center;
+    }
+
+    .subtitle-text {
+      font-size: 18px;
+      color: rgba(255,255,255,0.3);
+      font-weight: 400;
+    }
+
+    .subtitle-claude {
+      color: rgba(255,255,255,0.5);
+      font-weight: 600;
+    }
+
+    /* ── Bottom line ── */
+    .bottom-line {
+      position: absolute;
+      bottom: 72px;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      animation: fade-up 0.8s ease-out 1.8s forwards;
+      text-align: center;
+    }
+
+    .bottom-text {
+      font-size: 14px;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 1px;
+    }
+
+    .bottom-url {
+      margin-top: 6px;
+      font-size: 16px;
+      color: rgba(35,97,216,0.6);
+      font-weight: 500;
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Keyframes ── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      50%       { opacity: 0.7; transform: translate(-50%, -50%) scale(1.1); }
+    }
+
+    @keyframes float {
+      from { transform: translateY(0) translateX(0); opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      to   { transform: translateY(-120px) translateX(var(--dx, 30px)); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Fondo de partículas -->
+  <div class="particles" id="particles"></div>
+  <div class="glow"></div>
+
+  <!-- Logos -->
+  <div class="logos">
+    <img class="logo-holded" src="../../apps/holded/public/brand/holded/holded-diamond-logo.png" alt="Holded" />
+    <div class="divider"></div>
+    <div class="logo-chatgpt">
+      <svg width="26" height="26" viewBox="0 0 41 41" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M37.532 16.87a9.963 9.963 0 0 0-.856-8.184 10.078 10.078 0 0 0-10.855-4.835 9.964 9.964 0 0 0-6.212-2.843 10.078 10.078 0 0 0-9.49 6.967 9.967 9.967 0 0 0-6.188 4.83 10.079 10.079 0 0 0 1.24 11.817 9.965 9.965 0 0 0 .856 8.185 10.079 10.079 0 0 0 10.855 4.835 9.965 9.965 0 0 0 6.212 2.843 10.078 10.078 0 0 0 9.49-6.967 9.966 9.966 0 0 0 6.188-4.831 10.079 10.079 0 0 0-1.24-11.816zm-17.453 24.588a7.464 7.464 0 0 1-4.799-1.735c.061-.033.168-.091.237-.134l7.964-4.6a1.294 1.294 0 0 0 .655-1.134V19.054l3.366 1.944a.12.12 0 0 1 .066.092v9.299a7.505 7.505 0 0 1-7.49 7.069zM4.708 34.151a7.469 7.469 0 0 1-.894-5.023c.06.036.162.099.237.141l7.964 4.6a1.297 1.297 0 0 0 1.308 0l9.724-5.614v3.888a.12.12 0 0 1-.048.103L14.854 37.28a7.505 7.505 0 0 1-10.146-3.13zM3.39 13.503A7.469 7.469 0 0 1 7.29 9.89c0 .068-.004.19-.004.274v9.201a1.294 1.294 0 0 0 .654 1.132l9.723 5.614-3.366 1.944a.12.12 0 0 1-.114.012L5.765 23.082a7.505 7.505 0 0 1-2.375-9.579zm27.658 6.437l-9.724-5.615 3.367-1.943a.121.121 0 0 1 .114-.012l8.418 4.865a7.504 7.504 0 0 1-1.158 13.528v-9.476a1.293 1.293 0 0 0-.017-.347zm3.35-5.043c-.059-.037-.162-.099-.236-.141l-7.965-4.6a1.298 1.298 0 0 0-1.308 0l-9.723 5.614v-3.888a.12.12 0 0 1 .048-.103l8.144-4.703a7.498 7.498 0 0 1 11.04 7.822zm-21.063 6.929l-3.367-1.944a.12.12 0 0 1-.065-.092v-9.299a7.497 7.497 0 0 1 12.293-5.756 6.94 6.94 0 0 0-.236.134l-7.965 4.6a1.294 1.294 0 0 0-.654 1.132l-.006 11.225zm1.829-3.943l4.33-2.501 4.332 2.5v4.999l-4.331 2.5-4.331-2.5V17.883z" fill="white"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Powered by -->
+  <div class="powered">
+    <div class="powered-label">Powered by</div>
+    <div class="powered-brand">
+      <span class="brand-verifactu">verifactu</span><span class="brand-dot">.</span><span class="brand-business">business</span>
+    </div>
+  </div>
+
+  <!-- Subtitle -->
+  <div class="subtitle">
+    <div class="subtitle-text">
+      Desarrollado con <span class="subtitle-claude">Claude Sonnet 4.6 · Anthropic</span>
+    </div>
+  </div>
+
+  <!-- Bottom URL -->
+  <div class="bottom-line">
+    <div class="bottom-text">Conector Holded para ChatGPT · MCP + OAuth 2.0</div>
+    <div class="bottom-url">holded.verifactu.business</div>
+  </div>
+
+  <script>
+    // Genera partículas flotantes
+    const container = document.getElementById('particles');
+    for (let i = 0; i < 40; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.bottom = Math.random() * 30 + '%';
+      p.style.setProperty('--dx', (Math.random() * 80 - 40) + 'px');
+      p.style.animationDuration = (4 + Math.random() * 6) + 's';
+      p.style.animationDelay = (Math.random() * 4) + 's';
+      p.style.opacity = '0';
+      container.appendChild(p);
+    }
+    // Outro duration: ~4s | Press F11 for fullscreen
+    console.log('Outro duration: ~4s | Press F11 for fullscreen before recording');
+  </script>
+</body>
+</html>
