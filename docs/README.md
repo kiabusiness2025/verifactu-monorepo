@@ -250,3 +250,12 @@ Deployment: Vercel, Firebase
 ---
 
 Ultima actualizacion: Abril 2026
+
+### Integraciones clave y conectores IA
+
+- [engineering/HOLDED_CONNECTOR_PAYMENTS_SERVICES_README.md](engineering/HOLDED_CONNECTOR_PAYMENTS_SERVICES_README.md) — Estado, estructura y plan de endpoints para Pagos y Servicios en el conector Holded. Aplica a:
+  - Conector Holded (ChatGPT + Holded)
+  - Isaak (integración y uso de servicios/pagos en contexto conversacional)
+  - Claude (futuro canal IA compatible, ver roadmap en docs/product/holded/HOLDED_CONNECTORS_PUBLIC_ARCHITECTURE_PLAN_2026-04-25.md)
+
+> Este README técnico es referencia para cualquier canal IA (ChatGPT, Claude, Isaak) que consuma o exponga pagos y servicios vía Holded.
