@@ -116,6 +116,19 @@ const SUGGESTION_POOL: Record<PageContext, string[]> = {
   ],
 };
 
+const DEFAULT_STANDALONE_SUPPORT_PROMPT =
+  'Necesito soporte tecnico con el conector de Holded. Ayudame a diagnosticar el problema paso a paso.';
+
+function buildStandaloneChatPath(page: PageContext, prompt: string, source: string) {
+  const params = new URLSearchParams({
+    page,
+    prompt,
+    source,
+  });
+
+  return `/support/chat?${params.toString()}`;
+}
+
 function uid() {
   return Math.random().toString(36).slice(2);
 }
@@ -182,6 +195,16 @@ export function IsaakWidget({ page = 'generic' }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const textRef = useRef<HTMLTextAreaElement>(null);
 
+  const openStandaloneChat = useCallback(
+    (prompt = DEFAULT_STANDALONE_SUPPORT_PROMPT, source = 'isaak_floating_button') => {
+      setBubbleVisible(false);
+      setBubbleDismissed(true);
+      const url = buildStandaloneChatPath(page, prompt, source);
+      window.open(url, 'isaak-support-chat', 'noopener,noreferrer,width=460,height=720');
+    },
+    [page]
+  );
+
   // Check session once on mount
   useEffect(() => {
     fetch('/api/auth/session/health')
@@ -195,12 +218,10 @@ export function IsaakWidget({ page = 'generic' }: Props) {
       .catch(() => {});
   }, []);
 
-  // Show bubble after 4s if chat not yet opened
+  // Isaak stays as a floating launcher; the chat itself opens in /support/chat.
   useEffect(() => {
-    if (open || bubbleDismissed) return;
-    const t = setTimeout(() => setBubbleVisible(true), 4000);
-    return () => clearTimeout(t);
-  }, [open, bubbleDismissed]);
+    setBubbleVisible(false);
+  }, []);
 
   useEffect(() => {
     if (open) setBubbleVisible(false);
@@ -309,16 +330,9 @@ export function IsaakWidget({ page = 'generic' }: Props) {
 
   const handleSuggestion = useCallback(
     (suggestion: string) => {
-      setBubbleVisible(false);
-      setBubbleDismissed(true);
-      if (!open) {
-        setOpen(true);
-        setTimeout(() => sendMessage(suggestion), 120);
-      } else {
-        sendMessage(suggestion);
-      }
+      openStandaloneChat(suggestion, 'isaak_suggestion');
     },
-    [sendMessage, open]
+    [openStandaloneChat]
   );
 
   const handleKeyDown = useCallback(
@@ -339,11 +353,13 @@ export function IsaakWidget({ page = 'generic' }: Props) {
   const showRegisterHint = !isRegistered && exchangeCount === 2;
   const placeholder = userName ? `¿En qué te ayudo, ${userName}?` : '¿En qué puedo ayudarte?';
   const bubbleSuggestions = BUBBLE_SUGGESTIONS[page];
+  const showPreOpenBubble = false;
+  const inlinePanelEnabled = false;
 
   return (
     <>
       {/* Pre-open suggestion bubble */}
-      {bubbleVisible && !open ? (
+      {showPreOpenBubble && bubbleVisible && !open ? (
         <div className="isaak-bubble fixed bottom-24 right-6 z-50 w-[min(300px,calc(100vw-3rem))] rounded-2xl border border-[#2361d8]/20 bg-white shadow-xl">
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
             <div className="flex items-center gap-2">
@@ -385,12 +401,8 @@ export function IsaakWidget({ page = 'generic' }: Props) {
       {/* Floating button */}
       <button
         type="button"
-        onClick={() => {
-          setBubbleVisible(false);
-          setBubbleDismissed(true);
-          setOpen((v) => !v);
-        }}
-        aria-label={open ? 'Cerrar Isaak' : 'Abrir Isaak — Asistente de Verifactu'}
+        onClick={() => openStandaloneChat()}
+        aria-label="Abrir Isaak en una ventana independiente"
         className="fixed bottom-6 right-6 z-50 flex h-16 w-16 items-center justify-center rounded-full transition hover:scale-105 active:scale-95"
       >
         <div className="isaak-gradient absolute inset-0 rounded-full shadow-[0_4px_20px_rgba(35,97,216,0.45)]" />
@@ -411,7 +423,7 @@ export function IsaakWidget({ page = 'generic' }: Props) {
             <IsaakAvatar size={52} />
           )}
         </div>
-        {bubbleVisible && !open ? (
+        {showPreOpenBubble && bubbleVisible && !open ? (
           <span className="absolute right-0.5 top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#2361d8] ring-2 ring-white">
             <span className="h-1.5 w-1.5 rounded-full bg-white" />
           </span>
@@ -420,7 +432,7 @@ export function IsaakWidget({ page = 'generic' }: Props) {
       </button>
 
       {/* Chat panel */}
-      {open ? (
+      {inlinePanelEnabled && open ? (
         <div className="isaak-panel fixed bottom-24 right-6 z-50 flex w-[min(380px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
           {/* Header */}
           <div className="isaak-gradient flex items-center justify-between px-5 py-4">
@@ -656,8 +668,16 @@ export function IsaakWidget({ page = 'generic' }: Props) {
                 </button>
               </div>
             </div>
-            <div className="mt-1.5 text-center text-[10px] text-slate-400">
-              Isaak · Verifactu Business · soporte@verifactu.business
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="text-[10px] text-slate-400">
+                Isaak · Verifactu Business · soporte@verifactu.business
+              </span>
+              <a
+                href="/conectores/chatgpt/soporte"
+                className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+              >
+                🎧 Soporte / Ayuda
+              </a>
             </div>
           </div>
         </div>

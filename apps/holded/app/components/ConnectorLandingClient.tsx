@@ -50,6 +50,7 @@ interface ConnectorConfig {
   docsHref: string;
   privacyHref: string;
   dpaHref: string;
+  termsHref: string;
   status: string;
   aiName: string; // "Claude" | "ChatGPT"
   logoSrc: string;
@@ -100,6 +101,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     docsHref: '/conectores/claude/docs',
     privacyHref: '/conectores/claude/privacy',
     dpaHref: '/conectores/claude/dpa',
+    termsHref: '/conectores/claude/terms',
     status: 'Operativo · Conector personalizado MCP · Anthropic',
     aiName: 'Claude',
     logoSrc: '/brand/claude-logo.svg',
@@ -115,6 +117,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     docsHref: '/conectores/chatgpt/docs',
     privacyHref: '/conectores/chatgpt/privacy',
     dpaHref: '/conectores/chatgpt/dpa',
+    termsHref: '/conectores/chatgpt/terms',
     status: 'Operativo · Plugin OAuth · OpenAI',
     aiName: 'ChatGPT',
     logoSrc: '/brand/chatgpt-logo.png',
@@ -637,6 +640,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               ['Docs', cfg.docsHref],
               ['Privacy', cfg.privacyHref],
               ['DPA', cfg.dpaHref],
+              ['Terms', cfg.termsHref],
             ].map(([label, href]) => (
               <Link
                 key={href}

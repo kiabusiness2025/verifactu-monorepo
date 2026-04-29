@@ -23,13 +23,14 @@ export default function HoldedSiteChrome({ children }: Props) {
   const pathname = usePathname();
   const isAuthRoute = pathname?.startsWith('/auth/') ?? false;
   const isIsaakApp = false;
+  const isStandaloneSupportChat = pathname?.startsWith('/support/chat') ?? false;
   const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
 
-  if (isAuthRoute || isIsaakApp) {
+  if (isAuthRoute || isIsaakApp || isStandaloneSupportChat) {
     return <>{children}</>;
   }
 
@@ -161,14 +162,12 @@ export default function HoldedSiteChrome({ children }: Props) {
                 de Holded para ofrecer una capa de lectura y operativa más clara.
               </div>
               <div className="pt-1">
-                <a
-                  href="https://verifactu.business"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                <Link
+                  href="/"
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
                 >
-                  ↗ Hub principal — verifactu.business
-                </a>
+                  ↗ holded.verifactu.business
+                </Link>
               </div>
             </div>
 
