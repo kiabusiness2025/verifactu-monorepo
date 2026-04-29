@@ -297,6 +297,42 @@ function requiredPayload(input: Record<string, unknown>) {
   return payload as Record<string, unknown>;
 }
 
+function optionalPayload(input: Record<string, unknown>) {
+  const payload = input.payload;
+  if (payload === undefined || payload === null) {
+    return {};
+  }
+
+  if (typeof payload !== 'object' || Array.isArray(payload)) {
+    throw new Error('payload must be an object');
+  }
+
+  return payload as Record<string, unknown>;
+}
+
+function optionalBoolean(input: Record<string, unknown>, key: string, defaultValue?: boolean) {
+  const value = input[key];
+  if (value === undefined || value === null || value === '') {
+    return defaultValue;
+  }
+
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value !== 0;
+  }
+
+  if (typeof value === 'string' && value.trim()) {
+    const normalized = value.trim().toLowerCase();
+    if (['1', 'true', 'yes', 'si'].includes(normalized)) return true;
+    if (['0', 'false', 'no'].includes(normalized)) return false;
+  }
+
+  throw new Error(`${key} must be a boolean`);
+}
+
 function requiredEnumString(
   input: Record<string, unknown>,
   key: string,
@@ -1137,6 +1173,8 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     const items = await holdedAdapter.listPayments(apiKey, {
       page: readPage(input),
       limit: readLimit(input),
+      starttmp: optionalUnixTimestamp(input, 'startTimestamp'),
+      endtmp: optionalUnixTimestamp(input, 'endTimestamp'),
     });
     return { items };
   },
@@ -1275,6 +1313,55 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     return { deleted };
   },
 
+  async holded_list_employees(apiKey, input) {
+    const items = await holdedAdapter.listEmployees(apiKey, {
+      page: readPage(input),
+      limit: readLimit(input),
+    });
+    return { items };
+  },
+
+  async holded_get_employee(apiKey, input) {
+    const item = await holdedAdapter.getEmployee(apiKey, requiredString(input, 'employeeId'));
+    return { item };
+  },
+
+  async holded_create_employee(apiKey, input) {
+    requireConfirm(input);
+    const created = await holdedAdapter.createEmployee(apiKey, requiredPayload(input));
+    return { created };
+  },
+
+  async holded_update_employee(apiKey, input) {
+    requireConfirm(input);
+    const updated = await holdedAdapter.updateEmployee(
+      apiKey,
+      requiredString(input, 'employeeId'),
+      requiredPayload(input)
+    );
+    return { updated };
+  },
+
+  async holded_clock_in_employee(apiKey, input) {
+    requireConfirm(input);
+    const clockIn = await holdedAdapter.clockInEmployee(
+      apiKey,
+      requiredString(input, 'employeeId'),
+      optionalPayload(input)
+    );
+    return { clockIn };
+  },
+
+  async holded_clock_out_employee(apiKey, input) {
+    requireConfirm(input);
+    const clockOut = await holdedAdapter.clockOutEmployee(
+      apiKey,
+      requiredString(input, 'employeeId'),
+      optionalPayload(input)
+    );
+    return { clockOut };
+  },
+
   async holded_list_daily_ledger(apiKey, input) {
     const items = await holdedAdapter.listDailyLedger(apiKey, {
       page: readPage(input),
@@ -1286,8 +1373,11 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
 
   async holded_list_accounts(apiKey, input) {
     const items = await holdedAdapter.listAccounts(apiKey, {
-      page: readPage(input),
-      limit: readLimit(input),
+      ...(input.page !== undefined ? { page: readPage(input) } : {}),
+      ...(input.limit !== undefined ? { limit: readLimit(input) } : {}),
+      starttmp: optionalUnixTimestamp(input, 'startTimestamp'),
+      endtmp: optionalUnixTimestamp(input, 'endTimestamp'),
+      includeEmpty: optionalBoolean(input, 'includeEmpty', true),
     });
     return { items };
   },
@@ -1382,10 +1472,12 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_documents',
     'List documents in Holded',
-    'List invoice and sales documents from Holded for the currently authorized tenant. Use year or from/to when you need older history such as 2025.',
+    'List invoice, sales and supplier documents from Holded for the currently authorized tenant. Use docType purchase, purchaseorder or purchaserefund for purchases and supplier expenses, and use year or from/to when you need older history such as 2025.',
     listSchema({
       status: stringProperty('Optional Holded document status filter.'),
-      docType: stringProperty('Optional Holded document type filter such as invoice or estimate.'),
+      docType: stringProperty(
+        'Optional Holded document type filter such as invoice, estimate, purchase, purchaseorder or purchaserefund.'
+      ),
       year: yearProperty,
       from: isoDateProperty,
       to: isoDateProperty,
@@ -1406,7 +1498,7 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_create_document',
     'Create a document in Holded',
-    'Create a document in Holded with explicit confirmation.',
+    'Create a document in Holded with explicit confirmation. Supported supplier document types include purchase, purchaseorder and purchaserefund.',
     writeSchema(
       {
         docType: stringProperty('The Holded document type to create.', { defaultValue: 'invoice' }),
@@ -1946,7 +2038,10 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
     'holded_list_payments',
     'List payments in Holded',
     'List payments from Holded for the currently authorized tenant.',
-    listSchema()
+    listSchema({
+      startTimestamp: unixTimestampProperty,
+      endTimestamp: unixTimestampProperty,
+    })
   ),
   readTool(
     'holded_get_payment',
@@ -2084,10 +2179,79 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
     { destructiveHint: true }
   ),
   readTool(
+    'holded_list_employees',
+    'List employees in Holded',
+    'List employees from Holded for the currently authorized tenant.',
+    listSchema()
+  ),
+  readTool(
+    'holded_get_employee',
+    'Get one employee from Holded',
+    'Retrieve a single Holded employee by id.',
+    simpleSchema({ employeeId: stringProperty('The Holded employee identifier.') }, ['employeeId'])
+  ),
+  writeTool(
+    'holded_create_employee',
+    'Create an employee in Holded',
+    'Create an employee in Holded with explicit confirmation.',
+    writeSchema({ payload: payloadProperty('Employee payload for Holded.') }, ['payload'])
+  ),
+  writeTool(
+    'holded_update_employee',
+    'Update an employee in Holded',
+    'Update a Holded employee with explicit confirmation.',
+    writeSchema(
+      {
+        employeeId: stringProperty('The Holded employee identifier.'),
+        payload: payloadProperty('Employee fields to update in Holded.'),
+      },
+      ['employeeId', 'payload']
+    )
+  ),
+  writeTool(
+    'holded_clock_in_employee',
+    'Clock in an employee in Holded',
+    'Start employee time tracking in Holded with explicit confirmation.',
+    writeSchema(
+      {
+        employeeId: stringProperty('The Holded employee identifier.'),
+        payload: payloadProperty(
+          'Optional clock-in payload for Holded, for example location when available.'
+        ),
+      },
+      ['employeeId']
+    )
+  ),
+  writeTool(
+    'holded_clock_out_employee',
+    'Clock out an employee in Holded',
+    'End employee time tracking in Holded with explicit confirmation.',
+    writeSchema(
+      {
+        employeeId: stringProperty('The Holded employee identifier.'),
+        payload: payloadProperty(
+          'Optional clock-out payload for Holded, for example latitude and longitude when available.'
+        ),
+      },
+      ['employeeId']
+    )
+  ),
+  readTool(
     'holded_list_accounts',
     'List accounting accounts in Holded',
-    'List accounting accounts available in Holded for the currently authorized tenant.',
-    listSchema()
+    'List the complete Holded chart of accounts for the currently authorized tenant. By default the connector calls chartofaccounts with includeEmpty=1 so empty accounts are not silently omitted.',
+    simpleSchema({
+      page: pageProperty,
+      limit: limitProperty,
+      startTimestamp: unixTimestampProperty,
+      endTimestamp: unixTimestampProperty,
+      includeEmpty: {
+        type: 'boolean',
+        default: true,
+        description:
+          'Whether to include empty accounting accounts. Defaults to true to avoid partial chart-of-accounts views.',
+      },
+    })
   ),
   readTool(
     'holded_list_daily_ledger',

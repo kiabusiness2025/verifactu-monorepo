@@ -191,6 +191,28 @@ python run.py --all-connectors --all-formats --skip-sora  # 6 videos (2 conector
 
 **Embed en Hero de landings:** componente `DemoIframeHero` cicla las 6 escenas como iframe en las landings de `/conectores/claude` y `/conectores/chatgpt`.
 
+## Generación de vídeos demo OpenAI con Sora (automatizado)
+
+1. Ve a la carpeta scripts/sora-video/
+2. Coloca los assets en las rutas:
+   - ../../apps/holded/public/video/Video Holded App 1.mp4 (vídeo principal)
+   - ../../apps/holded/public/Holded/Corporativo/Holded logo.png (logo Holded)
+   - ../../apps/holded/public/brand/chatgpt-logo.png (logo ChatGPT)
+   - ../../brand/app/app-icon-512.png (icono Verifactu)
+   - ../../docs/video-assets/intro.html (intro base, editable)
+3. Instala dependencias:
+   pnpm install
+4. Añade tu SORA_API_KEY en .env.local en la raíz del monorepo
+5. Ejecuta:
+   node generate-sora-demo-video.js
+6. El script mostrará la URL de descarga del vídeo generado.
+7. Descarga el mp4 y súbelo a apps/holded/public/video/ con el nombre que desees (ej: openai-review-demo.mp4)
+8. Actualiza la ruta en la página demo si cambias el nombre.
+
+Puedes modificar el guion en generate-sora-demo-video.js para futuras demos.
+
+---
+
 ## Siguientes pasos (prioridad)
 
 1. Terminar paneles admin: usuarios, suscripciones, emails, Vercel, soporte.

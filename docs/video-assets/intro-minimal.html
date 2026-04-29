@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Intro Minimal — ChatGPT + Holded</title>
+  <!--
+    Grabar con OBS: 1920×1080 · 60 FPS · duración ~5.5 s
+    Texto ya incluido en el HTML (no necesita overlays de post-producción).
+    Para versión sin texto, comenta el bloque .text-block.
+  -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:  #10a37f;
+      --navy:   #0c1c50;
+      --red:    #e53935;
+    }
+
+    html, body {
+      width: 1920px; height: 1080px;
+      overflow: hidden;
+      font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: linear-gradient(150deg, #ecfdf5 0%, #f4fef9 30%, #f8faff 70%, #fafafa 100%);
+    }
+
+    /* ── Faint background UI ghosts ─────────────────────────────────────── */
+    .ghost {
+      position: fixed;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.45);
+      border: 1px solid rgba(16,163,127,0.08);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      opacity: 0;
+      animation: ghost-in 1.2s ease var(--d) forwards;
+    }
+    .ghost-bar { height: 6px; border-radius: 3px; background: rgba(16,163,127,0.18); margin-bottom: 6px; }
+
+    .g1 { width:220px; height:100px; top:100px; left:80px;  --d:0.4s; }
+    .g2 { width:180px; height: 80px; bottom:120px; left:140px; --d:0.7s; }
+    .g3 { width:200px; height:110px; top:80px;  right:80px; --d:0.6s; }
+    .g4 { width:170px; height: 70px; bottom:100px; right:130px; --d:0.9s; }
+
+    @keyframes ghost-in {
+      to { opacity: 1; }
+    }
+
+    /* ── Stage ──────────────────────────────────────────────────────────── */
+    .stage {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 44px;
+    }
+
+    /* ── Logo cards row ─────────────────────────────────────────────────── */
+    .cards-row {
+      display: flex;
+      align-items: center;
+      gap: 0; /* gap collapses as cards approach */
+    }
+
+    .logo-card {
+      width: 160px; height: 160px;
+      background: rgba(255,255,255,0.88);
+      border: 1px solid rgba(255,255,255,0.95);
+      border-radius: 28px;
+      box-shadow: 0 8px 40px rgba(16,163,127,0.13), 0 2px 8px rgba(0,0,0,0.05);
+      display: flex; align-items: center; justify-content: center;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      flex-shrink: 0;
+    }
+    .logo-card img { width: 88%; height: 88%; object-fit: contain; }
+
+    /* Cards enter from sides, then drift to center */
+    .card-left {
+      opacity: 0;
+      transform: translateX(-280px);
+      animation:
+        card-enter-left  0.9s cubic-bezier(.16,1,.3,1) 0.2s forwards,
+        card-float       3.8s ease-in-out              1.1s infinite,
+        card-drift-left  0.7s cubic-bezier(.4,0,.2,1)  2.6s forwards;
+    }
+    .card-right {
+      opacity: 0;
+      transform: translateX(280px);
+      animation:
+        card-enter-right 0.9s cubic-bezier(.16,1,.3,1) 0.4s forwards,
+        card-float-inv   3.8s ease-in-out              1.3s infinite,
+        card-drift-right 0.7s cubic-bezier(.4,0,.2,1)  2.6s forwards;
+    }
+
+    @keyframes card-enter-left  { to { opacity:1; transform: translateX(-120px); } }
+    @keyframes card-enter-right { to { opacity:1; transform: translateX(120px);  } }
+    @keyframes card-drift-left  { to { transform: translateX(-4px); } }
+    @keyframes card-drift-right { to { transform: translateX(4px);  } }
+    @keyframes card-float     { 0%,100%{ margin-top:0;   } 50%{ margin-top:-10px; } }
+    @keyframes card-float-inv { 0%,100%{ margin-top:0;   } 50%{ margin-top:10px;  } }
+
+    /* ── Connector ──────────────────────────────────────────────────────── */
+    .connector-wrap {
+      position: relative;
+      width: 200px; height: 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      animation: conn-appear 0.5s ease 1.4s forwards;
+    }
+    @keyframes conn-appear { to { opacity:1; } }
+
+    .connector-line {
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, var(--green), #34d399, var(--green));
+      border-radius: 2px;
+      box-shadow: 0 0 14px rgba(16,163,127,0.55);
+      transform-origin: left;
+      transform: scaleX(0);
+      animation: line-grow 0.6s cubic-bezier(.4,0,.2,1) 1.4s forwards;
+    }
+    @keyframes line-grow { to { transform: scaleX(1); } }
+
+    /* particles */
+    .pt {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green), 0 0 16px #34d399;
+      opacity: 0;
+    }
+    .pt1 { animation: pt-run 1.1s ease-in-out 2.1s infinite; }
+    .pt2 { animation: pt-run 1.1s ease-in-out 2.5s infinite; }
+    .pt3 { animation: pt-run 1.1s ease-in-out 2.9s infinite; }
+    @keyframes pt-run {
+      0%   { opacity:0; left:0;    }
+      12%  { opacity:1;            }
+      88%  { opacity:1;            }
+      100% { opacity:0; left:100%; }
+    }
+
+    /* center glow at moment of meeting */
+    .meet-glow {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 60px; height: 60px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,163,127,0.35) 0%, transparent 70%);
+      opacity: 0;
+      animation: glow-burst 1.0s ease 3.0s forwards;
+    }
+    @keyframes glow-burst {
+      0%   { opacity:0; transform: translate(-50%,-50%) scale(0.4); }
+      40%  { opacity:1; transform: translate(-50%,-50%) scale(1.8); }
+      100% { opacity:0; transform: translate(-50%,-50%) scale(2.6); }
+    }
+
+    /* ── Text block ─────────────────────────────────────────────────────── */
+    .text-block {
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      opacity: 0;
+      animation: text-in 0.7s cubic-bezier(.16,1,.3,1) 3.4s forwards;
+    }
+    @keyframes text-in {
+      from { opacity:0; transform: translateY(14px); }
+      to   { opacity:1; transform: translateY(0);    }
+    }
+
+    .title {
+      font-size: 72px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.035em;
+      line-height: 1;
+    }
+    .title .plus { color: var(--green); font-weight: 300; margin: 0 8px; }
+
+    .subtitle {
+      font-size: 24px;
+      color: #374151;
+      font-weight: 400;
+      letter-spacing: 0.005em;
+    }
+
+    .label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--green);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: text-in 0.5s ease 4.0s forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Faint background ghosts -->
+  <div class="ghost g1">
+    <div style="padding:14px 18px">
+      <div class="ghost-bar" style="width:65%"></div>
+      <div class="ghost-bar" style="width:85%"></div>
+      <div class="ghost-bar" style="width:50%"></div>
+    </div>
+  </div>
+  <div class="ghost g2">
+    <div style="padding:14px 18px">
+      <div class="ghost-bar" style="width:80%"></div>
+      <div class="ghost-bar" style="width:55%"></div>
+    </div>
+  </div>
+  <div class="ghost g3">
+    <div style="padding:14px 18px; display:flex; align-items:flex-end; gap:5px; height:70px;">
+      <div style="width:16px;height:40%;background:rgba(16,163,127,0.25);border-radius:3px 3px 0 0"></div>
+      <div style="width:16px;height:65%;background:rgba(16,163,127,0.25);border-radius:3px 3px 0 0"></div>
+      <div style="width:16px;height:50%;background:rgba(16,163,127,0.25);border-radius:3px 3px 0 0"></div>
+      <div style="width:16px;height:85%;background:rgba(16,163,127,0.25);border-radius:3px 3px 0 0"></div>
+      <div style="width:16px;height:60%;background:rgba(16,163,127,0.25);border-radius:3px 3px 0 0"></div>
+    </div>
+  </div>
+  <div class="ghost g4">
+    <div style="padding:14px 18px">
+      <div class="ghost-bar" style="width:70%"></div>
+      <div class="ghost-bar" style="width:90%"></div>
+    </div>
+  </div>
+
+  <div class="stage">
+
+    <!-- Cards + connector -->
+    <div class="cards-row">
+
+      <!-- ChatGPT card -->
+      <div class="logo-card card-left">
+        <img src="../OpenAI logos/Chatgpt icono 2.png" alt="ChatGPT" />
+      </div>
+
+      <!-- Connector -->
+      <div class="connector-wrap">
+        <div class="connector-line"></div>
+        <div class="pt pt1"></div>
+        <div class="pt pt2"></div>
+        <div class="pt pt3"></div>
+        <div class="meet-glow"></div>
+      </div>
+
+      <!-- Holded card -->
+      <div class="logo-card card-right">
+        <img src="../Holded logos/holded-diamond-logo.png" alt="Holded" />
+      </div>
+
+    </div>
+
+    <!-- Text -->
+    <div class="text-block">
+      <div class="title">ChatGPT<span class="plus">+</span>Holded</div>
+      <div class="subtitle">Conecta tus datos. Pregunta. Decide.</div>
+      <div class="label">Tutorial práctico</div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -11,6 +11,7 @@ jest.mock('./accounting', () => ({
     getContactAttachment: jest.fn(),
     createDocument: jest.fn(),
     listDailyLedger: jest.fn(),
+    listAccounts: jest.fn(),
     createDailyLedgerEntry: jest.fn(),
     createAccountingAccount: jest.fn(),
     sendDocument: jest.fn(),
@@ -28,6 +29,13 @@ jest.mock('./accounting', () => ({
     getProductSecondaryImage: jest.fn(),
     updateProductStock: jest.fn(),
     listProjectTasks: jest.fn(),
+    listPayments: jest.fn(),
+    listEmployees: jest.fn(),
+    getEmployee: jest.fn(),
+    createEmployee: jest.fn(),
+    updateEmployee: jest.fn(),
+    clockInEmployee: jest.fn(),
+    clockOutEmployee: jest.fn(),
   },
 }));
 
@@ -50,6 +58,7 @@ const mockedHoldedAdapter = holdedAdapter as unknown as {
   getContactAttachment: jest.Mock;
   createDocument: jest.Mock;
   listDailyLedger: jest.Mock;
+  listAccounts: jest.Mock;
   createDailyLedgerEntry: jest.Mock;
   createAccountingAccount: jest.Mock;
   sendDocument: jest.Mock;
@@ -67,6 +76,13 @@ const mockedHoldedAdapter = holdedAdapter as unknown as {
   getProductSecondaryImage: jest.Mock;
   updateProductStock: jest.Mock;
   listProjectTasks: jest.Mock;
+  listPayments: jest.Mock;
+  listEmployees: jest.Mock;
+  getEmployee: jest.Mock;
+  createEmployee: jest.Mock;
+  updateEmployee: jest.Mock;
+  clockInEmployee: jest.Mock;
+  clockOutEmployee: jest.Mock;
 };
 
 describe('holdedMcpTools', () => {
@@ -91,6 +107,12 @@ describe('holdedMcpTools', () => {
         'holded_list_contact_groups',
         'holded_list_remittances',
         'holded_list_services',
+        'holded_list_employees',
+        'holded_get_employee',
+        'holded_create_employee',
+        'holded_update_employee',
+        'holded_clock_in_employee',
+        'holded_clock_out_employee',
         'holded_list_daily_ledger',
         'holded_send_document',
         'holded_pay_document',
@@ -177,6 +199,7 @@ describe('holdedMcpTools', () => {
     expect(toolNames).not.toContain('holded_create_sales_channel');
     expect(toolNames).not.toContain('holded_update_warehouse');
     expect(toolNames).not.toContain('holded_create_contact_group');
+    expect(toolNames).not.toContain('holded_clock_in_employee');
   });
 
   it('keeps the public OpenAI review preset aligned with the deployed connector catalog', () => {
@@ -290,6 +313,17 @@ describe('holdedMcpTools', () => {
     expect(result).toEqual({ items: [{ id: 'entry-1' }] });
   });
 
+  it('lists the full chart of accounts by default', async () => {
+    mockedHoldedAdapter.listAccounts.mockResolvedValue([{ id: '70000001' }]);
+
+    const result = await callHoldedMcpTool('demo-key', 'holded_list_accounts', {});
+
+    expect(mockedHoldedAdapter.listAccounts).toHaveBeenCalledWith('demo-key', {
+      includeEmpty: true,
+    });
+    expect(result).toEqual({ items: [{ id: '70000001' }] });
+  });
+
   it('routes list document calls through the shared Holded adapter', async () => {
     mockedHoldedAdapter.listDocuments.mockResolvedValue([{ id: 'doc-1' }]);
 
@@ -352,6 +386,82 @@ describe('holdedMcpTools', () => {
       desc: 'Pago proveedor abril',
     });
     expect(result).toEqual({ paid: { ok: true } });
+  });
+
+  it('passes timestamp filters to payment listing', async () => {
+    mockedHoldedAdapter.listPayments.mockResolvedValue([{ id: 'payment-1' }]);
+
+    const result = await callHoldedMcpTool('demo-key', 'holded_list_payments', {
+      page: 2,
+      limit: 20,
+      startTimestamp: '1712016000',
+      endTimestamp: 1714607999,
+    });
+
+    expect(mockedHoldedAdapter.listPayments).toHaveBeenCalledWith('demo-key', {
+      page: 2,
+      limit: 20,
+      starttmp: 1712016000,
+      endtmp: 1714607999,
+    });
+    expect(result).toEqual({ items: [{ id: 'payment-1' }] });
+  });
+
+  it('routes employee CRUD and clock actions through the Holded adapter', async () => {
+    mockedHoldedAdapter.listEmployees.mockResolvedValue([{ id: 'employee-1' }]);
+    mockedHoldedAdapter.getEmployee.mockResolvedValue({ id: 'employee-1' });
+    mockedHoldedAdapter.createEmployee.mockResolvedValue({ id: 'employee-2' });
+    mockedHoldedAdapter.updateEmployee.mockResolvedValue({ ok: true });
+    mockedHoldedAdapter.clockInEmployee.mockResolvedValue({ ok: true });
+    mockedHoldedAdapter.clockOutEmployee.mockResolvedValue({ ok: true });
+
+    const listed = await callHoldedMcpTool('demo-key', 'holded_list_employees', {
+      page: 2,
+      limit: 5,
+    });
+    const item = await callHoldedMcpTool('demo-key', 'holded_get_employee', {
+      employeeId: 'employee-1',
+    });
+    const created = await callHoldedMcpTool('demo-key', 'holded_create_employee', {
+      confirm: true,
+      payload: { name: 'Ada Lovelace' },
+    });
+    const updated = await callHoldedMcpTool('demo-key', 'holded_update_employee', {
+      confirm: true,
+      employeeId: 'employee-1',
+      payload: { email: 'ada@example.com' },
+    });
+    const clockIn = await callHoldedMcpTool('demo-key', 'holded_clock_in_employee', {
+      confirm: true,
+      employeeId: 'employee-1',
+      payload: { location: 'office' },
+    });
+    const clockOut = await callHoldedMcpTool('demo-key', 'holded_clock_out_employee', {
+      confirm: true,
+      employeeId: 'employee-1',
+    });
+
+    expect(mockedHoldedAdapter.listEmployees).toHaveBeenCalledWith('demo-key', {
+      page: 2,
+      limit: 5,
+    });
+    expect(mockedHoldedAdapter.getEmployee).toHaveBeenCalledWith('demo-key', 'employee-1');
+    expect(mockedHoldedAdapter.createEmployee).toHaveBeenCalledWith('demo-key', {
+      name: 'Ada Lovelace',
+    });
+    expect(mockedHoldedAdapter.updateEmployee).toHaveBeenCalledWith('demo-key', 'employee-1', {
+      email: 'ada@example.com',
+    });
+    expect(mockedHoldedAdapter.clockInEmployee).toHaveBeenCalledWith('demo-key', 'employee-1', {
+      location: 'office',
+    });
+    expect(mockedHoldedAdapter.clockOutEmployee).toHaveBeenCalledWith('demo-key', 'employee-1', {});
+    expect(listed).toEqual({ items: [{ id: 'employee-1' }] });
+    expect(item).toEqual({ item: { id: 'employee-1' } });
+    expect(created).toEqual({ created: { id: 'employee-2' } });
+    expect(updated).toEqual({ updated: { ok: true } });
+    expect(clockIn).toEqual({ clockIn: { ok: true } });
+    expect(clockOut).toEqual({ clockOut: { ok: true } });
   });
 
   it('requires date and amount for pay-document calls', async () => {

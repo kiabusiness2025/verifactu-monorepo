@@ -135,7 +135,7 @@ export class HoldedClient {
   // ── Contabilidad ─────────────────────────────────────────────────────────
 
   async getChartOfAccounts() {
-    return this.request<unknown[]>('/api/accounting/v1/accounts');
+    return this.request<unknown[]>('/api/accounting/v1/chartofaccounts?includeEmpty=1');
   }
 
   async getJournal(params?: Record<string, string>) {

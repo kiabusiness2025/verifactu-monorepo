@@ -36,7 +36,7 @@ function VideoEmbed() {
         className="h-full w-full"
         preload="metadata"
       >
-        <source src="/video/Video%20Holded%20App%201.mp4" type="video/mp4" />
+        <source src="/video/holded-chatgpt-demo.mp4" type="video/mp4" />
         Tu navegador no soporta la reproducción de vídeo.
       </video>
     </div>

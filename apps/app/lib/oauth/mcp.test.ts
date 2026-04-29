@@ -64,10 +64,10 @@ describe('MCP OAuth metadata helpers', () => {
 
   it('announces the authorization server issuer in protected resource metadata', () => {
     expect(getAuthorizationServerIssuer()).toBe('https://holded.verifactu.business');
-    expect(getPublicScopePreset()).toBe('openai_review_v2');
+    expect(getPublicScopePreset()).toBe('holded_priority1');
     expect(getSupportedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getAdvertisedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
-    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('openai_review_v2')]);
+    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('holded_priority1')]);
     expect(getProtectedResourceMetadata()).toEqual({
       resource: 'https://holded.verifactu.business/api/mcp/holded',
       authorization_servers: ['https://holded.verifactu.business'],

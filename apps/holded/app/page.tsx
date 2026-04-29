@@ -15,8 +15,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Holded con IA — Claude y ChatGPT | Verifactu Business',

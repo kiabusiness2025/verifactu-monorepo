@@ -463,6 +463,17 @@ type HoldedPaginationArgs = {
   limit?: number;
 };
 
+type HoldedAccountListArgs = HoldedPaginationArgs & {
+  starttmp?: number;
+  endtmp?: number;
+  includeEmpty?: boolean;
+};
+
+type HoldedPaymentListArgs = HoldedPaginationArgs & {
+  starttmp?: number;
+  endtmp?: number;
+};
+
 export type HoldedHistoricalListMeta = {
   appliedRange: {
     from: string;
@@ -1190,13 +1201,16 @@ export const holdedAdapter = {
     });
   },
 
-  async listAccounts(apiKey: string, args?: { page?: number; limit?: number }) {
+  async listAccounts(apiKey: string, args?: HoldedAccountListArgs) {
     return holdedRequest<HoldedAccount[]>({
       apiKey,
       path: HOLDED_CHART_OF_ACCOUNTS_PATH,
       query: {
-        page: args?.page ?? 1,
-        limit: args?.limit ?? 25,
+        page: args?.page,
+        limit: args?.limit,
+        starttmp: args?.starttmp,
+        endtmp: args?.endtmp,
+        includeEmpty: args?.includeEmpty === false ? 0 : 1,
       },
     });
   },
@@ -1419,8 +1433,17 @@ export const holdedAdapter = {
     return deleteInvoicingResource(apiKey, 'warehouses', warehouseId);
   },
 
-  async listPayments(apiKey: string, args?: HoldedPaginationArgs) {
-    return listInvoicingResource<Record<string, unknown>>(apiKey, 'payments', args);
+  async listPayments(apiKey: string, args?: HoldedPaymentListArgs) {
+    return holdedRequest<Record<string, unknown>[]>({
+      apiKey,
+      path: '/api/invoicing/v1/payments',
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+        starttmp: args?.starttmp,
+        endtmp: args?.endtmp,
+      },
+    });
   },
 
   async getPayment(apiKey: string, paymentId: string) {
@@ -1557,6 +1580,49 @@ export const holdedAdapter = {
         page: args?.page ?? 1,
         limit: args?.limit ?? 25,
       },
+    });
+  },
+
+  async getEmployee(apiKey: string, employeeId: string) {
+    return holdedRequest<HoldedEmployee>({
+      apiKey,
+      path: `/api/team/v1/employees/${employeeId}`,
+    });
+  },
+
+  async createEmployee(apiKey: string, payload: HoldedEntityPayload) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'POST',
+      path: '/api/team/v1/employees',
+      body: payload,
+    });
+  },
+
+  async updateEmployee(apiKey: string, employeeId: string, payload: HoldedEntityPayload) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'PUT',
+      path: `/api/team/v1/employees/${employeeId}`,
+      body: payload,
+    });
+  },
+
+  async clockInEmployee(apiKey: string, employeeId: string, payload: HoldedEntityPayload = {}) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'POST',
+      path: `/api/team/v1/employees/${employeeId}/times/clockin`,
+      body: payload,
+    });
+  },
+
+  async clockOutEmployee(apiKey: string, employeeId: string, payload: HoldedEntityPayload = {}) {
+    return holdedRequest<Record<string, unknown>>({
+      apiKey,
+      method: 'POST',
+      path: `/api/team/v1/employees/${employeeId}/times/clockout`,
+      body: payload,
     });
   },
 

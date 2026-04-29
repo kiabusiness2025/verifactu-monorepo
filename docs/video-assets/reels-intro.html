@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Reels Intro 9:16 — ChatGPT + Holded</title>
+  <!--
+    Formato: VERTICAL 9:16 para Instagram Reels / Stories
+    Dimensiones del canvas: 1080 × 1920 px
+    Duración: 12 s
+
+    Cómo grabar con OBS:
+      · Fuente: Window Capture (Chrome a pantalla completa en monitor secundario o
+        configurado en resolución 1080×1920, o usar Browser Source 1080×1920)
+      · Alternativa recomendada: OBS → Sources → Browser Source
+          URL: file:///ruta/absoluta/a/reels-intro.html
+          Width: 1080 · Height: 1920
+      · FPS: 60 · Duración: 12 s
+
+    Todos los textos están incluidos — no requiere overlays externos.
+  -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:  #10a37f;
+      --g-lt:   #34d399;
+      --g-bg:   #d1fae5;
+      --navy:   #0c1c50;
+      --red:    #e53935;
+      --card:   rgba(255,255,255,0.92);
+      --sh:     0 8px 40px rgba(16,163,127,0.14), 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    html, body {
+      width: 1080px;
+      height: 1920px;
+      overflow: hidden;
+      font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+
+    /* ── Background ───────────────────────────────────────────────────────── */
+    .bg {
+      position: fixed; inset: 0;
+      background: linear-gradient(180deg, #ecfdf5 0%, #f4fef9 30%, #f8faff 65%, #fafafa 100%);
+      animation: bg-warm 1s ease 9.8s forwards;
+    }
+    @keyframes bg-warm {
+      to { background: linear-gradient(180deg, #f0fdf9 0%, #f6fffd 40%, #fafffe 100%); }
+    }
+
+    /* ── Stage ────────────────────────────────────────────────────────────── */
+    .stage { position: fixed; inset: 0; }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       BACKGROUND GHOSTS
+    ═══════════════════════════════════════════════════════════════════════ */
+    .ghost {
+      position: absolute;
+      background: rgba(255,255,255,0.40);
+      border: 1px solid rgba(16,163,127,0.06);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      opacity: 0;
+      animation: ghost-in 1s ease var(--gd) forwards,
+                 ghost-out 0.5s ease 7.6s forwards;
+    }
+    .ghost-row { height: 7px; border-radius: 4px; background: rgba(16,163,127,0.16); margin-bottom: 8px; }
+    .g1 { width:220px; height:100px; top: 80px;  left: 30px;  --gd:0.5s; }
+    .g2 { width:200px; height: 90px; top:150px;  right:30px;  --gd:0.8s; }
+    .g3 { width:190px; height: 80px; top:650px;  left: 40px;  --gd:0.6s; }
+    .g4 { width:210px; height: 95px; top:700px;  right:40px;  --gd:1.0s; }
+    @keyframes ghost-in  { to { opacity: 1; } }
+    @keyframes ghost-out { to { opacity: 0; } }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       SCENE 1-2 — ICON CARDS + CONNECTOR
+    ═══════════════════════════════════════════════════════════════════════ */
+    .icon-cards {
+      position: absolute;
+      top: 320px; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: 0;
+      opacity: 0;
+      animation: ic-in 0.8s cubic-bezier(.16,1,.3,1) 0.3s forwards,
+                 ic-out 0.6s ease 7.6s forwards;
+    }
+    @keyframes ic-in  { to { opacity: 1; } }
+    @keyframes ic-out { to { opacity: 0; transform: translateY(-30px); } }
+
+    .icon-card {
+      width: 200px; height: 200px;
+      background: var(--card);
+      border: 1px solid rgba(255,255,255,0.9);
+      border-radius: 30px;
+      box-shadow: var(--sh);
+      backdrop-filter: blur(16px);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .icon-card img { width: 86%; height: 86%; object-fit: contain; }
+
+    .ic-left {
+      animation: ic-enter-l 0.9s cubic-bezier(.16,1,.3,1) 0.3s both,
+                 ic-float-a 3.5s ease-in-out 1.2s infinite;
+    }
+    .ic-right {
+      animation: ic-enter-r 0.9s cubic-bezier(.16,1,.3,1) 0.5s both,
+                 ic-float-b 3.5s ease-in-out 1.4s infinite;
+    }
+    @keyframes ic-enter-l { from { transform: translateX(-60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes ic-enter-r { from { transform: translateX(60px);  opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes ic-float-a { 0%,100%{ transform: translateY(0);    } 50%{ transform: translateY(-10px); } }
+    @keyframes ic-float-b { 0%,100%{ transform: translateY(0);    } 50%{ transform: translateY(10px);  } }
+
+    /* Connector */
+    .connector-wrap {
+      position: relative;
+      width: 220px; height: 2px;
+      flex-shrink: 0;
+      opacity: 0;
+      animation: cw-in 0.5s ease 1.3s forwards;
+    }
+    @keyframes cw-in { to { opacity: 1; } }
+
+    .connector-line {
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, var(--green), var(--g-lt), var(--green));
+      border-radius: 2px;
+      box-shadow: 0 0 14px rgba(16,163,127,0.6);
+      transform-origin: left;
+      transform: scaleX(0);
+      animation: cl-grow 0.6s cubic-bezier(.4,0,.2,1) 1.3s forwards;
+    }
+    @keyframes cl-grow { to { transform: scaleX(1); } }
+
+    .pt {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green), 0 0 18px var(--g-lt);
+      opacity: 0;
+    }
+    .pt1 { animation: pt-run 1.2s ease-in-out 2.2s infinite; }
+    .pt2 { animation: pt-run 1.2s ease-in-out 2.6s infinite; }
+    .pt3 { animation: pt-run 1.2s ease-in-out 3.0s infinite; }
+    @keyframes pt-run {
+      0%   { opacity: 0; left: 0;    }
+      10%  { opacity: 1;             }
+      90%  { opacity: 1;             }
+      100% { opacity: 0; left: 100%; }
+    }
+
+    /* Glow pulse at center */
+    .meet-glow {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px; height: 50px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,163,127,0.4) 0%, transparent 70%);
+      opacity: 0;
+      animation: mg-pulse 2s ease-in-out 2.2s infinite;
+    }
+    @keyframes mg-pulse {
+      0%,100% { opacity: 0.3; transform: translate(-50%,-50%) scale(0.9); }
+      50%     { opacity: 1;   transform: translate(-50%,-50%) scale(1.6); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       SCENE 3 — CHAT INTERFACE
+    ═══════════════════════════════════════════════════════════════════════ */
+    .chat-card {
+      position: absolute;
+      top: 640px; left: 70px; right: 70px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: var(--sh);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: chat-in 0.8s cubic-bezier(.16,1,.3,1) 3.8s forwards,
+                 chat-out 0.5s ease 7.6s forwards;
+    }
+    @keyframes chat-in  { to { opacity: 1; transform: translateY(0); } }
+    @keyframes chat-out { to { opacity: 0; transform: translateY(-20px); } }
+
+    .chat-hdr {
+      background: var(--green);
+      padding: 16px 22px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .chat-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.55); }
+    .chat-hdr-title { color: #fff; font-size: 16px; font-weight: 600; }
+
+    .chat-body {
+      padding: 26px 22px;
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .bubble {
+      max-width: 82%; padding: 14px 20px;
+      border-radius: 20px; font-size: 17px; line-height: 1.5;
+    }
+    .bubble-user {
+      background: var(--green); color: #fff;
+      align-self: flex-end; border-bottom-right-radius: 4px;
+      font-weight: 500;
+    }
+    .bubble-ai {
+      background: #f1f5f9; color: var(--navy);
+      align-self: flex-start; border-bottom-left-radius: 4px;
+    }
+    .bubble-ai strong { color: var(--green); font-size: 19px; }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       SCENE 4 — FEATURE CARDS
+    ═══════════════════════════════════════════════════════════════════════ */
+    .feat-grid {
+      position: absolute;
+      top: 1060px; left: 70px; right: 70px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      opacity: 0;
+      animation: feat-in 0.7s cubic-bezier(.16,1,.3,1) 5.4s forwards,
+                 feat-out 0.5s ease 7.6s forwards;
+    }
+    @keyframes feat-in  { from { opacity:0; transform:translateY(24px);} to { opacity:1; transform:translateY(0);} }
+    @keyframes feat-out { to   { opacity:0; } }
+
+    .feat-card {
+      background: var(--card);
+      border: 1px solid rgba(16,163,127,0.10);
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 4px 18px rgba(16,163,127,0.08);
+    }
+    .feat-accent { width: 3px; height: 28px; border-radius: 2px; background: var(--green); opacity: 0.55; }
+    .feat-icon   { font-size: 22px; line-height: 1; }
+    .feat-label  { font-size: 16px; font-weight: 600; color: var(--navy); }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       SCENE 5 — SECURITY PANEL
+    ═══════════════════════════════════════════════════════════════════════ */
+    .sec-panel {
+      position: absolute;
+      top: 50%; left: 70px; right: 70px;
+      transform: translateY(-50%) scale(0.94);
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: var(--sh);
+      padding: 48px 44px;
+      display: flex; flex-direction: column; align-items: center; gap: 24px;
+      opacity: 0;
+      animation: sec-in 0.7s cubic-bezier(.16,1,.3,1) 8.0s forwards,
+                 sec-out 0.6s ease 9.6s forwards;
+    }
+    @keyframes sec-in  { to { opacity:1; transform: translateY(-50%) scale(1); } }
+    @keyframes sec-out { to { opacity:0; } }
+
+    .sec-icons { display: flex; gap: 24px; align-items: center; }
+    .sec-ico-wrap {
+      width: 68px; height: 68px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px;
+    }
+    .sec-shield { background: rgba(16,163,127,0.10); box-shadow: 0 0 22px rgba(16,163,127,0.25); }
+    .sec-lock   { background: rgba(16,163,127,0.06); }
+    .sec-toggle {
+      width: 56px; height: 30px; background: var(--green);
+      border-radius: 15px; position: relative;
+    }
+    .sec-toggle::after {
+      content:''; position:absolute; right:4px; top:4px;
+      width:22px; height:22px; border-radius:50%;
+      background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.15);
+    }
+    .sec-title {
+      font-size: 26px; font-weight: 700; color: var(--navy);
+      text-align: center; letter-spacing: -0.01em;
+    }
+    .sec-sub { font-size: 16px; color: #6b7280; text-align: center; line-height: 1.6; }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       SCENE 6 — HERO OVERLAY (full screen)
+    ═══════════════════════════════════════════════════════════════════════ */
+    .hero {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 0;
+      opacity: 0;
+      animation: hero-in 0.9s ease 10.0s forwards;
+    }
+    @keyframes hero-in { to { opacity: 1; } }
+
+    .hero-logos {
+      display: flex; align-items: center; gap: 24px;
+      margin-bottom: 48px;
+    }
+    .hero-logo-card {
+      width: 140px; height: 140px;
+      background: var(--card);
+      border-radius: 26px;
+      box-shadow: var(--sh);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .hero-logo-card img { width: 86%; height: 86%; object-fit: contain; }
+    .hero-lc-l { animation: ic-float-a 3.5s ease-in-out 10s infinite; }
+    .hero-lc-r { animation: ic-float-b 3.5s ease-in-out 10s infinite; }
+
+    .hero-arc {
+      width: 80px; height: 2px;
+      background: linear-gradient(90deg, var(--green), var(--g-lt));
+      border-radius: 2px;
+      box-shadow: 0 0 12px rgba(16,163,127,0.6);
+      position: relative;
+    }
+    .hero-arc::before {
+      content:''; position:absolute; top:50%; left:50%;
+      transform: translate(-50%,-50%);
+      width:10px; height:10px; border-radius:50%;
+      background: var(--green);
+      box-shadow: 0 0 18px rgba(16,163,127,0.9);
+      animation: ha-pulse 1.6s ease-in-out 10s infinite;
+    }
+    @keyframes ha-pulse {
+      0%,100% { transform: translate(-50%,-50%) scale(1);   opacity: 1; }
+      50%     { transform: translate(-50%,-50%) scale(2.0); opacity: 0.4; }
+    }
+
+    .hero-title {
+      font-size: 56px; font-weight: 800; color: var(--navy);
+      letter-spacing: -0.03em; line-height: 1.08;
+      text-align: center; max-width: 880px;
+      opacity: 0; animation: fade-up 0.7s ease 10.5s forwards;
+    }
+    .hero-title .g { color: var(--green); }
+
+    .hero-sub {
+      margin-top: 20px;
+      font-size: 22px; color: #374151; font-weight: 400;
+      line-height: 1.6; text-align: center; max-width: 820px;
+      opacity: 0; animation: fade-up 0.7s ease 10.9s forwards;
+    }
+
+    .hero-cta {
+      margin-top: 32px;
+      padding: 18px 52px;
+      background: var(--navy); color: #fff;
+      border-radius: 14px; font-size: 20px; font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 6px 24px rgba(12,28,80,0.22);
+      opacity: 0; animation: fade-up 0.6s ease 11.3s forwards;
+    }
+
+    .hero-url {
+      margin-top: 20px;
+      font-size: 16px; color: var(--green); font-weight: 500;
+      letter-spacing: 0.02em;
+      opacity: 0; animation: fade-up 0.5s ease 11.7s forwards;
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="stage">
+
+    <!-- Background ghosts -->
+    <div class="ghost g1">
+      <div style="padding:14px 18px">
+        <div class="ghost-row" style="width:70%"></div>
+        <div class="ghost-row" style="width:88%"></div>
+        <div class="ghost-row" style="width:52%"></div>
+      </div>
+    </div>
+    <div class="ghost g2">
+      <div style="padding:14px 18px">
+        <div class="ghost-row" style="width:60%"></div>
+        <div class="ghost-row" style="width:80%"></div>
+      </div>
+    </div>
+    <div class="ghost g3">
+      <div style="padding:14px 18px; display:flex; align-items:flex-end; gap:6px; height:52px;">
+        <div style="width:18px;height:45%;background:rgba(16,163,127,0.22);border-radius:3px 3px 0 0"></div>
+        <div style="width:18px;height:70%;background:rgba(16,163,127,0.22);border-radius:3px 3px 0 0"></div>
+        <div style="width:18px;height:55%;background:rgba(16,163,127,0.22);border-radius:3px 3px 0 0"></div>
+        <div style="width:18px;height:90%;background:rgba(16,163,127,0.22);border-radius:3px 3px 0 0"></div>
+        <div style="width:18px;height:65%;background:rgba(16,163,127,0.22);border-radius:3px 3px 0 0"></div>
+      </div>
+    </div>
+    <div class="ghost g4">
+      <div style="padding:14px 18px">
+        <div class="ghost-row" style="width:75%"></div>
+        <div class="ghost-row" style="width:50%"></div>
+        <div class="ghost-row" style="width:90%"></div>
+      </div>
+    </div>
+
+    <!-- Scene 1-2: Icon cards + connector -->
+    <div class="icon-cards">
+      <div class="icon-card ic-left">
+        <img src="../OpenAI logos/Chatgpt icono 2.png" alt="ChatGPT" />
+      </div>
+
+      <div class="connector-wrap">
+        <div class="connector-line"></div>
+        <div class="pt pt1"></div>
+        <div class="pt pt2"></div>
+        <div class="pt pt3"></div>
+        <div class="meet-glow"></div>
+      </div>
+
+      <div class="icon-card ic-right">
+        <img src="../Holded logos/holded-diamond-logo.png" alt="Holded" />
+      </div>
+    </div>
+
+    <!-- Scene 3: Chat interface -->
+    <div class="chat-card">
+      <div class="chat-hdr">
+        <div class="chat-dot"></div>
+        <div class="chat-dot"></div>
+        <div class="chat-hdr-title">Holded · ChatGPT</div>
+      </div>
+      <div class="chat-body">
+        <div class="bubble bubble-user">
+          ¿Cuál ha sido la facturación de este mes?
+        </div>
+        <div class="bubble bubble-ai">
+          Tu facturación ha <strong>aumentado un 15%</strong> respecto al mes anterior.
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 4: Feature cards -->
+    <div class="feat-grid">
+      <div class="feat-card"><div class="feat-accent"></div><div class="feat-icon">🧾</div><div class="feat-label">Facturas</div></div>
+      <div class="feat-card"><div class="feat-accent"></div><div class="feat-icon">👥</div><div class="feat-label">Clientes</div></div>
+      <div class="feat-card"><div class="feat-accent"></div><div class="feat-icon">📈</div><div class="feat-label">Ingresos</div></div>
+      <div class="feat-card"><div class="feat-accent"></div><div class="feat-icon">📊</div><div class="feat-label">Gastos</div></div>
+      <div class="feat-card"><div class="feat-accent"></div><div class="feat-icon">📋</div><div class="feat-label">Informes</div></div>
+      <div class="feat-card"><div class="feat-accent"></div><div class="feat-icon">📁</div><div class="feat-label">Proyectos</div></div>
+    </div>
+
+    <!-- Scene 5: Security panel -->
+    <div class="sec-panel">
+      <div class="sec-icons">
+        <div class="sec-ico-wrap sec-shield">🛡️</div>
+        <div class="sec-ico-wrap sec-lock">🔒</div>
+        <div class="sec-toggle"></div>
+      </div>
+      <div class="sec-title">Tú decides qué datos conectar.</div>
+      <div class="sec-sub">Credenciales seguras · Solo tu tenant<br>Sin acceso a terceros</div>
+    </div>
+
+  </div><!-- /stage -->
+
+  <!-- Scene 6: Hero overlay -->
+  <div class="hero">
+    <div class="hero-logos">
+      <div class="hero-logo-card hero-lc-l">
+        <img src="../OpenAI logos/Chatgpt icono 2.png" alt="ChatGPT" />
+      </div>
+      <div class="hero-arc"></div>
+      <div class="hero-logo-card hero-lc-r">
+        <img src="../Holded logos/holded-diamond-logo.png" alt="Holded" />
+      </div>
+    </div>
+
+    <div class="hero-title">
+      Conector <span class="g">ChatGPT</span><br>con Holded
+    </div>
+    <div class="hero-sub">
+      La información de tu empresa,<br>al alcance de tu conversación.
+    </div>
+    <div class="hero-cta">Conecta tu cuenta</div>
+    <div class="hero-url">holded.verifactu.business/conectores/chatgpt</div>
+  </div>
+</body>
+</html>

@@ -245,6 +245,12 @@ Preset de review publica (`openai_review_v2`):
 mcp.read holded.invoices.read holded.contacts.read holded.accounts.read holded.crm.read holded.projects.read holded.invoices.write
 ```
 
+Preset publico de prioridad 1 (`holded_priority1`):
+
+```text
+mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.attachments.read holded.contacts.write holded.contactgroups.read holded.contactgroups.write holded.accounts.read holded.expenses.read holded.employees.read holded.employees.write holded.payments.read holded.payments.write holded.services.read holded.services.write holded.crm.read holded.projects.read
+```
+
 Preset operativo por defecto del servidor (`invoicing_accounting`):
 
 ```text
@@ -254,13 +260,13 @@ mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded
 Catalogo MCP completo (`full`):
 
 ```text
-mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.attachments.read holded.contacts.write holded.accounts.read holded.accounts.write holded.crm.read holded.projects.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.media.read holded.products.write holded.saleschannels.read holded.saleschannels.write holded.warehouses.read holded.warehouses.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.contactgroups.write holded.remittances.read holded.services.read holded.services.write
+mcp.read holded.invoices.read holded.invoices.write holded.documents.read holded.documents.write holded.contacts.read holded.contacts.attachments.read holded.contacts.write holded.accounts.read holded.accounts.write holded.crm.read holded.projects.read holded.treasury.read holded.treasury.write holded.expenses.read holded.expenses.write holded.numbering.read holded.numbering.write holded.products.read holded.products.media.read holded.products.write holded.saleschannels.read holded.saleschannels.write holded.warehouses.read holded.warehouses.write holded.payments.read holded.payments.write holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.contactgroups.write holded.remittances.read holded.services.read holded.services.write holded.employees.read holded.employees.write
 ```
 
 Solo lectura de todo el catalogo actual (`readonly`):
 
 ```text
-mcp.read holded.invoices.read holded.documents.read holded.contacts.read holded.contacts.attachments.read holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.expenses.read holded.numbering.read holded.products.read holded.products.media.read holded.saleschannels.read holded.warehouses.read holded.payments.read holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.remittances.read holded.services.read
+mcp.read holded.invoices.read holded.documents.read holded.contacts.read holded.contacts.attachments.read holded.accounts.read holded.crm.read holded.projects.read holded.treasury.read holded.expenses.read holded.numbering.read holded.products.read holded.products.media.read holded.saleschannels.read holded.warehouses.read holded.payments.read holded.taxes.read holded.paymentmethods.read holded.contactgroups.read holded.remittances.read holded.services.read holded.employees.read
 ```
 
 ### Catalogo completo de scopes soportados
@@ -282,12 +288,13 @@ mcp.read holded.invoices.read holded.documents.read holded.contacts.read holded.
 - grupos de contacto: `holded.contactgroups.read`, `holded.contactgroups.write`
 - remesas: `holded.remittances.read`
 - servicios: `holded.services.read`, `holded.services.write`
+- empleados: `holded.employees.read`, `holded.employees.write`
 
-Si un cliente OAuth no envia `scope`, Verifactu concede por defecto el preset operativo `invoicing_accounting`. Ese bloque da acceso operativo a invoices, documents, contacts, treasury, expense accounts, numbering series, products, payments, taxes, payment methods, remittances, services y cuentas contables, incluyendo ahora adjuntos de contacto, media de producto y escritura contable.
+Si un cliente OAuth no envia `scope`, Verifactu concede por defecto el preset publico `holded_priority1`. Ese bloque abre compras/documentos de proveedor, cuentas de gasto, contactos CRUD, grupos de contacto, empleados, pagos, servicios, lectura contable completa, CRM/proyectos de contexto y borrador de factura.
 
 El descriptor MCP publico sigue anunciando el catalogo completo en `scopes_supported`, mientras `default_scopes` depende de `MCP_PUBLIC_SCOPE_PRESET`. Si el cliente obtiene mas scopes explicitos, el catalogo visible se amplia a las tools permitidas por ese token.
 
-Si quieres que ChatGPT siga en review publica, usa `openai_review_v2`. Si quieres que pueda usar todas las tools que hoy anuncia el descriptor MCP, usa `full`. Si pegas menos scopes, las tools fuera de ese permiso dejaran de anunciarse en `tools/list` para ese token y `tools/call` seguira rechazandolas si se invocan sin permiso.
+Si quieres que ChatGPT siga en la superficie estrecha de review publica, usa `openai_review_v2`. Si quieres que pueda usar todas las tools que hoy anuncia el descriptor MCP, usa `full`. Si pegas menos scopes, las tools fuera de ese permiso dejaran de anunciarse en `tools/list` para ese token y `tools/call` seguira rechazandolas si se invocan sin permiso.
 
 ### Valores listos para copiar en ChatGPT
 
@@ -299,7 +306,8 @@ Si quieres que ChatGPT siga en review publica, usa `openai_review_v2`. Si quiere
 - Client registration: `Cliente OAuth definido por el usuario`
 - Token endpoint auth method: `none`
 - Client secret: dejar vacío
-- Scopes recomendados para review publica: pegar el bloque `openai_review_v2`
+- Scopes recomendados para prioridad 1 publica: pegar el bloque `holded_priority1`
+- Scopes recomendados para review publica estrecha: pegar el bloque `openai_review_v2`
 - Scopes recomendados para catalogo completo: pegar el bloque `full`
 
 ### OIDC

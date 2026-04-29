@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Outro — Conector ChatGPT con Holded</title>
+  <!--
+    Grabar con OBS:
+    · Resolución: 1920×1080 · FPS: 60
+    · Duración total: 8 s (termina en fade-to-white)
+    · Añadir textos en post-producción si se usan los placeholders:
+        Título:    "Conector ChatGPT con Holded"
+        Subtítulo: "Powered by verifactu.business"
+        URL:       "holded.verifactu.business/conectores/chatgpt"
+  -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:    #10a37f;
+      --green-lt: #34d399;
+      --green-bg: #d1fae5;
+      --navy:     #0c1c50;
+      --red:      #e53935;
+      --shadow:   0 8px 32px rgba(16, 163, 127, 0.16);
+      --card-bg:  rgba(255, 255, 255, 0.94);
+    }
+
+    html, body {
+      width: 1920px; height: 1080px;
+      overflow: hidden;
+      font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+
+    /* ── Background — fades to white at the end ─────────────────────────── */
+    .bg {
+      position: fixed; inset: 0;
+      background: linear-gradient(140deg, #ecfdf5 0%, #f0fdf4 40%, #f0f9ff 75%, #f9fafb 100%);
+      animation: bg-fade-white 1.4s ease 6.4s forwards;
+    }
+    @keyframes bg-fade-white {
+      to { background: #ffffff; }
+    }
+
+    /* ── Radial glow behind connector ───────────────────────────────────── */
+    .center-glow {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 320px; height: 320px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16,163,127,0.18) 0%, transparent 70%);
+      opacity: 0;
+      animation: glow-in 1.2s ease 1.0s forwards,
+                 glow-pulse 2.5s ease-in-out 2.2s infinite,
+                 glow-out 0.8s ease 6.4s forwards;
+    }
+    @keyframes glow-in    { to   { opacity: 1; } }
+    @keyframes glow-pulse {
+      0%, 100% { transform: translate(-50%,-50%) scale(1);   opacity: 0.7; }
+      50%      { transform: translate(-50%,-50%) scale(1.15); opacity: 1;   }
+    }
+    @keyframes glow-out   { to { opacity: 0; } }
+
+    /* ── Stage ──────────────────────────────────────────────────────────── */
+    .stage {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 0;
+    }
+
+    /* ── Logo pair ──────────────────────────────────────────────────────── */
+    .logo-pair {
+      display: flex; align-items: center; gap: 28px;
+      margin-bottom: 40px;
+      opacity: 0;
+      animation: pair-in 0.9s cubic-bezier(.16,1,.3,1) 0.6s forwards;
+    }
+    @keyframes pair-in {
+      from { opacity: 0; transform: scale(0.88); }
+      to   { opacity: 1; transform: scale(1);    }
+    }
+
+    .logo-card {
+      width: 140px; height: 140px;
+      background: var(--card-bg);
+      border-radius: 26px;
+      box-shadow: var(--shadow), 0 2px 6px rgba(0,0,0,0.05);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .logo-card img { width: 88%; height: 88%; object-fit: contain; }
+
+    .logo-card-left  { animation: float-a 3.6s ease-in-out 1.5s infinite; }
+    .logo-card-right { animation: float-b 3.6s ease-in-out 1.5s infinite; }
+    @keyframes float-a {
+      0%, 100% { transform: translateY(0);    }
+      50%      { transform: translateY(-8px); }
+    }
+    @keyframes float-b {
+      0%, 100% { transform: translateY(0);   }
+      50%      { transform: translateY(8px); }
+    }
+
+    /* ── Connector arc ──────────────────────────────────────────────────── */
+    .connector-wrap {
+      display: flex; align-items: center;
+      opacity: 0;
+      animation: conn-in 0.6s ease 1.4s forwards;
+    }
+    @keyframes conn-in { to { opacity: 1; } }
+
+    .connector-line {
+      width: 100px; height: 2px;
+      background: linear-gradient(90deg, var(--green), var(--green-lt), var(--green));
+      border-radius: 2px;
+      box-shadow: 0 0 12px rgba(16,163,127,0.55);
+      position: relative;
+    }
+    .connector-dot {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 10px; height: 10px;
+      border-radius: 50%; background: var(--green);
+      box-shadow: 0 0 18px rgba(16,163,127,0.9);
+      animation: dot-pulse 1.6s ease-in-out 2.0s infinite;
+    }
+    @keyframes dot-pulse {
+      0%, 100% { transform: translate(-50%,-50%) scale(1);   opacity: 1;   }
+      50%       { transform: translate(-50%,-50%) scale(1.9); opacity: 0.4; }
+    }
+
+    /* ── Text block ─────────────────────────────────────────────────────── */
+    .text-block {
+      text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+
+    .main-title {
+      font-size: 58px; font-weight: 800; color: var(--navy);
+      letter-spacing: -0.03em; line-height: 1.05;
+      opacity: 0;
+      animation: fade-up 0.75s ease 1.8s forwards;
+    }
+    .main-title .g { color: var(--green); }
+
+    .powered-by {
+      font-size: 20px; font-weight: 500; color: #4b5563;
+      opacity: 0;
+      animation: fade-up 0.6s ease 2.5s forwards;
+    }
+    .powered-by strong { color: var(--navy); font-weight: 700; }
+
+    .url-line {
+      font-size: 15px; color: var(--green);
+      font-weight: 500; letter-spacing: 0.02em;
+      opacity: 0;
+      animation: fade-up 0.5s ease 3.2s forwards;
+    }
+
+    /* ── Fade-to-white veil (final second) ──────────────────────────────── */
+    .fade-veil {
+      position: fixed; inset: 0;
+      background: white;
+      opacity: 0; pointer-events: none;
+      animation: veil-in 1.4s ease 6.4s forwards;
+    }
+    @keyframes veil-in { to { opacity: 1; } }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+  <div class="center-glow"></div>
+
+  <div class="stage">
+
+    <!-- Logo pair + connector -->
+    <div class="logo-pair">
+      <!-- ChatGPT -->
+      <div class="logo-card logo-card-left">
+        <img src="../OpenAI logos/Chatgpt icono 2.png" alt="ChatGPT" />
+      </div>
+
+      <div class="connector-wrap">
+        <div class="connector-line">
+          <div class="connector-dot"></div>
+        </div>
+      </div>
+
+      <!-- Holded -->
+      <div class="logo-card logo-card-right">
+        <img src="../Holded logos/holded-diamond-logo.png" alt="Holded" />
+      </div>
+    </div>
+
+    <!-- Text -->
+    <div class="text-block">
+      <div class="main-title">
+        Conector <span class="g">ChatGPT</span> con Holded
+      </div>
+      <div class="powered-by">
+        Powered by <strong>verifactu.business</strong>
+      </div>
+      <div class="url-line">holded.verifactu.business/conectores/chatgpt</div>
+    </div>
+
+  </div>
+
+  <!-- Fade-to-white veil -->
+  <div class="fade-veil"></div>
+</body>
+</html>

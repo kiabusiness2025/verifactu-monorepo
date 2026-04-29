@@ -1,18 +1,26 @@
 import { ExternalLink, LifeBuoy, Mail, MessageSquareText, ShieldCheck } from 'lucide-react';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
-import SupportAssistantClient from '../components/SupportAssistantClient';
 
 const supportEmail = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 const supportMailto = `mailto:${supportEmail}?subject=Ayuda%20con%20mi%20acceso%20a%20Holded`;
+const supportChatPrompt =
+  'Necesito soporte tecnico con el conector de Holded. Ayudame a diagnosticar el problema paso a paso.';
+
+type SupportOption = {
+  title: string;
+  body: string;
+  actionLabel: string;
+  actionHref: string;
+  external?: boolean;
+};
 
 export const metadata: Metadata = {
   title: 'Soporte | Holded',
   description: 'Ayuda rapida para acceso, verificacion, onboarding y conexion con Holded.',
 };
 
-const supportOptions = [
+const baseSupportOptions: SupportOption[] = [
   {
     title: 'Escribir a soporte',
     body: 'Si ves un error al crear tu acceso, verificar el correo o entrar al panel, escribenos y te ayudamos.',
@@ -60,10 +68,34 @@ function readValue(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || '' : value || '';
 }
 
+function buildSupportChatHref(source: string, digest: string) {
+  const params = new URLSearchParams({
+    source: source || 'holded_support',
+    prompt: supportChatPrompt,
+  });
+
+  if (digest) {
+    params.set('digest', digest);
+  }
+
+  return `/support/chat?${params.toString()}`;
+}
+
 export default async function HoldedSupportPage({ searchParams }: PageProps) {
   const resolved = (await searchParams) || {};
   const source = readValue(resolved.source);
   const digest = readValue(resolved.digest);
+  const supportChatHref = buildSupportChatHref(source, digest);
+  const supportOptions: SupportOption[] = [
+    {
+      title: 'Abrir chat de soporte',
+      body: 'Isaak se abre en una ventana independiente con el contexto de soporte tecnico ya preparado.',
+      actionLabel: 'Abrir chat',
+      actionHref: supportChatHref,
+      external: true,
+    },
+    ...baseSupportOptions,
+  ];
 
   return (
     <main className="page-enter min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_45%,#ffffff_100%)] text-slate-900">
@@ -92,15 +124,6 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
           </div>
 
           <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm lg:w-[25rem]">
-            <div className="mb-5 flex justify-center rounded-3xl bg-[linear-gradient(180deg,#fff7f7_0%,#f8fbff_100%)] p-4">
-              <Image
-                src="/assistant/holded-avatar.png"
-                alt="Soporte Holded"
-                width={220}
-                height={220}
-                className="h-auto w-full max-w-[8rem]"
-              />
-            </div>
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <ShieldCheck className="h-4 w-4 text-emerald-600" />
               Soporte en horario laboral
@@ -109,6 +132,15 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
               Si el problema bloquea tu conexion con Holded o el acceso al panel, priorizamos la
               revision para que puedas completar el alta cuanto antes.
             </p>
+            <a
+              href={supportChatHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#ff5460] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
+            >
+              Abrir chat de soporte
+              <ExternalLink className="h-4 w-4" />
+            </a>
           </div>
         </div>
 
@@ -142,6 +174,8 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
               <p className="mt-3 text-sm leading-6 text-slate-600">{item.body}</p>
               <a
                 href={item.actionHref}
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noopener noreferrer' : undefined}
                 className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[#ff5460] hover:text-[#ef4654]"
               >
                 {item.actionLabel}
@@ -172,12 +206,26 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
           </div>
         </div>
 
-        <div className="mt-10">
-          <SupportAssistantClient
-            source={source || 'holded_support'}
-            digest={digest || undefined}
-            title="Te ayudamos a salir del bloqueo sin iniciar sesion."
-          />
+        <div className="mt-10 rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <div className="mx-auto flex max-w-xl flex-col items-center gap-3">
+            <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+              <MessageSquareText className="h-4 w-4 text-[#ff5460]" />
+              Chat independiente
+            </div>
+            <p className="text-sm leading-7 text-slate-600">
+              Para evitar confusiones, el chat de soporte se abre fuera de esta pagina y mantiene
+              esta landing solo como punto de entrada.
+            </p>
+            <a
+              href={supportChatHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/25 bg-[#fff7f7] px-4 py-2 text-sm font-semibold text-[#ff5460] transition hover:border-[#ff5460]/40 hover:bg-[#ffeef0]"
+            >
+              Abrir chat con Isaak
+              <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
         </div>
 
         <div className="mt-8 text-center">

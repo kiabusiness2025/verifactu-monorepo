@@ -74,6 +74,12 @@ export const HOLDED_MCP_TOOL_SCOPES: Record<string, string[]> = {
   holded_create_service: ['mcp.read', 'holded.services.write'],
   holded_update_service: ['mcp.read', 'holded.services.write'],
   holded_delete_service: ['mcp.read', 'holded.services.write'],
+  holded_list_employees: ['mcp.read', 'holded.employees.read'],
+  holded_get_employee: ['mcp.read', 'holded.employees.read'],
+  holded_create_employee: ['mcp.read', 'holded.employees.write'],
+  holded_update_employee: ['mcp.read', 'holded.employees.write'],
+  holded_clock_in_employee: ['mcp.read', 'holded.employees.write'],
+  holded_clock_out_employee: ['mcp.read', 'holded.employees.write'],
   holded_list_daily_ledger: ['mcp.read', 'holded.accounts.read'],
   holded_list_accounts: ['mcp.read', 'holded.accounts.read'],
   holded_create_daily_ledger_entry: ['mcp.read', 'holded.accounts.write'],
@@ -124,6 +130,8 @@ export const HOLDED_MCP_SUPPORTED_SCOPES = [
   'holded.remittances.read',
   'holded.services.read',
   'holded.services.write',
+  'holded.employees.read',
+  'holded.employees.write',
 ] as const;
 
 export type HoldedMcpScopePreset =
@@ -131,6 +139,7 @@ export type HoldedMcpScopePreset =
   | 'readonly'
   | 'invoicing_accounting'
   | 'holded_phase2_accounting'
+  | 'holded_priority1'
   | 'openai_review_v2';
 
 const READONLY_SCOPE_SET = HOLDED_MCP_SUPPORTED_SCOPES.filter((scope) => !scope.endsWith('.write'));
@@ -179,10 +188,34 @@ const HOLDED_PHASE2_ACCOUNTING_SCOPE_SET = [
   'holded.accounts.write',
 ] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
 
+const HOLDED_PRIORITY1_SCOPE_SET = [
+  'mcp.read',
+  'holded.invoices.read',
+  'holded.invoices.write',
+  'holded.documents.read',
+  'holded.documents.write',
+  'holded.contacts.read',
+  'holded.contacts.attachments.read',
+  'holded.contacts.write',
+  'holded.contactgroups.read',
+  'holded.contactgroups.write',
+  'holded.accounts.read',
+  'holded.expenses.read',
+  'holded.employees.read',
+  'holded.employees.write',
+  'holded.payments.read',
+  'holded.payments.write',
+  'holded.services.read',
+  'holded.services.write',
+  'holded.crm.read',
+  'holded.projects.read',
+] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
+
 export function getHoldedMcpScopePreset(preset: HoldedMcpScopePreset) {
   if (preset === 'readonly') return READONLY_SCOPE_SET;
   if (preset === 'openai_review_v2') return OPENAI_REVIEW_V2_SCOPE_SET;
   if (preset === 'holded_phase2_accounting') return HOLDED_PHASE2_ACCOUNTING_SCOPE_SET;
+  if (preset === 'holded_priority1') return HOLDED_PRIORITY1_SCOPE_SET;
   if (preset === 'invoicing_accounting') return INVOICING_ACCOUNTING_SCOPE_SET;
   return HOLDED_MCP_SUPPORTED_SCOPES;
 }

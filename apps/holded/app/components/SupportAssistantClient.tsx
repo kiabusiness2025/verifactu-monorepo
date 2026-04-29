@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, Loader2, SendHorizonal } from 'lucide-react';
 
 type Message = {
@@ -9,10 +9,18 @@ type Message = {
   content: string;
 };
 
+type PageContext = 'claude' | 'chatgpt' | 'holded_hub' | 'verifactu' | 'generic';
+
 type Props = {
   source?: string;
   digest?: string;
   title?: string;
+  description?: string;
+  endpoint?: string;
+  page?: PageContext;
+  initialPrompt?: string;
+  autoSendInitialPrompt?: boolean;
+  className?: string;
 };
 
 const QUICK_PROMPTS = [
@@ -22,7 +30,17 @@ const QUICK_PROMPTS = [
   'Me sale un error al conectar Holded',
 ];
 
-export default function SupportAssistantClient({ source, digest, title }: Props) {
+export default function SupportAssistantClient({
+  source,
+  digest,
+  title,
+  description,
+  endpoint = '/api/support/chat',
+  page = 'generic',
+  initialPrompt,
+  autoSendInitialPrompt = false,
+  className = '',
+}: Props) {
   const initialMessage = useMemo(() => {
     const contextBits = [
       source ? `Estoy viendo esta pantalla desde ${source}.` : null,
@@ -49,52 +67,68 @@ export default function SupportAssistantClient({ source, digest, title }: Props)
   }, [digest, source, title]);
 
   const [messages, setMessages] = useState<Message[]>(initialMessage);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(initialPrompt && !autoSendInitialPrompt ? initialPrompt : '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [conversationId, setConversationId] = useState<string | null>(null);
+  const autoSentRef = useRef(false);
 
-  async function sendMessage(message: string) {
-    const trimmed = message.trim();
-    if (!trimmed || loading) return;
-
-    setMessages((current) => [
-      ...current,
-      { id: `user-${Date.now()}`, role: 'user', content: trimmed },
-    ]);
-    setInput('');
-    setLoading(true);
-    setError(null);
-
-    try {
-      const res = await fetch('/api/support/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: trimmed,
-          source: source || null,
-          digest: digest || null,
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.reply) {
-        throw new Error(data?.error || 'No he podido responder ahora mismo.');
-      }
+  const sendMessage = useCallback(
+    async (message: string) => {
+      const trimmed = message.trim();
+      if (!trimmed || loading) return;
 
       setMessages((current) => [
         ...current,
-        { id: `assistant-${Date.now()}`, role: 'assistant', content: data.reply },
+        { id: `user-${Date.now()}`, role: 'user', content: trimmed },
       ]);
-    } catch (assistantError) {
-      setError(
-        assistantError instanceof Error
-          ? assistantError.message
-          : 'No he podido responder ahora mismo.'
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
+      setInput('');
+      setLoading(true);
+      setError(null);
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: trimmed,
+            source: source || null,
+            digest: digest || null,
+            page,
+            conversationId,
+          }),
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.reply) {
+          throw new Error(data?.error || 'No he podido responder ahora mismo.');
+        }
+
+        setMessages((current) => [
+          ...current,
+          { id: `assistant-${Date.now()}`, role: 'assistant', content: data.reply },
+        ]);
+        if (typeof data.conversationId === 'string') {
+          setConversationId(data.conversationId);
+        }
+      } catch (assistantError) {
+        setError(
+          assistantError instanceof Error
+            ? assistantError.message
+            : 'No he podido responder ahora mismo.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    },
+    [conversationId, digest, endpoint, loading, page, source]
+  );
+
+  useEffect(() => {
+    if (!autoSendInitialPrompt || !initialPrompt || autoSentRef.current) return;
+    autoSentRef.current = true;
+    void sendMessage(initialPrompt);
+  }, [autoSendInitialPrompt, initialPrompt, sendMessage]);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -102,14 +136,16 @@ export default function SupportAssistantClient({ source, digest, title }: Props)
   }
 
   return (
-    <section className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+    <section
+      className={`rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}
+    >
       <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
         <Bot className="h-4 w-4 text-[#ff5460]" />
         Soporte guiado
       </div>
       <p className="mt-3 text-sm leading-7 text-slate-600">
-        Este chat no necesita login. Sirve para desbloquear acceso, verificacion, API key y errores
-        de conexion.
+        {description ||
+          'Este chat no necesita login. Sirve para desbloquear acceso, verificacion, API key y errores de conexion.'}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Outro Tutorial — ChatGPT + Holded</title>
+  <!--
+    Formato: HORIZONTAL 16:9 para YouTube outro
+    Dimensiones: 1920 × 1080 px · Duración: ~6 s
+    Grabar con OBS: Window Capture (Chrome F11) o Browser Source 1920×1080 · 60 FPS
+  -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green:  #10a37f;
+      --g-lt:   #34d399;
+      --navy:   #0c1c50;
+      --red:    #e53935;
+    }
+
+    html, body {
+      width: 1920px; height: 1080px;
+      overflow: hidden;
+      font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: linear-gradient(150deg, #ecfdf5 0%, #f4fef9 35%, #f8faff 70%, #fafafa 100%);
+    }
+
+    /* ── Background particles (ambient) ─────────────────────────────────── */
+    .ambient-line {
+      position: fixed;
+      top: 50%; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent 5%,
+        rgba(16,163,127,0.15) 30%,
+        rgba(52,211,153,0.25) 50%,
+        rgba(16,163,127,0.15) 70%,
+        transparent 95%
+      );
+      transform: translateY(-50%);
+      opacity: 0;
+      animation: al-in 1.4s ease 0.3s forwards;
+    }
+    @keyframes al-in { to { opacity: 1; } }
+
+    /* ambient particles on the line */
+    .apt {
+      position: fixed;
+      top: 50%; transform: translateY(-50%);
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      opacity: 0;
+    }
+    .apt1 { animation: apt-run 2.8s ease-in-out 1.0s infinite; }
+    .apt2 { animation: apt-run 2.8s ease-in-out 1.7s infinite; }
+    .apt3 { animation: apt-run 2.8s ease-in-out 2.4s infinite; }
+    @keyframes apt-run {
+      0%   { opacity: 0; left: 5%;  }
+      8%   { opacity: 1;            }
+      92%  { opacity: 1;            }
+      100% { opacity: 0; left: 95%; }
+    }
+
+    /* ── Stage ──────────────────────────────────────────────────────────── */
+    .stage {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Main card ──────────────────────────────────────────────────────── */
+    .main-card {
+      width: 860px;
+      background: rgba(255,255,255,0.90);
+      border: 1px solid rgba(255,255,255,0.95);
+      border-radius: 32px;
+      box-shadow: 0 20px 60px rgba(16,163,127,0.12), 0 4px 16px rgba(0,0,0,0.06);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 56px 68px;
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+      opacity: 0;
+      transform: scale(0.94);
+      animation: card-in 0.8s cubic-bezier(.16,1,.3,1) 0.6s forwards;
+    }
+    @keyframes card-in {
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* "Gracias por ver" */
+    .thanks {
+      font-size: 18px;
+      font-weight: 500;
+      color: var(--green);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fade-up 0.6s ease 1.2s forwards;
+    }
+
+    /* Divider */
+    .divider {
+      width: 48px; height: 2px;
+      background: linear-gradient(90deg, var(--green), var(--g-lt));
+      border-radius: 2px;
+      margin: 18px 0;
+      opacity: 0;
+      animation: fade-up 0.4s ease 1.5s forwards;
+    }
+
+    /* "ChatGPT + Holded" */
+    .main-title {
+      font-size: 64px;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.035em;
+      line-height: 1;
+      text-align: center;
+      opacity: 0;
+      animation: fade-up 0.7s ease 1.7s forwards;
+    }
+    .main-title .plus { color: var(--green); font-weight: 300; margin: 0 6px; }
+
+    /* "Powered by" */
+    .powered {
+      margin-top: 24px;
+      font-size: 18px;
+      color: #374151;
+      font-weight: 400;
+      opacity: 0;
+      animation: fade-up 0.6s ease 2.3s forwards;
+    }
+    .powered strong { color: var(--navy); font-weight: 700; }
+
+    /* Credits */
+    .credits {
+      margin-top: 8px;
+      font-size: 13px;
+      color: #9ca3af;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      text-align: center;
+      opacity: 0;
+      animation: fade-up 0.5s ease 2.7s forwards;
+    }
+
+    /* CTA */
+    .cta-wrap {
+      margin-top: 32px;
+      opacity: 0;
+      animation: fade-up 0.6s ease 3.2s forwards;
+    }
+    .cta {
+      display: inline-block;
+      padding: 14px 36px;
+      background: var(--navy);
+      color: #fff;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      box-shadow: 0 4px 18px rgba(12,28,80,0.20);
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+
+    /* ── Zoom-out veil (gentle camera pull-back feel) ───────────────────── */
+    .zoom-veil {
+      position: fixed; inset: -4%;
+      pointer-events: none;
+      animation: zoom-out-body 6s ease 0.5s forwards;
+    }
+    @keyframes zoom-out-body {
+      from { transform: scale(1.04); }
+      to   { transform: scale(1.00); }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient-line"></div>
+  <div class="apt apt1"></div>
+  <div class="apt apt2"></div>
+  <div class="apt apt3"></div>
+
+  <!-- Zoom-out wrapper -->
+  <div class="zoom-veil">
+    <div class="stage">
+      <div class="main-card">
+
+        <div class="thanks">Gracias por ver</div>
+
+        <div class="divider"></div>
+
+        <div class="main-title">
+          ChatGPT<span class="plus">+</span>Holded
+        </div>
+
+        <div class="powered">
+          Powered by <strong>verifactu.business</strong>
+        </div>
+
+        <div class="credits">
+          Co-produced with Claude Sonnet and OpenAI Codex
+        </div>
+
+        <div class="cta-wrap">
+          <div class="cta">Más tutoriales en verifactu.business</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>

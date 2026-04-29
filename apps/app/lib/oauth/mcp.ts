@@ -82,7 +82,7 @@ type HoldedEmailVerificationPayload = {
 export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
 
 const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
-const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_v2';
+const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'holded_priority1';
 const AUTHORIZATION_CODE_REDEMPTIONS_TABLE = 'oauth_authorization_code_redemptions';
 
 type MintAuthorizationCodeInput = Omit<AuthorizationCodePayload, 'codeId'>;
@@ -95,6 +95,7 @@ function isHoldedMcpScopePreset(value: string): value is HoldedMcpScopePreset {
     value === 'readonly' ||
     value === 'invoicing_accounting' ||
     value === 'holded_phase2_accounting' ||
+    value === 'holded_priority1' ||
     value === 'openai_review_v2'
   );
 }

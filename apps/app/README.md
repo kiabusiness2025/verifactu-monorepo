@@ -53,7 +53,7 @@ La visibilidad real del conector no sale de un unico archivo. Se reparte asi:
 Matiz importante desde abril 2026:
 
 - `scopes_supported` anuncia el catalogo completo de scopes Holded soportados por el runtime
-- `default_scopes` puede seguir usando un preset mas estrecho, por ejemplo `openai_review_v2`
+- `default_scopes` usa ahora `holded_priority1` por defecto; `openai_review_v2` sigue disponible como preset estrecho de review
 - si una app interna necesita mas tools, el cambio no va en `HOLDED_MCP_TOOL_SCOPES`, sino en que el cliente OAuth solicite scopes adicionales y en que `lib/oauth/mcp.ts` los admita
 
 ## Preset publico actual del conector Holded Beta
@@ -64,7 +64,9 @@ Distinguir siempre entre tres niveles:
 - `default_scopes` -> preset publico que se expone por defecto al conector en revision
 - datos del tenant -> que una tool exista no implica que haya datos utiles en la cuenta conectada
 
-En abril de 2026, el preset publico `openai_review_v2` expone 11 tools y esa es la superficie real que hoy puede validar ChatGPT/OpenAI sin scopes adicionales:
+Desde abril de 2026, el preset publico por defecto es `holded_priority1`. Mantiene la base de demo de `openai_review_v2` y anade las familias publicas oficiales de mas valor: documentos de proveedor, cuentas de gasto, contactos CRUD, grupos de contacto, empleados y fichajes, pagos y servicios.
+
+`openai_review_v2` sigue existiendo y expone 11 tools para una superficie estrecha:
 
 - `holded_list_invoices`
 - `holded_get_invoice`
@@ -78,7 +80,7 @@ En abril de 2026, el preset publico `openai_review_v2` expone 11 tools y esa es 
 - `holded_get_project`
 - `holded_list_project_tasks`
 
-## Matriz de capacidades del preset publico `openai_review_v2`
+## Matriz de capacidades del preset estrecho `openai_review_v2`
 
 La tabla siguiente describe el beta publico actual. No describe por si sola todo el catalogo interno soportado por el runtime.
 
@@ -132,8 +134,8 @@ Ese schema define la referencia operativa que consumen `apps/isaak`, `apps/holde
 - Esa restriccion aplica solo al conector MCP de Holded; no describe por si sola todo el runtime de Isaak.
 - El chat principal de `apps/app` debe reservar la web abierta para fuentes oficiales relevantes del producto: Holded Academy y paginas oficiales de AEAT, SEPE, Seguridad Social y otros organismos publicos espanoles.
 - En el runtime auditado no existe todavia una tool de navegador o busqueda web generica para ese acceso oficial.
-- En el preset publico `openai_review_v2`, `holded_list_daily_ledger` sigue expuesta bajo `holded.accounts.read`, pero ahora exige `startTimestamp` y `endTimestamp` porque el endpoint productivo rechaza consultas sin rango.
-- Hasta que OpenAI apruebe la version limitada del conector directo `Holded Connector for ChatGPT`, la surface publica debe mantenerse estrecha: no ampliar scopes, no mezclar acceso web abierto y no convertir este conector en asesor universal salvo fixes criticos.
+- En los presets que incluyen `holded.accounts.read`, `holded_list_accounts` llama a `chartofaccounts` con `includeEmpty=1` por defecto para evitar vistas parciales del plan contable.
+- En el preset estrecho `openai_review_v2`, `holded_list_daily_ledger` sigue expuesta bajo `holded.accounts.read`, pero ahora exige `startTimestamp` y `endTimestamp` porque el endpoint productivo rechaza consultas sin rango.
 - Desde abril de 2026, el flujo publico `channel=chatgpt` usa una `connector onboarding session` propia. La base ya entregada elimina el login clasico visible; la nueva ola de Fase 1 anade estado de identidad verificada para soportar Google opcional o correo verificado antes del onboarding por pasos.
 - El troubleshooting del conector debe apoyarse en `x-verifactu-request-id` y en los logs de `authorize`, `status`, `validate` y `connect`.
 - Tras la aprobacion de OpenAI, el conector Holded puede abrir una Fase 2 de escritura estructurada dentro del propio dominio Holded, empezando por cuentas contables, asientos y otras acciones mutativas por familias.

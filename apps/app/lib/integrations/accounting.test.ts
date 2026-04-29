@@ -27,7 +27,7 @@ describe('Holded accounting adapter', () => {
     await holdedAdapter.listAccounts('demo-key', { page: 2, limit: 5 });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.holded.com/api/accounting/v1/chartofaccounts?page=2&limit=5',
+      'https://api.holded.com/api/accounting/v1/chartofaccounts?page=2&limit=5&includeEmpty=1',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -35,6 +35,23 @@ describe('Holded accounting adapter', () => {
           'Content-Type': 'application/json',
           key: 'demo-key',
         }),
+      })
+    );
+  });
+
+  it('lists the complete chart of accounts by default', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '[]',
+    });
+
+    await holdedAdapter.listAccounts('demo-key');
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.holded.com/api/accounting/v1/chartofaccounts?includeEmpty=1',
+      expect.objectContaining({
+        method: 'GET',
       })
     );
   });
@@ -532,6 +549,58 @@ describe('Holded accounting adapter', () => {
     );
     expect(fetchCalls).toContain(
       'https://api.holded.com/api/invoicing/v1/documents/invoice/doc-3/pipeline/set'
+    );
+  });
+
+  it('lists payments with the documented timestamp filters', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '[]',
+    });
+
+    await holdedAdapter.listPayments('demo-key', {
+      page: 2,
+      limit: 20,
+      starttmp: 1_712_016_000,
+      endtmp: 1_714_607_999,
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.holded.com/api/invoicing/v1/payments?page=2&limit=20&starttmp=1712016000&endtmp=1714607999',
+      expect.objectContaining({
+        method: 'GET',
+      })
+    );
+  });
+
+  it('uses the documented team employee and clock-in routes', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '{"ok":true}',
+    });
+
+    await holdedAdapter.listEmployees('demo-key', { page: 2, limit: 10 });
+    await holdedAdapter.getEmployee('demo-key', 'employee-1');
+    await holdedAdapter.createEmployee('demo-key', { name: 'Ada Lovelace' });
+    await holdedAdapter.updateEmployee('demo-key', 'employee-1', { email: 'ada@example.com' });
+    await holdedAdapter.clockInEmployee('demo-key', 'employee-1', { location: 'office' });
+    await holdedAdapter.clockOutEmployee('demo-key', 'employee-1', {
+      latitude: 40.4168,
+      longitude: -3.7038,
+    });
+
+    const fetchCalls = (global.fetch as jest.Mock).mock.calls.map((call) => String(call[0]));
+
+    expect(fetchCalls).toContain('https://api.holded.com/api/team/v1/employees?page=2&limit=10');
+    expect(fetchCalls).toContain('https://api.holded.com/api/team/v1/employees/employee-1');
+    expect(fetchCalls).toContain('https://api.holded.com/api/team/v1/employees');
+    expect(fetchCalls).toContain(
+      'https://api.holded.com/api/team/v1/employees/employee-1/times/clockin'
+    );
+    expect(fetchCalls).toContain(
+      'https://api.holded.com/api/team/v1/employees/employee-1/times/clockout'
     );
   });
 

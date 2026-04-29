@@ -89,6 +89,65 @@ describe('holdedMcpScopes', () => {
     expect(toolNames).not.toContain('holded_create_contact_group');
   });
 
+  it('keeps holded_priority1 aligned with the public priority 1 rollout', () => {
+    const scopes = getHoldedMcpScopePreset('holded_priority1');
+    const toolNames = getAllowedHoldedMcpToolNames(scopes);
+
+    expect(scopes).toEqual(
+      expect.arrayContaining([
+        'mcp.read',
+        'holded.documents.read',
+        'holded.documents.write',
+        'holded.expenses.read',
+        'holded.contacts.read',
+        'holded.contacts.write',
+        'holded.contactgroups.read',
+        'holded.employees.read',
+        'holded.employees.write',
+        'holded.payments.read',
+        'holded.payments.write',
+        'holded.services.read',
+        'holded.services.write',
+        'holded.accounts.read',
+      ])
+    );
+
+    expect(toolNames).toEqual(
+      expect.arrayContaining([
+        'holded_list_documents',
+        'holded_get_document',
+        'holded_create_document',
+        'holded_update_document',
+        'holded_list_expense_accounts',
+        'holded_list_contacts',
+        'holded_get_contact',
+        'holded_create_contact',
+        'holded_update_contact',
+        'holded_delete_contact',
+        'holded_list_contact_groups',
+        'holded_list_employees',
+        'holded_get_employee',
+        'holded_create_employee',
+        'holded_update_employee',
+        'holded_clock_in_employee',
+        'holded_clock_out_employee',
+        'holded_list_payments',
+        'holded_get_payment',
+        'holded_create_payment',
+        'holded_update_payment',
+        'holded_pay_document',
+        'holded_list_services',
+        'holded_get_service',
+        'holded_create_service',
+        'holded_update_service',
+        'holded_list_accounts',
+      ])
+    );
+
+    expect(toolNames).not.toContain('holded_list_products');
+    expect(toolNames).not.toContain('holded_create_accounting_account');
+  });
+
   it('keeps holded_phase2_accounting aligned with review tools plus accounting writes', () => {
     const scopes = getHoldedMcpScopePreset('holded_phase2_accounting');
     const toolNames = getAllowedHoldedMcpToolNames(scopes);
