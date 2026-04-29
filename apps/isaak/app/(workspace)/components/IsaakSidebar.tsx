@@ -7,15 +7,12 @@ import { useRef, useState } from 'react';
 import {
   BarChart3,
   ChevronUp,
-  CreditCard,
   ExternalLink,
-  LifeBuoy,
   LogOut,
   Loader2,
   MessageSquare,
   Plus,
   Receipt,
-  Settings,
   TrendingUp,
   Users,
   Users2,
@@ -83,7 +80,7 @@ export default function IsaakSidebar({
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
     } finally {
-      window.location.href = 'https://holded.verifactu.business/auth/holded?source=isaak_logout';
+      window.location.href = '/';
     }
   };
 

@@ -1,16 +1,13 @@
 import { redirect } from 'next/navigation';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { listHoldedConversations } from '@/app/lib/holded-chat';
-import { buildHoldedAuthUrl } from '@/app/lib/isaak-navigation';
 import IsaakSidebar from './components/IsaakSidebar';
 
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const session = await getHoldedSession();
 
   if (!session?.tenantId || !session.userId) {
-    redirect(
-      buildHoldedAuthUrl('workspace_requires_session', 'https://isaak.verifactu.business/chat')
-    );
+    redirect('/auth');
   }
 
   const conversations = await listHoldedConversations({

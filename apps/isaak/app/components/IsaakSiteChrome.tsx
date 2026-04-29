@@ -18,7 +18,8 @@ export default function IsaakSiteChrome({ children }: Props) {
     pathname?.startsWith('/ventas') ||
     pathname?.startsWith('/gastos') ||
     pathname?.startsWith('/contactos') ||
-    pathname?.startsWith('/equipo');
+    pathname?.startsWith('/equipo') ||
+    pathname?.startsWith('/auth');
 
   if (isWorkspaceRoute) {
     return <>{children}</>;
