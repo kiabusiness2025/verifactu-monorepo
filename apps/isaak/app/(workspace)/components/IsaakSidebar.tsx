@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useRef, useState } from 'react';
 import {
   BarChart3,
+  CalendarDays,
   ChevronUp,
   ExternalLink,
   LogOut,
@@ -37,6 +38,7 @@ const NAV_SECTIONS = [
   { href: '/gastos', label: 'Gastos', icon: Receipt },
   { href: '/contactos', label: 'Contactos', icon: Users },
   { href: '/equipo', label: 'Equipo', icon: Users2 },
+  { href: '/calendario', label: 'Calendario Fiscal', icon: CalendarDays },
 ];
 
 const SETTINGS_ITEMS = [

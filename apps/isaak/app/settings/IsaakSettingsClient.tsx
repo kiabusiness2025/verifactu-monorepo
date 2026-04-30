@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Building2,
+  Calendar,
   CheckCircle2,
   CreditCard,
   ExternalLink,
@@ -14,6 +15,7 @@ import {
   PlugZap,
   RefreshCcw,
   Sparkles,
+  Unplug,
   UserCircle2,
   Users,
 } from 'lucide-react';
@@ -240,6 +242,13 @@ export default function IsaakSettingsClient({
   const [connection, setConnection] = useState(settingsData.connection);
   const [isaak, setIsaak] = useState(settingsData.isaak);
   const [billing, setBilling] = useState(settingsData.billing);
+  const [googleStatus, setGoogleStatus] = useState<{
+    connected: boolean;
+    email: string | null;
+    googleConfigured: boolean;
+  } | null>(null);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleDisconnecting, setGoogleDisconnecting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [noticeTone, setNoticeTone] = useState<'success' | 'danger'>('success');
   const [error, setError] = useState<string | null>(null);
@@ -266,6 +275,40 @@ export default function IsaakSettingsClient({
       cancelled = true;
     };
   }, [activeSection, billing.invoices.length]);
+
+  useEffect(() => {
+    if (activeSection !== 'connections' || googleStatus) return;
+    setGoogleLoading(true);
+    void fetch('/api/isaak/google/status')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d) setGoogleStatus(d as typeof googleStatus);
+      })
+      .finally(() => setGoogleLoading(false));
+
+    // Handle OAuth redirect notice
+    const params = new URLSearchParams(window.location.search);
+    const g = params.get('google');
+    if (g === 'connected') {
+      setNotice('Google Calendar conectado correctamente.');
+      setNoticeTone('success');
+    } else if (g === 'error') {
+      setError('No se pudo conectar Google Calendar. Inténtalo de nuevo.');
+    }
+  }, [activeSection, googleStatus]);
+
+  async function disconnectGoogle() {
+    if (!confirm('¿Desconectar Google Calendar?')) return;
+    setGoogleDisconnecting(true);
+    try {
+      await fetch('/api/isaak/google/disconnect', { method: 'DELETE' });
+      setGoogleStatus((prev) => (prev ? { ...prev, connected: false, email: null } : null));
+      setNotice('Google Calendar desconectado.');
+      setNoticeTone('success');
+    } finally {
+      setGoogleDisconnecting(false);
+    }
+  }
 
   async function requestJson<T>(section: SectionKey, url: string, init?: RequestInit): Promise<T> {
     setSavingSection(section);
@@ -837,17 +880,82 @@ export default function IsaakSettingsClient({
                     </div>
                   </div>
                 </section>
-                <section className="rounded-[1.6rem] border border-slate-200 bg-slate-50/70 p-5">
-                  <div className="text-lg font-semibold text-slate-950">Proximamente</div>
-                  <div className="mt-4 space-y-3 text-sm text-slate-600">
-                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                      Google Drive
+                <section className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
+                  <div className="text-lg font-semibold text-slate-950">Google Calendar</div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Sincroniza los plazos fiscales del año directamente en tu calendario.
+                  </p>
+                  <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
+                          <Calendar className="h-4 w-4 text-red-500" />
+                        </div>
+                        <div>
+                          <div className="text-sm font-semibold text-slate-900">
+                            Google Calendar
+                          </div>
+                          {googleLoading ? (
+                            <div className="text-xs text-slate-400">Cargando...</div>
+                          ) : googleStatus?.connected ? (
+                            <div className="text-xs text-slate-500">{googleStatus.email}</div>
+                          ) : (
+                            <div className="text-xs text-slate-400">No conectado</div>
+                          )}
+                        </div>
+                      </div>
+                      {!googleLoading && (
+                        <div className="flex items-center gap-2">
+                          {googleStatus?.connected ? (
+                            <>
+                              <span className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                                <CheckCircle2 className="h-3 w-3" />
+                                Conectado
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => void disconnectGoogle()}
+                                disabled={googleDisconnecting}
+                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+                              >
+                                {googleDisconnecting ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Unplug className="h-3 w-3" />
+                                )}
+                                Desconectar
+                              </button>
+                            </>
+                          ) : googleStatus?.googleConfigured ? (
+                            <a
+                              href="/api/isaak/google/auth"
+                              className="inline-flex items-center gap-1.5 rounded-full bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                              Conectar
+                            </a>
+                          ) : (
+                            <span className="text-xs text-slate-400">Próximamente</span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                      Gmail
+                    {googleStatus?.connected && (
+                      <p className="mt-3 text-xs text-slate-500">
+                        Ve a{' '}
+                        <a href="/calendario" className="text-[#2361d8] underline">
+                          Calendario Fiscal
+                        </a>{' '}
+                        para sincronizar los plazos tributarios del año.
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 space-y-2 text-sm text-slate-400">
+                    <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-2.5">
+                      Google Drive · Próximamente
                     </div>
-                    <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                      Calendar
+                    <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-2.5">
+                      Gmail · Próximamente
                     </div>
                   </div>
                 </section>

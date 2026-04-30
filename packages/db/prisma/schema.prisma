@@ -555,6 +555,7 @@ model Tenant {
   externalConnectionAuditLogs ExternalConnectionAuditLog[]
   externalSyncRuns            ExternalSyncRun[]
   isaakConversations          IsaakConversation[]
+  isaakGoogleTokens           IsaakGoogleToken[]
   isaakMemoryFacts            IsaakMemoryFact[]
   isaakOnboardingProfiles     IsaakOnboardingProfile[]
   usageEvents                 UsageEvent[]
@@ -1775,6 +1776,27 @@ model IsaakMemoryFact {
   @@index([userId, createdAt])
   @@index([conversationId, createdAt])
   @@map("isaak_memory_facts")
+}
+
+// ==================== ISAAK: GOOGLE TOKENS ====================
+
+model IsaakGoogleToken {
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id") @db.Uuid
+  userId       String    @map("user_id")
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz
+  email        String?
+  scopes       String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@map("isaak_google_tokens")
 }
 
 // ==================== DEMO REQUESTS ====================
