@@ -119,6 +119,13 @@ const SUGGESTION_POOL: Record<PageContext, string[]> = {
 const DEFAULT_STANDALONE_SUPPORT_PROMPT =
   'Necesito soporte tecnico con el conector de Holded. Ayudame a diagnosticar el problema paso a paso.';
 
+const CTA_VARIANT_STORAGE_KEY = 'isaak_upgrade_cta_variant';
+type UpgradeCtaVariant = 'activate' | 'plans';
+
+function getUpgradeCtaLabel(variant: UpgradeCtaVariant) {
+  return variant === 'activate' ? 'Activar Isaak completo →' : 'Ver planes de Isaak →';
+}
+
 function buildStandaloneChatPath(page: PageContext, prompt: string, source: string) {
   const params = new URLSearchParams({
     page,
@@ -189,6 +196,7 @@ export function IsaakWidget({ page = 'generic' }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [errorCta, setErrorCta] = useState<string | null>(null);
+  const [upgradeCtaVariant, setUpgradeCtaVariant] = useState<UpgradeCtaVariant>('activate');
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [exchangeCount, setExchangeCount] = useState(0);
 
@@ -217,6 +225,22 @@ export function IsaakWidget({ page = 'generic' }: Props) {
         }
       })
       .catch(() => {});
+  }, []);
+
+  // Persist CTA variant per browser to keep messaging consistent for each user.
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(CTA_VARIANT_STORAGE_KEY);
+      if (stored === 'activate' || stored === 'plans') {
+        setUpgradeCtaVariant(stored);
+        return;
+      }
+      const assigned: UpgradeCtaVariant = Math.random() < 0.5 ? 'activate' : 'plans';
+      window.localStorage.setItem(CTA_VARIANT_STORAGE_KEY, assigned);
+      setUpgradeCtaVariant(assigned);
+    } catch {
+      setUpgradeCtaVariant('activate');
+    }
   }, []);
 
   // Isaak stays as a floating launcher; the chat itself opens in /support/chat.
@@ -565,12 +589,12 @@ export function IsaakWidget({ page = 'generic' }: Props) {
                 <p className="mb-2 text-red-700">{error}</p>
                 {errorCta && (
                   <a
-                    href={errorCta}
+                    href={`${errorCta}?source=widget_quota_cta&variant=${upgradeCtaVariant}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-block font-semibold text-[#2361d8] underline hover:no-underline"
                   >
-                    Activar Isaak completo →
+                    {getUpgradeCtaLabel(upgradeCtaVariant)}
                   </a>
                 )}
               </div>
