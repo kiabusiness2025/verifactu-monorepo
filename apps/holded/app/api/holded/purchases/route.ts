@@ -91,7 +91,7 @@ export async function POST(req: NextRequest) {
       supplierId,
       date: new Date(data.date),
       description: data.description,
-      category: data.category,
+      category: data.category ?? 'general',
       amount: data.amount,
       taxRate: data.iva ?? 0.21,
       taxCategory: data.retenciones ?? 'ninguna',
