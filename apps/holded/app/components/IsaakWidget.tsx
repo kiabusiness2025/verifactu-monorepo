@@ -570,7 +570,7 @@ export function IsaakWidget({ page = 'generic' }: Props) {
                     rel="noopener noreferrer"
                     className="inline-block font-semibold text-[#2361d8] underline hover:no-underline"
                   >
-                    Empezar prueba gratuita →
+                    Activar Isaak completo →
                   </a>
                 )}
               </div>

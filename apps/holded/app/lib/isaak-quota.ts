@@ -26,7 +26,7 @@ type RateBucket = { count: number; resetAt: number };
 const buckets = new Map<string, RateBucket>();
 
 const WINDOW_MS = 24 * 60 * 60 * 1000; // 24 h rolling window
-const DEFAULT_DAILY_LIMIT = 50; // generous limit while in beta
+const DEFAULT_DAILY_LIMIT = 10; // enough to evaluate value, preserves upgrade urgency
 
 // Single source of truth for quota exhaustion messaging
 function buildQuotaExhaustedResponse(): Extract<QuotaCheckResult, { allowed: false }> {
