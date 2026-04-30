@@ -3,7 +3,7 @@
 //
 // Required Prisma migration for TenantSubscription:
 // - Add field: queriesUsedToday Int @default(0) @map("queries_used_today")
-// - Add field: dailyQueryLimit Int (per-plan, default 50) @map("daily_query_limit")
+// - Add field: dailyQueryLimit Int (per-plan, default 10 for connector) @map("daily_query_limit")
 // - Add field: lastQueryResetAt DateTime @default(now()) @map("last_query_reset_at")
 //
 // Once migration is applied and released:
@@ -33,7 +33,7 @@ function buildQuotaExhaustedResponse(): Extract<QuotaCheckResult, { allowed: fal
   return {
     allowed: false,
     message:
-      'Has alcanzado el límite diario del conector. Para análisis continuo con historial y memoria de tu empresa, Isaak completo está disponible en isaak.verifactu.business',
+      'Has alcanzado el límite diario del conector. Para seguir con análisis continuo, historial y memoria de tu empresa, activa Isaak completo en isaak.verifactu.business',
     cta: 'https://isaak.verifactu.business',
   };
 }
@@ -73,7 +73,7 @@ export function checkIsaakQuota(tenantId: string): QuotaCheckResult {
 //   });
 //
 //   if (!sub) {
-//     // No subscription: use free tier limit (50 queries/day)
+//     // No subscription: use free tier limit (10 queries/day)
 //     return { allowed: true };
 //   }
 //
