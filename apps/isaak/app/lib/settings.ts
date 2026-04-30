@@ -1,7 +1,6 @@
-import { prisma } from '@/app/lib/prisma';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
-import { getIsaakOnboardingState } from '@verifactu/integrations';
-import { stripeClient } from '@verifactu/integrations';
+import { prisma } from '@/app/lib/prisma';
+import { getIsaakOnboardingState, stripeClient } from '@verifactu/integrations';
 import { ISAAK_PUBLIC_URL, buildHoldedProfileOnboardingUrl } from './isaak-navigation';
 
 export type SettingsProfileData = {

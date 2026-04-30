@@ -63,6 +63,8 @@ type SettingsData = {
     code: string;
     status: string;
     stripeStatus: string | null;
+    trialEndsAt: string | null;
+    daysUntilTrialEnd: number | null;
     nextRenewalAt: string | null;
     cancelAtPeriodEnd: boolean;
     paymentMethodSummary: string | null;
@@ -88,6 +90,56 @@ type SettingsData = {
     activeMembers: number;
   };
 };
+
+const PLAN_TIERS = [
+  {
+    code: 'starter',
+    name: 'Starter',
+    price: 19,
+    tagline: 'Para autónomos y freelancers',
+    features: [
+      '1 ERP conectado (Holded)',
+      '100 preguntas al mes',
+      'Chat con historial completo',
+      'Dashboard KPI básico',
+      'Soporte por email',
+    ],
+    cta: 'checkout' as const,
+    highlight: false,
+  },
+  {
+    code: 'pyme',
+    name: 'Pyme',
+    price: 49,
+    tagline: 'El más popular para pymes',
+    features: [
+      '1 ERP conectado',
+      'Preguntas ilimitadas',
+      'Crear facturas Verifactu desde chat',
+      'Integraciones Google (Calendar, Gmail)',
+      'Carga de archivos + OCR',
+      'Soporte prioritario',
+    ],
+    cta: 'contact' as const,
+    highlight: true,
+  },
+  {
+    code: 'empresa',
+    name: 'Empresa',
+    price: 149,
+    tagline: 'Para equipos y despachos',
+    features: [
+      'Hasta 3 ERPs conectados',
+      'Multi-usuario',
+      'Notificaciones fiscales (push + email)',
+      'Voz: entrada y salida',
+      'API access',
+      'Onboarding dedicado + SLA',
+    ],
+    cta: 'contact' as const,
+    highlight: false,
+  },
+];
 
 type SectionKey = 'profile' | 'company' | 'connections' | 'isaak' | 'team' | 'billing';
 
@@ -919,123 +971,243 @@ export default function IsaakSettingsClient({
             ) : null}
 
             {activeSection === 'billing' ? (
-              <section className="mt-6 rounded-[1.6rem] border border-slate-200 p-5">
-                <div className="text-lg font-semibold text-slate-950">Facturacion</div>
-                <div className="mt-5 grid gap-4 sm:grid-cols-3">
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Plan actual
+              <section className="mt-6 space-y-5">
+                {/* Trial countdown banner */}
+                {billing.status === 'trial' ? (
+                  <div
+                    className={`flex flex-wrap items-center justify-between gap-3 rounded-[1.5rem] border px-5 py-4 ${
+                      (billing.daysUntilTrialEnd ?? 30) <= 3
+                        ? 'border-rose-200 bg-rose-50'
+                        : (billing.daysUntilTrialEnd ?? 30) <= 7
+                          ? 'border-amber-200 bg-amber-50'
+                          : 'border-blue-200 bg-blue-50'
+                    }`}
+                  >
+                    <div>
+                      <div
+                        className={`text-sm font-semibold ${
+                          (billing.daysUntilTrialEnd ?? 30) <= 3
+                            ? 'text-rose-900'
+                            : (billing.daysUntilTrialEnd ?? 30) <= 7
+                              ? 'text-amber-900'
+                              : 'text-blue-900'
+                        }`}
+                      >
+                        {billing.daysUntilTrialEnd === 0
+                          ? 'Tu prueba gratuita termina hoy'
+                          : billing.daysUntilTrialEnd === 1
+                            ? 'Tu prueba gratuita termina mañana'
+                            : `Tu prueba gratuita termina en ${billing.daysUntilTrialEnd ?? '—'} días`}
+                      </div>
+                      <div
+                        className={`mt-0.5 text-xs ${
+                          (billing.daysUntilTrialEnd ?? 30) <= 3
+                            ? 'text-rose-700'
+                            : (billing.daysUntilTrialEnd ?? 30) <= 7
+                              ? 'text-amber-700'
+                              : 'text-blue-700'
+                        }`}
+                      >
+                        Elige un plan para no perder el acceso a tus datos y conversaciones.
+                      </div>
                     </div>
-                    <div className="mt-2 text-lg font-semibold text-slate-950">{billing.name}</div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        void openBillingAction(
+                          '/api/settings/billing/checkout',
+                          'No hemos podido abrir Stripe Checkout.'
+                        )
+                      }
+                      disabled={savingSection === 'billing'}
+                      className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#2361d8] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
+                    >
+                      {savingSection === 'billing' ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : null}
+                      Activar plan ahora
+                    </button>
                   </div>
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Codigo
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-slate-950">{billing.code}</div>
-                  </div>
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                      Estado
-                    </div>
-                    <div className="mt-2 text-lg font-semibold text-slate-950">
-                      {billing.stripeStatus || billing.status}
-                    </div>
+                ) : null}
+
+                {/* Plan cards */}
+                <div className="rounded-[1.6rem] border border-slate-200 p-5">
+                  <div className="text-lg font-semibold text-slate-950">Planes disponibles</div>
+                  <p className="mt-1 text-sm text-slate-500">
+                    30 días de prueba gratuita en todos los planes. Sin tarjeta para empezar.
+                  </p>
+                  <div className="mt-5 grid gap-4 lg:grid-cols-3">
+                    {PLAN_TIERS.map((plan) => {
+                      const isCurrent = billing.code === plan.code;
+                      return (
+                        <div
+                          key={plan.code}
+                          className={`relative rounded-[1.4rem] border p-5 ${
+                            plan.highlight
+                              ? 'border-[#2361d8]/30 bg-[#edf4ff]'
+                              : 'border-slate-200 bg-white'
+                          }`}
+                        >
+                          {plan.highlight ? (
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[#2361d8] px-3 py-0.5 text-[11px] font-semibold text-white">
+                              Más popular
+                            </div>
+                          ) : null}
+                          <div className="text-base font-bold text-slate-950">{plan.name}</div>
+                          <div className="mt-0.5 text-[11px] text-slate-500">{plan.tagline}</div>
+                          <div className="mt-3 flex items-baseline gap-1">
+                            <span className="text-3xl font-bold text-slate-950">{plan.price}€</span>
+                            <span className="text-sm text-slate-500">/mes</span>
+                          </div>
+                          <ul className="mt-4 space-y-2">
+                            {plan.features.map((feat) => (
+                              <li
+                                key={feat}
+                                className="flex items-start gap-2 text-[13px] text-slate-700"
+                              >
+                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                                {feat}
+                              </li>
+                            ))}
+                          </ul>
+                          <div className="mt-5">
+                            {isCurrent ? (
+                              <div className="flex h-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-500">
+                                Plan actual
+                              </div>
+                            ) : plan.cta === 'checkout' ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  void openBillingAction(
+                                    '/api/settings/billing/checkout',
+                                    'No hemos podido abrir Stripe Checkout.'
+                                  )
+                                }
+                                disabled={savingSection === 'billing'}
+                                className="flex h-10 w-full items-center justify-center gap-2 rounded-full bg-[#2361d8] text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
+                              >
+                                {savingSection === 'billing' ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : null}
+                                Empezar prueba gratuita
+                              </button>
+                            ) : (
+                              <Link
+                                href="/support?source=isaak_billing_upgrade"
+                                className="flex h-10 w-full items-center justify-center rounded-full border border-[#2361d8] text-sm font-semibold text-[#2361d8] transition hover:bg-[#edf4ff]"
+                              >
+                                Hablar con ventas
+                              </Link>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-                <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_0.9fr]">
-                  <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
+
+                {/* Current subscription details */}
+                <div className="grid gap-4 lg:grid-cols-[1fr_0.85fr]">
+                  <div className="rounded-[1.6rem] border border-slate-200 p-5">
+                    <div className="text-base font-semibold text-slate-950">Suscripción actual</div>
+                    <div className="mt-4 grid gap-4 sm:grid-cols-2">
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                          Proxima renovacion
+                          Plan
                         </div>
-                        <div className="mt-2 text-sm font-medium text-slate-900">
+                        <div className="mt-1.5 text-sm font-semibold text-slate-900">
+                          {billing.name}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Estado
+                        </div>
+                        <div className="mt-1.5 text-sm font-semibold text-slate-900">
+                          {billing.status === 'trial'
+                            ? `Prueba gratuita (${billing.daysUntilTrialEnd ?? '—'} días)`
+                            : billing.stripeStatus || billing.status}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Próxima renovación
+                        </div>
+                        <div className="mt-1.5 text-sm font-medium text-slate-900">
                           {formatDate(billing.nextRenewalAt)}
                         </div>
                       </div>
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
-                          Metodo de pago
+                          Método de pago
                         </div>
-                        <div className="mt-2 text-sm font-medium text-slate-900">
-                          {billing.paymentMethodSummary || 'Se mostrara cuando Stripe lo confirme'}
+                        <div className="mt-1.5 text-sm font-medium text-slate-900">
+                          {billing.paymentMethodSummary || 'Se mostrará cuando Stripe lo confirme'}
                         </div>
                       </div>
                     </div>
                     <div className="mt-5 flex flex-wrap gap-3">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void openBillingAction(
-                            '/api/settings/billing/checkout',
-                            'No hemos podido abrir Stripe Checkout.'
-                          )
-                        }
-                        disabled={savingSection === 'billing'}
-                        className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
-                      >
-                        {savingSection === 'billing' ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : null}
-                        Actualizar plan
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void openBillingAction(
-                            '/api/settings/billing/portal',
-                            'No hemos podido abrir el portal de facturacion.'
-                          )
-                        }
-                        disabled={savingSection === 'billing' || !billing.portalAvailable}
-                        className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        Abrir portal de facturacion
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          void openBillingAction(
-                            '/api/settings/billing/cancel',
-                            'No hemos podido preparar la cancelacion.'
-                          )
-                        }
-                        disabled={savingSection === 'billing' || !billing.cancelAvailable}
-                        className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
-                      >
-                        Cancelar al final del periodo
-                      </button>
+                      {billing.portalAvailable ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void openBillingAction(
+                              '/api/settings/billing/portal',
+                              'No hemos podido abrir el portal de facturación.'
+                            )
+                          }
+                          disabled={savingSection === 'billing'}
+                          className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                        >
+                          {savingSection === 'billing' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : null}
+                          Portal de facturación
+                        </button>
+                      ) : null}
+                      {billing.cancelAvailable ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void openBillingAction(
+                              '/api/settings/billing/cancel',
+                              'No hemos podido preparar la cancelación.'
+                            )
+                          }
+                          disabled={savingSection === 'billing'}
+                          className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-5 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-50 disabled:opacity-50"
+                        >
+                          Cancelar al final del periodo
+                        </button>
+                      ) : null}
                     </div>
                   </div>
-                  <div className="rounded-[1.5rem] border border-slate-200 p-4">
-                    <div className="text-sm font-semibold text-slate-950">Facturas</div>
-                    <div className="mt-3 space-y-3">
+
+                  {/* Invoice history */}
+                  <div className="rounded-[1.6rem] border border-slate-200 p-5">
+                    <div className="text-base font-semibold text-slate-950">Facturas</div>
+                    <div className="mt-3 space-y-2.5">
                       {billing.invoices.length ? (
                         billing.invoices.slice(0, 5).map((invoice) => (
                           <div
                             key={invoice.id}
-                            className="rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3"
+                            className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 px-4 py-3"
                           >
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <div className="text-sm font-semibold text-slate-950">
-                                  {invoice.number || 'Factura Stripe'}
-                                </div>
-                                <div className="mt-1 text-xs text-slate-500">
-                                  {formatDate(invoice.createdAt)}
-                                </div>
+                            <div>
+                              <div className="text-sm font-semibold text-slate-950">
+                                {invoice.number || 'Factura Stripe'}
                               </div>
+                              <div className="mt-0.5 text-xs text-slate-500">
+                                {formatDate(invoice.createdAt)} · {invoice.status || 'pending'}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3">
                               <div className="text-sm font-semibold text-slate-900">
                                 {formatMoney(
                                   invoice.amountPaid ?? invoice.amountDue,
                                   invoice.currency
                                 )}
-                              </div>
-                            </div>
-                            <div className="mt-2 flex items-center justify-between gap-3">
-                              <div className="text-xs font-medium uppercase tracking-[0.16em] text-slate-400">
-                                {invoice.status || 'pending'}
                               </div>
                               {invoice.hostedInvoiceUrl ? (
                                 <a
@@ -1044,7 +1216,7 @@ export default function IsaakSettingsClient({
                                   rel="noreferrer"
                                   className="text-xs font-semibold text-[#2361d8] transition hover:text-[#174db5]"
                                 >
-                                  Ver factura
+                                  Ver
                                 </a>
                               ) : null}
                             </div>
@@ -1052,7 +1224,7 @@ export default function IsaakSettingsClient({
                         ))
                       ) : (
                         <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-500">
-                          Todavia no hay facturas sincronizadas desde Stripe para este espacio.
+                          Sin facturas todavía. Aparecerán aquí cuando actives un plan de pago.
                         </div>
                       )}
                     </div>

@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { listHoldedConversations } from '@/app/lib/holded-chat';
+import { loadBillingData } from '@/app/lib/settings';
 import IsaakSidebar from './components/IsaakSidebar';
+import TrialBanner from './components/TrialBanner';
 
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const session = await getHoldedSession();
@@ -10,10 +12,13 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     redirect('/auth');
   }
 
-  const conversations = await listHoldedConversations({
-    tenantId: session.tenantId,
-    userId: session.userId,
-  }).catch(() => []);
+  const [conversations, billing] = await Promise.all([
+    listHoldedConversations({
+      tenantId: session.tenantId,
+      userId: session.userId,
+    }).catch(() => []),
+    loadBillingData({ tenantId: session.tenantId }).catch(() => null),
+  ]);
 
   const user = {
     name: session.name ?? 'Usuario',
@@ -21,10 +26,18 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     initials: getInitials(session.name),
   };
 
+  const showTrialBanner =
+    billing?.status === 'trial' &&
+    typeof billing.daysUntilTrialEnd === 'number' &&
+    billing.daysUntilTrialEnd <= 14;
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0b1a40] font-sans">
       <IsaakSidebar user={user} conversations={conversations} />
-      <main className="relative flex flex-1 flex-col overflow-hidden bg-white">{children}</main>
+      <main className="relative flex flex-1 flex-col overflow-hidden bg-white">
+        {showTrialBanner ? <TrialBanner daysLeft={billing!.daysUntilTrialEnd!} /> : null}
+        {children}
+      </main>
     </div>
   );
 }
