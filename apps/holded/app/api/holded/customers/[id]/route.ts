@@ -17,14 +17,14 @@ const CustomerSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export async function GET(_req: NextRequest, context: { params: { id: string } }) {
-  const { params } = context;
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getHoldedSession();
   if (!session?.tenantId) {
     return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
   }
   const customer = await prisma.customer.findFirst({
-    where: { id: params.id, tenantId: session.tenantId },
+    where: { id, tenantId: session.tenantId },
   });
   if (!customer) {
     return NextResponse.json({ ok: false, error: 'No encontrado' }, { status: 404 });
@@ -32,8 +32,8 @@ export async function GET(_req: NextRequest, context: { params: { id: string } }
   return NextResponse.json({ ok: true, data: customer });
 }
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
-  const { params } = context;
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getHoldedSession();
   if (!session?.tenantId) {
     return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
@@ -53,20 +53,20 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
   }
   const data = parsed.data;
   const customer = await prisma.customer.update({
-    where: { id: params.id, tenantId: session.tenantId },
+    where: { id, tenantId: session.tenantId },
     data,
   });
   return NextResponse.json({ ok: true, data: customer });
 }
 
-export async function DELETE(_req: NextRequest, context: { params: { id: string } }) {
-  const { params } = context;
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getHoldedSession();
   if (!session?.tenantId) {
     return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
   }
   await prisma.customer.delete({
-    where: { id: params.id, tenantId: session.tenantId },
+    where: { id, tenantId: session.tenantId },
   });
   return NextResponse.json({ ok: true });
 }
