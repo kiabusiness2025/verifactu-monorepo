@@ -1,20 +1,59 @@
 'use client';
 
 import Image from 'next/image';
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   ExternalLink,
   FileText,
   LifeBuoy,
   Loader2,
+  Mic,
+  MicOff,
   Paperclip,
   Plus,
   SendHorizonal,
   Sparkles,
+  Volume2,
+  VolumeX,
   X,
 } from 'lucide-react';
 import IsaakMarkdown from './IsaakMarkdown';
+
+// ── Speech API minimal types ──────────────────────────────────────────────────
+interface ISpeechRecognitionResult {
+  readonly isFinal: boolean;
+  readonly [index: number]: { readonly transcript: string };
+}
+interface ISpeechRecognitionResultList {
+  readonly length: number;
+  readonly [index: number]: ISpeechRecognitionResult;
+}
+interface ISpeechRecognitionEvent extends Event {
+  readonly results: ISpeechRecognitionResultList;
+}
+interface ISpeechRecognition extends EventTarget {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  start(): void;
+  stop(): void;
+  abort(): void;
+  onstart: ((this: ISpeechRecognition, ev: Event) => void) | null;
+  onend: ((this: ISpeechRecognition, ev: Event) => void) | null;
+  onerror: ((this: ISpeechRecognition, ev: Event) => void) | null;
+  onresult: ((this: ISpeechRecognition, ev: ISpeechRecognitionEvent) => void) | null;
+}
+type ISpeechRecognitionCtor = new () => ISpeechRecognition;
+
+function getSpeechRecognition(): ISpeechRecognitionCtor | null {
+  if (typeof window === 'undefined') return null;
+  const w = window as Window & {
+    SpeechRecognition?: ISpeechRecognitionCtor;
+    webkitSpeechRecognition?: ISpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+}
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
@@ -77,6 +116,8 @@ function ChatInput({
   onFileSelect,
   selectedFile,
   onClearFile,
+  onMicClick,
+  isListening,
   inputRef,
   placeholder = 'Pregunta lo que necesites...',
 }: {
@@ -88,6 +129,8 @@ function ChatInput({
   onFileSelect?: (file: File) => void;
   selectedFile?: File | null;
   onClearFile?: () => void;
+  onMicClick?: () => void;
+  isListening?: boolean;
   inputRef: React.RefObject<HTMLTextAreaElement>;
   placeholder?: string;
 }) {
@@ -143,12 +186,33 @@ function ChatInput({
             </button>
           </>
         )}
+        {onMicClick && (
+          <button
+            type="button"
+            onClick={onMicClick}
+            disabled={loading}
+            title={isListening ? 'Detener grabación' : 'Hablar con Isaak'}
+            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition disabled:cursor-not-allowed ${
+              isListening
+                ? 'animate-pulse bg-rose-100 text-rose-500 hover:bg-rose-200'
+                : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+            }`}
+          >
+            {isListening ? <MicOff size={14} /> : <Mic size={14} />}
+          </button>
+        )}
         <textarea
           ref={inputRef}
           value={input}
           onChange={(e) => onChange(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={selectedFile ? 'Añade un comentario o pulsa enviar...' : placeholder}
+          placeholder={
+            isListening
+              ? 'Escuchando...'
+              : selectedFile
+                ? 'Añade un comentario o pulsa enviar...'
+                : placeholder
+          }
           rows={1}
           className="flex-1 resize-none bg-transparent text-[14px] leading-6 text-slate-900 outline-none placeholder:text-slate-400"
         />
@@ -243,8 +307,80 @@ export default function IsaakChatSection({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
+
+  // Stop TTS when component unmounts
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+      recognitionRef.current?.abort();
+    };
+  }, []);
+
+  const toggleMic = useCallback(() => {
+    const SpeechRec = getSpeechRecognition();
+    if (!SpeechRec) {
+      setError('Tu navegador no soporta reconocimiento de voz. Usa Chrome o Edge.');
+      return;
+    }
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    const rec = new SpeechRec();
+    rec.lang = 'es-ES';
+    rec.interimResults = true;
+    rec.maxAlternatives = 1;
+    rec.onstart = () => setIsListening(true);
+    rec.onend = () => setIsListening(false);
+    rec.onerror = () => setIsListening(false);
+    rec.onresult = (event: ISpeechRecognitionEvent) => {
+      let transcript = '';
+      for (let i = 0; i < event.results.length; i++) {
+        transcript += event.results[i][0].transcript;
+      }
+      setInput(transcript);
+      if (event.results[event.results.length - 1].isFinal) {
+        rec.stop();
+      }
+    };
+    recognitionRef.current = rec;
+    rec.start();
+  }, [isListening]);
+
+  const speakMessage = useCallback(
+    (id: string, text: string) => {
+      if (!('speechSynthesis' in window)) return;
+      if (speakingId === id) {
+        window.speechSynthesis.cancel();
+        setSpeakingId(null);
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const plain = text
+        .replace(/\*\*(.+?)\*\*/g, '$1')
+        .replace(/\*(.+?)\*/g, '$1')
+        .replace(/`+([^`]+)`+/g, '$1')
+        .replace(/^#+\s+/gm, '')
+        .replace(/^[-*]\s+/gm, '')
+        .replace(/\n{2,}/g, '. ');
+      const utterance = new SpeechSynthesisUtterance(plain);
+      utterance.lang = 'es-ES';
+      utterance.rate = 1.05;
+      const voices = window.speechSynthesis.getVoices();
+      const spanishVoice = voices.find((v) => v.lang.startsWith('es'));
+      if (spanishVoice) utterance.voice = spanishVoice;
+      utterance.onstart = () => setSpeakingId(id);
+      utterance.onend = () => setSpeakingId(null);
+      utterance.onerror = () => setSpeakingId(null);
+      window.speechSynthesis.speak(utterance);
+    },
+    [speakingId]
+  );
 
   const chips = QUICK_CHIPS[context] ?? QUICK_CHIPS.default;
 
@@ -380,6 +516,8 @@ export default function IsaakChatSection({
             onFileSelect={setSelectedFile}
             selectedFile={selectedFile}
             onClearFile={() => setSelectedFile(null)}
+            onMicClick={toggleMic}
+            isListening={isListening}
             inputRef={inputRef}
             placeholder="Pregúntame sobre tu negocio..."
           />
@@ -431,8 +569,22 @@ export default function IsaakChatSection({
                     className="object-cover"
                   />
                 </div>
-                <div className="max-w-[85%] rounded-2xl bg-[#f5f9ff] px-4 py-3">
-                  <IsaakMarkdown text={msg.content} />
+                <div className="group relative max-w-[85%]">
+                  <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3">
+                    <IsaakMarkdown text={msg.content} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => speakMessage(msg.id, msg.content)}
+                    title={speakingId === msg.id ? 'Detener' : 'Escuchar respuesta'}
+                    className={`absolute -bottom-2 right-2 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition opacity-0 group-hover:opacity-100 ${
+                      speakingId === msg.id
+                        ? 'text-[#2361d8]'
+                        : 'text-slate-400 hover:text-slate-700'
+                    }`}
+                  >
+                    {speakingId === msg.id ? <VolumeX size={11} /> : <Volume2 size={11} />}
+                  </button>
                 </div>
               </div>
             )
@@ -472,6 +624,8 @@ export default function IsaakChatSection({
           onFileSelect={setSelectedFile}
           selectedFile={selectedFile}
           onClearFile={() => setSelectedFile(null)}
+          onMicClick={toggleMic}
+          isListening={isListening}
           inputRef={inputRef}
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
