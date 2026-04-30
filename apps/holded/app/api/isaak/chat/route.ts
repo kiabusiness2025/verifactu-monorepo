@@ -20,11 +20,12 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Quota check
-  if (!checkIsaakQuota(session.tenantId)) {
+  const quotaCheck = checkIsaakQuota(session.tenantId);
+  if (!quotaCheck.allowed) {
     return NextResponse.json(
       {
-        error:
-          'Has alcanzado el límite diario del conector. Para análisis continuo con historial y memoria de tu empresa, Isaak completo está disponible en isaak.verifactu.business',
+        error: quotaCheck.message,
+        cta: quotaCheck.cta,
       },
       { status: 429 }
     );
