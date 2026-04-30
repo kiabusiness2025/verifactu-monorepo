@@ -14,6 +14,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
+import type { SettingsBillingData } from '@/app/lib/settings';
 
 const ALLOWED_TABS = new Set([
   'profile',
@@ -51,6 +52,8 @@ function SettingsContent() {
   } | null>(null);
   const [sessionInfoLoading, setSessionInfoLoading] = useState(false);
   const [sessionInfoError, setSessionInfoError] = useState<string | null>(null);
+  const [billingData, setBillingData] = useState<SettingsBillingData | null>(null);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   const sessionNameParts = splitFullName(session?.user?.name || null);
   const [profileSettings, setProfileSettings] = useState({
@@ -177,6 +180,43 @@ function SettingsContent() {
       setActiveTab(tabParam);
     }
   }, [activeTab, tabParam]);
+
+  useEffect(() => {
+    if (activeTab !== 'billing') return;
+    if (!activeTenantId) return;
+    let mounted = true;
+    async function loadBilling() {
+      setBillingLoading(true);
+      try {
+        const res = await fetch(
+          `/api/settings/billing?tenantId=${encodeURIComponent(activeTenantId)}`,
+          {
+            credentials: 'include',
+          }
+        );
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok) {
+          throw new Error(data?.error || 'No se pudo cargar la información de facturación');
+        }
+        if (mounted) {
+          setBillingData(data.data || null);
+        }
+      } catch (error) {
+        if (mounted) {
+          console.error('Error loading billing data:', error);
+          setBillingData(null);
+        }
+      } finally {
+        if (mounted) {
+          setBillingLoading(false);
+        }
+      }
+    }
+    loadBilling();
+    return () => {
+      mounted = false;
+    };
+  }, [activeTab, activeTenantId]);
 
   useEffect(() => {
     if (activeTab !== 'sessions') return;
@@ -730,38 +770,90 @@ function SettingsContent() {
 
           {activeTab === 'billing' && (
             <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">Plan Actual</h3>
-                <p className="text-blue-800 text-sm">Plan Profesional - {formatCurrency(99)}/mes</p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-slate-900 mb-4">Metodo de Pago</h3>
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
-                  <p className="text-slate-600 text-sm">Tarjeta Mastercard terminada en 4242</p>
-                  <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
-                    Cambiar metodo de pago
-                  </button>
+              {billingLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="text-slate-600">Cargando información de facturación...</div>
                 </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-slate-900 mb-4">Facturas Recientes</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-200">
-                    <div>
-                      <p className="font-medium text-slate-900">Factura INV-2026-01</p>
-                      <p className="text-sm text-slate-600">14 Enero, 2026</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-slate-900">{formatCurrency(99)}</p>
-                      <button className="text-blue-600 hover:text-blue-800 text-sm">
-                        Descargar PDF
-                      </button>
+              ) : billingData ? (
+                <>
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 className="font-semibold text-blue-900 mb-2">Plan Actual</h3>
+                    <div className="text-blue-800 text-sm">
+                      <p className="font-medium">{billingData.name}</p>
+                      {billingData.nextRenewalAt && (
+                        <p className="text-xs text-blue-700 mt-1">
+                          Próxima renovación: {formatDateTime(new Date(billingData.nextRenewalAt))}
+                        </p>
+                      )}
+                      {billingData.daysUntilTrialEnd !== null && (
+                        <p className="text-xs text-blue-700 mt-1">
+                          Período de prueba: {billingData.daysUntilTrialEnd} días restantes
+                        </p>
+                      )}
                     </div>
                   </div>
+
+                  {billingData.paymentMethodSummary && (
+                    <div>
+                      <h3 className="font-semibold text-slate-900 mb-4">Método de Pago</h3>
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-4">
+                        <p className="text-slate-600 text-sm">{billingData.paymentMethodSummary}</p>
+                        {billingData.portalAvailable && (
+                          <button className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            Cambiar método de pago
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {billingData.invoices.length > 0 && (
+                    <div>
+                      <h3 className="font-semibold text-slate-900 mb-4">Facturas Recientes</h3>
+                      <div className="space-y-2">
+                        {billingData.invoices.map((invoice) => (
+                          <div
+                            key={invoice.id}
+                            className="flex justify-between items-center p-3 bg-slate-50 rounded border border-slate-200"
+                          >
+                            <div>
+                              <p className="font-medium text-slate-900">
+                                {invoice.number || `Factura ${invoice.id.slice(-8)}`}
+                              </p>
+                              <p className="text-sm text-slate-600">
+                                {invoice.createdAt
+                                  ? formatDateTime(new Date(invoice.createdAt))
+                                  : 'Fecha no disponible'}
+                              </p>
+                            </div>
+                            <div className="text-right flex items-center gap-3">
+                              {invoice.amountDue !== null && (
+                                <p className="font-medium text-slate-900">
+                                  {formatCurrency(invoice.amountDue)}
+                                </p>
+                              )}
+                              {invoice.hostedInvoiceUrl && (
+                                <a
+                                  href={invoice.hostedInvoiceUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 text-sm"
+                                >
+                                  Ver
+                                </a>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-8 text-slate-600">
+                  <p>No hay información de facturación disponible</p>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
