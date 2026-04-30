@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { callLLM } from '@verifactu/utils';
 import { recordUsageEvent } from '@verifactu/integrations';
@@ -418,6 +419,266 @@ function buildReply(input: {
   return `La conexion con Holded esta activa y ya puedo trabajar con una lectura real de ${tenantLabel}: ${formatMoney(summary.monthSales)} en ventas este mes, ${formatMoney(summary.pendingCollectionsAmount)} pendientes de cobro y ${formatMoney(summary.monthMargin)} de margen estimado. Preguntame por trimestre, gastos, cobros o clientes y empezamos 😊`;
 }
 
+// ── Invoice tool support ─────────────────────────────────────────
+
+function isInvoiceCreationIntent(message: string) {
+  const text = message.toLowerCase();
+  const action =
+    text.includes('crea') ||
+    text.includes('nueva') ||
+    text.includes('emite') ||
+    text.includes('genera') ||
+    text.includes('hacer');
+  const invoiceWord = text.includes('factura') || text.includes('invoice');
+  const directRef =
+    invoiceWord && (text.includes(' a ') || text.includes(' para ')) && /\d/.test(text);
+  return (action && invoiceWord) || directRef;
+}
+
+function isIssueConfirmation(message: string) {
+  return /^(s[ií]|confirmar?|emitir?|ok|enviar|adelante|procede|dale|venga|hazlo)[\s.!]*$/i.test(
+    message.trim()
+  );
+}
+
+type InvoiceExtractResult = {
+  customerName: string;
+  customerNif?: string;
+  description: string;
+  amountNet: number;
+  taxRate: number;
+  issueDate: string;
+};
+
+async function callAnthropicForInvoiceData(
+  message: string,
+  companyName: string,
+  apiKey: string,
+  model: string
+): Promise<InvoiceExtractResult | null> {
+  const today = new Date().toISOString().slice(0, 10);
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01',
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 512,
+      system: `Eres un extractor de datos de facturas para ${companyName}. Extrae exactamente los campos pedidos del mensaje del usuario.`,
+      messages: [{ role: 'user', content: message }],
+      tools: [
+        {
+          name: 'propose_invoice',
+          description: 'Extrae los datos de la factura del mensaje del usuario.',
+          input_schema: {
+            type: 'object',
+            properties: {
+              customerName: { type: 'string', description: 'Nombre del cliente o empresa' },
+              customerNif: { type: 'string', description: 'NIF o CIF del cliente, si se menciona' },
+              description: {
+                type: 'string',
+                description: 'Descripción de los servicios o productos facturados',
+              },
+              amountNet: { type: 'number', description: 'Importe neto en EUR, sin IVA' },
+              taxRate: {
+                type: 'number',
+                description:
+                  'Tipo de IVA como decimal: 0.21 para 21%, 0.10 para 10%, 0 para sin IVA. Por defecto 0.21.',
+              },
+              issueDate: {
+                type: 'string',
+                description: `Fecha en YYYY-MM-DD. Por defecto hoy ${today}.`,
+              },
+            },
+            required: ['customerName', 'description', 'amountNet'],
+          },
+        },
+      ],
+      tool_choice: { type: 'auto' },
+    }),
+  });
+
+  if (!res.ok) return null;
+
+  const data = (await res.json()) as {
+    content?: Array<{ type: string; input?: unknown }>;
+  };
+  const toolUse = data.content?.find((b) => b.type === 'tool_use');
+  if (!toolUse?.input) return null;
+
+  const input = toolUse.input as Partial<InvoiceExtractResult>;
+  if (!input.customerName || !input.description || typeof input.amountNet !== 'number') return null;
+
+  return {
+    customerName: String(input.customerName).trim(),
+    customerNif: input.customerNif ? String(input.customerNif).trim() : undefined,
+    description: String(input.description).trim(),
+    amountNet: input.amountNet,
+    taxRate: typeof input.taxRate === 'number' ? input.taxRate : 0.21,
+    issueDate:
+      typeof input.issueDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(input.issueDate)
+        ? input.issueDate
+        : today,
+  };
+}
+
+async function createIsaakInvoiceDraft(input: {
+  tenantId: string;
+  userId: string;
+  customerName: string;
+  customerNif?: string;
+  description: string;
+  amountNet: number;
+  taxRate: number;
+  issueDate: string;
+}) {
+  const amountNet = Math.round(input.amountNet * 100) / 100;
+  const amountTax = Math.round(amountNet * input.taxRate * 100) / 100;
+  const amountGross = Math.round((amountNet + amountTax) * 100) / 100;
+
+  const year = new Date().getFullYear();
+  const count = await prisma.invoice.count({ where: { tenantId: input.tenantId } });
+  const number = `FAC-${year}-${(count + 1).toString().padStart(4, '0')}`;
+
+  const invoice = await prisma.invoice.create({
+    data: {
+      tenantId: input.tenantId,
+      customerName: input.customerName,
+      customerNif: input.customerNif ?? null,
+      number,
+      issueDate: new Date(input.issueDate),
+      amountNet,
+      amountTax,
+      amountGross,
+      status: 'draft',
+      notes: input.description,
+      createdBy: input.userId,
+    },
+  });
+
+  return { invoice, amountNet, amountTax, amountGross, taxRate: input.taxRate };
+}
+
+async function issueIsaakInvoice(
+  invoiceId: string,
+  tenantId: string
+): Promise<{
+  ok: boolean;
+  verifactuStatus?: string;
+  verifactuHash?: string | null;
+  error?: string;
+}> {
+  const invoice = await prisma.invoice.findFirst({
+    where: { id: invoiceId, tenantId },
+    include: { tenant: { select: { nif: true, name: true, legalName: true } } },
+  });
+
+  if (!invoice) return { ok: false, error: 'Factura no encontrada' };
+  if (invoice.verifactuStatus === 'validated' || invoice.verifactuStatus === 'accepted') {
+    return {
+      ok: true,
+      verifactuStatus: invoice.verifactuStatus,
+      verifactuHash: invoice.verifactuHash,
+    };
+  }
+
+  const tenant = invoice.tenant as { nif?: string | null; name: string; legalName?: string | null };
+  const tenantNif = tenant.nif ?? '';
+  if (!tenantNif) {
+    return {
+      ok: false,
+      error: 'Falta el NIF de la empresa. Configúralo en Ajustes antes de emitir.',
+    };
+  }
+
+  const amountNet = Number(invoice.amountNet);
+  const amountTax = Number(invoice.amountTax);
+  const amountGross = Number(invoice.amountGross);
+
+  const payload = {
+    id: invoice.id,
+    tenant_id: invoice.tenantId,
+    tenant_nif: tenantNif,
+    nif: tenantNif,
+    number: invoice.number,
+    issueDate: invoice.issueDate.toISOString().slice(0, 10),
+    amountNet,
+    amountTax,
+    amountGross,
+    total: amountGross,
+    tax: {
+      rate: amountNet > 0 ? Number((amountTax / amountNet).toFixed(4)) : 0,
+      amount: amountTax,
+    },
+    customer: { name: invoice.customerName, nif: invoice.customerNif ?? '' },
+    issuer: { name: tenant.legalName || tenant.name, nif: tenantNif },
+  };
+
+  const payloadHash = createHash('sha256').update(JSON.stringify(payload)).digest('hex');
+  const verifactuBase = (
+    process.env.VERIFACTU_API_URL ||
+    process.env.API_BASE ||
+    'https://api.verifactu.business'
+  ).replace(/\/$/, '');
+
+  await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: {
+      verifactuStatus: 'pending',
+      verifactuPayloadHash: payloadHash,
+      verifactuLastError: null,
+    } as never,
+  });
+
+  const res = await fetch(`${verifactuBase}/api/verifactu/register-invoice`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    cache: 'no-store',
+  });
+
+  const body = (await res.json().catch(() => ({}))) as {
+    ok?: boolean;
+    error?: string;
+    data?: Record<string, unknown>;
+  };
+
+  if (!res.ok || !body?.ok) {
+    const errorMessage =
+      (typeof body?.error === 'string' && body.error) || `VeriFactu API error ${res.status}`;
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        verifactuStatus: 'error',
+        verifactuLastError: errorMessage.slice(0, 1000),
+      } as never,
+    });
+    return { ok: false, error: errorMessage };
+  }
+
+  const data = body?.data ?? {};
+  const verifactuStatus =
+    (typeof data?.verifactu_status === 'string' && data.verifactu_status) || 'validated';
+  const verifactuHash = typeof data?.verifactu_hash === 'string' ? data.verifactu_hash : null;
+
+  await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: {
+      verifactuStatus,
+      verifactuHash,
+      verifactuQr: typeof data?.verifactu_qr === 'string' ? data.verifactu_qr : null,
+      verifactuLastError: null,
+    } as never,
+  });
+
+  return { ok: true, verifactuStatus, verifactuHash };
+}
+
+// ────────────────────────────────────────────────────────────────
+
 export async function POST(request: NextRequest) {
   let session;
   try {
@@ -537,55 +798,147 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  let reply: string;
-  let connectionProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null = null;
-
-  if (isConnectionDiagnosticRequest(message)) {
-    try {
-      connectionProbe = await probeHoldedConnection(context.holded.connection.apiKey);
-    } catch (error) {
-      console.warn('[holded/chat] live probe failed', {
-        tenantId: session.tenantId,
-        userId: session.userId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+  // ── Invoice intent detection ────────────────────────────────────
+  let pendingIssueInvoiceId: string | null = null;
+  if (isIssueConfirmation(message) && conversation) {
+    const lastMsg = await prisma.isaakConversationMsg
+      .findFirst({
+        where: { conversationId: conversation.id, role: 'assistant' },
+        orderBy: { createdAt: 'desc' },
+      })
+      .catch(() => null);
+    const meta = lastMsg?.metadata as Record<string, unknown> | null;
+    pendingIssueInvoiceId =
+      typeof meta?.pendingIssueInvoiceId === 'string' ? meta.pendingIssueInvoiceId : null;
   }
 
-  try {
-    const llmReply = await buildLlmReply({
-      message,
-      context,
-      snapshot,
-      diagnosticProbe: connectionProbe,
-    }).catch((error) => {
-      console.warn('[holded/chat] responses api failed, using deterministic fallback', {
+  let extraAssistantMetadata: Record<string, unknown> = {};
+  let reply = '';
+  let connectionProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null = null;
+  let invoiceHandled = false;
+
+  if (isInvoiceCreationIntent(message)) {
+    const apiKey = process.env.ISAAK_ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
+    if (apiKey) {
+      const model =
+        process.env.ISAAK_AI_MODEL_CLAUDE_DEFAULT ??
+        process.env.ANTHROPIC_MODEL ??
+        'claude-sonnet-4-5';
+      const extracted = await callAnthropicForInvoiceData(
+        message,
+        context.labels.companyName || 'tu empresa',
+        apiKey,
+        model
+      ).catch(() => null);
+
+      if (extracted) {
+        try {
+          const { invoice, amountNet, amountTax, amountGross, taxRate } =
+            await createIsaakInvoiceDraft({
+              tenantId: session.tenantId,
+              userId: session.userId,
+              ...extracted,
+            });
+          const fmt = (n: number) =>
+            n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+            ' €';
+          reply = [
+            `He creado el borrador de factura **${invoice.number}** para **${extracted.customerName}** 📄`,
+            '',
+            `- **Concepto:** ${extracted.description}`,
+            `- **Base imponible:** ${fmt(amountNet)}`,
+            `- **IVA (${Math.round(taxRate * 100)}%):** ${fmt(amountTax)}`,
+            `- **Total:** ${fmt(amountGross)}`,
+            extracted.customerNif ? `- **NIF cliente:** ${extracted.customerNif}` : '',
+            '',
+            '¿Quieres que la emita a la AEAT ahora mismo? Responde **"sí"** para confirmar.',
+          ]
+            .filter(Boolean)
+            .join('\n');
+          extraAssistantMetadata = { pendingIssueInvoiceId: invoice.id };
+          invoiceHandled = true;
+        } catch (err) {
+          console.error('[holded/chat] invoice draft creation failed', err);
+          reply =
+            'He tenido un problema al crear el borrador. Inténtalo de nuevo o crea la factura directamente en Verifactu.';
+          invoiceHandled = true;
+        }
+      }
+    }
+    if (!invoiceHandled) {
+      reply =
+        'No he podido extraer todos los datos necesarios. ¿Puedes indicar el nombre del cliente, el concepto y el importe neto en euros?';
+      invoiceHandled = true;
+    }
+  } else if (pendingIssueInvoiceId) {
+    const result = await issueIsaakInvoice(pendingIssueInvoiceId, session.tenantId).catch((e) => ({
+      ok: false as const,
+      error: e instanceof Error ? e.message : 'Error desconocido',
+    }));
+    if (result.ok) {
+      reply = [
+        '✅ Factura emitida correctamente a la AEAT.',
+        '',
+        result.verifactuHash ? `**Hash de registro:** \`${result.verifactuHash}\`` : '',
+        '',
+        'Puedes consultar el estado y el QR desde Verifactu.',
+      ]
+        .filter(Boolean)
+        .join('\n');
+    } else {
+      reply = `No he podido emitir la factura: ${result.error ?? 'error desconocido'}. Puedes intentarlo desde Verifactu directamente.`;
+    }
+    invoiceHandled = true;
+  }
+
+  if (!invoiceHandled) {
+    if (isConnectionDiagnosticRequest(message)) {
+      try {
+        connectionProbe = await probeHoldedConnection(context.holded.connection.apiKey);
+      } catch (error) {
+        console.warn('[holded/chat] live probe failed', {
+          tenantId: session.tenantId,
+          userId: session.userId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    try {
+      const llmReply = await buildLlmReply({
+        message,
+        context,
+        snapshot,
+        diagnosticProbe: connectionProbe,
+      }).catch((error) => {
+        console.warn('[holded/chat] responses api failed, using deterministic fallback', {
+          tenantId: session.tenantId,
+          userId: session.userId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        return null;
+      });
+
+      reply =
+        typeof llmReply === 'string' && llmReply.trim()
+          ? llmReply.trim()
+          : buildReply({
+              message,
+              snapshot,
+              context,
+              probe: connectionProbe,
+            });
+    } catch (error) {
+      console.error('[holded/chat] reply build failed', {
         tenantId: session.tenantId,
         userId: session.userId,
         error: error instanceof Error ? error.message : String(error),
       });
-      return null;
-    });
-
-    reply =
-      typeof llmReply === 'string' && llmReply.trim()
-        ? llmReply.trim()
-        : buildReply({
-            message,
-            snapshot,
-            context,
-            probe: connectionProbe,
-          });
-  } catch (error) {
-    console.error('[holded/chat] reply build failed', {
-      tenantId: session.tenantId,
-      userId: session.userId,
-      error: error instanceof Error ? error.message : String(error),
-    });
-    return NextResponse.json(
-      { error: 'No he podido procesar tu pregunta en este momento. Intenta de nuevo.' },
-      { status: 503 }
-    );
+      return NextResponse.json(
+        { error: 'No he podido procesar tu pregunta en este momento. Intenta de nuevo.' },
+        { status: 503 }
+      );
+    }
   }
 
   let assistantMessage: Awaited<ReturnType<typeof appendConversationMessage>> | null = null;
@@ -598,6 +951,7 @@ export async function POST(request: NextRequest) {
         content: reply,
         metadata: {
           source: 'isaak_workspace_mvp',
+          ...extraAssistantMetadata,
           snapshot: {
             invoices: snapshot.invoices.length,
             contacts: snapshot.contacts.length,
