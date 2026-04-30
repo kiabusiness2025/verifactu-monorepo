@@ -127,6 +127,57 @@ jest.mock('@/app/lib/prisma', () => ({
   },
 }));
 
+jest.mock('@verifactu/utils', () => ({
+  __esModule: true,
+  buildFullName: jest.fn((first?: string | null, last?: string | null) => {
+    const normalized = [first, last]
+      .map((value) => (typeof value === 'string' ? value.trim() : ''))
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+    return normalized || null;
+  }),
+  isLikelySpanishPhone: jest.fn((value?: unknown) => {
+    if (typeof value !== 'string') return false;
+    const digits = value.replace(/\D/g, '');
+    return digits.length >= 9;
+  }),
+  isValidEmail: jest.fn((value?: unknown) => {
+    if (typeof value !== 'string') return false;
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+  }),
+  isValidSpanishTaxId: jest.fn((value?: unknown) => {
+    if (typeof value !== 'string') return false;
+    const normalized = value.trim().toUpperCase();
+    return /^[0-9]{8}[A-Z]$/.test(normalized) || /^[A-Z][0-9]{7}[A-Z0-9]$/.test(normalized);
+  }),
+  normalizeOptionalEmail: jest.fn((value?: unknown) => {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toLowerCase();
+    return normalized || null;
+  }),
+  normalizeOptionalText: jest.fn((value?: unknown) => {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().replace(/\s+/g, ' ');
+    return normalized || null;
+  }),
+  normalizeTaxId: jest.fn((value?: unknown) => {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toUpperCase();
+    return normalized || null;
+  }),
+  splitNameParts: jest.fn((value?: unknown) => {
+    const normalized = typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
+    if (!normalized) return { firstName: '', lastName: '' };
+    const parts = normalized.split(' ');
+    if (parts.length === 1) return { firstName: parts[0], lastName: '' };
+    return {
+      firstName: parts.slice(0, -1).join(' '),
+      lastName: parts.slice(-1).join(' '),
+    };
+  }),
+}));
+
 import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
 import { sendPublicHighGovernanceRiskInternalAlertEmail } from '@/app/lib/communications/holded-governance-emails';
 import { writeHoldedActivity } from '@/app/lib/holded-activity';
@@ -177,6 +228,8 @@ describe('POST /api/holded/connect', () => {
       crmApi: { ok: false, status: 403 },
       projectsApi: { ok: false, status: 403 },
       teamApi: { ok: false, status: 403 },
+      expenseApi: { ok: false, status: 403 },
+      error: null,
     });
     mockSaveHoldedConnection.mockResolvedValue({
       connected: true,
@@ -777,7 +830,7 @@ describe('POST /api/holded/connect', () => {
     expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith(
       expect.objectContaining({
         userEmail: 'tenant@example.com',
-        companyName: 'Acme SL',
+        companyName: 'tu cuenta de Holded',
         channel: 'chatgpt',
         returnUrl: 'https://chatgpt.com/connector/oauth/demo',
       })
@@ -786,6 +839,43 @@ describe('POST /api/holded/connect', () => {
       expect.objectContaining({
         type: 'HOLDED_CONNECTED',
         source: 'holded_connect_public_chatgpt',
+      })
+    );
+    expect(mockTenantUpdate).not.toHaveBeenCalled();
+    expect(mockUserUpdate).not.toHaveBeenCalled();
+  });
+
+  it('allows claude channel when tax id is omitted and keeps claude channel in communication', async () => {
+    const response = await POST(
+      new Request('https://holded.verifactu.business/api/holded/connect', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: 'abcdefghijklmnop',
+          channel: 'claude',
+          nextTarget: 'https://claude.ai/chat/demo',
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(mockProbeHoldedConnection).toHaveBeenCalled();
+    expect(payload.notificationEmail).toBe('tenant@example.com');
+    expect(payload.companyEmailVerificationPending).toBe(false);
+    expect(mockSendHoldedConnectedCommunication).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userEmail: 'tenant@example.com',
+        companyName: 'tu cuenta de Holded',
+        channel: 'claude',
+        returnUrl: 'https://claude.ai/chat/demo',
+      })
+    );
+    expect(mockRecordUsageEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'HOLDED_CONNECTED',
+        metadataJson: expect.objectContaining({ channel: 'claude' }),
       })
     );
     expect(mockTenantUpdate).not.toHaveBeenCalled();
@@ -911,5 +1001,40 @@ describe('POST /api/holded/connect', () => {
       userId: 'user_1',
       channel: 'dashboard',
     });
+  });
+
+  it('delegates disconnect to canonical app endpoint for claude channel', async () => {
+    global.fetch = jest.fn().mockResolvedValue(
+      new Response(JSON.stringify({ ok: true, status: 'disconnected' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      })
+    ) as typeof fetch;
+
+    const response = await DELETE(
+      new Request('https://holded.verifactu.business/api/holded/connect?channel=claude', {
+        method: 'DELETE',
+        headers: { cookie: 'session=claude123' },
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.ok).toBe(true);
+    expect(payload.connection).toMatchObject({
+      disconnected: true,
+      channel: 'claude',
+    });
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://app.verifactu.business/api/integrations/accounting/disconnect',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'x-holded-entry-channel': 'claude',
+          cookie: 'session=claude123',
+        }),
+      })
+    );
+    expect(mockDisconnectHoldedConnection).not.toHaveBeenCalled();
   });
 });
