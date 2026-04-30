@@ -798,8 +798,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // ── Invoice intent detection ────────────────────────────────────
+  // ── Pending action detection ────────────────────────────────────
   let pendingIssueInvoiceId: string | null = null;
+  let pendingExpense: Record<string, unknown> | null = null;
+  let pendingExpenseHoldedKey: string | null = null;
+
   if (isIssueConfirmation(message) && conversation) {
     const lastMsg = await prisma.isaakConversationMsg
       .findFirst({
@@ -810,6 +813,10 @@ export async function POST(request: NextRequest) {
     const meta = lastMsg?.metadata as Record<string, unknown> | null;
     pendingIssueInvoiceId =
       typeof meta?.pendingIssueInvoiceId === 'string' ? meta.pendingIssueInvoiceId : null;
+    if (meta?.pendingExpense && typeof meta.pendingExpense === 'object') {
+      pendingExpense = meta.pendingExpense as Record<string, unknown>;
+      pendingExpenseHoldedKey = typeof meta.holdedApiKey === 'string' ? meta.holdedApiKey : null;
+    }
   }
 
   let extraAssistantMetadata: Record<string, unknown> = {};
@@ -887,6 +894,83 @@ export async function POST(request: NextRequest) {
         .join('\n');
     } else {
       reply = `No he podido emitir la factura: ${result.error ?? 'error desconocido'}. Puedes intentarlo desde Verifactu directamente.`;
+    }
+    invoiceHandled = true;
+  } else if (pendingExpense) {
+    // Register expense in Holded
+    const holdedKey = pendingExpenseHoldedKey ?? context.holded.connection?.apiKey ?? '';
+    if (!holdedKey) {
+      reply =
+        'No puedo registrar el gasto porque la conexión con Holded no está disponible. Revisa la configuración.';
+    } else {
+      const expenseDate =
+        typeof pendingExpense.issueDate === 'string'
+          ? Math.floor(new Date(pendingExpense.issueDate).getTime() / 1000)
+          : Math.floor(Date.now() / 1000);
+      const description =
+        typeof pendingExpense.description === 'string'
+          ? pendingExpense.description
+          : 'Gasto registrado desde Isaak';
+      const invoiceNumber =
+        typeof pendingExpense.invoiceNumber === 'string' ? pendingExpense.invoiceNumber : null;
+      const amountNet = typeof pendingExpense.amountNet === 'number' ? pendingExpense.amountNet : 0;
+      const vatRate = typeof pendingExpense.vatRate === 'number' ? pendingExpense.vatRate : 0.21;
+      const supplierName =
+        typeof pendingExpense.supplierName === 'string' ? pendingExpense.supplierName : 'Proveedor';
+      const amountTotal =
+        typeof pendingExpense.amountTotal === 'number' ? pendingExpense.amountTotal : 0;
+
+      const holdedPayload = {
+        date: expenseDate,
+        notes: invoiceNumber ? `${description} (Ref: ${invoiceNumber})` : description,
+        products: [
+          {
+            desc: description,
+            units: 1,
+            price: amountNet,
+            tax: Math.round(vatRate * 100),
+          },
+        ],
+      };
+
+      try {
+        const holdedRes = await fetch(
+          'https://api.holded.com/api/invoicing/v1/documents/purchase',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', key: holdedKey },
+            body: JSON.stringify(holdedPayload),
+          }
+        );
+        const holdedData = (await holdedRes.json().catch(() => ({}))) as {
+          id?: string;
+          status?: number;
+          info?: string;
+        };
+
+        if (!holdedRes.ok || holdedData.status === 0) {
+          reply = `No he podido registrar el gasto en Holded: ${holdedData.info ?? `Error ${holdedRes.status}`}. Puedes añadirlo manualmente en Holded.`;
+        } else {
+          const fmt = (n: number) =>
+            n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+            ' €';
+          reply = [
+            `✅ Gasto registrado en Holded correctamente.`,
+            '',
+            `- **Proveedor:** ${supplierName}`,
+            `- **Total:** ${fmt(amountTotal)}`,
+            holdedData.id ? `- **ID Holded:** \`${holdedData.id}\`` : '',
+            '',
+            'Puedes verlo en la sección de Compras de Holded.',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        }
+      } catch (err) {
+        console.error('[holded/chat] expense registration failed', err);
+        reply =
+          'Ha ocurrido un error al conectar con Holded. El gasto no se ha registrado. Inténtalo de nuevo o añádelo manualmente.';
+      }
     }
     invoiceHandled = true;
   }

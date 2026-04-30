@@ -3,7 +3,17 @@
 import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ExternalLink, LifeBuoy, Loader2, Plus, SendHorizonal, Sparkles } from 'lucide-react';
+import {
+  ExternalLink,
+  FileText,
+  LifeBuoy,
+  Loader2,
+  Paperclip,
+  Plus,
+  SendHorizonal,
+  Sparkles,
+  X,
+} from 'lucide-react';
 import IsaakMarkdown from './IsaakMarkdown';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
@@ -64,6 +74,9 @@ function ChatInput({
   onChange,
   onSubmit,
   onKeyDown,
+  onFileSelect,
+  selectedFile,
+  onClearFile,
   inputRef,
   placeholder = 'Pregunta lo que necesites...',
 }: {
@@ -72,34 +85,82 @@ function ChatInput({
   onChange: (v: string) => void;
   onSubmit: () => void;
   onKeyDown: (e: React.KeyboardEvent) => void;
+  onFileSelect?: (file: File) => void;
+  selectedFile?: File | null;
+  onClearFile?: () => void;
   inputRef: React.RefObject<HTMLTextAreaElement>;
   placeholder?: string;
 }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   return (
-    <form
-      className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
-      onSubmit={(e) => {
-        e.preventDefault();
-        onSubmit();
-      }}
-    >
-      <textarea
-        ref={inputRef}
-        value={input}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={onKeyDown}
-        placeholder={placeholder}
-        rows={1}
-        className="flex-1 resize-none bg-transparent text-[14px] leading-6 text-slate-900 outline-none placeholder:text-slate-400"
-      />
-      <button
-        type="submit"
-        disabled={loading || !input.trim()}
-        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2361d8] text-white transition hover:bg-[#1d55c2] disabled:cursor-not-allowed disabled:bg-slate-200"
+    <div className="space-y-2">
+      {selectedFile && (
+        <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
+          <FileText size={13} className="shrink-0 text-[#2361d8]" />
+          <span className="flex-1 truncate text-[12px] font-medium text-[#2361d8]">
+            {selectedFile.name}
+          </span>
+          <button
+            type="button"
+            onClick={onClearFile}
+            className="shrink-0 rounded-full p-0.5 text-slate-400 hover:text-slate-600"
+            aria-label="Quitar archivo"
+          >
+            <X size={12} />
+          </button>
+        </div>
+      )}
+      <form
+        className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+        onSubmit={(e) => {
+          e.preventDefault();
+          onSubmit();
+        }}
       >
-        {loading ? <Loader2 size={14} className="animate-spin" /> : <SendHorizonal size={14} />}
-      </button>
-    </form>
+        {onFileSelect && (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png,.webp"
+              title="Subir factura o ticket (PDF, JPG, PNG)"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) onFileSelect(f);
+                e.target.value = '';
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={loading}
+              title="Subir factura o ticket"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 disabled:cursor-not-allowed"
+            >
+              <Paperclip size={14} />
+            </button>
+          </>
+        )}
+        <textarea
+          ref={inputRef}
+          value={input}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={onKeyDown}
+          placeholder={selectedFile ? 'Añade un comentario o pulsa enviar...' : placeholder}
+          rows={1}
+          className="flex-1 resize-none bg-transparent text-[14px] leading-6 text-slate-900 outline-none placeholder:text-slate-400"
+        />
+        <button
+          type="submit"
+          disabled={loading || (!input.trim() && !selectedFile)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2361d8] text-white transition hover:bg-[#1d55c2] disabled:cursor-not-allowed disabled:bg-slate-200"
+        >
+          {loading ? <Loader2 size={14} className="animate-spin" /> : <SendHorizonal size={14} />}
+        </button>
+      </form>
+    </div>
   );
 }
 
@@ -181,12 +242,18 @@ export default function IsaakChatSection({
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
   const chips = QUICK_CHIPS[context] ?? QUICK_CHIPS.default;
 
   const sendMessage = async (text: string) => {
+    // If a file is pending and the user submits, handle as file upload
+    if (selectedFile && !text.trim()) {
+      await uploadFile(selectedFile);
+      return;
+    }
     const trimmed = text.trim();
     if (!trimmed || loading) return;
     setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', content: trimmed }]);
@@ -225,10 +292,51 @@ export default function IsaakChatSection({
     }
   };
 
+  const uploadFile = async (file: File) => {
+    if (loading) return;
+    setMessages((prev) => [
+      ...prev,
+      { id: `u-${Date.now()}`, role: 'user', content: `📎 ${file.name}` },
+    ]);
+    setSelectedFile(null);
+    setLoading(true);
+    setError(null);
+    setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (conversationId) formData.append('conversationId', conversationId);
+      const res = await fetch('/api/holded/upload-expense', { method: 'POST', body: formData });
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        reply?: string;
+        error?: string;
+        conversation?: { id: string; title: string };
+      } | null;
+      if (!data?.reply) throw new Error(data?.error ?? 'Sin respuesta');
+      if (data.conversation?.id && !conversationId) {
+        setConversationId(data.conversation.id);
+        router.refresh();
+      } else if (data.conversation?.id) {
+        setConversationId(data.conversation.id);
+      }
+      setMessages((prev) => [
+        ...prev,
+        { id: `a-${Date.now()}`, role: 'assistant', content: data.reply! },
+      ]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al procesar el archivo.');
+    } finally {
+      setLoading(false);
+      setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      void sendMessage(input);
+      if (selectedFile) void uploadFile(selectedFile);
+      else void sendMessage(input);
     }
   };
 
@@ -265,8 +373,13 @@ export default function IsaakChatSection({
             input={input}
             loading={loading}
             onChange={setInput}
-            onSubmit={() => void sendMessage(input)}
+            onSubmit={() =>
+              selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
+            }
             onKeyDown={handleKeyDown}
+            onFileSelect={setSelectedFile}
+            selectedFile={selectedFile}
+            onClearFile={() => setSelectedFile(null)}
             inputRef={inputRef}
             placeholder="Pregúntame sobre tu negocio..."
           />
@@ -354,8 +467,11 @@ export default function IsaakChatSection({
           input={input}
           loading={loading}
           onChange={setInput}
-          onSubmit={() => void sendMessage(input)}
+          onSubmit={() => (selectedFile ? void uploadFile(selectedFile) : void sendMessage(input))}
           onKeyDown={handleKeyDown}
+          onFileSelect={setSelectedFile}
+          selectedFile={selectedFile}
+          onClearFile={() => setSelectedFile(null)}
           inputRef={inputRef}
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
