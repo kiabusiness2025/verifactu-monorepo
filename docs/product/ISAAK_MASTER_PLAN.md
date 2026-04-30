@@ -23,6 +23,35 @@
 
 ---
 
+## Estrategia de captación: conectores como funnel
+
+Los conectores públicos (ChatGPT y Claude) no son productos separados ni variantes de Isaak.
+Son el funnel deliberado de adquisición hacia Isaak como producto principal de pago.
+
+**La regla:**
+
+- Conector → gratuito, sin checkout, sin billing
+- Widget de Isaak en el conector → demostración de valor + invitación natural
+- `isaak.verifactu.business` → producto de pago con historial, memoria y sin límites
+
+**Los tres modos del widget en los conectores:**
+
+| Modo                | Función                                                                  | Límite                         |
+| ------------------- | ------------------------------------------------------------------------ | ------------------------------ |
+| Soporte técnico     | Resuelve errores del conector (OAuth, API key, conexión)                 | Sin límite                     |
+| Servicios puntuales | Migración, formación, onboarding, demo Holded (0–1.190 €)                | Sin límite                     |
+| Vitrina de Isaak    | Responde con datos reales de Holded — el usuario ve valor antes de pagar | 50 consultas/día → CTA a Isaak |
+
+**Copy correcto para el límite de cuota:**
+
+> "Has alcanzado el límite diario del conector. Para análisis continuo con historial y memoria de tu empresa, Isaak completo está disponible en isaak.verifactu.business"
+
+El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector tiene un plan que puede cambiar. No tiene ninguno.
+
+**Documento de referencia:** `docs/product/CONNECTOR_ACQUISITION_FUNNEL_PLAN_2026.md`
+
+---
+
 ## Estado actual (Semana 3 completada)
 
 ### ✅ Implementado

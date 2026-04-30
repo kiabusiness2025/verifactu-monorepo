@@ -31,6 +31,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Precios: `docs/product/pricing/`
 - Onboarding: `docs/product/onboarding/`
 - Issues/sprints: `docs/product/issues/`
+- **Conectores como funnel de captación hacia Isaak:** `docs/product/CONNECTOR_ACQUISITION_FUNNEL_PLAN_2026.md`
 
 ### Ingeniería — `docs/engineering/`
 
