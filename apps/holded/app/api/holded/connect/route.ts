@@ -40,7 +40,9 @@ import { NextRequest, NextResponse } from 'next/server';
 export const runtime = 'nodejs';
 
 function normalizeChannel(value: unknown) {
-  return value === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  if (value === 'chatgpt') return 'chatgpt';
+  if (value === 'claude') return 'claude';
+  return 'dashboard';
 }
 
 function isIntegrationStorageSchemaError(error: unknown) {
@@ -103,7 +105,10 @@ function resolveCanonicalConnectEndpoint() {
   return new URL('/api/integrations/accounting/connect', appBaseUrl).toString();
 }
 
-async function tryCanonicalDisconnect(request: NextRequest, channel: 'chatgpt' | 'dashboard') {
+async function tryCanonicalDisconnect(
+  request: NextRequest,
+  channel: 'chatgpt' | 'claude' | 'dashboard'
+) {
   const cookieHeader = request.headers.get('cookie');
 
   try {
@@ -143,7 +148,7 @@ type CanonicalConnectPayload = {
 
 async function tryCanonicalConnect(
   request: NextRequest,
-  channel: 'chatgpt' | 'dashboard',
+  channel: 'chatgpt' | 'claude' | 'dashboard',
   payload: CanonicalConnectPayload
 ) {
   const cookieHeader = request.headers.get('cookie');
@@ -467,7 +472,7 @@ export async function POST(request: NextRequest) {
     const acceptedTerms = body?.acceptedTerms === true;
     const acceptedPrivacy = body?.acceptedPrivacy === true;
     const mode = body?.mode === 'reconnect' ? 'reconnect' : 'initial';
-    const isChatgptFlow = channel === 'chatgpt';
+    const isAiConnectorFlow = channel === 'chatgpt' || channel === 'claude';
     const nextTarget = normalizeOptionalUrl(body?.nextTarget);
     const existingIdentity = await readExistingIdentity(session.tenantId);
     const identity = resolveConnectionIdentity({
@@ -826,7 +831,7 @@ export async function POST(request: NextRequest) {
       throw persistError;
     }
 
-    if (isChatgptFlow) {
+    if (isAiConnectorFlow) {
       const detectedCompany = null;
       const connection = buildConnectionStatusDto({
         connectionId: `${session.tenantId}:${channel}`,
@@ -906,7 +911,7 @@ export async function POST(request: NextRequest) {
               companyEmail: identity.requestedCompanyEmail || identity.verifiedCompanyEmail || null,
               companyName: identity.companyName || 'tu cuenta de Holded',
               supportedModules,
-              channel: 'chatgpt',
+              channel,
               returnUrl: nextTarget,
               isFirstConnection,
             })
@@ -1084,7 +1089,7 @@ export async function POST(request: NextRequest) {
                 userEmail: userNotificationEmail || notificationEmail!,
                 companyEmail:
                   identity.requestedCompanyEmail || identity.verifiedCompanyEmail || null,
-                companyName: isChatgptFlow
+                companyName: isAiConnectorFlow
                   ? identity.companyName || 'tu cuenta de Holded'
                   : identity.companyName || saved?.tenantName || 'tu empresa',
                 supportedModules: readProbeSupportedModules(probe),

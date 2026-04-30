@@ -60,8 +60,8 @@ function buildHoldedConnectorFlowPath(
   const url = new URL(pathname, HOLDED_PUBLIC_URL);
   url.searchParams.set('source', source);
 
-  if (input.channel === 'chatgpt') {
-    url.searchParams.set('channel', 'chatgpt');
+  if (input.channel === 'chatgpt' || input.channel === 'claude') {
+    url.searchParams.set('channel', input.channel);
   }
 
   const next = cleanFlowValue(input.next);

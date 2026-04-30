@@ -34,6 +34,7 @@ function readSource(value: string | string[] | undefined) {
 function readChannel(value: string | string[] | undefined, source?: string) {
   const resolved = Array.isArray(value) ? value[0] || '' : value || '';
   if (resolved === 'chatgpt' || source === 'holded_chatgpt_entry') return 'chatgpt';
+  if (resolved === 'claude' || source === 'holded_claude_entry') return 'claude';
   return 'dashboard';
 }
 

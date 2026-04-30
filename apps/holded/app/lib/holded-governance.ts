@@ -1,4 +1,3 @@
-import { createHash } from 'crypto';
 import {
   buildDefaultAvailableActions,
   buildDefaultDuplicateConflict,
@@ -9,6 +8,7 @@ import {
   type DuplicateConflictDTO,
   type MembershipRole,
 } from '@verifactu/integrations';
+import { createHash } from 'crypto';
 import { prisma } from './prisma';
 
 const OPEN_ACCESS_REQUEST_STATUSES = ['submitted', 'under_review'] as const;
@@ -29,7 +29,9 @@ type PrismaAny = typeof prisma & {
 const prismaAny = prisma as PrismaAny;
 
 function normalizeChannel(channel?: string | null) {
-  return channel === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  if (channel === 'chatgpt') return 'chatgpt';
+  if (channel === 'claude') return 'claude';
+  return 'dashboard';
 }
 
 function buildApiKeyFingerprint(apiKey: string) {

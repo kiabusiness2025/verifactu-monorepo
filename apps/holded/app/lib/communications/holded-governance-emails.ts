@@ -6,8 +6,8 @@ import {
   buildHighGovernanceRiskInternalEmail,
 } from '@verifactu/integrations';
 
-import { sendHoldedNotificationEmail } from './holded-email-service';
 import { prisma } from '../prisma';
+import { sendHoldedNotificationEmail } from './holded-email-service';
 
 const SUPPORT_EMAIL =
   process.env.SUPPORT_NOTIFICATION_EMAIL?.trim().toLowerCase() || 'soporte@verifactu.business';
@@ -292,7 +292,7 @@ export async function sendPublicClaimCreatedEmails(input: { claimId: string }) {
 export async function sendPublicHighGovernanceRiskInternalAlertEmail(input: {
   tenantName?: string | null;
   tenantLegalName?: string | null;
-  channel?: 'dashboard' | 'chatgpt' | null;
+  channel?: 'dashboard' | 'chatgpt' | 'claude' | null;
   actorName?: string | null;
   actorEmail?: string | null;
   companyEmail?: string | null;

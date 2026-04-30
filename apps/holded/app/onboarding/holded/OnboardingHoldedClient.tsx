@@ -57,7 +57,7 @@ type InitialIdentity = {
 };
 
 type OnboardingHoldedClientProps = {
-  channel: 'dashboard' | 'chatgpt';
+  channel: 'dashboard' | 'chatgpt' | 'claude';
   nextTarget: string;
   initialIdentity: InitialIdentity;
   forceFullReset?: boolean;
@@ -308,7 +308,7 @@ export default function OnboardingHoldedClient({
   }, []);
   const holdedApiGuideUrl =
     'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
-  const preferApiOnlyFlow = channel === 'chatgpt';
+  const preferApiOnlyFlow = channel === 'chatgpt' || channel === 'claude';
   const shouldShowFullProfileSteps = forceFullReset && !preferApiOnlyFlow;
 
   // Wizard step

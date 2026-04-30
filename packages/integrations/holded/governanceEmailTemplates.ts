@@ -75,7 +75,9 @@ function renderOwnershipStatus(status?: string | null) {
 }
 
 function renderChannelLabel(channel?: string | null) {
-  return channel === 'chatgpt' ? 'ChatGPT' : 'Dashboard';
+  if (channel === 'chatgpt') return 'ChatGPT';
+  if (channel === 'claude') return 'Claude';
+  return 'Dashboard';
 }
 
 export function buildHighGovernanceRiskInternalEmail(input: {

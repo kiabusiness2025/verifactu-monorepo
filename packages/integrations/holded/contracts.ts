@@ -1,4 +1,4 @@
-export type HoldedConnectionChannel = 'dashboard' | 'chatgpt';
+export type HoldedConnectionChannel = 'dashboard' | 'chatgpt' | 'claude';
 
 export type ConnectionStatus =
   | 'connected'

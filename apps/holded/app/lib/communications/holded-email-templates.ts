@@ -676,7 +676,7 @@ export function buildHoldedWeeklyAdminSummaryEmail(input: {
         </div>
       </div>
     `.trim(),
-    text: `[Holded Admin] Resumen semanal - ${weekLabel}\n\nNuevas conexiones: ${newConnections} (ChatGPT: ${newConnectionsByChannel.chatgpt}, Panel: ${newConnectionsByChannel.dashboard})\nDesconexiones: ${disconnections}\nConexiones activas totales: ${totalActive}\n\nPanel de administracion: ${adminPanelUrl}`,
+    text: `[Holded Admin] Resumen semanal - ${weekLabel}\n\nNuevas conexiones: ${newConnections} (ChatGPT: ${newConnectionsByChannel.chatgpt}, Claude: ${newConnectionsByChannel.claude ?? 0}, Panel: ${newConnectionsByChannel.dashboard})\nDesconexiones: ${disconnections}\nConexiones activas totales: ${totalActive}\n\nPanel de administracion: ${adminPanelUrl}`,
   };
 }
 

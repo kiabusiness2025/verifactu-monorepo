@@ -36,7 +36,7 @@ export type HoldedProbeResult = {
   error: string | null;
 };
 
-export type HoldedConnectionChannel = 'dashboard' | 'chatgpt';
+export type HoldedConnectionChannel = 'dashboard' | 'chatgpt' | 'claude';
 
 export type HoldedConnectionRecord = {
   provider: 'holded';
@@ -63,7 +63,9 @@ export type HoldedConnectionRecord = {
 };
 
 function normalizeHoldedChannel(channel?: string | null): HoldedConnectionChannel {
-  return channel === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  if (channel === 'chatgpt') return 'chatgpt';
+  if (channel === 'claude') return 'claude';
+  return 'dashboard';
 }
 
 function resolveTrustedTenantIdentity(input: {

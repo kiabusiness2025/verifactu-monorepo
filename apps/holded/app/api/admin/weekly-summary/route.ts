@@ -1,9 +1,20 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/prisma';
 import { sendHoldedWeeklySummaryAdminEmail } from '@/app/lib/communications/holded-email-service';
+import { prisma } from '@/app/lib/prisma';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
+
+function countDistinctTenants(rows: Array<{ tenantId: string }>) {
+  return new Set(rows.map((row) => row.tenantId)).size;
+}
+
+function countDistinctTenantsByChannel(
+  rows: Array<{ tenantId: string; channelKey: string | null }>,
+  channel: 'chatgpt' | 'claude' | 'dashboard'
+) {
+  return new Set(rows.filter((row) => row.channelKey === channel).map((row) => row.tenantId)).size;
+}
 
 function weekLabel(from: Date, to: Date) {
   const fmt = (d: Date) =>
@@ -25,31 +36,36 @@ export async function GET(request: Request) {
   weekStart.setUTCDate(weekStart.getUTCDate() - 7);
   weekStart.setUTCHours(0, 0, 0, 0);
 
-  const [newConnectionRows, disconnectionRows, totalActive] = await Promise.all([
+  const [newConnectionRows, disconnectionRows, totalActiveRows] = await Promise.all([
     prisma.externalConnection.findMany({
       where: {
         provider: 'holded',
         connectionStatus: 'connected',
         connectedAt: { gte: weekStart },
       },
-      select: { channelKey: true },
+      select: { tenantId: true, channelKey: true },
     }),
-    prisma.externalConnection.count({
+    prisma.externalConnection.findMany({
       where: {
         provider: 'holded',
         connectionStatus: 'disconnected',
         disconnectedAt: { gte: weekStart },
       },
+      select: { tenantId: true },
     }),
-    prisma.externalConnection.count({
+    prisma.externalConnection.findMany({
       where: { provider: 'holded', connectionStatus: 'connected' },
+      select: { tenantId: true },
     }),
   ]);
 
-  const newConnections = newConnectionRows.length;
+  const newConnections = countDistinctTenants(newConnectionRows);
+  const disconnections = countDistinctTenants(disconnectionRows);
+  const totalActive = countDistinctTenants(totalActiveRows);
   const newConnectionsByChannel = {
-    chatgpt: newConnectionRows.filter((r) => r.channelKey === 'chatgpt').length,
-    dashboard: newConnectionRows.filter((r) => r.channelKey !== 'chatgpt').length,
+    chatgpt: countDistinctTenantsByChannel(newConnectionRows, 'chatgpt'),
+    claude: countDistinctTenantsByChannel(newConnectionRows, 'claude'),
+    dashboard: countDistinctTenantsByChannel(newConnectionRows, 'dashboard'),
   };
 
   const label = weekLabel(weekStart, now);
@@ -58,7 +74,7 @@ export async function GET(request: Request) {
     weekLabel: label,
     newConnections,
     newConnectionsByChannel,
-    disconnections: disconnectionRows,
+    disconnections,
     totalActive,
   });
 
@@ -67,7 +83,7 @@ export async function GET(request: Request) {
     weekLabel: label,
     newConnections,
     newConnectionsByChannel,
-    disconnections: disconnectionRows,
+    disconnections,
     totalActive,
     recipients: emailResult.recipients,
     messageId: emailResult.messageId,

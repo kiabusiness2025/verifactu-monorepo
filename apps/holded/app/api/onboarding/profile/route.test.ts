@@ -25,6 +25,25 @@ jest.mock('@/app/lib/prisma', () => ({
   },
 }));
 
+jest.mock('jose', () => ({
+  __esModule: true,
+  SignJWT: class {
+    setProtectedHeader() {
+      return this;
+    }
+    setIssuedAt() {
+      return this;
+    }
+    setExpirationTime() {
+      return this;
+    }
+    async sign() {
+      return 'mock-jwt-token';
+    }
+  },
+  jwtVerify: jest.fn(async () => ({ payload: {} })),
+}));
+
 import { getHoldedConnection } from '@/app/lib/holded-integration';
 import {
   completeHoldedOnboardingProfile,
