@@ -188,6 +188,7 @@ export function IsaakWidget({ page = 'generic' }: Props) {
   const [attachments, setAttachments] = useState<ImageAttachment[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCta, setErrorCta] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [exchangeCount, setExchangeCount] = useState(0);
 
@@ -281,6 +282,7 @@ export function IsaakWidget({ page = 'generic' }: Props) {
       ]);
       setInput('');
       setError(null);
+      setErrorCta(null);
       setLoading(true);
       const pendingAttachments = attachments;
       setAttachments([]);
@@ -301,6 +303,9 @@ export function IsaakWidget({ page = 'generic' }: Props) {
 
         if (!res.ok) {
           setError(payload?.error || 'No he podido responder ahora. Inténtalo de nuevo.');
+          if (payload?.cta) {
+            setErrorCta(payload.cta);
+          }
           return;
         }
 
@@ -556,7 +561,19 @@ export function IsaakWidget({ page = 'generic' }: Props) {
             ) : null}
 
             {error ? (
-              <div className="rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>
+              <div className="rounded-2xl border border-[#2361d8]/20 bg-[#2361d8]/5 p-3 text-xs leading-5 text-slate-600">
+                <p className="mb-2 text-red-700">{error}</p>
+                {errorCta && (
+                  <a
+                    href={errorCta}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block font-semibold text-[#2361d8] underline hover:no-underline"
+                  >
+                    Empezar prueba gratuita →
+                  </a>
+                )}
+              </div>
             ) : null}
 
             <div ref={bottomRef} />
