@@ -17,7 +17,8 @@ const CustomerSchema = z.object({
   isActive: z.boolean().optional(),
 });
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(_req: NextRequest, context: { params: { id: string } }) {
+  const { params } = context;
   const session = await getHoldedSession();
   if (!session?.tenantId) {
     return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
@@ -31,7 +32,8 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   return NextResponse.json({ ok: true, data: customer });
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+  const { params } = context;
   const session = await getHoldedSession();
   if (!session?.tenantId) {
     return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
@@ -57,7 +59,8 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   return NextResponse.json({ ok: true, data: customer });
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: { id: string } }) {
+  const { params } = context;
   const session = await getHoldedSession();
   if (!session?.tenantId) {
     return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
