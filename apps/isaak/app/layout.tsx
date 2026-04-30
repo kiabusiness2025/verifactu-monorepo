@@ -10,9 +10,9 @@ const avatarPath = '/Personalidad/isaak-avatar-verifactu.png';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: 'Isaak | Asistente fiscal inteligente',
+  title: 'Isaak | Orquestador empresarial inteligente',
   description:
-    'Isaak te ayuda a entender ventas, gastos, cobros y prioridades fiscales usando contexto real de tu negocio.',
+    'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
   alternates: {
     canonical: '/',
   },
@@ -22,9 +22,9 @@ export const metadata: Metadata = {
     apple: [{ url: avatarPath, type: 'image/png' }],
   },
   openGraph: {
-    title: 'Isaak | Asistente fiscal inteligente',
+    title: 'Isaak | Orquestador empresarial inteligente',
     description:
-      'Isaak te ayuda a entender ventas, gastos, cobros y prioridades fiscales usando contexto real de tu negocio.',
+      'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
     url: siteUrl,
     siteName: 'Isaak',
     images: [{ url: avatarPath, width: 512, height: 512, alt: 'Avatar de Isaak' }],
@@ -33,9 +33,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Isaak | Asistente fiscal inteligente',
+    title: 'Isaak | Orquestador empresarial inteligente',
     description:
-      'Isaak te ayuda a entender ventas, gastos, cobros y prioridades fiscales usando contexto real de tu negocio.',
+      'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
     images: [avatarPath],
   },
 };

@@ -12,6 +12,7 @@ import {
 import type { NextRequest } from 'next/server';
 import { Resend } from 'resend';
 import { getSessionPayloadFromRequest } from './sessionAuth';
+import { renderCorporateBrandedEmail, renderCorporatePlainTextEmail } from './emailTemplates';
 
 export type ContactLeadInput = {
   flow: 'contact';
@@ -68,6 +69,16 @@ function parseEmailList(...values: Array<string | null | undefined>) {
         .filter(Boolean)
     )
   );
+}
+
+function resolveReplyToEmail() {
+  const candidates = parseEmailList(
+    process.env.LANDING_REPLY_TO_EMAIL,
+    process.env.SUPPORT_EMAIL,
+    'soporte@verifactu.business'
+  );
+
+  return candidates[0] || 'soporte@verifactu.business';
 }
 
 function looksLikeGeneratedTenantName(value: string | null | undefined) {
@@ -350,38 +361,148 @@ export async function notifyLandingLead(result: PersistedLeadResult) {
   }
 
   const resend = new Resend(resendApiKey);
+  const operationalReplyTo = resolveReplyToEmail();
+  const isInvestorLead =
+    result.flow === 'contact' && (result.message || '').toLowerCase().includes('inversor');
   const subject =
     result.flow === 'holded_trial'
       ? `Solicitud Holded: ${result.fullName}`
-      : `Nuevo contacto: ${result.fullName}`;
+      : isInvestorLead
+        ? `Nuevo contacto inversores: ${result.fullName}`
+        : `Nuevo contacto: ${result.fullName}`;
 
-  const body =
+  const detailsHtml =
     result.flow === 'holded_trial'
       ? `
-        <h2>Solicitud de prueba gratuita de Holded</h2>
-        <p><strong>Nombre:</strong> ${escapeHtml(result.fullName)}</p>
-        <p><strong>Email:</strong> ${escapeHtml(result.email)}</p>
-        ${result.taxId ? `<p><strong>CIF / NIF:</strong> ${escapeHtml(result.taxId)}</p>` : ''}
-        ${result.roleInCompany ? `<p><strong>Rol:</strong> ${escapeHtml(getHoldedRoleLabel(result.roleInCompany) || result.roleInCompany)}</p>` : ''}
-        ${result.businessSectorLabel ? `<p><strong>Sector:</strong> ${escapeHtml(result.businessSectorLabel)}</p>` : ''}
-        <p><strong>User ID:</strong> ${escapeHtml(result.userId)}</p>
-        <p><strong>Tenant ID:</strong> ${escapeHtml(result.tenantId)}</p>
+        <p style="margin:0 0 8px 0;"><strong>Flujo:</strong> Solicitud de prueba gratuita de Holded</p>
+        <p style="margin:0 0 8px 0;"><strong>Nombre:</strong> ${escapeHtml(result.fullName)}</p>
+        <p style="margin:0 0 8px 0;"><strong>Email:</strong> ${escapeHtml(result.email)}</p>
+        ${result.taxId ? `<p style="margin:0 0 8px 0;"><strong>CIF / NIF:</strong> ${escapeHtml(result.taxId)}</p>` : ''}
+        ${result.roleInCompany ? `<p style="margin:0 0 8px 0;"><strong>Rol:</strong> ${escapeHtml(getHoldedRoleLabel(result.roleInCompany) || result.roleInCompany)}</p>` : ''}
+        ${result.businessSectorLabel ? `<p style="margin:0 0 8px 0;"><strong>Sector:</strong> ${escapeHtml(result.businessSectorLabel)}</p>` : ''}
+        <p style="margin:0 0 8px 0;"><strong>User ID:</strong> ${escapeHtml(result.userId)}</p>
+        <p style="margin:0;"><strong>Tenant ID:</strong> ${escapeHtml(result.tenantId)}</p>
       `
       : `
-        <h2>Nuevo contacto desde landing</h2>
-        <p><strong>Nombre:</strong> ${escapeHtml(result.fullName)}</p>
-        <p><strong>Email:</strong> ${escapeHtml(result.email)}</p>
-        ${result.companyName ? `<p><strong>Empresa:</strong> ${escapeHtml(result.companyName)}</p>` : ''}
-        ${result.phone ? `<p><strong>Telefono:</strong> ${escapeHtml(result.phone)}</p>` : ''}
-        ${result.message ? `<p><strong>Mensaje:</strong></p><p>${escapeHtml(result.message)}</p>` : ''}
-        <p><strong>User ID:</strong> ${escapeHtml(result.userId)}</p>
-        <p><strong>Tenant ID:</strong> ${escapeHtml(result.tenantId)}</p>
+        <p style="margin:0 0 8px 0;"><strong>Flujo:</strong> ${isInvestorLead ? 'Inversores' : 'Contacto landing'}</p>
+        <p style="margin:0 0 8px 0;"><strong>Nombre:</strong> ${escapeHtml(result.fullName)}</p>
+        <p style="margin:0 0 8px 0;"><strong>Email:</strong> ${escapeHtml(result.email)}</p>
+        ${result.companyName ? `<p style="margin:0 0 8px 0;"><strong>Empresa:</strong> ${escapeHtml(result.companyName)}</p>` : ''}
+        ${result.phone ? `<p style="margin:0 0 8px 0;"><strong>Telefono:</strong> ${escapeHtml(result.phone)}</p>` : ''}
+        ${result.message ? `<p style="margin:0 0 8px 0;"><strong>Mensaje:</strong></p><p style="margin:0 0 8px 0;white-space:pre-line;">${escapeHtml(result.message)}</p>` : ''}
+        <p style="margin:0 0 8px 0;"><strong>User ID:</strong> ${escapeHtml(result.userId)}</p>
+        <p style="margin:0;"><strong>Tenant ID:</strong> ${escapeHtml(result.tenantId)}</p>
       `;
 
-  await resend.emails.send({
-    from: process.env.FROM_EMAIL || 'info@verifactu.business',
-    to: recipients,
-    subject,
-    html: body,
+  const adminHtml = renderCorporateBrandedEmail({
+    variant: isInvestorLead ? 'inversores' : 'comercial',
+    title: isInvestorLead ? 'Nuevo contacto de inversores' : 'Nuevo lead desde verifactu.business',
+    intro:
+      result.flow === 'holded_trial'
+        ? 'Se ha registrado una nueva solicitud de prueba de Holded en la landing.'
+        : 'Se ha registrado un nuevo contacto en la landing de verifactu.business.',
+    bodyHtml: detailsHtml,
+    footerNote: 'Notificacion automatica del flujo de formularios de verifactu.business.',
   });
+
+  const adminTextLines =
+    result.flow === 'holded_trial'
+      ? [
+          'Flujo: Solicitud de prueba gratuita de Holded',
+          `Nombre: ${result.fullName}`,
+          `Email: ${result.email}`,
+          ...(result.taxId ? [`CIF / NIF: ${result.taxId}`] : []),
+          ...(result.roleInCompany
+            ? [`Rol: ${getHoldedRoleLabel(result.roleInCompany) || result.roleInCompany}`]
+            : []),
+          ...(result.businessSectorLabel ? [`Sector: ${result.businessSectorLabel}`] : []),
+          `User ID: ${result.userId}`,
+          `Tenant ID: ${result.tenantId}`,
+        ]
+      : [
+          `Flujo: ${isInvestorLead ? 'Inversores' : 'Contacto landing'}`,
+          `Nombre: ${result.fullName}`,
+          `Email: ${result.email}`,
+          ...(result.companyName ? [`Empresa: ${result.companyName}`] : []),
+          ...(result.phone ? [`Telefono: ${result.phone}`] : []),
+          ...(result.message ? [`Mensaje: ${result.message}`] : []),
+          `User ID: ${result.userId}`,
+          `Tenant ID: ${result.tenantId}`,
+        ];
+
+  const adminText = renderCorporatePlainTextEmail({
+    variant: isInvestorLead ? 'inversores' : 'comercial',
+    title: isInvestorLead ? 'Nuevo contacto de inversores' : 'Nuevo lead desde verifactu.business',
+    intro:
+      result.flow === 'holded_trial'
+        ? 'Se ha registrado una nueva solicitud de prueba de Holded en la landing.'
+        : 'Se ha registrado un nuevo contacto en la landing de verifactu.business.',
+    lines: adminTextLines,
+    footerNote: 'Notificacion automatica del flujo de formularios de verifactu.business.',
+  });
+
+  try {
+    await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'info@verifactu.business',
+      to: recipients,
+      subject,
+      reply_to: result.email,
+      html: adminHtml,
+      text: adminText,
+    });
+  } catch (error) {
+    console.error('landing lead notification failed:', error);
+  }
+
+  // Confirmacion al remitente para cerrar el flujo de correo despues del formulario.
+  const acknowledgementHtml = renderCorporateBrandedEmail({
+    variant: isInvestorLead ? 'inversores' : 'comercial',
+    title: isInvestorLead
+      ? 'Hemos recibido tu solicitud para inversores'
+      : 'Hemos recibido tu solicitud',
+    intro:
+      'Gracias por contactar con verifactu.business. El equipo revisara tu solicitud y respondera lo antes posible.',
+    bodyHtml: `
+      <p style="margin:0 0 8px 0;"><strong>Nombre:</strong> ${escapeHtml(result.fullName)}</p>
+      <p style="margin:0 0 8px 0;"><strong>Email:</strong> ${escapeHtml(result.email)}</p>
+      ${result.companyName ? `<p style="margin:0 0 8px 0;"><strong>Empresa:</strong> ${escapeHtml(result.companyName)}</p>` : ''}
+      ${isInvestorLead ? '<p style="margin:0;">Tu solicitud ha sido enviada al equipo fundador.</p>' : '<p style="margin:0;">Tu solicitud ha sido enviada al equipo correspondiente.</p>'}
+    `,
+    footerNote:
+      'Si necesitas ampliar informacion, responde a este correo o escribe a soporte@verifactu.business.',
+  });
+
+  const acknowledgementText = renderCorporatePlainTextEmail({
+    variant: isInvestorLead ? 'inversores' : 'comercial',
+    title: isInvestorLead
+      ? 'Hemos recibido tu solicitud para inversores'
+      : 'Hemos recibido tu solicitud',
+    intro:
+      'Gracias por contactar con verifactu.business. El equipo revisara tu solicitud y respondera lo antes posible.',
+    lines: [
+      `Nombre: ${result.fullName}`,
+      `Email: ${result.email}`,
+      ...(result.companyName ? [`Empresa: ${result.companyName}`] : []),
+      isInvestorLead
+        ? 'Tu solicitud ha sido enviada al equipo fundador.'
+        : 'Tu solicitud ha sido enviada al equipo correspondiente.',
+    ],
+    footerNote:
+      'Si necesitas ampliar informacion, responde a este correo o escribe a soporte@verifactu.business.',
+  });
+
+  try {
+    await resend.emails.send({
+      from: process.env.FROM_EMAIL || 'info@verifactu.business',
+      to: result.email,
+      subject: isInvestorLead
+        ? 'Solicitud recibida · verifactu.business'
+        : 'Hemos recibido tu solicitud · verifactu.business',
+      reply_to: operationalReplyTo,
+      html: acknowledgementHtml,
+      text: acknowledgementText,
+    });
+  } catch (error) {
+    console.error('landing lead acknowledgement failed:', error);
+  }
 }

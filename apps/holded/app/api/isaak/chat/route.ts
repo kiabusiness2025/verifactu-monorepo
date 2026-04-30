@@ -1,12 +1,12 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { NextRequest, NextResponse } from 'next/server';
-import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
-import { prisma } from '@/app/lib/prisma';
-import { buildIsaakSystemPrompt } from '@/app/lib/isaak-chat-prompt';
+import { getHoldedSession } from '@/app/lib/holded-session';
 import { HOLDED_TOOLS, executeHoldedTool } from '@/app/lib/holded-tools';
+import { buildIsaakSystemPrompt } from '@/app/lib/isaak-chat-prompt';
 import { checkIsaakQuota } from '@/app/lib/isaak-quota';
 import { formatResponsePayload, type ToolCallEntry } from '@/app/lib/isaak-response-formatter';
+import { prisma } from '@/app/lib/prisma';
+import Anthropic from '@anthropic-ai/sdk';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

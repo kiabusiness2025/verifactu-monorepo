@@ -1,3 +1,4 @@
+import { getHoldedSession } from '@/app/lib/holded-session';
 import {
   ArrowLeft,
   BookOpen,
@@ -9,7 +10,6 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getHoldedSession } from '@/app/lib/holded-session';
 import { ConnectorSupportForm } from './ConnectorSupportForm';
 
 type ConnectorId = 'chatgpt' | 'claude';

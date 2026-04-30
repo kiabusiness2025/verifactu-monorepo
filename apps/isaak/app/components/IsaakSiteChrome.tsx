@@ -42,34 +42,37 @@ export default function IsaakSiteChrome({ children }: Props) {
             </div>
             <div className="leading-tight">
               <div className="text-base font-semibold text-[#011c67]">Isaak</div>
-              <div className="text-xs font-medium text-slate-600">Asistente fiscal inteligente</div>
+              <div className="text-xs font-medium text-slate-600">Orquestador empresarial</div>
             </div>
           </Link>
 
           <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 md:flex">
             <Link href="/" className="hover:text-slate-900">
-              Que es Isaak
+              Producto
             </Link>
-            <Link href="/demo" className="hover:text-slate-900">
-              Demo abierta
+            <Link href="/modos/excel" className="hover:text-slate-900">
+              Modo Excel
             </Link>
-            <Link href="/chat" className="hover:text-slate-900">
-              Abrir Isaak
+            <Link href="/conectores" className="hover:text-slate-900">
+              Conectores
             </Link>
-            <a href={HOLDed_ONBOARDING_URL} className="hover:text-slate-900">
-              Compatibilidad Holded
-            </a>
+            <Link href="/asesorias" className="hover:text-slate-900">
+              Asesorias
+            </Link>
+            <Link href="/#permisos" className="hover:text-slate-900">
+              Seguridad/permisos
+            </Link>
             <a href={CONTACT_URL} className="hover:text-slate-900">
-              Contacto
+              Solicitar acceso
             </a>
           </nav>
 
           <div className="flex flex-wrap items-center gap-2">
             <Link
-              href="/demo"
+              href="/support"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
-              Ver demo
+              Solicitar acceso
             </Link>
             <Link
               href="/chat"
@@ -99,11 +102,20 @@ export default function IsaakSiteChrome({ children }: Props) {
           </div>
 
           <div className="flex flex-wrap gap-4 text-xs font-semibold sm:text-sm">
-            <Link href="/chat" className="hover:text-slate-900">
-              Abrir Isaak
+            <Link href="/" className="hover:text-slate-900">
+              Producto
             </Link>
-            <Link href="/demo" className="hover:text-slate-900">
-              Demo
+            <Link href="/modos/excel" className="hover:text-slate-900">
+              Modo Excel
+            </Link>
+            <Link href="/conectores" className="hover:text-slate-900">
+              Conectores
+            </Link>
+            <Link href="/asesorias" className="hover:text-slate-900">
+              Asesorias
+            </Link>
+            <Link href="/#permisos" className="hover:text-slate-900">
+              Seguridad
             </Link>
             <Link href="/privacy" className="hover:text-slate-900">
               Privacidad
@@ -114,7 +126,7 @@ export default function IsaakSiteChrome({ children }: Props) {
             <Link href="/support" className="hover:text-slate-900">
               Soporte
             </Link>
-            <a href={HOLDed_ONBOARDING_URL} className="hover:text-slate-900">
+            <a href="https://holded.verifactu.business/conectores" className="hover:text-slate-900">
               Holded
             </a>
           </div>

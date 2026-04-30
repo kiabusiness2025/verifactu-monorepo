@@ -1,12 +1,12 @@
 import type { Metadata } from 'next';
-import IsaakLandingClient from './components/IsaakLandingClient';
+import IsaakPublicPhase1Landing from './components/IsaakPublicPhase1Landing';
 
 export const metadata: Metadata = {
-  title: 'Isaak — Tu asistente fiscal inteligente',
+  title: 'Isaak | Orquestador empresarial inteligente',
   description:
-    'Isaak te ayuda a entender qué pasa en tu negocio, priorizar lo importante y reducir errores fiscales usando contexto real. Disponible en Claude, ChatGPT y su propio workspace.',
+    'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
 };
 
 export default function IsaakHomePage() {
-  return <IsaakLandingClient />;
+  return <IsaakPublicPhase1Landing />;
 }

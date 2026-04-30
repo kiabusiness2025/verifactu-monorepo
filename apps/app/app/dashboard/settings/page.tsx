@@ -1,20 +1,20 @@
 'use client';
 
+import type { SettingsBillingData } from '@/app/lib/settings';
 import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
 import { AccessibleInput } from '@/components/accessibility/AccessibleFormInputs';
 import { useToast } from '@/components/notifications/ToastNotifications';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
-import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
-import { formatCurrency, formatDateTime } from '@/src/lib/formatters';
 import { auth } from '@/lib/firebase';
 import { buildFullName, normalizePersonNamePart, splitFullName } from '@/lib/personName';
+import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
+import { formatCurrency, formatDateTime } from '@/src/lib/formatters';
 import { sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { Camera } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState } from 'react';
-import type { SettingsBillingData } from '@/app/lib/settings';
 
 const ALLOWED_TABS = new Set([
   'profile',

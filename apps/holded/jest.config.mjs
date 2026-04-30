@@ -23,7 +23,7 @@ const customJestConfig = {
       },
     ],
   },
-  transformIgnorePatterns: ['/node_modules/(?!(jose|@verifactu|@prisma)/)'],
+  transformIgnorePatterns: ['[\\\\/]node_modules[\\\\/](?!(jose|@verifactu|@prisma)[\\\\/])'],
 };
 
 export default createJestConfig(customJestConfig);

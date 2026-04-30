@@ -8,7 +8,9 @@ function isWellKnownFile(file) {
 
 module.exports = {
   '*.{ts,tsx,js,jsx}': (files) => {
-    const lintableFiles = files.filter((file) => !isWellKnownFile(file));
+    const lintableFiles = files.filter(
+      (file) => !isWellKnownFile(file) && !file.endsWith('next-env.d.ts')
+    );
 
     if (lintableFiles.length === 0) {
       return [];

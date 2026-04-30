@@ -12,11 +12,13 @@ type Props = {
 };
 
 const navLinks = [
-  { href: '/#solucion', label: 'Solución' },
-  { href: '/#capacidades', label: 'Capacidades' },
-  { href: '/conectores/claude', label: 'Claude' },
+  { href: '/conectores', label: 'Conectores' },
   { href: '/conectores/chatgpt', label: 'ChatGPT' },
-  { href: '/contacto', label: 'Contacto' },
+  { href: '/conectores/claude', label: 'Claude' },
+  { href: '/conectores/docs', label: 'Docs' },
+  { href: '/conectores/privacy', label: 'Privacidad' },
+  { href: '/conectores/dpa', label: 'DPA' },
+  { href: '/conectores/soporte', label: 'Soporte' },
 ];
 
 export default function HoldedSiteChrome({ children }: Props) {
@@ -39,7 +41,7 @@ export default function HoldedSiteChrome({ children }: Props) {
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/88 backdrop-blur-xl">
         <div className="mx-auto max-w-6xl px-4">
           <div className="flex items-center justify-between gap-4 py-4">
-            <Link href="/" className="group flex items-center gap-3">
+            <Link href="/conectores" className="group flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200 transition group-hover:shadow-md">
                 <Image
                   src="/brand/holded/holded-diamond-logo.png"
@@ -52,13 +54,11 @@ export default function HoldedSiteChrome({ children }: Props) {
               </div>
               <div className="leading-tight">
                 <div className="text-base font-semibold text-slate-900">Holded</div>
-                <div className="text-xs font-medium text-slate-500">
-                  Conector conversacional para negocio real
-                </div>
+                <div className="text-xs font-medium text-slate-500">Hub vertical de conectores</div>
               </div>
             </Link>
 
-            <nav className="hidden items-center gap-5 text-sm font-semibold text-slate-600 lg:flex">
+            <nav className="hidden items-center gap-4 text-xs font-semibold text-slate-600 lg:flex xl:text-sm">
               {navLinks.map((link) => (
                 <Link key={link.href} href={link.href} className="transition hover:text-slate-900">
                   {link.label}
@@ -158,15 +158,16 @@ export default function HoldedSiteChrome({ children }: Props) {
                 </a>
               </div>
               <div className="max-w-xl text-xs leading-5 text-slate-400">
-                Solution Partner autorizado de Holded. No somos Holded. Esta experiencia usa la API
-                de Holded para ofrecer una capa de lectura y operativa más clara.
+                Integracion independiente sobre API de Holded. No somos Holded. Este dominio agrupa
+                documentacion, privacidad, DPA y soporte de conectores publicados por Verifactu
+                Business.
               </div>
               <div className="pt-1">
                 <Link
-                  href="/"
+                  href="/conectores"
                   className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
                 >
-                  ↗ holded.verifactu.business
+                  ↗ hub de conectores Holded
                 </Link>
               </div>
             </div>
@@ -177,6 +178,9 @@ export default function HoldedSiteChrome({ children }: Props) {
                   Conectores
                 </div>
                 <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
+                  <Link href="/conectores" className="hover:text-slate-900">
+                    Hub de conectores
+                  </Link>
                   <Link href="/conectores/claude" className="hover:text-slate-900">
                     Conector Claude
                   </Link>
@@ -197,14 +201,14 @@ export default function HoldedSiteChrome({ children }: Props) {
                   Soporte
                 </div>
                 <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
-                  <Link href="/demo" className="hover:text-slate-900">
-                    Demo gratuita
+                  <Link href="/conectores/docs" className="hover:text-slate-900">
+                    Documentacion
+                  </Link>
+                  <Link href="/conectores/soporte" className="hover:text-slate-900">
+                    Soporte
                   </Link>
                   <Link href="/contacto" className="hover:text-slate-900">
                     Contacto
-                  </Link>
-                  <Link href="/capacidades" className="hover:text-slate-900">
-                    Capacidades
                   </Link>
                 </div>
               </div>
@@ -214,17 +218,14 @@ export default function HoldedSiteChrome({ children }: Props) {
                   Legal
                 </div>
                 <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
-                  <Link href="/dpa" className="hover:text-slate-900">
+                  <Link href="/conectores/privacy" className="hover:text-slate-900">
+                    Privacidad
+                  </Link>
+                  <Link href="/conectores/dpa" className="hover:text-slate-900">
                     DPA
                   </Link>
                   <Link href="/legal" className="hover:text-slate-900">
                     Aviso legal
-                  </Link>
-                  <Link href="/privacy" className="hover:text-slate-900">
-                    Privacidad
-                  </Link>
-                  <Link href="/terms" className="hover:text-slate-900">
-                    Términos
                   </Link>
                 </div>
               </div>

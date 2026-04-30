@@ -18,6 +18,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Contrato canonico del conector directo Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md` (login del conector + API key + retorno OAuth a ChatGPT)
 - Plan de implementacion Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md` (base ya entregada + nueva ola de identidad ligera)
 - Reordenacion de producto y ownership: `docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md`
+- Arquitectura publica canonica de Fase 1: `docs/product/PUBLIC_ECOSYSTEM_PHASE1_2026.md`
 - Arquitectura de sync Isaak: `docs/product/ISAAK_PLATFORM_SYNC_PLAN.md`
 - Conexiones compartidas Holded: `docs/product/ISAAK_HOLDED_SHARED_CONNECTIONS.md`
 - Alcance de APIs Holded para facturacion y contabilidad: `docs/product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md`

@@ -14,9 +14,9 @@ import {
   Sparkles,
   Users,
 } from 'lucide-react';
-import type { ComponentType } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import type { ComponentType } from 'react';
 
 type ConnectorId = 'claude' | 'chatgpt';
 
@@ -37,7 +37,6 @@ type ConnectorConfig = {
   aiName: string;
   provider: string;
   label: string;
-  status: string;
   logoSrc: string;
   docsHref: string;
   demoHref: string;
@@ -84,7 +83,6 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     aiName: 'Claude',
     provider: 'Anthropic',
     label: 'Conector Holded para Claude',
-    status: 'Operativo - MCP - Anthropic',
     logoSrc: '/brand/claude-logo.svg',
     docsHref: '/conectores/claude/docs',
     demoHref: '/demo-recording',
@@ -96,7 +94,6 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     aiName: 'ChatGPT',
     provider: 'OpenAI',
     label: 'Conector Holded para ChatGPT',
-    status: 'Operativo - Apps SDK / MCP - OpenAI',
     logoSrc: '/brand/chatgpt-logo.png',
     docsHref: '/conectores/chatgpt/docs',
     demoHref: '/conectores/chatgpt/openai-review-demo',
@@ -155,6 +152,14 @@ const TRUST_POINTS = [
   'No envia, emite, cobra, finaliza, elimina ni sobrescribe facturas o registros existentes.',
 ];
 
+const CONNECTOR_STATUS: Record<ConnectorId, string> = {
+  claude:
+    process.env.NEXT_PUBLIC_HOLDED_CLAUDE_CONNECTOR_STATUS || 'Disponible en acceso controlado',
+  chatgpt:
+    process.env.NEXT_PUBLIC_HOLDED_CHATGPT_CONNECTOR_STATUS ||
+    'Disponibilidad publica sujeta a revision',
+};
+
 function ConnectorLogo({ cfg }: { cfg: ConnectorConfig }) {
   return (
     <div className="mb-6 flex items-center justify-center gap-3">
@@ -184,6 +189,7 @@ function ConnectorLogo({ cfg }: { cfg: ConnectorConfig }) {
 export function ConnectorLandingClient({ connector }: { connector: ConnectorId }) {
   const theme = THEMES[connector];
   const cfg = CONFIGS[connector];
+  const connectorStatus = CONNECTOR_STATUS[connector];
 
   return (
     <main className="page-enter min-h-screen bg-white text-slate-900">
@@ -248,7 +254,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
             ))}
           </div>
 
-          <p className="mt-5 text-xs text-slate-400">{cfg.status}</p>
+          <p className="mt-5 text-xs text-slate-400">{connectorStatus}</p>
         </div>
       </section>
 
@@ -492,10 +498,11 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           <div className="mt-8 flex flex-wrap justify-center gap-5 text-xs">
             {[
               ['Docs', cfg.docsHref],
-              ['Privacy', '/privacy'],
-              ['DPA', cfg.dpaHref],
-              ['Terms', '/terms'],
-              ['Support', cfg.supportHref],
+              ['Privacidad', '/conectores/privacy'],
+              ['DPA', '/conectores/dpa'],
+              ['Soporte', '/conectores/soporte'],
+              ['Aviso legal', '/legal'],
+              ['Conector especifico', cfg.supportHref],
             ].map(([label, href]) => (
               <Link
                 key={href}

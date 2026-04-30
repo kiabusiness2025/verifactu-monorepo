@@ -19,9 +19,9 @@ const display = Space_Grotesk({
   display: 'swap',
 });
 
-const title = 'Verifactu Business';
+const title = 'Verifactu Business | Hub VeriFactu, Isaak e integraciones empresariales';
 const description =
-  'Plataforma para llevar ventas, gastos y beneficio con tranquilidad, cumpliendo VeriFactu.';
+  'Cumplimiento VeriFactu, modo Excel, conectores e Isaak como orquestador empresarial para autonomos, pymes y asesorias.';
 
 export const metadata: Metadata = {
   title,
@@ -55,7 +55,7 @@ export const metadata: Metadata = {
         url: '/brand/social/og-1200x630.png',
         width: 1200,
         height: 630,
-        alt: 'Verifactu Business - Lleva tus ventas, gastos y beneficio con tranquilidad',
+        alt: 'Verifactu Business - Hub VeriFactu, Isaak e integraciones empresariales',
       },
     ],
   },

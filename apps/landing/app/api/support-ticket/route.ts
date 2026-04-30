@@ -3,6 +3,10 @@ import { Resend } from 'resend';
 import { prisma, SupportChannelType, SupportMessageDirection } from '@verifactu/db';
 import { isValidEmail, normalizeOptionalEmail } from '@verifactu/utils';
 import { getSessionPayloadFromRequest } from '../../lib/sessionAuth';
+import {
+  renderCorporateBrandedEmail,
+  renderCorporatePlainTextEmail,
+} from '../../lib/emailTemplates';
 
 const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024;
@@ -32,6 +36,14 @@ function escapeHtml(text: string): string {
     "'": '&#039;',
   };
   return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
+function resolveReplyToEmail(): string {
+  return (
+    process.env.LANDING_REPLY_TO_EMAIL?.trim() ||
+    process.env.SUPPORT_EMAIL?.trim() ||
+    'soporte@verifactu.business'
+  );
 }
 
 function parseEmailList(...values: Array<string | null | undefined>) {
@@ -188,20 +200,46 @@ export async function POST(request: NextRequest) {
       return createdTicket;
     });
 
-    const emailContent = `
-      <h2>Nuevo ticket de soporte</h2>
-      <p><strong>Ticket:</strong> ${escapeHtml(ticket.id)}</p>
-      <p><strong>Nombre:</strong> ${escapeHtml(name)}</p>
-      <p><strong>Email:</strong> ${escapeHtml(email)}</p>
-      ${company ? `<p><strong>Empresa:</strong> ${escapeHtml(company)}</p>` : ''}
-      ${product ? `<p><strong>Producto:</strong> ${escapeHtml(product)}</p>` : ''}
-      ${category ? `<p><strong>Categoria:</strong> ${escapeHtml(category)}</p>` : ''}
-      ${priority ? `<p><strong>Prioridad:</strong> ${escapeHtml(priority)}</p>` : ''}
-      <p><strong>Asunto:</strong> ${escapeHtml(subject)}</p>
-      ${url ? `<p><strong>URL:</strong> ${escapeHtml(url)}</p>` : ''}
-      <p><strong>Descripcion:</strong></p>
-      <p>${escapeHtml(description)}</p>
+    const supportDetailsHtml = `
+      <p style="margin:0 0 8px 0;"><strong>Ticket:</strong> ${escapeHtml(ticket.id)}</p>
+      <p style="margin:0 0 8px 0;"><strong>Nombre:</strong> ${escapeHtml(name)}</p>
+      <p style="margin:0 0 8px 0;"><strong>Email:</strong> ${escapeHtml(email)}</p>
+      ${company ? `<p style="margin:0 0 8px 0;"><strong>Empresa:</strong> ${escapeHtml(company)}</p>` : ''}
+      ${product ? `<p style="margin:0 0 8px 0;"><strong>Producto:</strong> ${escapeHtml(product)}</p>` : ''}
+      ${category ? `<p style="margin:0 0 8px 0;"><strong>Categoria:</strong> ${escapeHtml(category)}</p>` : ''}
+      ${priority ? `<p style="margin:0 0 8px 0;"><strong>Prioridad:</strong> ${escapeHtml(priority)}</p>` : ''}
+      <p style="margin:0 0 8px 0;"><strong>Asunto:</strong> ${escapeHtml(subject)}</p>
+      ${url ? `<p style="margin:0 0 8px 0;"><strong>URL:</strong> ${escapeHtml(url)}</p>` : ''}
+      <p style="margin:0 0 8px 0;"><strong>Descripcion:</strong></p>
+      <p style="margin:0;white-space:pre-line;">${escapeHtml(description)}</p>
     `;
+
+    const emailContent = renderCorporateBrandedEmail({
+      variant: 'soporte',
+      title: `Nuevo ticket de soporte: ${subject}`,
+      intro: 'Se ha generado un nuevo ticket de soporte desde la landing de verifactu.business.',
+      bodyHtml: supportDetailsHtml,
+      footerNote: 'Notificacion automatica del flujo de soporte.',
+    });
+
+    const emailTextContent = renderCorporatePlainTextEmail({
+      variant: 'soporte',
+      title: `Nuevo ticket de soporte: ${subject}`,
+      intro: 'Se ha generado un nuevo ticket de soporte desde la landing de verifactu.business.',
+      lines: [
+        `Ticket: ${ticket.id}`,
+        `Nombre: ${name}`,
+        `Email: ${email}`,
+        ...(company ? [`Empresa: ${company}`] : []),
+        ...(product ? [`Producto: ${product}`] : []),
+        ...(category ? [`Categoria: ${category}`] : []),
+        ...(priority ? [`Prioridad: ${priority}`] : []),
+        `Asunto: ${subject}`,
+        ...(url ? [`URL: ${url}`] : []),
+        `Descripcion: ${description}`,
+      ],
+      footerNote: 'Notificacion automatica del flujo de soporte.',
+    });
 
     const resendApiKey = process.env.RESEND_API_KEY?.trim();
     const supportRecipients = parseEmailList(
@@ -222,6 +260,8 @@ export async function POST(request: NextRequest) {
           bcc: adminRecipients.length > 0 ? adminRecipients : undefined,
           subject: `Ticket soporte: ${escapeHtml(subject)}`,
           html: emailContent,
+          text: emailTextContent,
+          reply_to: resolveReplyToEmail(),
           attachments,
         });
       } catch (notificationError) {

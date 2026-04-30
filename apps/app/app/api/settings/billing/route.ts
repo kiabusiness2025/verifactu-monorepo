@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { loadBillingData } from '@/app/lib/settings';
+import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

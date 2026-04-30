@@ -6,6 +6,13 @@ Fecha: 2026-04-25
 
 `holded.verifactu.business` sera el dominio publico de referencia para conectores que trabajan con Holded.
 
+Actualizacion 2026-04-30:
+
+- la raiz `/` sigue congelada
+- se implementa un hub seguro intermedio en `/conectores`
+- se anaden paginas agregadoras `/conectores/docs`, `/conectores/privacy`, `/conectores/dpa` y `/conectores/soporte`
+- ChatGPT y Claude mantienen sus rutas especificas bajo `/conectores/*`
+
 La raiz `holded.verifactu.business/` se convertira en hub de conectores con Holded en la Fase 3, despues de la aprobacion de OpenAI para el conector `ChatGPT + Holded`.
 
 Hasta entonces, la raiz actual se mantiene congelada para no alterar URLs, copy, documentos o claims que puedan formar parte de la revision de OpenAI.
@@ -15,7 +22,12 @@ Hasta entonces, la raiz actual se mantiene congelada para no alterar URLs, copy,
 ```txt
 holded.verifactu.business/
 ├── /                         -> Estado actual: landing ChatGPT + Holded congelada
-│                              -> Fase 3: hub de conectores con Holded
+│                              -> Fase 3: hub de conectores con Holded en raiz si deja de estar bloqueada
+├── /conectores               -> Hub seguro actual de conectores Holded
+├── /conectores/docs          -> Indice documental por conector
+├── /conectores/privacy       -> Indice de privacidad por conector
+├── /conectores/dpa           -> Indice DPA por conector
+├── /conectores/soporte       -> Indice de soporte por conector
 ├── /conectores/chatgpt        -> Landing canonica ChatGPT + Holded
 ├── /conectores/chatgpt/docs   -> Documentacion del conector ChatGPT + Holded
 ├── /conectores/chatgpt/privacy
@@ -87,16 +99,17 @@ Tareas:
 - [ ] Mantener `/claude` durante el periodo de convivencia.
 - [ ] Redirigir `/claude` a `/conectores/claude` solo si el ERP y el trafico real lo permiten.
 
-### Fase 3 - Hub Holded despues de aprobacion OpenAI
+### Fase 3 - Hub Holded en raiz despues de aprobacion OpenAI
 
 Decision elegida: opcion 2.
 
-Objetivo: convertir `holded.verifactu.business/` en el hub de conectores con Holded.
+Objetivo: decidir si el hub seguro de `/conectores` se promociona tambien en la raiz `holded.verifactu.business/`.
 
 Tareas:
 
 - [ ] Esperar confirmacion de aprobacion de OpenAI para `ChatGPT + Holded`.
-- [ ] Definir el contenido del hub raiz: tarjetas de ChatGPT, Claude y futuros conectores.
+- [x] Definir e implementar el contenido del hub seguro de `/conectores`: ChatGPT, Claude y accesos legales/documentales.
+- [ ] Decidir si el mismo esquema se replica en la raiz cuando deje de estar congelada.
 - [ ] Mover la narrativa canonica de ChatGPT a `/conectores/chatgpt`.
 - [ ] Mantener compatibilidad con URLs incluidas en la aprobacion de OpenAI.
 - [ ] Actualizar enlaces internos desde la raiz hacia `/conectores/chatgpt` y `/conectores/claude`.
@@ -145,9 +158,11 @@ Tareas:
 Implementado en esta primera ola:
 
 - Documento canonico del plan.
+- Hub seguro en `/conectores` con navegacion publica agregada.
 - Rutas duplicadas nuevas para ChatGPT bajo `/conectores/chatgpt`.
 - Landing canonica inicial para Claude bajo `/conectores/claude`.
 - Rutas legales/documentales especificas para Claude bajo `/conectores/claude`.
+- Indices publicos para docs, privacidad, DPA y soporte.
 - Enlaces desde los indices de documentacion.
 
 Pendiente:

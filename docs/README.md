@@ -29,6 +29,7 @@ Empieza por estos documentos de entrada y luego baja al detalle tecnico:
 ### Isaak
 
 - [../apps/isaak/README.md](../apps/isaak/README.md) - Entrada principal a la app de producto
+- [product/PUBLIC_ECOSYSTEM_PHASE1_2026.md](product/PUBLIC_ECOSYSTEM_PHASE1_2026.md) - Contrato publico actual: `verifactu.business` como hub, `isaak` como orquestador y `holded` como hub vertical de conectores
 - [engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md](engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md) - Operacion real de endpoints, auth y runbook
 - [engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md](engineering/ai/ISAAK_MEMORY_ARCHITECTURE_2026.md) - Memoria privada y continuidad
 - [engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md](engineering/ai/ISAAK_PERSONA_PLAYBOOK_2026.md) - Voz y comportamiento de Isaak
@@ -65,6 +66,7 @@ Todos comparten backend y piezas de plataforma, pero la documentacion debe trata
 - [../apps/client/README.md](../apps/client/README.md) - Panel cliente y persistencia de Isaak
 - [product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md](product/OPERATIVE_CHECKLIST_ACCOUNTING_API_2026.md) - Checklist operativo unificado (planes, app, backend, datos, QA)
 - [product/ISAAK_PRODUCT_REORDER_PLAN_2026.md](product/ISAAK_PRODUCT_REORDER_PLAN_2026.md) - Reordenacion del monorepo: Isaak como producto principal, Holded como entrada y app como core
+- [product/PUBLIC_ECOSYSTEM_PHASE1_2026.md](product/PUBLIC_ECOSYSTEM_PHASE1_2026.md) - Mapa publico vigente de dominios, rutas base y reglas de no ruptura
 - [product/ISAAK_PLATFORM_SYNC_PLAN.md](product/ISAAK_PLATFORM_SYNC_PLAN.md) - Arquitectura objetivo de Isaak, ownership de datos y fases de sync
 - [product/ISAAK_HOLDED_SHARED_CONNECTIONS.md](product/ISAAK_HOLDED_SHARED_CONNECTIONS.md) - Arquitectura de conexion compartida Holded para app interna, app publica y dashboard
 - [product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md](product/ISAAK_HOLDED_API_IMPLEMENTATION_SCOPE.md) - Alcance oficial de APIs Holded a implementar para facturacion, contabilidad y acciones operativas desde Isaak

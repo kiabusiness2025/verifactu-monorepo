@@ -1,4 +1,6 @@
 'use client';
+
+import LandingPublicHubPhase1 from './components/LandingPublicHubPhase1';
 import { motion } from 'framer-motion';
 import { Briefcase, Building2, Check, ShieldCheck, Sparkles, UserRound } from 'lucide-react';
 import Image from 'next/image';
@@ -27,6 +29,8 @@ import {
 } from './lib/home/ui';
 
 export default function Page() {
+  return <LandingPublicHubPhase1 />;
+
   const navLinks = [
     { label: 'Inicio', href: '/' },
     { label: 'Qué es Isaak', href: '/que-es-isaak' },

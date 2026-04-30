@@ -779,7 +779,7 @@ export function Footer() {
       </div>
 
       <Container className="py-12 relative z-10">
-        <div className="grid gap-10 md:grid-cols-4">
+        <div className="grid gap-10 md:grid-cols-5">
           <div>
             <BrandLogo variant="footer" />
             <p className="mt-3 text-sm text-slate-300">
@@ -819,6 +819,15 @@ export function Footer() {
             </div>
           </div>
 
+          <FooterCol
+            title="Empresa"
+            links={[
+              { label: 'Sobre nosotros', href: '/inversores#ecosistema' },
+              { label: 'Inversores', href: '/inversores' },
+              { label: 'Partners', href: '/inversores#buscamos' },
+              { label: 'Contacto', href: '/inversores#contacto' },
+            ]}
+          />
           <FooterCol
             title="Producto"
             links={[
