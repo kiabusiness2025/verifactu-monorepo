@@ -90,7 +90,7 @@ export default function IsaakSidebar({
   };
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col overflow-hidden border-r border-white/5">
+    <aside className="flex w-64 shrink-0 flex-col overflow-hidden border-r border-white/5 bg-gradient-to-b from-[#081936] via-[#0b1a40] to-[#0b2060]">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-5">
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl">
@@ -105,7 +105,7 @@ export default function IsaakSidebar({
         </div>
         <div>
           <div className="text-[15px] font-bold tracking-tight text-white">Isaak</div>
-          <div className="text-[11px] text-slate-500">Tu copiloto de negocio</div>
+          <div className="text-[11px] text-slate-400">Asistente fiscal inteligente</div>
         </div>
       </div>
 
@@ -171,13 +171,13 @@ export default function IsaakSidebar({
 
       <div className="mt-auto">
         {/* Powered by footer */}
-        <div className="px-4 pb-2 text-[11px] text-slate-600">
+        <div className="px-4 pb-2 text-[11px] text-slate-500">
           Powered by{' '}
           <a
             href="https://verifactu.business"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-slate-400 underline underline-offset-2"
+            className="font-semibold text-[#2361d8]/80 hover:text-[#2361d8] underline-offset-2"
           >
             verifactu.business
           </a>

@@ -7,13 +7,13 @@ export const metadata: Metadata = { title: 'Equipo — Isaak' };
 export default function EquipoPage() {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-100 bg-white px-5 py-4">
+      <div className="border-b border-slate-100 bg-[#fafbff] px-5 py-4">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-50">
-            <Users2 size={16} className="text-violet-600" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#2361d8]/10">
+            <Users2 size={16} className="text-[#2361d8]" />
           </div>
           <div>
-            <h1 className="text-[16px] font-semibold text-slate-900">Equipo</h1>
+            <h1 className="text-[16px] font-semibold text-[#011c67]">Equipo</h1>
             <p className="text-[12px] text-slate-500">Empleados, proyectos y horas registradas</p>
           </div>
         </div>

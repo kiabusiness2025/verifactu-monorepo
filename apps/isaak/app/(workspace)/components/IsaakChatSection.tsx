@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useRef, useState } from 'react';
 import { ExternalLink, LifeBuoy, Loader2, Plus, SendHorizonal, Sparkles } from 'lucide-react';
 
@@ -272,15 +273,21 @@ export default function IsaakChatSection({
       <div className="flex h-full flex-col items-center justify-center px-5 py-8">
         <div className="w-full max-w-xl">
           <div className="mb-5 flex flex-col items-center text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2361d8]/10">
-              <Sparkles size={22} className="text-[#2361d8]" />
+            <div className="relative mb-3 h-14 w-14 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+              <Image
+                src="/Personalidad/isaak-avatar-verifactu.png"
+                alt="Isaak"
+                fill
+                sizes="56px"
+                className="object-cover"
+                priority
+              />
             </div>
-            <p className="text-[18px] font-semibold text-[#011c67]">
+            <p className="text-[18px] font-bold tracking-tight text-[#011c67]">
               {welcomeTitle ?? 'Hola, soy Isaak'}
             </p>
             <p className="mt-1 text-[13px] text-slate-500">
-              {welcomeSubtitle ??
-                'Tu asistente financiero. Pregúntame cualquier cosa sobre tu negocio.'}
+              {welcomeSubtitle ?? 'Tu asistente fiscal inteligente. Pregúntame lo que necesites.'}
             </p>
           </div>
 
@@ -337,10 +344,16 @@ export default function IsaakChatSection({
               </div>
             ) : (
               <div key={msg.id} className="flex items-start gap-3">
-                <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#2361d8]/10">
-                  <Sparkles size={13} className="text-[#2361d8]" />
+                <div className="relative mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                  <Image
+                    src="/Personalidad/isaak-avatar-verifactu.png"
+                    alt="Isaak"
+                    fill
+                    sizes="28px"
+                    className="object-cover"
+                  />
                 </div>
-                <div className="max-w-[85%] rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                <div className="max-w-[85%] rounded-2xl bg-[#f5f9ff] px-4 py-3">
                   <SimpleMarkdown text={msg.content} />
                 </div>
               </div>
@@ -348,11 +361,17 @@ export default function IsaakChatSection({
           )}
           {loading && (
             <div className="flex items-start gap-3">
-              <div className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#2361d8]/10">
-                <Loader2 size={13} className="animate-spin text-[#2361d8]" />
+              <div className="relative mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200">
+                <Image
+                  src="/Personalidad/isaak-avatar-verifactu.png"
+                  alt="Isaak"
+                  fill
+                  sizes="28px"
+                  className="object-cover"
+                />
               </div>
-              <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
-                <span className="text-[13px] text-slate-400">Isaak está pensando…</span>
+              <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3">
+                <Loader2 size={14} className="animate-spin text-[#2361d8]" />
               </div>
             </div>
           )}

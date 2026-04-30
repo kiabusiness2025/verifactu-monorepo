@@ -28,7 +28,7 @@ export default function AuthPage() {
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight text-white">Isaak</h1>
-            <p className="mt-1 text-sm text-slate-400">Tu copiloto de negocio</p>
+            <p className="mt-1 text-sm text-slate-400">Asistente fiscal inteligente</p>
           </div>
         </div>
 

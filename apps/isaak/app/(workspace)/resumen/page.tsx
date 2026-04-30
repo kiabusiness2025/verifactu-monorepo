@@ -19,8 +19,8 @@ const KPI_CARDS = [
 export default function ResumenPage() {
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-100 bg-white px-5 py-4">
-        <h1 className="text-[16px] font-semibold text-slate-900">Resumen de tu empresa</h1>
+      <div className="border-b border-slate-100 bg-[#fafbff] px-5 py-4">
+        <h1 className="text-[16px] font-semibold text-[#011c67]">Resumen de tu empresa</h1>
         <p className="text-[12px] text-slate-500">
           Estado general · datos en tiempo real desde Holded
         </p>

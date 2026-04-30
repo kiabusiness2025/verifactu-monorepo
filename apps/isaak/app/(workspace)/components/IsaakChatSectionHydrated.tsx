@@ -117,7 +117,7 @@ export default function IsaakChatSectionHydrated({
                     className="h-full w-full object-cover"
                   />
                 </div>
-                <div className="max-w-[85%] rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                <div className="max-w-[85%] rounded-2xl bg-[#f5f9ff] px-4 py-3">
                   <SimpleMarkdown text={msg.content} />
                 </div>
               </div>
@@ -132,7 +132,7 @@ export default function IsaakChatSectionHydrated({
                   className="h-full w-full object-cover"
                 />
               </div>
-              <div className="rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+              <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3">
                 <Loader2 size={16} className="animate-spin text-[#2361d8]" />
               </div>
             </div>
