@@ -34,17 +34,17 @@ function SectionPill({ icon: Icon, children }: { icon: LucideIcon; children: Rea
 }
 
 const connectorFeatures = [
-  'Contabilidad, balance y PyG',
-  'Facturas, gastos e IVA',
-  'Clientes y proyectos',
-  'Borradores de factura con tu confirmación',
+  'Facturas y contactos',
+  'Cuentas contables y diario',
+  'Alcance cerrado por tenant',
+  'Borradores de factura con confirmacion',
 ];
 
 const whyItems = [
   {
     icon: ShieldCheck,
-    title: 'Solo lectura',
-    desc: 'No modifica nada en Holded. El único cambio posible es crear borradores de factura, siempre con tu confirmación explícita antes.',
+    title: 'Solo lectura por defecto',
+    desc: 'Consulta datos de Holded sin modificar tu cuenta. Crear un borrador de factura requiere confirmacion explicita antes.',
   },
   {
     icon: Zap,
@@ -121,7 +121,7 @@ export default function HoldedHomePage() {
 
               <p className="mt-5 flex items-center gap-2 text-sm text-slate-500">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
-                Solo lectura — no modifica tu cuenta de Holded
+                Solo lectura por defecto - borradores solo con confirmacion
               </p>
             </div>
 
@@ -164,14 +164,12 @@ export default function HoldedHomePage() {
                     </span>
                   </div>
                   <ul className="mt-3 space-y-1.5">
-                    {['Contabilidad y balance', 'Facturas e IVA', 'Clientes y proyectos'].map(
-                      (f) => (
-                        <li key={f} className="flex items-center gap-2 text-[11px] text-slate-600">
-                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#D4570C]" />
-                          {f}
-                        </li>
-                      )
-                    )}
+                    {['Facturas y contactos', 'Cuentas contables', 'Diario con fechas'].map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-[11px] text-slate-600">
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#D4570C]" />
+                        {f}
+                      </li>
+                    ))}
                   </ul>
                   <Link
                     href="/conectores/claude"
@@ -201,7 +199,7 @@ export default function HoldedHomePage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-slate-900">ChatGPT</p>
-                        <p className="text-[11px] text-slate-500">GPT Action · API key</p>
+                        <p className="text-[11px] text-slate-500">Apps SDK / MCP</p>
                       </div>
                     </div>
                     <span className="flex items-center gap-1.5 rounded-full border border-[#10a37f]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#10a37f]">
@@ -210,14 +208,12 @@ export default function HoldedHomePage() {
                     </span>
                   </div>
                   <ul className="mt-3 space-y-1.5">
-                    {['Contabilidad y balance', 'Facturas e IVA', 'Análisis de archivos'].map(
-                      (f) => (
-                        <li key={f} className="flex items-center gap-2 text-[11px] text-slate-600">
-                          <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#10a37f]" />
-                          {f}
-                        </li>
-                      )
-                    )}
+                    {['Facturas y contactos', 'Cuentas contables', 'Diario con fechas'].map((f) => (
+                      <li key={f} className="flex items-center gap-2 text-[11px] text-slate-600">
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-[#10a37f]" />
+                        {f}
+                      </li>
+                    ))}
                   </ul>
                   <Link
                     href="/conectores/chatgpt"
@@ -272,14 +268,14 @@ export default function HoldedHomePage() {
                 Holded para Claude
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Conéctate mediante MCP (Model Context Protocol) de Anthropic. Usa OAuth 2.0 — sin
-                introducir API keys en texto.
+                Conectate mediante el flujo seguro de Verifactu para usar Holded desde Claude. Las
+                credenciales se guardan server-side y no se muestran a Claude.
               </p>
               <ul className="mt-5 space-y-2">
                 {[
                   'Claude.ai Desktop y Web',
-                  'OAuth 2.0 — acceso seguro sin guardar claves',
-                  'Protocolo MCP nativo de Anthropic',
+                  'Credenciales protegidas server-side',
+                  'Protocolo MCP para Claude',
                   ...connectorFeatures.slice(2),
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
@@ -326,14 +322,14 @@ export default function HoldedHomePage() {
                 Holded para ChatGPT
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Conéctate mediante GPT Action (OpenAI) introduciendo tu API key de Holded.
-                Disponible desde ChatGPT Plus y Team.
+                Conectate mediante el flujo seguro de Verifactu para usar Holded desde ChatGPT. Las
+                credenciales se guardan server-side y no se muestran a OpenAI.
               </p>
               <ul className="mt-5 space-y-2">
                 {[
                   'ChatGPT Plus y Team',
-                  'Conexión con API key de Holded',
-                  'Sube y contrasta archivos externos',
+                  'Credenciales protegidas server-side',
+                  'Apps SDK / MCP para ChatGPT',
                   connectorFeatures[3],
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
@@ -451,17 +447,17 @@ export default function HoldedHomePage() {
                   Mira cómo funciona antes de conectar.
                 </h2>
                 <p className="mt-4 max-w-xl text-base leading-8 text-slate-600">
-                  Una demo real con datos de Holded: facturas vencidas, resumen de IVA, balance del
-                  ejercicio. Sin registro, sin configuración previa.
+                  Una demo real con datos de Holded: facturas, contactos, cuentas contables, diario
+                  con rango de fechas y borradores con confirmacion. Sin registro.
                 </p>
               </div>
               <div className="shrink-0">
                 <Link
-                  href="/demo"
+                  href="/demo-recording"
                   className="inline-flex items-center gap-2.5 rounded-full bg-[#ff5460] px-7 py-4 text-sm font-semibold text-white shadow-[0_16px_40px_-20px_rgba(255,84,96,0.6)] transition hover:bg-[#ef4654]"
                 >
                   <PlayCircle className="h-5 w-5" />
-                  Ver demo gratis
+                  Ver demos
                 </Link>
               </div>
             </div>

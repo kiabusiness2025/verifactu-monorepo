@@ -1,107 +1,119 @@
-import { ArrowRight, Play } from 'lucide-react';
+import { ArrowRight, Play, VideoIcon } from 'lucide-react';
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
-import { buildRegisterUrl } from '../lib/holded-navigation';
-import DemoVideoGrid, { type DemoClip } from './DemoVideoGrid';
 
 export const metadata: Metadata = {
-  title: 'Demo del conector | Holded',
+  title: 'Demo recording | Holded Connector',
   description:
-    'Ve como funciona el conector Holded en accion: consulta de facturas, contactos, contabilidad y proyectos directamente desde el chat.',
+    'Demo recording for the Holded connector. The current OpenAI review demo shows invoices, contacts, accounting accounts, daily ledger and draft invoice confirmation.',
+  alternates: { canonical: '/demo-recording' },
 };
 
-const heroClip: DemoClip = {
-  id: 'overview',
-  slug: 'holded-overview',
-  label: 'Vision general',
-  title: 'El conector en accion',
+const CURRENT_DEMO = {
+  title: 'OpenAI review demo - Holded para ChatGPT',
   description:
-    'Consulta de facturas, entendimiento contable y gestion de proyectos directamente desde el chat. Sin menus, sin tecnicismos.',
+    'Grabacion real del conector Holded para ChatGPT con alcance cerrado: facturas, contactos, cuentas contables, diario con rango de fechas y borrador de factura con confirmacion explicita.',
+  href: '/conectores/chatgpt/openai-review-demo',
+  videoSrc: '/video/holded-chatgpt-demo.mp4',
 };
 
-const useCaseClips: DemoClip[] = [
-  {
-    id: 'facturas',
-    slug: 'holded-facturas',
-    label: 'Facturas',
-    title: 'Que facturas revisar hoy',
-    description:
-      'El conector prioriza las facturas con mas riesgo de cobro y las explica en lenguaje claro.',
-  },
-  {
-    id: 'contactos',
-    slug: 'holded-contactos',
-    label: 'Contactos',
-    title: 'Clientes con riesgo de cobro',
-    description:
-      'Cruza clientes y estado de facturas para decidir a quien llamar primero sin salir del chat.',
-  },
-  {
-    id: 'contabilidad',
-    slug: 'holded-contabilidad',
-    label: 'Contabilidad',
-    title: 'El diario en lenguaje normal',
-    description:
-      'Los asientos y movimientos contables traducidos a frases que cualquier gestor entiende.',
-  },
-  {
-    id: 'proyectos',
-    slug: 'holded-proyectos',
-    label: 'Proyectos',
-    title: 'Estado y prioridades del equipo',
-    description:
-      'Resumen de proyectos activos, cargas de trabajo y bloqueos sin abrir otra herramienta.',
-  },
+const FUTURE_DEMOS = [
+  'Claude connector demo',
+  'Mobile review walkthrough',
+  'Invoice draft confirmation flow',
 ];
 
-export default function HoldedDemoPage() {
+export default function DemoRecordingPage() {
   return (
-    <main className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_40%,#ffffff_100%)] text-slate-900">
-      <section className="mx-auto max-w-6xl px-4 pb-10 pt-14">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/20 bg-[#ff5460]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-[#ff5460]">
-          <Play className="h-3.5 w-3.5" />
-          Demo del conector
-        </div>
-        <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight text-slate-950 sm:text-[3rem] sm:leading-[1.06]">
-          Ve como funciona antes de conectar
-        </h1>
-        <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-          Facturas, contactos, contabilidad y proyectos de Holded explicados en lenguaje claro,
-          directamente desde el chat. Gratis para siempre para usuarios de ChatGPT.
-        </p>
-      </section>
-
-      <DemoVideoGrid heroClip={heroClip} useCaseClips={useCaseClips} />
-
-      <section className="mx-auto max-w-6xl px-4 py-10">
-        <div className="rounded-[2rem] border border-[#ff5460]/15 bg-[linear-gradient(180deg,#fff7f7_0%,#ffffff_100%)] px-8 py-10 shadow-[0_32px_90px_-48px_rgba(255,84,96,0.3)] sm:px-10">
-          <h2 className="text-3xl font-bold tracking-tight text-slate-950">
-            Listo para probarlo con tus datos reales
-          </h2>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-            Conecta tu cuenta de Holded en menos de un minuto. Pega tu API key, validamos la
-            conexion al momento y entras directamente al panel.
-          </p>
-          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-            <Link
-              href={buildRegisterUrl('holded_demo_cta')}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ff5460] px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-[#ef4654] hover:shadow-xl"
-            >
-              Conectar Holded ahora
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <Link
-              href="/capacidades"
-              className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-            >
-              Ver capacidades completas
-            </Link>
+    <main className="min-h-screen bg-white text-slate-900">
+      <section className="mx-auto max-w-5xl px-4 py-14">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-2xl">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/brand/holded/holded-diamond-logo.png"
+                alt="Holded"
+                width={40}
+                height={40}
+                className="rounded-xl"
+              />
+              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+                <VideoIcon className="h-3.5 w-3.5" />
+                Demo recordings
+              </div>
+            </div>
+            <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-950">
+              Biblioteca de demos del conector Holded
+            </h1>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              Esta URL se mantiene estable para formularios y revisiones externas. La demo principal
+              actual es la grabacion de revision OpenAI del conector Holded para ChatGPT.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href={CURRENT_DEMO.href}
+                className="inline-flex items-center gap-2 rounded-full bg-[#10a37f] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#0d8f6f]"
+              >
+                Abrir pagina de demo
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/conectores/chatgpt"
+                className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+              >
+                Ver conector ChatGPT
+              </Link>
+            </div>
           </div>
-          <p className="mt-5 text-xs text-slate-500">
-            Gratis para siempre para usuarios de ChatGPT. Operado por Verifactu Business, Holded
-            Solution Partner.
-          </p>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-5 lg:w-[20rem]">
+            <p className="text-sm font-semibold text-slate-900">URL estable</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Mantener `/demo-recording` evita romper enlaces ya enviados. Las nuevas demos pueden
+              anadirse aqui como biblioteca sin cambiar la URL historica.
+            </p>
+          </div>
         </div>
+
+        <section className="mt-12 rounded-lg border border-slate-200 bg-white shadow-sm">
+          <div className="aspect-video overflow-hidden rounded-t-lg bg-slate-950">
+            <video controls playsInline preload="metadata" className="h-full w-full">
+              <source src={CURRENT_DEMO.videoSrc} type="video/mp4" />
+              Tu navegador no soporta la reproduccion de video.
+            </video>
+          </div>
+          <div className="p-6">
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+              <Play className="h-3.5 w-3.5" />
+              Demo actual
+            </div>
+            <h2 className="mt-4 text-2xl font-bold tracking-tight text-slate-950">
+              {CURRENT_DEMO.title}
+            </h2>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
+              {CURRENT_DEMO.description}
+            </p>
+          </div>
+        </section>
+
+        <section className="mt-10">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-950">Proximas demos</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
+            La pagina queda preparada para alojar varias demos sin cambiar la URL ya compartida.
+          </p>
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {FUTURE_DEMOS.map((title) => (
+              <article
+                key={title}
+                className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5"
+              >
+                <p className="text-sm font-semibold text-slate-700">{title}</p>
+                <p className="mt-2 text-xs leading-5 text-slate-500">Pendiente de publicacion.</p>
+              </article>
+            ))}
+          </div>
+        </section>
       </section>
     </main>
   );

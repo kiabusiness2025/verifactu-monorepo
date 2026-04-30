@@ -2,9 +2,9 @@ import type { Metadata } from 'next';
 import { ConnectorLandingClient } from '@/app/components/ConnectorLandingClient';
 
 export const metadata: Metadata = {
-  title: 'Plugin Holded para ChatGPT | Verifactu Business',
+  title: 'Conector Holded para ChatGPT | Verifactu Business',
   description:
-    'Conecta Holded con ChatGPT mediante OAuth. Consulta facturación, contabilidad, clientes y proyectos en lenguaje natural. Solo lectura por defecto.',
+    'Conecta Holded con ChatGPT para consultar facturas, contactos, cuentas contables y diario en lenguaje natural. Borradores solo con confirmacion explicita.',
   alternates: {
     canonical: '/conectores/chatgpt',
   },

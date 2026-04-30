@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server';
 const REDIRECT_TARGETS: Record<string, string> = {
   '/capacidades': '/#beneficios',
   '/planes': '/#acceso-libre',
-  '/demo-recording': '/#beneficios',
 };
 
 export function middleware(request: NextRequest) {
@@ -56,7 +55,6 @@ export const config = {
     '/capacidades',
     '/planes',
     '/support',
-    '/demo-recording',
     '/admin/:path*',
     '/dashboard/:path*',
     '/onboarding/:path*',

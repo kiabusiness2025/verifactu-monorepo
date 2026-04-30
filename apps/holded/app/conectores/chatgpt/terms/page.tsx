@@ -146,10 +146,9 @@ export default function ChatGPTTermsPage() {
             Descripción del servicio
           </div>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            El conector permite a los usuarios de ChatGPT acceder a los datos de su cuenta de Holded
-            —facturas, contactos, tesorería, proyectos, empleados y documentos— mediante lenguaje
-            natural, utilizando el protocolo <strong>Model Context Protocol (MCP)</strong> y
-            autenticación <strong>OAuth 2.0</strong>.
+            El conector permite a los usuarios de ChatGPT acceder a datos clave de su cuenta de
+            Holded: facturas, contactos, cuentas contables y diario con rango de fechas. La conexion
+            se aloja en Verifactu y las credenciales se tratan server-side.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3">
@@ -157,10 +156,10 @@ export default function ChatGPTTermsPage() {
                 Operaciones disponibles
               </div>
               <ul className="mt-2 space-y-1 text-sm text-slate-700">
-                <li>✓ Consulta de facturas, contactos y proyectos</li>
-                <li>✓ Resúmenes y análisis de datos del negocio</li>
-                <li>✓ Búsqueda de empleados, productos y almacenes</li>
-                <li>✓ Creación de borradores de factura (con confirmación)</li>
+                <li>- Consulta de facturas y contactos</li>
+                <li>- Consulta de cuentas contables y diario con rango de fechas</li>
+                <li>- Resumenes de datos disponibles dentro del tenant conectado</li>
+                <li>- Creacion de borradores de factura con confirmacion explicita</li>
               </ul>
             </div>
             <div className="rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3">
@@ -185,8 +184,8 @@ export default function ChatGPTTermsPage() {
             </div>
             <ul className="mt-3 space-y-2 text-sm leading-7 text-slate-600">
               <li>
-                Eres responsable de la cuenta de Holded que conectas y del token OAuth que
-                facilitas.
+                Eres responsable de la cuenta de Holded que conectas y de las credenciales que
+                autorizas en el flujo de conexion.
               </li>
               <li>
                 Debes revisar y confirmar cualquier acción que modifique datos antes de ejecutarla.
