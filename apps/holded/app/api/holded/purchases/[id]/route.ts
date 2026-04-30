@@ -33,12 +33,12 @@ const PurchaseSchema = z.object({
   concepto: z.string().optional(),
 });
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const { id } = await context.params;
   const session = await getHoldedSession();
   if (!session?.tenantId) {
     return NextResponse.json({ ok: false, error: 'No autenticado' }, { status: 401 });
   }
-  const { id } = params;
   let body: any;
   try {
     body = await req.json();
