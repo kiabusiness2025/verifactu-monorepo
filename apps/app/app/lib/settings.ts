@@ -1,4 +1,4 @@
-import { prisma } from '@/app/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { stripeClient } from '@verifactu/integrations';
 
 export type SettingsBillingInvoice = {
