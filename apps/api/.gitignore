@@ -13,3 +13,9 @@ yarn-error.log*
 /dist
 .vercel
 .env*.local
+
+# Certificados AEAT — NUNCA subir al repositorio
+# Los certificados .p12 contienen claves privadas firmantes
+certs/*.p12
+certs/aeat_cert_pass.txt
+certs/aeat_wsdl_url.txt
