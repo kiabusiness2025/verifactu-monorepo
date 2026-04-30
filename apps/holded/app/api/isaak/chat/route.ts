@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         error:
-          'Has alcanzado el límite diario de consultas. Vuelve mañana o actualiza tu plan para continuar.',
+          'Has alcanzado el límite diario del conector. Para análisis continuo con historial y memoria de tu empresa, Isaak completo está disponible en isaak.verifactu.business',
       },
       { status: 429 }
     );

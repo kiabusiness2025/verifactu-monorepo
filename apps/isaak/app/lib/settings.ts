@@ -64,6 +64,8 @@ export type SettingsBillingData = {
   code: string;
   status: string;
   stripeStatus: string | null;
+  trialEndsAt: string | null;
+  daysUntilTrialEnd: number | null;
   nextRenewalAt: string | null;
   cancelAtPeriodEnd: boolean;
   paymentMethodSummary: string | null;
@@ -156,6 +158,7 @@ function formatCardBrand(brand: string | null | undefined) {
 
 function readDefaultPriceId() {
   return (
+    process.env.STRIPE_PRICE_ISAAK_MONTHLY?.trim() ||
     process.env.STRIPE_PRICE_HOLDED_FISCAL_MONTHLY?.trim() ||
     process.env.STRIPE_PRICE_HOLDED_MIGRACIONES_MONTHLY?.trim() ||
     ''
@@ -178,11 +181,19 @@ export async function loadBillingData(input: {
 
   const customerId = subscription?.stripeCustomerId ?? null;
   const subscriptionId = subscription?.stripeSubscriptionId ?? null;
+  const trialEndsAt = subscription?.trialEndsAt ?? null;
+  const daysUntilTrialEnd =
+    trialEndsAt && subscription?.status === 'trial'
+      ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / 86_400_000))
+      : null;
+
   const billing: SettingsBillingData = {
     name: subscription?.plan?.name ?? 'Plan gratuito',
     code: subscription?.plan?.code ?? 'free',
     status: subscription?.status ?? 'active',
     stripeStatus: subscription?.stripeStatus ?? null,
+    trialEndsAt: trialEndsAt?.toISOString() ?? null,
+    daysUntilTrialEnd,
     nextRenewalAt: subscription?.currentPeriodEnd?.toISOString() ?? null,
     cancelAtPeriodEnd: Boolean(subscription?.cancelAtPeriodEnd),
     paymentMethodSummary: null,
