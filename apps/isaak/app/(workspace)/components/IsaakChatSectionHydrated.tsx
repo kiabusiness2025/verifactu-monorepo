@@ -2,50 +2,9 @@
 
 import { useRef, useState } from 'react';
 import { Loader2, SendHorizonal } from 'lucide-react';
+import IsaakMarkdown from './IsaakMarkdown';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
-
-function SimpleMarkdown({ text }: { text: string }) {
-  const lines = text.split('\n');
-  return (
-    <div className="space-y-1.5 text-[14px] leading-relaxed text-slate-700">
-      {lines.map((line, i) => {
-        if (line.startsWith('### '))
-          return (
-            <p key={i} className="font-semibold text-slate-900">
-              {line.slice(4)}
-            </p>
-          );
-        if (line.startsWith('## '))
-          return (
-            <p key={i} className="font-bold text-slate-900">
-              {line.slice(3)}
-            </p>
-          );
-        if (line.startsWith('- ') || line.startsWith('* '))
-          return (
-            <p key={i} className="pl-3">
-              · {line.slice(2)}
-            </p>
-          );
-        if (line === '') return <div key={i} className="h-1" />;
-        return (
-          <p key={i}>
-            {line.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
-              part.startsWith('**') ? (
-                <strong key={j} className="font-semibold text-slate-900">
-                  {part.slice(2, -2)}
-                </strong>
-              ) : (
-                part
-              )
-            )}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
 
 export default function IsaakChatSectionHydrated({
   conversationId,
@@ -118,7 +77,7 @@ export default function IsaakChatSectionHydrated({
                   />
                 </div>
                 <div className="max-w-[85%] rounded-2xl bg-[#f5f9ff] px-4 py-3">
-                  <SimpleMarkdown text={msg.content} />
+                  <IsaakMarkdown text={msg.content} />
                 </div>
               </div>
             )

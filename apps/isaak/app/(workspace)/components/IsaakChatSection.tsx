@@ -2,7 +2,9 @@
 
 import Image from 'next/image';
 import { useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { ExternalLink, LifeBuoy, Loader2, Plus, SendHorizonal, Sparkles } from 'lucide-react';
+import IsaakMarkdown from './IsaakMarkdown';
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
 
@@ -54,49 +56,6 @@ const INTEGRATIONS = [
 ];
 
 const SUPPORT_EMAIL = 'soporte@verifactu.business';
-
-// ── SimpleMarkdown ─────────────────────────────────────────────────────────────
-function SimpleMarkdown({ text }: { text: string }) {
-  const lines = text.split('\n');
-  return (
-    <div className="space-y-1.5 text-[14px] leading-relaxed text-slate-700">
-      {lines.map((line, i) => {
-        if (line.startsWith('### '))
-          return (
-            <p key={i} className="font-semibold text-slate-900">
-              {line.slice(4)}
-            </p>
-          );
-        if (line.startsWith('## '))
-          return (
-            <p key={i} className="font-bold text-slate-900">
-              {line.slice(3)}
-            </p>
-          );
-        if (line.startsWith('- ') || line.startsWith('* '))
-          return (
-            <p key={i} className="pl-3">
-              · {line.slice(2)}
-            </p>
-          );
-        if (line === '') return <div key={i} className="h-1" />;
-        return (
-          <p key={i}>
-            {line.split(/(\*\*[^*]+\*\*)/).map((part, j) =>
-              part.startsWith('**') ? (
-                <strong key={j} className="font-semibold text-slate-900">
-                  {part.slice(2, -2)}
-                </strong>
-              ) : (
-                part
-              )
-            )}
-          </p>
-        );
-      })}
-    </div>
-  );
-}
 
 // ── ChatInput ─────────────────────────────────────────────────────────────────
 function ChatInput({
@@ -216,6 +175,7 @@ export default function IsaakChatSection({
   welcomeTitle?: string;
   welcomeSubtitle?: string;
 }) {
+  const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -247,7 +207,12 @@ export default function IsaakChatSection({
         conversation?: { id: string; title: string };
       } | null;
       if (!res.ok || !data?.reply) throw new Error(data?.error ?? 'Sin respuesta');
-      if (data.conversation?.id) setConversationId(data.conversation.id);
+      if (data.conversation?.id && !conversationId) {
+        setConversationId(data.conversation.id);
+        router.refresh();
+      } else if (data.conversation?.id) {
+        setConversationId(data.conversation.id);
+      }
       setMessages((prev) => [
         ...prev,
         { id: `a-${Date.now()}`, role: 'assistant', content: data.reply! },
@@ -354,7 +319,7 @@ export default function IsaakChatSection({
                   />
                 </div>
                 <div className="max-w-[85%] rounded-2xl bg-[#f5f9ff] px-4 py-3">
-                  <SimpleMarkdown text={msg.content} />
+                  <IsaakMarkdown text={msg.content} />
                 </div>
               </div>
             )
