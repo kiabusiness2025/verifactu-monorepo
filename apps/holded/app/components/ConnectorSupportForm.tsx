@@ -8,6 +8,24 @@ type Status = 'idle' | 'sending' | 'sent' | 'error';
 
 const SUPPORT_URL = '/api/support/tickets';
 
+const CONNECTOR_THEME: Record<
+  ConnectorId,
+  { focusBorder: string; focusRing: string; btn: string; btnHover: string }
+> = {
+  chatgpt: {
+    focusBorder: 'focus:border-emerald-400',
+    focusRing: 'focus:ring-emerald-100',
+    btn: 'bg-[#10a37f]',
+    btnHover: 'hover:bg-[#0d8f6f]',
+  },
+  claude: {
+    focusBorder: 'focus:border-amber-400',
+    focusRing: 'focus:ring-amber-100',
+    btn: 'bg-amber-600',
+    btnHover: 'hover:bg-amber-700',
+  },
+};
+
 function connectorLabel(connector: ConnectorId) {
   return connector === 'claude' ? 'Claude' : 'ChatGPT';
 }
@@ -24,6 +42,7 @@ export function ConnectorSupportForm({
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [ticketId, setTicketId] = useState<string | null>(null);
+  const t = CONNECTOR_THEME[connector];
 
   const handleSubmit = useCallback(async () => {
     if (!isRegistered || !message.trim()) return;
@@ -108,7 +127,7 @@ export function ConnectorSupportForm({
         onChange={(event) => setSubject(event.target.value)}
         maxLength={140}
         placeholder={`Asunto - Conector Holded para ${connectorLabel(connector)}`}
-        className="w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+        className={`w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 ${t.focusBorder} focus:outline-none focus:ring-2 ${t.focusRing}`}
       />
       <textarea
         value={message}
@@ -116,7 +135,7 @@ export function ConnectorSupportForm({
         maxLength={4000}
         placeholder="Describe la consulta, error o paso donde necesitas ayuda..."
         rows={6}
-        className="w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-100"
+        className={`w-full resize-none rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 ${t.focusBorder} focus:outline-none focus:ring-2 ${t.focusRing}`}
       />
 
       <p className="text-xs leading-5 text-slate-500">
@@ -132,7 +151,7 @@ export function ConnectorSupportForm({
         type="button"
         onClick={handleSubmit}
         disabled={!message.trim() || status === 'sending'}
-        className="inline-flex items-center gap-2 rounded-full bg-[#10a37f] px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0d8f6f] disabled:opacity-40"
+        className={`inline-flex items-center gap-2 rounded-full ${t.btn} px-6 py-2.5 text-sm font-semibold text-white transition ${t.btnHover} disabled:opacity-40`}
       >
         {status === 'sending' ? 'Enviando...' : 'Crear ticket'}
       </button>

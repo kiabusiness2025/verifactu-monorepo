@@ -418,7 +418,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
                 )}`,
                 label: 'Enviar email',
                 Icon: Mail,
-                external: false,
+                external: true,
               },
             ].map((option) => {
               const { Icon } = option;

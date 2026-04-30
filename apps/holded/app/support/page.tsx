@@ -47,8 +47,8 @@ const connectorLinks = [
     color: 'text-[#ff5460]',
     border: 'border-[#ff5460]/20',
     bg: 'bg-[#ff5460]/5',
-    docsHref: '/docs/chatgpt',
-    connectHref: '/acceso',
+    docsHref: '/conectores/chatgpt/docs',
+    connectHref: '/conectores/chatgpt',
   },
   {
     label: 'Claude',
