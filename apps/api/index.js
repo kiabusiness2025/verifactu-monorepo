@@ -4,7 +4,7 @@ import rateLimit from 'express-rate-limit';
 import fs from 'fs';
 import { jwtVerify } from 'jose';
 import pino from 'pino';
-import { registerInvoice } from './soap-client.js';
+import { registerInvoice, resetClient, getClient } from './soap-client.js';
 import { getLastInvoiceHash, processInvoiceVeriFactu } from './verifactu-generator.js';
 
 const log = pino();
@@ -207,6 +207,89 @@ app.get('/api/verifactu/ops', (_req, res) => {
   } catch (e) {
     log.error(e);
     return res.status(500).json({ ok: false, error: e.message });
+  }
+});
+
+// Diagnóstico completo del certificado y conexión SOAP con la AEAT
+// Solo accesible para administradores. No expone el cert ni la contraseña.
+app.get('/api/verifactu/check-cert', async (req, res) => {
+  if (!req.user?.isAdmin) {
+    return res.status(403).json({ ok: false, error: 'Forbidden' });
+  }
+
+  const result = {
+    ok: false,
+    checks: {
+      cert_file: { ok: false, detail: null },
+      pass_file: { ok: false, detail: null },
+      wsdl_file: { ok: false, detail: null },
+      soap_client: { ok: false, detail: null },
+    },
+    cert_subject: null,
+    wsdl_url: null,
+    error: null,
+  };
+
+  try {
+    // 1. Verificar existencia del certificado
+    const certExists = fs.existsSync(CERT_PATH);
+    result.checks.cert_file.ok = certExists;
+    if (certExists) {
+      const stat = fs.statSync(CERT_PATH);
+      result.checks.cert_file.detail = `${Math.round(stat.size / 1024)} KB, modificado ${stat.mtime.toISOString().slice(0, 10)}`;
+    } else {
+      result.checks.cert_file.detail = `No encontrado en: ${CERT_PATH}`;
+    }
+
+    // 2. Verificar existencia y contenido de la contraseña
+    const passExists = fs.existsSync(PASS_FILE);
+    result.checks.pass_file.ok = passExists;
+    if (passExists) {
+      const pass = fs.readFileSync(PASS_FILE, 'utf8').trim();
+      result.checks.pass_file.detail = pass.length > 0 ? `${pass.length} caracteres` : 'Vacío';
+      result.checks.pass_file.ok = pass.length > 0;
+    } else {
+      result.checks.pass_file.detail = `No encontrado en: ${PASS_FILE}`;
+    }
+
+    // 3. Verificar existencia y contenido del WSDL
+    const wsdlExists = fs.existsSync(WSDL_FILE);
+    result.checks.wsdl_file.ok = wsdlExists;
+    if (wsdlExists) {
+      const wsdlUrl = fs.readFileSync(WSDL_FILE, 'utf8').trim();
+      result.wsdl_url = wsdlUrl;
+      result.checks.wsdl_file.ok = wsdlUrl.startsWith('http');
+      result.checks.wsdl_file.detail = wsdlUrl.startsWith('http') ? wsdlUrl : 'URL no válida';
+    } else {
+      result.checks.wsdl_file.detail = `No encontrado en: ${WSDL_FILE}`;
+    }
+
+    // 4. Intentar crear el cliente SOAP (prueba de conectividad real)
+    if (result.checks.cert_file.ok && result.checks.pass_file.ok && result.checks.wsdl_file.ok) {
+      try {
+        resetClient(); // Forzar reinicio para usar los archivos actuales
+        await getClient();
+        result.checks.soap_client.ok = true;
+        result.checks.soap_client.detail = 'Cliente SOAP inicializado correctamente';
+      } catch (soapError) {
+        result.checks.soap_client.ok = false;
+        // Limpiar mensajes de error para no exponer rutas internas
+        const msg = soapError?.message || 'Error desconocido';
+        result.checks.soap_client.detail = msg
+          .replace(/\/var\/secrets\/[^\s]*/g, '***')
+          .replace(/C:\\[^\s]*/gi, '***')
+          .slice(0, 300);
+      }
+    } else {
+      result.checks.soap_client.detail = 'No intentado: faltan archivos previos';
+    }
+
+    result.ok = Object.values(result.checks).every((c) => c.ok);
+    return res.json(result);
+  } catch (e) {
+    log.error(e);
+    result.error = e?.message?.slice(0, 200) || 'Error inesperado';
+    return res.status(500).json(result);
   }
 });
 
