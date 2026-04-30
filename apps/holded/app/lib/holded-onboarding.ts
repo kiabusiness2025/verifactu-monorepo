@@ -1,4 +1,5 @@
 import { prisma } from '@/app/lib/prisma';
+import { getIsaakOnboardingState } from '@verifactu/integrations';
 
 /**
  * Comprueba si el perfil de onboarding de Holded está completo para un usuario y tenant dados.
@@ -11,8 +12,7 @@ export async function isHoldedProfileComplete({
   tenantId: string;
   userId: string;
 }): Promise<boolean> {
-  // getHoldedOnboardingState es un alias de getIsaakOnboardingState
-  const state = await getHoldedOnboardingState({ prisma, tenantId, userId });
+  const state = await getIsaakOnboardingState({ prisma, tenantId, userId });
   return Boolean(state.completed);
 }
 export {
