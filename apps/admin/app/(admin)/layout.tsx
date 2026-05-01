@@ -14,24 +14,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       nav={navAdmin}
       pathname={pathname}
       showThemeToggle={false}
-      showIsaak={false}
+      showIsaak={true}
+      isaakExtraContext={{ moduleKey: 'admin', role: 'admin', context: 'backoffice' }}
       sidebarBrand={
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900 text-sm font-semibold text-white">
-            H
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#011c67] text-sm font-semibold text-white">
+            VB
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold text-slate-900">Holded Admin</div>
-            <div className="truncate text-xs text-slate-500">Usuarios y tenants</div>
+            <div className="truncate text-sm font-semibold text-slate-900">Verifactu Business</div>
+            <div className="truncate text-xs text-slate-500">Panel de administración</div>
           </div>
         </div>
       }
       headerLeft={
         <div className="min-w-0">
           <div className="truncate text-sm font-semibold text-slate-900">
-            Panel del canal Holded
+            Verifactu Business Admin
           </div>
-          <div className="truncate text-xs text-slate-500">Usuarios y tenants</div>
+          <div className="truncate text-xs text-slate-500">Gestión interna del producto</div>
         </div>
       }
       headerRight={<InstallPwaButton />}

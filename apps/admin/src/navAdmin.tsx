@@ -1,8 +1,31 @@
-import { Building2, CalendarCheck, LayoutDashboard, Users } from 'lucide-react';
+import {
+  BarChart3,
+  BookOpen,
+  Building2,
+  CalendarCheck,
+  FileText,
+  LayoutDashboard,
+  LifeBuoy,
+  Megaphone,
+  ShoppingBag,
+  TrendingUp,
+  Users,
+} from 'lucide-react';
 
 export const navAdmin = [
+  // ─── Operaciones ───────────────────────────────────────
   { label: 'Panel', href: '/panel', icon: <LayoutDashboard className="h-4 w-4" /> },
   { label: 'Usuarios', href: '/users', icon: <Users className="h-4 w-4" /> },
   { label: 'Tenants', href: '/tenants', icon: <Building2 className="h-4 w-4" /> },
-  { label: 'Demos', href: '/demo-requests', icon: <CalendarCheck className="h-4 w-4" /> },
+  { label: 'Pedidos', href: '/admin-orders', icon: <ShoppingBag className="h-4 w-4" /> },
+  { label: 'Soporte', href: '/admin-support', icon: <LifeBuoy className="h-4 w-4" /> },
+  // ─── Crecimiento ───────────────────────────────────────
+  { label: 'Marketing', href: '/admin-marketing', icon: <Megaphone className="h-4 w-4" /> },
+  { label: 'Métricas', href: '/admin-metrics', icon: <BarChart3 className="h-4 w-4" /> },
+  // ─── Relaciones ────────────────────────────────────────
+  { label: 'Reuniones', href: '/admin-meetings', icon: <CalendarCheck className="h-4 w-4" /> },
+  { label: 'Inversores', href: '/admin-investors', icon: <TrendingUp className="h-4 w-4" /> },
+  // ─── Contenido ─────────────────────────────────────────
+  { label: 'Documentación', href: '/admin-docs', icon: <BookOpen className="h-4 w-4" /> },
+  { label: 'Demos', href: '/demo-requests', icon: <FileText className="h-4 w-4" /> },
 ];
