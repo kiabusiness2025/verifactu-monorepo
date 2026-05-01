@@ -4,21 +4,16 @@
  * Genera y descarga el PDF de una factura con branding corporativo.
  * Scope: isaak.invoices.read
  */
-import { NextRequest, NextResponse } from 'next/server';
-import { buildV1Context } from '../../../_context';
+import { ResourceNotFoundError } from '@/lib/isaak-platform/api/errors';
 import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
 import { handlePlatformError } from '@/lib/isaak-platform/api/response';
-import { ResourceNotFoundError } from '@/lib/isaak-platform/api/errors';
 import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import { buildInvoicePdfBuffer } from '@/lib/isaak-platform/pdf/invoicePdfBuilder';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { buildV1Context } from '../../../_context';
 
 export const dynamic = 'force-dynamic';
-
-const VERIFACTU_API_URL = (
-  process.env.VERIFACTU_API_URL ||
-  process.env.API_BASE ||
-  'https://api.verifactu.business'
-).replace(/\/$/, '');
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const authResult = await buildV1Context(req);
@@ -49,6 +44,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         notes: true,
         verifactuStatus: true,
         verifactuQr: true,
+        verifactuHash: true,
         lines: {
           select: {
             quantity: true,
@@ -77,34 +73,37 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
         ? (history.branding as Record<string, string>)
         : null;
 
-    const pdfPayload = {
-      ...invoice,
+    // Get issuer data from tenant profile
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: ctx.tenantId },
+      select: { name: true, legalName: true, nif: true },
+    });
+
+    const pdfBuffer = await buildInvoicePdfBuffer({
+      id: invoice.id,
+      number: invoice.number,
+      issueDate: invoice.issueDate,
+      issuerName: tenant?.legalName ?? tenant?.name,
+      issuerNif: tenant?.nif ?? undefined,
+      customerName: invoice.customerName,
+      customerNif: invoice.customerNif ?? undefined,
       amountNet: Number(invoice.amountNet),
       amountTax: Number(invoice.amountTax),
       amountGross: Number(invoice.amountGross),
+      notes: invoice.notes,
+      verifactuStatus: invoice.verifactuStatus,
+      verifactuQr: invoice.verifactuQr,
+      verifactuHash: invoice.verifactuHash,
       lines: invoice.lines.map((l) => ({
-        ...l,
         quantity: Number(l.quantity),
         unitPrice: Number(l.unitPrice),
         taxRate: Number(l.taxRate),
-        discount: Number(l.discount),
+        discount: Number(l.discount ?? 0),
         lineTotal: Number(l.lineTotal),
       })),
       branding: branding ?? undefined,
-    };
-
-    const pdfRes = await fetch(`${VERIFACTU_API_URL}/api/verifactu/invoice-pdf`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(pdfPayload),
-      cache: 'no-store',
     });
 
-    if (!pdfRes.ok) {
-      throw new Error(`PDF generation failed: ${pdfRes.status}`);
-    }
-
-    const pdfBuffer = await pdfRes.arrayBuffer();
     const filename = `factura-${invoice.number ?? params.id}.pdf`;
 
     await logAuditEvent({
