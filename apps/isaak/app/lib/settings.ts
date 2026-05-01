@@ -26,6 +26,9 @@ export type SettingsCompanyData = {
   website: string;
   phone: string;
   teamSize: string;
+  logoUrl: string | null;
+  primaryColor: string;
+  secondaryColor: string;
 };
 
 export type SettingsConnectionData = {
@@ -148,6 +151,42 @@ export function parseEmployeesLabel(teamSize: string | null) {
 function normalizeAmount(amount: number | null | undefined) {
   if (typeof amount !== 'number') return null;
   return amount / 100;
+}
+
+function normalizeHexColor(value: unknown, fallback: string) {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim();
+  return /^#[0-9A-Fa-f]{6}$/.test(normalized) ? normalized.toUpperCase() : fallback;
+}
+
+function readCompanyBranding(value: unknown): {
+  logoUrl: string | null;
+  primaryColor: string;
+  secondaryColor: string;
+} {
+  const fallback = {
+    logoUrl: null,
+    primaryColor: '#2361D8',
+    secondaryColor: '#0F172A',
+  };
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return fallback;
+  }
+
+  const root = value as Record<string, unknown>;
+  const brandingRaw = root.branding;
+  if (!brandingRaw || typeof brandingRaw !== 'object' || Array.isArray(brandingRaw)) {
+    return fallback;
+  }
+
+  const branding = brandingRaw as Record<string, unknown>;
+  const logoUrl = typeof branding.logoUrl === 'string' ? branding.logoUrl.trim() : '';
+  return {
+    logoUrl: logoUrl || null,
+    primaryColor: normalizeHexColor(branding.primaryColor, fallback.primaryColor),
+    secondaryColor: normalizeHexColor(branding.secondaryColor, fallback.secondaryColor),
+  };
 }
 
 function formatCardBrand(brand: string | null | undefined) {
@@ -330,6 +369,7 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
       website: tenantProfile?.website ?? onboarding?.website ?? '',
       phone: tenantProfile?.phone ?? '',
       teamSize: onboarding?.teamSize || employeesToLabel(tenantProfile?.employees),
+      ...readCompanyBranding(tenantProfile?.adminEditHistory),
     },
     connection: {
       status: connection?.status ?? 'disconnected',

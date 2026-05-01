@@ -598,6 +598,22 @@ async function issueIsaakInvoice(
   const amountTax = Number(invoice.amountTax);
   const amountGross = Number(invoice.amountGross);
 
+  const previousIssuedInvoice = await prisma.invoice.findFirst({
+    where: {
+      tenantId,
+      id: { not: invoice.id },
+      verifactuHash: { not: null },
+      OR: [
+        { status: 'issued' },
+        { verifactuStatus: 'validated' },
+        { verifactuStatus: 'accepted' },
+        { verifactuStatus: 'accepted_with_errors' },
+      ],
+    },
+    orderBy: [{ issueDate: 'desc' }, { createdAt: 'desc' }],
+    select: { verifactuHash: true },
+  });
+
   const payload = {
     id: invoice.id,
     tenant_id: invoice.tenantId,
@@ -613,6 +629,7 @@ async function issueIsaakInvoice(
       rate: amountNet > 0 ? Number((amountTax / amountNet).toFixed(4)) : 0,
       amount: amountTax,
     },
+    previous_verifactu_hash: previousIssuedInvoice?.verifactuHash || null,
     customer: { name: invoice.customerName, nif: invoice.customerNif ?? '' },
     issuer: { name: tenant.legalName || tenant.name, nif: tenantNif },
   };
@@ -667,6 +684,7 @@ async function issueIsaakInvoice(
   await prisma.invoice.update({
     where: { id: invoice.id },
     data: {
+      status: 'issued',
       verifactuStatus,
       verifactuHash,
       verifactuQr: typeof data?.verifactu_qr === 'string' ? data.verifactu_qr : null,

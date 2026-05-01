@@ -15,6 +15,7 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 ### Producto — `docs/product/`
 
 - Features implementadas, planes, presupuestos, gastos, facturas, integraciones
+- Implementación VeriFactu + facturas emitidas (borrador/emitida + PDF): `docs/product/VERIFACTU_FACTURAS_EMITIDAS_IMPLEMENTATION_2026-05-01.md`
 - Contrato canonico del conector directo Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_CONTRACT_2026.md` (login del conector + API key + retorno OAuth a ChatGPT)
 - Plan de implementacion Fase 1: `docs/product/HOLDED_DIRECT_CONNECTOR_PHASE1_IMPLEMENTATION_PLAN_2026.md` (base ya entregada + nueva ola de identidad ligera)
 - Reordenacion de producto y ownership: `docs/product/ISAAK_PRODUCT_REORDER_PLAN_2026.md`
@@ -62,5 +63,6 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 - Guia MCP del conector directo: `docs/engineering/ai/ISAAK_FOR_HOLDED_MCP_SETUP.md`
 - Regresion demo Holded: `docs/engineering/ai/HOLDED_DEMO_REGRESSION.md`
 - Instrucciones operativas 2026: `docs/engineering/ai/ISAAK_INSTRUCCIONES_OPERATIVAS_2026.md`
+- Instrucciones exactas VeriFactu + PDF (2026-05-01): `docs/engineering/ai/ISAAK_VERIFACTU_INSTRUCCIONES_OPERATIVAS_2026-05-01.md`
 
 ### Histórico — `docs/legacy/`

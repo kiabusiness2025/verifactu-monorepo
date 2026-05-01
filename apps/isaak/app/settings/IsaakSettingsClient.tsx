@@ -43,6 +43,9 @@ type SettingsData = {
     website: string;
     phone: string;
     teamSize: string;
+    logoUrl: string | null;
+    primaryColor: string;
+    secondaryColor: string;
   };
   connection: {
     status: string;
@@ -224,6 +227,15 @@ function formatSupportedModule(value: string) {
   }
 }
 
+function fileToDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('No se pudo leer la imagen seleccionada.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function IsaakSettingsClient({
   initialSection,
   settingsData,
@@ -254,6 +266,8 @@ export default function IsaakSettingsClient({
   const [error, setError] = useState<string | null>(null);
   const [savingSection, setSavingSection] = useState<SectionKey | null>(null);
   const [apiKeyDraft, setApiKeyDraft] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingCompanyLogo, setUploadingCompanyLogo] = useState(false);
 
   useEffect(() => {
     if (activeSection !== 'billing') return;
@@ -364,6 +378,56 @@ export default function IsaakSettingsClient({
       setNoticeTone('success');
     } catch {
       // handled in requestJson
+    }
+  }
+
+  async function uploadProfilePhoto(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setError('Selecciona una imagen valida para el perfil.');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    setError(null);
+    try {
+      const photoUrl = await fileToDataUrl(file);
+      const res = await fetch('/api/settings/profile/avatar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ photoUrl }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || 'No se pudo actualizar la foto de perfil.');
+      }
+
+      setProfile((current) => ({ ...current, photoUrl: data.data?.photoUrl || photoUrl }));
+      setNotice('Foto de perfil actualizada.');
+      setNoticeTone('success');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo actualizar la foto de perfil.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  }
+
+  async function uploadCompanyLogo(file: File) {
+    if (!file.type.startsWith('image/')) {
+      setError('Selecciona una imagen valida para el logo.');
+      return;
+    }
+
+    setUploadingCompanyLogo(true);
+    setError(null);
+    try {
+      const logoUrl = await fileToDataUrl(file);
+      setCompany((current) => ({ ...current, logoUrl }));
+      setNotice('Logo cargado. Pulsa Guardar empresa para confirmar.');
+      setNoticeTone('success');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo cargar el logo.');
+    } finally {
+      setUploadingCompanyLogo(false);
     }
   }
 
@@ -659,6 +723,24 @@ export default function IsaakSettingsClient({
                         {formatRole(profile.roleInCompany)}
                       </div>
                     </label>
+                    <label className="grid gap-2 text-sm">
+                      <span className="font-medium text-slate-700">Foto de perfil</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) {
+                            void uploadProfilePhoto(file);
+                          }
+                          event.currentTarget.value = '';
+                        }}
+                        className="rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition file:mr-3 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200"
+                      />
+                      {uploadingAvatar ? (
+                        <span className="text-xs text-slate-500">Subiendo foto...</span>
+                      ) : null}
+                    </label>
                     <div className="flex flex-wrap gap-3 pt-2">
                       <button
                         type="button"
@@ -688,7 +770,10 @@ export default function IsaakSettingsClient({
                       Este bloque recoge lo personal. La empresa y las conexiones viven aparte para
                       que el chat no se convierta en un panel tecnico.
                     </p>
-                    <p>La foto quedara para una siguiente iteracion sin complicar este MVP.</p>
+                    <p>
+                      Puedes actualizar la foto desde aqui para que tu cuenta quede identificada en
+                      todo el espacio de trabajo.
+                    </p>
                   </div>
                 </section>
               </div>
@@ -697,6 +782,119 @@ export default function IsaakSettingsClient({
             {activeSection === 'company' ? (
               <section className="mt-6 rounded-[1.6rem] border border-slate-200 p-5">
                 <div className="text-lg font-semibold text-slate-950">Empresa</div>
+                <div className="mt-5 rounded-[1.4rem] border border-slate-200 bg-slate-50/70 p-4">
+                  <div className="text-sm font-semibold text-slate-900">Identidad visual</div>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Define logo y colores corporativos para personalizar facturas y documentos.
+                  </p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-[200px_1fr]">
+                    <div>
+                      <div className="flex h-28 w-44 items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                        {company.logoUrl ? (
+                          <img
+                            src={company.logoUrl}
+                            alt="Logo empresa"
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <span className="px-4 text-center text-xs text-slate-400">
+                            Sin logo cargado
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp,image/gif"
+                        aria-label="Subir logo de empresa"
+                        title="Subir logo de empresa"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0];
+                          if (file) {
+                            void uploadCompanyLogo(file);
+                          }
+                          event.currentTarget.value = '';
+                        }}
+                        className="mt-3 w-full rounded-2xl border border-slate-200 px-3 py-2 text-xs outline-none transition file:mr-2 file:rounded-full file:border-0 file:bg-slate-100 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-slate-700 hover:file:bg-slate-200"
+                      />
+                      {uploadingCompanyLogo ? (
+                        <span className="mt-1 block text-xs text-slate-500">Cargando logo...</span>
+                      ) : null}
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <label className="grid gap-2 text-sm">
+                        <span className="font-medium text-slate-700">Color principal</span>
+                        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                          <input
+                            type="color"
+                            value={company.primaryColor}
+                            onChange={(event) =>
+                              setCompany((current) => ({
+                                ...current,
+                                primaryColor: event.target.value,
+                              }))
+                            }
+                            className="h-8 w-10 cursor-pointer rounded border border-slate-200"
+                          />
+                          <input
+                            value={company.primaryColor}
+                            onChange={(event) =>
+                              setCompany((current) => ({
+                                ...current,
+                                primaryColor: event.target.value,
+                              }))
+                            }
+                            placeholder="#2361D8"
+                            aria-label="Color principal"
+                            className="w-full bg-transparent text-sm outline-none"
+                          />
+                        </div>
+                      </label>
+                      <label className="grid gap-2 text-sm">
+                        <span className="font-medium text-slate-700">Color secundario</span>
+                        <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+                          <input
+                            type="color"
+                            value={company.secondaryColor}
+                            onChange={(event) =>
+                              setCompany((current) => ({
+                                ...current,
+                                secondaryColor: event.target.value,
+                              }))
+                            }
+                            className="h-8 w-10 cursor-pointer rounded border border-slate-200"
+                          />
+                          <input
+                            value={company.secondaryColor}
+                            onChange={(event) =>
+                              setCompany((current) => ({
+                                ...current,
+                                secondaryColor: event.target.value,
+                              }))
+                            }
+                            placeholder="#0F172A"
+                            aria-label="Color secundario"
+                            className="w-full bg-transparent text-sm outline-none"
+                          />
+                        </div>
+                      </label>
+                      <div className="md:col-span-2">
+                        <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                            Vista previa de paleta
+                          </div>
+                          <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <span className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1">
+                              Principal: {company.primaryColor}
+                            </span>
+                            <span className="rounded-lg border border-slate-200 bg-slate-50 px-2 py-1">
+                              Secundario: {company.secondaryColor}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   {[
                     ['Nombre comercial', 'tradeName'],

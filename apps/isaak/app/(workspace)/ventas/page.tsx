@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { TrendingUp } from 'lucide-react';
-import IsaakChatSection from '../components/IsaakChatSection';
+import VentasWorkspaceClient from './VentasWorkspaceClient';
 
 export const metadata: Metadata = { title: 'Ventas — Isaak' };
 
@@ -19,11 +19,7 @@ export default function VentasPage() {
         </div>
       </div>
       <div className="flex-1 overflow-hidden">
-        <IsaakChatSection
-          context="ventas"
-          welcomeTitle="Analiza tus ventas"
-          welcomeSubtitle="Consulta facturas, cobros pendientes y rendimiento por cliente."
-        />
+        <VentasWorkspaceClient />
       </div>
     </div>
   );

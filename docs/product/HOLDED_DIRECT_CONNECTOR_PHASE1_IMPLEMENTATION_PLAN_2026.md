@@ -22,7 +22,21 @@ Documento complementario a:
 - `/holded` es la cara publica del conector
 - `/app` se mantiene como backend compartido
 - `/isaak` queda fuera del flujo publico del conector
+- este diseño es transitorio para publicar y estabilizar el conector directo
+- evolucion objetivo: los canales externos deben consumir capacidades a traves de Isaak como capa orquestadora unica
 - no se mezcla backlog de producto mayor con el MVP publicable
+
+## Nota de arquitectura (2026-05-01)
+
+Decision vigente:
+
+- mantener en Fase I el conector directo por canal (`ChatGPT <-> Holded`, `Claude <-> Holded`) para no bloquear publicacion ni operacion
+
+Decision objetivo de evolucion:
+
+- converger a una arquitectura `channel -> Isaak -> capacidades` en una fase posterior
+- Isaak sera la capa propia de orquestacion, reglas de negocio y trazabilidad comun
+- los conectores por canal quedaran como interfaz de entrada, no como cerebro de dominio
 
 ## Alcance vigente de Fase I
 
