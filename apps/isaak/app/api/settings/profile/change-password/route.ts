@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { buildHoldedAuthUrl } from '@/app/lib/isaak-navigation';
+import { buildIsaakAuthUrl } from '@/app/lib/isaak-navigation';
 import { toSettingsSession } from '@/app/lib/settings';
 
 export const runtime = 'nodejs';
@@ -16,8 +16,8 @@ export async function POST() {
       ok: false,
       available: false,
       error:
-        'El cambio directo de contrasena sigue en fase 2. Usa el flujo de acceso de Holded para restablecerla.',
-      redirectUrl: buildHoldedAuthUrl(
+        'El cambio de contraseña se realiza desde la página de acceso. Usa el enlace de recuperación.',
+      redirectUrl: buildIsaakAuthUrl(
         'isaak_settings_change_password',
         'https://isaak.verifactu.business/settings?section=profile'
       ),

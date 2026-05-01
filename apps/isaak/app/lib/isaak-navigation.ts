@@ -34,6 +34,13 @@ export const buildHoldedAuthUrl = (source: string, next?: string) => {
   return `${HOLDed_AUTH_URL}?source=${encodeURIComponent(source)}&next=${encodeURIComponent(target)}`;
 };
 
+/** Auth URL for native Isaak users (not Holded channel) */
+export const buildIsaakAuthUrl = (source: string, next?: string) => {
+  const landingUrl = getOrigin(process.env.NEXT_PUBLIC_LANDING_URL, 'https://verifactu.business');
+  const target = next || `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
+  return `${landingUrl}/auth/isaak?source=${encodeURIComponent(source)}&next=${encodeURIComponent(target)}`;
+};
+
 export const buildHoldedProfileOnboardingUrl = (source: string, next?: string) => {
   const target = next || `${ISAAK_PUBLIC_URL}/chat?source=${encodeURIComponent(source)}`;
   return `${HOLDed_PROFILE_ONBOARDING_URL}?source=${encodeURIComponent(source)}&next=${encodeURIComponent(target)}`;

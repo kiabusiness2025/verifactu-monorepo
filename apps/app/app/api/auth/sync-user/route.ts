@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '../../../../lib/prisma';
+import { sendIsaakWelcomeEmail } from '../../../../lib/isaak-welcome';
 import { getPreferredFullName, normalizePersonNamePart, splitFullName } from '@/lib/personName';
 import { upsertUser } from '@/lib/tenants';
 
@@ -51,11 +52,20 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
     });
 
+    const created = !existingUser;
+
+    // Best-effort welcome email for new native users
+    if (created && email) {
+      sendIsaakWelcomeEmail({ email, name: normalizedDisplayName || undefined }).catch((err) => {
+        console.error('[sync-user] welcome email failed (non-blocking)', err);
+      });
+    }
+
     return NextResponse.json({
       ok: true,
       user,
-      created: !existingUser,
-      message: existingUser ? undefined : 'User created',
+      created,
+      message: created ? 'User created' : undefined,
     });
   } catch (error: any) {
     console.error('Error syncing user with Prisma:', error);

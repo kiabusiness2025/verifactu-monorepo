@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { buildHoldedAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
+import { buildIsaakAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import { loadSettingsData, toSettingsSession } from '@/app/lib/settings';
 import IsaakSettingsClient from './IsaakSettingsClient';
 
@@ -21,7 +22,7 @@ export default async function IsaakSettingsPage({ searchParams }: PageProps) {
   const settingsUrl = `${ISAAK_PUBLIC_URL}/settings${section ? `?section=${encodeURIComponent(section)}` : ''}`;
 
   if (!session) {
-    redirect(buildHoldedAuthUrl('isaak_settings_requires_session', settingsUrl));
+    redirect(buildIsaakAuthUrl('isaak_settings_requires_session', settingsUrl));
   }
 
   const settingsData = await loadSettingsData(session);

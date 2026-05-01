@@ -1,7 +1,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
-import { buildHoldedAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
+import { buildIsaakAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 
 export const metadata = {
   title: 'Acceder — Isaak',
@@ -9,7 +9,7 @@ export const metadata = {
 };
 
 export default function AuthPage() {
-  const loginUrl = buildHoldedAuthUrl('isaak_auth_page', `${ISAAK_PUBLIC_URL}/chat`);
+  const loginUrl = buildIsaakAuthUrl('isaak_auth_page', `${ISAAK_PUBLIC_URL}/chat`);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-[#0b1a40] px-4">
@@ -50,8 +50,11 @@ export default function AuthPage() {
 
           <p className="mt-4 text-center text-xs text-slate-600">
             ¿Primera vez?{' '}
-            <Link href="/onboarding/holded" className="text-slate-400 hover:text-white underline">
-              Conecta tu ERP
+            <Link
+              href={loginUrl + '&signup=1'}
+              className="text-slate-400 hover:text-white underline"
+            >
+              Crear cuenta
             </Link>
           </p>
         </div>
