@@ -62,7 +62,7 @@ export default function DashboardClientLayout({ children, supportMode, supportTe
     pathname?.startsWith('/dashboard/integrations/isaak-for-holded') ||
     false;
   const minimalAdminMode = isAdminRoute || isHoldedConnectorAdminRoute;
-  const enableIsaak = false;
+  const enableIsaak = !minimalAdminMode;
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [demoOnlyAccess, setDemoOnlyAccess] = useState(false);
 

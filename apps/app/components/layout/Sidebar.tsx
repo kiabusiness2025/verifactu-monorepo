@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import { navItems } from '@/config/nav';
+import { useIsaakUI } from '@/context/IsaakUIContext';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -13,6 +14,7 @@ type SidebarProps = {
 
 export function Sidebar({ isOpen, onClose, isDemo = false, minimalMode = false }: SidebarProps) {
   const pathname = usePathname() || '';
+  const { openDrawer } = useIsaakUI();
   const visibleItems = minimalMode
     ? navItems.filter((item) => item.href === '/dashboard/integrations/holded')
     : navItems;
@@ -57,27 +59,45 @@ export function Sidebar({ isOpen, onClose, isDemo = false, minimalMode = false }
                   : pathname === targetHref || pathname.startsWith(targetHref + '/');
               return (
                 <li key={item.href}>
-                  <Link
-                    href={targetHref}
-                    className={`group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold transition ${
-                      active ? 'bg-[#2361d8]/10 text-[#2361d8]' : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    <span
-                      className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
+                  {item.action === 'openIsaak' ? (
+                    <button
+                      onClick={openDrawer}
+                      className="group flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold transition text-slate-700 hover:bg-slate-50"
+                    >
+                      <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-700 group-hover:bg-[#2361d8]/10 group-hover:text-[#2361d8]">
+                        {item.icon ? (
+                          <item.icon className="h-5 w-5" aria-hidden="true" />
+                        ) : (
+                          <span className="text-[10px] font-semibold">?</span>
+                        )}
+                      </span>
+                      <span>{item.label}</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href={targetHref}
+                      className={`group flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-semibold transition ${
                         active
-                          ? 'bg-[#2361d8] text-white shadow-sm'
-                          : 'bg-slate-100 text-slate-700 group-hover:bg-[#2361d8]/10 group-hover:text-[#2361d8]'
+                          ? 'bg-[#2361d8]/10 text-[#2361d8]'
+                          : 'text-slate-700 hover:bg-slate-50'
                       }`}
                     >
-                      {item.icon ? (
-                        <item.icon className="h-5 w-5" aria-hidden="true" />
-                      ) : (
-                        <span className="text-[10px] font-semibold">?</span>
-                      )}
-                    </span>
-                    <span>{item.label}</span>
-                  </Link>
+                      <span
+                        className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${
+                          active
+                            ? 'bg-[#2361d8] text-white shadow-sm'
+                            : 'bg-slate-100 text-slate-700 group-hover:bg-[#2361d8]/10 group-hover:text-[#2361d8]'
+                        }`}
+                      >
+                        {item.icon ? (
+                          <item.icon className="h-5 w-5" aria-hidden="true" />
+                        ) : (
+                          <span className="text-[10px] font-semibold">?</span>
+                        )}
+                      </span>
+                      <span>{item.label}</span>
+                    </Link>
+                  )}
                 </li>
               );
             })}

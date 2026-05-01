@@ -156,13 +156,16 @@ Nothing should be physically removed until all gates below are true.
 
 ## 8. Recommended Delivery Order
 
-1. `packages/db` schema extension and canonical billing/provisioning contracts.
-2. `apps/landing` public IA rebuild and redirect map.
-3. `apps/landing/app/api` catalog, checkout and onboarding-start refactor.
-4. `apps/app/app/api` orders, subscriptions and support endpoints.
-5. `apps/admin` orders, fulfillment and claims queues.
-6. Shared package refinements and WhatsApp adapter.
-7. Legacy route retirement and company-centric cleanup.
+1. `packages/db` schema extension and canonical billing/provisioning contracts. ✅ DONE
+2. `apps/landing` public IA rebuild and redirect map. ✅ DONE (Paso 2)
+3. `apps/landing/app/api` catalog, checkout and onboarding-start refactor. ✅ DONE (Paso 3)
+4. `apps/app/app/api` orders, subscriptions and support endpoints. ✅ DONE (Paso 4)
+   - Dashboard pages: `/dashboard/orders`, `/dashboard/orders/[id]`, `/dashboard/support`
+   - Nav updated: Mis pedidos + Soporte entries added
+   - Isaak AI nav item → opens IsaakSmartFloating sidebar (enabled: `enableIsaak = !minimalAdminMode`)
+5. `apps/admin` orders, fulfillment and claims queues. ⏳ NEXT
+6. Shared package refinements and WhatsApp adapter. ⏳
+7. Legacy route retirement and company-centric cleanup. ⏳
 
 ## 9. Practical Summary
 

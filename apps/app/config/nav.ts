@@ -17,6 +17,7 @@ export type NavItem = {
   href: string;
   icon?: LucideIcon;
   roles?: string[]; // reservado para RBAC futuro
+  action?: 'openIsaak'; // items que disparan acción en vez de navegar
 };
 
 export const navItems: NavItem[] = [
@@ -25,7 +26,7 @@ export const navItems: NavItem[] = [
   { label: 'Clientes', href: '/dashboard/clients', icon: Users },
   { label: 'Bancos', href: '/dashboard/banks', icon: Landmark },
   { label: 'Documentos', href: '/dashboard/documents', icon: FolderOpen },
-  { label: 'Isaak AI', href: '/dashboard/isaak', icon: Sparkles },
+  { label: 'Isaak AI', href: '/dashboard/isaak', icon: Sparkles, action: 'openIsaak' as const },
   { label: 'Calendario', href: '/dashboard/calendar', icon: CalendarDays },
   { label: 'Mis pedidos', href: '/dashboard/orders', icon: ShoppingBag },
   { label: 'Soporte', href: '/dashboard/support', icon: LifeBuoy },
