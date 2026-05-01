@@ -25,7 +25,15 @@ export const CreateInvoiceDraftSchema = z.object({
 export const ListInvoicesQuerySchema = z.object({
   page: z.coerce.number().int().positive().optional().default(1),
   limit: z.coerce.number().int().min(1).max(100).optional().default(50),
-  status: z.enum(['draft', 'validated', 'submitted', 'accepted', 'rejected']).optional(),
+  status: z
+    .union([
+      z.literal('draft'),
+      z.literal('validated'),
+      z.literal('submitted'),
+      z.literal('accepted'),
+      z.literal('rejected'),
+    ])
+    .optional(),
   from: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)

@@ -4,11 +4,11 @@
  *
  * La revocación es irreversible. La key queda inutilizable al instante.
  */
+import { errorResponse, okResponse } from '@/lib/isaak-platform/api/response';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { buildV1Context } from '../../_context';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
-import { okResponse, errorResponse } from '@/lib/isaak-platform/api/response';
-import prisma from '@/lib/prisma';
 
 type Params = { params: Promise<{ id: string }> };
 

@@ -47,7 +47,7 @@ export async function proposeAction(
       proposedBy: ctx.userId,
       type: input.type,
       status: 'pending',
-      payload: input.payload,
+      payload: input.payload as never,
       reason: input.reason ?? null,
       riskLevel,
       expiresAt,

@@ -12,11 +12,11 @@
  *   - channel dashboard | chatgpt | api | mcp | ...
  *   - action  tool/action filter
  */
+import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
+import { handlePlatformError, okListResponse } from '@/lib/isaak-platform/api/response';
+import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { buildV1Context } from '../../_context';
-import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
-import { okListResponse, handlePlatformError } from '@/lib/isaak-platform/api/response';
-import prisma from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 

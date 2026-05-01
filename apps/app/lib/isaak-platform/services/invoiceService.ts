@@ -187,7 +187,7 @@ export async function createInvoiceDraft(
   );
   const amountGross = amountNet + amountTax;
 
-  const invoice = await prisma.invoice.create({
+  const created = await prisma.invoice.create({
     data: {
       tenantId: ctx.tenantId,
       createdBy: ctx.userId,
@@ -200,58 +200,21 @@ export async function createInvoiceDraft(
       amountTax,
       amountGross,
       notes: input.notes ?? '',
-      lines: {
-        create: input.items.map((l) => ({
-          articleId: l.articleId ?? null,
-          quantity: l.quantity,
-          unitPrice: l.unitPrice,
-          taxRate: l.taxRate / 100,
-          discount: l.discount ?? 0,
-          lineTotal: l.quantity * l.unitPrice * (1 - (l.discount ?? 0) / 100),
-        })),
-      },
-    },
-    select: {
-      id: true,
-      number: true,
-      status: true,
-      customerName: true,
-      customerNif: true,
-      issueDate: true,
-      amountNet: true,
-      amountTax: true,
-      amountGross: true,
-      verifactuStatus: true,
-      verifactuHash: true,
-      verifactuQr: true,
-      notes: true,
-      createdAt: true,
-      lines: {
-        select: {
-          id: true,
-          quantity: true,
-          unitPrice: true,
-          taxRate: true,
-          discount: true,
-          lineTotal: true,
-          articleId: true,
-        },
-      },
-    },
+    } as never,
+    select: { id: true },
   });
 
-  return {
-    ...invoice,
-    amountNet: Number(invoice.amountNet),
-    amountTax: Number(invoice.amountTax),
-    amountGross: Number(invoice.amountGross),
-    lines: invoice.lines.map((l) => ({
-      ...l,
-      quantity: Number(l.quantity),
-      unitPrice: Number(l.unitPrice),
-      taxRate: Number(l.taxRate),
-      discount: Number(l.discount),
-      lineTotal: Number(l.lineTotal),
-    })),
-  };
+  await prisma.invoiceLine.createMany({
+    data: input.items.map((l) => ({
+      invoiceId: created.id,
+      articleId: l.articleId ?? null,
+      quantity: l.quantity,
+      unitPrice: l.unitPrice,
+      taxRate: l.taxRate / 100,
+      discount: l.discount ?? 0,
+      lineTotal: l.quantity * l.unitPrice * (1 - (l.discount ?? 0) / 100),
+    })) as never,
+  });
+
+  return getInvoice(ctx, created.id);
 }

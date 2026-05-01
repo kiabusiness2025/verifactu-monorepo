@@ -5,14 +5,14 @@
  * Requiere autenticación por cookie (dashboard).
  * Las API keys no pueden crear otras API keys (source !== 'api_key').
  */
-import { NextRequest, NextResponse } from 'next/server';
-import { buildV1Context } from '../_context';
+import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
+import { errorResponse, okResponse } from '@/lib/isaak-platform/api/response';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
 import { generateApiKey } from '@/lib/isaak-platform/auth/apiKeyAuth';
 import { PLATFORM_API_SCOPES } from '@/lib/isaak-platform/permissions/scopes';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
-import { okResponse, errorResponse } from '@/lib/isaak-platform/api/response';
-import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
 import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
+import { buildV1Context } from '../_context';
 
 const MAX_KEYS_PER_TENANT = 20;
 

@@ -4,16 +4,16 @@
  *
  * Scopes: isaak.invoices.read / isaak.invoices.write
  */
-import { NextRequest, NextResponse } from 'next/server';
-import { buildV1Context } from '../_context';
+import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
+import { handlePlatformError, okListResponse, okResponse } from '@/lib/isaak-platform/api/response';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
 import {
-  listInvoices,
   createInvoiceDraft,
+  listInvoices,
   type ListInvoicesOpts,
 } from '@/lib/isaak-platform/services/invoiceService';
-import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
-import { okListResponse, okResponse, handlePlatformError } from '@/lib/isaak-platform/api/response';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import { NextRequest, NextResponse } from 'next/server';
+import { buildV1Context } from '../_context';
 
 export const dynamic = 'force-dynamic';
 

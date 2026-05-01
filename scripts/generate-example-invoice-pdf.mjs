@@ -38,27 +38,27 @@ const EXAMPLE_INVOICE = {
   customerAddress: 'Paseo de la Castellana 123, 28046 Madrid',
 
   // Importes
-  amountNet: 1000.00,
-  amountTax: 210.00,
-  amountGross: 1210.00,
+  amountNet: 1000.0,
+  amountTax: 210.0,
+  amountGross: 1210.0,
 
   // Líneas
   lines: [
     {
       description: 'Servicio de asesoría fiscal — Mayo 2026',
       quantity: 1,
-      unitPrice: 500.00,
+      unitPrice: 500.0,
       taxRate: 0.21,
       discount: 0,
-      lineTotal: 500.00,
+      lineTotal: 500.0,
     },
     {
       description: 'Gestión contable mensual',
       quantity: 2,
-      unitPrice: 250.00,
+      unitPrice: 250.0,
       taxRate: 0.21,
       discount: 0,
-      lineTotal: 500.00,
+      lineTotal: 500.0,
     },
   ],
 
@@ -118,7 +118,12 @@ async function buildPdf(invoice) {
   const qrUrl = buildVeriFactuQrUrl(invoice);
   let qrBuffer = null;
   try {
-    qrBuffer = await QRCode.toBuffer(qrUrl, { type: 'png', width: 200, margin: 1, errorCorrectionLevel: 'M' });
+    qrBuffer = await QRCode.toBuffer(qrUrl, {
+      type: 'png',
+      width: 200,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    });
     console.log(`QR generado para: ${qrUrl}`);
   } catch (e) {
     console.warn('No se pudo generar el QR:', e.message);
@@ -142,7 +147,10 @@ async function buildPdf(invoice) {
     doc.restore();
 
     doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(22).text('FACTURA', MARGIN, 28);
-    doc.font('Helvetica').fontSize(11).text(`N.º ${invoice.number ?? invoice.id}`, MARGIN, 56);
+    doc
+      .font('Helvetica')
+      .fontSize(11)
+      .text(`N.º ${invoice.number ?? invoice.id}`, MARGIN, 56);
     doc.text(`Fecha: ${formatDate(invoice.issueDate)}`, MARGIN, 70);
 
     // Nombre de la empresa en cabecera derecha
@@ -224,15 +232,19 @@ async function buildPdf(invoice) {
 
     rowY += 4;
     doc.save();
-    doc.moveTo(MARGIN, rowY).lineTo(MARGIN + CONTENT_W, rowY).strokeColor(primary).lineWidth(0.5).stroke();
+    doc
+      .moveTo(MARGIN, rowY)
+      .lineTo(MARGIN + CONTENT_W, rowY)
+      .strokeColor(primary)
+      .lineWidth(0.5)
+      .stroke();
     doc.restore();
     rowY += 8;
 
     // 4. Totales
     const TOTALS_X = MARGIN + CONTENT_W - 220;
-    const taxPct = invoice.amountNet > 0
-      ? ((invoice.amountTax / invoice.amountNet) * 100).toFixed(0)
-      : '21';
+    const taxPct =
+      invoice.amountNet > 0 ? ((invoice.amountTax / invoice.amountNet) * 100).toFixed(0) : '21';
 
     doc.font('Helvetica').fontSize(10).fillColor(secondary);
     doc.text('Base imponible:', TOTALS_X, rowY, { width: 130 });
@@ -248,13 +260,20 @@ async function buildPdf(invoice) {
     doc.restore();
     doc.font('Helvetica-Bold').fontSize(11).fillColor('#FFFFFF');
     doc.text('TOTAL:', TOTALS_X, rowY + 3, { width: 130 });
-    doc.text(`${to2(invoice.amountGross)} €`, TOTALS_X + 130, rowY + 3, { width: 90, align: 'right' });
+    doc.text(`${to2(invoice.amountGross)} €`, TOTALS_X + 130, rowY + 3, {
+      width: 90,
+      align: 'right',
+    });
     rowY += 30;
 
     // 5. Notas
     if (invoice.notes) {
       doc.fillColor(primary).font('Helvetica-Bold').fontSize(9).text('Notas', MARGIN, rowY);
-      doc.fillColor(secondary).font('Helvetica').fontSize(9).text(invoice.notes, MARGIN, rowY + 12, { width: CONTENT_W });
+      doc
+        .fillColor(secondary)
+        .font('Helvetica')
+        .fontSize(9)
+        .text(invoice.notes, MARGIN, rowY + 12, { width: CONTENT_W });
       rowY += 30;
     }
 
@@ -264,7 +283,11 @@ async function buildPdf(invoice) {
     doc.save();
     doc.rect(MARGIN, rowY, CONTENT_W, 14).fill('#EEF2FF');
     doc.restore();
-    doc.fillColor(primary).font('Helvetica-Bold').fontSize(9).text('INFORMACIÓN VERIFACTU (RD 1007/2023)', MARGIN + 4, rowY + 3);
+    doc
+      .fillColor(primary)
+      .font('Helvetica-Bold')
+      .fontSize(9)
+      .text('INFORMACIÓN VERIFACTU (RD 1007/2023)', MARGIN + 4, rowY + 3);
     rowY += 18;
 
     doc.fillColor(secondary).font('Helvetica').fontSize(8);
@@ -281,8 +304,8 @@ async function buildPdf(invoice) {
         invoice.verifactuStatus === 'registered'
           ? 'Registrado en AEAT'
           : invoice.verifactuStatus === 'pending'
-          ? 'Pendiente de registro'
-          : invoice.verifactuStatus;
+            ? 'Pendiente de registro'
+            : invoice.verifactuStatus;
       doc.text(`Estado AEAT: ${estadoLabel}`, MARGIN, rowY);
       rowY += 12;
     }

@@ -4,12 +4,12 @@
  * Devuelve el contexto de la empresa activa del usuario autenticado.
  * Scope requerido: isaak.company.read
  */
+import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
+import { handlePlatformError, okResponse } from '@/lib/isaak-platform/api/response';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import { getCompanyContext } from '@/lib/isaak-platform/services/companyService';
 import { NextRequest, NextResponse } from 'next/server';
 import { buildV1Context } from '../../_context';
-import { getCompanyContext } from '@/lib/isaak-platform/services/companyService';
-import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
-import { okResponse, handlePlatformError } from '@/lib/isaak-platform/api/response';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
 
 export const dynamic = 'force-dynamic';
 

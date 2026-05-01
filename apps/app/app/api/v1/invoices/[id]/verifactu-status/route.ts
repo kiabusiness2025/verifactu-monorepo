@@ -4,12 +4,12 @@
  * Obtiene el estado actual de registro VeriFactu de una factura.
  * Scope: isaak.verifactu.validate
  */
+import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
+import { handlePlatformError, okResponse } from '@/lib/isaak-platform/api/response';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import { getVerifactuStatus } from '@/lib/isaak-platform/services/verifactuService';
 import { NextRequest, NextResponse } from 'next/server';
 import { buildV1Context } from '../../../_context';
-import { getVerifactuStatus } from '@/lib/isaak-platform/services/verifactuService';
-import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
-import { okResponse, handlePlatformError } from '@/lib/isaak-platform/api/response';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
 
 export const dynamic = 'force-dynamic';
 

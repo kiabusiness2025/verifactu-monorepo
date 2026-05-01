@@ -11,39 +11,39 @@
  *  - Bearer {JWT OAuth}                → scopes del token
  *  - Sin token                         → initialize + tools/list (público)
  */
-import { NextRequest, NextResponse } from 'next/server';
+import {
+  consumeConfirmationToken,
+  createConfirmationToken,
+} from '@/lib/isaak-platform/actions/confirmationTokens';
+import { ConfirmationRequiredError, MissingScopeError } from '@/lib/isaak-platform/api/errors';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import type { IsaakExecutionContext } from '@/lib/isaak-platform/context';
+import { ISAAK_MCP_SCOPES } from '@/lib/isaak-platform/permissions/scopes';
+import { proposeAction } from '@/lib/isaak-platform/services/actionService';
+import { getCompanyContext } from '@/lib/isaak-platform/services/companyService';
+import {
+  createInvoiceDraft,
+  getInvoice,
+  listInvoices,
+} from '@/lib/isaak-platform/services/invoiceService';
+import {
+  getVerifactuStatus,
+  submitInvoiceToAeat,
+  validateInvoice,
+} from '@/lib/isaak-platform/services/verifactuService';
 import {
   applyOpenAiCorsHeaders,
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
-  getTokenEndpoint,
   getRegistrationEndpoint,
+  getTokenEndpoint,
   getUserInfoEndpoint,
   verifyAccessToken,
 } from '@/lib/oauth/mcp';
-import { getCompanyContext } from '@/lib/isaak-platform/services/companyService';
-import {
-  listInvoices,
-  getInvoice,
-  createInvoiceDraft,
-} from '@/lib/isaak-platform/services/invoiceService';
-import {
-  validateInvoice,
-  getVerifactuStatus,
-  submitInvoiceToAeat,
-} from '@/lib/isaak-platform/services/verifactuService';
-import { proposeAction } from '@/lib/isaak-platform/services/actionService';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
-import {
-  createConfirmationToken,
-  consumeConfirmationToken,
-} from '@/lib/isaak-platform/actions/confirmationTokens';
-import { ConfirmationRequiredError, MissingScopeError } from '@/lib/isaak-platform/api/errors';
-import { ISAAK_MCP_SCOPES } from '@/lib/isaak-platform/permissions/scopes';
-import type { IsaakExecutionContext } from '@/lib/isaak-platform/context';
+import prisma from '@/lib/prisma';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
-import prisma from '@/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -681,7 +681,7 @@ async function callTool(
     case 'isaak_propose_action': {
       const action = await proposeAction(ctx, {
         type: String(args?.type ?? ''),
-        summary: String(args?.summary ?? ''),
+        reason: String(args?.summary ?? ''),
         payload: (args?.payload as Record<string, unknown>) ?? {},
       });
       return { proposed: true, action };

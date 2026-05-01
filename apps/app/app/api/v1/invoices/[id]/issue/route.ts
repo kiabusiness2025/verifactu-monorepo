@@ -10,18 +10,20 @@
  *
  * Scope: isaak.verifactu.submit
  */
-import { NextRequest, NextResponse } from 'next/server';
-import { buildV1Context } from '../../../_context';
-import { submitInvoiceToAeat } from '@/lib/isaak-platform/services/verifactuService';
-import { validateInvoice } from '@/lib/isaak-platform/services/verifactuService';
-import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
-import { okResponse, handlePlatformError } from '@/lib/isaak-platform/api/response';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
 import {
-  createConfirmationToken,
   consumeConfirmationToken,
+  createConfirmationToken,
 } from '@/lib/isaak-platform/actions/confirmationTokens';
 import { ConfirmationRequiredError } from '@/lib/isaak-platform/api/errors';
+import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
+import { handlePlatformError, okResponse } from '@/lib/isaak-platform/api/response';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import {
+  submitInvoiceToAeat,
+  validateInvoice,
+} from '@/lib/isaak-platform/services/verifactuService';
+import { NextRequest, NextResponse } from 'next/server';
+import { buildV1Context } from '../../../_context';
 
 export const dynamic = 'force-dynamic';
 

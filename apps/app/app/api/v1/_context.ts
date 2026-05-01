@@ -7,10 +7,10 @@
  *  2. Cookie __session                → Dashboard autenticado (Fase 2)
  */
 import { requireTenantContext } from '@/lib/api/tenantAuth';
-import type { IsaakExecutionContext } from '@/lib/isaak-platform/context';
 import { getOrCreateRequestId } from '@/lib/isaak-platform/api/middleware/requestId';
-import { ISAAK_MCP_SCOPES } from '@/lib/isaak-platform/permissions/scopes';
 import { isIsaakApiKey, validateApiKey } from '@/lib/isaak-platform/auth/apiKeyAuth';
+import type { IsaakExecutionContext } from '@/lib/isaak-platform/context';
+import { ISAAK_MCP_SCOPES } from '@/lib/isaak-platform/permissions/scopes';
 import type { NextRequest } from 'next/server';
 
 export type V1AuthResult =
@@ -36,7 +36,7 @@ export async function buildV1Context(req: NextRequest): Promise<V1AuthResult> {
   const auth = await requireTenantContext({ channelType: 'dashboard' });
 
   if ('error' in auth) {
-    return { error: auth.error, status: auth.status as 401 | 403 };
+    return { error: auth.error ?? 'Unauthorized', status: auth.status as 401 | 403 };
   }
 
   const ctx: IsaakExecutionContext = {

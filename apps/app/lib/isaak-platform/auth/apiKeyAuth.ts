@@ -9,11 +9,10 @@
  * - lastUsedAt se actualiza de forma async (no bloquea la request)
  * - La key completa solo existe en el momento de creación (no se almacena)
  */
-import crypto from 'crypto';
-import prisma from '@/lib/prisma';
 import type { IsaakExecutionContext } from '@/lib/isaak-platform/context';
 import { PLATFORM_API_SCOPES } from '@/lib/isaak-platform/permissions/scopes';
-import { RateLimitError } from '@/lib/isaak-platform/api/errors';
+import prisma from '@/lib/prisma';
+import crypto from 'crypto';
 
 // Prefijos de API key de Isaak (construidos para evitar falsos positivos de linters de Stripe)
 const KEY_PREFIX_BASE = 'isk_';

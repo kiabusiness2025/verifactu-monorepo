@@ -32,7 +32,7 @@ export async function logAuditEvent(entry: AuditEntry): Promise<void> {
         riskLevel: entry.riskLevel ?? null,
         confirmationRequired: entry.confirmationRequired ?? false,
         ip: entry.ip ?? null,
-        meta: (entry.meta ?? null) as object | null,
+        meta: (entry.meta ?? null) as never,
       },
     });
   } catch (err) {

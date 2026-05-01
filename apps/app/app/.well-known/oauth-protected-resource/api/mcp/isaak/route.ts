@@ -5,8 +5,8 @@
  * Permite a clientes MCP (Claude, ChatGPT, etc.) descubrir el servidor OAuth
  * y los scopes soportados por el Isaak MCP.
  */
-import { applyOpenAiCorsHeaders } from '@/lib/oauth/mcp';
 import { ISAAK_MCP_SCOPES } from '@/lib/isaak-platform/permissions/scopes';
+import { applyOpenAiCorsHeaders } from '@/lib/oauth/mcp';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';

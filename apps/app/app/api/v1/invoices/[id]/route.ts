@@ -3,12 +3,12 @@
  *
  * Scope: isaak.invoices.read
  */
+import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
+import { handlePlatformError, okResponse } from '@/lib/isaak-platform/api/response';
+import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
+import { getInvoice } from '@/lib/isaak-platform/services/invoiceService';
 import { NextRequest, NextResponse } from 'next/server';
 import { buildV1Context } from '../../_context';
-import { getInvoice } from '@/lib/isaak-platform/services/invoiceService';
-import { requireScope } from '@/lib/isaak-platform/api/middleware/requireScope';
-import { okResponse, handlePlatformError } from '@/lib/isaak-platform/api/response';
-import { logAuditEvent } from '@/lib/isaak-platform/audit/auditLogger';
 
 export const dynamic = 'force-dynamic';
 
