@@ -4,7 +4,9 @@
   FolderOpen,
   Home,
   Landmark,
+  LifeBuoy,
   Settings,
+  ShoppingBag,
   Sparkles,
   Users,
   type LucideIcon,
@@ -25,6 +27,8 @@ export const navItems: NavItem[] = [
   { label: 'Documentos', href: '/dashboard/documents', icon: FolderOpen },
   { label: 'Isaak AI', href: '/dashboard/isaak', icon: Sparkles },
   { label: 'Calendario', href: '/dashboard/calendar', icon: CalendarDays },
+  { label: 'Mis pedidos', href: '/dashboard/orders', icon: ShoppingBag },
+  { label: 'Soporte', href: '/dashboard/support', icon: LifeBuoy },
   { label: 'Configuración', href: '/dashboard/settings', icon: Settings },
   { label: 'Admin', href: '/dashboard/admin-dashboard', icon: Settings, roles: ['admin', 'owner'] },
   {
