@@ -10,6 +10,7 @@
  *  - Pie legal con texto de obligatoriedad VeriFactu
  */
 import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 
 // ---------------------------------------------------------------------------
 // Tipos de entrada
@@ -119,6 +120,38 @@ function formatDate(d: string | Date | null | undefined): string {
   return String(d).slice(0, 10);
 }
 
+/**
+ * Genera un Buffer PNG del QR VeriFactu.
+ * Si existe un QR ya generado (data URL), lo usa directamente.
+ * Si no, construye la URL de verificación AEAT y genera el QR.
+ */
+async function resolveQrBuffer(invoice: InvoicePdfInput): Promise<Buffer | null> {
+  // 1. Si viene QR pre-generado (data URL), usarlo
+  const fromData = parseDataUrl(invoice.verifactuQr);
+  if (fromData) return fromData;
+
+  // 2. Construir URL de verificación AEAT
+  // Formato oficial: https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR
+  const nif = invoice.issuerNif ?? '';
+  const serie = invoice.number ?? invoice.id;
+  const fecha = formatDate(invoice.issueDate).split('-').reverse().join('-'); // DD-MM-YYYY
+  const importe = to2(invoice.amountGross);
+
+  const url = `https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?nif=${encodeURIComponent(nif)}&numserie=${encodeURIComponent(serie)}&fecha=${encodeURIComponent(fecha)}&importe=${encodeURIComponent(importe)}`;
+
+  try {
+    const pngBuffer = await QRCode.toBuffer(url, {
+      type: 'png',
+      width: 200,
+      margin: 1,
+      errorCorrectionLevel: 'M',
+    });
+    return pngBuffer;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Constructor principal
 // ---------------------------------------------------------------------------
@@ -127,7 +160,10 @@ export async function buildInvoicePdfBuffer(invoice: InvoicePdfInput): Promise<B
   const branding = invoice.branding ?? {};
   const primary = normalizeHex(branding.primaryColor, '#2361D8');
   const secondary = normalizeHex(branding.secondaryColor, '#0F172A');
-  const logoBuffer = await loadLogoBuffer(branding.logoUrl);
+  const [logoBuffer, qrBuffer] = await Promise.all([
+    loadLogoBuffer(branding.logoUrl),
+    resolveQrBuffer(invoice),
+  ]);
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
@@ -326,7 +362,6 @@ export async function buildInvoicePdfBuffer(invoice: InvoicePdfInput): Promise<B
     }
 
     // QR VeriFactu (esquina inferior derecha de la sección)
-    const qrBuffer = parseDataUrl(invoice.verifactuQr);
     if (qrBuffer) {
       const qrX = MARGIN + CONTENT_W - 120;
       const qrY = rowY - (invoice.verifactuHash ? 24 : 12);
@@ -338,7 +373,7 @@ export async function buildInvoicePdfBuffer(invoice: InvoicePdfInput): Promise<B
           .fontSize(7)
           .text('Verificar en AEAT', qrX, qrY + 102, { width: 100, align: 'center' });
       } catch {
-        // QR no válido — continuar
+        // imagen QR no válida — continuar
       }
       rowY = Math.max(rowY, qrY + 116);
     }

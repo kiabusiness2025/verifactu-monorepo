@@ -9,6 +9,7 @@
  */
 
 import PDFDocument from 'pdfkit';
+import QRCode from 'qrcode';
 import { writeFileSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -100,12 +101,30 @@ function formatDate(d) {
 // Generación del PDF
 // ---------------------------------------------------------------------------
 
-function buildPdf(invoice) {
-  return new Promise((resolve, reject) => {
-    const branding = invoice.branding ?? {};
-    const primary = normalizeHex(branding.primaryColor, '#2361D8');
-    const secondary = normalizeHex(branding.secondaryColor, '#0F172A');
+function buildVeriFactuQrUrl(invoice) {
+  const nif = invoice.issuerNif ?? '';
+  const serie = invoice.number ?? invoice.id;
+  const fecha = formatDate(invoice.issueDate).split('-').reverse().join('-'); // DD-MM-YYYY
+  const importe = to2(invoice.amountGross);
+  return `https://www2.agenciatributaria.gob.es/wlpl/TIKE-CONT/ValidarQR?nif=${encodeURIComponent(nif)}&numserie=${encodeURIComponent(serie)}&fecha=${encodeURIComponent(fecha)}&importe=${encodeURIComponent(importe)}`;
+}
 
+async function buildPdf(invoice) {
+  const branding = invoice.branding ?? {};
+  const primary = normalizeHex(branding.primaryColor, '#2361D8');
+  const secondary = normalizeHex(branding.secondaryColor, '#0F172A');
+
+  // Generar QR VeriFactu en PNG
+  const qrUrl = buildVeriFactuQrUrl(invoice);
+  let qrBuffer = null;
+  try {
+    qrBuffer = await QRCode.toBuffer(qrUrl, { type: 'png', width: 200, margin: 1, errorCorrectionLevel: 'M' });
+    console.log(`QR generado para: ${qrUrl}`);
+  } catch (e) {
+    console.warn('No se pudo generar el QR:', e.message);
+  }
+
+  return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const chunks = [];
 
@@ -268,12 +287,29 @@ function buildPdf(invoice) {
       rowY += 12;
     }
 
+    // QR VeriFactu
+    if (qrBuffer) {
+      const qrX = MARGIN + CONTENT_W - 120;
+      const qrBaseY = rowY - 24;
+      try {
+        doc.image(qrBuffer, qrX, qrBaseY, { width: 100, height: 100 });
+        doc
+          .fillColor(secondary)
+          .font('Helvetica')
+          .fontSize(7)
+          .text('Verificar en AEAT', qrX, qrBaseY + 102, { width: 100, align: 'center' });
+        rowY = Math.max(rowY, qrBaseY + 116);
+      } catch (e) {
+        console.warn('No se pudo insertar QR en PDF:', e.message);
+      }
+    }
+
     doc
       .fillColor('#6B7280')
       .fontSize(7)
       .text(
-        'Nota: Los datos VeriFactu de esta factura de ejemplo son simulados. ' +
-          'En facturas reales, la huella registral y el QR son generados y verificables en la sede electrónica de la AEAT.',
+        'Nota: El QR incluido enlaza a la verificación oficial AEAT (RD 1007/2023). ' +
+          'La huella registral de este ejemplo es simulada — en facturas reales es generada y verificable en la sede electrónica de la AEAT.',
         MARGIN,
         rowY,
         { width: CONTENT_W }
