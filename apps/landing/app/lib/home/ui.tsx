@@ -826,6 +826,7 @@ export function Footer() {
               { label: 'Inversores', href: '/inversores' },
               { label: 'Partners', href: '/inversores#buscamos' },
               { label: 'Contacto', href: '/inversores#contacto' },
+              { label: 'Developers', href: '/developers' },
             ]}
           />
           <FooterCol

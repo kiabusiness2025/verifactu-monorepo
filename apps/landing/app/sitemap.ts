@@ -66,6 +66,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
       priority: 0.75,
     },
+    {
+      url: `${baseUrl}/developers`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly' as const,
+      priority: 0.8,
+    },
     // VeriFactu section
     {
       url: `${baseUrl}/planes`,
