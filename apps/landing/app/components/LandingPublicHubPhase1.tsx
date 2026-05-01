@@ -16,13 +16,11 @@ const HOLDed_CONNECTORS_URL = 'https://holded.verifactu.business/conectores';
 const ISAAK_URL = 'https://isaak.verifactu.business';
 
 const navLinks = [
-  { label: 'VeriFactu', href: '/verifactu/que-es' },
-  { label: 'Isaak', href: '/que-es-isaak' },
-  { label: 'Modo Excel', href: '/modo-excel' },
-  { label: 'Conectores', href: '/conectores' },
-  { label: 'Asesorias', href: '/asesorias' },
-  { label: 'Precios / Demo', href: '/demo' },
-  { label: 'Contacto', href: '/recursos/contacto' },
+  { label: 'Servicios', href: '/servicios' },
+  { label: 'Integraciones', href: '/integraciones' },
+  { label: 'Suscripciones', href: '/suscripciones' },
+  { label: 'Developers', href: '/developers' },
+  { label: 'Contacto', href: '/contacto' },
 ];
 
 const pillars = [
