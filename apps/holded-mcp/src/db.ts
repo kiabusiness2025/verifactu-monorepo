@@ -23,7 +23,7 @@ export function getDbPool() {
       ssl: shouldUseSsl(config.DATABASE_URL) ? { rejectUnauthorized: false } : undefined,
     });
 
-    pool.on('error', (error) => {
+    pool.on('error', (error: Error) => {
       logger.error('PostgreSQL pool error:', error);
     });
   }
