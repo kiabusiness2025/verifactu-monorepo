@@ -12,6 +12,7 @@ const log = pino();
 const WSDL_FILE = process.env.AEAT_WSDL_FILE || '/var/secrets/aeat_wsdl/wsdl_url.txt';
 const CERT_PATH = process.env.AEAT_CERT_PATH || '/var/secrets/aeat_cert/cert.p12';
 const PASS_FILE = process.env.AEAT_CERT_PASS_PATH || '/var/secrets/aeat_pass/cert_pass.txt';
+const SOAP_ENDPOINT = (process.env.AEAT_SOAP_ENDPOINT || '').trim();
 
 let client = null;
 
@@ -49,6 +50,9 @@ async function getClient() {
     };
 
     client = await soap.createClientAsync(wsdlSource, soapOptions);
+    if (SOAP_ENDPOINT) {
+      client.setEndpoint(SOAP_ENDPOINT);
+    }
     return client;
   } catch (error) {
     log.error('Error creating SOAP client:', error);
