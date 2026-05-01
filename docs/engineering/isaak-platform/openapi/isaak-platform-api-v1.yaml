@@ -1,0 +1,1028 @@
+openapi: 3.1.0
+info:
+  title: Isaak Platform API
+  version: '1.0'
+  description: |
+    API REST de la plataforma Isaak para gestión fiscal, facturas y VeriFactu.
+
+    ## Autenticación
+
+    - **Cookie** (Isaak UI): `__session` JWT firmado con SESSION_SECRET
+    - **Bearer** (partners, Fase 4): `Authorization: Bearer isk_live_<token>`
+
+    ## Formato de respuesta
+
+    Todas las respuestas usan el envelope estándar:
+    ```json
+    { "ok": true, "data": {}, "meta": { "requestId": "req_...", "tenantId": "uuid", "timestamp": "..." } }
+    ```
+
+    ## Acciones irreversibles
+
+    Los endpoints que interactúan con AEAT requieren un `confirmationToken` de dos pasos.
+    Llamar sin token devuelve `202 confirmation_required` con un preview y un token de 5 min.
+  contact:
+    name: Isaak Platform Engineering
+    url: https://isaak.verifactu.business
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://isaak.verifactu.business/api/v1
+    description: Producción
+  - url: https://pre.isaak.verifactu.business/api/v1
+    description: Pre-producción
+
+security:
+  - cookieAuth: []
+  - bearerAuth: []
+
+tags:
+  - name: Companies
+    description: Contexto de empresa del tenant
+  - name: Invoices
+    description: Gestión de facturas y VeriFactu
+  - name: VeriFactu
+    description: Historial de eventos AEAT
+  - name: Actions
+    description: Acciones propuestas y aprobación
+  - name: Audit
+    description: Registro de auditoría
+
+paths:
+  # ─── COMPANIES ──────────────────────────────────────────────
+
+  /companies/current:
+    get:
+      operationId: getCompanyCurrent
+      summary: Obtener empresa activa
+      tags: [Companies]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [company.read]
+      responses:
+        '200':
+          description: Datos de la empresa
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+              example:
+                ok: true
+                data:
+                  id: '550e8400-e29b-41d4-a716-446655440000'
+                  name: 'Empresa SL'
+                  nif: 'B12345678'
+                  fiscalAddress:
+                    street: 'Calle Mayor 1'
+                    city: 'Madrid'
+                    postalCode: '28001'
+                    country: 'ES'
+                  vatRegime: 'general'
+                  verifactuEnabled: true
+                  plan: 'pro'
+                  createdAt: '2025-01-15T10:00:00Z'
+                meta:
+                  requestId: 'req_01HXYZ'
+                  tenantId: '550e8400-e29b-41d4-a716-446655440000'
+                  environment: 'live'
+                  timestamp: '2026-05-01T12:00:00Z'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── INVOICES ───────────────────────────────────────────────
+
+  /invoices:
+    get:
+      operationId: listInvoices
+      summary: Listar facturas
+      tags: [Invoices]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, validated, submitted, accepted, rejected]
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Fecha de factura ≥ (YYYY-MM-DD)
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Fecha de factura ≤ (YYYY-MM-DD)
+        - name: customer
+          in: query
+          schema:
+            type: string
+          description: Búsqueda por nombre o NIF de cliente
+      responses:
+        '200':
+          description: Lista de facturas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InvoiceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      operationId: createInvoiceDraft
+      summary: Crear borrador de factura
+      tags: [Invoices]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceRequest'
+      responses:
+        '201':
+          description: Borrador creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /invoices/{id}:
+    get:
+      operationId: getInvoice
+      summary: Obtener detalle de factura
+      tags: [Invoices]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Detalle de la factura
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices/{id}/validate:
+    post:
+      operationId: validateInvoice
+      summary: Validar factura (sin enviar a AEAT)
+      tags: [Invoices]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Resultado de validación
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationResultResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices/{id}/issue:
+    post:
+      operationId: issueInvoice
+      summary: Emitir factura a AEAT (VeriFactu)
+      description: |
+        **Acción irreversible.** Envía la factura a la AEAT vía SOAP VeriFactu.
+
+        **Flujo de dos pasos:**
+        1. Llamar sin `confirmationToken` → recibe `202` con token y preview
+        2. Confirmar con el usuario humano
+        3. Llamar con `{ "confirmationToken": "ctok_..." }` → factura enviada
+      tags: [Invoices]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.issue]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirmationToken:
+                  type: string
+                  description: Token de confirmación obtenido en el paso 1
+      responses:
+        '200':
+          description: Factura enviada a AEAT correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueInvoiceResponse'
+        '202':
+          description: Confirmación requerida — contiene token y preview
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmationRequiredResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Factura ya enviada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '502':
+          description: Error en comunicación con AEAT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /invoices/{id}/pdf:
+    get:
+      operationId: getInvoicePdf
+      summary: Descargar PDF de la factura
+      tags: [Invoices]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: PDF de la factura
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices/{id}/verifactu-status:
+    get:
+      operationId: getVerifactuStatus
+      summary: Estado VeriFactu de la factura en AEAT
+      tags: [Invoices]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Estado actual en AEAT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifactuStatusResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── VERIFACTU ──────────────────────────────────────────────
+
+  /verifactu/events:
+    get:
+      operationId: listVerifactuEvents
+      summary: Historial de eventos AEAT del tenant
+      tags: [VeriFactu]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [submitted, accepted, rejected]
+      responses:
+        '200':
+          description: Lista de eventos AEAT
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ─── ACTIONS ────────────────────────────────────────────────
+
+  /actions:
+    get:
+      operationId: listActions
+      summary: Listar acciones
+      tags: [Actions]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [actions.read]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, executed, cancelled, expired]
+      responses:
+        '200':
+          description: Lista de acciones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      operationId: proposeAction
+      summary: Proponer una acción
+      tags: [Actions]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [actions.propose]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProposeActionRequest'
+      responses:
+        '201':
+          description: Acción propuesta
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /actions/{id}:
+    get:
+      operationId: getAction
+      summary: Detalle de acción
+      tags: [Actions]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [actions.read]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Detalle de la acción
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /actions/{id}/approve:
+    post:
+      operationId: approveAction
+      summary: Aprobar acción (requiere confirmationToken)
+      tags: [Actions]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [actions.execute]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                confirmationToken:
+                  type: string
+      responses:
+        '200':
+          description: Acción aprobada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '202':
+          $ref: '#/components/responses/ConfirmationRequired'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /actions/{id}/execute:
+    post:
+      operationId: executeAction
+      summary: Ejecutar acción aprobada (requiere confirmationToken)
+      tags: [Actions]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [actions.execute]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmationToken]
+              properties:
+                confirmationToken:
+                  type: string
+      responses:
+        '200':
+          description: Acción ejecutada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /actions/{id}/cancel:
+    post:
+      operationId: cancelAction
+      summary: Cancelar acción pendiente
+      tags: [Actions]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [actions.propose]
+      parameters:
+        - $ref: '#/components/parameters/IdParam'
+      responses:
+        '200':
+          description: Acción cancelada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ─── AUDIT ──────────────────────────────────────────────────
+
+  /audit/events:
+    get:
+      operationId: listAuditEvents
+      summary: Historial de audit log del tenant
+      tags: [Audit]
+      security:
+        - cookieAuth: []
+        - bearerAuth: [audit.read]
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [api, mcp, dashboard, chatgpt, claude]
+        - name: riskLevel
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high]
+      responses:
+        '200':
+          description: Lista de eventos de auditoría
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditEventListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+# ─── COMPONENTS ─────────────────────────────────────────────────────────────
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: __session
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 'API key con formato: isk_live_<32-bytes-base64url>'
+
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Identificador del recurso
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+
+  schemas:
+    Meta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId:
+          type: string
+          example: 'req_01HXYZ'
+        tenantId:
+          type: string
+          format: uuid
+        environment:
+          type: string
+          enum: [live, test]
+        timestamp:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+
+    OkResponse:
+      type: object
+      required: [ok, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    ErrorDetail:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          example: 'permission_denied'
+        message:
+          type: string
+          example: 'No tienes permiso para emitir facturas.'
+        stage:
+          type: string
+          enum: [authentication, authorization, validation, pre_execution, execution]
+        reason:
+          type: string
+
+    ErrorResponse:
+      type: object
+      required: [ok, error, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          $ref: '#/components/schemas/ErrorDetail'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    ConfirmationRequiredResponse:
+      type: object
+      required: [ok, error, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          required: [code, message, confirmationToken, expiresAt]
+          properties:
+            code:
+              type: string
+              enum: [confirmation_required]
+            message:
+              type: string
+            stage:
+              type: string
+              enum: [pre_execution]
+            confirmationToken:
+              type: string
+              example: 'ctok_01HXYZ'
+            expiresAt:
+              type: string
+              format: date-time
+            preview:
+              type: object
+              additionalProperties: true
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    InvoiceItem:
+      type: object
+      required: [description, quantity, unitPrice, taxRate]
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+          minimum: 0
+        unitPrice:
+          type: number
+        taxRate:
+          type: number
+          enum: [0, 4, 10, 21]
+        taxCategory:
+          type: string
+          enum: [S, E, Z, O]
+          default: S
+
+    CreateInvoiceRequest:
+      type: object
+      required: [customer, issueDate, items]
+      properties:
+        customer:
+          type: object
+          required: [name, nif]
+          properties:
+            name:
+              type: string
+            nif:
+              type: string
+            address:
+              type: string
+        issueDate:
+          type: string
+          format: date
+        dueDate:
+          type: string
+          format: date
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvoiceItem'
+          minItems: 1
+        notes:
+          type: string
+
+    InvoiceListResponse:
+      type: object
+      required: [ok, data, pagination, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              number:
+                type: string
+              status:
+                type: string
+                enum: [draft, validated, submitted, accepted, rejected]
+              customer:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  nif:
+                    type: string
+              issueDate:
+                type: string
+                format: date
+              dueDate:
+                type: string
+                format: date
+              total:
+                type: number
+              currency:
+                type: string
+                default: EUR
+              verifactu:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  submittedAt:
+                    type: string
+                    format: date-time
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    ValidationResultResponse:
+      type: object
+      required: [ok, data, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            valid:
+              type: boolean
+            warnings:
+              type: array
+              items:
+                type: string
+            errors:
+              type: array
+              items:
+                type: string
+            readyToIssue:
+              type: boolean
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    IssueInvoiceResponse:
+      type: object
+      required: [ok, data, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            invoiceId:
+              type: string
+            verifactuStatus:
+              type: string
+              enum: [accepted, rejected, pending]
+            verifactuHash:
+              type: string
+            verifactuQr:
+              type: string
+              format: uri
+            aeatResponse:
+              type: object
+              properties:
+                codigoEstado:
+                  type: string
+                descripcionEstado:
+                  type: string
+            submittedAt:
+              type: string
+              format: date-time
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    VerifactuStatusResponse:
+      type: object
+      required: [ok, data, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            invoiceId:
+              type: string
+            status:
+              type: string
+              enum: [draft, validated, submitted, accepted, rejected]
+            hash:
+              type: string
+            qrUrl:
+              type: string
+              format: uri
+            submittedAt:
+              type: string
+              format: date-time
+            aeatEvents:
+              type: array
+              items:
+                type: object
+                properties:
+                  timestamp:
+                    type: string
+                    format: date-time
+                  code:
+                    type: string
+                  description:
+                    type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    ProposeActionRequest:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          enum: [issue_invoice, send_reminder, update_customer]
+        payload:
+          type: object
+          additionalProperties: true
+        reason:
+          type: string
+        expiresInSeconds:
+          type: integer
+          minimum: 60
+          maximum: 86400
+          default: 3600
+
+    AuditEventListResponse:
+      type: object
+      required: [ok, data, pagination, meta]
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              requestId:
+                type: string
+              channel:
+                type: string
+                enum: [api, mcp, dashboard, chatgpt, claude]
+              method:
+                type: string
+              endpoint:
+                type: string
+              toolOrAction:
+                type: string
+              status:
+                type: integer
+              durationMs:
+                type: integer
+              riskLevel:
+                type: string
+                enum: [low, medium, high]
+              confirmationRequired:
+                type: boolean
+              createdAt:
+                type: string
+                format: date-time
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+  responses:
+    Unauthorized:
+      description: Sin autenticación válida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error:
+              code: unauthorized
+              message: 'Autenticación requerida.'
+              stage: authentication
+            meta:
+              requestId: 'req_01HXYZ'
+              timestamp: '2026-05-01T12:00:00Z'
+
+    Forbidden:
+      description: Autenticado pero sin permiso o scope
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error:
+              code: missing_scope
+              message: "El token no tiene el scope 'invoices.write'."
+              stage: authorization
+              reason: missing_scope
+            meta:
+              requestId: 'req_01HXYZ'
+              timestamp: '2026-05-01T12:00:00Z'
+
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error:
+              code: not_found
+              message: 'Factura no encontrada.'
+              stage: execution
+            meta:
+              requestId: 'req_01HXYZ'
+              timestamp: '2026-05-01T12:00:00Z'
+
+    ValidationError:
+      description: Campos inválidos en el body
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            ok: false
+            error:
+              code: validation_error
+              message: 'El NIF del cliente no tiene un formato válido.'
+              stage: validation
+            meta:
+              requestId: 'req_01HXYZ'
+              timestamp: '2026-05-01T12:00:00Z'
+
+    ConfirmationRequired:
+      description: Confirmación requerida antes de ejecutar
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ConfirmationRequiredResponse'
