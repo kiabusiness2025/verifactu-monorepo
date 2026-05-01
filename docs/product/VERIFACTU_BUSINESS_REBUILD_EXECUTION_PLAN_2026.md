@@ -157,21 +157,17 @@ Nothing should be physically removed until all gates below are true.
 ## 8. Recommended Delivery Order
 
 1. `packages/db` schema extension and canonical billing/provisioning contracts. ✅ DONE
-2. `apps/landing` public IA rebuild and redirect map. ✅ DONE (Paso 2)
+2. `apps/landing` public IA rebuild and redirect map. ✅ DONE (Paso 2 — rutas canónicas)
 3. `apps/landing/app/api` catalog, checkout and onboarding-start refactor. ✅ DONE (Paso 3)
 4. `apps/app/app/api` orders, subscriptions and support endpoints. ✅ DONE (Paso 4)
-   - Dashboard pages: `/dashboard/orders`, `/dashboard/orders/[id]`, `/dashboard/support`
-   - Nav updated: Mis pedidos + Soporte entries added
-   - Isaak AI nav item → opens IsaakSmartFloating sidebar (enabled: `enableIsaak = !minimalAdminMode`)
 5. `apps/admin` orders, fulfillment and catalog queues. ✅ DONE (Paso 5)
-   - Orders queue: `/admin/orders` list + filter by status + inline status updater + detail placeholder
-   - Fulfillment queue: `/admin/fulfillment` case management + task assignment + priority tracking
-   - Catalog ops: `/admin/catalog` CRUD items + category filtering + featured toggle
-   - APIs: GET/PATCH /api/admin/{orders,fulfillment,catalog}
-   - Nav reorganized: Operaciones (Pedidos/Fulfillment), Crecimiento (Catálogo/Marketing/Métricas)
-6. Shared package refinements and WhatsApp adapter. ⏳
-7. Claims review queue and admin support routing. ⏳
-8. Legacy route retirement and company-centric cleanup. ⏳
+6. **Landing public architecture phase 1, investor page, corporate email system.** ✅ DONE (Fase PublicArch-1)
+7. **App real billing data integration + Isaak AI platform enablement.** ✅ DONE (Fase App-F3-A)
+8. **Public MCP spec + API v1 OpenAPI contracts (developer docs).** ✅ DONE (Fase DevDocs)
+9. **PDF QR VeriFactu generation + Fase 5 public developer portal.** ✅ DONE (Fase PDF+DevPortal)
+10. Shared package refinements and WhatsApp adapter. ⏳
+11. Claims review queue and admin support routing. ⏳
+12. Legacy route retirement and company-centric cleanup. ⏳
 
 ## 9. Delivery Notes
 
@@ -259,12 +255,257 @@ Response: { ok, message, item: { id, name, slug, categorySlug } }
 - Tailwind CSS + Lucide icons (Package, Zap, ShoppingBag)
 - `requireAdminContext` for auth guard
 
-## 10. Practical Summary
+## 10. Extended Phases: Landing Public Ecosystem + App Integration
 
-The rebuild should be run as a controlled migration, not as a blind redesign.
+### Fase PublicArch-1: Landing Public Architecture Phase 1 + Investor Page (May 2026)
 
-- reuse the strong pieces immediately
-- freeze valuable dashboard depth for later phases
-- redirect and retire only when the new route or backend contract already exists
+**Scope:** Build public-facing marketing architecture, investor page, and corporate email system.
 
-That keeps the product additive instead of destructive, and prevents the landing rebuild from breaking the real platform value already present in the repo.
+**Deliverables:**
+
+1. **Landing Public Hub Phase 1 (`LandingPublicHubPhase1.tsx`)**
+   - Central navigation component for landing website
+   - Routes: Servicios, Integraciones, Suscripciones, Developers, Contacto
+   - Consolidated navigation (no more fragmented product trees)
+
+2. **New Landing Route Family**
+   - `/asesorias` — consulting services marketplace
+   - `/conectores` — integrations catalog hub
+   - `/modo-excel` — Excel-native mode for non-technical users
+   - `/modos` — collection of operational modes
+
+3. **Investor Teaser Page (`/inversores`)**
+   - `apps/landing/app/inversores/page.tsx`: 9-section investor acquisition page
+     - Hero · Oportunidad · Tesis · Ecosistema · Tracción · Modelo · Mercado · Buscamos · Contacto
+   - `apps/landing/app/inversores/InvestorContactForm.tsx`: Client-side contact form for investor inquiries
+   - Disclaimer footer (investor risk disclosure)
+   - Footer link added: Empresa → Inversores
+
+4. **Corporate Email System (Branded Variants)**
+   - `apps/landing/app/lib/emailTemplates.ts`: Shared branded email module
+     - 3 variants: comercial | inversores | soporte (badge/color theming)
+     - Export: `renderCorporateBrandedEmail()`, `renderCorporatePlainTextEmail()`
+   - `apps/landing/app/lib/leadIntake.ts`: Lead-aware, branded HTML+text routing
+     - Configurable reply_to via `LANDING_REPLY_TO_EMAIL` env var
+   - `/api/support-ticket/route.ts`: Branded soporte template, configurable reply-to
+
+5. **Holded Connector Public Hub**
+   - Connector landing pages (ConnectorLandingClient, ConnectorSupportPage)
+   - `/conectores` route with subroutes: docs, privacy, soporte, sitemap
+   - HoldedSiteChrome + layout updated for public hub
+
+6. **Isaak Orchestrator Public Hub**
+   - IsaakPublicPhase1Landing.tsx orchestrator page
+   - Routes: `/asesorias`, `/conectores`, `/modos` with sitemaps
+   - IsaakSiteChrome + layout updated
+
+**Impact:** Marketing top-of-funnel now supports three entry paths: services marketplace, integrations catalog, investor outreach. Branded email creates consistent corporate presence across lead capture.
+
+---
+
+### Fase App-F3-A: App Real Billing Data Integration + Isaak Platform Enablement (May 2026)
+
+**Scope:** Replace hardcoded mock billing with real TenantSubscription data. Enable Isaak AI for all dashboard surfaces.
+
+**Deliverables:**
+
+1. **Real Billing Data in Settings**
+   - `apps/app/app/lib/settings.ts`: `loadBillingData()` function
+     - Loads TenantSubscription for tenant (copies isaak/lib/settings pattern)
+   - `apps/app/app/api/settings/billing/route.ts`: GET endpoint (query param: `tenantId`)
+     - Returns SettingsBillingData: plan name, trial/renewal dates, payment method, invoices
+   - `apps/app/app/dashboard/settings/page.tsx`: Real subscription display
+     - Replaces mock (Plan Profesional 99€, Mastercard 4242)
+     - Shows actual plan, dates, payment method from database
+
+2. **Isaak AI Platform Enablement**
+   - `apps/app/components/layout/Sidebar.tsx`: Support action items
+     - Items with `action === 'openIsaak'` render as buttons (not links)
+     - onClick triggers `openDrawer()` from useIsaakUI
+   - `apps/app/config/nav.ts`: Add `action?: 'openIsaak'` to NavItem type
+     - Isaak AI nav item now carries `action: 'openIsaak'` instead of `/dashboard/isaak`
+   - `apps/app/app/dashboard/DashboardClientLayout.tsx`: Enable Isaak on all non-admin routes
+     - `enableIsaak = !minimalAdminMode` (was false)
+     - Activates: IsaakSmartFloating, IsaakDrawer, IsaakProactiveBubbles, IsaakDeadlineNotifications
+     - Tenant workspace now has AI co-pilot throughout entire dashboard
+
+**Impact:** Panel avanzado (apps/app) now displays real billing state, increasing credibility. Isaak becomes ambient AI assistant for all tenant operators (not just Isaak app users). Subscription transparency enables upsell/downgrade flows.
+
+---
+
+### Fase DevDocs: Canonical MCP Server Spec + API v1 OpenAPI Contract (May 2026)
+
+**Scope:** Document the Isaak Platform as public developer surface with MCP and REST API contracts.
+
+**Deliverables:**
+
+1. **`docs/isaak/ISAAK_MCP_SERVER_SPEC.md`** — Canonical MCP Server Specification
+   - Protocol: JSON-RPC 2.0 / MCP 2024-11-05
+   - Endpoint: POST `/api/mcp/isaak` in apps/app
+   - Authentication: OAuth2 PKCE | shared secret | anonymous (initialize + tools/list)
+   - 9 scopes fully documented (company_read, invoices_write, invoices_issue, etc.)
+   - All methods: initialize, tools/list, tools/call with example requests
+   - 9 tools with scope, risk level, requires_confirmation flag
+   - Two-step confirmation flow for `isaak_issue_verifactu_invoice` (irreversible action)
+   - Claude Desktop config JSON (OAuth + shared secret)
+   - JSON-RPC error codes table
+   - Source file references
+
+2. **`docs/isaak/ISAAK_API_V1_OPENAPI.yaml`** — Public REST API Contract
+   - OpenAPI 3.1 specification
+   - Base URL: `https://app.verifactu.business/api/v1`
+   - 10 endpoints fully specified:
+     - `GET /companies/current` — current company context
+     - `GET /invoices`, `POST /invoices` — list and create invoices
+     - `GET /invoices/{id}` — retrieve single invoice
+     - `POST /invoices/{id}/validate` — validation endpoint
+     - `POST /invoices/{id}/issue` — two-step issuance (202 → 200)
+     - `GET /invoices/{id}/verifactu-status` — VeriFactu validation status
+     - `GET /invoices/{id}/pdf` — PDF download
+     - `GET /audit/events` — audit log
+     - `GET /keys`, `POST /keys`, `DELETE /keys/{id}` — API key management
+   - Strict schemas: all request/response bodies with types
+   - SecuritySchemes: BearerApiKey + SessionCookie
+   - Tags: company, invoices, verifactu, audit, keys
+
+**Impact:** Developers now have canonical reference for integrating with Isaak Platform. MCP enables Claude/AI integrations natively. REST API unifies programmatic access with clear versioning and security model.
+
+---
+
+### Fase PDF+DevPortal: PDF QR VeriFactu Generation + Public Developer Portal (May 2026)
+
+**Scope:** Add automatic AEAT verification QR codes to invoices. Launch public developer portal with quickstart + endpoint table.
+
+**Deliverables:**
+
+1. **PDF QR VeriFactu Auto-Generation**
+   - `apps/app/lib/isaak-platform/pdf/invoicePdfBuilder.ts`: QR generation logic
+     - If invoice has `verifactuQr` (data URL): use it directly
+     - If not: build AEAT verification URL and generate QR with qrcode library
+     - Format: `/ValidarQR?nif=...&numserie=...&fecha=DD-MM-YYYY&importe=...`
+     - QR rendered 100×100px bottom-right of VeriFactu section
+     - Label: "Verificar en AEAT"
+     - QR + logo resolved in parallel (Promise.all) before PDF stream
+   - Dependencies: `qrcode` ^1.5.4, `@types/qrcode` ^1.5.6
+   - `scripts/generate-example-invoice-pdf.mjs`: Standalone script uses same QR logic
+   - Example: `docs/examples/factura-ejemplo-verifactu-v2.pdf` with live QR
+
+2. **Public Developer Portal (`/developers`)**
+   - `apps/landing/app/developers/page.tsx`: Public developer hub
+     - **Hero:** Isaak Platform API · Beta
+     - **Auth section:** Bearer tokens (live/test), two-step confirmation for AEAT
+     - **Quickstart:** curl examples (list, create draft, issue)
+     - **Endpoints table:** 10 endpoints with method, path, description, scope
+     - **MCP section:** config JSON + 9 available tools
+     - **CTA:** Create account / Talk to team
+   - Footer link added: Empresa → Developers
+   - Sitemap entry: `/developers` (priority 0.8)
+
+**Impact:** End users can now verify invoices via AEAT QR code in PDF. Developers get low-friction entry point with examples and specs. QR generation is transparent—no user action required.
+
+---
+
+### Paso 2 Extended: Landing Canonical Routes + Legacy Redirects (May 2026)
+
+**Scope:** Establish canonical route tree. Redirect all legacy marketing URLs.
+
+**Deliverables:**
+
+1. **Canonical Route Family**
+   - `/servicios` — VeriFactu, Isaak, Modo Excel, Migraciones, Asesorías
+   - `/integraciones` — Holded, Isaak nativo, API/MCP, WhatsApp
+   - `/suscripciones` — Plans comparison table (Básico 19€, Pyme 39€, Empresa 69€, Pro 99€)
+   - `/contacto` — redirect to `/recursos/contacto` (unified flow pending)
+   - `/acceder` — canonical login entry point (redirect from `/auth/login`)
+
+2. **Legacy Redirect Map**
+   - `/planes` → `/suscripciones`
+   - `/producto/plataforma` → `/`
+   - `/producto/resumen` → `/`
+   - `/recursos/contacto` → `/contacto`
+   - `/holded/privacy` → `/legal/privacidad`
+   - `/holded/terms` → `/legal/terminos`
+   - `/que-es-isaak` → `/integraciones/holded-chatgpt` (after content reuse)
+
+3. **Navigation + Sitemap**
+   - LandingPublicHubPhase1 nav updated to canonical routes (Servicios/Integraciones/Suscripciones/Developers/Contacto)
+   - `sitemap.ts` cleaned: legacy routes removed, canonical routes added with correct priorities
+
+**Impact:** Single marketing URL namespace. Users land on correct funnel. SEO consolidates under canonical routes.
+
+---
+
+### Paso 3 Extended: Landing APIs — Catalog, Onboarding, Custom Integrations (May 2026)
+
+**Scope:** Connect landing to tenant platform via three new public APIs.
+
+**Deliverables:**
+
+1. **`/api/catalog` (GET)**
+   - List published CatalogItems with active CatalogPrices
+   - Filters: `category` (slug), `featured`, `type`
+   - Decimal-to-string serialization for JSON
+   - Returns: `{ ok, items: [...], categories: [...] }`
+
+2. **`/api/onboarding-start` (POST)**
+   - Create Order draft linked to requested planId
+   - Search CatalogItem by slug (`suscripcion-{planId}`)
+   - Create OrderLine if catalog is seeded; else return draft without line
+   - Resolve user session if cookie exists
+   - Returns: `{ redirectUrl: 'app.verifactu.business/onboarding', orderId }`
+
+3. **`/api/custom-integration-request` (POST)**
+   - Persist CustomIntegrationRequest to DB
+   - Rate limit: 3 req/hour per IP
+   - Link user session if exists
+   - Fields: contactName, contactEmail, companyName, title, summary, requestedSystems, businessGoals, budgetRange, urgency
+
+**Impact:** Marketing can now guide visitors through signup funnel. Custom integration requests captured for sales team. Landing handoff to app is transparent to user.
+
+---
+
+### Paso 4 Extended: Tenant Dashboard — Orders, Support, Real Billing (May 2026)
+
+**Scope:** Give tenant operators full visibility into platform state: orders placed, support tickets, subscription details.
+
+**Deliverables:**
+
+1. **Orders Dashboard**
+   - `apps/app/app/dashboard/orders/page.tsx`: List with pagination (limit=50), status badges, formatAmount/formatDate
+   - `apps/app/app/dashboard/orders/[id]/page.tsx`: Order detail (name, email, channel, items, totals, dates)
+   - Skeleton loader, empty state CTA → /suscripciones
+   - Status flow visible: draft → pending → paid → active → provisioning → cancelled / failed
+
+2. **Support Dashboard**
+   - `apps/app/app/dashboard/support/page.tsx`: Tenant support tickets
+   - Uses existing `/api/support/tickets` endpoints (GET/POST)
+   - Create form + list with pagination
+   - Ticket status tracking
+
+3. **Real Billing Settings**
+   - Subscription page shows actual plan, renewal date, payment method
+   - Links to Stripe portal for billing updates
+   - Transparent pricing: no more mock data
+
+4. **Navigation**
+   - `apps/app/config/nav.ts` updated: Mis pedidos + Soporte entries
+   - Isaak AI nav item → opens IsaakSmartFloating (action: 'openIsaak')
+
+**Impact:** Tenant can now track orders, get help, and manage subscription without going to email. Billing transparency builds trust.
+
+---
+
+## 11. Practical Summary
+
+The rebuild is **running as a controlled migration**, not a blind redesign.
+
+- ✅ **Reused strong pieces immediately:** Tenant model, Holded adapter, Stripe webhook foundation, auth patterns
+- ✅ **Froze valuable dashboard depth for later:** Invoice, AEAT, banking, expenses modules preserved untouched
+- ✅ **Redirected and retired only after replacement exists:** All landing route transitions backed by new pages or APIs
+
+That keeps the product **additive instead of destructive**, and prevents the rebuild from breaking real platform value already in the repo.
+
+**Current Status (May 2026):**
+
+- ✅ Pasos 1-5 + Fases PublicArch-1, App-F3-A, DevDocs, PDF+DevPortal completed
+- ⏳ Remaining: WhatsApp adapter, claims queue, legacy cleanup (Pasos 6-8)
