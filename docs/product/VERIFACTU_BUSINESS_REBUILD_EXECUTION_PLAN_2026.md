@@ -163,11 +163,103 @@ Nothing should be physically removed until all gates below are true.
    - Dashboard pages: `/dashboard/orders`, `/dashboard/orders/[id]`, `/dashboard/support`
    - Nav updated: Mis pedidos + Soporte entries added
    - Isaak AI nav item → opens IsaakSmartFloating sidebar (enabled: `enableIsaak = !minimalAdminMode`)
-5. `apps/admin` orders, fulfillment and claims queues. ⏳ NEXT
+5. `apps/admin` orders, fulfillment and catalog queues. ✅ DONE (Paso 5)
+   - Orders queue: `/admin/orders` list + filter by status + inline status updater + detail placeholder
+   - Fulfillment queue: `/admin/fulfillment` case management + task assignment + priority tracking
+   - Catalog ops: `/admin/catalog` CRUD items + category filtering + featured toggle
+   - APIs: GET/PATCH /api/admin/{orders,fulfillment,catalog}
+   - Nav reorganized: Operaciones (Pedidos/Fulfillment), Crecimiento (Catálogo/Marketing/Métricas)
 6. Shared package refinements and WhatsApp adapter. ⏳
-7. Legacy route retirement and company-centric cleanup. ⏳
+7. Claims review queue and admin support routing. ⏳
+8. Legacy route retirement and company-centric cleanup. ⏳
 
-## 9. Practical Summary
+## 9. Delivery Notes
+
+### Paso 5: Admin Queues and Catalog Operations (May 2026)
+
+**Scope:** Implement control-plane queues for orders, fulfillment, and catalog management. Admin operators can now:
+
+- View and filter orders by status
+- Manage fulfillment cases and assign tasks to staff
+- Publish and manage catalog items and pricing
+
+**Deliverables:**
+
+1. **Orders Queue (`/admin/orders`)**
+   - `apps/admin/app/(admin)/orders/page.tsx`: Table view with status badges, inline dropdown to change status (draft → pending → paid → active → provisioning → cancelled)
+   - `apps/admin/app/(admin)/orders/[id]/page.tsx`: Detail page placeholder (full endpoint GET /api/admin/orders/[id] pending)
+   - `apps/admin/app/api/admin/orders/route.ts`: GET (list + filter + pagination) and PATCH (update status)
+   - Status flow: draft (new) → pending (awaiting payment) → paid (invoice sent to user) → active (subscription live) → provisioning (fulfillment in progress) → cancelled
+
+2. **Fulfillment Queue (`/admin/fulfillment`)**
+   - `apps/admin/app/(admin)/fulfillment/page.tsx`: Table with FulfillmentCase status, priority, and task assignment
+   - `apps/admin/app/api/admin/fulfillment/route.ts`: GET (list + filter) and PATCH (update case status or assign task to staff member)
+   - Case statuses: pending (new) → assigned (staff assigned) → in-progress (work started) → completed (fulfilled) / failed
+   - Task counts display: "assigned_count/total_tasks" (e.g., "2/3" means 2 tasks assigned out of 3)
+
+3. **Catalog Operations (`/admin/catalog`)**
+   - `apps/admin/app/(admin)/catalog/page.tsx`: Browse CatalogItems by category, create new items, see active prices and featured status
+   - `apps/admin/app/api/admin/catalog/route.ts`: GET (list + category filter + pagination) and POST (create/upsert item)
+   - Form to create new service: name, slug (e.g., "suscripcion-pyme"), category (dropdown from DB), description (optional), featured toggle
+   - Displays: item name, slug, category, active price variants (€XX/month, €XX/year), featured star, creation date
+
+4. **Navigation Update**
+   - `apps/admin/src/navAdmin.tsx`: Reorganized sections
+     - **Operaciones:** Panel, Usuarios, Tenants, **Pedidos** (/orders, previously /admin-orders), **Fulfillment** (/fulfillment, Zap icon), Soporte
+     - **Crecimiento:** **Catálogo** (/catalog, ShoppingBag icon), Marketing, Métricas
+     - (Relaciones and Contenido sections unchanged)
+
+**API Contracts:**
+
+```
+GET /api/admin/orders?status=pending&limit=50&offset=0
+Response: { ok, orders: [...], pagination: { limit, offset, total, hasMore } }
+
+PATCH /api/admin/orders
+Body: { id, status, notes? }
+Response: { ok, message, order: { id, status, updatedAt } }
+
+GET /api/admin/fulfillment?status=pending&limit=50&offset=0
+Response: { ok, cases: [...], pagination: {...} }
+
+PATCH /api/admin/fulfillment
+Body: { id, status? } OR { id, taskId, assignedTo?, taskStatus? }
+Response: { ok, message, case/task: {...} }
+
+GET /api/admin/catalog?category=suscripciones&limit=50&offset=0
+Response: { ok, items: [...], categories: [...], pagination: {...} }
+
+POST /api/admin/catalog
+Body: { name, slug, categorySlug, description?, featured?, active? }
+Response: { ok, message, item: { id, name, slug, categorySlug } }
+```
+
+**What's Not Yet Implemented:**
+
+- GET /api/admin/orders/[id] (detail endpoint; page shows placeholder)
+- Claims review queue (Paso 6)
+- WhatsApp template management (Paso 6)
+- Detailed task assignment UI (currently just shows count; full Kanban board deferred)
+- Catalog pricing CRUD (only items are handled; prices use existing CatalogPrice read)
+
+**Testing Checklist:**
+
+- [ ] List orders with status filter (all statuses show correct count)
+- [ ] Change order status from admin UI (persists in DB)
+- [ ] List fulfillment cases by priority and task assignment rate
+- [ ] Assign tasks to staff (case status updates to "assigned")
+- [ ] List catalog items, create new item, see it appear in listing
+- [ ] Category filter on catalog works (shows filtered items + category list)
+
+**Tech Stack Used:**
+
+- Next.js 15 App Router (Typescript)
+- React "use client" components with fetch + useState/useEffect
+- Prisma ORM (read/write Order, FulfillmentCase, FulfillmentTask, CatalogItem, CatalogCategory)
+- Tailwind CSS + Lucide icons (Package, Zap, ShoppingBag)
+- `requireAdminContext` for auth guard
+
+## 10. Practical Summary
 
 The rebuild should be run as a controlled migration, not as a blind redesign.
 
