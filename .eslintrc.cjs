@@ -28,4 +28,12 @@ module.exports = {
     '@typescript-eslint/no-unused-vars': 'off',
     'no-case-declarations': 'off',
   },
+  overrides: [
+    {
+      files: ['**/*.test.js', '**/*.test.ts', '**/*.test.tsx', '**/*.spec.js', '**/*.spec.ts'],
+      env: {
+        jest: true,
+      },
+    },
+  ],
 };

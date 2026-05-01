@@ -6,6 +6,7 @@ import { jwtVerify } from 'jose';
 import pino from 'pino';
 import { registerInvoice, resetClient, getClient } from './soap-client.js';
 import { getLastInvoiceHash, processInvoiceVeriFactu } from './verifactu-generator.js';
+import { buildInvoicePdfBuffer } from './invoice-pdf.js';
 
 const log = pino();
 const app = express();
@@ -298,7 +299,14 @@ app.post('/api/verifactu/register-invoice', async (req, res) => {
     const invoice = req.body;
 
     // 1. Generar hash y QR antes de enviar a AEAT
-    const previousHash = await getLastInvoiceHash(null, invoice.tenant_id || invoice.tenantId);
+    const previousHashFromPayload =
+      typeof invoice?.previous_verifactu_hash === 'string' &&
+      /^[a-fA-F0-9]{64}$/.test(invoice.previous_verifactu_hash)
+        ? invoice.previous_verifactu_hash
+        : null;
+    const previousHash =
+      previousHashFromPayload ||
+      (await getLastInvoiceHash(null, invoice.tenant_id || invoice.tenantId));
     const verifactuData = await processInvoiceVeriFactu(invoice, previousHash);
 
     // 2. Combinar datos originales con VeriFactu
@@ -323,6 +331,27 @@ app.post('/api/verifactu/register-invoice', async (req, res) => {
   } catch (error) {
     log.error(error);
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post('/api/verifactu/invoice-pdf', async (req, res) => {
+  try {
+    const invoice = req.body || {};
+    const pdfBuffer = await buildInvoicePdfBuffer(invoice);
+    const invoiceNumber = String(invoice.number || invoice.id || 'factura').replace(
+      /[^a-zA-Z0-9-_]/g,
+      '_'
+    );
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${invoiceNumber}.pdf"`);
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).send(pdfBuffer);
+  } catch (error) {
+    log.error(error);
+    return res
+      .status(500)
+      .json({ ok: false, error: error?.message || 'No se pudo generar el PDF' });
   }
 });
 

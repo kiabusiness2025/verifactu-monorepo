@@ -50,6 +50,7 @@ async function getClient() {
     };
 
     client = await soap.createClientAsync(wsdlSource, soapOptions);
+    client.setSecurity(new soap.ClientSSLSecurityPFX(cert, password, { rejectUnauthorized: true }));
     if (SOAP_ENDPOINT) {
       client.setEndpoint(SOAP_ENDPOINT);
     }
@@ -64,12 +65,7 @@ import { invoiceToVeriFactuXML } from './verifactu-xml.js';
 
 async function registerInvoice(invoice) {
   const client = await getClient();
-  // The method name should be exactly as in the WSDL
-  // I am assuming the method name is 'RegFactuSistemaFacturacion'
-  const result = await client.RegFactuSistemaFacturacionAsync({
-    // The request body should match the WSDL schema
-    datosFactura: invoiceToVeriFactuXML(invoice),
-  });
+  const result = await client.RegFactuSistemaFacturacionAsync(invoiceToVeriFactuXML(invoice));
   return result;
 }
 
