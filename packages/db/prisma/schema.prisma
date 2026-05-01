@@ -573,6 +573,10 @@ model Tenant {
   connectionRecipients        ConnectionRecipient[]
   accessRequests              AccessRequest[]
   claimCases                  ClaimCase[]
+  isaakPlatformKeys           IsaakPlatformKey[]
+  isaakApiAuditLogs           IsaakApiAuditLog[]
+  isaakWebhookEndpoints       IsaakWebhookEndpoint[]
+  isaakProposedActions        IsaakProposedAction[]
 
   @@map("tenants")
 }
@@ -1826,4 +1830,91 @@ model DemoRequest {
   @@index([status])
   @@index([createdAt])
   @@map("demo_requests")
+}
+
+// ==================== ISAAK PLATFORM ====================
+
+model IsaakProposedAction {
+  id          String    @id @default(cuid())
+  tenantId    String    @map("tenant_id") @db.Uuid
+  proposedBy  String    @map("proposed_by")
+  type        String
+  status      String    @default("pending")
+  payload     Json
+  reason      String?
+  riskLevel   String    @default("medium") @map("risk_level")
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz
+  executedAt  DateTime? @map("executed_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+  @@map("isaak_proposed_actions")
+}
+
+model IsaakPlatformKey {
+  id         String    @id @default(cuid())
+  tenantId   String    @map("tenant_id") @db.Uuid
+  userId     String    @map("user_id")
+  name       String
+  keyHash    String    @unique @map("key_hash")
+  keyPrefix  String    @map("key_prefix")
+  scopes     String[]
+  rateLimit  Int       @default(1000) @map("rate_limit")
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  auditLogs IsaakApiAuditLog[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId])
+  @@map("isaak_platform_keys")
+}
+
+model IsaakApiAuditLog {
+  id                   String   @id @default(cuid())
+  requestId            String   @map("request_id")
+  tenantId             String   @map("tenant_id") @db.Uuid
+  userId               String?  @map("user_id")
+  keyId                String?  @map("key_id")
+  channel              String
+  method               String
+  endpoint             String
+  toolOrAction         String?  @map("tool_or_action")
+  status               Int
+  durationMs           Int?     @map("duration_ms")
+  riskLevel            String?  @map("risk_level")
+  confirmationRequired Boolean  @default(false) @map("confirmation_required")
+  ip                   String?
+  meta                 Json?
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  key    IsaakPlatformKey? @relation(fields: [keyId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([requestId])
+  @@map("isaak_api_audit_logs")
+}
+
+model IsaakWebhookEndpoint {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id") @db.Uuid
+  url       String
+  secret    String
+  events    String[]
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("isaak_webhook_endpoints")
 }
