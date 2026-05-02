@@ -113,6 +113,8 @@ export function createApp() {
       code_challenge_methods_supported: ['S256'],
       token_endpoint_auth_methods_supported: ['client_secret_post'],
       scopes_supported: ['holded:read', 'holded:write'],
+      service_documentation: `${config.BASE_URL}/docs`,
+      logo_uri: `${config.BASE_URL}/holded-diamond-logo.png`,
     });
   });
 

@@ -199,6 +199,7 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
     grant_types: ['authorization_code'],
     response_types: ['code'],
     token_endpoint_auth_method: 'client_secret_post',
+    logo_uri: `${config.BASE_URL}/holded-diamond-logo.png`,
   });
 });
 
