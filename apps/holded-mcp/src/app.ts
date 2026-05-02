@@ -44,14 +44,16 @@ export function createApp() {
   // genérico en lugar del rombo de Holded.
   const sendDiamondPng = (res: express.Response, contentType = 'image/png') => {
     res.set({
-      'Cache-Control': 'public, max-age=3600, must-revalidate',
+      // no-cache fuerza revalidación en cada request. Esto evita que Claude.ai
+      // u otros clientes sirvan un icono obsoleto cacheado indefinidamente.
+      'Cache-Control': 'no-cache',
       'Content-Type': contentType,
     });
     res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
   };
 
-  // /favicon.ico — el .ico histórico era la letra "V". Servimos el PNG del
-  // diamante con header image/x-icon; navegadores modernos lo aceptan.
+  // /favicon.ico — public/favicon.ico eliminado del repo (era la "V" azul de
+  // Verifactu). Esta ruta sirve el PNG del diamante de Holded como ICO.
   app.get('/favicon.ico', (_req, res) => sendDiamondPng(res, 'image/x-icon'));
   app.get('/favicon.png', (_req, res) => sendDiamondPng(res));
   app.get('/logo.png', (_req, res) => sendDiamondPng(res));
