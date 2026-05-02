@@ -1,0 +1,98 @@
+{
+  "name": "Isaak — Asistente fiscal inteligente",
+  "short_name": "Isaak",
+  "description": "Tu asistente fiscal inteligente. Conecta Holded, emite facturas VeriFactu y gestiona tu negocio desde el chat.",
+  "start_url": "/chat",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#0b1a40",
+  "theme_color": "#2361d8",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/Personalidad/isaak-avatar-verifactu.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Isaak chat"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nuevo chat",
+      "short_name": "Chat",
+      "description": "Inicia una conversación con Isaak",
+      "url": "/chat",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Ventas",
+      "short_name": "Ventas",
+      "description": "Ver facturas emitidas",
+      "url": "/ventas",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Resumen",
+      "short_name": "Resumen",
+      "description": "KPIs y métricas de tu empresa",
+      "url": "/resumen",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}

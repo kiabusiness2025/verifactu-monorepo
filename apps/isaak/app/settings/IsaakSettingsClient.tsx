@@ -8,6 +8,7 @@ import {
   Building2,
   Calendar,
   CheckCircle2,
+  Code2,
   CreditCard,
   ExternalLink,
   LifeBuoy,
@@ -146,7 +147,14 @@ const PLAN_TIERS = [
   },
 ];
 
-type SectionKey = 'profile' | 'company' | 'connections' | 'isaak' | 'team' | 'billing';
+type SectionKey =
+  | 'profile'
+  | 'company'
+  | 'connections'
+  | 'isaak'
+  | 'team'
+  | 'billing'
+  | 'developer';
 
 const TEAM_OPTIONS = ['Solo yo', '2-5 personas', '6-20 personas', 'Mas de 20'];
 const GOAL_OPTIONS = [
@@ -157,13 +165,19 @@ const GOAL_OPTIONS = [
   'Entender balances y resultados',
   'Llevar mejor la gestion diaria',
 ];
-const sections: Array<{ key: SectionKey; label: string; icon: typeof UserCircle2 }> = [
+const sections: Array<{
+  key: SectionKey;
+  label: string;
+  icon: typeof UserCircle2;
+  external?: string;
+}> = [
   { key: 'profile', label: 'Perfil', icon: UserCircle2 },
   { key: 'company', label: 'Empresa', icon: Building2 },
-  { key: 'connections', label: 'Conexiones', icon: PlugZap },
+  { key: 'connections', label: 'Conexiones', icon: PlugZap, external: '/integrations' },
   { key: 'isaak', label: 'Isaak', icon: Sparkles },
   { key: 'team', label: 'Equipo', icon: Users },
-  { key: 'billing', label: 'Facturacion', icon: CreditCard },
+  { key: 'billing', label: 'Facturación', icon: CreditCard },
+  { key: 'developer', label: 'Developer', icon: Code2, external: '/integrations?tab=developer' },
 ];
 
 function deriveInitial(name: string) {
@@ -564,7 +578,7 @@ export default function IsaakSettingsClient({
   }
 
   return (
-    <main className="min-h-dvh bg-[radial-gradient(circle_at_top,#f5f8ff_0%,#f8fafc_38%,#f8fafc_100%)] text-slate-900">
+    <main className="min-h-dvh bg-[#f8faff] text-slate-900">
       <div className="mx-auto flex min-h-dvh w-full max-w-[1480px] flex-col px-4 py-4 sm:px-6 lg:flex-row lg:gap-8 lg:px-8">
         <aside className="w-full shrink-0 lg:w-[280px]">
           <div className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-[0_24px_70px_-46px_rgba(15,23,42,0.28)]">
@@ -600,16 +614,16 @@ export default function IsaakSettingsClient({
                 </div>
               </div>
             </div>
-            <nav className="mt-6 space-y-2">
+            <nav className="mt-6 space-y-1">
               {sections.map((item) => {
                 const Icon = item.icon;
-                const href = `/settings?section=${item.key}`;
-                const isActive = item.key === activeSection;
+                const href = item.external ?? `/settings?section=${item.key}`;
+                const isActive = !item.external && item.key === activeSection;
                 return (
                   <Link
                     key={item.key}
                     href={href}
-                    className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-medium transition ${
+                    className={`flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-medium transition ${
                       isActive
                         ? 'bg-[#edf4ff] text-[#174db5]'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -619,11 +633,14 @@ export default function IsaakSettingsClient({
                       <Icon className="h-4 w-4" />
                       {item.label}
                     </span>
-                    {item.key === 'team' && !settingsData.team.enabled ? (
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
-                        Pronto
-                      </span>
-                    ) : null}
+                    <span className="flex items-center gap-1.5">
+                      {item.key === 'team' && !settingsData.team.enabled ? (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
+                          Pronto
+                        </span>
+                      ) : null}
+                      {item.external ? <ExternalLink className="h-3 w-3 text-slate-400" /> : null}
+                    </span>
                   </Link>
                 );
               })}

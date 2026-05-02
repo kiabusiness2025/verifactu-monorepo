@@ -6,7 +6,6 @@ import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { buildRangeSummary } from '@/app/lib/holded-analytics';
 import { prisma } from '@/app/lib/prisma';
-import IsaakChatSection from '../components/IsaakChatSection';
 import ResumenChart, { type MonthlyPoint } from './components/ResumenChart';
 
 export const metadata: Metadata = { title: 'Resumen — Isaak' };
@@ -240,7 +239,7 @@ async function DashboardContent() {
 
 export default function ResumenPage() {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full flex-col overflow-y-auto">
       <div className="border-b border-slate-100 bg-[#fafbff] px-5 py-4">
         <h1 className="text-[16px] font-semibold text-[#011c67]">Resumen de tu empresa</h1>
         <p className="text-[12px] text-slate-500">
@@ -262,14 +261,6 @@ export default function ResumenPage() {
       >
         <DashboardContent />
       </Suspense>
-
-      <div className="flex-1 overflow-hidden border-t border-slate-100">
-        <IsaakChatSection
-          context="resumen"
-          welcomeTitle="¿Qué quieres analizar hoy?"
-          welcomeSubtitle="Haz clic en una pregunta rápida o escribe tu consulta."
-        />
-      </div>
     </div>
   );
 }

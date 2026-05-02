@@ -319,6 +319,7 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
           website: true,
           phone: true,
           employees: true,
+          adminEditHistory: true,
         },
       }),
       getHoldedConnection(session.tenantId, 'dashboard'),

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
 import IsaakFloatingChatButton from './components/IsaakFloatingChatButton';
 import IsaakSiteChrome from './components/IsaakSiteChrome';
@@ -8,7 +8,20 @@ const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700
 const siteUrl = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
 const avatarPath = '/Personalidad/isaak-avatar-verifactu.png';
 
+export const viewport: Viewport = {
+  themeColor: '#2361d8',
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+};
+
 export const metadata: Metadata = {
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Isaak',
+  },
   metadataBase: new URL(siteUrl),
   title: 'Isaak | Orquestador empresarial inteligente',
   description:
@@ -46,6 +59,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={manrope.className}>
         <IsaakSiteChrome>{children}</IsaakSiteChrome>
         <IsaakFloatingChatButton />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});})}`,
+          }}
+        />
       </body>
     </html>
   );

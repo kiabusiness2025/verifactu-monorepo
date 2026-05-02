@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { buildHoldedAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import { buildIsaakAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import { loadSettingsData, toSettingsSession } from '@/app/lib/settings';
 import IsaakSettingsClient from './IsaakSettingsClient';
