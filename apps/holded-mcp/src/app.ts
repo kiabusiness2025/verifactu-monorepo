@@ -52,11 +52,12 @@ export function createApp() {
     res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
   };
 
-  // /favicon.ico redirige a /favicon.png. Servir bytes PNG como image/x-icon
-  // es inválido; clientes HTTP (incluido Claude.ai) lo rechazan y caen al
-  // icono por defecto de la plataforma. El redirect 301 fuerza que cualquier
-  // cliente acabe en /favicon.png, que sí devuelve image/png correcto.
-  app.get('/favicon.ico', (_req, res) => res.redirect(301, '/favicon.png'));
+  // favicon.ico — archivo ICO real (formato ICO con PNG payload embebido),
+  // generado por scripts/make-ico.cjs. Servirlo como image/x-icon correcto.
+  app.get('/favicon.ico', (_req, res) => {
+    res.set({ 'Cache-Control': 'no-cache', 'Content-Type': 'image/x-icon' });
+    res.sendFile(path.join(publicDir, 'favicon.ico'));
+  });
   app.get('/favicon.png', (_req, res) => sendDiamondPng(res));
   app.get('/logo.png', (_req, res) => sendDiamondPng(res));
   app.get('/icon.png', (_req, res) => sendDiamondPng(res));
