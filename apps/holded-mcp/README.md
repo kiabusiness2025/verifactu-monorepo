@@ -11,7 +11,7 @@ Remote HTTPS MCP server for Claude.ai and Anthropic MCP Directory submission.
 - Terms: `https://holded.verifactu.business/conectores/claude/terms`
 - Support: `https://holded.verifactu.business/conectores/claude/soporte`
 
-These pages live exclusively in the Next.js app at `holded.verifactu.business/conectores/claude/*`. The MCP server does **not** expose `/docs`, `/privacy`, `/dpa`, `/terms`, `/support` or `/soporte` — there is one canonical page per legal/documentation surface, hosted in the Next.js app, to avoid template divergence.
+These pages live in the Next.js app at `holded.verifactu.business/conectores/claude/*`. The MCP server exposes `/docs`, `/privacy`, `/dpa`, `/terms`, `/support`, `/soporte` as **301 redirects** to those canonical URLs — no content is duplicated on the MCP server.
 
 - Support: `mailto:soporte@verifactu.business`
 
@@ -41,10 +41,12 @@ Runtime endpoints:
 - `GET /health`
 - `GET /.well-known/oauth-authorization-server`
 - `GET /.well-known/oauth-protected-resource`
-- `GET /docs`
-- `GET /privacy`
-- `GET /terms`
-- `GET /support`
+- `GET /docs` → 301 to holded.verifactu.business/conectores/claude/docs
+- `GET /privacy` → 301 to holded.verifactu.business/conectores/claude/privacy
+- `GET /dpa` → 301 to holded.verifactu.business/conectores/claude/dpa
+- `GET /terms` → 301 to holded.verifactu.business/conectores/claude/terms
+- `GET /support` → 301 to holded.verifactu.business/conectores/claude/soporte
+- `GET /soporte` → 301 to holded.verifactu.business/conectores/claude/soporte
 - `GET|POST /oauth/authorize`
 - `POST /oauth/register`
 - `POST /oauth/token`
@@ -57,13 +59,17 @@ Read-only tools:
 
 - `list_documents`: list invoices, quotes, orders and other Holded documents
 - `get_document`: read one document in detail
+- `get_document_pdf`: read one document as a base64-encoded PDF
 - `list_contacts`: list Holded contacts
 - `get_contact`: read one contact in detail
 - `list_crm_funnels`: list CRM funnels
 - `list_leads`: list CRM leads or opportunities
 - `list_products`: list products and services
 - `get_product`: read one product in detail
-- `list_warehouses`: list warehouses and stock
+- `list_products_stock`: list current stock levels per product and warehouse
+- `list_warehouses`: list warehouse locations (without stock; use list_products_stock for stock)
+- `list_taxes`: list VAT and other tax IDs configured in Holded
+- `list_numbering_series`: list numbering series configured in Holded
 - `list_projects`: list projects
 - `get_project`: read one project in detail
 - `list_project_tasks`: list project tasks
@@ -142,7 +148,6 @@ Runtime brand assets served by this app:
 - `public/holded-diamond-logo.png`
 - `public/logo.svg`
 - `public/claude.svg`
-- `public/favicon.ico`
 
 Brand sync:
 
@@ -232,6 +237,6 @@ Before Anthropic submission, production should have:
 Recommended after deploy:
 
 - verify `GET /.well-known/oauth-authorization-server`
-- verify `GET /docs` on the MCP server and the canonical public docs at `https://holded.verifactu.business/claude`
+- verify `GET /docs` redirects to `https://holded.verifactu.business/conectores/claude/docs`
 - verify `https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64`
 - reconnect the Claude custom connector once if external icon caches are stale

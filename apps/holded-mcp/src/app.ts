@@ -10,13 +10,7 @@ import { apiRateLimit, requireAuth, requestLogger } from './middleware/auth.js';
 import { corsMiddleware } from './middleware/cors.js';
 import { logger } from './logger.js';
 import { oauthRouter } from './oauth-routes.js';
-import {
-  renderDocsPage,
-  renderPrivacyPage,
-  renderSupportPage,
-  renderTermsPage,
-  renderLandingPage,
-} from './public-pages.js';
+import { renderLandingPage } from './public-pages.js';
 import { registerProductionTools } from './tools/index.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -86,27 +80,16 @@ export function createApp() {
     res.send(renderLandingPage(config.BASE_URL));
   });
 
-  // /docs, /privacy, /dpa — estas URLs fueron entregadas a Anthropic en el
-  // formulario de submission. Redirigen a la app Next.js que es la fuente de
-  // verdad; así el servidor MCP no duplica contenido legal/docs.
+  // /docs /privacy /dpa /terms /support /soporte — URLs referenciadas en el
+  // formulario de Anthropic y en bookmarks de usuarios. Redirigen 301 a la
+  // app Next.js, que es la única fuente de verdad para contenido legal/docs.
   const holdedBase = 'https://holded.verifactu.business/conectores/claude';
   app.get('/docs', (_req, res) => res.redirect(301, `${holdedBase}/docs`));
   app.get('/privacy', (_req, res) => res.redirect(301, `${holdedBase}/privacy`));
   app.get('/dpa', (_req, res) => res.redirect(301, `${holdedBase}/dpa`));
-
-  // Holded MCP documentation (for reference)
-  app.get('/mcp-docs', (_req, res) => {
-    res.type('html').send(renderDocsPage(config.BASE_URL));
-  });
-  app.get('/mcp-privacy', (_req, res) => {
-    res.type('html').send(renderPrivacyPage());
-  });
-  app.get('/mcp-terms', (_req, res) => {
-    res.type('html').send(renderTermsPage());
-  });
-  app.get('/mcp-support', (_req, res) => {
-    res.type('html').send(renderSupportPage());
-  });
+  app.get('/terms', (_req, res) => res.redirect(301, `${holdedBase}/terms`));
+  app.get('/support', (_req, res) => res.redirect(301, `${holdedBase}/soporte`));
+  app.get('/soporte', (_req, res) => res.redirect(301, `${holdedBase}/soporte`));
 
   app.use('/oauth', oauthRouter);
 
