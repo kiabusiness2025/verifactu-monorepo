@@ -52,9 +52,11 @@ export function createApp() {
     res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
   };
 
-  // /favicon.ico — public/favicon.ico eliminado del repo (era la "V" azul de
-  // Verifactu). Esta ruta sirve el PNG del diamante de Holded como ICO.
-  app.get('/favicon.ico', (_req, res) => sendDiamondPng(res, 'image/x-icon'));
+  // /favicon.ico redirige a /favicon.png. Servir bytes PNG como image/x-icon
+  // es inválido; clientes HTTP (incluido Claude.ai) lo rechazan y caen al
+  // icono por defecto de la plataforma. El redirect 301 fuerza que cualquier
+  // cliente acabe en /favicon.png, que sí devuelve image/png correcto.
+  app.get('/favicon.ico', (_req, res) => res.redirect(301, '/favicon.png'));
   app.get('/favicon.png', (_req, res) => sendDiamondPng(res));
   app.get('/logo.png', (_req, res) => sendDiamondPng(res));
   app.get('/icon.png', (_req, res) => sendDiamondPng(res));

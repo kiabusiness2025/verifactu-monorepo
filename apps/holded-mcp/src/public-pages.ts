@@ -23,8 +23,8 @@ function pageTemplate(title: string, body: string) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(title)}</title>
-    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/holded-diamond-logo.png" />
     <style>
       :root {
         --bg: #f5f5f0;
@@ -419,8 +419,8 @@ function pageTemplateClaude(title: string, body: string, theme: 'light' | 'dark'
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(title)}</title>
-    <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/holded-diamond-logo.png" />
     <style>
       :root {
         --bg: ${isDark ? '#0f172a' : '#ffffff'};
