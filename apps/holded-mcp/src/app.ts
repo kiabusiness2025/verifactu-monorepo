@@ -52,12 +52,11 @@ export function createApp() {
     res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
   };
 
-  // favicon.ico — archivo ICO real (formato ICO con PNG payload embebido),
-  // generado por scripts/make-ico.cjs. Servirlo como image/x-icon correcto.
-  app.get('/favicon.ico', (_req, res) => {
-    res.set({ 'Cache-Control': 'no-cache', 'Content-Type': 'image/x-icon' });
-    res.sendFile(path.join(publicDir, 'favicon.ico'));
-  });
+  // /favicon.ico — se sirve el PNG directamente con Content-Type: image/png.
+  // El formato ICO causaba pantallas blancas (dimensiones 250x250 vs 256x256
+  // declaradas en el header). PNG con image/png funciona en todos los clientes
+  // modernos incluyendo Node.js fetch (que usa Claude.ai para obtener el icono).
+  app.get('/favicon.ico', (_req, res) => sendDiamondPng(res));
   app.get('/favicon.png', (_req, res) => sendDiamondPng(res));
   app.get('/logo.png', (_req, res) => sendDiamondPng(res));
   app.get('/icon.png', (_req, res) => sendDiamondPng(res));
