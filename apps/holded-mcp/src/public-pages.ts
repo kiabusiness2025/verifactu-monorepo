@@ -23,9 +23,11 @@ function pageTemplate(title: string, body: string) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(title)}</title>
-    <link rel="icon" type="image/png" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/holded-diamond-logo.png" sizes="64x64" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/holded-diamond-logo.png" />
+    <link rel="manifest" href="/manifest.json" />
     <style>
       :root {
         --bg: #f5f5f0;
@@ -420,9 +422,11 @@ function pageTemplateClaude(title: string, body: string, theme: 'light' | 'dark'
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>${escapeHtml(title)}</title>
-    <link rel="icon" type="image/png" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/holded-diamond-logo.png" sizes="64x64" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="icon" type="image/png" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/holded-diamond-logo.png" />
+    <link rel="manifest" href="/manifest.json" />
     <style>
       :root {
         --bg: ${isDark ? '#0f172a' : '#ffffff'};

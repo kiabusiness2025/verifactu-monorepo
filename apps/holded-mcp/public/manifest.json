@@ -1,0 +1,14 @@
+{
+  "name": "Holded MCP",
+  "short_name": "Holded",
+  "icons": [
+    {
+      "src": "/holded-diamond-logo.png",
+      "sizes": "64x64",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone"
+}
