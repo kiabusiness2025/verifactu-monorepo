@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Producto
 
-> Última actualización: 2026-04-30  
+> Última actualización: 2026-05-02  
 > Estado: documento vivo — añadir ✅ cuando se complete cada ítem
 
 ---
@@ -52,7 +52,7 @@ El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector ti
 
 ---
 
-## Estado actual (Semana 3 completada)
+## Estado actual (Semana 5 — 2026-05-02)
 
 ### ✅ Implementado
 
@@ -67,6 +67,14 @@ El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector ti
 - Widget flotante en holded.verifactu.business
 - Brand alignment: colores, avatar, tipografía coherentes con landing
 - Auth con Firebase/cookie + guard en workspace
+- **S4-A ✅** `create_verifactu_invoice` conversacional en chat: detección de intención → extracción de datos con Claude tool → borrador en DB → confirmación → emisión a AEAT vía VeriFactu API
+- **S4-B ✅** `GET /api/invoices/[id]/pdf` — PDF estilado con cabecera de marca, bloques emisor/receptor, tabla de importes, QR dibujado como módulos PDF nativos desde `verifactuQr`; links de descarga integrados en el chat
+- **S4-C ✅** Card Verifactu en `/resumen`: emitidas / borradores / errores AEAT en tiempo real
+- **S8-A 🟡 parcial** Google Calendar: rutas OAuth + sync implementadas (`/api/isaak/google/*`); tarjeta conectar/desconectar/sincronizar en `/integrations`
+- **S10-A ✅** PWA: `manifest.json`, service worker (`sw.js`), 8 iconos (72–512 px), headers en `next.config.js`, viewport y `appleWebApp` en root layout
+- **IsaakCopilotPanel ✅** Panel derecho colapsable con chat contextual en cada sección del workspace
+- **Integrations page ✅** `/integrations`: 3 pestañas — Conectores activos (Holded + Google Calendar), Catálogo (6 conectores + próximos), API & MCP (API keys + MCP server + webhooks placeholder)
+- **Sidebar v2 ✅** Colapsable a iconos, plan badge en perfil, enlace Integraciones con punto verde de estado, dropdown de perfil con ajustes + logout
 
 ---
 
@@ -74,29 +82,26 @@ El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector ti
 
 ---
 
-## SPRINT 4 — Verifactu nativo desde chat (2–3 días)
+## SPRINT 4 — Verifactu nativo desde chat ✅ COMPLETADO (2026-05-02)
 
 > Sistema Verifactu ya ~70% implementado en `apps/app`. Exponer via tools en Isaak.
 
-### S4-A: `create_verifactu_invoice` tool
+### S4-A ✅ `create_verifactu_invoice` tool
 
-- Tool definition en `/api/holded/chat/route.ts`
-- Llama a `POST /api/invoices` de apps/app (o directo a Prisma)
-- Flujo: Isaak propone borrador → usuario confirma → se emite
-- Campos: NIF receptor, concepto, cantidad, precio unitario, tasa IVA
-- Estado: `verifactuStatus` (draft → submitted → registered)
+- Implementado en `apps/isaak/app/api/holded/chat/route.ts`
+- Flujo completo: `isInvoiceCreationIntent()` → `callAnthropicForInvoiceData()` (Claude tool) → `createIsaakInvoiceDraft()` → confirmación usuario → `issueIsaakInvoice()` → AEAT vía VeriFactu API
 
-### S4-B: PDF de factura con QR Verifactu
+### S4-B ✅ PDF de factura con QR Verifactu
 
-- Template con `@react-pdf/renderer`: logo, datos empresa, tabla líneas
-- QR embebido desde campo `verifactuQr` del modelo `Invoice`
-- Endpoint `GET /api/invoices/[id]/pdf` — mejorar el stub actual
-- Enlace desde chat: "Descarga el PDF de esta factura"
+- `GET /api/invoices/[id]/pdf` en `apps/isaak` (sesión Isaak propia)
+- PDF raw con cabecera azul marino, bloques emisor/receptor, tabla de importes
+- QR dibujado como módulos rectangulares PDF nativos (sin dependencias de imagen)
+- Links "[📄 Ver borrador en PDF]" y "[📄 Descargar PDF]" en el chat tras crear/emitir
 
-### S4-C: Dashboard Verifactu en Resumen
+### S4-C ✅ Dashboard Verifactu en Resumen
 
-- KPI card adicional: facturas emitidas Verifactu / pendientes / errores AEAT
-- Integrar con el dashboard existente de `/resumen`
+- Card Verifactu en `/resumen`: emitidas / borradores / errores AEAT
+- Queries Prisma directas por `verifactuStatus` en tiempo real
 
 ---
 
@@ -214,12 +219,12 @@ El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector ti
 
 ---
 
-## SPRINT 8 — Integraciones Google (4–5 días)
+## SPRINT 8 — Integraciones Google (4–5 días) 🟡 PARCIAL
 
 > MCP tools de Google Calendar, Gmail y Drive ya disponibles vía claude.ai.
 > El trabajo es conectarlas al workspace de Isaak con auth propia.
 
-### S8-A: Google Calendar — Calendario Fiscal
+### S8-A ✅ Google Calendar — Calendario Fiscal (rutas implementadas)
 
 - OAuth2 Google con scope `calendar.events` — guardar token en `ExternalConnection`
 - Crear/actualizar eventos en Google Calendar del usuario
@@ -294,17 +299,20 @@ El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector ti
 
 ---
 
-## SPRINT 10 — PWA + Móvil (2–3 días)
+## SPRINT 10 — PWA + Móvil (2–3 días) 🟡 PARCIAL
 
 > Isaak en el bolsillo del autónomo. Voice input ya hace la experiencia mobile-first.
 
-### S10-A: Progressive Web App
+### S10-A ✅ Progressive Web App
 
-- `manifest.json` con nombre "Isaak", icono `isaak-avatar-verifactu.png`, `theme_color: #011c67`
-- Service Worker con cache offline para el workspace
-- Instalable en iOS (Safari "Añadir a pantalla de inicio") y Android (Chrome prompt)
+- `manifest.json` completo con nombre, descripción, iconos 72–512 px, shortcuts, screenshots
+- Service Worker (`sw.js`) con estrategias: cache-first para estáticos, network-first para navegación, stale-while-revalidate para assets; push notifications futuro incluido
+- Iconos generados desde `isaak-avatar-2.png` (8 tamaños en `public/icons/`)
+- `next.config.js` headers para `sw.js` y `manifest.json`
+- Viewport export + `appleWebApp` metadata en root layout
+- Registro del Service Worker inline en `_document` (script en layout)
 
-### S10-B: Push notifications nativas
+### S10-B ⬜ Push notifications nativas
 
 - Service Worker registra push subscription → guardada en `PushSubscription` (Prisma)
 - Backend envía via Web Push API cuando se genera una alerta (S8-B)
