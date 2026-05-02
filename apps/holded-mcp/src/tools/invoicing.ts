@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { HoldedClient } from '../holded-client.js';
-import { CREATE_INVOICE_DRAFT_ANNOTATIONS, READ_ONLY_TOOL_ANNOTATIONS } from './policy.js';
+import { readOnlyWithTitle, writeWithTitle } from './policy.js';
 
 const DOC_TYPES = [
   'invoice',
@@ -30,7 +30,7 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
       endtmp: z.string().optional().describe('End date as Unix timestamp.'),
       contactId: z.string().optional().describe('Optional Holded contact ID filter.'),
     },
-    READ_ONLY_TOOL_ANNOTATIONS,
+    readOnlyWithTitle('List Holded documents'),
     async ({ docType, ...params }) => {
       const filtered = Object.fromEntries(
         Object.entries(params).filter(([, value]) => value !== undefined)
@@ -50,7 +50,7 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
       docType: z.enum(DOC_TYPES).describe('Document type.'),
       documentId: z.string().describe('Holded document ID.'),
     },
-    READ_ONLY_TOOL_ANNOTATIONS,
+    readOnlyWithTitle('Get Holded document'),
     async ({ docType, documentId }) => {
       const data = await getClient().getDocument(docType, documentId);
       return {
@@ -79,7 +79,7 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
         )
         .describe('Invoice draft line items.'),
     },
-    CREATE_INVOICE_DRAFT_ANNOTATIONS,
+    writeWithTitle('Create invoice draft'),
     async (params) => {
       const data = await getClient().createDocument('invoice', params);
       return {

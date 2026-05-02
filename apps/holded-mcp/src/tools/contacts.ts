@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { HoldedClient } from '../holded-client.js';
-import { READ_ONLY_TOOL_ANNOTATIONS } from './policy.js';
+import { readOnlyWithTitle } from './policy.js';
 
 export function registerContactsTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
@@ -14,7 +14,7 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
         .describe('Optional Holded contact type filter.'),
       page: z.string().optional().describe('Results page number.'),
     },
-    READ_ONLY_TOOL_ANNOTATIONS,
+    readOnlyWithTitle('List Holded contacts'),
     async (params) => {
       const filtered = Object.fromEntries(
         Object.entries(params).filter(([, value]) => value !== undefined)
@@ -31,7 +31,7 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
     {
       contactId: z.string().describe('Holded contact ID.'),
     },
-    READ_ONLY_TOOL_ANNOTATIONS,
+    readOnlyWithTitle('Get Holded contact'),
     async ({ contactId }) => {
       const data = await getClient().getContact(contactId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -42,7 +42,7 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
     'list_crm_funnels',
     'Lists the CRM funnels configured in Holded. Read-only.',
     {},
-    READ_ONLY_TOOL_ANNOTATIONS,
+    readOnlyWithTitle('List CRM funnels'),
     async () => {
       const data = await getClient().listContactFunnels();
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -58,7 +58,7 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
         .optional()
         .describe('Optional funnel ID. If omitted, returns leads across all funnels.'),
     },
-    READ_ONLY_TOOL_ANNOTATIONS,
+    readOnlyWithTitle('List CRM leads'),
     async ({ funnelId }) => {
       const data = await getClient().listLeads(funnelId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };

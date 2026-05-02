@@ -258,9 +258,9 @@ export function renderDocsPage(baseUrl: string) {
       <h2>Support and Legal</h2>
       <p>Support contact: <a href="mailto:${escapeHtml(SUPPORT_EMAIL)}">${escapeHtml(SUPPORT_EMAIL)}</a></p>
       <div class="footer-links">
-        <a href="https://holded.verifactu.business/claude">Canonical docs</a>
-        <a href="https://holded.verifactu.business/privacy">Privacy Policy</a>
-        <a href="https://holded.verifactu.business/dpa">DPA</a>
+        <a href="https://holded.verifactu.business/conectores/claude">Canonical docs</a>
+        <a href="/privacy">Privacy Policy</a>
+        <a href="/dpa">DPA</a>
         <a href="/support">Support</a>
       </div>
     `
@@ -664,6 +664,24 @@ export function renderDocsPageClaude(baseUrl: string) {
         <li>No destructive operations</li>
         <li>No cross-service automation</li>
       </ul>
+
+      <h2>Reviewer &amp; Test Access</h2>
+      <div class="warning">
+        <strong>Demo account for Anthropic reviewers</strong>
+        <p>Company: <strong>Nova Gestión SL</strong></p>
+        <p>Holded API key: <code>0ecf1267eacc89ff45acab1b8ca28396</code></p>
+        <p>Use this key when prompted during the OAuth authorization step.</p>
+      </div>
+      <h3>MCP Inspector (local test)</h3>
+      <ol>
+        <li>Run: <code>npx @modelcontextprotocol/inspector</code></li>
+        <li>Open the Inspector UI (default: <code>http://localhost:6274</code>).</li>
+        <li>Select transport: <strong>Streamable HTTP</strong>.</li>
+        <li>URL: <code>${escapeHtml(`${baseUrl}/mcp`)}</code></li>
+        <li>Click <strong>Connect</strong> — the Inspector will open the OAuth authorization page.</li>
+        <li>Enter the test API key above and click <strong>Authorize</strong>.</li>
+        <li>The Inspector will list all 20 available tools with their annotations.</li>
+      </ol>
 
       <h2>Troubleshooting</h2>
       <ul>

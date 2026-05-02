@@ -5,9 +5,10 @@ Remote HTTPS MCP server for Claude.ai and Anthropic MCP Directory submission.
 - Public base URL: `https://claude.verifactu.business`
 - MCP endpoint: `https://claude.verifactu.business/mcp`
 - OAuth metadata: `https://claude.verifactu.business/.well-known/oauth-authorization-server`
-- Public docs: `https://holded.verifactu.business/claude`
-- Privacy Policy: `https://holded.verifactu.business/privacy`
-- Data Processing Agreement: `https://holded.verifactu.business/dpa`
+- Landing (Holded site): `https://holded.verifactu.business/conectores/claude`
+- Docs: `https://claude.verifactu.business/docs`
+- Privacy Policy: `https://claude.verifactu.business/privacy`
+- Data Processing Agreement: `https://claude.verifactu.business/dpa`
 - Support: `mailto:soporte@verifactu.business`
 
 Operational runbook:
@@ -193,6 +194,35 @@ Expected result:
 - most tools appear as read-only
 - `create_invoice_draft` remains the only write-capable tool
 
+## MCP Inspector (live server)
+
+The MCP Inspector connects directly to the production server at `https://claude.verifactu.business/mcp` and exercises the full OAuth flow.
+
+### Test account
+
+Company: **Nova Gestión SL**
+Holded API key: `0ecf1267eacc89ff45acab1b8ca28396`
+Login email (Holded): `soy@kseniailicheva.com`
+
+Use the API key when the OAuth authorization page asks for it.
+
+### Steps
+
+Run the Inspector — no install needed:
+
+```bash
+npx @modelcontextprotocol/inspector
+```
+
+Then in the browser UI (`http://localhost:6274`):
+
+1. Select transport: **Streamable HTTP**
+1. URL: `https://claude.verifactu.business/mcp`
+1. Click **Connect** — the Inspector opens the OAuth authorization page.
+1. Enter the test API key `0ecf1267eacc89ff45acab1b8ca28396` and click **Authorize**.
+1. The Inspector lists all 20 tools with titles and annotations.
+1. Call `list_contacts` or `list_documents` (docType: `invoice`) to verify live data from Nova Gestión SL.
+
 ## Testing
 
 Run locally:
@@ -227,6 +257,6 @@ Before Anthropic submission, production should have:
 Recommended after deploy:
 
 - verify `GET /.well-known/oauth-authorization-server`
-- verify `GET /docs` on the MCP server and the canonical public docs at `https://holded.verifactu.business/claude`
+- verify `GET /docs` and the landing at `https://holded.verifactu.business/conectores/claude`
 - verify `https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64`
 - reconnect the Claude custom connector once if external icon caches are stale

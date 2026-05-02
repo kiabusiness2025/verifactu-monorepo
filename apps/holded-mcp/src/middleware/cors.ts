@@ -1,7 +1,14 @@
 import { Request, Response, NextFunction } from 'express';
 import { config } from '../config.js';
 
-const DEFAULT_ALLOWED_ORIGINS = ['https://claude.ai', 'https://app.claude.ai'];
+const DEFAULT_ALLOWED_ORIGINS = [
+  'https://claude.ai',
+  'https://app.claude.ai',
+  'http://localhost:6274',
+  'http://localhost:6277',
+  'http://127.0.0.1:6274',
+  'http://127.0.0.1:6277',
+];
 const DEFAULT_ALLOWED_HEADERS = [
   'Authorization',
   'Content-Type',

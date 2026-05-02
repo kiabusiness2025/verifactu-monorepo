@@ -40,6 +40,14 @@ export const CREATE_INVOICE_DRAFT_ANNOTATIONS: ToolAnnotations = {
   openWorldHint: false,
 };
 
+export function readOnlyWithTitle(title: string): ToolAnnotations {
+  return { title, ...READ_ONLY_TOOL_ANNOTATIONS };
+}
+
+export function writeWithTitle(title: string): ToolAnnotations {
+  return { title, ...CREATE_INVOICE_DRAFT_ANNOTATIONS };
+}
+
 export const TOOL_HUMAN_DESCRIPTIONS: Record<(typeof PRODUCTION_TOOL_NAMES)[number], string> = {
   list_documents: 'Lista documentos de Holded como facturas, presupuestos, pedidos y albaranes.',
   get_document: 'Obtiene el detalle completo de un documento concreto de Holded.',

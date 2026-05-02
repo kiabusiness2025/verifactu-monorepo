@@ -55,9 +55,9 @@ export function createApp() {
   app.get('/favicon.png', (_req, res) => {
     res.set({
       'Cache-Control': 'public, max-age=3600, must-revalidate',
-      'Content-Type': 'image/svg+xml',
+      'Content-Type': 'image/png',
     });
-    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
+    res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
   });
   app.get('/logo.png', (_req, res) => {
     res.set('Content-Type', 'image/svg+xml');

@@ -192,13 +192,13 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
 
   res.status(201).json({
     client_id: clientId,
-    // client_secret is not returned for public clients (token_endpoint_auth_method: 'none')
+    client_secret: clientSecret,
     client_id_issued_at: Math.floor(Date.now() / 1000),
     client_secret_expires_at: 0,
     redirect_uris: redirectUris,
     grant_types: ['authorization_code'],
     response_types: ['code'],
-    token_endpoint_auth_method: 'none',
+    token_endpoint_auth_method: 'client_secret_post',
   });
 });
 

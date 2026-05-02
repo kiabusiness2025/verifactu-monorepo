@@ -48,7 +48,7 @@ type Capability = {
   title: string;
   subtitle: string;
   Icon: ComponentType<{ className?: string }>;
-  tools: string[];
+  tools: Record<ConnectorId, string[]>;
   examples: string[];
 };
 
@@ -107,7 +107,10 @@ const CAPABILITIES: Capability[] = [
     title: 'Facturas',
     subtitle: 'Lista facturas recientes y consulta el detalle de una factura existente.',
     Icon: Receipt,
-    tools: ['holded_list_invoices', 'holded_get_invoice'],
+    tools: {
+      claude: ['list_documents', 'get_document'],
+      chatgpt: ['holded_list_invoices', 'holded_get_invoice'],
+    },
     examples: [
       'List my latest Holded invoices.',
       'Show me the details of one invoice from the list.',
@@ -117,28 +120,40 @@ const CAPABILITIES: Capability[] = [
     title: 'Contactos',
     subtitle: 'Revisa contactos y datos disponibles sin crear ni modificar registros.',
     Icon: Users,
-    tools: ['holded_list_contacts', 'holded_get_contact'],
+    tools: {
+      claude: ['list_contacts', 'get_contact'],
+      chatgpt: ['holded_list_contacts', 'holded_get_contact'],
+    },
     examples: ['List my Holded contacts.', 'Show me the details of one contact from that list.'],
   },
   {
     title: 'Cuentas contables',
     subtitle: 'Consulta el plan de cuentas y resume codigos, nombres y tipos cuando existan.',
     Icon: Landmark,
-    tools: ['holded_list_accounts'],
+    tools: {
+      claude: ['get_chart_of_accounts'],
+      chatgpt: ['holded_list_accounts'],
+    },
     examples: ['List my main accounting accounts in Holded.'],
   },
   {
     title: 'Diario contable',
     subtitle: 'Lee apuntes existentes solo cuando el usuario indique fecha inicial y final.',
     Icon: BookOpen,
-    tools: ['holded_list_daily_ledger'],
+    tools: {
+      claude: ['get_journal', 'get_daily_book'],
+      chatgpt: ['holded_list_daily_ledger'],
+    },
     examples: ['Show my Holded daily ledger entries from 2026-03-01 to 2026-03-31.'],
   },
   {
     title: 'Borradores de factura',
     subtitle: 'Prepara borradores solo despues de confirmacion explicita del usuario.',
     Icon: FileText,
-    tools: ['holded_create_invoice_draft'],
+    tools: {
+      claude: ['create_invoice_draft'],
+      chatgpt: ['holded_create_invoice_draft'],
+    },
     examples: [
       'Create a draft invoice for an existing customer for 100 euros plus VAT. Ask for confirmation before creating it.',
     ],
@@ -290,7 +305,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
                   <h3 className="mt-4 text-base font-bold text-slate-950">{cap.title}</h3>
                   <p className="mt-1.5 flex-1 text-sm leading-6 text-slate-500">{cap.subtitle}</p>
                   <div className="mt-4 space-y-1">
-                    {cap.tools.map((tool) => (
+                    {cap.tools[connector].map((tool) => (
                       <code
                         key={tool}
                         className="block rounded-md bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600"
