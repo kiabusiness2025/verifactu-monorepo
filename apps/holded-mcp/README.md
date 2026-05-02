@@ -9,11 +9,10 @@ Remote HTTPS MCP server for Claude.ai and Anthropic MCP Directory submission.
 - Privacy Policy: `https://holded.verifactu.business/conectores/claude/privacy`
 - Data Processing Agreement: `https://holded.verifactu.business/conectores/claude/dpa`
 - Terms: `https://holded.verifactu.business/conectores/claude/terms`
-- Support: `https://holded.verifactu.business/conectores/claude/soporte`
+- Support page: `https://holded.verifactu.business/conectores/claude/soporte`
+- Support email: `mailto:soporte@verifactu.business`
 
 These pages live in the Next.js app at `holded.verifactu.business/conectores/claude/*`. The MCP server exposes `/docs`, `/privacy`, `/dpa`, `/terms`, `/support`, `/soporte` as **301 redirects** to those canonical URLs — no content is duplicated on the MCP server.
-
-- Support: `mailto:soporte@verifactu.business`
 
 Operational runbook:
 
