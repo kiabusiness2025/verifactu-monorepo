@@ -2,6 +2,7 @@ import {
   ArrowRight,
   BookOpen,
   CheckCircle2,
+  ExternalLink,
   FileText,
   HelpCircle,
   Landmark,
@@ -42,6 +43,7 @@ type ConnectorConfig = {
   demoHref: string;
   supportHref: string;
   dpaHref: string;
+  connectHref?: string;
 };
 
 type Capability = {
@@ -88,6 +90,8 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     demoHref: '/demo-recording',
     supportHref: '/conectores/claude/soporte',
     dpaHref: '/conectores/claude/dpa',
+    connectHref:
+      'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp',
   },
   chatgpt: {
     id: 'chatgpt',
@@ -230,9 +234,24 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
+            {cfg.connectHref && (
+              <a
+                href={cfg.connectHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Conectar con {cfg.aiName}
+              </a>
+            )}
             <Link
               href={cfg.demoHref}
-              className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
+              className={
+                cfg.connectHref
+                  ? 'inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-7 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50'
+                  : `inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`
+              }
             >
               <Play className="h-4 w-4 fill-current" />
               Ver demo
@@ -283,9 +302,8 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               Trabaja con datos clave de Holded en lenguaje natural.
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Esta plantilla evita prometer modulos que no forman parte del alcance validado. Otros
-              modulos de Holded se estan revisando y no son parte del alcance publico de esta
-              pagina.
+              Alcance actual del conector, validado con datos reales. Nuevos modulos de Holded se
+              incorporaran progresivamente.
             </p>
           </div>
 
@@ -318,6 +336,20 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               );
             })}
           </div>
+
+          {cfg.connectHref && (
+            <div className="mt-10 flex justify-center">
+              <a
+                href={cfg.connectHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Conectar con {cfg.aiName}
+              </a>
+            </div>
+          )}
         </div>
       </section>
 
@@ -489,16 +521,31 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
             Operado por Verifactu Business - no por {cfg.provider} ni Holded
           </div>
           <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
-            Preparado para conectar Holded con {cfg.aiName}.
+            Conecta tu cuenta de Holded con {cfg.aiName}.
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Usa la demo, revisa la documentacion o abre soporte. Cada enlace mantiene el contexto
-            del conector {cfg.aiName}.
+            Autoriza el conector en segundos. Solo lectura por defecto; los borradores requieren
+            confirmacion explicita antes de crearse.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
+            {cfg.connectHref && (
+              <a
+                href={cfg.connectHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
+              >
+                <ExternalLink className="h-4 w-4" />
+                Conectar con {cfg.aiName}
+              </a>
+            )}
             <Link
               href={cfg.demoHref}
-              className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
+              className={
+                cfg.connectHref
+                  ? 'inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50'
+                  : `inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`
+              }
             >
               <Play className="h-4 w-4 fill-current" />
               Ver demo
