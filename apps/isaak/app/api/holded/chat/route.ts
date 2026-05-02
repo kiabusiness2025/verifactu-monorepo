@@ -876,6 +876,8 @@ export async function POST(request: NextRequest) {
             `- **Total:** ${fmt(amountGross)}`,
             extracted.customerNif ? `- **NIF cliente:** ${extracted.customerNif}` : '',
             '',
+            `[📄 Ver borrador en PDF](/api/invoices/${invoice.id}/pdf)`,
+            '',
             '¿Quieres que la emita a la AEAT ahora mismo? Responde **"sí"** para confirmar.',
           ]
             .filter(Boolean)
@@ -906,7 +908,7 @@ export async function POST(request: NextRequest) {
         '',
         result.verifactuHash ? `**Hash de registro:** \`${result.verifactuHash}\`` : '',
         '',
-        'Puedes consultar el estado y el QR desde Verifactu.',
+        `[📄 Descargar PDF](/api/invoices/${pendingIssueInvoiceId}/pdf)`,
       ]
         .filter(Boolean)
         .join('\n');
