@@ -163,3 +163,18 @@ Manual QA still required:
 ## Release Status
 
 `READY_FOR_DEPLOY_THEN_PRODUCTION_WEB_MOBILE_QA`
+
+## Follow-up - 2026-05-02
+
+The remediation changes are present in the repository history and the remaining local dirty files are outside the Holded/OpenAI submission scope.
+
+Current release interpretation:
+
+- Public Holded landing remediation is ready to deploy.
+- Local desktop/mobile Playwright QA passed against `http://localhost:3011`.
+- OpenAI tool-hint validation passed.
+- Holded MCP contract tests passed.
+- Demo tenant validation passed.
+- Production QA is still required after deploy against `https://holded.verifactu.business`.
+
+Do not include unrelated local `apps/isaak` workspace changes in the Holded/OpenAI re-submit commit scope.
