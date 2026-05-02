@@ -1,16 +1,21 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { HoldedClient } from '../holded-client.js';
-import { readOnlyWithTitle } from './policy.js';
+import { toUnixSecondsString } from '../utils.js';
+import { readOnlyAnnotations } from './policy.js';
+
+const dateInput = z
+  .union([z.string(), z.number()])
+  .describe('Date as ISO 8601 (recommended) or Unix timestamp in seconds.');
 
 export function registerProductsTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_products',
-    'Lists Holded products and services. Read-only.',
+    'Returns the list of Holded products and services in the catalog. Read-only.',
     {
       page: z.string().optional().describe('Results page number.'),
     },
-    readOnlyWithTitle('List Holded products'),
+    readOnlyAnnotations('list_products'),
     async (params) => {
       const data = await getClient().listProducts(params as Record<string, string>);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -19,11 +24,11 @@ export function registerProductsTools(server: McpServer, getClient: () => Holded
 
   server.tool(
     'get_product',
-    'Gets the details of a specific Holded product. Read-only.',
+    'Returns the full details of a specific Holded product by its ID. Read-only.',
     {
       productId: z.string().describe('Holded product ID.'),
     },
-    readOnlyWithTitle('Get Holded product'),
+    readOnlyAnnotations('get_product'),
     async ({ productId }) => {
       const data = await getClient().getProduct(productId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -31,12 +36,52 @@ export function registerProductsTools(server: McpServer, getClient: () => Holded
   );
 
   server.tool(
+    'list_products_stock',
+    'Returns current stock levels for products across Holded warehouses. Read-only.',
+    {
+      page: z.string().optional().describe('Results page number.'),
+    },
+    readOnlyAnnotations('list_products_stock'),
+    async (params) => {
+      const filtered = Object.fromEntries(
+        Object.entries(params).filter(([, value]) => value !== undefined)
+      ) as Record<string, string>;
+      const data = await getClient().listProductsStock(filtered);
+      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+    }
+  );
+
+  server.tool(
     'list_warehouses',
-    'Lists Holded warehouses and available stock. Read-only.',
+    'Returns the list of Holded warehouses (locations only, without stock data). Read-only.',
     {},
-    readOnlyWithTitle('List Holded warehouses'),
+    readOnlyAnnotations('list_warehouses'),
     async () => {
       const data = await getClient().listWarehouses();
+      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+    }
+  );
+}
+
+export function registerCatalogsTools(server: McpServer, getClient: () => HoldedClient) {
+  server.tool(
+    'list_taxes',
+    'Returns the list of VAT and other tax IDs configured in Holded. Read-only.',
+    {},
+    readOnlyAnnotations('list_taxes'),
+    async () => {
+      const data = await getClient().listTaxes();
+      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+    }
+  );
+
+  server.tool(
+    'list_numbering_series',
+    'Returns the list of numbering series configured in Holded. Read-only.',
+    {},
+    readOnlyAnnotations('list_numbering_series'),
+    async () => {
+      const data = await getClient().listNumberingSeries();
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
     }
   );
@@ -45,9 +90,9 @@ export function registerProductsTools(server: McpServer, getClient: () => Holded
 export function registerProjectsTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_projects',
-    'Lists Holded projects and their general status. Read-only.',
+    'Returns the list of Holded projects with their general status. Read-only.',
     {},
-    readOnlyWithTitle('List Holded projects'),
+    readOnlyAnnotations('list_projects'),
     async () => {
       const data = await getClient().listProjects();
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -56,11 +101,11 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
 
   server.tool(
     'get_project',
-    'Gets the details of a specific Holded project. Read-only.',
+    'Returns the full details of a specific Holded project by its ID. Read-only.',
     {
       projectId: z.string().describe('Holded project ID.'),
     },
-    readOnlyWithTitle('Get Holded project'),
+    readOnlyAnnotations('get_project'),
     async ({ projectId }) => {
       const data = await getClient().getProject(projectId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -69,11 +114,11 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
 
   server.tool(
     'list_project_tasks',
-    'Lists tasks that belong to a specific Holded project. Read-only.',
+    'Returns the tasks belonging to a specific Holded project. Read-only.',
     {
       projectId: z.string().describe('Holded project ID.'),
     },
-    readOnlyWithTitle('List project tasks'),
+    readOnlyAnnotations('list_project_tasks'),
     async ({ projectId }) => {
       const data = await getClient().listTasks(projectId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -82,11 +127,11 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
 
   server.tool(
     'list_time_records',
-    'Lists time records logged against a Holded project. Read-only.',
+    'Returns the time records logged against a Holded project. Read-only.',
     {
       projectId: z.string().describe('Holded project ID.'),
     },
-    readOnlyWithTitle('List time records'),
+    readOnlyAnnotations('list_time_records'),
     async ({ projectId }) => {
       const data = await getClient().listTimeRecords(projectId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -97,9 +142,9 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
 export function registerAccountingTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'get_chart_of_accounts',
-    'Gets the Holded chart of accounts. Read-only.',
+    'Returns the Holded chart of accounts. Read-only.',
     {},
-    readOnlyWithTitle('Get chart of accounts'),
+    readOnlyAnnotations('get_chart_of_accounts'),
     async () => {
       const data = await getClient().getChartOfAccounts();
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -108,37 +153,40 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
 
   server.tool(
     'get_journal',
-    'Gets Holded journal entries for a date range. Read-only.',
+    'Returns Holded journal entries (daily ledger) for a date range. Read-only.',
     {
-      starttmp: z.string().optional().describe('Start date as Unix timestamp.'),
-      endtmp: z.string().optional().describe('End date as Unix timestamp.'),
+      starttmp: dateInput.optional().describe('Start date (ISO 8601 or Unix seconds).'),
+      endtmp: dateInput.optional().describe('End date (ISO 8601 or Unix seconds).'),
       page: z.string().optional().describe('Results page number.'),
     },
-    readOnlyWithTitle('Get journal entries'),
-    async (params) => {
-      const filtered = Object.fromEntries(
-        Object.entries(params).filter(([, value]) => value !== undefined)
-      ) as Record<string, string>;
+    readOnlyAnnotations('get_journal'),
+    async ({ starttmp, endtmp, ...rest }) => {
+      const params: Record<string, string> = {};
+      for (const [k, v] of Object.entries(rest)) {
+        if (v !== undefined) params[k] = String(v);
+      }
+      if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
+      if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
 
-      const data = await getClient().getJournal(filtered);
+      const data = await getClient().getDailyLedger(params);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
     }
   );
 
   server.tool(
     'get_daily_book',
-    'Gets the Holded daily accounting book for a date range. Read-only.',
+    'Returns the Holded daily accounting book (daily ledger) for a date range. Read-only.',
     {
-      starttmp: z.string().optional().describe('Start date as Unix timestamp.'),
-      endtmp: z.string().optional().describe('End date as Unix timestamp.'),
+      starttmp: dateInput.optional().describe('Start date (ISO 8601 or Unix seconds).'),
+      endtmp: dateInput.optional().describe('End date (ISO 8601 or Unix seconds).'),
     },
-    readOnlyWithTitle('Get daily accounting book'),
-    async (params) => {
-      const filtered = Object.fromEntries(
-        Object.entries(params).filter(([, value]) => value !== undefined)
-      ) as Record<string, string>;
+    readOnlyAnnotations('get_daily_book'),
+    async ({ starttmp, endtmp }) => {
+      const params: Record<string, string> = {};
+      if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
+      if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
 
-      const data = await getClient().getDailyBook(filtered);
+      const data = await getClient().getDailyLedger(params);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
     }
   );
@@ -147,9 +195,9 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
 export function registerTeamTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_employees',
-    'Lists active Holded employees. Read-only.',
+    'Returns the list of active Holded employees. Read-only.',
     {},
-    readOnlyWithTitle('List Holded employees'),
+    readOnlyAnnotations('list_employees'),
     async () => {
       const data = await getClient().listEmployees();
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -158,11 +206,11 @@ export function registerTeamTools(server: McpServer, getClient: () => HoldedClie
 
   server.tool(
     'get_employee',
-    'Gets the details of a specific Holded employee. Read-only.',
+    'Returns the full details of a specific Holded employee by ID. Read-only.',
     {
       employeeId: z.string().describe('Holded employee ID.'),
     },
-    readOnlyWithTitle('Get Holded employee'),
+    readOnlyAnnotations('get_employee'),
     async ({ employeeId }) => {
       const data = await getClient().getEmployee(employeeId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
@@ -173,9 +221,9 @@ export function registerTeamTools(server: McpServer, getClient: () => HoldedClie
 export function registerTreasuryTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_treasury_accounts',
-    'Lists Holded treasury accounts and current balances. Read-only.',
+    'Returns the list of Holded treasury accounts with their current balances. Read-only.',
     {},
-    readOnlyWithTitle('List treasury accounts'),
+    readOnlyAnnotations('list_treasury_accounts'),
     async () => {
       const data = await getClient().listTreasuryAccounts();
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };

@@ -1,72 +1,101 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { HoldedClient } from '../holded-client.js';
-import { readOnlyWithTitle, writeWithTitle } from './policy.js';
+import { HoldedClient, HOLDED_DOC_TYPES } from '../holded-client.js';
+import { toUnixSecondsNumber, toUnixSecondsString } from '../utils.js';
+import { readOnlyAnnotations, writeAnnotations } from './policy.js';
 
-const DOC_TYPES = [
-  'invoice',
-  'salesorder',
-  'proforma',
-  'waybill',
-  'quote',
-  'purchase',
-  'purchaseorder',
-  'purchaserefund',
-  'refund',
-] as const;
+const DOC_TYPES = HOLDED_DOC_TYPES;
+
+const dateInput = z
+  .union([z.string(), z.number()])
+  .describe('Date as ISO 8601 (recommended) or Unix timestamp in seconds.');
 
 export function registerInvoicingTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_documents',
-    'Lists Holded documents such as invoices, quotes, sales orders and waybills. Returns read-only document data and supports safe filtering by type, date and contact.',
+    'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only.',
     {
       docType: z
         .enum(DOC_TYPES)
         .describe(
-          'Document type. Examples: invoice, quote, salesorder, waybill, purchase, refund.'
+          'Document type. One of: invoice, salesreceipt, creditnote, salesorder, proform, waybill, estimate, purchase, purchaseorder, purchaserefund.'
         ),
       page: z.string().optional().describe('Results page number.'),
-      starttmp: z.string().optional().describe('Start date as Unix timestamp.'),
-      endtmp: z.string().optional().describe('End date as Unix timestamp.'),
+      starttmp: dateInput.optional().describe('Start date (ISO 8601 or Unix seconds).'),
+      endtmp: dateInput.optional().describe('End date (ISO 8601 or Unix seconds).'),
       contactId: z.string().optional().describe('Optional Holded contact ID filter.'),
     },
-    readOnlyWithTitle('List Holded documents'),
-    async ({ docType, ...params }) => {
-      const filtered = Object.fromEntries(
-        Object.entries(params).filter(([, value]) => value !== undefined)
-      ) as Record<string, string>;
+    readOnlyAnnotations('list_documents'),
+    async ({ docType, starttmp, endtmp, ...rest }) => {
+      const params: Record<string, string> = {};
+      for (const [k, v] of Object.entries(rest)) {
+        if (v !== undefined) params[k] = String(v);
+      }
+      if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
+      if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
 
-      const data = await getClient().listDocuments(docType, filtered);
-      return {
-        content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
-      };
+      const data = await getClient().listDocuments(docType, params);
+      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
     }
   );
 
   server.tool(
     'get_document',
-    'Gets the full details of a specific Holded document, including lines, taxes and related contact information. Read-only.',
+    'Returns the full details of a specific Holded document, including line items, taxes and contact information. Read-only.',
     {
       docType: z.enum(DOC_TYPES).describe('Document type.'),
       documentId: z.string().describe('Holded document ID.'),
     },
-    readOnlyWithTitle('Get Holded document'),
+    readOnlyAnnotations('get_document'),
     async ({ docType, documentId }) => {
       const data = await getClient().getDocument(docType, documentId);
+      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+    }
+  );
+
+  server.tool(
+    'get_document_pdf',
+    'Returns the PDF rendering of a specific Holded document, encoded as a base64 string. Read-only.',
+    {
+      docType: z.enum(DOC_TYPES).describe('Document type.'),
+      documentId: z.string().describe('Holded document ID.'),
+    },
+    readOnlyAnnotations('get_document_pdf'),
+    async ({ docType, documentId }) => {
+      const buf = await getClient().getDocumentPdf(docType, documentId);
       return {
-        content: [{ type: 'text', text: JSON.stringify(data, null, 2) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                docType,
+                documentId,
+                contentType: 'application/pdf',
+                base64: buf.toString('base64'),
+                bytes: buf.length,
+              },
+              null,
+              2
+            ),
+          },
+        ],
       };
     }
   );
 
   server.tool(
     'create_invoice_draft',
-    'Creates a draft invoice only in Holded. It does not issue, send, pay, delete, finalize, or destructively modify invoices. The user should review the draft in Holded before taking any further action.',
+    'Creates a Holded invoice in draft state. The server forces approveDoc=false at the wire level, so the document is never auto-issued, sent, paid, deleted or otherwise modified destructively. The created draft must be approved manually in Holded UI before it has any legal effect.',
     {
       contactId: z.string().describe('Holded customer or contact ID.'),
-      date: z.number().describe('Invoice date as Unix timestamp.'),
-      dueDate: z.number().optional().describe('Optional due date as Unix timestamp.'),
+      date: dateInput.describe('Invoice date (ISO 8601 or Unix seconds).'),
+      dueDate: dateInput.optional().describe('Optional due date (ISO 8601 or Unix seconds).'),
       notes: z.string().optional().describe('Optional invoice notes.'),
+      numSerieId: z
+        .string()
+        .optional()
+        .describe('Optional numbering series ID, as returned by list_numbering_series.'),
       items: z
         .array(
           z.object({
@@ -79,17 +108,25 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
         )
         .describe('Invoice draft line items.'),
     },
-    writeWithTitle('Create invoice draft'),
-    async (params) => {
-      const data = await getClient().createDocument('invoice', params);
+    writeAnnotations('create_invoice_draft'),
+    async ({ date, dueDate, ...rest }) => {
+      // approveDoc se fuerza al final del spread para que ningún input pueda
+      // anularlo. NO mover esta línea.
+      const body: Record<string, unknown> = {
+        ...rest,
+        date: toUnixSecondsNumber(date),
+        ...(dueDate !== undefined ? { dueDate: toUnixSecondsNumber(dueDate) } : {}),
+        approveDoc: false,
+      };
+
+      const data = await getClient().createDocument('invoice', body);
       return {
         content: [
           {
             type: 'text',
             text:
-              'Draft invoice created successfully.\n\n' +
-              `${JSON.stringify(data, null, 2)}\n\n` +
-              'Review the draft in Holded before issuing or sending it.',
+              'Draft invoice created (approveDoc=false enforced server-side). The document is in draft state in Holded.\n\n' +
+              JSON.stringify(data, null, 2),
           },
         ],
       };

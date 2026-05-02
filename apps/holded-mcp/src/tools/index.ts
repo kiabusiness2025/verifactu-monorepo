@@ -4,6 +4,7 @@ import { registerContactsTools } from './contacts.js';
 import { registerInvoicingTools } from './invoicing.js';
 import {
   registerAccountingTools,
+  registerCatalogsTools,
   registerProductsTools,
   registerProjectsTools,
   registerTeamTools,
@@ -14,6 +15,7 @@ export function registerProductionTools(server: McpServer, getClient: () => Hold
   registerInvoicingTools(server, getClient);
   registerContactsTools(server, getClient);
   registerProductsTools(server, getClient);
+  registerCatalogsTools(server, getClient);
   registerProjectsTools(server, getClient);
   registerAccountingTools(server, getClient);
   registerTeamTools(server, getClient);

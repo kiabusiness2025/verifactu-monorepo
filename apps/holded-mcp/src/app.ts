@@ -16,9 +16,6 @@ import {
   renderSupportPage,
   renderTermsPage,
   renderLandingPage,
-  renderDocsPageClaude,
-  renderPrivacyPageClaude,
-  renderDpaPageClaude,
 } from './public-pages.js';
 import { registerProductionTools } from './tools/index.js';
 
@@ -42,57 +39,60 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(requestLogger);
 
-  app.use(express.static(publicDir));
+  // ⚠️ ORDEN IMPORTANTE: las rutas de iconos van ANTES que express.static.
+  // Si express.static corre primero, sirve los bytes históricos de
+  // public/favicon.ico (la "V") y nuestras rutas nunca se ejecutan.
 
-  // Favicon with cache-busting headers
-  app.get('/favicon.ico', (_req, res) => {
+  // Holded diamond brand mark — TODAS las variantes PNG sirven el mismo
+  // asset (apps/holded-mcp/public/holded-diamond-logo.png). Anteriormente
+  // estas rutas devolvían holded-logo.svg con Content-Type image/svg+xml,
+  // lo que provocaba que Claude y otros clientes mostraran un icono "V"
+  // genérico en lugar del rombo de Holded.
+  const sendDiamondPng = (res: express.Response, contentType = 'image/png') => {
     res.set({
       'Cache-Control': 'public, max-age=3600, must-revalidate',
-      'Content-Type': 'image/x-icon',
-    });
-    res.sendFile(path.join(publicDir, 'favicon.ico'));
-  });
-  app.get('/favicon.png', (_req, res) => {
-    res.set({
-      'Cache-Control': 'public, max-age=3600, must-revalidate',
-      'Content-Type': 'image/png',
+      'Content-Type': contentType,
     });
     res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
-  });
-  app.get('/logo.png', (_req, res) => {
-    res.set('Content-Type', 'image/svg+xml');
-    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
-  });
-  app.get('/icon.png', (_req, res) => {
-    res.set('Content-Type', 'image/svg+xml');
-    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
-  });
+  };
+
+  // /favicon.ico — el .ico histórico era la letra "V". Servimos el PNG del
+  // diamante con header image/x-icon; navegadores modernos lo aceptan.
+  app.get('/favicon.ico', (_req, res) => sendDiamondPng(res, 'image/x-icon'));
+  app.get('/favicon.png', (_req, res) => sendDiamondPng(res));
+  app.get('/logo.png', (_req, res) => sendDiamondPng(res));
+  app.get('/icon.png', (_req, res) => sendDiamondPng(res));
+  app.get('/apple-touch-icon.png', (_req, res) => sendDiamondPng(res));
+  app.get('/holded-diamond-logo.png', (_req, res) => sendDiamondPng(res));
+
   app.get('/icon.svg', (_req, res) => {
-    res.set('Content-Type', 'image/svg+xml');
-    res.sendFile(path.join(publicDir, 'holded-logo.svg'));
-  });
-  app.get('/apple-touch-icon.png', (_req, res) => {
-    res.set('Content-Type', 'image/svg+xml');
+    res.set({
+      'Cache-Control': 'public, max-age=3600, must-revalidate',
+      'Content-Type': 'image/svg+xml',
+    });
     res.sendFile(path.join(publicDir, 'holded-logo.svg'));
   });
 
-  // Claude landing & documentation
+  // Static después de los overrides para que /favicon.ico y otras rutas
+  // de branding NO se sirvan desde public/ con bytes obsoletos.
+  app.use(express.static(publicDir));
+
+  // Claude landing — landing local del servidor MCP. Las páginas legales
+  // y de documentación NO viven aquí: existen únicamente en la app Next.js
+  // de holded.verifactu.business/conectores/claude/* para que haya una
+  // sola fuente de verdad por conector.
   app.get('/', (_req, res) => {
     res.set('Content-Type', 'text/html; charset=utf-8');
     res.send(renderLandingPage(config.BASE_URL));
   });
-  app.get('/docs', (_req, res) => {
-    res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(renderDocsPageClaude(config.BASE_URL));
-  });
-  app.get('/privacy', (_req, res) => {
-    res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(renderPrivacyPageClaude());
-  });
-  app.get('/dpa', (_req, res) => {
-    res.set('Content-Type', 'text/html; charset=utf-8');
-    res.send(renderDpaPageClaude());
-  });
+
+  // /docs, /privacy, /dpa — estas URLs fueron entregadas a Anthropic en el
+  // formulario de submission. Redirigen a la app Next.js que es la fuente de
+  // verdad; así el servidor MCP no duplica contenido legal/docs.
+  const holdedBase = 'https://holded.verifactu.business/conectores/claude';
+  app.get('/docs', (_req, res) => res.redirect(301, `${holdedBase}/docs`));
+  app.get('/privacy', (_req, res) => res.redirect(301, `${holdedBase}/privacy`));
+  app.get('/dpa', (_req, res) => res.redirect(301, `${holdedBase}/dpa`));
 
   // Holded MCP documentation (for reference)
   app.get('/mcp-docs', (_req, res) => {

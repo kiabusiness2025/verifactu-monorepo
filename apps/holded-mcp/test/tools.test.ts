@@ -8,10 +8,19 @@ import {
   PRODUCTION_TOOL_NAMES,
   READ_ONLY_TOOL_ANNOTATIONS,
   READ_ONLY_TOOL_NAMES,
+  TOOL_TITLES,
 } from '../src/tools/policy.ts';
 import { registerProductionTools } from '../src/tools/index.ts';
 
 installTestEnv();
+
+function expectedAnnotations(toolName: (typeof PRODUCTION_TOOL_NAMES)[number]) {
+  const base =
+    toolName === 'create_invoice_draft'
+      ? CREATE_INVOICE_DRAFT_ANNOTATIONS
+      : READ_ONLY_TOOL_ANNOTATIONS;
+  return { ...base, title: TOOL_TITLES[toolName] };
+}
 
 test('registerProductionTools exposes exactly the intended production surface', () => {
   const captured: Array<{
@@ -36,14 +45,17 @@ test('registerProductionTools exposes exactly the intended production surface', 
   assert.deepEqual(captured.map((tool) => tool.name).sort(), [...PRODUCTION_TOOL_NAMES].sort());
 
   for (const tool of captured) {
-    if (tool.name === 'create_invoice_draft') {
-      assert.deepEqual(tool.annotations, CREATE_INVOICE_DRAFT_ANNOTATIONS);
-      assert.match(tool.description ?? '', /draft invoice only/i);
-      assert.match(tool.description ?? '', /does not issue, send, pay, delete, finalize/i);
-      continue;
-    }
+    const name = tool.name as (typeof PRODUCTION_TOOL_NAMES)[number];
+    assert.deepEqual(tool.annotations, expectedAnnotations(name));
+    // Cada tool debe tener título legible.
+    assert.equal(typeof tool.annotations?.title, 'string');
+    assert.ok(((tool.annotations?.title as string) ?? '').length > 0);
 
-    assert.deepEqual(tool.annotations, READ_ONLY_TOOL_ANNOTATIONS);
+    if (name === 'create_invoice_draft') {
+      assert.match(tool.description ?? '', /draft/i);
+      assert.match(tool.description ?? '', /approveDoc=false/);
+      assert.match(tool.description ?? '', /never auto-issued/i);
+    }
   }
 });
 
@@ -73,20 +85,28 @@ test('MCP tools/list returns the exact intended production tools with safety ann
     const names = result.tools.map((tool) => tool.name).sort();
 
     assert.deepEqual(names, [...PRODUCTION_TOOL_NAMES].sort());
+
+    // Anthropic review criteria: ninguna tool debe combinar lectura/escritura
+    // ni exponer operaciones destructivas o de pago.
     assert.equal(
-      result.tools.some((tool) => /delete|update|send|finalize|payment|crypto/i.test(tool.name)),
+      result.tools.some((tool) =>
+        /delete|update|send|finalize|payment|crypto|transfer|api_request/i.test(tool.name)
+      ),
       false
     );
 
+    // Anthropic review criteria: nombres ≤ 64 caracteres.
     for (const tool of result.tools) {
-      if (tool.name === 'create_invoice_draft') {
-        assert.deepEqual(tool.annotations, CREATE_INVOICE_DRAFT_ANNOTATIONS);
-        assert.match(tool.description ?? '', /draft invoice only/i);
-        continue;
-      }
+      assert.ok(tool.name.length <= 64, `tool name too long: ${tool.name}`);
+    }
 
-      assert.ok(READ_ONLY_TOOL_NAMES.includes(tool.name as (typeof READ_ONLY_TOOL_NAMES)[number]));
-      assert.deepEqual(tool.annotations, READ_ONLY_TOOL_ANNOTATIONS);
+    for (const tool of result.tools) {
+      const name = tool.name as (typeof PRODUCTION_TOOL_NAMES)[number];
+      assert.ok(
+        READ_ONLY_TOOL_NAMES.includes(tool.name as (typeof READ_ONLY_TOOL_NAMES)[number]) ||
+          tool.name === 'create_invoice_draft'
+      );
+      assert.deepEqual(tool.annotations, expectedAnnotations(name));
     }
 
     await transport.close();
