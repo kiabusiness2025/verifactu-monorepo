@@ -1,14 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdminContext } from '@/lib/auth';
+import type { OrderStatus } from '@prisma/client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/admin/orders
- * List orders with optional status filter + pagination
- */
+const VALID_ORDER_STATUSES: OrderStatus[] = [
+  'draft',
+  'checkout_pending',
+  'paid',
+  'provisioning',
+  'in_progress',
+  'completed',
+  'cancelled',
+  'refunded',
+];
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdminContext(request);
@@ -17,24 +25,20 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') || undefined;
+    const statusParam = searchParams.get('status') || undefined;
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const where = status ? { status } : {};
+    const where = statusParam ? { status: statusParam as OrderStatus } : {};
 
     const [orders, total] = await Promise.all([
       prisma.order.findMany({
         where,
         include: {
-          tenant: {
-            select: { id: true, name: true },
-          },
+          tenant: { select: { id: true, name: true } },
           lines: {
             include: {
-              catalogItem: {
-                select: { id: true, name: true },
-              },
+              catalogItem: { select: { id: true, name: true } },
             },
           },
         },
@@ -49,8 +53,8 @@ export async function GET(request: NextRequest) {
       ok: true,
       orders: orders.map((o) => ({
         id: o.id,
-        orderNumber: o.orderNumber || `ORD-${o.id.slice(0, 8)}`,
-        tenantName: o.tenant?.name || 'N/A',
+        orderNumber: `ORD-${o.id.slice(0, 8)}`,
+        tenantName: o.tenant?.name || o.buyerName || 'N/A',
         status: o.status,
         totalAmount: o.totalAmount.toString(),
         itemCount: o.lines.length,
@@ -59,19 +63,18 @@ export async function GET(request: NextRequest) {
       })),
       pagination: { limit, offset, total, hasMore: offset + limit < total },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[admin/orders] GET error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-/**
- * PATCH /api/admin/orders/[id]
- * Update order status
- */
 export async function PATCH(request: NextRequest) {
   try {
     const admin = await requireAdminContext(request);
@@ -79,41 +82,26 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { id, status, notes } = body;
+    const body = (await request.json()) as Record<string, unknown>;
+    const { id, status } = body as { id?: string; status?: string };
 
     if (!id || !status) {
       return NextResponse.json({ error: 'Missing required fields: id, status' }, { status: 400 });
     }
 
-    const validStatuses = [
-      'draft',
-      'pending',
-      'paid',
-      'active',
-      'provisioning',
-      'cancelled',
-      'failed',
-    ];
-    if (!validStatuses.includes(status)) {
+    if (!VALID_ORDER_STATUSES.includes(status as OrderStatus)) {
       return NextResponse.json(
-        { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+        { error: `Invalid status. Must be one of: ${VALID_ORDER_STATUSES.join(', ')}` },
         { status: 400 }
       );
     }
 
     const order = await prisma.order.update({
       where: { id },
-      data: {
-        status,
-        adminNotes: notes || undefined,
-        updatedAt: new Date(),
-      },
+      data: { status: status as OrderStatus },
       include: {
         tenant: { select: { id: true, name: true } },
-        lines: {
-          include: { catalogItem: { select: { id: true, name: true } } },
-        },
+        lines: { include: { catalogItem: { select: { id: true, name: true } } } },
       },
     });
 
@@ -126,10 +114,13 @@ export async function PATCH(request: NextRequest) {
         updatedAt: order.updatedAt.toISOString(),
       },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[admin/orders] PATCH error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }

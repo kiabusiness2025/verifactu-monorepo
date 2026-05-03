@@ -89,6 +89,10 @@ export async function getAdminSessionOrNull(): Promise<SessionLike | null> {
   return null;
 }
 
+export async function requireAdminContext(_request?: unknown): Promise<SessionLike | null> {
+  return getAdminSessionOrNull();
+}
+
 export async function requireAdminSession(): Promise<AdminSession> {
   const session = await getAdminSessionOrNull();
   if (!session?.user) {

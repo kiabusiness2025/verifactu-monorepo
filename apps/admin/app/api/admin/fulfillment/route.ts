@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdminContext } from '@/lib/auth';
+import type { FulfillmentStatus, FulfillmentTaskStatus } from '@prisma/client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/**
- * GET /api/admin/fulfillment
- * List FulfillmentCase with optional status filter
- */
+const VALID_CASE_STATUSES: FulfillmentStatus[] = [
+  'pending_intake',
+  'awaiting_client',
+  'scheduled',
+  'in_execution',
+  'blocked',
+  'delivered',
+  'closed',
+];
+
 export async function GET(request: NextRequest) {
   try {
     const admin = await requireAdminContext(request);
@@ -17,11 +24,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') || undefined;
+    const statusParam = searchParams.get('status') || undefined;
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100);
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const where = status ? { status } : {};
+    const where = statusParam ? { status: statusParam as FulfillmentStatus } : {};
 
     const [cases, total] = await Promise.all([
       prisma.fulfillmentCase.findMany({
@@ -30,12 +37,11 @@ export async function GET(request: NextRequest) {
           order: {
             select: {
               id: true,
-              orderNumber: true,
               tenant: { select: { name: true } },
             },
           },
           tasks: {
-            select: { id: true, title: true, status: true, assignedTo: true },
+            select: { id: true, title: true, status: true, assignedToUserId: true },
           },
         },
         orderBy: { createdAt: 'desc' },
@@ -50,30 +56,28 @@ export async function GET(request: NextRequest) {
       cases: cases.map((c) => ({
         id: c.id,
         orderId: c.orderId,
-        orderNumber: c.order?.orderNumber || `ORD-${c.orderId.slice(0, 8)}`,
+        orderNumber: `ORD-${c.orderId.slice(0, 8)}`,
         tenantName: c.order?.tenant?.name || 'N/A',
         status: c.status,
-        priority: c.priority,
         taskCount: c.tasks.length,
-        assignedTaskCount: c.tasks.filter((t) => t.assignedTo).length,
+        assignedTaskCount: c.tasks.filter((t) => t.assignedToUserId).length,
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString(),
       })),
       pagination: { limit, offset, total, hasMore: offset + limit < total },
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[admin/fulfillment] GET error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
 }
 
-/**
- * PATCH /api/admin/fulfillment/[id]
- * Update FulfillmentCase status or assign task
- */
 export async function PATCH(request: NextRequest) {
   try {
     const admin = await requireAdminContext(request);
@@ -81,26 +85,30 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { id, status, taskId, taskStatus, assignedTo } = body;
+    const body = (await request.json()) as Record<string, unknown>;
+    const { id, status, taskId, taskStatus, assignedTo } = body as {
+      id?: string;
+      status?: string;
+      taskId?: string;
+      taskStatus?: string;
+      assignedTo?: string;
+    };
 
     if (!id) {
       return NextResponse.json({ error: 'Missing required field: id' }, { status: 400 });
     }
 
-    // If updating case status
     if (status) {
-      const validStatuses = ['pending', 'assigned', 'in-progress', 'completed', 'failed'];
-      if (!validStatuses.includes(status)) {
+      if (!VALID_CASE_STATUSES.includes(status as FulfillmentStatus)) {
         return NextResponse.json(
-          { error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` },
+          { error: `Invalid status. Must be one of: ${VALID_CASE_STATUSES.join(', ')}` },
           { status: 400 }
         );
       }
 
       const fulfillmentCase = await prisma.fulfillmentCase.update({
         where: { id },
-        data: { status, updatedAt: new Date() },
+        data: { status: status as FulfillmentStatus },
         include: { tasks: { select: { id: true, status: true } } },
       });
 
@@ -111,37 +119,30 @@ export async function PATCH(request: NextRequest) {
       });
     }
 
-    // If updating task assignment
     if (taskId) {
-      const validTaskStatuses = ['pending', 'assigned', 'in-progress', 'completed', 'failed'];
-      if (taskStatus && !validTaskStatuses.includes(taskStatus)) {
-        return NextResponse.json(
-          { error: `Invalid task status. Must be one of: ${validTaskStatuses.join(', ')}` },
-          { status: 400 }
-        );
-      }
-
       const task = await prisma.fulfillmentTask.update({
         where: { id: taskId },
         data: {
-          assignedTo: assignedTo || undefined,
-          status: taskStatus || (assignedTo ? 'assigned' : 'pending'),
-          updatedAt: new Date(),
+          assignedToUserId: assignedTo || null,
+          ...(taskStatus ? { status: taskStatus as FulfillmentTaskStatus } : {}),
         },
       });
 
       return NextResponse.json({
         ok: true,
         message: `Task ${taskId} assigned to ${assignedTo || 'unassigned'}`,
-        task: { id: task.id, assignedTo: task.assignedTo, status: task.status },
+        task: { id: task.id, assignedToUserId: task.assignedToUserId, status: task.status },
       });
     }
 
     return NextResponse.json({ error: 'No update fields provided' }, { status: 400 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[admin/fulfillment] PATCH error:', error);
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      {
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+      },
       { status: 500 }
     );
   }
