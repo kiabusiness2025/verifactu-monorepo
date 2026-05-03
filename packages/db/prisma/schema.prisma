@@ -556,6 +556,7 @@ model Tenant {
   externalSyncRuns            ExternalSyncRun[]
   isaakConversations          IsaakConversation[]
   isaakGoogleTokens           IsaakGoogleToken[]
+  isaakAlerts                 IsaakAlert[]
   isaakMemoryFacts            IsaakMemoryFact[]
   isaakOnboardingProfiles     IsaakOnboardingProfile[]
   usageEvents                 UsageEvent[]
@@ -1801,6 +1802,47 @@ model IsaakGoogleToken {
   @@unique([tenantId, userId])
   @@index([tenantId])
   @@map("isaak_google_tokens")
+}
+
+// ==================== ISAAK: ALERTS ====================
+
+enum IsaakAlertStatus {
+  pending
+  sent
+  read
+  dismissed
+
+  @@map("isaak_alert_status")
+}
+
+enum IsaakAlertChannel {
+  email
+  push
+  in_app
+
+  @@map("isaak_alert_channel")
+}
+
+model IsaakAlert {
+  id        String            @id @default(cuid())
+  tenantId  String            @map("tenant_id") @db.Uuid
+  type      String
+  title     String
+  body      String
+  dueDate   DateTime?         @map("due_date") @db.Timestamptz
+  channel   IsaakAlertChannel @default(email)
+  status    IsaakAlertStatus  @default(pending)
+  sentAt    DateTime?         @map("sent_at") @db.Timestamptz
+  metadata  Json?
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([dueDate])
+  @@map("isaak_alerts")
 }
 
 // ==================== DEMO REQUESTS ====================

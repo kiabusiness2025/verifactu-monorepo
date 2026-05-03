@@ -21,7 +21,7 @@ const routes = [
   },
   {
     path: '/conectores/claude',
-    checks: ['Trabaja con datos clave de Holded desde Claude', 'holded_list_invoices'],
+    checks: ['Trabaja con datos clave de Holded desde Claude', 'list_documents'],
     forbidden: ['Acceso completo a Holded', 'RRHH', 'almacenes', 'project tasks', 'time records'],
   },
   {
