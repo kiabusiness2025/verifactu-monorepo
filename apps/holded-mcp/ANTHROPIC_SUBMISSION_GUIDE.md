@@ -103,9 +103,19 @@ Tu repo ya tiene:
 
 > _"server logo (URL or SVG upload), favicon verification"_
 
-URL del logo a usar en el formulario: `https://claude.verifactu.business/holded-diamond-logo.png` (ahora que el bug del icono está arreglado).
+URL del logo a usar en el formulario: `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-03`
 
-Favicon: `https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64` debe mostrar el rombo. Si Google lo tiene cacheado con la "V" anterior, reconectar el conector custom limpiará la caché de Claude pero la de Google tarda más.
+Favicon: `https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64` debe mostrar el rombo.
+
+**Importante:** Si Claude.ai muestra un icono inesperado, comprueba primero si coincide con el _antiguo_ icono azul personalizado de la primera versión de este conector. Si coincide, trátalo como metadatos en caché — no como fallback genérico de Claude. Para limpiarlo:
+
+1. Desinstala el conector desde Claude.ai
+2. Si usas Claude Team/Enterprise, elimínalo también en Organization Settings → Connectors
+3. Limpia tu sesión de Claude: cierra sesión, borra la caché del navegador, vuelve a entrar
+4. Reinstala en `https://claude.verifactu.business/mcp`
+5. Verifica que las URLs públicas de icono son correctas: `https://claude.verifactu.business/holded-diamond-logo.png`, `/favicon.ico`, `/icon.png`
+6. Comprueba la caché de favicon de Google: `https://www.google.com/s2/favicons?domain=claude.verifactu.business`
+7. Solo trátalo como fallback genérico de Claude si el icono mostrado no coincide con ningún asset antiguo Y todas las URLs públicas de branding devuelven el rombo de Holded
 
 ### 1.8. Auditoría final de tools (review criteria)
 

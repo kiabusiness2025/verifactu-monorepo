@@ -135,6 +135,19 @@ Prueba funcional mínima sugerida:
 
 ## 10. Cómo interpretar el icono azul si sigue apareciendo
 
+**Importante:** Si Claude.ai muestra un icono inesperado, comprueba primero si coincide con el _antiguo_ icono azul personalizado de la primera versión de este conector (un escudo azul custom, no el escudo genérico de Claude). Si coincide, trátalo como metadatos en caché — no como fallback genérico. Para limpiarlo:
+
+1. Desinstala el conector desde Claude.ai → Settings → Connectors.
+2. Si usas Claude Team/Enterprise, elimínalo también en Organization Settings → Connectors.
+3. Limpia tu sesión de Claude: cierra sesión, borra la caché del navegador, vuelve a entrar.
+4. Reinstala en `https://claude.verifactu.business/mcp`.
+5. Verifica que las URLs públicas de icono son correctas:
+   - `https://claude.verifactu.business/holded-diamond-logo.png`
+   - `https://claude.verifactu.business/favicon.ico`
+   - `https://claude.verifactu.business/icon.png`
+6. Comprueba la caché de favicon de Google: `https://www.google.com/s2/favicons?domain=claude.verifactu.business`
+7. Solo trátalo como fallback genérico de Claude si el icono mostrado no coincide con ningún asset antiguo Y todas las URLs públicas de branding devuelven el rombo de Holded.
+
 Si después de recrear desde cero sigue apareciendo un icono azul o escudo genérico en:
 
 - lista de conectores
@@ -143,7 +156,7 @@ Si después de recrear desde cero sigue apareciendo un icono azul o escudo gené
 
 pero a la vez ocurre esto:
 
-- `logo.svg`, `favicon.png`, `icon.png` y `oauth/authorize` en producción son correctos
+- `favicon.ico`, `favicon.png`, `icon.png` y `oauth/authorize` en producción son correctos
 - la OAuth page renderiza Holded correctamente
 - el conector conecta y funciona
 

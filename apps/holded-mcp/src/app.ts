@@ -42,21 +42,41 @@ export function createApp() {
   // estas rutas devolvían holded-logo.svg con Content-Type image/svg+xml,
   // lo que provocaba que Claude y otros clientes mostraran un icono "V"
   // genérico en lugar del rombo de Holded.
+  //
+  // X-Icon-Version fuerza a Claude.ai y a proxies intermedios a tratar la
+  // respuesta como nueva aunque tengan una copia en caché. El valor incluye
+  // la fecha de la última regeneración del asset para facilitar la depuración.
+  const ICON_VERSION = 'holded-diamond-2026-05-03';
+
   const sendDiamondPng = (res: express.Response, contentType = 'image/png') => {
     res.set({
-      // no-cache fuerza revalidación en cada request. Esto evita que Claude.ai
-      // u otros clientes sirvan un icono obsoleto cacheado indefinidamente.
-      'Cache-Control': 'no-cache',
+      // no-cache + must-revalidate fuerza revalidación en cada request.
+      // Pragma: no-cache cubre clientes HTTP/1.0 y proxies legacy.
+      // Esto evita que Claude.ai u otros clientes sirvan un icono obsoleto
+      // cacheado indefinidamente.
+      'Cache-Control': 'no-cache, must-revalidate',
+      Pragma: 'no-cache',
       'Content-Type': contentType,
+      'X-Icon-Version': ICON_VERSION,
     });
     res.sendFile(path.join(publicDir, 'holded-diamond-logo.png'));
   };
 
-  // /favicon.ico — se sirve el PNG directamente con Content-Type: image/png.
-  // El formato ICO causaba pantallas blancas (dimensiones 250x250 vs 256x256
-  // declaradas en el header). PNG con image/png funciona en todos los clientes
-  // modernos incluyendo Node.js fetch (que usa Claude.ai para obtener el icono).
-  app.get('/favicon.ico', (_req, res) => sendDiamondPng(res));
+  const sendDiamondIco = (res: express.Response) => {
+    res.set({
+      'Cache-Control': 'no-cache, must-revalidate',
+      Pragma: 'no-cache',
+      'Content-Type': 'image/x-icon',
+      'X-Icon-Version': ICON_VERSION,
+    });
+    res.sendFile(path.join(publicDir, 'favicon.ico'));
+  };
+
+  // /favicon.ico — se sirve el ICO multi-resolución real (64/48/32/16 px)
+  // con Content-Type: image/x-icon. El fichero tiene magic bytes ICO válidos
+  // (00 00 01 00) y 4 frames, generados con:
+  //   magick holded-diamond-logo.png -define icon:auto-resize=64,48,32,16 favicon.ico
+  app.get('/favicon.ico', (_req, res) => sendDiamondIco(res));
   app.get('/favicon.png', (_req, res) => sendDiamondPng(res));
   app.get('/logo.png', (_req, res) => sendDiamondPng(res));
   app.get('/icon.png', (_req, res) => sendDiamondPng(res));
@@ -114,7 +134,7 @@ export function createApp() {
       token_endpoint_auth_methods_supported: ['client_secret_post'],
       scopes_supported: ['holded:read', 'holded:write'],
       service_documentation: `${config.BASE_URL}/docs`,
-      logo_uri: `${config.BASE_URL}/holded-diamond-logo.png`,
+      logo_uri: `${config.BASE_URL}/holded-diamond-logo.png?v=holded-diamond-2026-05-03`,
     });
   });
 

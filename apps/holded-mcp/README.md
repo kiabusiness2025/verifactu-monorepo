@@ -144,13 +144,53 @@ Canonical Holded brand source:
 
 Runtime brand assets served by this app:
 
-- `public/holded-diamond-logo.png`
+- `public/holded-diamond-logo.png` — canonical source for all icon variants
+- `public/favicon.ico` — multi-size ICO (64/48/32/16 px), generated from holded-diamond-logo.png
+- `public/favicon.png` — 64×64 PNG, generated from holded-diamond-logo.png
+- `public/icon.png` — 64×64 PNG, generated from holded-diamond-logo.png
+- `public/logo.png` — 256×256 PNG, generated from holded-diamond-logo.png
+- `public/apple-touch-icon.png` — 180×180 PNG, generated from holded-diamond-logo.png
 - `public/logo.svg`
 - `public/claude.svg`
+
+Icon routes in `src/app.ts`:
+
+- All icon routes (`/favicon.ico`, `/favicon.png`, `/icon.png`, `/logo.png`, `/apple-touch-icon.png`, `/holded-diamond-logo.png`) are registered **before** `express.static()` so physical files in `public/` never bypass them.
+- Each route sets `Cache-Control: no-cache, must-revalidate`, `Pragma: no-cache`, and `X-Icon-Version: holded-diamond-2026-05-03` to prevent stale icon caching.
+- `/favicon.ico` is served as `image/x-icon` (real multi-frame ICO); all PNG routes use `image/png`.
+
+OAuth metadata:
+
+- `logo_uri` in `/.well-known/oauth-authorization-server` includes a `?v=holded-diamond-2026-05-03` version query to force Claude to re-fetch the icon on each metadata crawl.
+
+To regenerate all icons from the canonical source:
+
+```powershell
+cd apps/holded-mcp/public
+magick holded-diamond-logo.png -resize 64x64 favicon.png
+magick holded-diamond-logo.png -resize 64x64 icon.png
+magick holded-diamond-logo.png -resize 256x256 logo.png
+magick holded-diamond-logo.png -resize 180x180 apple-touch-icon.png
+magick holded-diamond-logo.png -define icon:auto-resize=64,48,32,16 favicon.ico
+```
 
 Brand sync:
 
 - `pnpm --dir apps/holded-mcp sync:brand`
+
+Validate branding:
+
+- `pnpm --dir apps/holded-mcp validate-branding`
+
+**Important:** If Claude.ai shows an unexpected icon, first check whether it matches the _old_ custom blue connector icon from the first version of this connector. If it does, treat it as stale cached metadata — not a generic Claude fallback. To clear it:
+
+1. Uninstall the connector from Claude.ai
+2. If using Claude Team/Enterprise, also remove it under Organization Settings > Connectors
+3. Clear your Claude session (sign out, clear browser cache, sign back in)
+4. Reinstall at `https://claude.verifactu.business/mcp`
+5. Verify public icon URLs are correct: `https://claude.verifactu.business/holded-diamond-logo.png`, `/favicon.ico`, `/icon.png`
+6. Check Google's favicon cache: `https://www.google.com/s2/favicons?domain=claude.verifactu.business`
+7. Only treat it as the generic Claude fallback if the displayed icon does not match any old asset and all public branding URLs return the correct Holded diamond image
 
 Observed Claude behavior on `2026-04-23`:
 
