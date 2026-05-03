@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
+  Bell,
   Building2,
   Calendar,
   CheckCircle2,
@@ -154,6 +155,7 @@ type SectionKey =
   | 'isaak'
   | 'team'
   | 'billing'
+  | 'notificaciones'
   | 'developer';
 
 const TEAM_OPTIONS = ['Solo yo', '2-5 personas', '6-20 personas', 'Mas de 20'];
@@ -177,6 +179,7 @@ const sections: Array<{
   { key: 'isaak', label: 'Isaak', icon: Sparkles },
   { key: 'team', label: 'Equipo', icon: Users },
   { key: 'billing', label: 'Facturación', icon: CreditCard },
+  { key: 'notificaciones', label: 'Notificaciones', icon: Bell },
   { key: 'developer', label: 'Developer', icon: Code2, external: '/integrations?tab=developer' },
 ];
 
@@ -1550,6 +1553,104 @@ export default function IsaakSettingsClient({
                           Sin facturas todavía. Aparecerán aquí cuando actives un plan de pago.
                         </div>
                       )}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            ) : null}
+
+            {activeSection === 'notificaciones' ? (
+              <section className="mt-6 space-y-5">
+                {/* Fiscal alerts */}
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-blue-50">
+                      <Bell className="h-4 w-4 text-[#2361d8]" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        Alertas de plazos fiscales
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        D-15, D-7, D-3 y D-1 antes de cada plazo
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-3 text-sm text-slate-700">
+                    <p>
+                      Isaak te envía un email automático con antelación suficiente antes de cada
+                      obligación fiscal trimestral (IVA, IRPF, IS y retenciones) para que puedas
+                      prepararte a tiempo.
+                    </p>
+                    <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                      Las alertas se envían al email principal de tu cuenta. Para cambiar el email,
+                      ve a{' '}
+                      <button
+                        type="button"
+                        className="text-[#2361d8] underline"
+                        onClick={() => {
+                          const url = new URL(window.location.href);
+                          url.searchParams.set('section', 'profile');
+                          window.history.pushState({}, '', url.toString());
+                          window.location.reload();
+                        }}
+                      >
+                        Perfil
+                      </button>
+                      .
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Activadas
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      Se envían automáticamente a todos los tenants activos
+                    </span>
+                  </div>
+                </div>
+
+                {/* Trial expiry reminders */}
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50">
+                      <Calendar className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        Recordatorios de prueba gratuita
+                      </div>
+                      <div className="text-xs text-slate-500">D-7, D-3 y D-0</div>
+                    </div>
+                  </div>
+                  <div className="mt-4 text-sm text-slate-700">
+                    <p>
+                      Cuando tu prueba gratuita está próxima a vencer, Isaak te avisa por email para
+                      que puedas activar un plan sin interrupciones.
+                    </p>
+                  </div>
+                  <div className="mt-4 flex items-center gap-3">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Activadas
+                    </span>
+                  </div>
+                </div>
+
+                {/* Push notifications — coming soon */}
+                <div className="rounded-[1.6rem] border border-dashed border-slate-200 bg-slate-50 p-5 opacity-60">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
+                      <Bell className="h-4 w-4 text-slate-400" />
+                    </div>
+                    <div>
+                      <div className="text-sm font-semibold text-slate-500">
+                        Notificaciones push
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        Próximamente — alertas en el navegador
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -8,6 +8,10 @@
     {
       "path": "/api/cron/trial-expiry",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/fiscal-alerts",
+      "schedule": "0 8 * * *"
     }
   ]
 }
