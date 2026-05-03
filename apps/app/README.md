@@ -53,7 +53,7 @@ La visibilidad real del conector no sale de un unico archivo. Se reparte asi:
 Matiz importante desde abril 2026:
 
 - `scopes_supported` anuncia el catalogo completo de scopes Holded soportados por el runtime
-- `default_scopes` usa ahora `holded_priority1` por defecto; `openai_review_v2` sigue disponible como preset estrecho de review
+- `default_scopes` usa ahora `holded_public_campaign_v1` por defecto; `holded_priority1` y `openai_review_v2` siguen disponibles como presets explicitos
 - si una app interna necesita mas tools, el cambio no va en `HOLDED_MCP_TOOL_SCOPES`, sino en que el cliente OAuth solicite scopes adicionales y en que `lib/oauth/mcp.ts` los admita
 
 ## Preset publico actual del conector Holded Beta
@@ -64,7 +64,9 @@ Distinguir siempre entre tres niveles:
 - `default_scopes` -> preset publico que se expone por defecto al conector en revision
 - datos del tenant -> que una tool exista no implica que haya datos utiles en la cuenta conectada
 
-Desde abril de 2026, el preset publico por defecto es `holded_priority1`. Mantiene la base de demo de `openai_review_v2` y anade las familias publicas oficiales de mas valor: documentos de proveedor, cuentas de gasto, contactos CRUD, grupos de contacto, empleados y fichajes, pagos y servicios.
+Desde mayo de 2026, el preset publico por defecto para campanas y discovery anonimo es `holded_public_campaign_v1`. Expone solo la superficie anunciada en las landings publicas: facturas, contactos, cuentas contables, diario con rango de fechas y creacion de borradores de factura con confirmacion.
+
+`holded_priority1` sigue existiendo como preset explicito para rollouts ampliados. Anade documentos de proveedor, cuentas de gasto, contactos CRUD, grupos de contacto, empleados y fichajes, pagos y servicios.
 
 `openai_review_v2` sigue existiendo y expone 11 tools para una superficie estrecha:
 
@@ -79,6 +81,16 @@ Desde abril de 2026, el preset publico por defecto es `holded_priority1`. Mantie
 - `holded_list_projects`
 - `holded_get_project`
 - `holded_list_project_tasks`
+
+`holded_public_campaign_v1` expone por defecto estas 7 tools:
+
+- `holded_list_invoices`
+- `holded_get_invoice`
+- `holded_create_invoice_draft`
+- `holded_list_contacts`
+- `holded_get_contact`
+- `holded_list_accounts`
+- `holded_list_daily_ledger`
 
 ## Matriz de capacidades del preset estrecho `openai_review_v2`
 

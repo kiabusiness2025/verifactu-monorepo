@@ -148,6 +148,37 @@ describe('holdedMcpScopes', () => {
     expect(toolNames).not.toContain('holded_create_accounting_account');
   });
 
+  it('keeps holded_public_campaign_v1 aligned with the advertised landing scope', () => {
+    const scopes = getHoldedMcpScopePreset('holded_public_campaign_v1');
+    const toolNames = getAllowedHoldedMcpToolNames(scopes);
+
+    expect(scopes).toEqual([
+      'mcp.read',
+      'holded.invoices.read',
+      'holded.contacts.read',
+      'holded.accounts.read',
+      'holded.invoices.write',
+    ]);
+
+    expect(toolNames.sort()).toEqual(
+      [
+        'holded_create_invoice_draft',
+        'holded_get_contact',
+        'holded_get_invoice',
+        'holded_list_accounts',
+        'holded_list_contacts',
+        'holded_list_daily_ledger',
+        'holded_list_invoices',
+      ].sort()
+    );
+
+    expect(toolNames).not.toContain('holded_list_projects');
+    expect(toolNames).not.toContain('holded_list_project_tasks');
+    expect(toolNames).not.toContain('holded_pay_document');
+    expect(toolNames).not.toContain('holded_delete_contact');
+    expect(toolNames).not.toContain('holded_clock_in_employee');
+  });
+
   it('keeps holded_phase2_accounting aligned with review tools plus accounting writes', () => {
     const scopes = getHoldedMcpScopePreset('holded_phase2_accounting');
     const toolNames = getAllowedHoldedMcpToolNames(scopes);

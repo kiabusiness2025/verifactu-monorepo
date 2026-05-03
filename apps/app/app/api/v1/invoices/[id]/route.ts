@@ -12,7 +12,8 @@ import { buildV1Context } from '../../_context';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const invoiceId = (await params).id;
   const authResult = await buildV1Context(req);
   if ('error' in authResult) {
     return NextResponse.json(
@@ -25,12 +26,12 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   try {
     requireScope(ctx, 'isaak.invoices.read');
 
-    const invoice = await getInvoice(ctx, params.id);
+    const invoice = await getInvoice(ctx, invoiceId);
 
     await logAuditEvent({
       ctx,
       method: 'GET',
-      endpoint: `/api/v1/invoices/${params.id}`,
+      endpoint: `/api/v1/invoices/${invoiceId}`,
       toolOrAction: 'invoices.get',
       status: 200,
       riskLevel: 'low',

@@ -27,7 +27,8 @@ import { buildV1Context } from '../../../_context';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const invoiceId = (await params).id;
   const authResult = await buildV1Context(req);
   if ('error' in authResult) {
     return NextResponse.json(
@@ -54,14 +55,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     if (!confirmationToken) {
       // Step 1: validate + return confirmation token
-      const validation = await validateInvoice(ctx, params.id);
+      const validation = await validateInvoice(ctx, invoiceId);
 
       const { token, expiresAt } = createConfirmationToken({
         tenantId: ctx.tenantId,
         action: 'issue_invoice',
-        resourceId: params.id,
+        resourceId: invoiceId,
         preview: {
-          invoiceId: params.id,
+          invoiceId,
           validation,
           message: 'Esta acción registrará la factura en VeriFactu (AEAT). No se puede deshacer.',
         },
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         confirmationToken: token,
         expiresAt,
         preview: {
-          invoiceId: params.id,
+          invoiceId,
           validation,
           message: 'Esta acción registrará la factura en VeriFactu (AEAT). No se puede deshacer.',
         },
@@ -83,15 +84,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       token: confirmationToken,
       tenantId: ctx.tenantId,
       action: 'issue_invoice',
-      resourceId: params.id,
+      resourceId: invoiceId,
     });
 
-    const result = await submitInvoiceToAeat(ctx, params.id);
+    const result = await submitInvoiceToAeat(ctx, invoiceId);
 
     await logAuditEvent({
       ctx,
       method: 'POST',
-      endpoint: `/api/v1/invoices/${params.id}/issue`,
+      endpoint: `/api/v1/invoices/${invoiceId}/issue`,
       toolOrAction: 'verifactu.submit',
       status: 200,
       riskLevel: 'high',

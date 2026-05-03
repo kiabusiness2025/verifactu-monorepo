@@ -137,7 +137,7 @@ describe('MCP Holded route discovery and auth', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
     expect(payload.name).toBe('Holded Connector for ChatGPT');
-    expect(payload.description).toContain('review-safe Phase 1 subset');
+    expect(payload.description).toContain('public campaign default');
     expect(payload.description).toContain('bounded daily ledger reads');
     expect(payload.description).not.toContain('purchase summaries');
     expect(payload.endpoint).toBe('/api/mcp/holded');

@@ -40,7 +40,7 @@ type ToolDefinition = HoldedMcpToolDefinition;
 const TOOLS: ToolDefinition[] = holdedMcpTools;
 const MCP_CONNECTOR_NAME = 'Holded Connector for ChatGPT';
 const MCP_CONNECTOR_DESCRIPTION =
-  'Direct MCP connector between ChatGPT and Holded powered by Verifactu. By default it exposes the review-safe Phase 1 subset for sales invoices, contacts, accounting accounts, bounded daily ledger reads, CRM bookings, project context, and invoice draft creation for the connected tenant. Broader Holded surfaces remain gated behind additional scopes and later rollout phases.';
+  'Direct MCP connector between ChatGPT and Holded powered by Verifactu. The public campaign default exposes sales invoices, contacts, accounting accounts, bounded daily ledger reads, and draft invoice creation for the connected tenant. Broader Holded surfaces require explicit OAuth scopes and later rollout phases.';
 
 function applyMcpCors<T extends { headers: Headers }>(response: T, request: NextRequest) {
   response.headers.set('Cache-Control', 'no-store');
