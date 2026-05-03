@@ -1,6 +1,16 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Code2, Key, Lock, MessageSquare, Terminal, Zap } from 'lucide-react';
+import {
+  ArrowRight,
+  BookOpen,
+  Code2,
+  FlaskConical,
+  Key,
+  Lock,
+  MessageSquare,
+  Terminal,
+  Zap,
+} from 'lucide-react';
 import Header from '../components/Header';
 import { Container, Footer } from '../lib/home/ui';
 
@@ -149,6 +159,66 @@ const MCP_TOOLS = [
   { name: 'isaak_propose_action', description: 'Propone acciones fiscales a Isaak' },
 ];
 
+// ─── MCP Inspector code blocks ────────────────────────────────────────────────
+
+const INSPECTOR_LAUNCH = `npx @modelcontextprotocol/inspector@latest`;
+
+const INSPECTOR_CLAUDE_STEPS = `# En el Inspector UI:
+# Transport: Streamable HTTP
+# URL:       https://claude.verifactu.business/mcp
+#
+# → Pulsa Connect → completa el OAuth con tu API key de Holded
+# → Verás 24 tools listadas con readOnlyHint / writeAnnotations`;
+
+const INSPECTOR_CHATGPT_LOCAL = `# 1. Arranca apps/app en local
+pnpm --dir apps/app dev
+
+# 2. En el Inspector UI:
+# Transport: Streamable HTTP
+# URL:       http://localhost:3000/api/mcp/holded
+# Header:    Authorization: Bearer <MCP_SHARED_SECRET de .env.local>`;
+
+const INSPECTOR_ISAAK = `# En el Inspector UI:
+# Transport: Streamable HTTP
+# URL:       https://isaak.verifactu.business/api/mcp/isaak
+# Header:    Authorization: Bearer isk_live_TU_API_KEY`;
+
+const INSPECTOR_TROUBLESHOOT = `# Puerto 6277 ocupado (Windows)
+netstat -ano | findstr ":6274 :6277" | for /f "tokens=5" %P in ('more') do taskkill /PID %P /F
+
+# Puerto 6277 ocupado (macOS / Linux)
+lsof -ti :6274,:6277 | xargs kill -9`;
+
+const INSPECTOR_CONNECTORS = [
+  {
+    id: 'claude',
+    label: 'Conector Claude',
+    url: 'https://claude.verifactu.business/mcp',
+    auth: 'OAuth 2.0 DCR (el Inspector gestiona el flujo automáticamente)',
+    tools: '24 tools — 23 read-only + create_invoice_draft',
+    hint: 'Pulsa Connect → la página OAuth se abre en el navegador → introduce tu API key de Holded → autoriza.',
+    code: INSPECTOR_CLAUDE_STEPS,
+  },
+  {
+    id: 'chatgpt',
+    label: 'Conector ChatGPT',
+    url: 'http://localhost:3000/api/mcp/holded (local)',
+    auth: 'Bearer MCP_SHARED_SECRET (en .env.local)',
+    tools: '70+ tools (preset holded_priority1 en modo shared_secret)',
+    hint: 'Requiere apps/app corriendo en local. Añade Authorization header en el Inspector antes de conectar.',
+    code: INSPECTOR_CHATGPT_LOCAL,
+  },
+  {
+    id: 'isaak',
+    label: 'Servidor Isaak MCP',
+    url: 'https://isaak.verifactu.business/api/mcp/isaak',
+    auth: 'Bearer isk_live_TU_API_KEY',
+    tools: '9 tools — facturas, VeriFactu, resumen fiscal',
+    hint: 'Añade Authorization header con tu API key antes de conectar. tools/list es público.',
+    code: INSPECTOR_ISAAK,
+  },
+];
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function DevelopersPage() {
@@ -216,6 +286,13 @@ export default function DevelopersPage() {
                 body: 'Solicita acceso anticipado. API keys disponibles desde tu cuenta. Sin límite durante la fase beta.',
                 href: 'https://isaak.verifactu.business',
                 cta: 'Solicitar acceso',
+              },
+              {
+                icon: <FlaskConical className="h-5 w-5 text-[#2361d8]" />,
+                title: 'MCP Inspector',
+                body: 'Depura cualquier conector MCP desde el navegador. Un solo comando, sin instalación. Compatible con Claude, ChatGPT e Isaak.',
+                href: '#inspector',
+                cta: 'Cómo usar el Inspector',
               },
             ].map((card) => (
               <div
@@ -445,6 +522,119 @@ export default function DevelopersPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── MCP Inspector ──────────────────────────────────────────────────── */}
+      <section id="inspector" className="border-t border-slate-100 py-14">
+        <Container>
+          <div className="max-w-4xl">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+              <FlaskConical className="h-4 w-4" />
+              MCP Inspector
+            </div>
+            <h2 className="mt-4 text-2xl font-bold text-[#011c67] sm:text-3xl">
+              Inspecciona y prueba cualquier conector MCP desde el navegador
+            </h2>
+            <p className="mt-3 text-slate-600">
+              El MCP Inspector es la herramienta oficial de debug del protocolo. Sin instalación —
+              solo{' '}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm font-mono text-slate-800">
+                npx
+              </code>
+              . Conecta a cualquiera de los tres servidores MCP disponibles, ve los tools en tiempo
+              real y ejecuta llamadas directamente desde la UI.
+            </p>
+
+            {/* Launch command */}
+            <div className="mt-6 overflow-hidden rounded-2xl border border-slate-200">
+              <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-800 px-4 py-3">
+                <div className="h-2.5 w-2.5 rounded-full bg-red-500" />
+                <div className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                <span className="ml-2 text-xs font-medium text-slate-400">
+                  Terminal — lanzar Inspector
+                </span>
+              </div>
+              <pre className="overflow-x-auto bg-slate-900 p-5 text-sm text-slate-200">
+                <code>{INSPECTOR_LAUNCH}</code>
+              </pre>
+            </div>
+            <p className="mt-3 text-sm text-slate-500">
+              El Inspector arranca en{' '}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-mono text-slate-700">
+                http://localhost:6274
+              </code>
+              . Copia la URL con el token que imprime en la consola.
+            </p>
+
+            {/* Connector cards */}
+            <div className="mt-8 grid gap-5 lg:grid-cols-3">
+              {INSPECTOR_CONNECTORS.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="mb-3 text-sm font-semibold text-[#011c67]">{c.label}</div>
+                  <dl className="space-y-2 text-xs text-slate-600">
+                    <div>
+                      <dt className="font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+                        URL
+                      </dt>
+                      <dd>
+                        <code className="break-all font-mono text-[#2361d8]">{c.url}</code>
+                      </dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+                        Auth
+                      </dt>
+                      <dd>{c.auth}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500 uppercase tracking-wider mb-0.5">
+                        Tools
+                      </dt>
+                      <dd>{c.tools}</dd>
+                    </div>
+                  </dl>
+                  <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    {c.hint}
+                  </div>
+                  <details className="mt-3">
+                    <summary className="cursor-pointer text-xs font-medium text-[#2361d8] hover:underline select-none">
+                      Ver pasos en terminal
+                    </summary>
+                    <pre className="mt-2 overflow-x-auto rounded-xl bg-slate-900 p-3 text-xs leading-6 text-slate-300">
+                      <code>{c.code}</code>
+                    </pre>
+                  </details>
+                </div>
+              ))}
+            </div>
+
+            {/* Troubleshoot */}
+            <h3 className="mt-10 text-base font-semibold text-[#011c67]">
+              Resolución de problemas
+            </h3>
+            <div className="mt-3 overflow-hidden rounded-2xl border border-slate-200">
+              <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-800 px-4 py-3">
+                <span className="text-xs font-medium text-slate-400">Puerto ocupado</span>
+              </div>
+              <pre className="overflow-x-auto bg-slate-900 p-5 text-xs leading-6 text-slate-300">
+                <code>{INSPECTOR_TROUBLESHOOT}</code>
+              </pre>
+            </div>
+            <p className="mt-4 text-sm text-slate-500">
+              Guía técnica completa →{' '}
+              <Link
+                href="https://isaak.verifactu.business/developers"
+                className="font-medium text-[#2361d8] hover:underline"
+              >
+                isaak.verifactu.business/developers
+              </Link>
+            </p>
           </div>
         </Container>
       </section>

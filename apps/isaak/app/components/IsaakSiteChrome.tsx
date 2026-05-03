@@ -56,6 +56,9 @@ export default function IsaakSiteChrome({ children }: Props) {
             <Link href="/conectores" className="hover:text-slate-900">
               Conectores
             </Link>
+            <Link href="/developers" className="hover:text-slate-900">
+              Developers
+            </Link>
             <Link href="/asesorias" className="hover:text-slate-900">
               Asesorias
             </Link>
@@ -110,6 +113,9 @@ export default function IsaakSiteChrome({ children }: Props) {
             </Link>
             <Link href="/conectores" className="hover:text-slate-900">
               Conectores
+            </Link>
+            <Link href="/developers" className="hover:text-slate-900">
+              Developers
             </Link>
             <Link href="/asesorias" className="hover:text-slate-900">
               Asesorias
