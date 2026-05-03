@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://holded.verifactu.business/sitemap.xml

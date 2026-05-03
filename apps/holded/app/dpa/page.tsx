@@ -6,6 +6,7 @@ export const metadata: Metadata = {
   title: 'Acuerdo de tratamiento de datos (DPA) | Holded',
   description:
     'Acuerdo de tratamiento de datos del Conector Holded de verifactu.business. Responsable, encargados, finalidad, base juridica y derechos del interesado.',
+  alternates: { canonical: '/dpa' },
 };
 
 export default function HoldedDpaPage() {

@@ -13,7 +13,7 @@ describe('holded navigation return target sanitization', () => {
     process.env.NEXT_PUBLIC_HOLDED_SITE_URL = previousHoldedSiteUrl;
   });
 
-  it('keeps the app oauth authorize return target used by ChatGPT login handoff', async () => {
+  it('canonicalizes app oauth authorize return targets to the public holded domain', async () => {
     const { sanitizeHoldedReturnTarget } = await import('./holded-navigation');
 
     expect(
@@ -21,7 +21,7 @@ describe('holded navigation return target sanitization', () => {
         'https://app.verifactu.business/oauth/authorize?client_id=openai-chatgpt-test',
         'https://holded.verifactu.business/dashboard?source=fallback'
       )
-    ).toBe('https://app.verifactu.business/oauth/authorize?client_id=openai-chatgpt-test');
+    ).toBe('https://holded.verifactu.business/oauth/authorize?client_id=openai-chatgpt-test');
   });
 
   it('canonicalizes stale app onboarding holded links to holded domain', async () => {
@@ -73,7 +73,7 @@ describe('holded navigation return target sanitization', () => {
         onboardingToken: 'token-123',
       })
     ).toBe(
-      '/onboarding?source=holded_chatgpt_entry&channel=chatgpt&next=https%3A%2F%2Fapp.verifactu.business%2Foauth%2Fauthorize%3Fclient_id%3Dopenai-mobile&onboarding_token=token-123'
+      '/onboarding?source=holded_chatgpt_entry&channel=chatgpt&next=https%3A%2F%2Fholded.verifactu.business%2Foauth%2Fauthorize%3Fclient_id%3Dopenai-mobile&onboarding_token=token-123'
     );
 
     expect(
@@ -84,7 +84,7 @@ describe('holded navigation return target sanitization', () => {
         onboardingToken: 'token-123',
       })
     ).toBe(
-      '/onboarding/holded?source=holded_chatgpt_entry&channel=chatgpt&next=https%3A%2F%2Fapp.verifactu.business%2Foauth%2Fauthorize%3Fclient_id%3Dopenai-mobile&onboarding_token=token-123'
+      '/onboarding/holded?source=holded_chatgpt_entry&channel=chatgpt&next=https%3A%2F%2Fholded.verifactu.business%2Foauth%2Fauthorize%3Fclient_id%3Dopenai-mobile&onboarding_token=token-123'
     );
   });
 });

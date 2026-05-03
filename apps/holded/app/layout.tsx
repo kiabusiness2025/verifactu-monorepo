@@ -12,9 +12,6 @@ export const metadata: Metadata = {
   title: 'Holded | Hub vertical de conectores',
   description:
     'Hub vertical de conectores Holded dentro de Verifactu Business. Documentacion, privacidad, DPA y soporte para ChatGPT y Claude.',
-  alternates: {
-    canonical: '/conectores',
-  },
   icons: {
     icon: [
       { url: '/Holded/Corporativo/Holded logo.svg', type: 'image/svg+xml' },

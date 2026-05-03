@@ -18,6 +18,7 @@ type SupportOption = {
 export const metadata: Metadata = {
   title: 'Soporte | Holded',
   description: 'Ayuda rapida para acceso, verificacion, onboarding y conexion con Holded.',
+  alternates: { canonical: '/support' },
 };
 
 const baseSupportOptions: SupportOption[] = [

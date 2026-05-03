@@ -1,4 +1,13 @@
-import { Database, KeyRound, Lock, Mail, ServerCog, ShieldCheck, UserCheck } from 'lucide-react';
+import {
+  Clock,
+  Database,
+  KeyRound,
+  Lock,
+  Mail,
+  ServerCog,
+  ShieldCheck,
+  UserCheck,
+} from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -129,6 +138,31 @@ export default function ClaudePrivacyPage() {
             </ul>
           </SectionCard>
 
+          <SectionCard icon={Clock} title="Retención de datos">
+            <ul className="space-y-2">
+              <li>
+                - <strong>API key de Holded:</strong> se conserva cifrada (AES-256-GCM) mientras la
+                conexión está activa. Se elimina al desconectar el conector o al revocar el acceso
+                OAuth.
+              </li>
+              <li>
+                - <strong>Tokens OAuth:</strong> los access tokens expiran a los 60 minutos. Los
+                refresh tokens se anulan al revocar el acceso.
+              </li>
+              <li>
+                - <strong>Datos de Holded (facturas, contactos, etc.):</strong> se procesan en
+                tránsito para responder la consulta. No se almacenan en servidores de Verifactu más
+                allá del tiempo de respuesta de la llamada.
+              </li>
+              <li>
+                - <strong>Metadatos de sesión:</strong> los registros de auditoría técnica se
+                conservan un máximo de 90 días y se eliminan de forma automática.
+              </li>
+            </ul>
+          </SectionCard>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
           <SectionCard icon={Mail} title="Derechos y contacto">
             <p>
               Para solicitudes sobre privacidad, soporte o eliminacion de datos, escribe a{' '}

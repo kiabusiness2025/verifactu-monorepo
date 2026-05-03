@@ -12,9 +12,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Términos de Servicio | Conector Holded para ChatGPT — Verifactu Business',
+  title: 'Términos de Servicio | Conector Holded para ChatGPT y Claude — Verifactu Business',
   description:
     'Términos y condiciones del conector Holded para ChatGPT y Claude, desarrollado por Expert Estudios Profesionales, SLU (Verifactu Business). Alcance del servicio, responsabilidades, OAuth y derechos del usuario.',
+  alternates: { canonical: '/terms' },
 };
 
 export default function HoldedTermsPage() {

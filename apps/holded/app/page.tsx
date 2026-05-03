@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   title: 'Holded con IA — Claude y ChatGPT | Verifactu Business',
   description:
     'Conecta Holded con Claude o ChatGPT. Consulta contabilidad, facturas e impuestos en lenguaje claro. Dos conectores en producción.',
+  alternates: {
+    canonical: '/',
+  },
 };
 
 function SectionPill({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {

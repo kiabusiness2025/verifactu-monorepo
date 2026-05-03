@@ -3,9 +3,10 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad | Conector Holded para ChatGPT — Verifactu Business',
+  title: 'Política de Privacidad | Conector Holded para ChatGPT y Claude — Verifactu Business',
   description:
     'Política de privacidad del conector Holded para ChatGPT y Claude, desarrollado por Expert Estudios Profesionales, SLU (Verifactu Business). Datos tratados, OAuth, GDPR y derechos del usuario.',
+  alternates: { canonical: '/privacy' },
 };
 
 export default function HoldedPrivacyPage() {
@@ -69,9 +70,9 @@ export default function HoldedPrivacyPage() {
           <p className="mt-3 text-sm leading-7 text-slate-600">
             El <strong>Conector Holded para ChatGPT y Claude</strong> es un plugin desarrollado por
             Expert Estudios Profesionales, SLU que permite a los usuarios de ChatGPT (OpenAI) y
-            Claude (Anthropic) acceder a los datos de su cuenta de Holded —facturas, contactos,
-            proyectos, tesorería, empleados y más— en lenguaje natural, sin salir de su asistente de
-            IA.
+            Claude (Anthropic) acceder a datos clave de su cuenta de Holded —facturas, contactos,
+            cuentas contables, diario y borradores de factura cuando el usuario lo confirma— en
+            lenguaje natural, sin salir de su asistente de IA.
           </p>
           <p className="mt-3 text-sm leading-7 text-slate-600">
             Expert Estudios Profesionales, SLU es <strong>Holded Solution Partner</strong>, lo que
@@ -103,7 +104,7 @@ export default function HoldedPrivacyPage() {
               </li>
               <li>
                 <strong>Datos de negocio de Holded:</strong> información consultada en tiempo real
-                —facturas, contactos, cuentas, proyectos, empleados— únicamente en respuesta a
+                —facturas, contactos, cuentas contables y diario— únicamente en respuesta a
                 solicitudes explícitas del usuario.
               </li>
               <li>

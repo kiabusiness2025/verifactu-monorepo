@@ -4,13 +4,16 @@ import {
   CheckCircle2,
   ChevronRight,
   FileText,
+  FlaskConical,
   FolderKanban,
   Key,
+  ListOrdered,
   MessageSquare,
   Package,
   PlugZap,
   Receipt,
   ShieldCheck,
+  Terminal,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -29,8 +32,8 @@ const modules = [
     label: 'Facturación',
     color: 'text-amber-600',
     bg: 'bg-amber-50',
-    tools: ['list_documents', 'get_document', 'create_invoice_draft'],
-    desc: 'Lista facturas, consulta detalles y crea borradores sin modificar datos reales.',
+    tools: ['list_documents', 'get_document', 'get_document_pdf', 'create_invoice_draft'],
+    desc: 'Lista facturas, consulta detalles, descarga PDFs y crea borradores sin modificar datos reales.',
   },
   {
     icon: Users,
@@ -45,8 +48,8 @@ const modules = [
     label: 'Productos',
     color: 'text-sky-500',
     bg: 'bg-sky-50',
-    tools: ['list_products', 'get_product', 'list_warehouses'],
-    desc: 'Catálogo de productos, precios y almacenes.',
+    tools: ['list_products', 'get_product', 'list_products_stock', 'list_warehouses'],
+    desc: 'Catálogo de productos, precios, stock por almacén y ubicaciones.',
   },
   {
     icon: FolderKanban,
@@ -80,6 +83,14 @@ const modules = [
     tools: ['list_treasury_accounts'],
     desc: 'Cuentas bancarias y saldos.',
   },
+  {
+    icon: ListOrdered,
+    label: 'Catálogos',
+    color: 'text-orange-500',
+    bg: 'bg-orange-50',
+    tools: ['list_taxes', 'list_numbering_series'],
+    desc: 'IDs de impuestos y series numéricas necesarios para crear facturas borrador.',
+  },
 ];
 
 const steps = [
@@ -102,7 +113,7 @@ const steps = [
         En <strong className="text-slate-800">claude.ai → Ajustes → Conectores</strong>, haz clic en
         «Añadir conector personalizado» e introduce la URL{' '}
         <code className="rounded bg-amber-50 px-1.5 py-0.5 text-xs font-mono text-amber-700">
-          https://holded.verifactu.business/api/mcp/holded
+          https://claude.verifactu.business/mcp
         </code>
         .
       </>
@@ -438,6 +449,55 @@ export default function ClaudeDocsPage() {
             , que crea borradores revisables por el usuario. No envía emails automáticamente, no
             emite ni cobra facturas, no mueve dinero, no borra registros y no cierra asientos
             contables de forma autónoma.
+          </div>
+        </article>
+
+        {/* ── MCP Inspector ── */}
+        <article className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <FlaskConical className="h-4 w-4 text-amber-500" />
+            Probar con MCP Inspector
+          </div>
+          <p className="mt-2 text-sm leading-7 text-slate-600">
+            El MCP Inspector es la herramienta oficial de debug del protocolo MCP. Con un solo
+            comando puedes listar los 24 tools del conector, ver sus annotations y ejecutar llamadas
+            directamente desde el navegador.
+          </p>
+          <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
+            <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-800 px-4 py-3">
+              <Terminal className="h-3.5 w-3.5 text-slate-400" />
+              <span className="text-xs font-medium text-slate-400">Terminal</span>
+            </div>
+            <pre className="overflow-x-auto bg-slate-900 p-4 text-sm text-slate-200">
+              <code>npx @modelcontextprotocol/inspector@latest</code>
+            </pre>
+          </div>
+          <ol className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
+            {[
+              'Abre la URL con el token que imprime la consola.',
+              'Transport: Streamable HTTP',
+              'URL: https://claude.verifactu.business/mcp',
+              'Pulsa Connect → la página OAuth se abre en el navegador.',
+              'Introduce tu API key de Holded y pulsa Conectar.',
+              'Verás 24 tools con readOnlyHint: true (23) y writeAnnotations (create_invoice_draft).',
+            ].map((step, i) => (
+              <li key={i} className="flex gap-2">
+                <span className="flex-shrink-0 font-bold text-amber-500">{i + 1}.</span>
+                <span>{step}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Guía completa con los tres conectores (Claude, ChatGPT, Isaak) en{' '}
+            <a
+              href="https://isaak.verifactu.business/developers"
+              className="font-medium underline hover:text-amber-900"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              isaak.verifactu.business/developers
+            </a>
+            .
           </div>
         </article>
 
