@@ -10,7 +10,6 @@ import {
   READ_ONLY_TOOL_NAMES,
   TOOL_TITLES,
 } from '../src/tools/policy.ts';
-import { registerProductionTools } from '../src/tools/index.ts';
 
 installTestEnv();
 
@@ -22,7 +21,9 @@ function expectedAnnotations(toolName: (typeof PRODUCTION_TOOL_NAMES)[number]) {
   return { ...base, title: TOOL_TITLES[toolName] };
 }
 
-test('registerProductionTools exposes exactly the intended production surface', () => {
+test('registerProductionTools exposes exactly the intended production surface', async () => {
+  const { registerProductionTools } = await import('../src/tools/index.ts');
+
   const captured: Array<{
     name: string;
     description?: string;

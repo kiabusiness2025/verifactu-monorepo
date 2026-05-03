@@ -25,7 +25,7 @@ function pageTemplate(title: string, body: string) {
     <title>${escapeHtml(title)}</title>
     <link rel="icon" type="image/png" href="/holded-diamond-logo.png" sizes="64x64" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="icon" type="image/png" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/holded-diamond-logo.png" />
     <link rel="manifest" href="/manifest.json" />
     <style>
@@ -424,7 +424,7 @@ function pageTemplateClaude(title: string, body: string, theme: 'light' | 'dark'
     <title>${escapeHtml(title)}</title>
     <link rel="icon" type="image/png" href="/holded-diamond-logo.png" sizes="64x64" />
     <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="icon" type="image/png" href="/favicon.ico" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="apple-touch-icon" href="/holded-diamond-logo.png" />
     <link rel="manifest" href="/manifest.json" />
     <style>
