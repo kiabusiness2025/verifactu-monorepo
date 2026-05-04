@@ -1,5 +1,3 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
 import {
   ArrowRight,
   BookOpen,
@@ -12,6 +10,8 @@ import {
   Terminal,
   Wrench,
 } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Developers — MCP Inspector | Isaak',

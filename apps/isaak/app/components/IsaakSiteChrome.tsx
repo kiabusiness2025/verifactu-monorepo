@@ -1,10 +1,10 @@
 'use client';
 
+import { Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
-import { CONTACT_URL, HOLDed_ONBOARDING_URL } from '../lib/isaak-navigation';
+import { CONTACT_URL } from '../lib/isaak-navigation';
 
 type Props = {
   children: React.ReactNode;

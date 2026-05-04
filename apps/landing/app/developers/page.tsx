@@ -1,5 +1,3 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
 import {
   ArrowRight,
   BookOpen,
@@ -11,6 +9,8 @@ import {
   Terminal,
   Zap,
 } from 'lucide-react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 import Header from '../components/Header';
 import { Container, Footer } from '../lib/home/ui';
 
