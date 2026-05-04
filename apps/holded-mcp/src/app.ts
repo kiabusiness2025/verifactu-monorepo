@@ -48,14 +48,17 @@ export function createApp() {
   // la fecha de la última regeneración del asset para facilitar la depuración.
   const ICON_VERSION = 'holded-diamond-2026-05-03';
 
+  // ⚠️ Anthropic Connectors Directory fetchea el logo desde
+  // https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64
+  // Si el server responde con no-cache, Google interpreta "no almacenar"
+  // y sirve un placeholder gris en su lugar — el directorio mostraría gris.
+  // Por eso cacheamos 1 día. ICON_VERSION sigue en el header para
+  // depuración (Cmd+F en DevTools al asset).
+  const ICON_CACHE = 'public, max-age=86400, immutable';
+
   const sendDiamondPng = (res: express.Response, contentType = 'image/png') => {
     res.set({
-      // no-cache + must-revalidate fuerza revalidación en cada request.
-      // Pragma: no-cache cubre clientes HTTP/1.0 y proxies legacy.
-      // Esto evita que Claude.ai u otros clientes sirvan un icono obsoleto
-      // cacheado indefinidamente.
-      'Cache-Control': 'no-cache, must-revalidate',
-      Pragma: 'no-cache',
+      'Cache-Control': ICON_CACHE,
       'Content-Type': contentType,
       'X-Icon-Version': ICON_VERSION,
     });
@@ -64,8 +67,7 @@ export function createApp() {
 
   const sendDiamondIco = (res: express.Response) => {
     res.set({
-      'Cache-Control': 'no-cache, must-revalidate',
-      Pragma: 'no-cache',
+      'Cache-Control': ICON_CACHE,
       'Content-Type': 'image/x-icon',
       'X-Icon-Version': ICON_VERSION,
     });

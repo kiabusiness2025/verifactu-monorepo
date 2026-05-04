@@ -3,9 +3,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Política de Privacidad | Conector Holded para ChatGPT y Claude — Verifactu Business',
+  title: 'Política de Privacidad | Verifactu Business',
   description:
-    'Política de privacidad del conector Holded para ChatGPT y Claude, desarrollado por Expert Estudios Profesionales, SLU (Verifactu Business). Datos tratados, OAuth, GDPR y derechos del usuario.',
+    'Política de privacidad de Verifactu Business (Expert Estudios Profesionales, SLU) y de los conectores Holded para ChatGPT y Claude. Para detalles específicos de cada conector, consulta /conectores/{conector}/privacy.',
   alternates: { canonical: '/privacy' },
 };
 
@@ -21,12 +21,27 @@ export default function HoldedPrivacyPage() {
               Política de Privacidad
             </div>
             <h1 className="text-4xl font-bold tracking-tight text-slate-950">
-              Política de Privacidad del Conector Holded
+              Política de Privacidad de Verifactu Business
             </h1>
             <p className="max-w-3xl text-lg leading-8 text-slate-600">
-              Esta política describe qué datos tratamos, cómo gestionamos la conexión con Holded
-              mediante OAuth y API, y los derechos que puedes ejercer como usuario del conector
-              disponible en ChatGPT y Claude.
+              Política de privacidad general de Verifactu Business (Expert Estudios Profesionales,
+              SLU) y de los conectores Holded para ChatGPT y Claude. Cubre datos tratados, OAuth,
+              GDPR y derechos del usuario. Para los detalles legales específicos de cada conector,
+              consulta{' '}
+              <Link
+                href="/conectores/claude/privacy"
+                className="font-medium text-[#ff5460] underline underline-offset-4"
+              >
+                /conectores/claude/privacy
+              </Link>{' '}
+              o{' '}
+              <Link
+                href="/conectores/chatgpt/privacy"
+                className="font-medium text-[#ff5460] underline underline-offset-4"
+              >
+                /conectores/chatgpt/privacy
+              </Link>
+              .
             </p>
             <p className="text-sm text-slate-500">Última actualización: 29 de abril de 2026.</p>
           </div>

@@ -559,12 +559,15 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-5 text-xs">
             {[
+              // URLs específicas del conector — cada conector tiene su propia
+              // política y DPA porque los sub-procesadores difieren (Anthropic
+              // vs OpenAI). El hub /conectores/privacy y /conectores/dpa siguen
+              // existiendo como selectores generales.
               ['Docs', cfg.docsHref],
-              ['Privacidad', '/conectores/privacy'],
-              ['DPA', '/conectores/dpa'],
-              ['Soporte', '/conectores/soporte'],
+              ['Privacidad', `/conectores/${cfg.id}/privacy`],
+              ['DPA', cfg.dpaHref],
+              ['Soporte', cfg.supportHref],
               ['Aviso legal', '/legal'],
-              ['Conector especifico', cfg.supportHref],
             ].map(([label, href]) => (
               <Link
                 key={href}
