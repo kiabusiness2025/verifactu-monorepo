@@ -52,29 +52,62 @@ El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector ti
 
 ---
 
-## Estado actual (Semana 5 — 2026-05-02)
+## Estado actual — 2026-05-04 ✅ PLAN MAESTRO S1–S10 COMPLETADO
 
-### ✅ Implementado
+> Última actualización: 2026-05-04
 
-- Chat con LLM usando snapshot Holded (callLLM, prompt snapshot)
-- Historial de conversaciones (Prisma `IsaakConversation`)
-- 12 tools MCP Holded (ventas, gastos, contactos, proyectos, equipo)
-- Workspace autenticado con sidebar oscuro (6 secciones)
-- KPI cards reales en `/resumen` — Holded analytics en tiempo real
-- Recharts bar chart 6 meses en `/resumen`
-- `react-markdown` + `remark-gfm` (tablas, code, listas, links)
-- Sidebar refresh automático cuando se crea nueva conversación
-- Widget flotante en holded.verifactu.business
-- Brand alignment: colores, avatar, tipografía coherentes con landing
-- Auth con Firebase/cookie + guard en workspace
-- **S4-A ✅** `create_verifactu_invoice` conversacional en chat: detección de intención → extracción de datos con Claude tool → borrador en DB → confirmación → emisión a AEAT vía VeriFactu API
-- **S4-B ✅** `GET /api/invoices/[id]/pdf` — PDF estilado con cabecera de marca, bloques emisor/receptor, tabla de importes, QR dibujado como módulos PDF nativos desde `verifactuQr`; links de descarga integrados en el chat
-- **S4-C ✅** Card Verifactu en `/resumen`: emitidas / borradores / errores AEAT en tiempo real
-- **S8-A 🟡 parcial** Google Calendar: rutas OAuth + sync implementadas (`/api/isaak/google/*`); tarjeta conectar/desconectar/sincronizar en `/integrations`
-- **S10-A ✅** PWA: `manifest.json`, service worker (`sw.js`), 8 iconos (72–512 px), headers en `next.config.js`, viewport y `appleWebApp` en root layout
-- **IsaakCopilotPanel ✅** Panel derecho colapsable con chat contextual en cada sección del workspace
-- **Integrations page ✅** `/integrations`: 3 pestañas — Conectores activos (Holded + Google Calendar), Catálogo (6 conectores + próximos), API & MCP (API keys + MCP server + webhooks placeholder)
-- **Sidebar v2 ✅** Colapsable a iconos, plan badge en perfil, enlace Integraciones con punto verde de estado, dropdown de perfil con ajustes + logout
+### ✅ TODOS LOS SPRINTS COMPLETADOS (S1–S10)
+
+| Sprint | Área                                                                                                                         | Estado |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- | ------ |
+| S1–S3  | Base: chat LLM, historial, workspace, KPIs, markdown, brand                                                                  | ✅     |
+| S4     | Verifactu nativo: `create_verifactu_invoice`, PDF+QR, links chat                                                             | ✅     |
+| S5     | Billing: 3 tiers 19/49/149€, trial badge, Stripe portal, cron expiry                                                         | ✅     |
+| S6     | Archivos+OCR: upload multipart `POST /api/holded/upload-expense`, OCR Claude (PDF+imagen), confirmación→Holded, UI Paperclip | ✅     |
+| S7     | Voz: STT (`toggleMic` Web Speech), TTS (`speakMessage`), botón Mic, VolumeX                                                  | ✅     |
+| S8-A   | Google Calendar: OAuth + sync + tarjeta /integrations                                                                        | ✅     |
+| S8-B   | Alertas fiscales: `IsaakAlert` model, cron D-15/D-7/D-3/D-1, Resend email                                                    | ✅     |
+| S8-C   | Gmail scan: `gmail.readonly` scope, scan+cache, `IsaakGmailScan`, `GmailCard`                                                | ✅     |
+| S8-D   | Google Drive: `drive.file` scope, `google-drive.ts`, `DriveCard`, folder «Isaak — Facturas»                                  | ✅     |
+| S9     | Admin Panel: Stripe MRR/trials, tenant billing completa con historial                                                        | ✅     |
+| S10-A  | PWA: manifest.json, sw.js (push handler incluido), 8 iconos                                                                  | ✅     |
+| S10-B  | Push notifications: `IsaakPushSubscription` model, VAPID JWT, subscribe API, `PushNotificationsCard` en settings             | ✅     |
+
+### Conectores y T-0X (Connector Audit)
+
+| Task                                           | Estado                                |
+| ---------------------------------------------- | ------------------------------------- |
+| T-01 sanitizeCompanyName                       | ✅                                    |
+| T-02 email admin con enlace panel              | ✅                                    |
+| T-03 email bienvenida primera conexión ChatGPT | ✅                                    |
+| T-04 email completar perfil                    | ✅                                    |
+| T-05/T-09 cron weekly summary admin            | ✅                                    |
+| T-06 auth screen copy                          | ✅                                    |
+| T-07 onboarding step 3 copy+UX                 | ✅                                    |
+| T-08 success screen copy+CTA                   | ✅                                    |
+| T-10 template email semanal admin              | ✅                                    |
+| T-11 email semanal usuario                     | ⏸ DIFERIDO — necesita métricas de uso |
+
+### Variables de entorno críticas (Isaak)
+
+```
+# VAPID keys para push notifications
+VAPID_PUBLIC_KEY=<generado 2026-05-04>
+VAPID_PRIVATE_KEY=<generado 2026-05-04>
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<igual que VAPID_PUBLIC_KEY>
+VAPID_SUBJECT=mailto:soporte@verifactu.business
+
+# Google OAuth (Calendar + Gmail + Drive)
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
+
+# Fiscal alerts + trial cron
+CRON_SECRET=...
+```
+
+### Backlog S11+ (pendientes post-Plan-Maestro)
+
+Ver sección "SPRINT 11–12" al final de este documento.
 
 ---
 
