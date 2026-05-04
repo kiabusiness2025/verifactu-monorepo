@@ -253,6 +253,144 @@ function fileToDataUrl(file: File) {
   });
 }
 
+// ── Push Notifications Card ────────────────────────────────────────────────────
+
+function PushNotificationsCard() {
+  const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'unsupported'>('idle');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      !('serviceWorker' in navigator) ||
+      !('PushManager' in window)
+    ) {
+      setStatus('unsupported');
+      return;
+    }
+    navigator.serviceWorker.ready
+      .then((reg) => {
+        reg.pushManager
+          .getSubscription()
+          .then((sub) => {
+            setStatus(sub ? 'subscribed' : 'idle');
+          })
+          .catch(() => setStatus('idle'));
+      })
+      .catch(() => setStatus('unsupported'));
+  }, []);
+
+  async function subscribe() {
+    const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey || !('serviceWorker' in navigator)) return;
+    setLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: vapidPublicKey,
+      });
+      const json = sub.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
+      await fetch('/api/isaak/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(json),
+      });
+      setStatus('subscribed');
+    } catch {
+      setStatus('denied');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function unsubscribe() {
+    setLoading(true);
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      const sub = await reg.pushManager.getSubscription();
+      if (sub) {
+        await fetch('/api/isaak/push/unsubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ endpoint: sub.endpoint }),
+        });
+        await sub.unsubscribe();
+      }
+      setStatus('idle');
+    } catch {
+      /* ignore */
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-full ${status === 'subscribed' ? 'bg-blue-50' : 'bg-slate-100'}`}
+          >
+            <Bell
+              className={`h-4 w-4 ${status === 'subscribed' ? 'text-[#2361d8]' : 'text-slate-400'}`}
+            />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Notificaciones push</div>
+            <div className="text-xs text-slate-500">Alertas en el navegador sin abrir Isaak</div>
+          </div>
+        </div>
+
+        {status === 'unsupported' ? (
+          <span className="text-xs text-slate-400">No soportado en este navegador</span>
+        ) : status === 'subscribed' ? (
+          <button
+            type="button"
+            onClick={() => void unsubscribe()}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-rose-200 bg-white px-3 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-50 disabled:opacity-60"
+          >
+            {loading ? (
+              <Loader2 className="h-3 w-3 animate-spin" />
+            ) : (
+              <Unplug className="h-3 w-3" />
+            )}
+            Desactivar
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void subscribe()}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
+          >
+            {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Bell className="h-3 w-3" />}
+            Activar
+          </button>
+        )}
+      </div>
+
+      {status === 'subscribed' && (
+        <div className="mt-3 flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            Activas
+          </span>
+          <span className="text-xs text-slate-400">
+            Recibirás alertas fiscales en este dispositivo
+          </span>
+        </div>
+      )}
+      {status === 'denied' && (
+        <div className="mt-3 text-xs text-rose-600">
+          El navegador ha bloqueado las notificaciones. Actívalas en la configuración del sitio.
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function IsaakSettingsClient({
   initialSection,
   settingsData,
@@ -1638,22 +1776,8 @@ export default function IsaakSettingsClient({
                   </div>
                 </div>
 
-                {/* Push notifications — coming soon */}
-                <div className="rounded-[1.6rem] border border-dashed border-slate-200 bg-slate-50 p-5 opacity-60">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-100">
-                      <Bell className="h-4 w-4 text-slate-400" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-slate-500">
-                        Notificaciones push
-                      </div>
-                      <div className="text-xs text-slate-400">
-                        Próximamente — alertas en el navegador
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* Push notifications */}
+                <PushNotificationsCard />
               </section>
             ) : null}
 

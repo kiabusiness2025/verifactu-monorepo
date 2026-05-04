@@ -558,6 +558,7 @@ model Tenant {
   isaakGoogleTokens           IsaakGoogleToken[]
   isaakAlerts                 IsaakAlert[]
   isaakGmailScans             IsaakGmailScan[]
+  isaakPushSubscriptions      IsaakPushSubscription[]
   isaakMemoryFacts            IsaakMemoryFact[]
   isaakOnboardingProfiles     IsaakOnboardingProfile[]
   usageEvents                 UsageEvent[]
@@ -1860,6 +1861,26 @@ model IsaakAlert {
   @@index([status])
   @@index([dueDate])
   @@map("isaak_alerts")
+}
+
+// ==================== ISAAK: PUSH SUBSCRIPTIONS ====================
+
+model IsaakPushSubscription {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  endpoint  String
+  p256dh    String
+  auth      String
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([endpoint])
+  @@index([tenantId])
+  @@index([userId])
+  @@map("isaak_push_subscriptions")
 }
 
 // ==================== DEMO REQUESTS ====================

@@ -46,6 +46,7 @@ type GoogleStatus = {
   email: string | null;
   googleConfigured: boolean;
   hasGmailScope?: boolean;
+  hasDriveScope?: boolean;
 };
 
 type GmailInvoiceCandidate = {
@@ -96,9 +97,9 @@ const CATALOG_ITEMS = [
   {
     id: 'gdrive',
     name: 'Google Drive',
-    desc: 'Accede a documentos y contratos',
+    desc: 'Archiva facturas PDF en la nube',
     logo: '📁',
-    status: 'soon',
+    status: 'active',
   },
   {
     id: 'stripe',
@@ -472,6 +473,71 @@ function GmailCard({
               }).format(new Date(scannedAt))}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Google Drive Card ──────────────────────────────────────────────────────────
+
+function DriveCard({
+  googleConnected,
+  hasDriveScope,
+  googleConfigured,
+}: {
+  googleConnected: boolean;
+  hasDriveScope: boolean;
+  googleConfigured: boolean;
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-lg">
+            📁
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold text-slate-900">Google Drive</span>
+              <StatusDot
+                active={googleConnected && hasDriveScope}
+                label={googleConnected && hasDriveScope ? 'Activo' : 'Sin acceso'}
+              />
+            </div>
+            <div className="text-[12px] text-slate-500">
+              Archiva facturas PDF automáticamente en la carpeta «Isaak — Facturas»
+            </div>
+          </div>
+        </div>
+
+        {!googleConfigured ? (
+          <span className="shrink-0 text-[12px] text-slate-400">No disponible en este plan</span>
+        ) : !googleConnected ? (
+          <a
+            href="/api/isaak/google/auth"
+            className="shrink-0 rounded-lg bg-[#2361d8] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#1d55c2]"
+          >
+            Conectar Google
+          </a>
+        ) : !hasDriveScope ? (
+          <a
+            href="/api/isaak/google/auth"
+            className="shrink-0 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-[12px] font-semibold text-amber-700 transition hover:bg-amber-100"
+          >
+            Reconectar para añadir Drive
+          </a>
+        ) : (
+          <span className="shrink-0 inline-flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
+            <CheckCircle2 size={14} className="text-emerald-500" />
+            Carpeta activa
+          </span>
+        )}
+      </div>
+      {googleConnected && hasDriveScope && (
+        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-2.5 text-[12px] text-slate-600">
+          Las facturas emitidas desde Isaak se guardan en{' '}
+          <span className="font-medium">Isaak — Facturas</span> en tu Drive.
         </div>
       )}
     </div>
@@ -1090,6 +1156,13 @@ export default function IntegrationsClient() {
                     googleConfigured={googleStatus.googleConfigured}
                   />
                 )}
+                {googleStatus && (
+                  <DriveCard
+                    googleConnected={googleStatus.connected}
+                    hasDriveScope={googleStatus.hasDriveScope ?? false}
+                    googleConfigured={googleStatus.googleConfigured}
+                  />
+                )}
               </div>
             )}
 
@@ -1097,7 +1170,7 @@ export default function IntegrationsClient() {
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-4">
               <div className="flex items-center gap-2 text-[12px] text-slate-500">
                 <ChevronRight size={14} />
-                Próximamente: Google Drive, Stripe, Factusol y más.{' '}
+                Próximamente: Stripe, Factusol y más.{' '}
                 <Link
                   href="/integrations?tab=catalog"
                   className="font-semibold text-[#2361d8] underline-offset-2 hover:underline"

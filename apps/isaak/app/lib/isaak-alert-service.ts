@@ -1,6 +1,7 @@
 import type { IsaakAlertChannel, Prisma } from '@prisma/client';
 import { sendEmail } from '@verifactu/integrations';
 import { prisma } from '@/app/lib/prisma';
+import { sendPushToTenant } from '@/app/lib/push-service';
 
 export type CreateAlertInput = {
   tenantId: string;
@@ -89,6 +90,15 @@ export async function fanOutAlert(
       subject: alert.title,
       html: fiscalAlertHtml(alert.title, alert.body, daysLeft),
     });
+  }
+
+  if (alert.channel === 'push' || alert.channel === 'in_app') {
+    await sendPushToTenant(alert.tenantId, {
+      title: alert.title,
+      body: alert.body,
+      url: '/fiscal',
+      tag: `fiscal-${alert.type}`,
+    }).catch(() => null);
   }
 
   await prisma.isaakAlert.update({
