@@ -13,20 +13,29 @@ const dateInput = z
 export function registerInvoicingTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_documents',
-    'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only.',
+    'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only. Paginated — use page and limit to control response size.',
     {
       docType: z
         .enum(DOC_TYPES)
         .describe(
           'Document type. One of: invoice, salesreceipt, creditnote, salesorder, proform, waybill, estimate, purchase, purchaseorder, purchaserefund.'
         ),
-      page: z.string().optional().describe('Results page number.'),
+      page: z.string().optional().describe('Results page number (default 1).'),
       starttmp: dateInput.optional().describe('Start date (ISO 8601 or Unix seconds).'),
       endtmp: dateInput.optional().describe('End date (ISO 8601 or Unix seconds).'),
       contactId: z.string().optional().describe('Optional Holded contact ID filter.'),
+      limit: z.coerce
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .default(25)
+        .describe(
+          'Max documents returned in this call (default 25, max 100). Use page=2 for the next batch.'
+        ),
     },
     readOnlyAnnotations('list_documents'),
-    async ({ docType, starttmp, endtmp, ...rest }) => {
+    async ({ docType, starttmp, endtmp, limit, ...rest }) => {
       const params: Record<string, string> = {};
       for (const [k, v] of Object.entries(rest)) {
         if (v !== undefined) params[k] = String(v);
@@ -34,8 +43,21 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
       if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
       if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
 
-      const data = await getClient().listDocuments(docType, params);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      const raw = await getClient().listDocuments(docType, params);
+      const all = Array.isArray(raw) ? raw : [];
+      const truncated = all.length > limit;
+      const documents = all.slice(0, limit);
+      const payload: Record<string, unknown> = {
+        docType,
+        documents,
+        count: documents.length,
+        totalReceived: all.length,
+        truncated,
+      };
+      if (truncated) {
+        payload.hint = `Showing first ${limit} of ${all.length} documents received from Holded. Use page=2 (or higher) for the next batch, or narrow with starttmp/endtmp/contactId.`;
+      }
+      return { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
     }
   );
 
