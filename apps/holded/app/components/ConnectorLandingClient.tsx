@@ -216,6 +216,13 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
         <div className="mx-auto max-w-4xl px-4 text-center">
           <ConnectorLogo cfg={cfg} />
 
+          {/* Launch banner — visible above the connector label during free-launch period.
+              Quitar este bloque cuando se active el modelo freemium con límites. */}
+          <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800 shadow-sm">
+            <Sparkles className="h-3.5 w-3.5" />
+            Plan Gratis Para Siempre · sin límites en lanzamiento
+          </div>
+
           <div
             className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] ${theme.pill}`}
           >

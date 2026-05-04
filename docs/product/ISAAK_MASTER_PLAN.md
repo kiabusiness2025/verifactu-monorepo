@@ -386,7 +386,7 @@ Ver sección "SPRINT 11–12" al final de este documento.
 - UI de planes en `/settings?section=billing` (S5-A)
 - Banner de trial expirando en workspace (S5-B)
 - Cron de expiración automática (S5-B)
-- Admin billing pages (S9-A / S9-B)
+- ~~Admin billing pages (S9-A / S9-B)~~ — **✅ COMPLETADO 2026-05-04**
 - Emails de recordatorio trial (S5-B)
 
 ---
@@ -395,22 +395,22 @@ Ver sección "SPRINT 11–12" al final de este documento.
 
 ### Apps Admin (`apps/admin` → `admin.verifactu.business`)
 
-| Ruta                         | Estado               |
-| ---------------------------- | -------------------- |
-| `/dashboard`                 | ✅ Operativo         |
-| `/tenants`                   | ✅ Operativo         |
-| `/tenants/[id]/overview`     | ✅ Operativo         |
-| `/tenants/[id]/billing`      | 🔴 Placeholder vacío |
-| `/tenants/[id]/users`        | ✅ Operativo         |
-| `/tenants/[id]/emails`       | ✅ Operativo         |
-| `/tenants/[id]/integrations` | ✅ Operativo         |
-| `/tenants/[id]/audit`        | ✅ Operativo         |
-| `/users`                     | ✅ Operativo         |
-| `/integrations/stripe`       | 🔴 Placeholder vacío |
-| `/integrations/resend`       | ✅ Operativo         |
-| `/demo-requests`             | ✅ Operativo         |
-| `/audit-log`                 | ✅ Operativo         |
-| `/operations`                | ✅ Operativo         |
+| Ruta                         | Estado                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| `/dashboard`                 | ✅ Operativo                                                                                      |
+| `/tenants`                   | ✅ Operativo                                                                                      |
+| `/tenants/[id]/overview`     | ✅ Operativo                                                                                      |
+| `/tenants/[id]/billing`      | ✅ Operativo — plan/estado/historial + acciones manuales (extender trial, cambiar plan, cancelar) |
+| `/tenants/[id]/users`        | ✅ Operativo                                                                                      |
+| `/tenants/[id]/emails`       | ✅ Operativo                                                                                      |
+| `/tenants/[id]/integrations` | ✅ Operativo                                                                                      |
+| `/tenants/[id]/audit`        | ✅ Operativo                                                                                      |
+| `/users`                     | ✅ Operativo                                                                                      |
+| `/integrations/stripe`       | ✅ Operativo — MRR, ARR, trials activos, conversión trial→pago, planes, subs expirando            |
+| `/integrations/resend`       | ✅ Operativo                                                                                      |
+| `/demo-requests`             | ✅ Operativo                                                                                      |
+| `/audit-log`                 | ✅ Operativo                                                                                      |
+| `/operations`                | ✅ Operativo                                                                                      |
 
 ### Holded Admin (`apps/holded/app/admin`)
 
@@ -422,10 +422,10 @@ Ver sección "SPRINT 11–12" al final de este documento.
 
 ### Pendiente para Admin Isaak
 
-- Vista global de usuarios Isaak (conversaciones, plan, actividad)
-- Admin billing con datos Stripe en tiempo real
-- Panel de notificaciones enviadas
-- Gestión de alertas fiscales globales
+- Vista global de usuarios Isaak (conversaciones, plan, actividad) — S9-C pendiente
+- ~~Admin billing con datos Stripe en tiempo real~~ — **✅ COMPLETADO 2026-05-04** (`/integrations/stripe` + `/tenants/[id]/billing` con acciones manuales)
+- Panel de notificaciones enviadas — S9-D pendiente
+- Gestión de alertas fiscales globales — S9-D pendiente
 
 ---
 

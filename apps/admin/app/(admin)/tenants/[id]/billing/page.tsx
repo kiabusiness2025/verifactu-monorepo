@@ -1,5 +1,6 @@
-import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
+import { notFound } from 'next/navigation';
+import { BillingActions } from './BillingActions';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +46,7 @@ function StatCard({ label, value, sub }: { label: string; value: string; sub?: s
 export default async function TenantBillingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  const [tenant, subscriptions] = await Promise.all([
+  const [tenant, subscriptions, plans] = await Promise.all([
     prisma.tenant.findUnique({
       where: { id },
       select: { id: true },
@@ -55,6 +56,7 @@ export default async function TenantBillingPage({ params }: { params: Promise<{ 
       include: { plan: true },
       orderBy: { createdAt: 'desc' },
     }),
+    prisma.plan.findMany({ orderBy: { fixedMonthly: 'asc' } }),
   ]);
 
   if (!tenant) notFound();
@@ -279,37 +281,15 @@ export default async function TenantBillingPage({ params }: { params: Promise<{ 
             </div>
           </section>
 
-          {/* Actions placeholder */}
+          {/* Admin actions */}
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <h3 className="text-base font-semibold text-slate-900">Acciones manuales</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Próximamente: extender trial, cambiar plan, cancelar suscripción.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-3">
-              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-2.5 text-sm text-slate-400">
-                Extender trial +7 días
-              </div>
-              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-2.5 text-sm text-slate-400">
-                Cambiar plan
-              </div>
-              <div className="rounded-xl border border-dashed border-rose-200 px-4 py-2.5 text-sm text-rose-300">
-                Cancelar suscripción
-              </div>
-            </div>
-            {current?.stripeCustomerId ? (
-              <p className="mt-3 text-xs text-slate-400">
-                Para acciones urgentes usa el{' '}
-                <a
-                  href={`https://dashboard.stripe.com/customers/${current.stripeCustomerId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  Stripe Dashboard
-                </a>{' '}
-                directamente con el Customer ID de arriba.
-              </p>
-            ) : null}
+            <h3 className="mb-4 text-base font-semibold text-slate-900">Acciones manuales</h3>
+            <BillingActions
+              tenantId={id}
+              currentStatus={active?.status ?? current?.status ?? ''}
+              hasActiveSubscription={!!active}
+              plans={plans.map((p) => ({ id: p.id, code: p.code, name: p.name }))}
+            />
           </section>
         </>
       )}
