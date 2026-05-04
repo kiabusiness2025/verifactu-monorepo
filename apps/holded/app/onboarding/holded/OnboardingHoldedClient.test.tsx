@@ -130,7 +130,7 @@ describe('OnboardingHoldedClient', () => {
   it('enables submit when identity and api key are valid', () => {
     render(<OnboardingHoldedClient {...defaultProps} />);
 
-    fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
+    fireEvent.change(screen.getByPlaceholderText('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'), {
       target: { value: 'abcdefghijklmnop' },
     });
     fireEvent.click(
@@ -157,7 +157,7 @@ describe('OnboardingHoldedClient', () => {
 
     render(<OnboardingHoldedClient {...defaultProps} />);
 
-    fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
+    fireEvent.change(screen.getByPlaceholderText('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'), {
       target: { value: 'abcdefghijklmnop' },
     });
     fireEvent.click(
@@ -232,7 +232,7 @@ describe('OnboardingHoldedClient', () => {
       />
     );
 
-    fireEvent.change(screen.getByPlaceholderText('Pega aqui la API key generada en Holded'), {
+    fireEvent.change(screen.getByPlaceholderText('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx'), {
       target: { value: 'abcdefghijklmnop' },
     });
     fireEvent.click(
@@ -303,7 +303,7 @@ describe('OnboardingHoldedClient', () => {
 
     render(<OnboardingHoldedClient {...defaultProps} />);
 
-    const apiKeyInput = screen.getByPlaceholderText('Pega aqui la API key generada en Holded');
+    const apiKeyInput = screen.getByPlaceholderText('xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx');
     fireEvent.change(apiKeyInput, {
       target: { value: 'abcdefghijklmnop' },
     });

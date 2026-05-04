@@ -95,7 +95,7 @@ describe('OAuth dynamic client registration route', () => {
     );
     const payload = await response.json();
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(201);
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://chatgpt.com');
     expect(payload.client_id).toBe('openai-chatgpt-dc3910724e2c913016182543');
   });

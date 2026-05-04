@@ -65,9 +65,9 @@ for (const route of iconRoutes) {
   check(`Route ${route} defined before express.static`, routePos !== -1 && routePos < staticPos);
 }
 
-// 5. Check app.ts has cache-busting headers
-check('app.ts has Cache-Control: no-cache, must-revalidate', appTs.includes('no-cache, must-revalidate'));
-check('app.ts has Pragma: no-cache', appTs.includes('Pragma'));
+// 5. Check app.ts has cache and versioning headers
+// Icons use 1-day public cache (immutable) so Google s2 favicons proxy can index for Anthropic directory
+check('app.ts has public max-age cache for icons', appTs.includes('max-age=86400') || appTs.includes('max-age=3600'));
 check('app.ts has X-Icon-Version header', appTs.includes('X-Icon-Version'));
 
 // 6. Check manifest.json has only Holded diamond icons
