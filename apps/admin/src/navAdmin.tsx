@@ -1,6 +1,7 @@
 import {
   BarChart3,
   BookOpen,
+  Bot,
   Building2,
   CalendarCheck,
   FileText,
@@ -21,6 +22,7 @@ export const navAdmin = [
   { label: 'Pedidos', href: '/orders', icon: <ShoppingBag className="h-4 w-4" /> },
   { label: 'Fulfillment', href: '/fulfillment', icon: <Zap className="h-4 w-4" /> },
   { label: 'Soporte', href: '/admin-support', icon: <LifeBuoy className="h-4 w-4" /> },
+  { label: 'Isaak', href: '/isaak', icon: <Bot className="h-4 w-4" /> },
   // ─── Crecimiento ───────────────────────────────────────
   { label: 'Catálogo', href: '/catalog', icon: <ShoppingBag className="h-4 w-4" /> },
   { label: 'Marketing', href: '/admin-marketing', icon: <Megaphone className="h-4 w-4" /> },
