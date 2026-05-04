@@ -174,7 +174,7 @@ export default function ClaudePrivacyPage() {
               </a>{' '}
               o utiliza{' '}
               <Link
-                href="/support"
+                href="/conectores/claude/soporte"
                 className="font-semibold text-amber-700 underline underline-offset-4"
               >
                 soporte del conector

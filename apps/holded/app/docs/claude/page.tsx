@@ -24,6 +24,12 @@ export const metadata: Metadata = {
   title: 'Documentación Conector Claude — Holded | verifactu.business',
   description:
     'Guía completa para conectar tu cuenta de Holded con Claude (Anthropic). Requisitos, pasos de configuración, herramientas disponibles y solución de problemas.',
+  // Canonical points to the connector-tree URL — that's where users actually land
+  // from the connector landing. Both /docs/claude and /conectores/claude/docs serve
+  // this same content; setting canonical here unifies their SEO signal.
+  alternates: {
+    canonical: '/conectores/claude/docs',
+  },
 };
 
 const modules = [

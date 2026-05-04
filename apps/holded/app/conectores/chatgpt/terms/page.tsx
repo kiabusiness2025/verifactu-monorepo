@@ -5,6 +5,7 @@ import {
   FileText,
   Lock,
   Mail,
+  Network,
   Scale,
   ServerCog,
   ShieldCheck,
@@ -137,6 +138,140 @@ export default function ChatGPTTermsPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* ── Verifactu como puente (NUEVO) ── */}
+        <div className="mt-6 rounded-3xl border border-emerald-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <Network className="h-4 w-4 text-emerald-600" />
+            Verifactu como puente de conexión
+          </div>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            <strong>Verifactu Business actúa exclusivamente como capa de conexión técnica</strong>{' '}
+            entre ChatGPT (proporcionado por OpenAI) y la API oficial de Holded. Verifactu no
+            participa en la generación de respuestas de ChatGPT ni en la gestión interna de los
+            datos almacenados en Holded.
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-emerald-700">
+                OpenAI / ChatGPT
+              </div>
+              <p className="mt-2 text-xs leading-6 text-slate-600">
+                Genera todas las respuestas en lenguaje natural. La calidad, exactitud y contenido
+                de las respuestas son responsabilidad de OpenAI conforme a sus propios términos.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-emerald-700">
+                Holded
+              </div>
+              <p className="mt-2 text-xs leading-6 text-slate-600">
+                Almacena, procesa y gestiona los datos contables, fiscales y comerciales del
+                usuario. La disponibilidad y exactitud de los datos depende exclusivamente de
+                Holded.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+              <div className="text-[10px] font-semibold uppercase tracking-widest text-emerald-700">
+                Verifactu Business
+              </div>
+              <p className="mt-2 text-xs leading-6 text-slate-700">
+                Provee la infraestructura que traduce peticiones de ChatGPT a llamadas a la API de
+                Holded. <strong>No genera respuestas, no almacena datos de negocio.</strong>
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs leading-6 text-slate-500">
+            En consecuencia, Verifactu Business <strong>queda eximida de responsabilidad</strong>{' '}
+            por el contenido de las respuestas de ChatGPT, por la disponibilidad o exactitud de los
+            datos en Holded y por las decisiones que el usuario tome en base a la información
+            obtenida a través del conector.
+          </p>
+        </div>
+
+        {/* ── Licencias requeridas (NUEVO) ── */}
+        <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+            <FileText className="h-4 w-4 text-emerald-600" />
+            Licencias requeridas para usar el conector
+          </div>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            El uso del conector requiere que el usuario disponga de licencias activas y vigentes en
+            las plataformas de terceros, y que cumpla los términos de cada una de ellas:
+          </p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Cuenta OpenAI / ChatGPT
+              </div>
+              <ul className="mt-2 space-y-1 text-sm leading-7 text-slate-700">
+                <li>
+                  — Cuenta activa en <strong>ChatGPT</strong> con un plan que permita el uso de
+                  conectores y aplicaciones (consultar disponibilidad por plan en OpenAI).
+                </li>
+                <li>
+                  — Aceptación de los{' '}
+                  <a
+                    href="https://openai.com/policies/terms-of-use"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-emerald-700 underline underline-offset-4"
+                  >
+                    Términos de uso de OpenAI
+                  </a>{' '}
+                  y la{' '}
+                  <a
+                    href="https://openai.com/policies/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-emerald-700 underline underline-offset-4"
+                  >
+                    Política de privacidad de OpenAI
+                  </a>
+                  .
+                </li>
+              </ul>
+            </div>
+            <div className="rounded-2xl border border-rose-100 bg-rose-50/60 p-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-rose-700">
+                Cuenta Holded
+              </div>
+              <ul className="mt-2 space-y-1 text-sm leading-7 text-slate-700">
+                <li>
+                  — Cuenta activa de <strong>Holded</strong> con un plan que permita el uso de la
+                  API (consultar disponibilidad por plan en Holded).
+                </li>
+                <li>
+                  — Aceptación de los{' '}
+                  <a
+                    href="https://www.holded.com/es/legal/condiciones-uso"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-rose-700 underline underline-offset-4"
+                  >
+                    Términos y condiciones de Holded
+                  </a>{' '}
+                  y la{' '}
+                  <a
+                    href="https://www.holded.com/es/legal/privacidad"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-semibold text-rose-700 underline underline-offset-4"
+                  >
+                    Política de privacidad de Holded
+                  </a>
+                  .
+                </li>
+              </ul>
+            </div>
+          </div>
+          <p className="mt-4 text-xs leading-6 text-slate-500">
+            La pérdida de cualquiera de estas licencias o el incumplimiento de los términos de
+            OpenAI o Holded por parte del usuario suspende automáticamente el derecho de uso del
+            conector. Verifactu no tiene capacidad para mantener el servicio si la licencia de la
+            plataforma de terceros queda revocada o suspendida.
+          </p>
         </div>
 
         {/* ── Descripción del servicio ── */}

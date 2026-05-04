@@ -48,6 +48,8 @@ type ConnectorConfig = {
   demoHref: string;
   supportHref: string;
   dpaHref: string;
+  privacyHref: string;
+  termsHref: string;
   connectHref?: string;
 };
 
@@ -92,9 +94,11 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     label: 'Conector Holded para Claude',
     logoSrc: '/brand/claude-logo.svg',
     docsHref: '/conectores/claude/docs',
-    demoHref: '/demo-recording',
+    demoHref: '/conectores/claude/demo',
     supportHref: '/conectores/claude/soporte',
     dpaHref: '/conectores/claude/dpa',
+    privacyHref: '/conectores/claude/privacy',
+    termsHref: '/conectores/claude/terms',
     connectHref:
       'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp',
   },
@@ -108,6 +112,8 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     demoHref: '/conectores/chatgpt/openai-review-demo',
     supportHref: '/conectores/chatgpt/soporte',
     dpaHref: '/conectores/chatgpt/dpa',
+    privacyHref: '/conectores/chatgpt/privacy',
+    termsHref: '/conectores/chatgpt/terms',
   },
 };
 
@@ -300,8 +306,12 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           <ConnectorLogo cfg={cfg} />
 
           {/* Launch banner — visible above the connector label during free-launch period.
+              Uses the connector theme.pill so it adopts amber on Claude and emerald on
+              ChatGPT, avoiding color collision with the connector chip below.
               Quitar este bloque cuando se active el modelo freemium con límites. */}
-          <div className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800 shadow-sm">
+          <div
+            className={`mx-auto mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] shadow-sm ${theme.pill}`}
+          >
             <Sparkles className="h-3.5 w-3.5" />
             Plan Gratis Para Siempre · sin límites en lanzamiento
           </div>
@@ -689,9 +699,10 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               // vs OpenAI). El hub /conectores/privacy y /conectores/dpa siguen
               // existiendo como selectores generales.
               ['Docs', cfg.docsHref],
-              ['Privacidad', `/conectores/${cfg.id}/privacy`],
+              ['Privacidad', cfg.privacyHref],
               ['DPA', cfg.dpaHref],
               ['Soporte', cfg.supportHref],
+              ['Términos', cfg.termsHref],
               ['Aviso legal', '/legal'],
             ].map(([label, href]) => (
               <Link

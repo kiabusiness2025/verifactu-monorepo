@@ -11,15 +11,37 @@ type Props = {
   children: React.ReactNode;
 };
 
-const navLinks = [
-  { href: '/conectores', label: 'Conectores' },
-  { href: '/conectores/chatgpt', label: 'ChatGPT' },
-  { href: '/conectores/claude', label: 'Claude' },
-  { href: '/conectores/docs', label: 'Docs' },
-  { href: '/conectores/privacy', label: 'Privacidad' },
-  { href: '/conectores/dpa', label: 'DPA' },
-  { href: '/conectores/soporte', label: 'Soporte' },
-];
+type ConnectorCtx = 'claude' | 'chatgpt' | null;
+
+/**
+ * Detects which connector page is active based on the current pathname.
+ * Returns 'claude' for /conectores/claude/*, 'chatgpt' for /conectores/chatgpt/*,
+ * or null for the generic hub /conectores or any other path.
+ */
+function detectConnectorContext(pathname: string | null): ConnectorCtx {
+  if (!pathname) return null;
+  if (pathname.startsWith('/conectores/claude')) return 'claude';
+  if (pathname.startsWith('/conectores/chatgpt')) return 'chatgpt';
+  return null;
+}
+
+/**
+ * Builds nav and footer links scoped to the active connector when one is active,
+ * falling back to generic /conectores/* selector pages otherwise.
+ *
+ * Bug fixed: the previous static navLinks hardcoded /conectores/{docs,privacy,dpa,soporte}
+ * (generic selectors that list ChatGPT first), so on /conectores/claude users
+ * were funneled toward ChatGPT instead of staying within the Claude flow.
+ */
+function buildConnectorLinks(ctx: ConnectorCtx) {
+  const base = ctx ? `/conectores/${ctx}` : '/conectores';
+  return {
+    docs: ctx ? `${base}/docs` : '/conectores/docs',
+    privacy: ctx ? `${base}/privacy` : '/conectores/privacy',
+    dpa: ctx ? `${base}/dpa` : '/conectores/dpa',
+    soporte: ctx ? `${base}/soporte` : '/conectores/soporte',
+  };
+}
 
 export default function HoldedSiteChrome({ children }: Props) {
   const pathname = usePathname();
@@ -27,6 +49,20 @@ export default function HoldedSiteChrome({ children }: Props) {
   const isIsaakApp = false;
   const isStandaloneSupportChat = pathname?.startsWith('/support/chat') ?? false;
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const connectorCtx = detectConnectorContext(pathname);
+  const links = buildConnectorLinks(connectorCtx);
+
+  // Nav: keep Hub + both connectors visible always, then context-aware secondary links.
+  const navLinks = [
+    { href: '/conectores', label: 'Conectores' },
+    { href: '/conectores/chatgpt', label: 'ChatGPT' },
+    { href: '/conectores/claude', label: 'Claude' },
+    { href: links.docs, label: 'Docs' },
+    { href: links.privacy, label: 'Privacidad' },
+    { href: links.dpa, label: 'DPA' },
+    { href: links.soporte, label: 'Soporte' },
+  ];
 
   useEffect(() => {
     setMenuOpen(false);
@@ -201,10 +237,10 @@ export default function HoldedSiteChrome({ children }: Props) {
                   Soporte
                 </div>
                 <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
-                  <Link href="/conectores/docs" className="hover:text-slate-900">
+                  <Link href={links.docs} className="hover:text-slate-900">
                     Documentacion
                   </Link>
-                  <Link href="/conectores/soporte" className="hover:text-slate-900">
+                  <Link href={links.soporte} className="hover:text-slate-900">
                     Soporte
                   </Link>
                   <Link href="/contacto" className="hover:text-slate-900">
@@ -218,10 +254,10 @@ export default function HoldedSiteChrome({ children }: Props) {
                   Legal
                 </div>
                 <div className="flex flex-col gap-1.5 font-semibold text-slate-500">
-                  <Link href="/conectores/privacy" className="hover:text-slate-900">
+                  <Link href={links.privacy} className="hover:text-slate-900">
                     Privacidad
                   </Link>
-                  <Link href="/conectores/dpa" className="hover:text-slate-900">
+                  <Link href={links.dpa} className="hover:text-slate-900">
                     DPA
                   </Link>
                   <Link href="/legal" className="hover:text-slate-900">
@@ -234,7 +270,17 @@ export default function HoldedSiteChrome({ children }: Props) {
         </div>
       </footer>
 
-      <IsaakWidget page="generic" />
+      <IsaakWidget
+        page={
+          connectorCtx === 'claude'
+            ? 'claude'
+            : connectorCtx === 'chatgpt'
+              ? 'chatgpt'
+              : pathname === '/conectores' || pathname?.startsWith('/conectores')
+                ? 'holded_hub'
+                : 'generic'
+        }
+      />
     </>
   );
 }

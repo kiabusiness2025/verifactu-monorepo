@@ -716,8 +716,18 @@ export function IsaakWidget({ page = 'generic' }: Props) {
                 Isaak · Verifactu Business · soporte@verifactu.business
               </span>
               <a
-                href="/conectores/chatgpt/soporte"
-                className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:bg-emerald-100"
+                href={
+                  page === 'claude'
+                    ? '/conectores/claude/soporte'
+                    : page === 'chatgpt'
+                      ? '/conectores/chatgpt/soporte'
+                      : '/conectores/soporte'
+                }
+                className={
+                  page === 'claude'
+                    ? 'shrink-0 rounded-full border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[10px] font-semibold text-amber-700 transition hover:bg-amber-100'
+                    : 'shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700 transition hover:bg-emerald-100'
+                }
               >
                 🎧 Soporte / Ayuda
               </a>
