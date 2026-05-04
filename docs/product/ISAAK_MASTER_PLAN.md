@@ -317,18 +317,24 @@ Ver sección "SPRINT 11–12" al final de este documento.
 - Logs de `UsageEvent` por tenant (preguntas, uploads, acciones ejecutadas)
 - Alertas de uso anómalo (spike repentino)
 
-### S9-C: Admin Isaak Users
+### S9-C: Admin Isaak Users ✅ COMPLETADO 2026-05-XX (commit `99113886`)
 
-- Lista de usuarios Isaak con: plan, ERP conectado, última actividad, conversaciones
-- Detalle de tenant: conversaciones, archivos subidos, integraciones activas
-- Impersonación controlada (soporte: ver chat sin acceder a datos reales)
-- Exportar CSV de usuarios por plan / por estado / por fecha de creación
+- ✅ Vista global `/isaak` — KPIs (tenants, conversaciones, activos hoy), tabla por tenant con plan/estado/mensajes/última actividad
+- ✅ Enlace a overview individual por tenant
+- ✅ Sección "Sin actividad" con pills de tenants en 0 conversaciones
+- ✅ Nav link "Isaak" con icono Bot en `navAdmin.tsx`
+- Detalle de tenant con archivos subidos e integraciones — pendiente
+- Impersonación controlada — pendiente
+- Exportar CSV — pendiente
 
-### S9-D: Admin Notificaciones
+### S9-D: Admin Notificaciones ✅ COMPLETADO 2026-05-XX (commit `08aa86f9`)
 
-- Cola de alertas pendientes / enviadas
-- Estadísticas de entrega por canal (email open rate, push CTR)
-- Plantillas de email editables sin deploy
+- ✅ Cola `/isaak/alerts` — KPIs (total, pendientes+vencidas, esta semana, enviadas), tabla con canal/estado/vencimiento
+- ✅ Banner vencidas (rose) si hay alertas pending pasadas de dueDate
+- ✅ Acción "Marcar enviada" (client component `AlertActions.tsx`)
+- ✅ API `PATCH /api/admin/isaak/alerts/[alertId]` con acciones `mark_sent` / `dismiss`
+- Estadísticas de entrega por canal (open rate, CTR) — pendiente
+- Plantillas de email editables sin deploy — pendiente
 
 ---
 
@@ -355,16 +361,22 @@ Ver sección "SPRINT 11–12" al final de este documento.
 
 ## SPRINT 11–12 — Futuro / Backlog
 
-| Ítem                   | Descripción                                           | Prioridad |
-| ---------------------- | ----------------------------------------------------- | --------- |
-| Multi-ERP              | Conectar Sage, A3, Contaplus además de Holded         | Alta      |
-| WhatsApp Bot           | Isaak responde por WhatsApp vía Twilio/360dialog      | Alta      |
-| Firma digital          | Firmar facturas con certificado digital (FNMT)        | Media     |
-| Isaak para asesores    | Perfil asesor: gestiona N empresas desde un dashboard | Media     |
-| Reporting avanzado     | Informes PDF personalizados (P&L, cashflow)           | Media     |
-| Banco conectado        | PSD2/Open Banking: lectura automática de movimientos  | Alta      |
-| App nativa iOS/Android | Si PWA no es suficiente para push/voz                 | Baja      |
-| ERP propio Verifactu   | Modulo básico de facturación sin Holded               | Baja      |
+### ✅ COMPLETADO S11 (commit `4a5feecb`)
+
+- **Reporting P&L**: `GET /api/reports/pl` (año/mes, YTD), `/informes` workspace con KPIs, gráfico barras y desglose por categoría
+- **Dashboard asesor**: `GET /api/advisor/clients`, `/advisor` workspace con tarjetas de clientes, alertas pendientes y acciones rápidas
+- **Landings actualizadas** (commit `55b7a960`): cross-link Holded↔Isaak, banner Plan Gratis, `/pricing`, `/signup`, `ISAAK_SELF_SERVICE_SPEC.md`
+
+### Backlog pendiente (bloqueadores externos)
+
+| Ítem                   | Descripción                                          | Prioridad | Bloqueador                       |
+| ---------------------- | ---------------------------------------------------- | --------- | -------------------------------- |
+| Multi-ERP              | Conectar Sage, A3, Contaplus además de Holded        | Alta      | Credenciales API de cada ERP     |
+| WhatsApp Bot           | Isaak responde por WhatsApp vía Twilio/360dialog     | Alta      | Cuenta Twilio/360dialog + número |
+| Firma digital          | Firmar facturas con certificado digital (FNMT)       | Media     | Certificado FNMT                 |
+| Banco conectado        | PSD2/Open Banking: lectura automática de movimientos | Alta      | Contrato Belvo/Tink/Plaid        |
+| App nativa iOS/Android | Si PWA no es suficiente para push/voz                | Baja      | —                                |
+| ERP propio Verifactu   | Modulo básico de facturación sin Holded              | Baja      | —                                |
 
 ---
 
@@ -422,10 +434,9 @@ Ver sección "SPRINT 11–12" al final de este documento.
 
 ### Pendiente para Admin Isaak
 
-- Vista global de usuarios Isaak (conversaciones, plan, actividad) — S9-C pendiente
+- ~~Vista global de usuarios Isaak~~ — **✅ COMPLETADO S9-C** commit `99113886` (`/isaak` global + nav link)
 - ~~Admin billing con datos Stripe en tiempo real~~ — **✅ COMPLETADO 2026-05-04** (`/integrations/stripe` + `/tenants/[id]/billing` con acciones manuales)
-- Panel de notificaciones enviadas — S9-D pendiente
-- Gestión de alertas fiscales globales — S9-D pendiente
+- ~~Panel de alertas fiscales + cola de envío~~ — **✅ COMPLETADO S9-D** commit `08aa86f9` (`/isaak/alerts` + PATCH API)
 
 ---
 
