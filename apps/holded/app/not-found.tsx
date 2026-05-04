@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import { Compass, Sparkles } from 'lucide-react';
 
+// Force dynamic rendering. The root layout wraps children with HoldedSiteChrome
+// (Client Component using usePathname + IsaakWidget) which fails during the
+// static prerender of the 404 page, causing Next.js to fall back to its
+// legacy Pages-Router error component (which imports <Html>). Forcing dynamic
+// renders not-found at request time and avoids the fallback.
+export const dynamic = 'force-dynamic';
+
 export default function HoldedNotFoundPage() {
   return (
     <main className="min-h-[calc(100vh-9rem)] bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_48%,#ffffff_100%)] px-4 py-10 text-slate-900">

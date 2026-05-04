@@ -7,6 +7,13 @@ import IsaakSidebar from './components/IsaakSidebar';
 import IsaakCopilotPanel from './components/IsaakCopilotPanel';
 import TrialBanner from './components/TrialBanner';
 
+// All routes in this group are auth-required and read cookies/session at request
+// time (getHoldedSession). They cannot be statically prerendered. Forcing dynamic
+// here avoids prerender errors like "useContext during prerender" on /integrations
+// when child Client Components (IsaakSidebar, IsaakCopilotPanel, IntegrationsClient)
+// are evaluated without a real React context tree at build time.
+export const dynamic = 'force-dynamic';
+
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const session = await getHoldedSession();
 
