@@ -17,6 +17,7 @@ import {
   Globe,
   Key,
   Loader2,
+  Mail,
   PlugZap,
   Plus,
   RefreshCcw,
@@ -44,6 +45,18 @@ type GoogleStatus = {
   connected: boolean;
   email: string | null;
   googleConfigured: boolean;
+  hasGmailScope?: boolean;
+};
+
+type GmailInvoiceCandidate = {
+  id: string;
+  threadId: string;
+  from: string;
+  subject: string;
+  date: string;
+  snippet: string;
+  attachmentCount: number;
+  hasLikelyInvoice: boolean;
 };
 
 type Tab = 'connectors' | 'catalog' | 'developer';
@@ -76,9 +89,9 @@ const CATALOG_ITEMS = [
   {
     id: 'gmail',
     name: 'Gmail',
-    desc: 'Leer y redactar correos con contexto fiscal',
+    desc: 'Detecta facturas de proveedores en tu bandeja de entrada',
     logo: '✉️',
-    status: 'soon',
+    status: 'active',
   },
   {
     id: 'gdrive',
@@ -302,6 +315,163 @@ function GoogleCalCard({
           <Link href="/calendario" className="text-[#2361d8] hover:underline">
             Ver calendario fiscal →
           </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Gmail Facturas Card ────────────────────────────────────────────────────────
+
+function GmailCard({
+  googleConnected,
+  hasGmailScope,
+  googleConfigured,
+}: {
+  googleConnected: boolean;
+  hasGmailScope: boolean;
+  googleConfigured: boolean;
+}) {
+  const [scanning, setScanning] = useState(false);
+  const [messages, setMessages] = useState<GmailInvoiceCandidate[] | null>(null);
+  const [scannedAt, setScannedAt] = useState<string | null>(null);
+  const [scanError, setScanError] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+
+  async function runScan() {
+    setScanning(true);
+    setScanError(null);
+    try {
+      const res = await fetch('/api/isaak/gmail/scan');
+      const data = (await res.json().catch(() => null)) as {
+        ok?: boolean;
+        messages?: GmailInvoiceCandidate[];
+        scannedAt?: string;
+        error?: string;
+      } | null;
+      if (res.ok && data?.ok) {
+        setMessages(data.messages ?? []);
+        setScannedAt(data.scannedAt ?? null);
+      } else {
+        setScanError(data?.error ?? 'Error al escanear Gmail.');
+      }
+    } catch {
+      setScanError('No se pudo conectar con el servidor.');
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  const displayed = messages ? (showAll ? messages : messages.slice(0, 5)) : [];
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-lg">
+            <Mail size={18} className="text-rose-500" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold text-slate-900">
+                Gmail — Facturas de proveedores
+              </span>
+              <StatusDot
+                active={googleConnected && hasGmailScope}
+                label={googleConnected && hasGmailScope ? 'Activo' : 'Sin acceso'}
+              />
+            </div>
+            <div className="text-[12px] text-slate-500">
+              Detecta emails con facturas de proveedores adjuntas
+            </div>
+          </div>
+        </div>
+
+        {!googleConfigured ? (
+          <span className="shrink-0 text-[12px] text-slate-400">No disponible en este plan</span>
+        ) : !googleConnected ? (
+          <a
+            href="/api/isaak/google/auth"
+            className="shrink-0 rounded-lg bg-[#2361d8] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#1d55c2]"
+          >
+            Conectar Google
+          </a>
+        ) : !hasGmailScope ? (
+          <a
+            href="/api/isaak/google/auth"
+            className="shrink-0 rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-[12px] font-semibold text-amber-700 transition hover:bg-amber-100"
+          >
+            Reconectar para añadir Gmail
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void runScan()}
+            disabled={scanning}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+          >
+            {scanning ? <Loader2 size={12} className="animate-spin" /> : <RefreshCcw size={12} />}
+            Escanear facturas
+          </button>
+        )}
+      </div>
+
+      {/* Error */}
+      {scanError && (
+        <div className="border-t border-rose-100 bg-rose-50 px-5 py-3 text-[12px] text-rose-700">
+          {scanError}
+        </div>
+      )}
+
+      {/* Results */}
+      {messages !== null && !scanError && (
+        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-3">
+          {messages.length === 0 ? (
+            <div className="py-2 text-center text-[12px] text-slate-400">
+              No se encontraron emails con facturas en los últimos 30 días.
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {displayed.map((msg) => (
+                <div
+                  key={msg.id}
+                  className="flex items-start gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5 text-[12px]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate font-medium text-slate-800">
+                      {msg.subject || '(Sin asunto)'}
+                    </div>
+                    <div className="mt-0.5 truncate text-slate-500">{msg.from}</div>
+                  </div>
+                  <div className="shrink-0 text-[11px] text-slate-400">
+                    {new Intl.DateTimeFormat('es-ES', { dateStyle: 'short' }).format(
+                      new Date(msg.date)
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {messages.length > 5 && !showAll && (
+                <button
+                  type="button"
+                  onClick={() => setShowAll(true)}
+                  className="mt-1 w-full rounded-xl border border-slate-100 bg-white py-2 text-[12px] font-semibold text-[#2361d8] transition hover:bg-slate-50"
+                >
+                  Ver todas ({messages.length})
+                </button>
+              )}
+            </div>
+          )}
+
+          {scannedAt && (
+            <div className="mt-2 text-[11px] text-slate-400">
+              Última exploración:{' '}
+              {new Intl.DateTimeFormat('es-ES', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }).format(new Date(scannedAt))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -913,6 +1083,13 @@ export default function IntegrationsClient() {
                     onDisconnect={() => void disconnectGoogle()}
                   />
                 )}
+                {googleStatus && (
+                  <GmailCard
+                    googleConnected={googleStatus.connected}
+                    hasGmailScope={googleStatus.hasGmailScope ?? false}
+                    googleConfigured={googleStatus.googleConfigured}
+                  />
+                )}
               </div>
             )}
 
@@ -920,7 +1097,7 @@ export default function IntegrationsClient() {
             <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-4">
               <div className="flex items-center gap-2 text-[12px] text-slate-500">
                 <ChevronRight size={14} />
-                Próximamente: Gmail, Google Drive, Stripe, Factusol y más.{' '}
+                Próximamente: Google Drive, Stripe, Factusol y más.{' '}
                 <Link
                   href="/integrations?tab=catalog"
                   className="font-semibold text-[#2361d8] underline-offset-2 hover:underline"

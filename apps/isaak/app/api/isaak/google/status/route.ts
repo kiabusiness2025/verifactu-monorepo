@@ -14,9 +14,13 @@ export async function GET() {
   const token = await prisma.isaakGoogleToken
     .findUnique({
       where: { tenantId_userId: { tenantId: session.tenantId, userId: session.userId } },
-      select: { email: true, createdAt: true, expiresAt: true },
+      select: { email: true, createdAt: true, expiresAt: true, scopes: true },
     })
     .catch(() => null);
+
+  const hasGmailScope = token?.scopes
+    ? token.scopes.includes('https://www.googleapis.com/auth/gmail.readonly')
+    : false;
 
   const upcoming = getUpcomingDeadlines(90).map((d) => ({
     id: d.id,
@@ -31,6 +35,7 @@ export async function GET() {
     connected: !!token,
     email: token?.email ?? null,
     connectedAt: token?.createdAt?.toISOString() ?? null,
+    hasGmailScope,
     upcoming,
     googleConfigured: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
   });

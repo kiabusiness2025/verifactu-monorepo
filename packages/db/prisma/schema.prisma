@@ -557,6 +557,7 @@ model Tenant {
   isaakConversations          IsaakConversation[]
   isaakGoogleTokens           IsaakGoogleToken[]
   isaakAlerts                 IsaakAlert[]
+  isaakGmailScans             IsaakGmailScan[]
   isaakMemoryFacts            IsaakMemoryFact[]
   isaakOnboardingProfiles     IsaakOnboardingProfile[]
   usageEvents                 UsageEvent[]
@@ -1802,6 +1803,22 @@ model IsaakGoogleToken {
   @@unique([tenantId, userId])
   @@index([tenantId])
   @@map("isaak_google_tokens")
+}
+
+// ==================== ISAAK: GMAIL SCANS ====================
+
+model IsaakGmailScan {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id") @db.Uuid
+  scannedAt    DateTime @default(now()) @map("scanned_at") @db.Timestamptz
+  messageCount Int      @map("message_count")
+  results      Json
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("isaak_gmail_scans")
 }
 
 // ==================== ISAAK: ALERTS ====================

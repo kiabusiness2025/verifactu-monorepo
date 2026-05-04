@@ -524,7 +524,10 @@ export default function OnboardingHoldedClient({
           .catch(() => null)) as ValidationResponse | null;
 
         if (!validationResponse.ok || !validationData?.ok) {
-          throw new Error(validationData?.error || 'No hemos podido validar la API key de Holded.');
+          throw new Error(
+            validationData?.error ||
+              'La clave API no es valida o no tiene los permisos necesarios. Verifica que sea una clave activa de Holded.'
+          );
         }
 
         reusableToken = validationData.validationToken || null;
@@ -764,9 +767,9 @@ export default function OnboardingHoldedClient({
                     <ol className="mt-3 space-y-2">
                       {[
                         'Entra en Holded y abre Configuracion',
-                        'Ve a la seccion Desarrolladores → API Keys',
-                        'Crea una nueva key o copia una existente',
-                        'Pegala en el campo de la derecha',
+                        'Ve a la seccion API → Crear nueva clave',
+                        'Ponle un nombre (p. ej. "ChatGPT") y guarda',
+                        'Copia la clave y pegala en el campo de la derecha',
                       ].map((step, i) => (
                         <li key={i} className="flex items-start gap-2.5">
                           <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ff5460]/10 text-[10px] font-bold text-[#ff5460]">
@@ -1103,7 +1106,7 @@ export default function OnboardingHoldedClient({
                     <div>
                       <div className="text-sm font-semibold text-slate-900">API key de Holded</div>
                       <p className="mt-1 text-xs leading-5 text-slate-500">
-                        Generala desde Configuracion → Desarrolladores en tu cuenta de Holded.
+                        Encuéntrala en Holded → Configuracion → API → Crear nueva clave.
                       </p>
                       <label className="mt-4 block text-sm font-medium text-slate-700">
                         API key
@@ -1119,10 +1122,18 @@ export default function OnboardingHoldedClient({
                             setError(null);
                           }}
                           rows={4}
-                          placeholder="Pega aqui la API key generada en Holded"
-                          className="mt-2 w-full resize-none rounded-3xl border border-slate-300 bg-slate-50 px-4 py-4 text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
+                          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                          className="mt-2 w-full resize-none rounded-3xl border border-slate-300 bg-slate-50 px-4 py-4 font-mono text-sm text-slate-900 outline-none transition focus:border-[#ff5460] focus:ring-4 focus:ring-[#ff5460]/10"
                         />
                       </label>
+                      <div className="mt-2 text-right">
+                        <a
+                          href="/onboarding/holded/help"
+                          className="text-xs font-semibold text-[#ff5460] hover:text-[#ef4654]"
+                        >
+                          ¿No encuentras tu clave? Ver guia →
+                        </a>
+                      </div>
                     </div>
 
                     <label className="flex items-start gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-600">
@@ -1270,11 +1281,16 @@ export default function OnboardingHoldedClient({
                         className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654] disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {isSubmitting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {phase === 'validating' ? 'Verificando clave…' : 'Activando conexion…'}
+                          </>
                         ) : (
-                          <CheckCircle2 className="h-4 w-4" />
+                          <>
+                            <CheckCircle2 className="h-4 w-4" />
+                            Validar y conectar
+                          </>
                         )}
-                        Validar y conectar
                       </button>
                     </div>
                   </form>

@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
@@ -51,17 +51,36 @@ export default function HoldedFusionSuccess() {
           <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(255,84,96,0.16),rgba(255,255,255,0)_70%)] blur-2xl" />
 
           <div className="relative mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#ff5460]/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#ff5460]">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">
+              <CheckCircle2 className="h-3.5 w-3.5 animate-bounce" />
               Conexion completada
             </div>
             <h1 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-5xl">
-              Tu Holded ya esta conectado
+              ¡Holded conectado!
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
-              En unos segundos te llevamos a completar el contexto inicial de empresa para dejar la
-              experiencia preparada desde el primer uso.
+              Ya puedes preguntarle a ChatGPT sobre tus facturas, contactos y datos de Holded.
             </p>
+
+            <div className="mx-auto mt-6 max-w-xl rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 text-left">
+              <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                Prueba a preguntar
+              </div>
+              <ul className="mt-3 space-y-2">
+                {[
+                  '¿Cuánto he facturado este mes?',
+                  'Lista mis facturas pendientes de cobro',
+                  '¿Quiénes son mis clientes principales?',
+                  '¿Cuál es mi resultado operativo?',
+                  'Crea una factura para [cliente] por [importe]',
+                ].map((q) => (
+                  <li key={q} className="flex items-start gap-2 text-sm leading-6 text-slate-700">
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#ff5460]" />
+                    <span>{q}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             <div className="relative mt-12 h-[21rem] sm:h-[24rem]">
               <div className="holded-fusion-rail absolute left-1/2 top-[6.2rem] hidden h-1 w-[18rem] -translate-x-1/2 rounded-full bg-[linear-gradient(90deg,rgba(16,185,129,0.22),rgba(255,84,96,0.28))] sm:block" />
@@ -159,23 +178,30 @@ export default function HoldedFusionSuccess() {
                   />
                 </div>
                 <p className="px-5 py-3.5 text-sm leading-6 text-slate-600">
-                  Te llevamos a completar la configuracion inicial en unos segundos. Pulsa el boton
-                  si prefieres continuar ahora.
+                  En unos segundos te llevamos a completar la configuracion inicial. Pulsa el boton
+                  de ChatGPT si prefieres empezar a usar el conector ahora.
                 </p>
               </div>
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
-                <Link
-                  href={PROFILE_ONBOARDING_URL}
+                <a
+                  href="https://chatgpt.com"
                   className="inline-flex items-center justify-center gap-2 rounded-full bg-[#ff5460] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                 >
-                  Continuar configuracion
+                  Volver a ChatGPT
                   <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/onboarding/holded"
+                </a>
+                <a
+                  href="https://app.verifactu.business"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
-                  Revisar conexion
+                  Ver dashboard
+                </a>
+                <Link
+                  href={PROFILE_ONBOARDING_URL}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+                >
+                  Completar configuracion
+                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
             </div>

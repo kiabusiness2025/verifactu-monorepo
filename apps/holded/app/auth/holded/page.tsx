@@ -602,12 +602,12 @@ function HoldedAuthContent() {
                     <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
                       {isChatgptFlow
                         ? 'Identificate para activar tu conexion'
-                        : 'Accede para continuar'}
+                        : 'Conecta Holded con ChatGPT'}
                     </h2>
                     <p className="mt-2 text-sm leading-6 text-slate-500">
                       {isChatgptFlow
                         ? 'En menos de un minuto validas tu acceso y conectas Holded.'
-                        : 'Elige como quieres identificarte.'}
+                        : 'Accede a tu cuenta para continuar. Despues conectaras tu cuenta de Holded.'}
                     </p>
                   </div>
 

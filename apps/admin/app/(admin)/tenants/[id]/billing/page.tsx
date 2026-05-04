@@ -21,14 +21,24 @@ function StatusBadge({ status }: { status: string }) {
     status === 'active'
       ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
       : status === 'trial'
-        ? 'bg-blue-50 text-blue-700 border-blue-200'
-        : status === 'past_due'
+        ? 'bg-amber-50 text-amber-700 border-amber-200'
+        : status === 'past_due' || status === 'cancelled'
           ? 'bg-rose-50 text-rose-700 border-rose-200'
           : 'bg-slate-100 text-slate-600 border-slate-200';
   return (
     <span className={`rounded-full border px-2.5 py-0.5 text-xs font-semibold ${classes}`}>
       {status}
     </span>
+  );
+}
+
+function StatCard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">{label}</div>
+      <div className="mt-2 text-2xl font-bold text-slate-900">{value}</div>
+      {sub ? <div className="mt-1 text-sm text-slate-500">{sub}</div> : null}
+    </div>
   );
 }
 
@@ -49,6 +59,8 @@ export default async function TenantBillingPage({ params }: { params: Promise<{ 
 
   if (!tenant) notFound();
 
+  const current = subscriptions[0] ?? null;
+
   const active = subscriptions.find(
     (s) => s.status === 'active' || s.status === 'trial' || s.status === 'past_due'
   );
@@ -58,6 +70,10 @@ export default async function TenantBillingPage({ params }: { params: Promise<{ 
       ? Math.max(0, Math.ceil((active.trialEndsAt.getTime() - Date.now()) / 86_400_000))
       : null;
 
+  const daysSinceCreation = current
+    ? Math.floor((Date.now() - current.createdAt.getTime()) / 86_400_000)
+    : null;
+
   return (
     <main className="space-y-5">
       <header>
@@ -65,143 +81,238 @@ export default async function TenantBillingPage({ params }: { params: Promise<{ 
         <p className="text-sm text-slate-500">Estado de suscripción y datos Stripe.</p>
       </header>
 
-      {/* Active subscription */}
-      {active ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
-          <div className="flex items-center justify-between gap-4">
-            <h3 className="text-base font-semibold text-slate-900">Suscripción activa</h3>
-            <StatusBadge status={active.status} />
-          </div>
-
-          {active.status === 'trial' && daysUntilTrialEnd !== null ? (
-            <div
-              className={`mt-3 rounded-xl px-4 py-2.5 text-sm font-medium ${
-                daysUntilTrialEnd <= 3
-                  ? 'bg-rose-50 text-rose-800'
-                  : daysUntilTrialEnd <= 7
-                    ? 'bg-amber-50 text-amber-800'
-                    : 'bg-blue-50 text-blue-800'
-              }`}
-            >
-              Trial expira en {daysUntilTrialEnd} días ({fmtDate(active.trialEndsAt)})
-            </div>
-          ) : null}
-
-          <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              { label: 'Plan', value: active.plan?.name ?? '—' },
-              { label: 'Código', value: active.plan?.code ?? '—' },
-              {
-                label: 'Precio/mes',
-                value: fmtMoney(active.plan?.fixedMonthly?.toNumber() ?? null),
-              },
-              { label: 'Estado Stripe', value: active.stripeStatus ?? '—' },
-              { label: 'Periodo inicio', value: fmtDate(active.currentPeriodStart) },
-              { label: 'Periodo fin', value: fmtDate(active.currentPeriodEnd) },
-              { label: 'Trial expira', value: fmtDate(active.trialEndsAt) },
-              {
-                label: 'Cancela al fin de periodo',
-                value: active.cancelAtPeriodEnd ? 'Sí' : 'No',
-              },
-              { label: 'Creada', value: fmtDate(active.createdAt) },
-            ].map(({ label, value }) => (
-              <div key={label}>
-                <dt className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-                  {label}
-                </dt>
-                <dd className="mt-1 text-sm font-medium text-slate-900">{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          {/* Stripe IDs */}
-          <div className="mt-5 space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-4">
-            <div className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-              IDs Stripe
-            </div>
-            {[
-              { label: 'Customer ID', value: active.stripeCustomerId },
-              { label: 'Subscription ID', value: active.stripeSubscriptionId },
-              { label: 'Price ID', value: active.stripePriceId },
-            ].map(({ label, value }) => (
-              <div key={label} className="flex items-baseline gap-2 text-sm">
-                <span className="w-32 shrink-0 text-xs text-slate-500">{label}</span>
-                <span className="break-all font-mono text-xs text-slate-700">{value ?? '—'}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : (
+      {subscriptions.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-sm text-slate-500">
           Este tenant no tiene ninguna suscripción registrada.
         </div>
-      )}
+      ) : (
+        <>
+          {/* Header plan card */}
+          {current && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">
+                    {current.plan?.name ?? '—'}
+                  </h3>
+                  <span className="mt-0.5 font-mono text-xs text-slate-500">
+                    {current.plan?.code ?? '—'}
+                  </span>
+                </div>
+                <StatusBadge status={current.status} />
+              </div>
 
-      {/* All subscriptions history */}
-      {subscriptions.length > 1 ? (
-        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
-          <h3 className="text-base font-semibold text-slate-900">
-            Historial de suscripciones ({subscriptions.length})
-          </h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-widest text-slate-400">
-                  <th className="pb-2 text-left">Plan</th>
-                  <th className="pb-2 text-left">Estado</th>
-                  <th className="pb-2 text-left">Trial expira</th>
-                  <th className="pb-2 text-left">Periodo fin</th>
-                  <th className="pb-2 text-left">Creada</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {subscriptions.map((s) => (
-                  <tr key={s.id}>
-                    <td className="py-2 text-slate-700">{s.plan?.name ?? '—'}</td>
-                    <td className="py-2">
-                      <StatusBadge status={s.status} />
-                    </td>
-                    <td className="py-2 text-slate-600">{fmtDate(s.trialEndsAt)}</td>
-                    <td className="py-2 text-slate-600">{fmtDate(s.currentPeriodEnd)}</td>
-                    <td className="py-2 text-slate-500">{fmtDate(s.createdAt)}</td>
-                  </tr>
+              {current.status === 'trial' && current.trialEndsAt ? (
+                <div
+                  className={`mt-3 rounded-xl px-4 py-2.5 text-sm font-medium ${
+                    daysUntilTrialEnd !== null && daysUntilTrialEnd <= 3
+                      ? 'bg-rose-50 text-rose-800'
+                      : 'bg-amber-50 text-amber-800'
+                  }`}
+                >
+                  Trial expira el {fmtDate(current.trialEndsAt)}
+                  {daysUntilTrialEnd !== null ? ` (${daysUntilTrialEnd} días restantes)` : ''}
+                </div>
+              ) : null}
+
+              {(current.status === 'active' || current.status === 'past_due') &&
+              current.currentPeriodEnd ? (
+                <div className="mt-3 rounded-xl bg-slate-50 px-4 py-2.5 text-sm text-slate-700">
+                  Próxima renovación: <strong>{fmtDate(current.currentPeriodEnd)}</strong>
+                </div>
+              ) : null}
+
+              {current.cancelAtPeriodEnd ? (
+                <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-medium text-rose-800">
+                  Cancelación programada al final del periodo actual.
+                </div>
+              ) : null}
+
+              <dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  { label: 'Estado Stripe', value: current.stripeStatus ?? '—' },
+                  { label: 'Periodo inicio', value: fmtDate(current.currentPeriodStart) },
+                  { label: 'Periodo fin', value: fmtDate(current.currentPeriodEnd) },
+                  { label: 'Trial expira', value: fmtDate(current.trialEndsAt) },
+                  {
+                    label: 'Cancela al fin de periodo',
+                    value: current.cancelAtPeriodEnd ? 'Sí' : 'No',
+                  },
+                  { label: 'Última actualización', value: fmtDate(current.updatedAt) },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <dt className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+                      {label}
+                    </dt>
+                    <dd className="mt-1 text-sm font-medium text-slate-900">{value}</dd>
+                  </div>
                 ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
+              </dl>
+            </section>
+          )}
 
-      {/* Actions placeholder */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
-        <h3 className="text-base font-semibold text-slate-900">Acciones manuales</h3>
-        <p className="mt-1 text-sm text-slate-500">
-          Próximamente: extender trial, cambiar plan, cancelar suscripción.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <div className="rounded-xl border border-dashed border-slate-200 px-4 py-2.5 text-sm text-slate-400">
-            Extender trial +7 días
-          </div>
-          <div className="rounded-xl border border-dashed border-slate-200 px-4 py-2.5 text-sm text-slate-400">
-            Cambiar plan
-          </div>
-          <div className="rounded-xl border border-dashed border-rose-200 px-4 py-2.5 text-sm text-rose-300">
-            Cancelar suscripción
-          </div>
-        </div>
-        <p className="mt-3 text-xs text-slate-400">
-          Para acciones urgentes usa el{' '}
-          <a
-            href="https://dashboard.stripe.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Stripe Dashboard
-          </a>{' '}
-          directamente con el Customer ID de arriba.
-        </p>
-      </section>
+          {/* Stats row */}
+          {current && (
+            <div className="grid gap-4 sm:grid-cols-3">
+              <StatCard
+                label="Precio / mes"
+                value={fmtMoney(current.plan?.fixedMonthly?.toNumber() ?? null)}
+                sub={current.plan?.code ?? undefined}
+              />
+              <StatCard label="Suscripción creada" value={fmtDate(current.createdAt)} />
+              <StatCard
+                label="Días activo"
+                value={daysSinceCreation !== null ? String(daysSinceCreation) : '—'}
+                sub="desde la creación"
+              />
+            </div>
+          )}
+
+          {/* Stripe section */}
+          {current && (current.stripeCustomerId || current.stripeSubscriptionId) ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <h3 className="text-base font-semibold text-slate-900">Stripe</h3>
+              <div className="mt-4 space-y-3">
+                {current.stripeCustomerId ? (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      Customer ID
+                    </div>
+                    <div className="mt-1 flex items-center gap-3">
+                      <code className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-800 break-all">
+                        {current.stripeCustomerId}
+                      </code>
+                      <a
+                        href={`https://dashboard.stripe.com/customers/${current.stripeCustomerId}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                      >
+                        Ver en Stripe →
+                      </a>
+                    </div>
+                  </div>
+                ) : null}
+
+                {current.stripeSubscriptionId ? (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      Subscription ID
+                    </div>
+                    <div className="mt-1">
+                      <code className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-800 break-all">
+                        {current.stripeSubscriptionId}
+                      </code>
+                    </div>
+                  </div>
+                ) : null}
+
+                {current.stripePriceId ? (
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                      Price ID
+                    </div>
+                    <div className="mt-1">
+                      <code className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 font-mono text-xs text-slate-800 break-all">
+                        {current.stripePriceId}
+                      </code>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </section>
+          ) : null}
+
+          {/* All subscriptions table */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900">
+              Historial de suscripciones ({subscriptions.length})
+            </h3>
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-widest text-slate-400">
+                    <th className="pb-2 text-left">Plan</th>
+                    <th className="pb-2 text-left">Estado</th>
+                    <th className="pb-2 text-left">Inicio</th>
+                    <th className="pb-2 text-left">Fin / Trial</th>
+                    <th className="pb-2 text-left">Creada</th>
+                    <th className="pb-2 text-left">Stripe IDs</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {subscriptions.map((s) => (
+                    <tr key={s.id}>
+                      <td className="py-2.5 font-medium text-slate-900">
+                        {s.plan?.name ?? '—'}
+                        {s.plan?.code ? (
+                          <span className="ml-1 font-mono text-xs text-slate-400">
+                            ({s.plan.code})
+                          </span>
+                        ) : null}
+                      </td>
+                      <td className="py-2.5">
+                        <StatusBadge status={s.status} />
+                      </td>
+                      <td className="py-2.5 text-slate-600">{fmtDate(s.currentPeriodStart)}</td>
+                      <td className="py-2.5 text-slate-600">
+                        {s.status === 'trial'
+                          ? fmtDate(s.trialEndsAt)
+                          : fmtDate(s.currentPeriodEnd)}
+                      </td>
+                      <td className="py-2.5 text-slate-500">{fmtDate(s.createdAt)}</td>
+                      <td className="py-2.5">
+                        <div className="space-y-0.5 font-mono text-xs text-slate-400">
+                          {s.stripeCustomerId ? (
+                            <div title="Customer ID">{s.stripeCustomerId}</div>
+                          ) : null}
+                          {s.stripeSubscriptionId ? (
+                            <div title="Subscription ID">{s.stripeSubscriptionId}</div>
+                          ) : null}
+                          {!s.stripeCustomerId && !s.stripeSubscriptionId ? '—' : null}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* Actions placeholder */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900">Acciones manuales</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              Próximamente: extender trial, cambiar plan, cancelar suscripción.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-2.5 text-sm text-slate-400">
+                Extender trial +7 días
+              </div>
+              <div className="rounded-xl border border-dashed border-slate-200 px-4 py-2.5 text-sm text-slate-400">
+                Cambiar plan
+              </div>
+              <div className="rounded-xl border border-dashed border-rose-200 px-4 py-2.5 text-sm text-rose-300">
+                Cancelar suscripción
+              </div>
+            </div>
+            {current?.stripeCustomerId ? (
+              <p className="mt-3 text-xs text-slate-400">
+                Para acciones urgentes usa el{' '}
+                <a
+                  href={`https://dashboard.stripe.com/customers/${current.stripeCustomerId}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Stripe Dashboard
+                </a>{' '}
+                directamente con el Customer ID de arriba.
+              </p>
+            ) : null}
+          </section>
+        </>
+      )}
     </main>
   );
 }
