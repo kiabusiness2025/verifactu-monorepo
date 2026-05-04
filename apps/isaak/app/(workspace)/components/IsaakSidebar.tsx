@@ -12,6 +12,7 @@ import {
   ChevronUp,
   CreditCard,
   ExternalLink,
+  FileBarChart2,
   LifeBuoy,
   LogOut,
   Loader2,
@@ -51,9 +52,11 @@ const NAV_SECTIONS = [
   { href: '/resumen', label: 'Resumen', icon: BarChart3 },
   { href: '/ventas', label: 'Ventas', icon: TrendingUp },
   { href: '/gastos', label: 'Gastos', icon: Receipt },
+  { href: '/informes', label: 'Informes', icon: FileBarChart2 },
   { href: '/contactos', label: 'Contactos', icon: Users },
   { href: '/equipo', label: 'Equipo', icon: Users2 },
   { href: '/calendario', label: 'Calendario Fiscal', icon: CalendarDays },
+  { href: '/advisor', label: 'Mis clientes', icon: Building2 },
 ];
 
 const PROFILE_MENU = [
