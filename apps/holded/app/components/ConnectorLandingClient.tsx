@@ -1,18 +1,23 @@
 import {
   ArrowRight,
   BookOpen,
+  Briefcase,
   CheckCircle2,
   ExternalLink,
+  FileDown,
   FileText,
+  FolderKanban,
   HelpCircle,
   Landmark,
   LockKeyhole,
   Mail,
   MessageSquareText,
+  Package,
   Play,
   Receipt,
   ShieldCheck,
   Sparkles,
+  TrendingUp,
   Users,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -160,6 +165,84 @@ const CAPABILITIES: Capability[] = [
     },
     examples: [
       'Create a draft invoice for an existing customer for 100 euros plus VAT. Ask for confirmation before creating it.',
+    ],
+  },
+  {
+    title: 'Productos y stock',
+    subtitle: 'Lista catalogo, ficha de producto y stock disponible cuando esta habilitado.',
+    Icon: Package,
+    tools: {
+      claude: ['list_products', 'get_product', 'list_products_stock'],
+      chatgpt: ['holded_list_products', 'holded_get_product', 'holded_list_products_stock'],
+    },
+    examples: [
+      'Lista mis productos mas vendidos y dime cuales estan bajo minimos.',
+      'Show me product details and current stock for SKU ABC-123.',
+    ],
+  },
+  {
+    title: 'Proyectos y tareas',
+    subtitle: 'Consulta proyectos abiertos, tareas pendientes e imputaciones de horas.',
+    Icon: FolderKanban,
+    tools: {
+      claude: ['list_projects', 'get_project', 'list_project_tasks', 'list_time_records'],
+      chatgpt: ['holded_list_projects', 'holded_get_project', 'holded_list_project_tasks'],
+    },
+    examples: [
+      'Resume los proyectos activos y las tareas pendientes de esta semana.',
+      'Show hours imputed to project X this month.',
+    ],
+  },
+  {
+    title: 'CRM: leads y embudo',
+    subtitle: 'Visualiza el embudo de ventas y los leads asignados sin modificar nada.',
+    Icon: TrendingUp,
+    tools: {
+      claude: ['list_crm_funnels', 'list_leads'],
+      chatgpt: ['holded_list_crm_funnels', 'holded_list_leads'],
+    },
+    examples: [
+      'Resume mi embudo: cuantos leads en cada fase y prioridad.',
+      'List qualified leads waiting for follow-up.',
+    ],
+  },
+  {
+    title: 'PDFs de documentos',
+    subtitle: 'Descarga el PDF de una factura, presupuesto o albaran existente.',
+    Icon: FileDown,
+    tools: {
+      claude: ['get_document_pdf'],
+      chatgpt: ['holded_get_document_pdf'],
+    },
+    examples: [
+      'Damelo el PDF de la ultima factura emitida al cliente X.',
+      'Get the PDF of estimate Q-2026-042 to attach in an email.',
+    ],
+  },
+  {
+    title: 'Equipo, tesoreria y catalogos',
+    subtitle: 'Empleados, cuentas de tesoreria, tipos de IVA, almacenes y series de numeracion.',
+    Icon: Briefcase,
+    tools: {
+      claude: [
+        'list_employees',
+        'get_employee',
+        'list_treasury_accounts',
+        'list_taxes',
+        'list_warehouses',
+        'list_numbering_series',
+      ],
+      chatgpt: [
+        'holded_list_employees',
+        'holded_list_treasury_accounts',
+        'holded_list_taxes',
+        'holded_list_warehouses',
+        'holded_list_numbering_series',
+      ],
+    },
+    examples: [
+      'Muestrame mi equipo, cuentas bancarias y los tipos de IVA configurados.',
+      'List my warehouses and active numbering series before creating a draft.',
     ],
   },
 ];
@@ -357,6 +440,41 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               </a>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Cross-link banner: Holded connector → Isaak (orquestador principal).
+          Aparece despues de capabilities y antes de "Como funciona". */}
+      <section className="border-y border-slate-200 bg-gradient-to-br from-[#011c67] via-[#0d2b4a] to-[#011c67] py-12 text-white">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-100">
+                <Sparkles className="h-3.5 w-3.5" />
+                Quieres mas?
+              </div>
+              <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
+                Isaak hace lo mismo + memoria, libros AEAT y sync con tu ERP.
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100">
+                El conector de Holded para {cfg.aiName} es la entrada gratuita. Cuando necesites
+                trazabilidad, modo ejecucion controlado y multi-conector (Holded + bancos + Excel +
+                email), Isaak es la capa empresarial.
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3 lg:items-end">
+              <a
+                href="https://isaak.verifactu.business"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#011c67] shadow-sm hover:bg-slate-100"
+              >
+                Conoce Isaak
+                <ExternalLink className="h-4 w-4" />
+              </a>
+              <span className="text-xs text-blue-200">14 dias gratis · sin tarjeta</span>
+            </div>
+          </div>
         </div>
       </section>
 

@@ -9,15 +9,26 @@ import {
 import Link from 'next/link';
 
 const HOLDED_CONNECTORS_URL = 'https://holded.verifactu.business/conectores';
+const HOLDED_CLAUDE_URL = 'https://holded.verifactu.business/conectores/claude';
 
-const useCases = [
-  'Que facturas faltan para cerrar el trimestre?',
-  'Que IVA aproximado llevo acumulado?',
-  'Prepara un resumen para mi asesoria.',
-  'Revisa si hay datos incompletos.',
-  'Genera una accion pendiente.',
-  'Conecta Holded y consulta tus facturas.',
-  'Trabaja desde Excel sin migrar todo tu negocio.',
+type UseCase = {
+  text: string;
+  href?: string;
+  hrefLabel?: string;
+};
+
+const useCases: UseCase[] = [
+  { text: 'Que facturas faltan para cerrar el trimestre?' },
+  { text: 'Que IVA aproximado llevo acumulado?' },
+  { text: 'Prepara un resumen para mi asesoria.' },
+  { text: 'Revisa si hay datos incompletos.' },
+  { text: 'Genera una accion pendiente.' },
+  {
+    text: 'Conecta Holded y consulta tus facturas.',
+    href: HOLDED_CLAUDE_URL,
+    hrefLabel: 'Probar conector Holded para Claude',
+  },
+  { text: 'Trabaja desde Excel sin migrar todo tu negocio.' },
 ];
 
 const permissionCards = [
@@ -38,6 +49,27 @@ const permissionCards = [
 export default function IsaakPublicPhase1Landing() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      {/* Cross-link banner: usuarios que vienen del conector Holded en Claude.
+          Mantener visible mientras el conector sea la entrada principal de adquisicion. */}
+      <div className="border-b border-emerald-100 bg-emerald-50">
+        <div className="mx-auto flex max-w-6xl flex-col items-start gap-2 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-emerald-900">
+            <span className="mr-2" aria-hidden>
+              👋
+            </span>
+            <span className="font-semibold">Vienes de Holded?</span> Empieza gratis con nuestro
+            conector en Claude.
+          </p>
+          <a
+            href="https://holded.verifactu.business/conectores/claude"
+            className="inline-flex items-center gap-1 rounded-full border border-emerald-300 bg-white px-3 py-1 text-xs font-semibold text-emerald-800 hover:bg-emerald-50"
+          >
+            Abrir conector Holded → Claude
+            <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </div>
+
       <section className="border-b border-slate-200 bg-[linear-gradient(180deg,#eef4ff_0%,#ffffff_72%)] py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
@@ -186,14 +218,30 @@ export default function IsaakPublicPhase1Landing() {
             </h2>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {useCases.map((item) => (
-              <article
-                key={item}
-                className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
-              >
-                <p className="text-sm leading-7 text-slate-700">{item}</p>
-              </article>
-            ))}
+            {useCases.map((item) => {
+              const baseClasses = 'rounded-[1.5rem] border bg-white p-5 shadow-sm transition';
+              if (item.href) {
+                return (
+                  <a
+                    key={item.text}
+                    href={item.href}
+                    aria-label={item.hrefLabel ?? item.text}
+                    className={`${baseClasses} group flex flex-col justify-between gap-3 border-[#2361d8]/30 hover:border-[#2361d8] hover:shadow-md`}
+                  >
+                    <p className="text-sm leading-7 text-slate-800">{item.text}</p>
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#2361d8] group-hover:underline">
+                      {item.hrefLabel ?? 'Probar ahora'}
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
+                  </a>
+                );
+              }
+              return (
+                <article key={item.text} className={`${baseClasses} border-slate-200`}>
+                  <p className="text-sm leading-7 text-slate-700">{item.text}</p>
+                </article>
+              );
+            })}
           </div>
           <div className="mt-10 rounded-[2rem] border border-slate-200 bg-[#011c67] p-8 text-white shadow-sm">
             <h2 className="text-2xl font-semibold">
