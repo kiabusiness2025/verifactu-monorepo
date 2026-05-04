@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 2. Quota check
-  const quotaCheck = checkIsaakQuota(session.tenantId);
+  const quotaCheck = await checkIsaakQuota(session.tenantId);
   if (!quotaCheck.allowed) {
     return NextResponse.json(
       {

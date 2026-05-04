@@ -766,6 +766,9 @@ model TenantSubscription {
   stripePriceId        String?   @map("stripe_price_id")
   stripeStatus         String?   @map("stripe_status")
   cancelAtPeriodEnd    Boolean?  @default(false) @map("cancel_at_period_end")
+  queriesUsedToday     Int       @default(0) @map("queries_used_today")
+  dailyQueryLimit      Int       @default(10) @map("daily_query_limit")
+  lastQueryResetAt     DateTime  @default(now()) @map("last_query_reset_at") @db.Timestamptz
   updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
