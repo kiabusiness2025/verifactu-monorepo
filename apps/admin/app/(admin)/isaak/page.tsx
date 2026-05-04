@@ -79,11 +79,19 @@ export default async function AdminIsaakPage() {
 
   return (
     <main className="space-y-6">
-      <header>
-        <h1 className="text-xl font-semibold text-slate-900">Isaak — Usuarios</h1>
-        <p className="text-sm text-slate-500">
-          Actividad global de conversaciones, planes y uso por tenant.
-        </p>
+      <header className="flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-semibold text-slate-900">Isaak — Usuarios</h1>
+          <p className="text-sm text-slate-500">
+            Actividad global de conversaciones, planes y uso por tenant.
+          </p>
+        </div>
+        <Link
+          href="/isaak/alerts"
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
+        >
+          Cola de alertas →
+        </Link>
       </header>
 
       {/* KPI row */}
