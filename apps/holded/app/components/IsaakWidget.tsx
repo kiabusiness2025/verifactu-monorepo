@@ -123,7 +123,9 @@ const CTA_VARIANT_STORAGE_KEY = 'isaak_upgrade_cta_variant';
 type UpgradeCtaVariant = 'activate' | 'plans';
 
 function getUpgradeCtaLabel(variant: UpgradeCtaVariant) {
-  return variant === 'activate' ? 'Activar Isaak completo →' : 'Ver planes de Isaak →';
+  return variant === 'activate'
+    ? 'Empezar prueba gratuita de Isaak →'
+    : 'Probar Isaak 30 días gratis →';
 }
 
 function buildStandaloneChatPath(page: PageContext, prompt: string, source: string) {

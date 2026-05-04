@@ -195,12 +195,13 @@ function formatCardBrand(brand: string | null | undefined) {
 }
 
 function readDefaultPriceId() {
-  return (
-    process.env.STRIPE_PRICE_ISAAK_MONTHLY?.trim() ||
-    process.env.STRIPE_PRICE_HOLDED_FISCAL_MONTHLY?.trim() ||
-    process.env.STRIPE_PRICE_HOLDED_MIGRACIONES_MONTHLY?.trim() ||
-    ''
-  );
+  const priceId = process.env.STRIPE_PRICE_ISAAK_MONTHLY?.trim() ?? '';
+  if (!priceId && process.env.NODE_ENV === 'production') {
+    console.warn(
+      '[isaak/billing] STRIPE_PRICE_ISAAK_MONTHLY is not set — checkout will be unavailable'
+    );
+  }
+  return priceId;
 }
 
 export function getSettingsReturnUrl(section: string) {

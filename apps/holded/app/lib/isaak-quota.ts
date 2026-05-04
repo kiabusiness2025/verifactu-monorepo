@@ -33,7 +33,7 @@ function buildQuotaExhaustedResponse(): Extract<QuotaCheckResult, { allowed: fal
   return {
     allowed: false,
     message:
-      'Has alcanzado el límite diario del conector. Para seguir con análisis continuo, historial y memoria de tu empresa, activa Isaak completo en isaak.verifactu.business',
+      'Has alcanzado el límite diario del conector. Para análisis continuo con historial y memoria de tu empresa, Isaak completo está disponible en isaak.verifactu.business',
     cta: 'https://isaak.verifactu.business',
   };
 }
