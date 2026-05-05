@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { buildAuthUrl } from '../lib/holded-navigation';
+import { buildAuthUrl, HOLDED_PUBLIC_URL } from '../lib/holded-navigation';
 import { IsaakWidget } from './IsaakWidget';
 
 type Props = {
@@ -63,6 +63,7 @@ export default function HoldedSiteChrome({ children }: Props) {
     { href: links.dpa, label: 'DPA' },
     { href: links.soporte, label: 'Soporte' },
   ];
+  const hubReturnUrl = `${HOLDED_PUBLIC_URL}/conectores`;
 
   useEffect(() => {
     setMenuOpen(false);
@@ -111,10 +112,10 @@ export default function HoldedSiteChrome({ children }: Props) {
               </Link>
 
               <Link
-                href={buildAuthUrl('holded_nav_global')}
+                href={buildAuthUrl('holded_nav_global', hubReturnUrl)}
                 className="inline-flex items-center justify-center rounded-full bg-[#ff5460] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#ef4654]"
               >
-                Iniciar y conectar
+                Acceder
               </Link>
 
               <button
@@ -163,11 +164,11 @@ export default function HoldedSiteChrome({ children }: Props) {
                 ))}
                 <li>
                   <Link
-                    href={buildAuthUrl('holded_mobile_nav')}
+                    href={buildAuthUrl('holded_mobile_nav', hubReturnUrl)}
                     onClick={() => setMenuOpen(false)}
                     className="mt-1 flex items-center justify-center rounded-full bg-[#ff5460] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#ef4654]"
                   >
-                    Iniciar y conectar
+                    Acceder
                   </Link>
                 </li>
               </ul>
