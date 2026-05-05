@@ -17,6 +17,19 @@ export {
   verifyWebhookSignature,
 } from './gocardless-payments';
 export {
+  SaltEdgeError,
+  createSECustomer,
+  getSECustomer,
+  createConnectSession,
+  getConnection,
+  listConnections,
+  removeConnection,
+  listAccounts,
+  listTransactions,
+  listSpanishProviders,
+  verifySaltEdgeWebhook,
+} from './saltedge';
+export {
   decryptHoldedSecret,
   disconnectHoldedConnection,
   encryptHoldedSecret,

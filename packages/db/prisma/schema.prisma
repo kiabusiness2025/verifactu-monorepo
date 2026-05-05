@@ -583,6 +583,10 @@ model Tenant {
   isaakProposedActions        IsaakProposedAction[]
   gcMandates                  GcMandate[]
   gcPayments                  GcPayment[]
+  seCustomer                  SeCustomer?
+  seConnections               SeConnection[]
+  seAccounts                  SeAccount[]
+  seTransactions              SeTransaction[]
 
   @@map("tenants")
 }
@@ -1944,6 +1948,89 @@ model GcPayment {
   @@index([tenantId])
   @@index([mandateId])
   @@map("gc_payments")
+}
+
+// ==================== SALTEDGE (Open Banking / PSD2) ====================
+
+model SeCustomer {
+  id         String   @id          // Salt Edge customer ID
+  tenantId   String   @unique @map("tenant_id") @db.Uuid
+  identifier String   @unique      // nuestro identificador (tenant ID como string)
+  secret     String                // customer-secret para llamadas autenticadas
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connections SeConnection[]
+
+  @@map("se_customers")
+}
+
+model SeConnection {
+  id           String   @id          // Salt Edge connection ID
+  tenantId     String   @map("tenant_id") @db.Uuid
+  seCustomerId String   @map("se_customer_id")
+  providerCode String   @map("provider_code")
+  providerName String   @map("provider_name")
+  countryCode  String   @default("ES") @map("country_code")
+  status       String   @default("pending")
+  lastSyncAt   DateTime? @map("last_sync_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+
+  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer   SeCustomer    @relation(fields: [seCustomerId], references: [id])
+  accounts   SeAccount[]
+
+  @@index([tenantId])
+  @@map("se_connections")
+}
+
+model SeAccount {
+  id           String   @id          // Salt Edge account ID
+  tenantId     String   @map("tenant_id") @db.Uuid
+  connectionId String   @map("connection_id")
+  name         String
+  nature       String   @default("account")
+  balance      Decimal  @db.Decimal(18, 2)
+  currency     String   @default("EUR")
+  iban         String?
+  status       String   @default("active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connection   SeConnection   @relation(fields: [connectionId], references: [id])
+  transactions SeTransaction[]
+
+  @@index([tenantId])
+  @@index([connectionId])
+  @@map("se_accounts")
+}
+
+model SeTransaction {
+  id           String   @id          // Salt Edge transaction ID
+  tenantId     String   @map("tenant_id") @db.Uuid
+  accountId    String   @map("account_id")
+  status       String   @default("posted") // posted | pending
+  madeOn       String   @map("made_on")    // YYYY-MM-DD
+  amount       Decimal  @db.Decimal(18, 2) // negativo = gasto
+  currency     String   @default("EUR")
+  description  String
+  category     String   @default("uncategorized")
+  payee        String?
+  payer        String?
+  duplicated   Boolean  @default(false)
+  reconciledAt DateTime? @map("reconciled_at") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+
+  tenant  Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account SeAccount @relation(fields: [accountId], references: [id])
+
+  @@index([tenantId])
+  @@index([accountId])
+  @@index([madeOn])
+  @@map("se_transactions")
 }
 
 // ==================== DEMO REQUESTS ====================
