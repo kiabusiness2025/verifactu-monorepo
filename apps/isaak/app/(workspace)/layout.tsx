@@ -5,6 +5,7 @@ import { loadBillingData } from '@/app/lib/settings';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
 import IsaakSidebar from './components/IsaakSidebar';
 import IsaakCopilotPanel from './components/IsaakCopilotPanel';
+import IsaakBottomNav from './components/IsaakBottomNav';
 import TrialBanner from './components/TrialBanner';
 
 // All routes in this group are auth-required and read cookies/session at request
@@ -51,7 +52,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     billing.daysUntilTrialEnd <= 3;
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0b1a40] font-sans">
+    <div className="flex h-[100dvh] overflow-hidden bg-[#0b1a40] font-sans">
       <IsaakSidebar
         user={user}
         conversations={conversations}
@@ -61,10 +62,12 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
       <main className="relative flex flex-1 overflow-hidden bg-white">
         <div className="flex flex-1 flex-col overflow-hidden">
           {showTrialBanner ? <TrialBanner daysLeft={billing!.daysUntilTrialEnd!} /> : null}
-          {children}
+          {/* pb-16 on mobile to clear bottom nav */}
+          <div className="flex flex-1 flex-col overflow-hidden pb-16 md:pb-0">{children}</div>
         </div>
         <IsaakCopilotPanel />
       </main>
+      <IsaakBottomNav />
     </div>
   );
 }

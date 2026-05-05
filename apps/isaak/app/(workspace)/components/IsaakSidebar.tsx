@@ -162,7 +162,7 @@ export default function IsaakSidebar({
 
   return (
     <aside
-      className={`flex shrink-0 flex-col overflow-hidden border-r border-white/5 bg-gradient-to-b from-[#081936] via-[#0b1a40] to-[#0b2060] transition-all duration-200 ${
+      className={`hidden shrink-0 flex-col overflow-hidden border-r border-white/5 bg-gradient-to-b from-[#081936] via-[#0b1a40] to-[#0b2060] transition-all duration-200 md:flex ${
         collapsed ? 'w-14' : 'w-64'
       }`}
     >

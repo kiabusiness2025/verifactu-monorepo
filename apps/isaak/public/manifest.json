@@ -1,4 +1,5 @@
 {
+  "id": "/chat",
   "name": "Isaak — Asistente fiscal inteligente",
   "short_name": "Isaak",
   "description": "Tu asistente fiscal inteligente. Conecta Holded, emite facturas VeriFactu y gestiona tu negocio desde el chat.",

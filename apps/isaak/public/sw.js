@@ -1,6 +1,6 @@
 /* eslint-env serviceworker */
 // Isaak Service Worker — PWA offline + cache strategy
-const CACHE_VERSION = 'isaak-v1';
+const CACHE_VERSION = 'isaak-v3';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 

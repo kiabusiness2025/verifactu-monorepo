@@ -253,6 +253,74 @@ function fileToDataUrl(file: File) {
   });
 }
 
+// ── PWA Install Card ──────────────────────────────────────────────────────────
+
+function PwaInstallCard() {
+  const [prompt, setPrompt] = useState<
+    (Event & { prompt?: () => Promise<void>; userChoice?: Promise<{ outcome: string }> }) | null
+  >(null);
+  const [installed, setInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setInstalled(true);
+      return;
+    }
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setPrompt(e as Event & { prompt?: () => Promise<void> });
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  if (installed || dismissed || !prompt) return null;
+
+  return (
+    <div className="rounded-[1.6rem] border border-[#2361d8]/20 bg-gradient-to-br from-[#f0f5ff] to-white p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2361d8]/10">
+            <Sparkles className="h-4 w-4 text-[#2361d8]" />
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-slate-900">Instalar Isaak</div>
+            <div className="text-xs text-slate-500">Accede desde tu pantalla de inicio</div>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          className="text-slate-400 hover:text-slate-600"
+          aria-label="Cerrar"
+        >
+          ×
+        </button>
+      </div>
+      <p className="mt-3 text-xs text-slate-600">
+        Instala Isaak como app en tu móvil para acceso directo, sin necesidad de abrir el navegador.
+      </p>
+      <button
+        type="button"
+        onClick={async () => {
+          if (prompt?.prompt) {
+            await prompt.prompt();
+            const choice = await prompt.userChoice;
+            if (choice?.outcome === 'accepted') setInstalled(true);
+            setPrompt(null);
+          }
+        }}
+        className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
+      >
+        <Sparkles className="h-3 w-3" />
+        Instalar ahora
+      </button>
+    </div>
+  );
+}
+
 // ── Push Notifications Card ────────────────────────────────────────────────────
 
 type PushPrefs = {
@@ -1866,6 +1934,9 @@ export default function IsaakSettingsClient({
 
                 {/* Push notifications */}
                 <PushNotificationsCard />
+
+                {/* PWA install */}
+                <PwaInstallCard />
               </section>
             ) : null}
 

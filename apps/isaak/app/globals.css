@@ -11,6 +11,11 @@
   --brand-navy: #011c67;
 }
 
+/* Safe area padding for bottom nav on iOS */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 body {
   margin: 0;
   background:
