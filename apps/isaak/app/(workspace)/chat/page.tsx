@@ -1,9 +1,17 @@
 import type { Metadata } from 'next';
 import IsaakChatSection from '../components/IsaakChatSection';
+import { getHoldedSession } from '@/app/lib/holded-session';
+import { getHoldedConnection } from '@/app/lib/holded-integration';
 
 export const metadata: Metadata = { title: 'Chat — Isaak' };
 
-export default function ChatPage() {
+export default async function ChatPage() {
+  const session = await getHoldedSession();
+  const holdedConn = session?.tenantId
+    ? await getHoldedConnection(session.tenantId).catch(() => null)
+    : null;
+  const holdedConnected = !!(holdedConn as { apiKey?: string } | null)?.apiKey;
+
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-slate-100 bg-[#fafbff] px-5 py-4">
@@ -13,7 +21,8 @@ export default function ChatPage() {
       <div className="flex-1 overflow-hidden">
         <IsaakChatSection
           context="default"
-          welcomeTitle="Hola, soy Isaak"
+          userName={session?.name ?? null}
+          holdedConnected={holdedConnected}
           welcomeSubtitle="Pregúntame por ventas, gastos, cobros, proyectos o cualquier duda sobre tu negocio."
         />
       </div>

@@ -99,12 +99,23 @@ const QUICK_CHIPS: Record<string, string[]> = {
 };
 
 // ── Integrations ──────────────────────────────────────────────────────────────
-const INTEGRATIONS = [
-  { id: 'holded', name: 'Holded', status: 'connected' as const, dotClass: 'bg-[#ff5460]' },
-  { id: 'excel', name: 'Excel', status: 'soon' as const, dotClass: 'bg-[#217346]' },
-];
-
 const SUPPORT_EMAIL = 'soporte@verifactu.business';
+
+function getTimeGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 13) return 'Buenos días';
+  if (hour < 20) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+function buildWelcomeTitle(name?: string | null) {
+  const greeting = getTimeGreeting();
+  if (name && name.trim().length > 0) {
+    const first = name.trim().split(/\s+/)[0];
+    return `${greeting}, ${first}`;
+  }
+  return `${greeting}, soy Isaak`;
+}
 
 // ── ChatInput ─────────────────────────────────────────────────────────────────
 function ChatInput({
@@ -229,32 +240,32 @@ function ChatInput({
 }
 
 // ── IntegrationBar ─────────────────────────────────────────────────────────────
-function IntegrationBar() {
+function IntegrationBar({ holdedConnected }: { holdedConnected: boolean }) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
         Conexiones
       </span>
-      {INTEGRATIONS.map((itg) =>
-        itg.status === 'connected' ? (
-          <span
-            key={itg.id}
-            className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[12px] font-medium text-slate-700 shadow-sm"
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${itg.dotClass}`} />
-            {itg.name}
-            <span className="text-[10px] text-emerald-600">✓</span>
-          </span>
-        ) : (
-          <span
-            key={itg.id}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-[11px] text-slate-400"
-          >
-            {itg.name}
-            <span className="opacity-70">· próximamente</span>
-          </span>
-        )
+      {holdedConnected ? (
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[12px] font-medium text-slate-700 shadow-sm">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#ff5460]" />
+          Holded
+          <span className="text-[10px] text-emerald-600">✓</span>
+        </span>
+      ) : (
+        <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-[11px] text-slate-400">
+          Holded
+          <span className="opacity-70">· no conectado</span>
+        </span>
       )}
+      <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-[11px] text-slate-400">
+        Excel
+        <span className="opacity-70">· próximamente</span>
+      </span>
+      <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-[11px] text-slate-400">
+        Google
+        <span className="opacity-70">· próximamente</span>
+      </span>
       <button
         type="button"
         title="Más integraciones próximamente"
@@ -295,10 +306,14 @@ export default function IsaakChatSection({
   context = 'default',
   welcomeTitle,
   welcomeSubtitle,
+  userName,
+  holdedConnected = false,
 }: {
   context?: string;
   welcomeTitle?: string;
   welcomeSubtitle?: string;
+  userName?: string | null;
+  holdedConnected?: boolean;
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -482,18 +497,8 @@ export default function IsaakChatSection({
       <div className="flex h-full flex-col items-center justify-center px-5 py-8">
         <div className="w-full max-w-xl">
           <div className="mb-5 flex flex-col items-center text-center">
-            <div className="relative mb-3 h-14 w-14 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-              <Image
-                src="/Personalidad/isaak-avatar-verifactu.png"
-                alt="Isaak"
-                fill
-                sizes="56px"
-                className="object-cover"
-                priority
-              />
-            </div>
             <p className="text-[18px] font-bold tracking-tight text-[#011c67]">
-              {welcomeTitle ?? 'Hola, soy Isaak'}
+              {welcomeTitle ?? buildWelcomeTitle(userName)}
             </p>
             <p className="mt-1 text-[13px] text-slate-500">
               {welcomeSubtitle ?? 'Tu asistente fiscal inteligente. Pregúntame lo que necesites.'}
@@ -536,7 +541,7 @@ export default function IsaakChatSection({
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-            <IntegrationBar />
+            <IntegrationBar holdedConnected={holdedConnected} />
           </div>
         </div>
         <p className="mt-8 text-[11px] text-slate-400">
@@ -629,7 +634,7 @@ export default function IsaakChatSection({
           inputRef={inputRef}
         />
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <IntegrationBar />
+          <IntegrationBar holdedConnected={holdedConnected} />
           <EscalationButton messages={messages} />
         </div>
         <p className="mt-2 text-center text-[11px] text-slate-400">

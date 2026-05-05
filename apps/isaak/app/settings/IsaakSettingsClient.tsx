@@ -260,14 +260,27 @@ function PwaInstallCard() {
     (Event & { prompt?: () => Promise<void>; userChoice?: Promise<{ outcome: string }> }) | null
   >(null);
   const [installed, setInstalled] = useState(false);
+  const [isIos, setIsIos] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches) {
+    const standalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      ((window.navigator as Navigator & { standalone?: boolean }).standalone ?? false);
+    if (standalone) {
       setInstalled(true);
       return;
     }
+
+    const ua = window.navigator.userAgent;
+    const ios = /iPhone|iPad|iPod/i.test(ua);
+    setIsIos(ios);
+
+    const savedDismiss = window.localStorage.getItem('isaak-install-dismissed');
+    if (savedDismiss === 'true') {
+      setDismissed(true);
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       setPrompt(e as Event & { prompt?: () => Promise<void> });
@@ -276,7 +289,7 @@ function PwaInstallCard() {
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
-  if (installed || dismissed || !prompt) return null;
+  if (installed || dismissed) return null;
 
   return (
     <div className="rounded-[1.6rem] border border-[#2361d8]/20 bg-gradient-to-br from-[#f0f5ff] to-white p-5">
@@ -292,31 +305,44 @@ function PwaInstallCard() {
         </div>
         <button
           type="button"
-          onClick={() => setDismissed(true)}
+          onClick={() => {
+            setDismissed(true);
+            window.localStorage.setItem('isaak-install-dismissed', 'true');
+          }}
           className="text-slate-400 hover:text-slate-600"
           aria-label="Cerrar"
         >
           ×
         </button>
       </div>
-      <p className="mt-3 text-xs text-slate-600">
-        Instala Isaak como app en tu móvil para acceso directo, sin necesidad de abrir el navegador.
-      </p>
-      <button
-        type="button"
-        onClick={async () => {
-          if (prompt?.prompt) {
-            await prompt.prompt();
-            const choice = await prompt.userChoice;
-            if (choice?.outcome === 'accepted') setInstalled(true);
-            setPrompt(null);
-          }
-        }}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
-      >
-        <Sparkles className="h-3 w-3" />
-        Instalar ahora
-      </button>
+      {prompt ? (
+        <>
+          <p className="mt-3 text-xs text-slate-600">
+            Instala Isaak como app en tu móvil para acceso directo, sin necesidad de abrir el
+            navegador.
+          </p>
+          <button
+            type="button"
+            onClick={async () => {
+              if (prompt?.prompt) {
+                await prompt.prompt();
+                const choice = await prompt.userChoice;
+                if (choice?.outcome === 'accepted') setInstalled(true);
+                setPrompt(null);
+              }
+            }}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-4 py-2 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
+          >
+            <Sparkles className="h-3 w-3" />
+            Instalar ahora
+          </button>
+        </>
+      ) : isIos ? (
+        <p className="mt-3 text-xs text-slate-600">
+          En iPhone: pulsa <span className="font-semibold">Compartir</span> en Safari y luego
+          <span className="font-semibold"> Añadir a pantalla de inicio</span>.
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -272,6 +272,39 @@ export default function IsaakSidebar({
       {/* ── Conversation history ───────────────────────────── */}
       {!collapsed && (
         <div className="min-h-0 flex-1 overflow-y-auto px-2">
+          <div className="mb-3 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+            <div className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Pendientes
+            </div>
+            <div className="space-y-1">
+              <Link
+                href="/settings?section=profile"
+                className="flex items-center justify-between rounded-lg px-2 py-1.5 text-[12px] text-slate-300 transition hover:bg-white/5"
+              >
+                <span>Completar perfil</span>
+                <span className="text-[10px] text-amber-300">pendiente</span>
+              </Link>
+              <Link
+                href="/settings?section=company"
+                className="flex items-center justify-between rounded-lg px-2 py-1.5 text-[12px] text-slate-300 transition hover:bg-white/5"
+              >
+                <span>Completar empresa</span>
+                <span className="text-[10px] text-amber-300">pendiente</span>
+              </Link>
+              <Link
+                href="/integrations"
+                className="flex items-center justify-between rounded-lg px-2 py-1.5 text-[12px] text-slate-300 transition hover:bg-white/5"
+              >
+                <span>Integrar herramientas</span>
+                <span
+                  className={`text-[10px] font-semibold ${holdedConnected ? 'text-emerald-300' : 'text-amber-300'}`}
+                >
+                  {holdedConnected ? 'activo' : 'pendiente'}
+                </span>
+              </Link>
+            </div>
+          </div>
+
           {conversations.length > 0 && (
             <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
               Recientes
