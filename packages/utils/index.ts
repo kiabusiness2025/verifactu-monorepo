@@ -1,5 +1,6 @@
 export * from './session';
 export * from './admin-access';
+export * from './safeRedirect';
 export * from './urls';
 export * from './expenses/canonical';
 export * from './isaak/persona';

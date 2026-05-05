@@ -10,6 +10,7 @@ import { signInWithEmail, signInWithGoogle } from '../../lib/auth';
 import { auth } from '../../lib/firebase';
 import { mintSessionCookie } from '../../lib/serverSession';
 import { getAppUrl, getClientUrl } from '../../lib/urls';
+import { resolveSafeRedirect } from '@verifactu/utils';
 
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
@@ -39,21 +40,11 @@ export default function HoldedAuthPage() {
     return query ? `${pathname}?${query}` : pathname;
   };
 
-  const redirectTarget = (() => {
-    if (!nextParam) return `${appUrl}/onboarding/holded?channel=chatgpt&source=${source}`;
-    try {
-      const target = new URL(nextParam);
-      const appOrigin = new URL(appUrl).origin;
-      const clientOrigin = new URL(clientUrl).origin;
-      const allowedOrigins = new Set([appOrigin, clientOrigin]);
-      if (!allowedOrigins.has(target.origin)) {
-        return `${appUrl}/onboarding/holded?channel=chatgpt&source=${source}`;
-      }
-      return target.toString();
-    } catch {
-      return `${appUrl}/onboarding/holded?channel=chatgpt&source=${source}`;
-    }
-  })();
+  const redirectTarget = resolveSafeRedirect(
+    nextParam,
+    `${appUrl}/onboarding/holded?channel=chatgpt&source=${source}`,
+    [appUrl, clientUrl]
+  );
 
   const redirectWithSession = React.useCallback(() => {
     try {
