@@ -9,12 +9,7 @@ import React, { useRef, useState } from 'react';
 import { AuthLayout, FormInput, PasswordInput } from '../../components/AuthComponents';
 import { useToast } from '../../components/Toast';
 import { useAuth } from '../../context/AuthContext';
-import {
-  signInWithEmail,
-  signInWithGoogle,
-  signInWithMicrosoft,
-  signUpWithEmail,
-} from '../../lib/auth';
+import { signInWithEmail, signInWithGoogle, signInWithMicrosoft } from '../../lib/auth';
 import { mintSessionCookie } from '../../lib/serverSession';
 import { getAppUrl, getClientUrl } from '../../lib/urls';
 
@@ -25,12 +20,8 @@ export default function LoginPage() {
   const { showToast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [agreeTerms, setAgreeTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [mode, setMode] = useState<'login' | 'signup'>('login');
-  const [passwordError, setPasswordError] = useState('');
   const [mintError, setMintError] = useState(false);
   const [authLoadingTimedOut, setAuthLoadingTimedOut] = useState(false);
   const [rememberDevice, setRememberDevice] = useState(() => {
@@ -374,70 +365,16 @@ export default function LoginPage() {
     }
   };
 
-  const validateSignup = () => {
-    setError('');
-    setPasswordError('');
-    if (password.length < 8) {
-      setPasswordError('La contraseña debe tener al menos 8 caracteres');
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setPasswordError('Las contraseñas no coinciden');
-      return false;
-    }
-
-    if (!agreeTerms) {
-      setError('Debes aceptar los terminos y condiciones');
-      return false;
-    }
-    return true;
-  };
-
-  const handleEmailSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateSignup()) return;
-    setIsLoading(true);
-    setError('');
-    try {
-      const result = await signUpWithEmail(email, password);
-      if (result.error) {
-        setError(result.error.userMessage);
-        return;
-      }
-      router.push(buildAuthHref('/auth/verify-email'));
-    } catch (err) {
-      setError('Error al registrarse. Intenta de nuevo.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
     <AuthLayout
-      title={
-        holdedMode
-          ? mode === 'login'
-            ? 'Inicia sesion para conectar Holded'
-            : 'Crea tu cuenta para continuar con Holded'
-          : mode === 'login'
-            ? 'Inicia sesion'
-            : 'Crea tu cuenta'
-      }
+      title={holdedMode ? 'Inicia sesion para conectar Holded' : 'Inicia sesion'}
       subtitle={
         holdedMode
-          ? mode === 'login'
-            ? 'Accede ahora y en el siguiente paso conectas Holded.'
-            : 'Crea tu cuenta y seguimos con la conexion de Holded.'
-          : mode === 'login'
-            ? 'Accede a tu cuenta en segundos.'
-            : 'Crea tu cuenta en menos de un minuto.'
+          ? 'Accede ahora y en el siguiente paso conectas Holded.'
+          : 'Accede a tu cuenta en segundos.'
       }
-      footerText={mode === 'login' ? 'No tienes cuenta?' : 'Ya tienes cuenta?'}
-      footerLink={
-        mode === 'login'
-          ? { href: buildAuthHref('/auth/signup'), label: 'Registrate aqui' }
-          : { href: buildAuthHref('/auth/login'), label: 'Inicia sesion aqui' }
-      }
+      footerText={'No tienes cuenta?'}
+      footerLink={{ href: buildAuthHref('/auth/signup'), label: 'Registrate aqui' }}
       brandMode={holdedMode ? 'holded' : 'default'}
       backHref={holdedMode ? holdedSiteUrl : undefined}
       backLabel={holdedMode ? 'Volver a Holded' : undefined}
@@ -504,7 +441,7 @@ export default function LoginPage() {
       </div>
 
       <motion.form
-        onSubmit={mode === 'login' ? handleEmailLogin : handleEmailSignup}
+        onSubmit={handleEmailLogin}
         className="space-y-4"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -522,92 +459,35 @@ export default function LoginPage() {
         <div>
           <div className="mb-2 flex items-center justify-between">
             <label className="block text-sm font-medium text-gray-700">Contraseña</label>
-            {mode === 'login' && (
-              <Link
-                href={buildAuthHref('/auth/forgot-password')}
-                className={`text-sm font-medium ${
-                  holdedMode
-                    ? 'text-[#ff5460] hover:text-[#ef4654]'
-                    : 'text-[#2361d8] hover:text-[#1f55c0]'
-                }`}
-              >
-                La olvidaste?
-              </Link>
-            )}
+            <Link
+              href={buildAuthHref('/auth/forgot-password')}
+              className={`text-sm font-medium ${
+                holdedMode
+                  ? 'text-[#ff5460] hover:text-[#ef4654]'
+                  : 'text-[#2361d8] hover:text-[#1f55c0]'
+              }`}
+            >
+              La olvidaste?
+            </Link>
           </div>
           <PasswordInput
             value={password}
             onChange={(e) => {
               setPassword(e.target.value);
-              setPasswordError('');
             }}
             required
           />
-          {mode === 'signup' && passwordError && (
-            <p className="mt-1 text-sm text-red-500">{passwordError}</p>
-          )}
         </div>
 
-        {mode === 'login' && (
-          <label className="flex items-center gap-2 text-sm text-gray-600">
-            <input
-              type="checkbox"
-              checked={rememberDevice}
-              onChange={(e) => setRememberDevice(e.target.checked)}
-              className="h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
-            />
-            Recordar este dispositivo
-          </label>
-        )}
-
-        {mode === 'signup' && (
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              Confirmar contraseña <span className="text-red-500">*</span>
-            </label>
-            <PasswordInput
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                setPasswordError('');
-              }}
-              placeholder="Repite tu contraseña"
-              required
-            />
-          </div>
-        )}
-
-        {mode === 'signup' && (
-          <label className="flex items-start gap-3 text-sm">
-            <input
-              type="checkbox"
-              checked={agreeTerms}
-              onChange={(e) => {
-                setAgreeTerms(e.target.checked);
-                setError('');
-              }}
-              className="mt-1 h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
-            />
-            <span className="text-gray-600">
-              Acepto los{' '}
-              <Link
-                href="/legal/terminos"
-                className="font-medium text-[#2361d8] hover:text-[#2361d8]"
-                aria-label="Leer terminos y condiciones"
-              >
-                terminos y condiciones
-              </Link>{' '}
-              y la{' '}
-              <Link
-                href="/legal/privacidad"
-                className="font-medium text-[#2361d8] hover:text-[#2361d8]"
-                aria-label="Leer politica de privacidad"
-              >
-                politica de privacidad
-              </Link>
-            </span>
-          </label>
-        )}
+        <label className="flex items-center gap-2 text-sm text-gray-600">
+          <input
+            type="checkbox"
+            checked={rememberDevice}
+            onChange={(e) => setRememberDevice(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-[#2361d8] focus:ring-[#2361d8]"
+          />
+          Recordar este dispositivo
+        </label>
 
         <button
           type="submit"
@@ -616,13 +496,7 @@ export default function LoginPage() {
             holdedMode ? 'bg-[#ff5460] hover:bg-[#ef4654]' : 'bg-[#2361d8] hover:bg-[#1f55c0]'
           }`}
         >
-          {isLoading
-            ? mode === 'login'
-              ? 'Iniciando sesion...'
-              : 'Creando cuenta...'
-            : mode === 'login'
-              ? 'Continuar con email'
-              : 'Crear cuenta con email'}
+          {isLoading ? 'Iniciando sesion...' : 'Continuar con email'}
         </button>
       </motion.form>
     </AuthLayout>

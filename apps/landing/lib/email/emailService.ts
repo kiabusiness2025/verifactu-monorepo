@@ -3,35 +3,17 @@
  * Integraciones con Resend para enviar correos electrónicos
  */
 
-import { VerifyEmailTemplate } from '../../emails/VerifyEmail';
-import { WelcomeEmailTemplate } from '../../emails/WelcomeEmail';
-import { ResetPasswordEmailTemplate } from '../../emails/ResetPasswordEmail';
-import { PasswordChangedEmailTemplate } from '../../emails/PasswordChangedEmail';
-import { TeamInviteEmailTemplate } from '../../emails/TeamInviteEmail';
+import { sendEmail as sendEmailWithResend } from '@verifactu/integrations/resend';
 
-// Importar Resend
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// Alias de emails según contexto
-const EMAIL_FROM_SUPPORT = process.env.RESEND_FROM_SUPPORT || 'Verifactu Business <info@verifactu.business>';
-const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || 'Verifactu Business <notificaciones@verifactu.business>';
-const EMAIL_FROM_INFO = process.env.RESEND_FROM_INFO || 'Verifactu Business <info@verifactu.business>';
+const EMAIL_FROM_NOREPLY =
+  process.env.RESEND_FROM_NOREPLY || 'Verifactu Business <notificaciones@verifactu.business>';
 
 export interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
-}
-
-/**
- * Función para convertir React component a HTML string
- * Usa renderización simple del componente React
- */
-function renderComponentToHtml(component: React.ReactElement): string {
-  // Para usar con React Server Components, necesitaremos una solución diferente
-  // Por ahora, retornamos un placeholder que será reemplazado
-  // En producción, se usaría react-email/render o similar
-  return '';
 }
 
 /**
@@ -44,30 +26,18 @@ async function sendEmail({ to, subject, html }: SendEmailParams) {
   }
 
   try {
-    // Usar Resend para enviar
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: EMAIL_FROM_NOREPLY,
-        to,
-        subject,
-        html,
-      }),
+    const data = await sendEmailWithResend({
+      from: EMAIL_FROM_NOREPLY,
+      to,
+      subject,
+      html,
     });
+    const messageId =
+      (data as { id?: string; data?: { id?: string } })?.id ||
+      (data as { id?: string; data?: { id?: string } })?.data?.id;
 
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('Error sending email via Resend:', error);
-      return { success: false, error };
-    }
-
-    const data = await response.json();
-    console.log('[📧 EMAIL] Sent successfully:', { to, subject, messageId: data.id });
-    return { success: true, messageId: data.id };
+    console.log('[📧 EMAIL] Sent successfully:', { to, subject, messageId });
+    return { success: true, messageId: messageId || null };
   } catch (error) {
     console.error('[📧 EMAIL] Exception:', error);
     return { success: false, error };
@@ -635,5 +605,3 @@ function generateTeamInviteEmailHtml({
 
   return wrapEmail(content);
 }
-
-

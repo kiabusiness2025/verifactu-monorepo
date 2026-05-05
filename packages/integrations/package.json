@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@prisma/client": "5.22.0",
+    "resend": "^3.4.0",
     "stripe": "^14.0.0"
   },
   "devDependencies": {

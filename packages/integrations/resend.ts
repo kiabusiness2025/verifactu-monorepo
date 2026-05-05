@@ -1,7 +1,20 @@
+import { Resend } from 'resend';
+
+function cleanEnv(value?: string | null) {
+  return value?.replace(/[\r\n]/g, '').trim() || '';
+}
+
 export const resendClient = {
-  apiKey: process.env.RESEND_API_KEY || '',
+  apiKey: cleanEnv(process.env.RESEND_API_KEY),
   baseUrl: 'https://api.resend.com',
 };
+
+function getResend() {
+  if (!resendClient.apiKey) {
+    throw new Error('RESEND_API_KEY is not configured');
+  }
+  return new Resend(resendClient.apiKey);
+}
 
 export async function sendEmail({
   to,
@@ -17,20 +30,14 @@ export async function sendEmail({
   replyTo?: string;
 }) {
   try {
-    const response = await fetch(`${resendClient.baseUrl}/emails`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${resendClient.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ to, from, subject, html, reply_to: replyTo }),
+    const resend = getResend();
+    return await resend.emails.send({
+      to,
+      from,
+      subject,
+      html,
+      reply_to: replyTo,
     });
-
-    if (!response.ok) {
-      throw new Error(`Resend API error: ${response.statusText}`);
-    }
-
-    return await response.json();
   } catch (error) {
     console.error('Error sending email:', error);
     throw error;
@@ -39,17 +46,8 @@ export async function sendEmail({
 
 export async function getDeliveryStatus(emailId: string) {
   try {
-    const response = await fetch(`${resendClient.baseUrl}/emails/${emailId}`, {
-      headers: {
-        Authorization: `Bearer ${resendClient.apiKey}`,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Resend API error: ${response.statusText}`);
-    }
-
-    return await response.json();
+    const resend = getResend();
+    return await resend.emails.get(emailId);
   } catch (error) {
     console.error('Error fetching delivery status:', error);
     throw error;
