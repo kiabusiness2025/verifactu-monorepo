@@ -5,6 +5,18 @@ export { resendClient, sendEmail, getDeliveryStatus } from './resend';
 export { vercelClient, getDeployments, getDeploymentStatus } from './vercel';
 export { githubClient, createIssue, listIssues } from './github';
 export {
+  GoCardlessError,
+  createCustomer,
+  getCustomer as getGcCustomer,
+  listMandates,
+  getMandate,
+  createPayment as createGcPayment,
+  getPayment as getGcPayment,
+  cancelPayment,
+  createMandateSetupLink,
+  verifyWebhookSignature,
+} from './gocardless-payments';
+export {
   decryptHoldedSecret,
   disconnectHoldedConnection,
   encryptHoldedSecret,

@@ -581,6 +581,8 @@ model Tenant {
   isaakApiAuditLogs           IsaakApiAuditLog[]
   isaakWebhookEndpoints       IsaakWebhookEndpoint[]
   isaakProposedActions        IsaakProposedAction[]
+  gcMandates                  GcMandate[]
+  gcPayments                  GcPayment[]
 
   @@map("tenants")
 }
@@ -1901,6 +1903,47 @@ model IsaakPushPreferences {
   @@unique([tenantId, userId])
   @@index([tenantId])
   @@map("isaak_push_preferences")
+}
+
+// ==================== GOCARDLESS ====================
+
+model GcMandate {
+  id          String   @id          // GoCardless mandate ID (MDxxxxxxxxx)
+  tenantId    String   @map("tenant_id") @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  gcCustomerId String  @map("gc_customer_id")
+  status      String   @default("pending_submission") @map("status")
+  scheme      String   @default("sepa_core")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  payments GcPayment[]
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("gc_mandates")
+}
+
+model GcPayment {
+  id          String   @id          // GoCardless payment ID (PMxxxxxxxxx)
+  tenantId    String   @map("tenant_id") @db.Uuid
+  mandateId   String   @map("mandate_id")
+  amountCents Int      @map("amount_cents")
+  currency    String   @default("EUR")
+  chargeDate  String   @map("charge_date")    // YYYY-MM-DD
+  status      String   @default("pending_submission")
+  description String?
+  reference   String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+
+  tenant  Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mandate GcMandate @relation(fields: [mandateId], references: [id])
+
+  @@index([tenantId])
+  @@index([mandateId])
+  @@map("gc_payments")
 }
 
 // ==================== DEMO REQUESTS ====================
