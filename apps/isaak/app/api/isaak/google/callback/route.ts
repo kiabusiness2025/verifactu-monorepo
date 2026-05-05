@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/app/lib/prisma';
 import { exchangeCodeForTokens, getUserEmail } from '@/app/lib/google-calendar';
+import { prisma } from '@/app/lib/prisma';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

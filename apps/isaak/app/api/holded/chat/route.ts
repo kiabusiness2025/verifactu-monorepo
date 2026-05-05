@@ -4,6 +4,10 @@ import { callLLM } from '@verifactu/utils';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
+import {
+  formatWorkspaceSignalsForPrompt,
+  loadIsaakWorkspaceSignals,
+} from '@/app/lib/isaak-workspace-signals';
 import { buildYearAnalyticsSummary } from '@/app/lib/holded-analytics';
 import {
   buildHoldedProbeSummary,
@@ -229,6 +233,7 @@ function buildLlmInstructions(input: {
   context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
+  workspaceSignalsBlock: string | null;
 }) {
   const companyName = input.context.labels.companyName || 'tu empresa';
   const preferredName =
@@ -286,6 +291,11 @@ function buildLlmInstructions(input: {
     '',
     'Si el usuario te pide un resumen, usa cifras concretas, concluye que significa para el negocio y remata con una recomendacion accionable.',
     'Si el usuario pide diagnostico, nombra al menos facturas, contactos y contabilidad aunque alguno falle.',
+    input.workspaceSignalsBlock
+      ? `Estado del workspace:\n${input.workspaceSignalsBlock}`
+      : 'Estado del workspace: no disponible.',
+    'Si faltan datos fiscales o de empresa para orientar mejor, abre una micro-entrevista de una sola pregunta y ofrece siempre las opciones "Prefiero no decirlo" y "No lo sé".',
+    'Si responde "No lo sé", explica cómo averiguarlo y cuándo conviene revisar la Sede Electrónica de la AEAT o el certificado electrónico.',
   ].join('\n');
 }
 
@@ -294,6 +304,7 @@ async function buildLlmReply(input: {
   context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>;
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
+  workspaceSignalsBlock: string | null;
 }): Promise<string | null> {
   try {
     const result = await callLLM({
@@ -301,6 +312,7 @@ async function buildLlmReply(input: {
         context: input.context,
         snapshot: input.snapshot,
         diagnosticProbe: input.diagnosticProbe,
+        workspaceSignalsBlock: input.workspaceSignalsBlock,
       }),
       messages: [{ role: 'user', content: input.message }],
       temperature: 0.45,
@@ -739,6 +751,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const workspaceSignalsBlock = await loadIsaakWorkspaceSignals({
+    tenantId: session.tenantId,
+    context,
+  })
+    .then((signals) => formatWorkspaceSignalsForPrompt(signals))
+    .catch(() => null);
+
   if (!context.holded.connection?.apiKey) {
     return NextResponse.json(
       { error: 'Antes de usar el chat necesitas conectar tu API key de Holded.' },
@@ -1014,6 +1033,7 @@ export async function POST(request: NextRequest) {
         context,
         snapshot,
         diagnosticProbe: connectionProbe,
+        workspaceSignalsBlock,
       }).catch((error) => {
         console.warn('[holded/chat] responses api failed, using deterministic fallback', {
           tenantId: session.tenantId,

@@ -119,10 +119,28 @@ export default function IsaakPublicPhase1Landing() {
             </div>
 
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+              <div className="inline-flex items-center rounded-full border border-[#2361d8]/15 bg-[#2361d8]/5 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+                Video de presentacion
+              </div>
+              <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200">
+                <video
+                  className="h-full w-full"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  controls
+                >
+                  <source src="/Personalidad/isaak_banner_hero_v2.mp4" type="video/mp4" />
+                  Tu navegador no soporta video HTML5.
+                </video>
+              </div>
+
+              <div className="mt-5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
                 Dos modos de entrada
               </div>
-              <div className="mt-5 grid gap-4">
+              <div className="mt-3 grid gap-4">
                 <article className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                   <div className="flex items-center gap-3 text-sm font-semibold text-slate-900">
                     <FileSpreadsheet className="h-5 w-5 text-[#2361d8]" />

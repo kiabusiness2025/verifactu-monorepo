@@ -422,7 +422,8 @@ export default function IsaakChatSection({
     setError(null);
     setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
     try {
-      const res = await fetch('/api/holded/chat', {
+      const endpoint = holdedConnected ? '/api/holded/chat' : '/api/chat';
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed, conversationId }),
@@ -430,19 +431,22 @@ export default function IsaakChatSection({
       const data = (await res.json().catch(() => null)) as {
         ok?: boolean;
         reply?: string;
+        response?: string;
         error?: string;
         conversation?: { id: string; title: string };
       } | null;
-      if (!res.ok || !data?.reply) throw new Error(data?.error ?? 'Sin respuesta');
-      if (data.conversation?.id && !conversationId) {
-        setConversationId(data.conversation.id);
+      const assistantReply = data?.reply ?? data?.response;
+      const nextConversationId = data?.conversation?.id;
+      if (!res.ok || !assistantReply) throw new Error(data?.error ?? 'Sin respuesta');
+      if (nextConversationId && !conversationId) {
+        setConversationId(nextConversationId);
         router.refresh();
-      } else if (data.conversation?.id) {
-        setConversationId(data.conversation.id);
+      } else if (nextConversationId) {
+        setConversationId(nextConversationId);
       }
       setMessages((prev) => [
         ...prev,
-        { id: `a-${Date.now()}`, role: 'assistant', content: data.reply! },
+        { id: `a-${Date.now()}`, role: 'assistant', content: assistantReply },
       ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al conectar con Isaak.');

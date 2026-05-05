@@ -946,7 +946,7 @@ export default function IsaakSettingsClient({
                 </div>
               </div>
             </div>
-            <nav className="mt-6 space-y-1">
+            <nav className="mt-6 flex gap-2 overflow-x-auto pb-1 lg:block lg:space-y-1 lg:overflow-visible lg:pb-0">
               {sections.map((item) => {
                 const Icon = item.icon;
                 const href = item.external ?? `/settings?section=${item.key}`;
@@ -955,7 +955,7 @@ export default function IsaakSettingsClient({
                   <Link
                     key={item.key}
                     href={href}
-                    className={`flex items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-medium transition ${
+                    className={`flex shrink-0 items-center justify-between rounded-2xl px-4 py-2.5 text-sm font-medium transition lg:shrink ${
                       isActive
                         ? 'bg-[#edf4ff] text-[#174db5]'
                         : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -1005,7 +1005,7 @@ export default function IsaakSettingsClient({
                 <div className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
                   Ajustes
                 </div>
-                <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+                <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">
                   Gestiona tu espacio en Isaak
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
@@ -1396,7 +1396,7 @@ export default function IsaakSettingsClient({
                         <span className="font-semibold">DESCONECTAR</span>.
                       </div>
                     </div>
-                    <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+                    <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_auto_auto]">
                       <input
                         value={apiKeyDraft}
                         onChange={(event) => setApiKeyDraft(event.target.value)}
