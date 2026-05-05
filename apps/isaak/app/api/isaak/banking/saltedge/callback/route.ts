@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Obtener datos de la conexión desde Salt Edge
-    const conn = await getConnection(connectionId, seCustomer.secret);
+    const conn = await getConnection(connectionId); // v6: sin customerSecret
 
     // Guardar conexión en BD (upsert por si ya existe)
     await prisma.seConnection.upsert({
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     // Sincronizar cuentas inmediatamente
     if (conn.status === 'active') {
-      const accounts = await listAccounts(connectionId, seCustomer.secret);
+      const accounts = await listAccounts(connectionId); // v6: sin customerSecret
       for (const acc of accounts) {
         await prisma.seAccount.upsert({
           where: { id: acc.id },

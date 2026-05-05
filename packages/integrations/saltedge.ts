@@ -1,14 +1,35 @@
 /**
- * Salt Edge API v5 client — Open Banking / PSD2
- * Docs: https://docs.saltedge.com/account_information/v5/
+ * Salt Edge API v6 client — Open Banking / PSD2
+ * Docs: https://docs.saltedge.com/v6/
  *
  * Cubre: customers, connect sessions, accounts, transactions, webhooks.
  * Usado para conciliación bancaria con entidades españolas.
+ *
+ * Migrado de v5 a v6 (v5 deprecada Oct 2025).
+ * Cambios principales:
+ *  - Base URL: /api/v5 → /api/v6
+ *  - Connect sessions: /connect_sessions/create → /connections/connect
+ *  - Sin Customer-secret header; se usa customer_id en query/body
+ *  - Customer object: campo id → customer_id
+ *  - Scopes renombrados: account_details → accounts+balance, transactions_details → transactions
+ *  - Webhook: verificación RSA-SHA256 (no HMAC)
  */
 
 import crypto from 'crypto';
 
-const SE_BASE_URL = 'https://www.saltedge.com/api/v5';
+const SE_BASE_URL = 'https://www.saltedge.com/api/v6';
+
+// Clave pública de Salt Edge v6 para verificar firmas de callbacks
+// Fuente: https://docs.saltedge.com/v6/#request_identification
+const SE_V6_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA8qxSS5BmftHK/eyW+o98
+NR89TyDmz1V8e6yyFdoMPddEYN4Bcidkk2whoJEc/T/AKghHQ9Nq+DuebnRYYcSJ
+YT99VbR1PpIw2R9i8z+DZ79hoizy6z+rwxGANnJOr5BDF5HUKJ8uKS9yGRieojFv
+Y9j+rxH6Fj6P90bO4d2igYYspKVoI3Zb3hWS0LrWN+JXAaW9qcOmQPTgO0WG0MUK
+gB3NNMfN7gMIkl3chbaULiEgVciP2qZTIGb1b7IDr5+fA9oVVGaXiybdieGHIa4J
+S7JNTf0JjWrIKd2DaczKULnghqNQsnoCu+S8BurEOJR5EN1BBfQBPlbSh+ru1zgZ
+AQIDAQAB
+-----END PUBLIC KEY-----`;
 
 function getCredentials(): { appId: string; secret: string } {
   const appId = process.env.SALTEDGE_APP_ID?.trim();
@@ -17,21 +38,16 @@ function getCredentials(): { appId: string; secret: string } {
   return { appId, secret };
 }
 
-async function seFetch<T>(
-  path: string,
-  options: RequestInit & { customerSecret?: string } = {}
-): Promise<T> {
+async function seFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const { appId, secret } = getCredentials();
-  const { customerSecret, ...rest } = options;
 
   const headers: Record<string, string> = {
     'App-id': appId,
     Secret: secret,
     'Content-Type': 'application/json',
   };
-  if (customerSecret) headers['Customer-secret'] = customerSecret;
 
-  const res = await fetch(`${SE_BASE_URL}${path}`, { ...rest, headers });
+  const res = await fetch(`${SE_BASE_URL}${path}`, { ...options, headers });
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -56,9 +72,9 @@ export class SaltEdgeError extends Error {
 // ──────────────────────────────────────────────────────────────────────────────
 
 export type SECustomer = {
-  id: string;
+  customer_id: string; // v6: campo renombrado de id → customer_id
   identifier: string;
-  secret: string;
+  // Sin secret en v6 — se usa customer_id directamente
 };
 
 export type SEConnectSession = {
@@ -68,6 +84,7 @@ export type SEConnectSession = {
 
 export type SEConnection = {
   id: string;
+  customer_id: string; // v6: incluido en la respuesta
   provider_id: string;
   provider_name: string;
   status:
@@ -84,6 +101,7 @@ export type SEConnection = {
   created_at: string;
   updated_at: string;
   categorization: string;
+  automatic_refresh: boolean; // v6: reemplaza daily_refresh
 };
 
 export type SEAccount = {
@@ -146,32 +164,31 @@ export async function getSECustomer(id: string): Promise<SECustomer> {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Connect Sessions — flujo de autorización bancaria (hosted)
+// Connect Sessions — flujo de autorización bancaria (hosted widget)
 // ──────────────────────────────────────────────────────────────────────────────
 
 /**
- * Crea una sesión de conexión.
+ * Inicia el flujo de conexión bancaria (v6).
  * El usuario es redirigido a `connect_url` para autenticarse con su banco.
- * Tras completarlo, Salt Edge redirige a `return_to` con el connection_id.
+ * Endpoint v6: POST /connections/connect (era /connect_sessions/create en v5)
  */
 export async function createConnectSession(params: {
-  customerSecret: string;
-  returnTo: string; // URL de callback de Verifactu
-  countryCode?: string; // 'ES' por defecto
-  providerCode?: string; // si quieres ir directamente a un banco concreto
+  customerId: string; // v6: customer_id (no customer-secret)
+  returnTo: string;
+  countryCode?: string;
+  providerCode?: string;
   consent?: {
-    scopes: ('account_details' | 'transactions_details' | 'holder_information')[];
-    from_date?: string; // YYYY-MM-DD
+    scopes: ('accounts' | 'balance' | 'transactions' | 'holder_info')[];
+    from_date?: string;
   };
 }): Promise<SEConnectSession> {
-  const { data } = await seFetch<{ data: SEConnectSession }>('/connect_sessions/create', {
+  const { data } = await seFetch<{ data: SEConnectSession }>('/connections/connect', {
     method: 'POST',
-    customerSecret: params.customerSecret,
     body: JSON.stringify({
       data: {
-        customer_id: undefined, // no necesario cuando se usa customer-secret header
+        customer_id: params.customerId,
         consent: params.consent ?? {
-          scopes: ['account_details', 'transactions_details'],
+          scopes: ['accounts', 'balance', 'transactions'],
           from_date: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         },
         attempt: {
@@ -185,48 +202,56 @@ export async function createConnectSession(params: {
   return data;
 }
 
+/**
+ * Reconecta una conexión existente (v6).
+ * Endpoint v6: POST /connections/{id}/reconnect (era /connect_sessions/reconnect en v5)
+ */
+export async function reconnectSession(params: {
+  connectionId: string;
+  customerId: string;
+  returnTo: string;
+}): Promise<SEConnectSession> {
+  const { data } = await seFetch<{ data: SEConnectSession }>(
+    `/connections/${params.connectionId}/reconnect`,
+    {
+      method: 'POST',
+      body: JSON.stringify({
+        data: {
+          customer_id: params.customerId,
+          attempt: { return_to: params.returnTo },
+        },
+      }),
+    }
+  );
+  return data;
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // Connections — estado de conexiones bancarias
 // ──────────────────────────────────────────────────────────────────────────────
 
-export async function getConnection(
-  connectionId: string,
-  customerSecret: string
-): Promise<SEConnection> {
-  const { data } = await seFetch<{ data: SEConnection }>(`/connections/${connectionId}`, {
-    customerSecret,
-  });
+export async function getConnection(connectionId: string): Promise<SEConnection> {
+  const { data } = await seFetch<{ data: SEConnection }>(`/connections/${connectionId}`);
   return data;
 }
 
-export async function listConnections(customerSecret: string): Promise<SEConnection[]> {
-  const { data } = await seFetch<{ data: SEConnection[] }>('/connections', {
-    customerSecret,
-  });
+export async function listConnections(customerId: string): Promise<SEConnection[]> {
+  const { data } = await seFetch<{ data: SEConnection[] }>(
+    `/connections?customer_id=${customerId}`
+  );
   return data;
 }
 
-export async function removeConnection(
-  connectionId: string,
-  customerSecret: string
-): Promise<void> {
-  await seFetch(`/connections/${connectionId}`, {
-    method: 'DELETE',
-    customerSecret,
-  });
+export async function removeConnection(connectionId: string): Promise<void> {
+  await seFetch(`/connections/${connectionId}`, { method: 'DELETE' });
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Accounts — cuentas bancarias de una conexión
 // ──────────────────────────────────────────────────────────────────────────────
 
-export async function listAccounts(
-  connectionId: string,
-  customerSecret: string
-): Promise<SEAccount[]> {
-  const { data } = await seFetch<{ data: SEAccount[] }>(`/accounts?connection_id=${connectionId}`, {
-    customerSecret,
-  });
+export async function listAccounts(connectionId: string): Promise<SEAccount[]> {
+  const { data } = await seFetch<{ data: SEAccount[] }>(`/accounts?connection_id=${connectionId}`);
   return data;
 }
 
@@ -235,20 +260,24 @@ export async function listAccounts(
 // ──────────────────────────────────────────────────────────────────────────────
 
 export async function listTransactions(params: {
+  connectionId: string; // v6: requerido para filtrar por conexión
   accountId: string;
-  customerSecret: string;
-  fromId?: string; // paginación: ID del último transaction visto
-  fromDate?: string; // YYYY-MM-DD
+  fromId?: string;
+  fromDate?: string;
   toDate?: string;
+  pending?: boolean; // v6: parámetro en query (era endpoint separado en v5)
 }): Promise<{ transactions: SETransaction[]; nextId: string | null }> {
-  const qs = new URLSearchParams({ account_id: params.accountId });
+  const qs = new URLSearchParams({
+    connection_id: params.connectionId,
+    account_id: params.accountId,
+  });
   if (params.fromId) qs.set('from_id', params.fromId);
   if (params.fromDate) qs.set('from_date', params.fromDate);
   if (params.toDate) qs.set('to_date', params.toDate);
+  if (params.pending) qs.set('pending', 'true');
 
   const res = await seFetch<{ data: SETransaction[]; meta: { next_id: string | null } }>(
-    `/transactions?${qs.toString()}`,
-    { customerSecret: params.customerSecret }
+    `/transactions?${qs.toString()}`
   );
 
   return { transactions: res.data, nextId: res.meta.next_id };
@@ -273,9 +302,8 @@ export async function listSpanishProviders(): Promise<SEProvider[]> {
   let providers: SEProvider[] = [];
   let fromId: string | null = null;
 
-  // Salt Edge pagina los providers — iteramos hasta tener todos los españoles
   do {
-    const qs = new URLSearchParams({ country_code: 'ES', include_fake_providers: 'false' });
+    const qs = new URLSearchParams({ country_code: 'ES', include_sandboxes: 'false' }); // v6: include_sandboxes (era include_fake_providers)
     if (fromId) qs.set('from_id', fromId);
 
     const res = await seFetch<{ data: SEProvider[]; meta: { next_id: string | null } }>(
@@ -289,18 +317,27 @@ export async function listSpanishProviders(): Promise<SEProvider[]> {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// Webhooks — verificación de firma
+// Webhooks — verificación de firma (v6: RSA-SHA256 con clave pública de SE)
 // ──────────────────────────────────────────────────────────────────────────────
 
 /**
- * Salt Edge firma los webhooks con el App-secret en el header `Signature`.
- * El payload es el body JSON como string.
+ * Verifica que el callback proviene de Salt Edge v6.
+ * El string firmado es: "callback_url|post_body"
+ * Firma: RSA-SHA256 con la clave privada de Salt Edge, verificada con SE_V6_PUBLIC_KEY.
+ *
+ * @param callbackUrl  URL completa del endpoint webhook (ej: https://isaak.verifactu.business/api/isaak/banking/saltedge/webhook)
+ * @param body         Body JSON crudo (como string)
+ * @param signature    Header `Signature` de la request (base64)
  */
-export function verifySaltEdgeWebhook(payload: string, signature: string, secret: string): boolean {
-  // Salt Edge usa HMAC-SHA256 en base64
-  const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64');
+export function verifySaltEdgeWebhook(
+  callbackUrl: string,
+  body: string,
+  signature: string
+): boolean {
   try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+    const message = `${callbackUrl}|${body}`;
+    const signatureBuffer = Buffer.from(signature, 'base64');
+    return crypto.verify('sha256', Buffer.from(message), SE_V6_PUBLIC_KEY, signatureBuffer);
   } catch {
     return false;
   }

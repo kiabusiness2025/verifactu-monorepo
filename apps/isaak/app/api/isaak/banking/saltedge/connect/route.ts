@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
       const created = await createSECustomer(`verifactu-${session.tenantId}`);
       seCustomer = await prisma.seCustomer.create({
         data: {
-          id: created.id,
+          id: created.customer_id, // v6: campo customer_id (era id en v5)
           tenantId: session.tenantId,
           identifier: created.identifier,
-          secret: created.secret,
+          // sin secret en v6
         },
       });
     }
@@ -46,12 +46,12 @@ export async function POST(request: NextRequest) {
     const returnTo = `${origin}/api/isaak/banking/saltedge/callback`;
 
     const connectSession = await createConnectSession({
-      customerSecret: seCustomer.secret,
+      customerId: seCustomer.id, // v6: customerId (era customerSecret en v5)
       returnTo,
       countryCode: 'ES',
       providerCode: body.providerCode,
       consent: {
-        scopes: ['account_details', 'transactions_details'],
+        scopes: ['accounts', 'balance', 'transactions'], // v6: scopes renombrados
         from_date:
           body.fromDate ??
           new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

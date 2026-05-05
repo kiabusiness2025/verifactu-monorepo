@@ -42,7 +42,7 @@ export async function POST(_request: NextRequest) {
   let synced = 0;
   for (const conn of seCustomer.connections) {
     try {
-      const accounts = await listAccounts(conn.id, seCustomer.secret);
+      const accounts = await listAccounts(conn.id); // v6: sin customerSecret
       for (const acc of accounts) {
         await prisma.seAccount.upsert({
           where: { id: acc.id },

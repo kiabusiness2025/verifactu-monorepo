@@ -14,16 +14,18 @@ import { prisma } from '@/app/lib/prisma';
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
-  const secret = process.env.SALTEDGE_SECRET;
-  if (!secret) {
-    return NextResponse.json({ error: 'Webhook no configurado.' }, { status: 500 });
-  }
-
   const signature = request.headers.get('Signature') ?? '';
   const rawBody = await request.text();
 
-  if (signature && !verifySaltEdgeWebhook(rawBody, signature, secret)) {
-    return NextResponse.json({ error: 'Firma inválida.' }, { status: 401 });
+  // v6: verificación RSA-SHA256 con clave pública de Salt Edge
+  // El string firmado es: "callback_url|post_body"
+  if (signature) {
+    const callbackUrl =
+      process.env.SALTEDGE_CALLBACK_URL ??
+      `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/isaak/banking/saltedge/webhook`;
+    if (!verifySaltEdgeWebhook(callbackUrl, rawBody, signature)) {
+      return NextResponse.json({ error: 'Firma inválida.' }, { status: 401 });
+    }
   }
 
   let payload: SEWebhookPayload;
@@ -74,7 +76,7 @@ async function handleWebhook(payload: SEWebhookPayload) {
     });
 
     // Sincronizar cuentas
-    const accounts = await listAccounts(connectionId, connection.customer.secret);
+    const accounts = await listAccounts(connectionId); // v6: sin customerSecret
     for (const acc of accounts) {
       await prisma.seAccount.upsert({
         where: { id: acc.id },

@@ -1953,10 +1953,10 @@ model GcPayment {
 // ==================== SALTEDGE (Open Banking / PSD2) ====================
 
 model SeCustomer {
-  id         String   @id          // Salt Edge customer ID
+  id         String   @id          // Salt Edge customer ID (customer_id en v6)
   tenantId   String   @unique @map("tenant_id") @db.Uuid
   identifier String   @unique      // nuestro identificador (tenant ID como string)
-  secret     String                // customer-secret para llamadas autenticadas
+  secret     String?               // deprecado en v6 — ya no se usa Customer-secret header
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
