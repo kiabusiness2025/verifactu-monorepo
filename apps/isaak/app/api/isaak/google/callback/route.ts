@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
     tenantId = decoded.tenantId;
     userId = decoded.userId;
   } catch {
-    return NextResponse.redirect(`${settingsUrl}&google=error`);
+    return NextResponse.redirect(`${integrationsUrl}?google=error`);
   }
 
   try {
