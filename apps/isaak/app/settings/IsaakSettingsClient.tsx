@@ -255,9 +255,35 @@ function fileToDataUrl(file: File) {
 
 // ── Push Notifications Card ────────────────────────────────────────────────────
 
+type PushPrefs = {
+  alertaFiscal: boolean;
+  documentoSinConciliar: boolean;
+  avisoProactivoIsaak: boolean;
+};
+
+const PUSH_EVENTS: Array<{ key: keyof PushPrefs; label: string; description: string }> = [
+  {
+    key: 'alertaFiscal',
+    label: 'Alerta fiscal próxima',
+    description: 'D-15, D-7, D-3 y D-1 antes de cada plazo trimestral',
+  },
+  {
+    key: 'documentoSinConciliar',
+    label: 'Documento pendiente',
+    description: 'Facturas o movimientos sin conciliar que necesitan atención',
+  },
+  {
+    key: 'avisoProactivoIsaak',
+    label: 'Aviso proactivo de Isaak',
+    description: 'Cuando Isaak detecta algo relevante en tu contabilidad',
+  },
+];
+
 function PushNotificationsCard() {
   const [status, setStatus] = useState<'idle' | 'subscribed' | 'denied' | 'unsupported'>('idle');
   const [loading, setLoading] = useState(false);
+  const [prefs, setPrefs] = useState<PushPrefs | null>(null);
+  const [savingPref, setSavingPref] = useState<keyof PushPrefs | null>(null);
 
   useEffect(() => {
     if (
@@ -273,7 +299,15 @@ function PushNotificationsCard() {
         reg.pushManager
           .getSubscription()
           .then((sub) => {
-            setStatus(sub ? 'subscribed' : 'idle');
+            const newStatus = sub ? 'subscribed' : 'idle';
+            setStatus(newStatus);
+            if (newStatus === 'subscribed') {
+              void fetch('/api/isaak/push/preferences')
+                .then((r) => (r.ok ? r.json() : null))
+                .then((d) => {
+                  if (d) setPrefs(d as PushPrefs);
+                });
+            }
           })
           .catch(() => setStatus('idle'));
       })
@@ -297,6 +331,12 @@ function PushNotificationsCard() {
         body: JSON.stringify(json),
       });
       setStatus('subscribed');
+      // Load preferences after subscribing
+      void fetch('/api/isaak/push/preferences')
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => {
+          if (d) setPrefs(d as PushPrefs);
+        });
     } catch {
       setStatus('denied');
     } finally {
@@ -318,10 +358,28 @@ function PushNotificationsCard() {
         await sub.unsubscribe();
       }
       setStatus('idle');
+      setPrefs(null);
     } catch {
       /* ignore */
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function togglePref(key: keyof PushPrefs, value: boolean) {
+    setSavingPref(key);
+    setPrefs((prev) => (prev ? { ...prev, [key]: value } : prev));
+    try {
+      const res = await fetch('/api/isaak/push/preferences', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (!res.ok) setPrefs((prev) => (prev ? { ...prev, [key]: !value } : prev));
+    } catch {
+      setPrefs((prev) => (prev ? { ...prev, [key]: !value } : prev));
+    } finally {
+      setSavingPref(null);
     }
   }
 
@@ -372,14 +430,44 @@ function PushNotificationsCard() {
       </div>
 
       {status === 'subscribed' && (
-        <div className="mt-3 flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-            <CheckCircle2 className="h-3.5 w-3.5" />
-            Activas
-          </span>
-          <span className="text-xs text-slate-400">
-            Recibirás alertas fiscales en este dispositivo
-          </span>
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Activas
+            </span>
+            <span className="text-xs text-slate-400">
+              Recibirás alertas fiscales en este dispositivo
+            </span>
+          </div>
+
+          {/* Event toggles */}
+          <div className="mt-3 space-y-2 border-t border-slate-100 pt-3">
+            <p className="text-xs font-medium text-slate-500">Qué quieres recibir</p>
+            {PUSH_EVENTS.map((evt) => {
+              const isOn = prefs ? prefs[evt.key] : true;
+              const isSaving = savingPref === evt.key;
+              return (
+                <div key={evt.key} className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs font-semibold text-slate-800">{evt.label}</div>
+                    <div className="text-xs text-slate-400">{evt.description}</div>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={isOn ? 'Desactivar' : 'Activar'}
+                    disabled={isSaving || !prefs}
+                    onClick={() => void togglePref(evt.key, !isOn)}
+                    className={`relative mt-0.5 inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-60 ${isOn ? 'bg-[#2361d8]' : 'bg-slate-200'}`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200 ${isOn ? 'translate-x-4' : 'translate-x-0'}`}
+                    />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
       {status === 'denied' && (
