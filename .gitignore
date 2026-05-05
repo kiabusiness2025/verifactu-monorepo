@@ -73,4 +73,6 @@ env-audit.txt
 # Just in case (variants)
 *.vercel*.env
 *.import*.env
+.tmp-*.env
+.tmp-*.json
 .tmp/

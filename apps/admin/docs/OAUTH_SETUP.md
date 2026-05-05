@@ -37,7 +37,7 @@ gcloud services enable \
   calendar-json.googleapis.com \
   gmail.googleapis.com \
   drive.googleapis.com \
-  --project=verifactu-business-480212
+  --project=<TU_GCP_PROJECT_ID>
 ```
 
 ## 🔐 2. Configurar Pantalla de Consentimiento OAuth
