@@ -12,10 +12,10 @@ export async function GET(request: NextRequest) {
 
   const appUrl =
     process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3002';
-  const settingsUrl = `${appUrl}/settings?section=connections`;
+  const integrationsUrl = `${appUrl}/integrations`;
 
   if (error || !code || !state) {
-    return NextResponse.redirect(`${settingsUrl}&google=error`);
+    return NextResponse.redirect(`${integrationsUrl}?google=error`);
   }
 
   let tenantId: string;
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.redirect(`${settingsUrl}&google=connected`);
+    return NextResponse.redirect(`${integrationsUrl}?google=connected`);
   } catch {
-    return NextResponse.redirect(`${settingsUrl}&google=error`);
+    return NextResponse.redirect(`${integrationsUrl}?google=error`);
   }
 }
