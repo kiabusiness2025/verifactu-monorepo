@@ -1,25 +1,15 @@
-import {
-  ArrowRight,
-  Building2,
-  FileSpreadsheet,
-  Landmark,
-  Link2,
-  ShieldCheck,
-  Sparkles,
-  Users,
-} from 'lucide-react';
+import { ArrowRight, ShieldCheck, Sparkles, FileSpreadsheet, Link2 } from 'lucide-react';
+import { Landmark, Building2, Users } from 'lucide-react';
 import Link from 'next/link';
 import Header from './Header';
-import { Container, Footer } from '../lib/home/ui';
+import { Container, Footer, HeroTripleMock } from '../lib/home/ui';
 
 const HOLDed_CONNECTORS_URL = 'https://holded.verifactu.business/conectores';
 const ISAAK_URL = 'https://isaak.verifactu.business';
 
 const navLinks = [
+  { label: 'Precios', href: '/precios' },
   { label: 'Servicios', href: '/servicios' },
-  { label: 'Integraciones', href: '/integraciones' },
-  { label: 'Suscripciones', href: '/suscripciones' },
-  { label: 'Developers', href: '/developers' },
   { label: 'Contacto', href: '/contacto' },
 ];
 
@@ -103,46 +93,7 @@ export default function LandingPublicHubPhase1() {
             </div>
 
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-                Ecosistema ordenado
-              </div>
-              <div className="mt-4 grid gap-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-sm font-semibold text-slate-900">
-                    1. Cumple con VeriFactu
-                  </div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    AEAT, trazabilidad, exportables y control regulatorio desde una superficie de
-                    confianza.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-sm font-semibold text-slate-900">
-                    2. Empieza con Excel o conecta sistemas
-                  </div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    No necesitas migrar todo el negocio desde el primer dia para empezar a trabajar
-                    con Isaak.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                  <div className="text-sm font-semibold text-slate-900">3. Orquesta con Isaak</div>
-                  <p className="mt-1 text-sm leading-6 text-slate-600">
-                    Isaak interpreta, conecta y ayuda a ejecutar con permisos, aprobaciones y
-                    trazabilidad.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-[#2361d8]/5 p-4 text-sm text-slate-700">
-                  Empezamos por Holded como primer ecosistema conectado. El hub vertical vive en{' '}
-                  <a
-                    href={HOLDed_CONNECTORS_URL}
-                    className="font-semibold text-[#2361d8] underline hover:no-underline"
-                  >
-                    holded.verifactu.business
-                  </a>
-                  .
-                </div>
-              </div>
+              <HeroTripleMock />
             </div>
           </div>
         </Container>

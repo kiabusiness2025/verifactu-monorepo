@@ -239,7 +239,7 @@ export default function IsaakAuthPage() {
                       : 'text-slate-400 hover:text-slate-300'
                   }`}
                 >
-                  Enlace mágico
+                  Entrar con email
                 </button>
                 <button
                   type="button"

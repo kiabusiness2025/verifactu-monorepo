@@ -1,6 +1,7 @@
 'use client';
 
 import type { User } from 'firebase/auth';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -66,7 +67,8 @@ export default function LoginPage() {
 
   const source = searchParams?.get('source')?.trim() || '';
   const nextParam = searchParams?.get('next')?.trim() || '';
-  const holdedSiteUrl = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+  const holdedSiteUrl =
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
   const holdedMode =
     source.startsWith('holded') ||
     nextParam.includes('/onboarding/holded') ||
@@ -148,10 +150,12 @@ export default function LoginPage() {
             <div className="w-full rounded-[30px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-10">
               <div className="flex justify-center">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
-                  <img
+                  <Image
                     src="/brand/holded/holded-diamond-logo.png"
                     alt="Isaak for Holded"
-                    className="h-[52px] w-[52px] object-contain"
+                    width={52}
+                    height={52}
+                    className="object-contain"
                   />
                 </div>
               </div>
@@ -201,7 +205,9 @@ export default function LoginPage() {
           <div className="inline-block h-10 w-10 animate-spin rounded-full border-b-2 border-[#2361d8]"></div>
           <p className="mt-4 text-sm font-semibold text-slate-900">Cargando tu acceso...</p>
           {!authLoadingTimedOut ? (
-            <p className="mt-1 text-sm text-gray-600">En unos segundos continuamos con la conexión.</p>
+            <p className="mt-1 text-sm text-gray-600">
+              En unos segundos continuamos con la conexión.
+            </p>
           ) : (
             <>
               <p className="mt-2 text-sm text-amber-700">
@@ -229,10 +235,12 @@ export default function LoginPage() {
             <div className="w-full rounded-[30px] border border-neutral-200 bg-white p-8 text-center shadow-[0_16px_40px_rgba(15,23,42,0.08)] sm:p-10">
               <div className="flex justify-center">
                 <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
-                  <img
+                  <Image
                     src="/brand/holded/holded-diamond-logo.png"
                     alt="Isaak for Holded"
-                    className="h-[52px] w-[52px] object-contain"
+                    width={52}
+                    height={52}
+                    className="object-contain"
                   />
                 </div>
               </div>
@@ -436,37 +444,10 @@ export default function LoginPage() {
       compact
       showSecurityCard={!holdedMode}
     >
-      <div className="mb-2 flex gap-1 rounded-xl bg-gray-100 p-1">
-        <button
-          type="button"
-          onClick={() => setMode('login')}
-          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
-            mode === 'login'
-              ? holdedMode
-                ? 'bg-white text-[#ff5460] shadow-sm'
-                : 'bg-white text-[#2361d8] shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Iniciar sesion
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode('signup')}
-          className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
-            mode === 'signup'
-              ? holdedMode
-                ? 'bg-white text-[#ff5460] shadow-sm'
-                : 'bg-white text-[#2361d8] shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
-          }`}
-        >
-          Crear cuenta
-        </button>
-      </div>
-
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
       )}
 
       <div className="space-y-3">
@@ -545,7 +526,9 @@ export default function LoginPage() {
               <Link
                 href={buildAuthHref('/auth/forgot-password')}
                 className={`text-sm font-medium ${
-                  holdedMode ? 'text-[#ff5460] hover:text-[#ef4654]' : 'text-[#2361d8] hover:text-[#1f55c0]'
+                  holdedMode
+                    ? 'text-[#ff5460] hover:text-[#ef4654]'
+                    : 'text-[#2361d8] hover:text-[#1f55c0]'
                 }`}
               >
                 La olvidaste?
@@ -630,9 +613,7 @@ export default function LoginPage() {
           type="submit"
           disabled={isLoading}
           className={`w-full rounded-full py-3 font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-50 ${
-            holdedMode
-              ? 'bg-[#ff5460] hover:bg-[#ef4654]'
-              : 'bg-[#2361d8] hover:bg-[#1f55c0]'
+            holdedMode ? 'bg-[#ff5460] hover:bg-[#ef4654]' : 'bg-[#2361d8] hover:bg-[#1f55c0]'
           }`}
         >
           {isLoading
