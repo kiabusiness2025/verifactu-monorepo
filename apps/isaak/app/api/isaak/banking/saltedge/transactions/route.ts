@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
       status: 'active',
       ...(body.accountId ? { id: body.accountId } : {}),
     },
+    include: { connection: { select: { id: true } } },
   });
 
   if (accounts.length === 0) {
@@ -82,8 +83,8 @@ export async function POST(request: NextRequest) {
 
     do {
       const { transactions, nextId: nxt } = await listTransactions({
+        connectionId: account.connection.id,
         accountId: account.id,
-        customerSecret: seCustomer.secret,
         fromId: nextId ?? undefined,
         fromDate: body.fromDate,
       });
