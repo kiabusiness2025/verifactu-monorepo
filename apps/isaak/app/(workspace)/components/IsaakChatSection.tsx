@@ -98,6 +98,13 @@ const QUICK_CHIPS: Record<string, string[]> = {
   ],
 };
 
+const QUICK_CHIPS_NO_HOLDED = [
+  '¿Qué puedo hacer aquí?',
+  'Cómo organizar mi flujo fiscal',
+  'Qué necesito para empezar',
+  'Recordatorios de obligaciones',
+];
+
 // ── Integrations ──────────────────────────────────────────────────────────────
 const SUPPORT_EMAIL = 'soporte@verifactu.business';
 
@@ -397,7 +404,9 @@ export default function IsaakChatSection({
     [speakingId]
   );
 
-  const chips = QUICK_CHIPS[context] ?? QUICK_CHIPS.default;
+  const chips = holdedConnected
+    ? (QUICK_CHIPS[context] ?? QUICK_CHIPS.default)
+    : QUICK_CHIPS_NO_HOLDED;
 
   const sendMessage = async (text: string) => {
     // If a file is pending and the user submits, handle as file upload
@@ -538,6 +547,15 @@ export default function IsaakChatSection({
                 {chip}
               </button>
             ))}
+            {!holdedConnected && (
+              <button
+                type="button"
+                onClick={() => router.push('/integrations')}
+                className="rounded-full border border-[#2361d8]/30 bg-[#edf4ff] px-3 py-1.5 text-[13px] font-medium text-[#2361d8] shadow-sm transition hover:border-[#2361d8]/50 hover:bg-[#e2edff]"
+              >
+                Conectar Holded
+              </button>
+            )}
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-3">

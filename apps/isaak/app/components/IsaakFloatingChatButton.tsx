@@ -7,7 +7,20 @@ import { usePathname } from 'next/navigation';
 export default function IsaakFloatingChatButton() {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/chat')) {
+  const hideInWorkspace =
+    pathname?.startsWith('/chat') ||
+    pathname?.startsWith('/resumen') ||
+    pathname?.startsWith('/ventas') ||
+    pathname?.startsWith('/gastos') ||
+    pathname?.startsWith('/contactos') ||
+    pathname?.startsWith('/equipo') ||
+    pathname?.startsWith('/calendario') ||
+    pathname?.startsWith('/integrations') ||
+    pathname?.startsWith('/settings') ||
+    pathname?.startsWith('/advisor') ||
+    pathname?.startsWith('/informes');
+
+  if (hideInWorkspace) {
     return null;
   }
 

@@ -261,6 +261,7 @@ function PwaInstallCard() {
   >(null);
   const [installed, setInstalled] = useState(false);
   const [isIos, setIsIos] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
@@ -274,7 +275,9 @@ function PwaInstallCard() {
 
     const ua = window.navigator.userAgent;
     const ios = /iPhone|iPad|iPod/i.test(ua);
+    const android = /Android/i.test(ua);
     setIsIos(ios);
+    setIsAndroid(android);
 
     const savedDismiss = window.localStorage.getItem('isaak-install-dismissed');
     if (savedDismiss === 'true') {
@@ -340,6 +343,12 @@ function PwaInstallCard() {
       ) : isIos ? (
         <p className="mt-3 text-xs text-slate-600">
           En iPhone: pulsa <span className="font-semibold">Compartir</span> en Safari y luego
+          <span className="font-semibold"> Añadir a pantalla de inicio</span>.
+        </p>
+      ) : isAndroid ? (
+        <p className="mt-3 text-xs text-slate-600">
+          En Android: abre el menú de Chrome (⋮) y pulsa
+          <span className="font-semibold"> Instalar app</span> o
           <span className="font-semibold"> Añadir a pantalla de inicio</span>.
         </p>
       ) : null}
