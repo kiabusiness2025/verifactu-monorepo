@@ -579,6 +579,8 @@ model Tenant {
   claimCases                  ClaimCase[]
   isaakPlatformKeys           IsaakPlatformKey[]
   isaakApiAuditLogs           IsaakApiAuditLog[]
+  holdedMcpPersonalAccessTokens HoldedMcpPersonalAccessToken[]
+  holdedMcpPatAuditLogs       HoldedMcpPatAuditLog[]
   isaakWebhookEndpoints       IsaakWebhookEndpoint[]
   isaakProposedActions        IsaakProposedAction[]
   gcMandates                  GcMandate[]
@@ -1435,6 +1437,7 @@ model ExternalConnection {
   accessRequests        AccessRequest[]
   claims                ClaimCase[]
   supportTickets        SupportTicket[]
+  holdedMcpPats         HoldedMcpPersonalAccessToken[]
 
   @@unique([tenantId, provider, channelKey])
   @@index([tenantId, provider, channelKey, connectionStatus])
@@ -2147,4 +2150,65 @@ model IsaakWebhookEndpoint {
 
   @@index([tenantId])
   @@map("isaak_webhook_endpoints")
+}
+
+/// Personal Access Token for the Holded MCP connector.
+/// Mirrors IsaakPlatformKey shape and is used as an alternative to OAuth on
+/// channels where OAuth is impractical (notably ChatGPT iOS, where the in-app
+/// browser breaks Firebase getRedirectResult). The PAT is stored only as a
+/// sha256 hash; the cleartext token is shown to the user once at creation
+/// time. The PAT is bound to a specific ExternalConnection so the underlying
+/// Holded API key is the same the OAuth flow would have resolved.
+model HoldedMcpPersonalAccessToken {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id") @db.Uuid
+  createdByUserId String    @map("created_by_user_id")
+  connectionId   String?   @map("connection_id") @db.Uuid
+  /// Channel this PAT was issued for. Mirrors ExternalConnection.channelKey.
+  /// Allowed values: "chatgpt", "claude", "dashboard".
+  channelKey      String    @default("chatgpt") @map("channel_key")
+  name            String
+  /// SHA-256 of the cleartext token (no salt — token entropy is sufficient).
+  keyHash         String    @unique @map("key_hash")
+  /// Visible prefix shown in lists, e.g. "hldmcp_AbCd". Never the full token.
+  keyPrefix       String    @map("key_prefix")
+  scopes          String[]
+  lastUsedAt      DateTime? @map("last_used_at") @db.Timestamptz
+  expiresAt       DateTime? @map("expires_at") @db.Timestamptz
+  revokedAt       DateTime? @map("revoked_at") @db.Timestamptz
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connection ExternalConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  auditLogs  HoldedMcpPatAuditLog[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, channelKey])
+  @@index([connectionId])
+  @@map("holded_mcp_personal_access_tokens")
+}
+
+/// Audit log for HoldedMcpPersonalAccessToken usage. Lightweight — captures the
+/// minimum needed for security review (created/used/revoked, IP, tool name).
+model HoldedMcpPatAuditLog {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id") @db.Uuid
+  patId       String?  @map("pat_id")
+  /// Event type: "created" | "used" | "revoked" | "rejected"
+  event       String
+  channel     String?
+  toolName    String?  @map("tool_name")
+  status      Int?
+  ip          String?
+  userAgent   String?  @map("user_agent")
+  meta        Json?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  pat    HoldedMcpPersonalAccessToken? @relation(fields: [patId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([patId])
+  @@map("holded_mcp_pat_audit_logs")
 }

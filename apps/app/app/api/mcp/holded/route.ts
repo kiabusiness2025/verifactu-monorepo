@@ -20,7 +20,11 @@ import {
   getTokenEndpoint,
   verifyAccessToken,
 } from '@/lib/oauth/mcp';
-import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
+import {
+  resolveSharedHoldedConnectionForTenant,
+  type HoldedConnectionChannel,
+} from '@/lib/integrations/holdedConnectionResolver';
+import { logPatUsage, PAT_PREFIX, verifyPat } from '@/lib/integrations/holdedPatStore';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextRequest, NextResponse } from 'next/server';
@@ -59,7 +63,7 @@ function getVisibleTools(scopes: string | readonly string[]) {
 
 function resolveVisibleTools(
   access?: {
-    mode: 'oauth' | 'shared_secret';
+    mode: 'oauth' | 'shared_secret' | 'pat';
     scope?: string | null;
   } | null
 ) {
@@ -71,6 +75,9 @@ function resolveVisibleTools(
     return getVisibleTools(getSupportedScopes());
   }
 
+  // PATs default to the same scope set as a typical OAuth grant. Specific
+  // PATs may narrow it via their `scopes` array; that's already reflected in
+  // `access.scope` when present.
   return getVisibleTools(access.scope ?? '');
 }
 
@@ -124,6 +131,37 @@ async function assertMcpAccess(request: NextRequest) {
     return { mode: 'shared_secret' as const, tenantId: null };
   }
 
+  // Personal Access Token branch — preferred for ChatGPT mobile and any client
+  // that cannot complete the OAuth roundtrip (iOS in-app browser breaks Firebase
+  // getRedirectResult; PATs sidestep the entire OAuth dance).
+  if (token.startsWith(PAT_PREFIX)) {
+    const pat = await verifyPat(token);
+    if (!pat) {
+      // Don't reveal whether the token shape is valid but revoked vs unknown.
+      return null;
+    }
+    // Fire-and-forget audit (the request isn't blocked on this).
+    void logPatUsage({
+      tenantId: pat.tenantId,
+      patId: pat.id,
+      channel: pat.channelKey,
+      ip: request.headers.get('x-forwarded-for') ?? null,
+      userAgent: request.headers.get('user-agent') ?? null,
+      event: 'used',
+    });
+    return {
+      mode: 'pat' as const,
+      tenantId: pat.tenantId,
+      uid: null as string | null,
+      email: null as string | null,
+      // Join PAT scopes with spaces so existing scope-string parsers work.
+      scope: pat.scopes.join(' '),
+      patId: pat.id,
+      channelKey: pat.channelKey,
+      connectionId: pat.connectionId,
+    };
+  }
+
   const oauth = await verifyAccessToken(token);
   if (!oauth) return null;
 
@@ -148,14 +186,24 @@ function logMcpAccess(event: {
 }
 
 async function resolveHoldedApiKey(access?: {
-  mode: 'oauth' | 'shared_secret';
+  mode: 'oauth' | 'shared_secret' | 'pat';
   tenantId: string | null;
+  channelKey?: string | null;
 }) {
   if (access?.tenantId) {
-    const connection = await resolveSharedHoldedConnectionForTenant(
-      access.tenantId,
-      access.mode === 'oauth' ? 'chatgpt' : 'dashboard'
-    );
+    // Channel resolution priority:
+    //   - PAT carries its own channelKey (chatgpt/claude/dashboard)
+    //   - OAuth always means chatgpt
+    //   - shared_secret falls back to dashboard
+    const channel: HoldedConnectionChannel =
+      access.mode === 'pat'
+        ? access.channelKey === 'dashboard'
+          ? 'dashboard'
+          : 'chatgpt'
+        : access.mode === 'oauth'
+          ? 'chatgpt'
+          : 'dashboard';
+    const connection = await resolveSharedHoldedConnectionForTenant(access.tenantId, channel);
     if (connection) {
       return {
         apiKey: connection.apiKey,
@@ -164,11 +212,13 @@ async function resolveHoldedApiKey(access?: {
     }
   }
 
-  // Keep OAuth channel isolated from dashboard session state.
-  // If the OAuth token does not resolve to a tenant with a Holded connection,
-  // the caller must reconnect Holded for that tenant instead of falling back.
-  if (access?.mode === 'oauth') {
-    throw new Error('No Holded API key configured for this OAuth tenant');
+  // Keep OAuth/PAT channels isolated from dashboard session state.
+  // If the bearer credential does not resolve to a tenant with a Holded
+  // connection, the caller must reconnect Holded instead of falling back.
+  if (access?.mode === 'oauth' || access?.mode === 'pat') {
+    throw new Error(
+      `No Holded API key configured for this ${access.mode === 'pat' ? 'PAT' : 'OAuth'} tenant`
+    );
   }
 
   const session = await getSessionPayload();
@@ -347,10 +397,11 @@ function isHoldedCredentialRevocationError(error: unknown) {
 
 async function callTool(
   access: {
-    mode: 'oauth' | 'shared_secret';
+    mode: 'oauth' | 'shared_secret' | 'pat';
     tenantId: string | null;
     scope?: string | null;
     uid?: string | null;
+    channelKey?: string | null;
   },
   name: string,
   args: Record<string, unknown> | undefined
@@ -371,6 +422,7 @@ async function callTool(
   const { apiKey, source } = await resolveHoldedApiKey({
     mode: access.mode,
     tenantId: access.tenantId,
+    channelKey: access.channelKey ?? null,
   });
   let result;
   try {
@@ -502,6 +554,7 @@ export async function POST(request: NextRequest) {
             tenantId: access.tenantId,
             scope: 'scope' in access ? access.scope : null,
             uid: 'uid' in access ? access.uid : null,
+            channelKey: 'channelKey' in access ? access.channelKey : null,
           },
           name,
           args
