@@ -1,7 +1,49 @@
 # Holded Connector Review Test Matrix
 
-Date: 2026-04-29
-Status: API-level validated matrix, pending ChatGPT web/mobile validation.
+**Date:** 2026-04-29 (initial), 2026-05-04 (post-rejection update)
+**Status:** ⚠️ REJECTED on first OpenAI submission. Fixes applied 2026-05-04 — pending re-validation on ChatGPT web AND mobile before resubmission.
+
+## 🔴 Outcome of the first submission (2026-04-29 → 2026-05-04 rejection)
+
+OpenAI rejected the submission with this reason:
+
+> "One or more of your test cases did not produce correct results. Please re-run all submitted test cases and align tool behavior/output with the documented expected outcomes. Ensure the same test cases pass consistently on both ChatGPT web and mobile."
+
+### Root cause analysis (post-mortem)
+
+Three structural issues were identified in the connector that likely caused review prompts to fail when executed inside ChatGPT (vs. the API-level harness we ran locally):
+
+1. **POS-06 — Daily ledger date conversion**. The tool only accepted Unix seconds (`startTimestamp`/`endTimestamp`). When a reviewer asked for "2026-03-01 to 2026-03-31", ChatGPT had to compute Unix seconds mentally. Off-by-one errors silently returned empty results, which the reviewer interpreted as "did not produce correct result".
+2. **POS-07B — Confirmation flow**. `holded_create_invoice_draft` required a nested `payload` object with `contactId` (a Mongo id only obtainable via `holded_list_contacts` first). On a fresh review session, ChatGPT often constructed the payload incorrectly or referenced a contact name instead of an id, causing the write to throw.
+3. **All POS list cases — Verbose JSON output**. `formatToolResult` returned `JSON.stringify(data, null, 2)` for every response. POS-05 dumped 206 accounts of raw JSON, POS-03 dumped 60 contacts of raw JSON. ChatGPT mobile in particular struggles to render and summarize this; the model frequently returned confused or truncated answers.
+
+### Fixes applied (2026-05-04)
+
+| Fix | File                                                             | Description                                                                                                                                                                                                                                             |
+| --- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| F1  | `apps/app/lib/integrations/holdedMcpTools.ts`                    | `holded_list_daily_ledger` now accepts ISO `startDate`/`endDate` (YYYY-MM-DD) in addition to Unix `startTimestamp`/`endTimestamp`. ISO is preferred for assistants. End date auto-bumps to 23:59:59 UTC for inclusivity.                                |
+| F2a | same                                                             | `holded_create_invoice_draft` accepts a flat shape (`contactId`, `contactName`, `subject`, `lines`, single-line shortcut `desc`/`units`/`price`/`tax`) at the top level. Legacy nested `payload` still works.                                           |
+| F2b | same                                                             | `contactName` → `contactId` resolution via `listContacts` when only the name is provided. Avoids forcing reviewers to chain calls.                                                                                                                      |
+| F2c | same                                                             | `requireConfirm` now throws an INSTRUCTIONAL message ("Confirmation pending. No changes were made. Call again with confirm: true.") so the model surfaces it as a confirmation prompt, not a hard error.                                                |
+| F3  | `apps/app/app/api/mcp/holded/route.ts`                           | `formatToolResult` returns concise **markdown summaries** for `items`/`item`/`created`/`stock` shapes. Top 10 items in text + total + pagination hint. Full data still in `structuredContent` for programmatic access. JSON dumps capped at 1500 chars. |
+| F4  | `apps/app/lib/integrations/holdedMcpTools.ts`                    | `holded_list_invoices` falls back to historical search (current year, then previous year) when the default endpoint returns 0 items. Protects POS-01 against tenants with restrictive default scope.                                                    |
+| F5  | `apps/holded/app/conectores/chatgpt/openai-review-demo/page.tsx` | Removed broken `<video>` fallback when no recording is published. Replaced with explanatory card listing the 8 review prompts so reviewers can re-run the flow live in ChatGPT.                                                                         |
+| F6  | this file                                                        | Status updated to "REJECTED — fixes applied — pending re-validation".                                                                                                                                                                                   |
+
+### Promotion rule (REINFORCED for resubmission)
+
+A test case is **NOT** safe for OpenAI submission until ALL of the following are true:
+
+- ✅ Passes API-level (curl/test harness against production endpoint)
+- ✅ Passes on ChatGPT **web** with the live connector authorized to the demo tenant
+- ✅ Passes on ChatGPT **mobile** with the same connector
+- ✅ The actual tool call selected by the model matches the expected tool
+- ✅ The actual response includes the expected information (concise, no credentials, no excessive PII)
+- ✅ Any write tool path requires explicit confirmation BEFORE execution
+
+The "Pass status" column below MUST be updated for each case BEFORE marking the matrix safe for resubmission. **Do not submit again with cells marked "API-level only".**
+
+---
 
 This matrix captures the intended positive and negative review tests. Live demo-tenant API validation passed on 2026-04-29 using `HOLDED_TEST_API_KEY` from the process environment. ChatGPT web and mobile still require manual validation before these cases are safe for final OpenAI submission.
 

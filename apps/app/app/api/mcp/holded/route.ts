@@ -205,14 +205,137 @@ async function resolveHoldedApiKey(access?: {
   throw new Error('No Holded API key configured for MCP');
 }
 
+/**
+ * Limit how many items we render verbatim in the human-readable text. Beyond
+ * this, we add a "+ N more — call again with page=2" footer so ChatGPT mobile
+ * doesn't drown in 200-row JSON dumps. Programmatic consumers still get the
+ * full data via structuredContent.
+ */
+const TEXT_PREVIEW_LIMIT = 10;
+
+function pickFirst<T>(obj: Record<string, unknown>, keys: string[]): T | undefined {
+  for (const key of keys) {
+    const value = obj[key];
+    if (value !== undefined && value !== null && value !== '') return value as T;
+  }
+  return undefined;
+}
+
+function summarizeItem(item: unknown): string {
+  if (!item || typeof item !== 'object') return String(item);
+  const obj = item as Record<string, unknown>;
+
+  // Common label fields, ordered by preference.
+  const label =
+    pickFirst<string>(obj, ['name', 'fullName', 'title', 'subject', 'docNumber', 'number']) ??
+    pickFirst<string>(obj, ['email', 'code', 'sku']);
+  const id = pickFirst<string>(obj, ['id', '_id', 'documentId', 'invoiceId', 'contactId']);
+  const date = pickFirst<string | number>(obj, ['date', 'createdAt', 'updatedAt']);
+  const total = pickFirst<number | string>(obj, ['total', 'amount', 'subtotal', 'price']);
+  const status = pickFirst<string>(obj, ['status', 'state']);
+
+  const parts: string[] = [];
+  if (label) parts.push(`**${label}**`);
+  if (id) parts.push(`\`${String(id).slice(0, 24)}\``);
+  if (date) {
+    const dateText =
+      typeof date === 'number'
+        ? new Date(date * 1000).toISOString().slice(0, 10)
+        : String(date).slice(0, 10);
+    parts.push(dateText);
+  }
+  if (total !== undefined) parts.push(`${total}`);
+  if (status) parts.push(`_${status}_`);
+
+  return parts.length > 0 ? `- ${parts.join(' · ')}` : `- ${JSON.stringify(obj).slice(0, 120)}`;
+}
+
+function buildItemsSummary(items: unknown[], total?: number): string {
+  if (items.length === 0) {
+    return 'No items returned for this query.';
+  }
+  const preview = items.slice(0, TEXT_PREVIEW_LIMIT).map(summarizeItem).join('\n');
+  const totalText = total !== undefined ? `${total}` : `${items.length}`;
+  const more =
+    items.length > TEXT_PREVIEW_LIMIT
+      ? `\n\n_…and ${items.length - TEXT_PREVIEW_LIMIT} more in this page. Use page+limit to paginate._`
+      : '';
+  return `Found ${totalText} item(s). Showing the first ${Math.min(items.length, TEXT_PREVIEW_LIMIT)}:\n\n${preview}${more}`;
+}
+
+function summarizeSingleItem(item: Record<string, unknown>): string {
+  const label =
+    pickFirst<string>(item, ['name', 'fullName', 'title', 'subject', 'docNumber', 'number']) ??
+    pickFirst<string>(item, ['email', 'code']);
+  const id = pickFirst<string>(item, ['id', '_id']);
+  const lines: string[] = [];
+  if (label) lines.push(`**${label}**`);
+  if (id) lines.push(`ID: \`${id}\``);
+
+  // A small, curated set of fields that are useful and don't bloat the response.
+  const fieldOrder = [
+    'date',
+    'dueDate',
+    'status',
+    'state',
+    'currency',
+    'total',
+    'subtotal',
+    'tax',
+    'email',
+    'phone',
+    'address',
+    'cif',
+    'vatnumber',
+    'type',
+  ];
+  for (const key of fieldOrder) {
+    const value = item[key];
+    if (value === undefined || value === null || value === '') continue;
+    if (typeof value === 'object') continue;
+    if (typeof value === 'number' && key.includes('date')) {
+      lines.push(`${key}: ${new Date(value * 1000).toISOString().slice(0, 10)}`);
+    } else {
+      lines.push(`${key}: ${String(value).slice(0, 200)}`);
+    }
+  }
+
+  return lines.length > 0 ? lines.join('\n') : JSON.stringify(item, null, 2).slice(0, 500);
+}
+
 function formatToolResult(data: unknown) {
+  // Concise human-readable text + full structuredContent for programmatic use.
+  // The text is what ChatGPT and Claude render to the end user; reviewers on
+  // mobile especially benefit from short markdown over a 5KB JSON dump.
+  let text: string;
+  if (data && typeof data === 'object' && !Array.isArray(data)) {
+    const obj = data as Record<string, unknown>;
+    if (Array.isArray(obj.items)) {
+      const total =
+        typeof obj.history === 'object' && obj.history !== null
+          ? (obj.history as Record<string, unknown>).total
+          : undefined;
+      text = buildItemsSummary(obj.items, typeof total === 'number' ? total : undefined);
+    } else if (obj.item && typeof obj.item === 'object') {
+      text = summarizeSingleItem(obj.item as Record<string, unknown>);
+    } else if (obj.created && typeof obj.created === 'object') {
+      const created = obj.created as Record<string, unknown>;
+      const id =
+        pickFirst<string>(created, ['id', '_id', 'documentId']) ?? '(id not returned by Holded)';
+      text = `Created successfully. Holded id: \`${id}\`. The draft is saved but NOT sent, finalized, charged, or emailed. Verify it from Holded UI before issuing.`;
+    } else if (obj.stock && Array.isArray(obj.stock)) {
+      text = buildItemsSummary(obj.stock as unknown[]);
+    } else {
+      // Small payloads are fine to show in JSON; large ones we truncate.
+      const json = JSON.stringify(data, null, 2);
+      text = json.length > 1500 ? `${json.slice(0, 1500)}\n…(truncated)` : json;
+    }
+  } else {
+    text = JSON.stringify(data, null, 2);
+  }
+
   return {
-    content: [
-      {
-        type: 'text',
-        text: JSON.stringify(data, null, 2),
-      },
-    ],
+    content: [{ type: 'text', text }],
     structuredContent: data,
   };
 }

@@ -10,8 +10,12 @@ export const metadata: Metadata = {
   alternates: { canonical: '/conectores/chatgpt/openai-review-demo' },
 };
 
+// When the recorded demo is published, set YOUTUBE_URL (preferred) or place the
+// MP4 at /public/video/holded-chatgpt-demo.mp4. Until then we render a stable
+// fallback card so reviewers don't see a broken <video> element.
 const YOUTUBE_URL = '';
 const LOCAL_VIDEO_URL = '/video/holded-chatgpt-demo.mp4';
+const HAS_LOCAL_VIDEO = false; // flip to true once the mp4 is deployed
 
 function VideoEmbed() {
   if (YOUTUBE_URL) {
@@ -28,12 +32,50 @@ function VideoEmbed() {
     );
   }
 
+  if (HAS_LOCAL_VIDEO) {
+    return (
+      <div className="aspect-video w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-950">
+        <video controls playsInline preload="metadata" className="h-full w-full">
+          <source src={LOCAL_VIDEO_URL} type="video/mp4" />
+          Tu navegador no soporta la reproduccion de video.
+        </video>
+      </div>
+    );
+  }
+
+  // Fallback: explanatory card with the test prompts a reviewer can run live.
+  // Avoids a broken <video> player while the recording is being produced.
   return (
-    <div className="aspect-video w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-950">
-      <video controls playsInline preload="metadata" className="h-full w-full">
-        <source src={LOCAL_VIDEO_URL} type="video/mp4" />
-        Tu navegador no soporta la reproduccion de video.
-      </video>
+    <div className="rounded-lg border border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-6">
+      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800">
+        <VideoIcon className="h-4 w-4" />
+        Video demo en preparacion
+      </div>
+      <p className="mt-3 text-sm leading-7 text-slate-700">
+        Mientras finalizamos la grabacion, los revisores pueden reproducir el flujo en vivo desde
+        ChatGPT con el conector ya autorizado, usando los prompts listados abajo. Los pasos
+        coinciden con la matriz de revision (POS-01 a POS-07).
+      </p>
+      <ol className="mt-4 space-y-1.5 text-sm leading-6 text-slate-700">
+        <li>1. List my latest 5 Holded invoices.</li>
+        <li>2. Show me the details of invoice F0030 from the list.</li>
+        <li>3. List my Holded contacts and include Kappa Digital Zaragoza SL if it appears.</li>
+        <li>4. Show me the details of Kappa Digital Zaragoza SL from that list.</li>
+        <li>5. List my main accounting accounts in Holded.</li>
+        <li>
+          6. Show my Holded daily ledger entries from <code>2026-03-01</code> to{' '}
+          <code>2026-03-31</code>.
+        </li>
+        <li>
+          7. Create a draft invoice for Kappa Digital Zaragoza SL for one service line of 100 EUR
+          plus 21% VAT. Ask for confirmation before creating it.
+        </li>
+        <li>8. Yes, create the draft invoice.</li>
+      </ol>
+      <p className="mt-4 text-xs leading-6 text-slate-500">
+        El borrador se crea con <code>draft: true</code>. No se envia, finaliza, cobra ni elimina
+        nada. Los reviewers pueden inspeccionar el draft en Holded UI tras el paso 8.
+      </p>
     </div>
   );
 }

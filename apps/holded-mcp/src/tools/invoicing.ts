@@ -108,9 +108,18 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
 
   server.tool(
     'create_invoice_draft',
-    'Creates a Holded invoice in draft state. The server forces approveDoc=false at the wire level, so the document is never auto-issued, sent, paid, deleted or otherwise modified destructively. The created draft must be approved manually in Holded UI before it has any legal effect.',
+    'Creates a Holded invoice in draft state. The server forces approveDoc=false at the wire level, so the document is never auto-issued, sent, paid, deleted or otherwise modified destructively. The created draft must be approved manually in Holded UI before it has any legal effect. Provide either contactId (preferred, from list_contacts) OR contactName (the connector resolves the contact via search).',
     {
-      contactId: z.string().describe('Holded customer or contact ID.'),
+      contactId: z
+        .string()
+        .optional()
+        .describe('Holded customer or contact ID. Provide either contactId or contactName.'),
+      contactName: z
+        .string()
+        .optional()
+        .describe(
+          'Customer or contact name (e.g. "Kappa Digital Zaragoza SL"). The connector resolves it to a contactId via list_contacts. Provide either contactId or contactName.'
+        ),
       date: dateInput.describe('Invoice date (ISO 8601 or Unix seconds).'),
       dueDate: dateInput.optional().describe('Optional due date (ISO 8601 or Unix seconds).'),
       notes: z.string().optional().describe('Optional invoice notes.'),
@@ -131,11 +140,37 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
         .describe('Invoice draft line items.'),
     },
     writeAnnotations('create_invoice_draft'),
-    async ({ date, dueDate, ...rest }) => {
+    async ({ date, dueDate, contactId, contactName, ...rest }) => {
+      // contactName → contactId resolution. Mirror of F2a in the ChatGPT
+      // adapter. Avoids forcing the caller to chain list_contacts first.
+      let resolvedContactId = contactId?.trim();
+      if (!resolvedContactId) {
+        if (!contactName?.trim()) {
+          throw new Error('Either contactId or contactName is required.');
+        }
+        const name = contactName.trim();
+        const matches = (await getClient().listContacts({ name })) as Array<
+          Record<string, unknown>
+        >;
+        const items = Array.isArray(matches) ? matches : [];
+        const exact = items.find(
+          (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
+        );
+        const chosen = exact ?? items[0];
+        const chosenId = chosen?.id ?? chosen?._id;
+        if (typeof chosenId !== 'string' || !chosenId.trim()) {
+          throw new Error(
+            `No contact found for "${name}". Use list_contacts to find the correct contact and pass contactId.`
+          );
+        }
+        resolvedContactId = chosenId.trim();
+      }
+
       // approveDoc se fuerza al final del spread para que ningún input pueda
       // anularlo. NO mover esta línea.
       const body: Record<string, unknown> = {
         ...rest,
+        contactId: resolvedContactId,
         date: toUnixSecondsNumber(date),
         ...(dueDate !== undefined ? { dueDate: toUnixSecondsNumber(dueDate) } : {}),
         approveDoc: false,

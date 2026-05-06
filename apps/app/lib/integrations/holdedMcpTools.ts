@@ -347,7 +347,13 @@ function requiredEnumString(
 
 function requireConfirm(input: Record<string, unknown>) {
   if (input.confirm !== true) {
-    throw new Error('confirm=true is required for write operations');
+    // Instructional message — ChatGPT and Claude treat this text as a normal
+    // tool response and surface it to the user for confirmation. Without this
+    // friendly phrasing the model often interprets the error as a hard failure
+    // and gives up instead of asking the user to confirm.
+    throw new Error(
+      'Confirmation pending. No changes were made. To proceed, call this tool again with the same input plus confirm: true.'
+    );
   }
 }
 
@@ -459,6 +465,57 @@ function requiredUnixTimestamp(input: Record<string, unknown>, key: string) {
     throw new Error(`${key} is required`);
   }
   return normalizeUnixTimestamp(value, key);
+}
+
+/**
+ * Parse an ISO 8601 date string (YYYY-MM-DD) into Unix seconds at UTC midnight.
+ * Returns undefined if the value is missing or unparseable.
+ */
+function parseIsoDateToUnix(value: unknown): number | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  // Accept YYYY-MM-DD or full ISO
+  const date = new Date(trimmed.length === 10 ? `${trimmed}T00:00:00Z` : trimmed);
+  if (Number.isNaN(date.getTime())) return undefined;
+  return Math.floor(date.getTime() / 1000);
+}
+
+/**
+ * Resolve a date input that can be either:
+ *  - A Unix timestamp (number or numeric string), via the *Timestamp key
+ *  - An ISO date string YYYY-MM-DD, via the *Date key (preferred for ChatGPT)
+ *
+ * The endOfDay flag bumps the result to 23:59:59 UTC when parsing a date — useful
+ * for endDate parameters so the range is inclusive of the last calendar day.
+ */
+function resolveDateInput(
+  input: Record<string, unknown>,
+  options: {
+    timestampKey: string;
+    dateKey: string;
+    required: boolean;
+    endOfDay?: boolean;
+  }
+): number | undefined {
+  // Prefer Unix timestamp when supplied (backwards compatible).
+  const tsValue = input[options.timestampKey];
+  if (tsValue !== undefined && tsValue !== null && tsValue !== '') {
+    return normalizeUnixTimestamp(tsValue, options.timestampKey);
+  }
+
+  // Fall back to ISO date string — easier for ChatGPT to produce reliably.
+  const isoUnix = parseIsoDateToUnix(input[options.dateKey]);
+  if (isoUnix !== undefined) {
+    return options.endOfDay ? isoUnix + 86399 : isoUnix;
+  }
+
+  if (options.required) {
+    throw new Error(
+      `Either ${options.timestampKey} (Unix seconds) or ${options.dateKey} (YYYY-MM-DD) is required`
+    );
+  }
+  return undefined;
 }
 
 function splitStringList(value: string) {
@@ -703,6 +760,31 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     }
 
     const items = await holdedAdapter.listInvoices(apiKey, args);
+
+    // Fallback: if the default listInvoices call returns nothing and no
+    // explicit filters were provided, retry against the current year via
+    // the historical endpoint. This protects POS-01 ("List my latest N
+    // invoices") on tenants where Holded's default scope is restrictive.
+    if (Array.isArray(items) && items.length === 0) {
+      const currentYear = new Date().getUTCFullYear();
+      const fallback = await holdedAdapter.listInvoicesHistory(apiKey, {
+        ...args,
+        year: currentYear,
+      });
+      if (Array.isArray(fallback.items) && fallback.items.length > 0) {
+        return { items: fallback.items, history: fallback.history };
+      }
+      // Try previous year too — the demo tenant may have been quiet this year.
+      const previousYear = currentYear - 1;
+      const previousFallback = await holdedAdapter.listInvoicesHistory(apiKey, {
+        ...args,
+        year: previousYear,
+      });
+      if (Array.isArray(previousFallback.items) && previousFallback.items.length > 0) {
+        return { items: previousFallback.items, history: previousFallback.history };
+      }
+    }
+
     return { items };
   },
 
@@ -1363,10 +1445,25 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_list_daily_ledger(apiKey, input) {
+    // Accepts either Unix timestamps (startTimestamp/endTimestamp) or ISO dates
+    // (startDate/endDate, format YYYY-MM-DD). ChatGPT produces ISO dates more
+    // reliably than Unix seconds — this avoids the OpenAI POS-06 review failure
+    // where the model had to compute timestamps mentally and could get them wrong.
+    const starttmp = resolveDateInput(input, {
+      timestampKey: 'startTimestamp',
+      dateKey: 'startDate',
+      required: true,
+    });
+    const endtmp = resolveDateInput(input, {
+      timestampKey: 'endTimestamp',
+      dateKey: 'endDate',
+      required: true,
+      endOfDay: true,
+    });
     const items = await holdedAdapter.listDailyLedger(apiKey, {
       page: readPage(input),
-      starttmp: requiredUnixTimestamp(input, 'startTimestamp'),
-      endtmp: requiredUnixTimestamp(input, 'endTimestamp'),
+      starttmp: starttmp!,
+      endtmp: endtmp!,
     });
     return { items };
   },
@@ -1432,7 +1529,84 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   async holded_create_invoice_draft(apiKey, input) {
     requireConfirm(input);
     const docType = optionalString(input, 'docType') || 'invoice';
-    const payload = requiredPayload(input);
+
+    // Accept BOTH the legacy nested shape (input.payload = {...}) and a flat
+    // shape where contactId, contactName, subject, lines, date live at the top
+    // level. ChatGPT review prompts produce the flat shape more reliably; the
+    // nested wrapper was a frequent failure mode in the OpenAI POS-07B test.
+    let payload: Record<string, unknown>;
+    if (input.payload && typeof input.payload === 'object' && !Array.isArray(input.payload)) {
+      payload = input.payload as Record<string, unknown>;
+    } else {
+      const flat: Record<string, unknown> = {};
+      const keys = [
+        'contactId',
+        'contactName',
+        'subject',
+        'desc',
+        'date',
+        'dueDate',
+        'lines',
+        'products',
+        'currency',
+        'language',
+        'notes',
+      ] as const;
+      for (const key of keys) {
+        if (input[key] !== undefined) flat[key] = input[key];
+      }
+      // Bare convenience: if the caller provided a single line at the top
+      // level (desc, units, price, tax) without wrapping in lines[], wrap it.
+      if (
+        !flat.lines &&
+        !flat.products &&
+        (input.desc !== undefined ||
+          input.units !== undefined ||
+          input.price !== undefined ||
+          input.tax !== undefined)
+      ) {
+        flat.lines = [
+          {
+            desc: input.desc,
+            units: input.units,
+            price: input.price,
+            tax: input.tax,
+          },
+        ];
+      }
+      payload = flat;
+    }
+
+    // contactName → contactId resolution: if the caller gave us a name but no
+    // id, try to find the contact via search. This makes ChatGPT's life much
+    // easier — it can pass "Kappa Digital Zaragoza SL" instead of needing to
+    // call holded_list_contacts first to grab an opaque mongo id.
+    if (
+      (typeof payload.contactId !== 'string' || !payload.contactId.trim()) &&
+      typeof payload.contactName === 'string' &&
+      payload.contactName.trim()
+    ) {
+      const name = payload.contactName.trim();
+      const matches = await holdedAdapter.listContacts(apiKey, { page: 1, name });
+      const items = Array.isArray((matches as { items?: unknown }).items)
+        ? ((matches as { items: unknown[] }).items as Array<Record<string, unknown>>)
+        : Array.isArray(matches as unknown)
+          ? (matches as Array<Record<string, unknown>>)
+          : [];
+      const exact = items.find(
+        (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
+      );
+      const chosen = exact ?? items[0];
+      const chosenId = chosen?.id ?? chosen?._id;
+      if (typeof chosenId === 'string' && chosenId.trim()) {
+        payload.contactId = chosenId.trim();
+      } else {
+        throw new Error(
+          `No contact found for "${name}". Use holded_list_contacts to find the correct contact and pass contactId.`
+        );
+      }
+    }
+
     const created = await holdedAdapter.createDocument(
       apiKey,
       docType,
@@ -2256,13 +2430,19 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_daily_ledger',
     'List daily ledger entries in Holded',
-    'List daily ledger entries from Holded for a bounded accounting window. startTimestamp and endTimestamp are required because this endpoint rejects unbounded requests in production tenants.',
+    'List daily ledger entries from Holded for a bounded accounting window. Provide the range as either ISO dates (startDate / endDate, format YYYY-MM-DD — preferred for assistants) or Unix seconds (startTimestamp / endTimestamp). Either pair is required because this endpoint rejects unbounded requests in production tenants.',
     listSchemaWithRequired(
       {
+        startDate: stringProperty(
+          'Start of the range as an ISO date YYYY-MM-DD (e.g. 2026-03-01). Preferred for ChatGPT and Claude. Either startDate OR startTimestamp must be provided.'
+        ),
+        endDate: stringProperty(
+          'End of the range as an ISO date YYYY-MM-DD (e.g. 2026-03-31). Preferred for ChatGPT and Claude. Either endDate OR endTimestamp must be provided.'
+        ),
         startTimestamp: unixTimestampProperty,
         endTimestamp: unixTimestampProperty,
       },
-      ['startTimestamp', 'endTimestamp']
+      []
     )
   ),
   writeTool(
@@ -2332,15 +2512,54 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_create_invoice_draft',
     'Create invoice draft in Holded',
-    'Create a draft invoice in Holded for the currently authorized tenant. This is kept for backward compatibility and requires explicit confirmation.',
+    'Create a draft invoice in Holded. The draft is NEVER sent, finalized, charged, or emailed — only saved as a draft. Requires explicit confirmation (confirm: true). The connector accepts two input shapes:\n\n  • FLAT (preferred for ChatGPT and Claude): pass contactId or contactName, subject, and lines (or a single desc/units/price/tax) at the top level.\n  • NESTED (legacy): pass a payload object with contactId, subject, lines, etc.\n\nWhen contactName is provided without contactId, the connector resolves it via holded_list_contacts automatically.',
     writeSchema(
       {
         docType: stringProperty('Document type to create in Holded.', { defaultValue: 'invoice' }),
+        // Flat shape — preferred. Either contactId OR contactName is required.
+        contactId: stringProperty(
+          'Holded contact identifier for the recipient. Provide either contactId or contactName.'
+        ),
+        contactName: stringProperty(
+          'Recipient name (e.g. "Kappa Digital Zaragoza SL"). The connector resolves it to a contactId automatically. Provide either contactId or contactName.'
+        ),
+        subject: stringProperty(
+          'Optional document subject / description visible on the draft invoice.'
+        ),
+        date: stringProperty(
+          'Optional document date as ISO YYYY-MM-DD or Unix seconds. Defaults to today.'
+        ),
+        lines: {
+          type: 'array',
+          description:
+            'Line items for the invoice. Each item must include desc, units and price; tax (e.g. 21 for 21% VAT) is optional.',
+          items: {
+            type: 'object',
+            properties: {
+              desc: { type: 'string', description: 'Concept / description of the line.' },
+              units: { type: 'number', description: 'Quantity of units.' },
+              price: { type: 'number', description: 'Unit price before tax (EUR).' },
+              tax: { type: 'number', description: 'Tax percent (e.g. 21 for 21% VAT).' },
+            },
+            required: ['desc', 'units', 'price'],
+          },
+        },
+        // Single-line shorthand (only used if lines is omitted).
+        desc: stringProperty(
+          'Single-line shortcut: line description. Only used if lines is omitted.'
+        ),
+        units: { type: 'number', description: 'Single-line shortcut: quantity of units.' },
+        price: { type: 'number', description: 'Single-line shortcut: unit price before tax.' },
+        tax: {
+          type: 'number',
+          description: 'Single-line shortcut: tax percent (e.g. 21 for 21% VAT).',
+        },
+        // Nested shape — kept for backward compatibility.
         payload: documentCreatePayloadProperty(
-          'Draft invoice payload for Holded. It must include contactId plus at least one line item. Prefer lines with desc, units, price and tax. The connector also accepts products as a compatibility alias and fills date automatically when omitted.'
+          'Legacy nested payload. Prefer the flat shape (contactId/contactName, subject, lines). When provided, top-level flat fields are ignored.'
         ),
       },
-      ['payload']
+      []
     )
   ),
 ];
