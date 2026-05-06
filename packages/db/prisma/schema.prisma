@@ -71,6 +71,7 @@ enum EmailProvider {
 enum AuthProvider {
   FIREBASE
   GOOGLE
+  HOLDED_DIRECT
 }
 
 enum UsageEventType {
