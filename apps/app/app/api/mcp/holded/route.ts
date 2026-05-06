@@ -1,30 +1,30 @@
+import { markAccountingIntegrationRevoked } from '@/lib/integrations/accountingStore';
+import {
+  resolveSharedHoldedConnectionForTenant,
+  type HoldedConnectionChannel,
+} from '@/lib/integrations/holdedConnectionResolver';
+import { getAllowedHoldedMcpToolNames } from '@/lib/integrations/holdedMcpScopes';
 import {
   callHoldedMcpTool,
   holdedMcpTools,
   type HoldedMcpToolDefinition,
 } from '@/lib/integrations/holdedMcpTools';
-import { markAccountingIntegrationRevoked } from '@/lib/integrations/accountingStore';
-import { getAllowedHoldedMcpToolNames } from '@/lib/integrations/holdedMcpScopes';
+import { logPatUsage, PAT_PREFIX, verifyPat } from '@/lib/integrations/holdedPatStore';
 import {
   applyOpenAiCorsHeaders,
-  getDefaultScopes,
   getAuthorizationEndpoint,
   getAuthorizationServerMetadataUrl,
+  getDefaultScopes,
   getMcpResourceUrl,
+  getProtectedResourceMetadataUrl,
   getRegistrationEndpoint,
   getSupportedScopes,
+  getTokenEndpoint,
   getUserInfoEndpoint,
   hasRequiredScopes,
   MCP_TOOL_SCOPES,
-  getProtectedResourceMetadataUrl,
-  getTokenEndpoint,
   verifyAccessToken,
 } from '@/lib/oauth/mcp';
-import {
-  resolveSharedHoldedConnectionForTenant,
-  type HoldedConnectionChannel,
-} from '@/lib/integrations/holdedConnectionResolver';
-import { logPatUsage, PAT_PREFIX, verifyPat } from '@/lib/integrations/holdedPatStore';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
 import { NextRequest, NextResponse } from 'next/server';

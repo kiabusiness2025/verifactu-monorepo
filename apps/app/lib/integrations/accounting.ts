@@ -1540,6 +1540,54 @@ export const holdedAdapter = {
     });
   },
 
+  /**
+   * List CRM funnels (sales pipelines) configured in Holded. Read-only.
+   * Source: https://developers.holded.com/reference/funnels
+   */
+  async listCrmFunnels(apiKey: string) {
+    return holdedRequest<unknown[]>({
+      apiKey,
+      path: '/api/crm/v1/funnels',
+    });
+  },
+
+  /**
+   * List CRM leads in Holded. Optionally scoped to a single funnel.
+   * Holded uses `/leads` (not `/deals`). Source:
+   * https://developers.holded.com/reference/leads
+   */
+  async listLeads(apiKey: string, args?: { funnelId?: string; page?: number; limit?: number }) {
+    const query: Record<string, string | number | boolean | null | undefined> = {
+      page: args?.page ?? 1,
+      limit: args?.limit ?? 25,
+    };
+    if (args?.funnelId) query.funnelId = args.funnelId;
+    return holdedRequest<unknown[]>({
+      apiKey,
+      path: '/api/crm/v1/leads',
+      query,
+    });
+  },
+
+  /**
+   * List time-tracking records imputed against a specific Holded project.
+   * Read-only. Source: https://developers.holded.com/reference/getprojecttimes
+   */
+  async listProjectTimeRecords(
+    apiKey: string,
+    projectId: string,
+    args?: { page?: number; limit?: number }
+  ) {
+    return holdedRequest<unknown[]>({
+      apiKey,
+      path: `/api/projects/v1/projects/${projectId}/timerecords`,
+      query: {
+        page: args?.page ?? 1,
+        limit: args?.limit ?? 25,
+      },
+    });
+  },
+
   async listProjects(apiKey: string, args?: { page?: number; limit?: number }) {
     return holdedRequest<HoldedProject[]>({
       apiKey,

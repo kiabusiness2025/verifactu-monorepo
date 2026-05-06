@@ -85,9 +85,12 @@ export const HOLDED_MCP_TOOL_SCOPES: Record<string, string[]> = {
   holded_create_daily_ledger_entry: ['mcp.read', 'holded.accounts.write'],
   holded_create_accounting_account: ['mcp.read', 'holded.accounts.write'],
   holded_list_bookings: ['mcp.read', 'holded.crm.read'],
+  holded_list_crm_funnels: ['mcp.read', 'holded.crm.read'],
+  holded_list_leads: ['mcp.read', 'holded.crm.read'],
   holded_list_projects: ['mcp.read', 'holded.projects.read'],
   holded_get_project: ['mcp.read', 'holded.projects.read'],
   holded_list_project_tasks: ['mcp.read', 'holded.projects.read'],
+  holded_list_time_records: ['mcp.read', 'holded.projects.read'],
   holded_create_invoice_draft: ['mcp.read', 'holded.invoices.write'],
 };
 
@@ -141,7 +144,8 @@ export type HoldedMcpScopePreset =
   | 'holded_phase2_accounting'
   | 'holded_public_campaign_v1'
   | 'holded_priority1'
-  | 'openai_review_v2';
+  | 'openai_review_v2'
+  | 'claude_parity';
 
 const READONLY_SCOPE_SET = HOLDED_MCP_SUPPORTED_SCOPES.filter((scope) => !scope.endsWith('.write'));
 
@@ -220,6 +224,35 @@ const HOLDED_PRIORITY1_SCOPE_SET = [
   'holded.projects.read',
 ] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
 
+/**
+ * Scope set that mirrors the 24 tools exposed by the Claude MCP server
+ * (apps/holded-mcp). Used as the DEFAULT for Personal Access Tokens (PATs)
+ * so ChatGPT mobile users — who fall through to the PAT path — get tool
+ * parity with Claude. The OAuth public campaign keeps its narrower default
+ * preset (holded_public_campaign_v1) to avoid expanding the surface area
+ * of the active OpenAI review submission.
+ *
+ * Covers: invoices, documents (incl. PDF), contacts, accounts, daily ledger,
+ * CRM (funnels + leads), projects (incl. tasks + time records), products
+ * (incl. stock), warehouses, taxes, numbering, employees, treasury.
+ */
+const CLAUDE_PARITY_SCOPE_SET = [
+  'mcp.read',
+  'holded.invoices.read',
+  'holded.invoices.write',
+  'holded.documents.read',
+  'holded.contacts.read',
+  'holded.accounts.read',
+  'holded.crm.read',
+  'holded.projects.read',
+  'holded.products.read',
+  'holded.warehouses.read',
+  'holded.taxes.read',
+  'holded.numbering.read',
+  'holded.employees.read',
+  'holded.treasury.read',
+] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
+
 export function getHoldedMcpScopePreset(preset: HoldedMcpScopePreset) {
   if (preset === 'readonly') return READONLY_SCOPE_SET;
   if (preset === 'holded_public_campaign_v1') return HOLDED_PUBLIC_CAMPAIGN_V1_SCOPE_SET;
@@ -227,6 +260,7 @@ export function getHoldedMcpScopePreset(preset: HoldedMcpScopePreset) {
   if (preset === 'holded_phase2_accounting') return HOLDED_PHASE2_ACCOUNTING_SCOPE_SET;
   if (preset === 'holded_priority1') return HOLDED_PRIORITY1_SCOPE_SET;
   if (preset === 'invoicing_accounting') return INVOICING_ACCOUNTING_SCOPE_SET;
+  if (preset === 'claude_parity') return CLAUDE_PARITY_SCOPE_SET;
   return HOLDED_MCP_SUPPORTED_SCOPES;
 }
 

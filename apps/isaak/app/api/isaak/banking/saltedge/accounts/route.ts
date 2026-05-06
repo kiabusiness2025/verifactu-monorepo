@@ -2,10 +2,10 @@
  * GET  /api/isaak/banking/saltedge/accounts   → lista cuentas del tenant
  * POST /api/isaak/banking/saltedge/accounts   → sincroniza cuentas desde Salt Edge
  */
-import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { listAccounts } from '@verifactu/integrations/saltedge';
 import { prisma } from '@/app/lib/prisma';
+import { listAccounts } from '@verifactu/integrations/saltedge';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

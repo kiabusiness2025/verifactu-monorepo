@@ -1505,6 +1505,32 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     return { items };
   },
 
+  async holded_list_crm_funnels(apiKey) {
+    const items = await holdedAdapter.listCrmFunnels(apiKey);
+    return { items };
+  },
+
+  async holded_list_leads(apiKey, input) {
+    const items = await holdedAdapter.listLeads(apiKey, {
+      page: readPage(input),
+      limit: readLimit(input),
+      funnelId: optionalString(input, 'funnelId'),
+    });
+    return { items };
+  },
+
+  async holded_list_time_records(apiKey, input) {
+    const items = await holdedAdapter.listProjectTimeRecords(
+      apiKey,
+      requiredString(input, 'projectId'),
+      {
+        page: readPage(input),
+        limit: readLimit(input),
+      }
+    );
+    return { items };
+  },
+
   async holded_list_projects(apiKey, input) {
     const items = await holdedAdapter.listProjects(apiKey, {
       page: readPage(input),
@@ -2474,6 +2500,40 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
     'List CRM bookings in Holded',
     'List CRM bookings and agenda items from Holded for the currently authorized tenant.',
     listSchema()
+  ),
+  readTool(
+    'holded_list_crm_funnels',
+    'List CRM funnels in Holded',
+    'List the CRM funnels (sales pipelines) configured in Holded for the currently authorized tenant. Use the returned funnel id to filter holded_list_leads.',
+    simpleSchema()
+  ),
+  readTool(
+    'holded_list_leads',
+    'List CRM leads in Holded',
+    'List CRM leads from Holded for the currently authorized tenant. Optionally filter by funnelId returned by holded_list_crm_funnels. Read-only.',
+    listSchemaWithRequired(
+      {
+        funnelId: stringProperty(
+          'Optional Holded funnel identifier. When omitted, returns leads across all funnels.'
+        ),
+      },
+      []
+    )
+  ),
+  readTool(
+    'holded_list_time_records',
+    'List time records for a Holded project',
+    'List time-tracking records imputed against a specific Holded project. Useful for explaining hours spent per task / employee.',
+    buildSchema(
+      {
+        projectId: stringProperty(
+          'The Holded project identifier to fetch time records for. Returned by holded_list_projects.'
+        ),
+        page: pageProperty,
+        limit: limitProperty,
+      },
+      ['projectId']
+    )
   ),
   readTool(
     'holded_list_projects',

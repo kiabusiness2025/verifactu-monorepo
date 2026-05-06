@@ -5,10 +5,10 @@
  * Query params: connection_id, state (opcional)
  * Guarda la conexión y redirige al usuario a la sección de banca.
  */
-import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { getConnection, listAccounts } from '@verifactu/integrations/saltedge';
 import { prisma } from '@/app/lib/prisma';
+import { getConnection, listAccounts } from '@verifactu/integrations/saltedge';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

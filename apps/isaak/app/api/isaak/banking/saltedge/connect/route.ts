@@ -5,10 +5,10 @@
  * Crea (o reutiliza) el customer de Salt Edge para este tenant,
  * luego crea una connect session y devuelve la URL de autorización.
  */
-import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { createSECustomer, createConnectSession } from '@verifactu/integrations/saltedge';
 import { prisma } from '@/app/lib/prisma';
+import { createConnectSession, createSECustomer } from '@verifactu/integrations/saltedge';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

@@ -7,9 +7,9 @@
  * - connection.disconnected → marcar como inactiva
  * - data.updated        → nueva sincronización disponible (enqueue)
  */
-import { NextRequest, NextResponse } from 'next/server';
-import { verifySaltEdgeWebhook, listAccounts } from '@verifactu/integrations/saltedge';
 import { prisma } from '@/app/lib/prisma';
+import { listAccounts, verifySaltEdgeWebhook } from '@verifactu/integrations/saltedge';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 

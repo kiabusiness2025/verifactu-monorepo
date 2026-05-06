@@ -15,6 +15,7 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 import { prisma } from '@verifactu/db';
+import { getHoldedMcpScopePreset } from './holdedMcpScopes';
 
 export const PAT_PREFIX = 'hldmcp_';
 /** Visible part shown in lists. e.g. "hldmcp_AbCd". */
@@ -22,8 +23,14 @@ const VISIBLE_PREFIX_LENGTH = 4;
 /** Number of random bytes encoded into the cleartext token (~43 chars base64url). */
 const PAT_RANDOM_BYTES = 32;
 
-/** Default scopes for a freshly created PAT — same as a typical OAuth grant. */
-export const DEFAULT_PAT_SCOPES = ['holded:read', 'holded:write_drafts'] as const;
+/**
+ * Default scopes for a freshly created PAT — set to `claude_parity` so
+ * ChatGPT mobile users (the primary audience for PATs) see the same 24-tool
+ * surface that Claude desktop users see. OAuth-based ChatGPT submissions
+ * stay on the narrower `holded_public_campaign_v1` preset to avoid
+ * expanding the OpenAI review surface area.
+ */
+export const DEFAULT_PAT_SCOPES = getHoldedMcpScopePreset('claude_parity');
 
 export type CreatePatInput = {
   tenantId: string;
