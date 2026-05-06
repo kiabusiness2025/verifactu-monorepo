@@ -1002,13 +1002,14 @@ export const holdedAdapter = {
     });
   },
 
-  async listContacts(apiKey: string, args?: { page?: number; limit?: number }) {
+  async listContacts(apiKey: string, args?: { page?: number; limit?: number; name?: string }) {
     return holdedRequest<HoldedContact[]>({
       apiKey,
       path: '/api/invoicing/v1/contacts',
       query: {
         page: args?.page ?? 1,
         limit: args?.limit ?? 25,
+        ...(args?.name ? { name: args.name } : {}),
       },
     });
   },

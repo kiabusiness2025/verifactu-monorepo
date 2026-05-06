@@ -1588,11 +1588,9 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     ) {
       const name = payload.contactName.trim();
       const matches = await holdedAdapter.listContacts(apiKey, { page: 1, name });
-      const items = Array.isArray((matches as { items?: unknown }).items)
-        ? ((matches as { items: unknown[] }).items as Array<Record<string, unknown>>)
-        : Array.isArray(matches as unknown)
-          ? (matches as Array<Record<string, unknown>>)
-          : [];
+      const items: Array<Record<string, unknown>> = Array.isArray(matches)
+        ? (matches as Array<Record<string, unknown>>)
+        : [];
       const exact = items.find(
         (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
       );
