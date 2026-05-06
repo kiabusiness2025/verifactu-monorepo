@@ -1,4 +1,3 @@
-import prisma from '@/lib/prisma';
 import { query } from '@/lib/db';
 import {
   type HoldedMcpScopePreset,
@@ -6,8 +5,9 @@ import {
   HOLDED_MCP_TOOL_SCOPES,
   getHoldedMcpScopePreset,
 } from '@/lib/integrations/holdedMcpScopes';
+import prisma from '@/lib/prisma';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
-import { getAppUrl, getLandingUrl, signSessionToken, verifySessionToken } from '@verifactu/utils';
+import { getAppUrl, signSessionToken, verifySessionToken } from '@verifactu/utils';
 import { createHash, randomUUID } from 'crypto';
 
 export const MCP_RESOURCE_PATH = '/api/mcp/holded';
@@ -551,7 +551,7 @@ export function mapSessionToOAuthUser(input: {
 export function buildLoginUrl(currentAuthorizeUrl: string, source?: string) {
   const holdedSiteUrl =
     process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business';
-  const loginUrl = new URL('/auth/holded', holdedSiteUrl);
+  const loginUrl = new URL('/auth/holded-direct', holdedSiteUrl);
   loginUrl.searchParams.set('next', currentAuthorizeUrl);
   if (source?.trim()) {
     loginUrl.searchParams.set('source', source.trim());
