@@ -1,5 +1,12 @@
 # Holded Direct Connector MCP
 
+## Estado reciente
+
+Para el cierre operativo de la sesion PAT de 2026-05-06, ver tambien:
+
+- `docs/engineering/ai/HOLDED_MCP_PAT_DEPLOY_RUNBOOK_2026-05-06.md`
+- `docs/product/HOLDED_MCP_MOBILE_OAUTH_FIX_PLAN.md`
+
 ## Objetivo
 
 Este documento mantiene la ruta historica de nombre, pero la surface publica actual es el conector directo `Holded Connector for ChatGPT`.
