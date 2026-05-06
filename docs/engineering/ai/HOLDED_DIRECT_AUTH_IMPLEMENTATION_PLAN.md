@@ -1,7 +1,7 @@
 # Holded Direct Auth — Plan de Implementación por Fases
 
 **Fecha inicio:** 2026-05-06  
-**Estado:** En progreso  
+**Estado:** IMPLEMENTADO ✅  
 **Objetivo:** Permitir que ChatGPT mobile complete el flujo OAuth sin depender de Firebase  
 **Origen:** [docs/product/HOLDED_MCP_MOBILE_OAUTH_FIX_PLAN.md](../../product/HOLDED_MCP_MOBILE_OAUTH_FIX_PLAN.md)
 
@@ -145,9 +145,9 @@ ChatGPT recibe code → exchange → CONECTADO ✅
 
 ## Historial de commits por fase
 
-| Fase          | Commit                                                                  | Hash      |
-| ------------- | ----------------------------------------------------------------------- | --------- |
-| F1 — Schema   | feat(holded-direct): Phase 1 - Prisma HOLDED_DIRECT auth provider       | pendiente |
-| F2 — Backend  | feat(holded-direct): Phase 2 - backend endpoint /api/auth/holded-direct | pendiente |
-| F3 — Frontend | feat(holded-direct): Phase 3 - login page /auth/holded-direct           | pendiente |
-| F4 — OAuth    | feat(holded-direct): Phase 4 - redirect OAuth to holded-direct          | pendiente |
+| Fase          | Commit                                                                               | Hash     |
+| ------------- | ------------------------------------------------------------------------------------ | -------- |
+| F1 — Schema   | feat(holded-direct): Phase 1 - add HOLDED_DIRECT AuthProvider + migration + plan doc | 3dbcf9bf |
+| F2 — Backend  | feat(holded-direct): Phase 2 - backend endpoint /api/auth/holded-direct              | 31336827 |
+| F3 — Frontend | feat(holded-direct): Phase 3 - login page /auth/holded-direct (no Firebase)          | ca15c041 |
+| F4 — OAuth    | feat(holded-direct): Phase 4 - redirect OAuth buildLoginUrl to /auth/holded-direct   | 914131b5 |
