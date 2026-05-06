@@ -81,10 +81,10 @@ Banco (Salt Edge)
 
 ### Tareas
 
-- [ ] Definir entidad/configuracion por tenant para reglas de conciliacion.
-- [ ] Exponer endpoint de lectura/escritura de reglas.
-- [ ] Aplicar defaults globales cuando no haya configuracion explicita.
-- [ ] Añadir validaciones para rangos seguros (ej. tolerancia y ventana maxima).
+- [x] Definir entidad/configuracion por tenant para reglas de conciliacion.
+- [x] Exponer endpoint de lectura/escritura de reglas.
+- [x] Aplicar defaults globales cuando no haya configuracion explicita.
+- [x] Añadir validaciones para rangos seguros (ej. tolerancia y ventana maxima).
 
 ### Criterio de cierre
 
@@ -98,8 +98,8 @@ Banco (Salt Edge)
 
 ### Tareas
 
-- [ ] Implementar score por importe, fecha, referencia y texto.
-- [ ] Definir umbrales: alta, media y baja confianza.
+- [x] Implementar score por importe, fecha, referencia y texto.
+- [x] Definir umbrales: alta, media y baja confianza.
 - [ ] Guardar razon de match (evidencias) para auditoria.
 - [ ] Dejar autoconciliacion activa solo en score alto.
 
@@ -167,6 +167,11 @@ Banco (Salt Edge)
 - Se habilito listado real de movimientos bancarios (ya no placeholder).
 - Se habilito conciliacion manual persistente por endpoint de match.
 - Se enlazo crear gasto con marcado de conciliacion del movimiento.
+- Se añadio endpoint por tenant de reglas de conciliacion en `apps/app/app/api/banks/reconciliation-config/route.ts`.
+- Se añadieron defaults y validaciones de rango para tolerancia, ventana y umbral.
+- Se añadio migracion SQL para `bank_reconciliation_configs`.
+- Se añadio motor inicial de score en `apps/app/lib/banking/reconcileScore.ts` (importe + fecha + texto).
+- Se añadio endpoint `POST /api/banks/movements/auto-match` para sugerencias y autoconciliacion por umbral.
 
 ---
 
