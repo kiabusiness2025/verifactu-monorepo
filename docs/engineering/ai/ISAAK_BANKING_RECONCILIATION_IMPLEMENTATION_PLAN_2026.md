@@ -137,14 +137,16 @@ Banco (Salt Edge)
 
 ### Tareas
 
-- [ ] Job periodico para reevaluar pendientes.
-- [ ] Integrar eventos no conciliados en alertas proactivas.
-- [ ] Dashboard tecnico: volumen, ratio auto/manual, errores.
-- [ ] Runbook de incidencias de conciliacion.
+- [x] Job periodico para reevaluar pendientes.
+- [x] Integrar eventos no conciliados en alertas proactivas.
+- [x] Dashboard tecnico: volumen, ratio auto/manual, errores.
+- [x] Runbook de incidencias de conciliacion.
 
 ### Criterio de cierre
 
 - Operacion robusta con seguimiento diario y reaccion ante fallos.
+
+✅ **FASE 5 COMPLETADA** — Commit: PENDIENTE
 
 ---
 
@@ -199,6 +201,17 @@ Banco (Salt Edge)
   - Razones de score visibles en lista y expandible
 - Integración en `apps/app/app/dashboard/banks/page.tsx`
 - Commit: 0107d459
+
+**Sesión 3 (2026-05-07):**
+
+- Se completó Fase 5: automatización, alertas y observabilidad.
+- Endpoint `POST /api/cron` ahora ejecuta job real de reevaluación multi-tenant de conciliación.
+- Nuevo servicio reutilizable `apps/app/lib/banking/reconciliationAutomation.ts` para reevaluación por tenant y ejecución global.
+- El mismo servicio crea alertas proactivas por pendientes antiguos y expone métricas técnicas de conciliación.
+- Endpoint nuevo `GET /api/banks/reconciliation-metrics` con scope tenant (sesión activa) y scope global (token de monitor).
+- `POST /api/banks/movements/auto-match` refactorizado para reutilizar el servicio común.
+- Runbook creado: `docs/ops/runbooks/BANK_RECONCILIATION_INCIDENT_RUNBOOK_2026.md`.
+- Tests añadidos en `apps/app/app/api/cron/route.test.ts` y `apps/app/app/api/banks/reconciliation-metrics/route.test.ts`.
 
 ---
 
