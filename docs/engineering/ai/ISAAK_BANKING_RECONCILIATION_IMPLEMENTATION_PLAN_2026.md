@@ -146,7 +146,7 @@ Banco (Salt Edge)
 
 - Operacion robusta con seguimiento diario y reaccion ante fallos.
 
-✅ **FASE 5 COMPLETADA** — Commit: PENDIENTE
+✅ **FASE 5 COMPLETADA** — Commit: 36f27a8d
 
 ---
 
@@ -156,10 +156,10 @@ Banco (Salt Edge)
 
 ### Tareas
 
-- [ ] Tests unitarios de reglas de matching.
-- [ ] Tests de API para endpoints de movimientos/match/create-expense.
+- [x] Tests unitarios de reglas de matching.
+- [x] Tests de API para endpoints de movimientos/match/create-expense.
 - [ ] Smoke de flujo completo (sync -> sugerencia -> conciliacion -> auditoria).
-- [ ] Checklist de release y rollback.
+- [x] Checklist de release y rollback.
 
 ### Criterio de cierre
 
@@ -213,14 +213,23 @@ Banco (Salt Edge)
 - Runbook creado: `docs/ops/runbooks/BANK_RECONCILIATION_INCIDENT_RUNBOOK_2026.md`.
 - Tests añadidos en `apps/app/app/api/cron/route.test.ts` y `apps/app/app/api/banks/reconciliation-metrics/route.test.ts`.
 
+**Sesión 4 (2026-05-07):**
+
+- Avance de Fase 6: cobertura de calidad y hardening.
+- Tests unitarios añadidos en `apps/app/lib/banking/reconcileScore.test.ts`.
+- Tests de API añadidos en:
+  - `apps/app/app/api/banks/movements/route.test.ts`
+  - `apps/app/app/api/banks/movements/[id]/match/route.test.ts`
+  - `apps/app/app/api/banks/movements/[id]/create-expense/route.test.ts`
+- Checklist operativo de release/rollback creado en `docs/ops/runbooks/BANK_RECONCILIATION_RELEASE_CHECKLIST_2026.md`.
+
 ---
 
 ## Backlog priorizado inmediato (siguiente sesion)
 
-1. Implementar Fase 5: Job periodico para reevaluar pendientes + alertas proactivas.
-2. Implementar Fase 6: Tests unitarios, API tests y E2E.
-3. Performance: Optimizar queries de movimientos y scoring (índices, paginación).
-4. UX: Integrar Isaak prompts para casos ambiguos en bandeja operativa.
+1. Completar Fase 6: Smoke de flujo completo (sync -> sugerencia -> conciliacion -> auditoria).
+2. Performance: Optimizar queries de movimientos y scoring (indices, paginacion).
+3. UX: Integrar Isaak prompts para casos ambiguos en bandeja operativa.
 
 ---
 
