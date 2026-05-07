@@ -1,4 +1,6 @@
 import { HoldedDirectTenantsSection } from '@/components/admin/HoldedDirectControlSections';
+import { HoldedConnectorsKpiCards } from '@/components/admin/HoldedConnectorsKpiCards';
+import { HoldedConnectorsSearch } from '@/components/admin/HoldedConnectorsSearch';
 import { listHoldedDirectTenants } from '@/lib/holdedDirectAdmin';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +16,12 @@ export default async function HoldedDirectTenantsPage() {
           Empresas con conexion o historial operativo del canal Holded.
         </p>
       </header>
+
+      {/* F6.2a — KPIs globales del conector (todos los canales). */}
+      <HoldedConnectorsKpiCards />
+
+      {/* F6.3 — Busqueda por nombre de empresa o usuario. */}
+      <HoldedConnectorsSearch />
 
       <HoldedDirectTenantsSection
         title="Tenants"
