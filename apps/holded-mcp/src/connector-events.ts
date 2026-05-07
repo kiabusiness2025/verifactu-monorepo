@@ -14,8 +14,9 @@ import { logger } from './logger.js';
 type ConnectorEventChannel = 'dashboard' | 'chatgpt' | 'mobile' | 'claude';
 
 interface BaseEvent {
-  tenantId: string;
-  userEmail: string;
+  userId?: string;
+  tenantId?: string;
+  userEmail?: string;
   channel: ConnectorEventChannel;
   detectedAt?: string;
 }

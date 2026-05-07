@@ -1372,6 +1372,7 @@ model ExpenseRecord {
 
   tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  seTransactionMatchAudits SeTransactionMatchAudit[]
 
   @@index([tenantId])
   @@index([supplierId])
