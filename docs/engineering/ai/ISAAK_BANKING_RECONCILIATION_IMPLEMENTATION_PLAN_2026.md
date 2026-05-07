@@ -118,14 +118,16 @@ Banco (Salt Edge)
 
 ### Tareas
 
-- [ ] Reemplazar placeholder de bancos por listado real con estado.
-- [ ] Acciones: confirmar, deshacer, crear gasto, enlazar con documento.
-- [ ] Filtros por estado, cuenta y periodo.
-- [ ] Mensajes de ayuda de Isaak para casos no concluyentes.
+- [x] Reemplazar placeholder de bancos por listado real con estado.
+- [x] Acciones: confirmar, deshacer, crear gasto, enlazar con documento.
+- [x] Filtros por estado, cuenta y periodo.
+- [x] Mensajes de ayuda de Isaak para casos no concluyentes.
 
 ### Criterio de cierre
 
 - Usuario puede cerrar conciliaciones pendientes sin salir del flujo.
+
+✅ **FASE 4 COMPLETADA** — Commit: 0107d459
 
 ---
 
@@ -186,15 +188,26 @@ Banco (Salt Edge)
 - Endpoint `POST /api/banks/movements/auto-match` actualizado para guardar auditoria en ambos casos: autoconciliados y sugeridos.
 - Endpoint GET `/api/banks/movements/audit?movementId=<id>` para consultar evidencia historica de matches.
 - Commit: c87100ff
+- Se completó Fase 4: bandeja operativa UI.
+- Componente `MovementsList` con funcionalidades:
+  - Listado de movimientos sin reconciliar (GET /api/banks/movements)
+  - Generación de scores con dryRun=true (POST /api/banks/movements/auto-match)
+  - Expandible por movimiento: muestra candidato sugerido, historial de auditoría, botones de acción
+  - Acciones: confirmar match, rechazar, crear nuevo gasto
+  - Filtros: sin concordancia vs sugeridos
+  - Status badges: auto-concordado (verde), sugerencia (naranja)
+  - Razones de score visibles en lista y expandible
+- Integración en `apps/app/app/dashboard/banks/page.tsx`
+- Commit: 0107d459
 
 ---
 
 ## Backlog priorizado inmediato (siguiente sesion)
 
-1. Diseñar y migrar configuracion por tenant de reglas de autoconciliacion.
-2. Implementar motor de score minimo (importe + fecha + texto).
-3. Exponer primera bandeja operativa en dashboard bancos.
-4. Añadir tests de endpoints de conciliacion.
+1. Implementar Fase 5: Job periodico para reevaluar pendientes + alertas proactivas.
+2. Implementar Fase 6: Tests unitarios, API tests y E2E.
+3. Performance: Optimizar queries de movimientos y scoring (índices, paginación).
+4. UX: Integrar Isaak prompts para casos ambiguos en bandeja operativa.
 
 ---
 
