@@ -100,13 +100,15 @@ Banco (Salt Edge)
 
 - [x] Implementar score por importe, fecha, referencia y texto.
 - [x] Definir umbrales: alta, media y baja confianza.
-- [ ] Guardar razon de match (evidencias) para auditoria.
-- [ ] Dejar autoconciliacion activa solo en score alto.
+- [x] Guardar razon de match (evidencias) para auditoria.
+- [x] Dejar autoconciliacion activa solo en score alto.
 
 ### Criterio de cierre
 
 - Casos claros se concilian automaticamente.
 - Casos ambiguos quedan en revision asistida.
+
+✅ **FASE 3 COMPLETADA** — Commit: c87100ff
 
 ---
 
@@ -163,6 +165,8 @@ Banco (Salt Edge)
 
 ## Registro de cambios de esta sesion
 
+**Sesión 1 (2026-05-06):**
+
 - Se activaron endpoints de conciliacion minima persistente en `apps/app`.
 - Se habilito listado real de movimientos bancarios (ya no placeholder).
 - Se habilito conciliacion manual persistente por endpoint de match.
@@ -172,6 +176,16 @@ Banco (Salt Edge)
 - Se añadio migracion SQL para `bank_reconciliation_configs`.
 - Se añadio motor inicial de score en `apps/app/lib/banking/reconcileScore.ts` (importe + fecha + texto).
 - Se añadio endpoint `POST /api/banks/movements/auto-match` para sugerencias y autoconciliacion por umbral.
+
+**Sesión 2 (2026-05-07):**
+
+- Se completó Fase 3: persistencia de evidencias de match.
+- Tabla `SeTransactionMatchAudit` con campos: id, tenantId, seTransactionId, matchedExpenseId, matchScore, scoreComponents (JSON), evidenceReasons (JSON), autoMatched, createdAt, updatedAt.
+- Relación bidireccional SeTransaction ↔ SeTransactionMatchAudit y Tenant ↔ SeTransactionMatchAudit.
+- Migración SQL: `20260507120000_add_bank_reconciliation_audit`.
+- Endpoint `POST /api/banks/movements/auto-match` actualizado para guardar auditoria en ambos casos: autoconciliados y sugeridos.
+- Endpoint GET `/api/banks/movements/audit?movementId=<id>` para consultar evidencia historica de matches.
+- Commit: c87100ff
 
 ---
 
