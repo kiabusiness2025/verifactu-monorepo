@@ -1,14 +1,18 @@
 import { Resend } from 'resend';
 import {
+  buildHoldedAuthFailuresAdminEmail,
+  buildHoldedAuthFailuresUserEmail,
   buildHoldedCompanyEmailVerificationEmail,
   buildHoldedConnectedAdminEmail,
   buildHoldedConnectedEmail,
   buildHoldedContactConfirmationEmail,
   buildHoldedDisconnectedAdminEmail,
   buildHoldedDisconnectedEmail,
+  buildHoldedFirstActivityAdminEmail,
   buildHoldedInternalContactEmail,
   buildHoldedInternalDemoRequestEmail,
   buildHoldedInternalLeadEmail,
+  buildHoldedInvoiceDraftCreatedAdminEmail,
   buildHoldedOnboardingGuideEmail,
   buildHoldedProfileCompletionEmail,
   buildHoldedWeeklyAdminSummaryEmail,
@@ -496,5 +500,166 @@ export async function sendHoldedDemoRequestNotification(
     success: !result.error,
     messageId: result.data?.id ?? null,
     error: result.error ?? null,
+  };
+}
+
+// ── F5: helpers de envio para los eventos operativos del conector ───────────
+// Cada uno toma una fila de ExternalConnection + datos del evento, construye
+// el template y lo envia. Estan diseñados para ser invocados desde el endpoint
+// connector-event (que recibe webhooks de apps/holded-mcp).
+
+type ConnectorEventChannel = 'dashboard' | 'chatgpt' | 'mobile' | 'claude';
+
+function readAdminEmailList() {
+  return readEmailList(
+    process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
+    process.env.HOLDED_ADMIN_EMAILS,
+    process.env.ADMIN_EMAILS,
+    'soporte@verifactu.business'
+  );
+}
+
+export async function sendHoldedFirstActivityNotification(input: {
+  companyName: string;
+  userEmail: string;
+  channel: ConnectorEventChannel;
+  toolUsed: string | null;
+  detectedAt?: Date;
+}) {
+  const { resend, from, replyTo } = createResendTransport();
+  const adminRecipients = readAdminEmailList();
+  if (adminRecipients.length === 0) {
+    return { sent: false, reason: 'no_admin_recipients' as const };
+  }
+
+  const adminPanelUrl = `${readOptionalEnv('NEXT_PUBLIC_HOLDED_SITE_URL', 'https://holded.verifactu.business')}/admin`;
+  const template = buildHoldedFirstActivityAdminEmail({
+    companyName: input.companyName,
+    userEmail: input.userEmail,
+    channel: input.channel,
+    toolUsed: input.toolUsed,
+    detectedAt: input.detectedAt ?? new Date(),
+    adminPanelUrl,
+  });
+
+  const result = await resend.emails.send({
+    from,
+    to: adminRecipients,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    replyTo,
+  });
+  return { sent: !result.error, messageId: result.data?.id ?? null };
+}
+
+export async function sendHoldedInvoiceDraftNotification(input: {
+  companyName: string;
+  userEmail: string;
+  channel: ConnectorEventChannel;
+  draftId: string | null;
+  draftNumber: string | null;
+  contactName: string | null;
+  total: number | null;
+  currency: string | null;
+  detectedAt?: Date;
+}) {
+  const { resend, from, replyTo } = createResendTransport();
+  const adminRecipients = readAdminEmailList();
+  if (adminRecipients.length === 0) {
+    return { sent: false, reason: 'no_admin_recipients' as const };
+  }
+
+  const adminPanelUrl = `${readOptionalEnv('NEXT_PUBLIC_HOLDED_SITE_URL', 'https://holded.verifactu.business')}/admin`;
+  const template = buildHoldedInvoiceDraftCreatedAdminEmail({
+    companyName: input.companyName,
+    userEmail: input.userEmail,
+    channel: input.channel,
+    draftId: input.draftId,
+    draftNumber: input.draftNumber,
+    contactName: input.contactName,
+    total: input.total,
+    currency: input.currency,
+    detectedAt: input.detectedAt ?? new Date(),
+    adminPanelUrl,
+  });
+
+  const result = await resend.emails.send({
+    from,
+    to: adminRecipients,
+    subject: template.subject,
+    html: template.html,
+    text: template.text,
+    replyTo,
+  });
+  return { sent: !result.error, messageId: result.data?.id ?? null };
+}
+
+export async function sendHoldedAuthFailuresBurst(input: {
+  userEmail: string;
+  userName: string;
+  companyName: string;
+  channel: ConnectorEventChannel;
+  failureCount: number;
+  windowMinutes: number;
+  detectedAt?: Date;
+}) {
+  const { resend, from, replyTo } = createResendTransport();
+  const adminRecipients = readAdminEmailList();
+  const supportEmail = readOptionalEnv('SUPPORT_NOTIFICATION_EMAIL', 'soporte@verifactu.business');
+  const reconnectUrl = `${readOptionalEnv('NEXT_PUBLIC_HOLDED_SITE_URL', 'https://holded.verifactu.business')}/auth/holded-direct?source=auth_failures_burst`;
+  const adminPanelUrl = `${readOptionalEnv('NEXT_PUBLIC_HOLDED_SITE_URL', 'https://holded.verifactu.business')}/admin`;
+  const detectedAt = input.detectedAt ?? new Date();
+
+  const userTemplate = buildHoldedAuthFailuresUserEmail({
+    name: input.userName,
+    companyName: input.companyName,
+    channel: input.channel,
+    failureCount: input.failureCount,
+    windowMinutes: input.windowMinutes,
+    reconnectUrl,
+    supportEmail,
+  });
+
+  const adminTemplate = buildHoldedAuthFailuresAdminEmail({
+    companyName: input.companyName,
+    userEmail: input.userEmail,
+    channel: input.channel,
+    failureCount: input.failureCount,
+    windowMinutes: input.windowMinutes,
+    detectedAt,
+    adminPanelUrl,
+  });
+
+  const sends: Array<Promise<unknown>> = [];
+  if (input.userEmail) {
+    sends.push(
+      resend.emails.send({
+        from,
+        to: [input.userEmail],
+        subject: userTemplate.subject,
+        html: userTemplate.html,
+        text: userTemplate.text,
+        replyTo,
+      })
+    );
+  }
+  if (adminRecipients.length > 0) {
+    sends.push(
+      resend.emails.send({
+        from,
+        to: adminRecipients,
+        subject: adminTemplate.subject,
+        html: adminTemplate.html,
+        text: adminTemplate.text,
+        replyTo,
+      })
+    );
+  }
+
+  await Promise.allSettled(sends);
+  return {
+    sent: true,
+    recipients: { user: Boolean(input.userEmail), admin: adminRecipients.length },
   };
 }

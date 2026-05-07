@@ -1,0 +1,267 @@
+'use client';
+
+/**
+ * F6.1 — pagina admin que lista las ExternalConnection (provider='holded') de
+ * un tenant. Para cada conexion muestra canal, estado, fecha conexion, ultima
+ * actividad, ultimo error y permite revocarla.
+ *
+ * Fase inicial. F6.2-F6.4 (metricas globales, busqueda, audit log viewer)
+ * llegan en Sesion 6.
+ */
+
+import { adminGet, adminPost } from '@/lib/adminApi';
+import { useParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
+
+type ConnectorRow = {
+  id: string;
+  channelKey: 'dashboard' | 'chatgpt' | 'mobile' | 'claude' | string;
+  status: string;
+  ownershipStatus: string | null;
+  flags: {
+    managedByThirdParty: boolean;
+    clientAdminGap: boolean;
+    highGovernanceRisk: boolean;
+    underClaimReview: boolean;
+  };
+  connectedAt: string | null;
+  lastValidatedAt: string | null;
+  lastSyncAt: string | null;
+  disconnectedAt: string | null;
+  revokedAt: string | null;
+  lastError: string | null;
+  legal: { termsAcceptedAt: string | null; version: string | null };
+  connectedBy: { userId: string; email: string | null; name: string | null } | null;
+};
+
+const CHANNEL_LABELS: Record<string, string> = {
+  dashboard: 'Dashboard',
+  chatgpt: 'ChatGPT',
+  mobile: 'ChatGPT mobile',
+  claude: 'Claude Desktop',
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  connected: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  error: 'bg-amber-50 text-amber-700 border-amber-200',
+  revoked_api: 'bg-rose-50 text-rose-700 border-rose-200',
+  disconnected: 'bg-slate-100 text-slate-600 border-slate-200',
+};
+
+function formatDate(value: string | null): string {
+  if (!value) return '—';
+  try {
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return d.toLocaleString('es-ES', {
+      timeZone: 'Europe/Madrid',
+      dateStyle: 'short',
+      timeStyle: 'short',
+    });
+  } catch {
+    return value;
+  }
+}
+
+export default function TenantConnectorsPage() {
+  const params = useParams<{ id: string }>();
+  const tenantId = (params?.id as string) || '';
+
+  const [items, setItems] = useState<ConnectorRow[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [revokeBusy, setRevokeBusy] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    if (!tenantId) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await adminGet<{ items: ConnectorRow[] }>(
+        `/api/admin/tenants/${tenantId}/connectors`
+      );
+      setItems(data.items ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error cargando conectores');
+    } finally {
+      setLoading(false);
+    }
+  }, [tenantId]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  async function handleRevoke(connectionId: string, channelKey: string) {
+    if (!tenantId) return;
+    const confirmed = window.confirm(
+      `Vas a revocar la conexión "${CHANNEL_LABELS[channelKey] ?? channelKey}" de este tenant. La acción es irreversible y borra la API key cifrada. ¿Continuar?`
+    );
+    if (!confirmed) return;
+
+    setRevokeBusy(connectionId);
+    setNotice(null);
+    setError(null);
+    try {
+      await adminPost<{ ok: true; connectionId: string }>(
+        `/api/admin/tenants/${tenantId}/connectors/${connectionId}/revoke`,
+        { reason: 'admin_panel_revoke' }
+      );
+      setNotice(`Conexión revocada (${connectionId.slice(0, 8)}…)`);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al revocar');
+    } finally {
+      setRevokeBusy(null);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-slate-900">Conectores Holded</h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Conexiones MCP/Holded de este tenant. Ver canal, estado y revocar.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={reload}
+          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+          disabled={loading}
+        >
+          {loading ? 'Cargando…' : 'Refrescar'}
+        </button>
+      </div>
+
+      {notice ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+          {notice}
+        </div>
+      ) : null}
+      {error ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-0 shadow-soft">
+        {loading && !items ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-500">Cargando conexiones…</div>
+        ) : items && items.length === 0 ? (
+          <div className="px-4 py-6 text-center text-sm text-slate-500">
+            Este tenant no tiene conectores Holded registrados.
+          </div>
+        ) : (
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-slate-200 bg-slate-50">
+              <tr>
+                <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Canal
+                </th>
+                <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Estado
+                </th>
+                <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Conectado por
+                </th>
+                <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Conectado
+                </th>
+                <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Última actividad
+                </th>
+                <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Último error
+                </th>
+                <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-600">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-slate-700">
+              {(items ?? []).map((row) => {
+                const statusClass =
+                  STATUS_STYLES[row.status] ?? 'bg-slate-100 text-slate-600 border-slate-200';
+                const channelLabel = CHANNEL_LABELS[row.channelKey] ?? row.channelKey;
+                const lastActivity = row.lastSyncAt || row.lastValidatedAt || row.connectedAt;
+                const isFinal = row.status === 'revoked_api' || row.status === 'disconnected';
+                return (
+                  <tr key={row.id}>
+                    <td className="px-3 py-2 text-sm font-medium text-slate-800">{channelLabel}</td>
+                    <td className="px-3 py-2 text-xs">
+                      <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 font-semibold ${statusClass}`}
+                      >
+                        {row.status}
+                      </span>
+                      {row.flags.highGovernanceRisk ? (
+                        <span className="ml-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700">
+                          governance
+                        </span>
+                      ) : null}
+                      {row.flags.underClaimReview ? (
+                        <span className="ml-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                          claim
+                        </span>
+                      ) : null}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-slate-700">
+                      {row.connectedBy ? (
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {row.connectedBy.name ||
+                              row.connectedBy.email ||
+                              row.connectedBy.userId}
+                          </span>
+                          {row.connectedBy.email ? (
+                            <span className="text-slate-500">{row.connectedBy.email}</span>
+                          ) : null}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-slate-700">
+                      {formatDate(row.connectedAt)}
+                    </td>
+                    <td className="px-3 py-2 text-xs text-slate-700">{formatDate(lastActivity)}</td>
+                    <td className="px-3 py-2 text-xs text-slate-700">
+                      {row.lastError ? (
+                        <span className="line-clamp-2 text-rose-700">{row.lastError}</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {isFinal ? (
+                        <span className="text-xs text-slate-400">
+                          {row.revokedAt ? `revocada ${formatDate(row.revokedAt)}` : 'desconectada'}
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleRevoke(row.id, row.channelKey)}
+                          disabled={revokeBusy === row.id}
+                          className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {revokeBusy === row.id ? 'Revocando…' : 'Revocar'}
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <p className="text-xs text-slate-400">
+        Versión inicial F6.1. Métricas globales, búsqueda y audit log llegan en F6.2-F6.4.
+      </p>
+    </div>
+  );
+}

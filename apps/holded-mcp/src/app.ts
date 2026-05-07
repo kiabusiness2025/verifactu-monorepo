@@ -159,7 +159,14 @@ export function createApp() {
     });
 
     const getClient = () => holdedClient;
-    registerProductionTools(mcpServer, getClient);
+    // F5.3: pasamos contexto del token (userId real post-F3, channel='claude'
+    // ya que este servidor MCP solo lo usa Claude Desktop) para que tools con
+    // side-effect puedan disparar eventos al endpoint receptor de apps/holded.
+    const getContext = () => ({
+      userId: record.userId,
+      channel: 'claude' as const,
+    });
+    registerProductionTools(mcpServer, getClient, getContext);
 
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,

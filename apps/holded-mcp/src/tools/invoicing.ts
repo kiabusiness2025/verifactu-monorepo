@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { HoldedClient, HOLDED_DOC_TYPES } from '../holded-client.js';
 import { toUnixSecondsNumber, toUnixSecondsString } from '../utils.js';
 import { readOnlyAnnotations, writeAnnotations } from './policy.js';
+import { dispatchConnectorEventBackground } from '../connector-events.js';
 
 const DOC_TYPES = HOLDED_DOC_TYPES;
 
@@ -10,7 +11,20 @@ const dateInput = z
   .union([z.string(), z.number()])
   .describe('Date as ISO 8601 (recommended) or Unix timestamp in seconds.');
 
-export function registerInvoicingTools(server: McpServer, getClient: () => HoldedClient) {
+/**
+ * F5.3: contexto del request que las tools reciben para que las que tengan
+ * side-effects (create_invoice_draft) puedan disparar eventos.
+ */
+export interface ToolContext {
+  userId: string;
+  channel: 'dashboard' | 'chatgpt' | 'mobile' | 'claude';
+}
+
+export function registerInvoicingTools(
+  server: McpServer,
+  getClient: () => HoldedClient,
+  getContext?: () => ToolContext
+) {
   server.tool(
     'list_documents',
     'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only. Paginated — use page and limit to control response size.',
@@ -177,6 +191,41 @@ export function registerInvoicingTools(server: McpServer, getClient: () => Holde
       };
 
       const data = await getClient().createDocument('invoice', body);
+
+      // F5.3: dispatch admin email "borrador de factura creado" via el endpoint
+      // receptor en apps/holded. Best-effort: si falla la red, el draft ya esta
+      // creado y no degradamos la respuesta del tool.
+      const ctx = getContext?.();
+      if (ctx?.userId) {
+        const draft = data as Record<string, unknown>;
+        const draftId =
+          typeof draft.id === 'string'
+            ? draft.id
+            : typeof draft._id === 'string'
+              ? draft._id
+              : null;
+        const draftNumber =
+          typeof draft.docNumber === 'string'
+            ? draft.docNumber
+            : typeof draft.number === 'string'
+              ? draft.number
+              : null;
+        const totalRaw = draft.total ?? draft.totalAmount ?? null;
+        const totalNumber = typeof totalRaw === 'number' ? totalRaw : null;
+        const currency = typeof draft.currency === 'string' ? draft.currency.toUpperCase() : null;
+
+        dispatchConnectorEventBackground({
+          type: 'invoice_draft_created',
+          userId: ctx.userId,
+          channel: ctx.channel,
+          draftId,
+          draftNumber,
+          contactName: contactName?.trim() || null,
+          total: totalNumber,
+          currency,
+        });
+      }
+
       return {
         content: [
           {

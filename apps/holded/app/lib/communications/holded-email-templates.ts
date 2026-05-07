@@ -856,3 +856,268 @@ export function buildHoldedInternalDemoRequestEmail(input: DemoRequestEmailInput
     text: `Nueva solicitud de demo Holded\nNombre: ${input.name}\nEmail: ${input.email}\nEmpresa: ${input.companyName}\n${extraText}\nOrigen: ${source}\nID: ${input.id}`,
   };
 }
+
+// ── F5: emails del ciclo de vida operativo ──────────────────────────────────
+// Estos templates cubren los eventos de la matriz F5 que tienen triggers
+// sincronos en el codigo del MCP / endpoint comun:
+//   - Primera actividad detectada (admin only)
+//   - Borrador de factura creado via conector (admin only)
+//   - Intentos de auth fallidos repetidos (personal + admin)
+// Los eventos con triggers de background job (sin actividad 30 dias, API key
+// revocada en Holded) viven en docs/engineering/HOLDED_CONNECTOR_BACKGROUND_EMAILS_RUNBOOK_2026.md.
+
+type HoldedConnectorChannel = 'dashboard' | 'chatgpt' | 'mobile' | 'claude';
+
+function channelLabelFor(channel: HoldedConnectorChannel) {
+  switch (channel) {
+    case 'chatgpt':
+      return 'ChatGPT';
+    case 'mobile':
+      return 'ChatGPT mobile';
+    case 'claude':
+      return 'Claude Desktop';
+    case 'dashboard':
+    default:
+      return 'Panel';
+  }
+}
+
+/**
+ * F5: primera vez que un access token del MCP se usa con exito (transicion
+ * de last_used_at NULL a NOT NULL). Solo email admin: el personal ya recibio
+ * el email "conectado" en el upsert.
+ */
+export function buildHoldedFirstActivityAdminEmail(input: {
+  companyName: string;
+  userEmail: string;
+  channel: HoldedConnectorChannel;
+  toolUsed: string | null;
+  detectedAt: Date;
+  adminPanelUrl: string;
+}): EmailTemplate {
+  const company = sanitizeCompanyName(input.companyName);
+  const channelLabel = channelLabelFor(input.channel);
+  const detectedAt = input.detectedAt.toLocaleString('es-ES', {
+    timeZone: 'Europe/Madrid',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+  const tool = input.toolUsed?.trim() || '(consulta inicial)';
+
+  return {
+    subject: `[Holded Admin] Primera actividad — ${company} (${channelLabel})`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+        <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+          <div style="padding:22px 28px 14px;background:linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%);border-bottom:1px solid #d1fae5;">
+            <span style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#047857;">Holded Admin · Primera actividad</span>
+            <h1 style="font-size:20px;margin:6px 0 0;color:#0f172a;">${escapeHtml(company)} · ${escapeHtml(channelLabel)}</h1>
+          </div>
+          <div style="padding:24px 28px;">
+            <p style="margin:0 0 12px;font-size:14px;color:#0f172a;">Detectamos la primera consulta exitosa al conector. La conexion esta operativa.</p>
+            <table role="presentation" style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
+              ${[
+                ['Empresa', company],
+                ['Usuario', input.userEmail],
+                ['Canal', channelLabel],
+                ['Primer tool usado', tool],
+                ['Fecha', detectedAt],
+              ]
+                .map(
+                  ([label, value]) => `
+                <tr>
+                  <td style="padding:9px 14px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #f1f5f9;width:35%;">${escapeHtml(label)}</td>
+                  <td style="padding:9px 14px;font-size:13px;color:#0f172a;border-bottom:1px solid #f1f5f9;">${escapeHtml(value)}</td>
+                </tr>`
+                )
+                .join('')}
+            </table>
+            <div style="margin-top:20px;">
+              <a href="${escapeHtml(input.adminPanelUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:700;font-size:13px;">Ver en panel de admin</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `.trim(),
+    text: `[Holded Admin] Primera actividad detectada\nEmpresa: ${company}\nUsuario: ${input.userEmail}\nCanal: ${channelLabel}\nPrimer tool: ${tool}\nFecha: ${detectedAt}\n\nPanel: ${input.adminPanelUrl}`,
+  };
+}
+
+/**
+ * F5: cada vez que se ejecuta un tool de escritura (create_invoice_draft o
+ * derivados). Pensado para que el admin de la empresa este al tanto de cualquier
+ * borrador creado a traves del conector. El personal no recibe email aqui (lo
+ * vio en la propia conversacion del LLM).
+ */
+export function buildHoldedInvoiceDraftCreatedAdminEmail(input: {
+  companyName: string;
+  userEmail: string;
+  channel: HoldedConnectorChannel;
+  draftId: string | null;
+  draftNumber: string | null;
+  contactName: string | null;
+  total: number | null;
+  currency: string | null;
+  detectedAt: Date;
+  adminPanelUrl: string;
+}): EmailTemplate {
+  const company = sanitizeCompanyName(input.companyName);
+  const channelLabel = channelLabelFor(input.channel);
+  const detectedAt = input.detectedAt.toLocaleString('es-ES', {
+    timeZone: 'Europe/Madrid',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+  const draftRef = input.draftNumber || input.draftId || '(sin numero)';
+  const totalLabel =
+    typeof input.total === 'number' && Number.isFinite(input.total)
+      ? `${input.total.toFixed(2)} ${input.currency || 'EUR'}`
+      : '(no informado)';
+
+  return {
+    subject: `[Holded Admin] Borrador de factura creado — ${company} (${channelLabel})`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+        <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+          <div style="padding:22px 28px 14px;background:linear-gradient(135deg,#fef3c7 0%,#fef9c3 100%);border-bottom:1px solid #fde68a;">
+            <span style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#854d0e;">Holded Admin · Borrador de factura</span>
+            <h1 style="font-size:20px;margin:6px 0 0;color:#0f172a;">${escapeHtml(company)}</h1>
+          </div>
+          <div style="padding:24px 28px;">
+            <p style="margin:0 0 12px;font-size:14px;color:#0f172a;">Se ha creado un <strong>borrador de factura</strong> a traves del conector. El borrador queda en Holded como <em>draft</em>: no se ha emitido ni enviado.</p>
+            <table role="presentation" style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
+              ${[
+                ['Empresa', company],
+                ['Usuario', input.userEmail],
+                ['Canal', channelLabel],
+                ['Numero / ID', draftRef],
+                ['Cliente', input.contactName || '(sin asignar)'],
+                ['Total', totalLabel],
+                ['Fecha', detectedAt],
+              ]
+                .map(
+                  ([label, value]) => `
+                <tr>
+                  <td style="padding:9px 14px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #f1f5f9;width:35%;">${escapeHtml(label)}</td>
+                  <td style="padding:9px 14px;font-size:13px;color:#0f172a;border-bottom:1px solid #f1f5f9;">${escapeHtml(value)}</td>
+                </tr>`
+                )
+                .join('')}
+            </table>
+            <p style="margin:18px 0 0;font-size:12px;color:#64748b;">El conector nunca emite, finaliza ni envia facturas. Es decir, no emite y no envia documentos por ti. Para hacerlo, revisa el borrador en Holded y actualizalo manualmente.</p>
+            <div style="margin-top:20px;">
+              <a href="${escapeHtml(input.adminPanelUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:700;font-size:13px;">Ver en panel de admin</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    `.trim(),
+    text: `[Holded Admin] Borrador de factura creado\nEmpresa: ${company}\nUsuario: ${input.userEmail}\nCanal: ${channelLabel}\nBorrador: ${draftRef}\nCliente: ${input.contactName || '(sin asignar)'}\nTotal: ${totalLabel}\nFecha: ${detectedAt}\n\nPanel: ${input.adminPanelUrl}`,
+  };
+}
+
+/**
+ * F5: 3+ intentos de auth fallidos en una ventana corta. Email al usuario
+ * para que sepa que algo va mal con su conexion.
+ */
+export function buildHoldedAuthFailuresUserEmail(input: {
+  name: string;
+  companyName: string;
+  channel: HoldedConnectorChannel;
+  failureCount: number;
+  windowMinutes: number;
+  reconnectUrl: string;
+  supportEmail: string;
+}): EmailTemplate {
+  const channelLabel = channelLabelFor(input.channel);
+  const company = sanitizeCompanyName(input.companyName);
+
+  return {
+    subject: `Tu conector Holded esta fallando — ${channelLabel}`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+        <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+          ${brandHeader('Hay un problema con tu conector')}
+          <div style="padding:24px 28px;">
+            <p style="margin:0 0 12px;font-size:15px;color:#0f172a;">${greeting(input.name)}</p>
+            <p style="margin:0 0 12px;font-size:14px;color:#0f172a;">Hemos detectado <strong>${input.failureCount} intentos de conexion fallidos</strong> con tu cuenta de Holded en los ultimos ${input.windowMinutes} minutos a traves de <strong>${escapeHtml(channelLabel)}</strong>.</p>
+            <p style="margin:0 0 12px;font-size:14px;color:#0f172a;">Las causas mas frecuentes son:</p>
+            <ul style="margin:0 0 16px;padding-left:20px;font-size:14px;color:#334155;">
+              <li>La API key de Holded ha sido <strong>regenerada o revocada</strong> en el panel de Holded.</li>
+              <li>Tu plan de Holded ha cambiado y ya no incluye acceso a la API.</li>
+              <li>La cuenta de Holded esta suspendida o limitada temporalmente.</li>
+            </ul>
+            <p style="margin:0 0 16px;font-size:14px;color:#0f172a;">Reconecta el conector para que vuelva a funcionar:</p>
+            <div>
+              <a href="${escapeHtml(input.reconnectUrl)}" style="display:inline-block;background:#dc2626;color:#fff;text-decoration:none;padding:11px 22px;border-radius:999px;font-weight:700;font-size:14px;">Reconectar Holded</a>
+            </div>
+            <p style="margin:18px 0 0;font-size:12px;color:#64748b;">Si crees que es un error o necesitas ayuda, escribenos a <a href="mailto:${escapeHtml(input.supportEmail)}" style="color:#1d9e75;">${escapeHtml(input.supportEmail)}</a>. Empresa: ${escapeHtml(company)}.</p>
+          </div>
+        </div>
+      </div>
+    `.trim(),
+    text: `Tu conector Holded para ${channelLabel} esta fallando.\n\nHemos detectado ${input.failureCount} intentos de conexion fallidos en los ultimos ${input.windowMinutes} minutos.\n\nReconecta: ${input.reconnectUrl}\nSoporte: ${input.supportEmail}`,
+  };
+}
+
+/**
+ * F5: contraparte admin del email anterior. Se manda al admin empresa cuando
+ * detectamos los mismos 3+ fallos en la ventana corta.
+ */
+export function buildHoldedAuthFailuresAdminEmail(input: {
+  companyName: string;
+  userEmail: string;
+  channel: HoldedConnectorChannel;
+  failureCount: number;
+  windowMinutes: number;
+  detectedAt: Date;
+  adminPanelUrl: string;
+}): EmailTemplate {
+  const company = sanitizeCompanyName(input.companyName);
+  const channelLabel = channelLabelFor(input.channel);
+  const detectedAt = input.detectedAt.toLocaleString('es-ES', {
+    timeZone: 'Europe/Madrid',
+    dateStyle: 'short',
+    timeStyle: 'short',
+  });
+
+  return {
+    subject: `[Holded Admin] Auth fallida — ${company} (${channelLabel})`,
+    html: `
+      <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+        <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+          <div style="padding:22px 28px 14px;background:linear-gradient(135deg,#fee2e2 0%,#fef2f2 100%);border-bottom:1px solid #fecaca;">
+            <span style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#b91c1c;">Holded Admin · Auth fallida</span>
+            <h1 style="font-size:20px;margin:6px 0 0;color:#0f172a;">${escapeHtml(company)} · ${escapeHtml(channelLabel)}</h1>
+          </div>
+          <div style="padding:24px 28px;">
+            <p style="margin:0 0 12px;font-size:14px;color:#0f172a;"><strong>${input.failureCount} intentos fallidos</strong> en los ultimos ${input.windowMinutes} minutos. Posibles causas: API key revocada, plan cambiado, cuenta suspendida.</p>
+            <table role="presentation" style="width:100%;border-collapse:collapse;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;">
+              ${[
+                ['Empresa', company],
+                ['Usuario', input.userEmail],
+                ['Canal', channelLabel],
+                ['Intentos fallidos', String(input.failureCount)],
+                ['Ventana', `${input.windowMinutes} min`],
+                ['Detectado', detectedAt],
+              ]
+                .map(
+                  ([label, value]) => `
+                <tr>
+                  <td style="padding:9px 14px;font-size:12px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #f1f5f9;width:35%;">${escapeHtml(label)}</td>
+                  <td style="padding:9px 14px;font-size:13px;color:#0f172a;border-bottom:1px solid #f1f5f9;">${escapeHtml(value)}</td>
+                </tr>`
+                )
+                .join('')}
+            </table>
+            <div style="margin-top:20px;">
+              <a href="${escapeHtml(input.adminPanelUrl)}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:11px 20px;border-radius:999px;font-weight:700;font-size:13px;">Ver en panel de admin</a>
+            </div>
+            <p style="margin:18px 0 0;font-size:12px;color:#64748b;">Tambien hemos avisado al usuario por email para que reconecte cuanto antes.</p>
+          </div>
+        </div>
+      </div>
+    `.trim(),
+    text: `[Holded Admin] Auth fallida\nEmpresa: ${company}\nUsuario: ${input.userEmail}\nCanal: ${channelLabel}\nIntentos: ${input.failureCount} en ${input.windowMinutes} min\nDetectado: ${detectedAt}\n\nPanel: ${input.adminPanelUrl}`,
+  };
+}

@@ -24,6 +24,15 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.coerce.number().default(60000),
   RATE_LIMIT_MAX_REQUESTS: z.coerce.number().default(100),
   LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  // F3 (Holded Connectors Unified Architecture): URL del backend `apps/app`
+  // donde vive el endpoint común F1 `/api/integrations/holded/upsert-from-key`.
+  // El consent screen de Claude lo usa para crear User+Tenant+Connection sin
+  // duplicar lógica (single source of truth).
+  VERIFACTU_APP_URL: z.string().url().default('https://app.verifactu.business'),
+  // Token compartido (server-to-server) entre el MCP y `apps/app` para llamar
+  // al endpoint F1. Si no se define, el MCP llamará sin auth header (válido si
+  // el endpoint F1 está abierto, p.ej. detrás de Vercel rate-limit).
+  VERIFACTU_APP_SHARED_SECRET: z.string().optional(),
 });
 
 function loadConfig() {

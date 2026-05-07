@@ -26,6 +26,15 @@ export interface AuthorizationCodePayload {
   scope: string;
   codeChallenge: string | null;
   codeChallengeMethod: 'S256' | null;
+  // F3 (Holded Connectors Unified Architecture): cuando el consent screen
+  // pasó por el endpoint común F1, recibimos el `User.id` real de Verifactu y
+  // el `Tenant.id` asociados. Si vienen, los persistimos en lugar del legacy
+  // sha256(apiKey). Para tokens emitidos antes del cambio (compatibilidad de
+  // 30 días) mantenemos el fallback.
+  userId?: string | null;
+  tenantId?: string | null;
+  // Email personal del usuario que dio consentimiento (informativo).
+  personalEmail?: string | null;
 }
 
 export interface TokenPair {
@@ -36,6 +45,7 @@ export interface TokenPair {
 }
 
 type DbAuthorizationCodeRow = {
+  user_id: string;
   client_id: string;
   redirect_uri: string;
   holded_api_key_enc: string;
@@ -308,6 +318,11 @@ export function verifyPkceCodeVerifier(codeVerifier: string, codeChallenge: stri
 
 export async function createAuthorizationCode(input: AuthorizationCodePayload): Promise<string> {
   const prisma = getPersistentClient();
+  // F3.2: si el consent screen recibió un userId real desde el endpoint común
+  // F1, lo persistimos. Si no (modo legacy o fallback por red caída), usamos
+  // sha256(apiKey) como hasta ahora — compatibilidad con tokens preexistentes.
+  const userIdToStore = input.userId?.trim() || (await hashApiKey(input.holdedApiKey));
+
   if (prisma) {
     await ensurePersistentStore(prisma);
 
@@ -322,7 +337,7 @@ export async function createAuthorizationCode(input: AuthorizationCodePayload): 
       `,
       [
         buildOpaqueTokenHash(code),
-        await hashApiKey(input.holdedApiKey),
+        userIdToStore,
         input.clientId,
         input.redirectUri,
         encryptSensitiveValue(input.holdedApiKey),
@@ -343,6 +358,9 @@ export async function createAuthorizationCode(input: AuthorizationCodePayload): 
     scp: input.scope,
     cc: input.codeChallenge,
     ccm: input.codeChallengeMethod,
+    uid: userIdToStore,
+    tid: input.tenantId ?? null,
+    em: input.personalEmail ?? null,
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -370,7 +388,7 @@ export async function consumeAuthorizationCode(
           WHERE code_hash = $1
             AND consumed_at IS NULL
             AND expires_at > now()
-          RETURNING client_id, redirect_uri, holded_api_key_enc, scope, code_challenge, code_challenge_method
+          RETURNING user_id, client_id, redirect_uri, holded_api_key_enc, scope, code_challenge, code_challenge_method
         `,
         [buildOpaqueTokenHash(code)]
       );
@@ -388,6 +406,12 @@ export async function consumeAuthorizationCode(
       scope: row.scope,
       codeChallenge: row.code_challenge,
       codeChallengeMethod: row.code_challenge_method === 'S256' ? 'S256' : null,
+      // F3.2: el `user_id` puede ser un User.id real (post-F3) o un sha256
+      // hash legacy. El consumer downstream lo propaga al token pair sin
+      // tener que distinguir.
+      userId: row.user_id,
+      tenantId: null,
+      personalEmail: null,
     };
   }
 
@@ -403,6 +427,9 @@ export async function consumeAuthorizationCode(
     const scope = payload['scp'];
     const codeChallenge = payload['cc'];
     const codeChallengeMethod = payload['ccm'];
+    const uid = payload['uid'];
+    const tid = payload['tid'];
+    const em = payload['em'];
 
     if (
       typeof holdedApiKey !== 'string' ||
@@ -419,6 +446,9 @@ export async function consumeAuthorizationCode(
       scope: typeof scope === 'string' && scope.trim() ? scope : 'holded:read holded:write',
       codeChallenge: typeof codeChallenge === 'string' ? codeChallenge : null,
       codeChallengeMethod: codeChallengeMethod === 'S256' ? 'S256' : null,
+      userId: typeof uid === 'string' ? uid : null,
+      tenantId: typeof tid === 'string' ? tid : null,
+      personalEmail: typeof em === 'string' ? em : null,
     };
   } catch {
     return null;
@@ -429,9 +459,13 @@ export async function createTokenPair(input: {
   holdedApiKey: string;
   clientId: string;
   scope: string;
+  // F3.2: cuando el authorization code fue creado tras un upsert F1 exitoso,
+  // este `userId` es el `User.id` real de Verifactu. Si no llega (modo legacy)
+  // mantenemos el sha256(apiKey) como fallback.
+  userId?: string | null;
 }): Promise<TokenPair> {
   const prisma = getPersistentClient();
-  const userId = await hashApiKey(input.holdedApiKey);
+  const userId = input.userId?.trim() || (await hashApiKey(input.holdedApiKey));
 
   if (prisma) {
     await ensurePersistentStore(prisma);
@@ -495,10 +529,13 @@ export async function verifyAccessToken(token: string): Promise<TokenRecord | nu
   if (prisma) {
     await ensurePersistentStore(prisma);
 
-    const rows = await queryRows<DbTokenRow>(
+    // F5.3: añadimos `last_used_at` al SELECT para detectar la transicion
+    // NULL→NOT NULL (= primer uso del token) y disparar el evento
+    // `first_activity` al endpoint receptor.
+    const rows = await queryRows<DbTokenRow & { last_used_at: Date | null }>(
       prisma,
       `
-        SELECT session_id, user_id, client_id, holded_api_key_enc, scope, created_at, expires_at
+        SELECT session_id, user_id, client_id, holded_api_key_enc, scope, created_at, expires_at, last_used_at
         FROM ${ACCESS_TOKENS_TABLE}
         WHERE token_hash = $1
           AND revoked_at IS NULL
@@ -513,6 +550,8 @@ export async function verifyAccessToken(token: string): Promise<TokenRecord | nu
       return null;
     }
 
+    const wasFirstUse = row.last_used_at === null;
+
     execute(
       prisma,
       `
@@ -522,6 +561,26 @@ export async function verifyAccessToken(token: string): Promise<TokenRecord | nu
         `,
       [buildOpaqueTokenHash(token)]
     ).catch(() => {});
+
+    if (wasFirstUse) {
+      // Fire-and-forget: si la red al endpoint receptor falla no degradamos
+      // el flujo del MCP. Importacion lazy para no romper si el modulo
+      // todavia no esta compilado en algun entorno (smoke tests, etc.).
+      try {
+        // Dynamic import to avoid bundling overhead at module load.
+        // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+        const { dispatchConnectorEventBackground } =
+          require('./connector-events.js') as typeof import('./connector-events.js');
+        dispatchConnectorEventBackground({
+          type: 'first_activity',
+          userId: row.user_id,
+          channel: 'claude',
+          toolUsed: null,
+        });
+      } catch {
+        // ignored - fire-and-forget
+      }
+    }
 
     return mapDbTokenRow(row);
   }

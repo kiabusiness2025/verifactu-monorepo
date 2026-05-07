@@ -1,11 +1,13 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 const tabs = [
-  { label: "Overview", href: "overview" },
-  { label: "Users", href: "users" },
-  { label: "Billing", href: "billing" },
-  { label: "Integrations", href: "integrations" },
-  { label: "Audit", href: "audit" },
+  { label: 'Overview', href: 'overview' },
+  { label: 'Users', href: 'users' },
+  { label: 'Billing', href: 'billing' },
+  { label: 'Integrations', href: 'integrations' },
+  // F6.1: tab dedicada a las conexiones MCP/Holded del tenant.
+  { label: 'Connectors', href: 'connectors' },
+  { label: 'Audit', href: 'audit' },
 ];
 
 export default async function TenantLayout({
