@@ -4,7 +4,17 @@ import { resolveSharedHoldedConnectionStatusForTenant } from '@/lib/integrations
 const PROVIDER = 'accounting_api';
 const SHARED_PROVIDER = 'holded';
 
-export type AccountingIntegrationChannel = 'dashboard' | 'chatgpt';
+// NOTE: Phase 1 (F1) of the unified Holded connectors architecture extends the
+// channel union to include 'mobile' (ChatGPT mobile self-contained form) and
+// 'claude' (Claude Desktop consent screen). The shared helper
+// `lib/integrations/holdedConnectionUpsert.ts` relies on this expansion.
+export const ACCOUNTING_INTEGRATION_CHANNELS = [
+  'dashboard',
+  'chatgpt',
+  'mobile',
+  'claude',
+] as const;
+export type AccountingIntegrationChannel = (typeof ACCOUNTING_INTEGRATION_CHANNELS)[number];
 
 function describeStorageError(error: unknown) {
   if (error instanceof Error) {
@@ -40,7 +50,11 @@ let externalConnectionsOptionalColumnsEnsured = false;
 let storageBootstrapAttempted = false;
 
 function normalizeAccountingChannel(channel?: string | null): AccountingIntegrationChannel {
-  return channel === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  if (typeof channel !== 'string') return 'dashboard';
+  const trimmed = channel.trim().toLowerCase();
+  return (ACCOUNTING_INTEGRATION_CHANNELS as readonly string[]).includes(trimmed)
+    ? (trimmed as AccountingIntegrationChannel)
+    : 'dashboard';
 }
 
 async function detectTable(tableName: string) {

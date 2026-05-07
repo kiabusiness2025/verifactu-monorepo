@@ -6,7 +6,11 @@ const ADMIN_NOTIFICATION_EMAIL =
   process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'soporte@verifactu.business';
 
 type HoldedLifecycleAction = 'connected' | 'disconnected';
-type HoldedLifecycleChannel = 'dashboard' | 'chatgpt';
+// Phase 1 of the Holded Connectors Unified Architecture extends the lifecycle
+// channel union to include 'mobile' (ChatGPT mobile self-contained form) and
+// 'claude' (Claude Desktop consent screen). The same email templates are reused
+// for these new entry points so we only need new labels and CTA copy.
+type HoldedLifecycleChannel = 'dashboard' | 'chatgpt' | 'mobile' | 'claude';
 
 type TenantEmailContext = {
   userEmail: string | null;
@@ -24,7 +28,17 @@ function renderActionLabel(action: HoldedLifecycleAction) {
 }
 
 function renderChannelLabel(channel: HoldedLifecycleChannel) {
-  return channel === 'chatgpt' ? 'ChatGPT' : 'tu area privada';
+  switch (channel) {
+    case 'chatgpt':
+      return 'ChatGPT';
+    case 'mobile':
+      return 'ChatGPT mobile';
+    case 'claude':
+      return 'Claude Desktop';
+    case 'dashboard':
+    default:
+      return 'tu area privada';
+  }
 }
 
 function normalizeText(value?: string | null) {
