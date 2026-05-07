@@ -1,17 +1,89 @@
-import { sanitizeHoldedReturnTarget } from '@/app/lib/holded-navigation';
-import { prisma } from '@/app/lib/prisma';
+/**
+ * POST /api/auth/holded-direct  (canal = mobile)
+ *
+ * Wrapper F2.2 de la arquitectura unificada de conectores Holded.
+ *
+ * Recibe el form simple de `/auth/holded-direct` y delega TODA la lógica de
+ * upsert (User → Tenant → Membership → ExternalConnection + emails admin) en
+ * el endpoint común F1.1 del backend `apps/app`:
+ *   POST {APP_PUBLIC_URL}/api/integrations/holded/upsert-from-key
+ *
+ * Responsabilidades propias del wrapper:
+ *   - Parsear y normalizar el body que envía el form.
+ *   - Sanitizar el `next` para que no se pueda redirigir fuera de los hosts
+ *     permitidos (`holded.verifactu.business` / `app.verifactu.business`).
+ *   - Mintear la cookie `.verifactu.business` (SameSite=None, Secure) con el
+ *     payload de sesión correcto a partir del `userId` + `tenantId` que el
+ *     endpoint F1.1 devuelve.
+ *   - Traducir los códigos de error de F1 a los códigos que la UI ya maneja
+ *     (MISSING_FIELDS / INVALID_EMAIL / TERMS_NOT_ACCEPTED / INVALID_API_KEY
+ *     / PROBE_ERROR / DB_ERROR / SESSION_ERROR / NETWORK_ERROR).
+ *
+ * Esto cumple la Decisión Clave #1 del plan: "Endpoint común vs
+ * implementaciones separadas: ELEGIDO endpoint común (DRY, single source of
+ * truth)".
+ */
+
+import { sanitizeHoldedReturnTarget, APP_PUBLIC_URL } from '@/app/lib/holded-navigation';
 import {
   SESSION_COOKIE_NAME,
   buildSessionCookieOptions,
   readSessionSecret,
   signSessionToken,
 } from '@/app/lib/session';
-import { encryptHoldedSecret, probeHoldedConnection } from '@verifactu/integrations';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
+const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 días
+const UPSERT_PATH = '/api/integrations/holded/upsert-from-key';
+const F2_CHANNEL = 'mobile' as const;
+const F2_SOURCE = 'chatgpt_mobile_form' as const;
+
+/** Errores F1 (helper) → códigos UI F2 (los que conoce `page.tsx`). */
+function translateUpsertReason(reason: string | undefined): {
+  code:
+    | 'MISSING_FIELDS'
+    | 'INVALID_EMAIL'
+    | 'TERMS_NOT_ACCEPTED'
+    | 'INVALID_API_KEY'
+    | 'PROBE_ERROR'
+    | 'DB_ERROR';
+  status: number;
+} {
+  switch (reason) {
+    case 'missing_api_key':
+    case 'invalid_channel':
+      return { code: 'MISSING_FIELDS', status: 400 };
+    case 'invalid_personal_email':
+      return { code: 'INVALID_EMAIL', status: 400 };
+    case 'legal_acceptance_required':
+      return { code: 'TERMS_NOT_ACCEPTED', status: 400 };
+    case 'invalid_api_key':
+      return { code: 'INVALID_API_KEY', status: 400 };
+    case 'probe_failed':
+      return { code: 'PROBE_ERROR', status: 502 };
+    case 'persist_failed':
+    default:
+      return { code: 'DB_ERROR', status: 500 };
+  }
+}
+
+type UpsertSuccess = {
+  ok: true;
+  userId: string;
+  tenantId: string;
+  connectionId: string;
+  status: 'connected' | 'error';
+  legalAcceptedAt: string;
+};
+
+type UpsertFailure = {
+  ok: false;
+  stage?: string;
+  reason?: string;
+  detail?: string;
+};
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -30,127 +102,74 @@ export async function POST(request: NextRequest) {
   if (!normalizedEmail || !normalizedApiKey) {
     return NextResponse.json({ error: 'MISSING_FIELDS' }, { status: 400 });
   }
-
   if (!acceptedTerms || !acceptedPrivacy) {
     return NextResponse.json({ error: 'TERMS_NOT_ACCEPTED' }, { status: 400 });
   }
 
-  // Validate email format at boundary
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(normalizedEmail)) {
-    return NextResponse.json({ error: 'INVALID_EMAIL' }, { status: 400 });
-  }
-
-  // Validate API key against Holded
-  let probe: Awaited<ReturnType<typeof probeHoldedConnection>>;
+  // Llamada al endpoint F1.1 (single source of truth para el upsert).
+  let upsertResponse: Response;
   try {
-    probe = await probeHoldedConnection(normalizedApiKey);
-  } catch {
+    upsertResponse = await fetch(`${APP_PUBLIC_URL}${UPSERT_PATH}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Propagamos el request-id si está, para correlacionar logs
+        ...(request.headers.get('x-request-id')
+          ? { 'x-request-id': request.headers.get('x-request-id') as string }
+          : {}),
+      },
+      body: JSON.stringify({
+        personalEmail: normalizedEmail,
+        holdedApiKey: normalizedApiKey,
+        channel: F2_CHANNEL,
+        source: F2_SOURCE,
+        acceptedTerms: acceptedTerms === true,
+        acceptedPrivacy: acceptedPrivacy === true,
+      }),
+      // El upsert debe ir contra estado fresco; nada de cache
+      cache: 'no-store',
+    });
+  } catch (err) {
+    console.error('[holded-direct] upsert HTTP failed:', err);
     return NextResponse.json({ error: 'PROBE_ERROR' }, { status: 502 });
   }
 
-  if (!probe.ok) {
-    return NextResponse.json({ error: 'INVALID_API_KEY' }, { status: 400 });
-  }
-
-  // Upsert User → Tenant → Membership → ExternalConnection
-  let sessionUserId: string;
-  let sessionTenantId: string;
-  let sessionEmail: string;
-
+  let upsertJson: UpsertSuccess | UpsertFailure;
   try {
-    const result = await prisma.$transaction(async (tx) => {
-      // Upsert user by email (authProvider=HOLDED_DIRECT)
-      let user = await tx.user.findFirst({ where: { email: normalizedEmail } });
-      if (!user) {
-        user = await tx.user.create({
-          data: {
-            email: normalizedEmail,
-            name: normalizedEmail.split('@')[0],
-            authProvider: 'HOLDED_DIRECT',
-            authSubject: `holded:${normalizedEmail}`,
-          },
-        });
-      }
-
-      // Find or create tenant
-      const membership = await tx.membership.findFirst({
-        where: { userId: user.id, status: 'active' },
-      });
-
-      let tenantId: string;
-      if (membership) {
-        tenantId = membership.tenantId;
-      } else {
-        const tenant = await tx.tenant.create({
-          data: {
-            name: normalizedEmail.split('@')[0],
-            legalName: null,
-          },
-        });
-        await tx.membership.create({
-          data: {
-            tenantId: tenant.id,
-            userId: user.id,
-            role: 'owner',
-            status: 'active',
-          },
-        });
-        tenantId = tenant.id;
-      }
-
-      // Upsert ExternalConnection (channelKey='mobile')
-      const encryptedKey = encryptHoldedSecret(normalizedApiKey);
-      await tx.externalConnection.upsert({
-        where: {
-          tenantId_provider_channelKey: {
-            tenantId,
-            provider: 'holded',
-            channelKey: 'mobile',
-          },
-        },
-        create: {
-          tenantId,
-          provider: 'holded',
-          channelKey: 'mobile',
-          apiKeyEnc: encryptedKey,
-          connectionStatus: 'connected',
-          connectedAt: new Date(),
-          connectedByUserId: user.id,
-          legalTermsAcceptedAt: new Date(),
-          legalPrivacyAcceptedAt: new Date(),
-          legalAcceptanceVersion: 'v1.0',
-        },
-        update: {
-          apiKeyEnc: encryptedKey,
-          connectionStatus: 'connected',
-          connectedAt: new Date(),
-        },
-      });
-
-      return { userId: user.id, email: user.email ?? normalizedEmail, tenantId };
+    upsertJson = (await upsertResponse.json()) as UpsertSuccess | UpsertFailure;
+  } catch {
+    console.error('[holded-direct] upsert returned non-JSON', {
+      status: upsertResponse.status,
     });
-
-    sessionUserId = result.userId;
-    sessionTenantId = result.tenantId;
-    sessionEmail = result.email;
-  } catch (err) {
-    console.error('[holded-direct] DB transaction failed:', err);
     return NextResponse.json({ error: 'DB_ERROR' }, { status: 500 });
   }
 
-  // Mint session JWT
+  if (!upsertJson.ok) {
+    const { code, status } = translateUpsertReason(upsertJson.reason);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[holded-direct] upsert rejected', {
+        stage: upsertJson.stage,
+        reason: upsertJson.reason,
+        detail: upsertJson.detail,
+      });
+    }
+    return NextResponse.json({ error: code }, { status });
+  }
+
+  const { userId, tenantId } = upsertJson;
+
+  // Mintamos la cookie de sesión (la única responsabilidad del wrapper).
   let token: string;
   try {
     const secret = readSessionSecret();
     token = await signSessionToken({
       payload: {
-        uid: sessionUserId,
-        email: sessionEmail,
-        tenantId: sessionTenantId,
+        uid: userId,
+        email: normalizedEmail,
+        tenantId,
         role: 'owner',
         roles: ['owner'],
-        tenants: [sessionTenantId],
+        tenants: [tenantId],
         ver: 1,
         rememberDevice: true,
       },

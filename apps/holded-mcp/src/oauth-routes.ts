@@ -36,6 +36,86 @@ function codeSecret() {
   return new TextEncoder().encode(config.OAUTH_JWT_SECRET);
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const F1_UPSERT_PATH = '/api/integrations/holded/upsert-from-key';
+
+const F1_ERROR_MESSAGES: Record<string, string> = {
+  invalid_personal_email: 'El email no tiene un formato valido.',
+  missing_api_key: 'Tienes que pegar la API key de Holded.',
+  legal_acceptance_required:
+    'Debes aceptar los terminos y la politica de privacidad para conectar.',
+  invalid_channel: 'No reconocemos el canal del flujo. Vuelve a empezar la conexion.',
+  invalid_api_key:
+    'La API key no es valida o no tiene los permisos necesarios. Comprueba que sea correcta y que tu plan de Holded este activo.',
+  probe_failed: 'No hemos podido contactar con Holded. Intentalo de nuevo en unos segundos.',
+  persist_failed:
+    'Error interno guardando la conexion. Si persiste, escribenos a soporte@verifactu.business.',
+};
+
+interface F1UpsertSuccessPayload {
+  ok: true;
+  userId: string;
+  tenantId: string;
+  connectionId: string;
+  status: 'connected' | 'error';
+  legalAcceptedAt: string;
+}
+
+interface F1UpsertFailurePayload {
+  ok: false;
+  stage?: string;
+  reason?: string;
+  detail?: string;
+}
+
+type F1UpsertResponse = F1UpsertSuccessPayload | F1UpsertFailurePayload;
+
+/**
+ * Llama al endpoint comun F1 (`apps/app`) para crear o actualizar el grafo
+ * User -> Tenant -> Membership -> ExternalConnection. Devuelve el resultado
+ * tal cual (success o failure) o lanza si hay error de red.
+ */
+async function callUpsertFromKey(input: {
+  personalEmail: string;
+  holdedApiKey: string;
+  acceptedTerms: boolean;
+  acceptedPrivacy: boolean;
+}): Promise<F1UpsertResponse> {
+  const url = new URL(F1_UPSERT_PATH, config.VERIFACTU_APP_URL).toString();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (config.VERIFACTU_APP_SHARED_SECRET) {
+    headers['x-verifactu-shared-secret'] = config.VERIFACTU_APP_SHARED_SECRET;
+  }
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      personalEmail: input.personalEmail,
+      holdedApiKey: input.holdedApiKey,
+      channel: 'claude',
+      source: 'claude_consent_screen',
+      acceptedTerms: input.acceptedTerms,
+      acceptedPrivacy: input.acceptedPrivacy,
+    }),
+    cache: 'no-store',
+  });
+
+  return (await response.json()) as F1UpsertResponse;
+}
+
 async function createDynamicClientSecret(
   clientId: string,
   redirectUris: string[]
@@ -254,12 +334,20 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
 
 oauthRouter.post('/authorize', async (req: Request, res: Response) => {
   res.set('Cache-Control', 'no-store');
-  const holdedApiKey = typeof req.body?.holded_api_key === 'string' ? req.body.holded_api_key : '';
+  const holdedApiKey =
+    typeof req.body?.holded_api_key === 'string' ? req.body.holded_api_key.trim() : '';
+  const personalEmailRaw =
+    typeof req.body?.personal_email === 'string'
+      ? req.body.personal_email.trim().toLowerCase()
+      : '';
+  const acceptedTerms = req.body?.accepted_terms === '1' || req.body?.accepted_terms === 'on';
+  const acceptedPrivacy = req.body?.accepted_privacy === '1' || req.body?.accepted_privacy === 'on';
   const authorizeContext = resolveAuthorizeContext(req);
 
-  if (!holdedApiKey || !authorizeContext) {
+  if (!holdedApiKey || !personalEmailRaw || !authorizeContext) {
     logger.warn('POST /oauth/authorize sin contexto suficiente', {
       hasHoldedApiKey: holdedApiKey.length > 0,
+      hasPersonalEmail: personalEmailRaw.length > 0,
       hasBodyClientId: typeof req.body?.client_id === 'string' && req.body.client_id.length > 0,
       hasBodyRedirectUri:
         typeof req.body?.redirect_uri === 'string' && req.body.redirect_uri.length > 0,
@@ -269,14 +357,10 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
       hasReferer: Boolean(req.get('referer')),
       contentType: req.get('content-type') ?? '',
     });
-    res.status(400).json({ error: 'Faltan parametros' });
-    return;
-  }
-
-  const client = new HoldedClient(holdedApiKey);
-  const valid = await client.validateApiKey();
-
-  if (!valid) {
+    if (!authorizeContext) {
+      res.status(400).json({ error: 'Faltan parametros' });
+      return;
+    }
     res
       .status(400)
       .send(
@@ -284,14 +368,121 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
           authorizeContext.clientId,
           authorizeContext.redirectUri,
           authorizeContext.state,
-          true,
+          'Faltan datos: rellena email y API key.',
           authorizeContext.scope,
           authorizeContext.codeChallenge,
-          authorizeContext.codeChallengeMethod
+          authorizeContext.codeChallengeMethod,
+          { personalEmail: personalEmailRaw, acceptedTerms, acceptedPrivacy }
         )
       );
     return;
   }
+
+  if (!EMAIL_REGEX.test(personalEmailRaw)) {
+    res
+      .status(400)
+      .send(
+        consentPage(
+          authorizeContext.clientId,
+          authorizeContext.redirectUri,
+          authorizeContext.state,
+          F1_ERROR_MESSAGES.invalid_personal_email,
+          authorizeContext.scope,
+          authorizeContext.codeChallenge,
+          authorizeContext.codeChallengeMethod,
+          { personalEmail: personalEmailRaw, acceptedTerms, acceptedPrivacy }
+        )
+      );
+    return;
+  }
+
+  if (!acceptedTerms || !acceptedPrivacy) {
+    res
+      .status(400)
+      .send(
+        consentPage(
+          authorizeContext.clientId,
+          authorizeContext.redirectUri,
+          authorizeContext.state,
+          F1_ERROR_MESSAGES.legal_acceptance_required,
+          authorizeContext.scope,
+          authorizeContext.codeChallenge,
+          authorizeContext.codeChallengeMethod,
+          { personalEmail: personalEmailRaw, acceptedTerms, acceptedPrivacy }
+        )
+      );
+    return;
+  }
+
+  // Single source of truth: delegamos el upsert User+Tenant+Connection en F1.
+  // Si el endpoint cae o devuelve un error de red, hacemos un fallback "best
+  // effort" en local para no bloquear a Claude (validamos solo la API key
+  // contra Holded y persistimos el authorization code con userId = sha256
+  // legacy). Esto se ejecuta SOLO si la red entre el MCP y `apps/app` falla.
+  let upsertResult: F1UpsertResponse | null = null;
+  let networkErrored = false;
+  try {
+    upsertResult = await callUpsertFromKey({
+      personalEmail: personalEmailRaw,
+      holdedApiKey,
+      acceptedTerms,
+      acceptedPrivacy,
+    });
+  } catch (err) {
+    networkErrored = true;
+    logger.error('F1 upsert network failure, falling back to local-only mode', {
+      message: err instanceof Error ? err.message : String(err),
+    });
+  }
+
+  if (!networkErrored && upsertResult && !upsertResult.ok) {
+    const reason = upsertResult.reason ?? 'persist_failed';
+    const message = F1_ERROR_MESSAGES[reason] ?? F1_ERROR_MESSAGES.persist_failed;
+    res
+      .status(reason === 'invalid_api_key' ? 400 : 500)
+      .send(
+        consentPage(
+          authorizeContext.clientId,
+          authorizeContext.redirectUri,
+          authorizeContext.state,
+          message,
+          authorizeContext.scope,
+          authorizeContext.codeChallenge,
+          authorizeContext.codeChallengeMethod,
+          { personalEmail: personalEmailRaw, acceptedTerms, acceptedPrivacy }
+        )
+      );
+    return;
+  }
+
+  // Si la red estaba caída, validamos al menos contra Holded para no emitir
+  // un authorization code con una API key claramente inválida.
+  if (networkErrored) {
+    const client = new HoldedClient(holdedApiKey);
+    const valid = await client.validateApiKey();
+    if (!valid) {
+      res
+        .status(400)
+        .send(
+          consentPage(
+            authorizeContext.clientId,
+            authorizeContext.redirectUri,
+            authorizeContext.state,
+            F1_ERROR_MESSAGES.invalid_api_key,
+            authorizeContext.scope,
+            authorizeContext.codeChallenge,
+            authorizeContext.codeChallengeMethod,
+            { personalEmail: personalEmailRaw, acceptedTerms, acceptedPrivacy }
+          )
+        );
+      return;
+    }
+  }
+
+  const realUserId =
+    !networkErrored && upsertResult && upsertResult.ok ? upsertResult.userId : null;
+  const realTenantId =
+    !networkErrored && upsertResult && upsertResult.ok ? upsertResult.tenantId : null;
 
   const code = await createAuthorizationCode({
     holdedApiKey,
@@ -300,8 +491,13 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
     scope: authorizeContext.scope,
     codeChallenge: authorizeContext.codeChallenge,
     codeChallengeMethod: authorizeContext.codeChallengeMethod,
+    userId: realUserId,
+    tenantId: realTenantId,
+    personalEmail: personalEmailRaw,
   });
-  logger.info(`Authorization code generado para ${authorizeContext.clientId}`);
+  logger.info(
+    `Authorization code generado para ${authorizeContext.clientId} (userId=${realUserId ? 'real' : 'legacy-hash'})`
+  );
 
   const callbackUrl = new URL(authorizeContext.redirectUri);
   callbackUrl.searchParams.set('code', code);
@@ -393,6 +589,10 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
       holdedApiKey: authCodePayload.holdedApiKey,
       clientId: clientRecord.clientId,
       scope: authCodePayload.scope,
+      // F3.2: propagamos el userId real (si vino del consent screen post-F1)
+      // al token pair para que la BD del MCP refleje el User.id de Verifactu
+      // en lugar del sha256(apiKey) legacy.
+      userId: authCodePayload.userId ?? null,
     });
 
     res.json({
@@ -462,10 +662,11 @@ function consentPage(
   clientId: string,
   redirectUri: string,
   state: string,
-  error = false,
+  error: false | string = false,
   scope = 'holded:read holded:write',
   codeChallenge: string | null = null,
-  codeChallengeMethod: 'S256' | null = null
+  codeChallengeMethod: 'S256' | null = null,
+  prefill: { personalEmail?: string; acceptedTerms?: boolean; acceptedPrivacy?: boolean } = {}
 ): string {
   const actionUrl = new URL('/oauth/authorize', config.BASE_URL);
   actionUrl.searchParams.set('client_id', clientId);
@@ -507,6 +708,11 @@ function consentPage(
     .scopes { background: #f9fafb; border-radius: 8px; padding: 14px; margin-bottom: 20px; }
     .scope { font-size: 13px; color: #374151; padding: 3px 0; }
     .scope::before { content: '\\2713 '; color: #1D9E75; }
+    .terms { margin: 8px 0 18px; padding: 12px 14px; background: #f9fafb; border: 1px solid #eef2f7; border-radius: 8px; }
+    .checkbox-row { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; cursor: pointer; }
+    .checkbox-row input { width: 16px; height: 16px; margin: 2px 0 0; padding: 0; flex: 0 0 auto; accent-color: #1D9E75; }
+    .checkbox-row span { font-size: 12px; color: #4b5563; line-height: 1.5; }
+    .checkbox-row a { color: #1D9E75; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -519,7 +725,11 @@ function consentPage(
     <h1>Conectar Holded con Claude</h1>
     <p>Claude necesita acceder a tu cuenta de Holded para consultar tus datos y ayudarte con facturas, contactos, proyectos y contabilidad.</p>
 
-    ${error ? '<div class="error">API key invalida o sin permisos. Comprueba que es correcta y que tu plan de Holded esta activo.</div>' : ''}
+    ${
+      error
+        ? `<div class="error">${typeof error === 'string' ? escapeHtml(error) : 'API key invalida o sin permisos. Comprueba que es correcta y que tu plan de Holded esta activo.'}</div>`
+        : ''
+    }
 
     <div class="scopes">
       <div class="scope">Leer facturas, presupuestos y documentos</div>
@@ -537,17 +747,28 @@ function consentPage(
       <input type="hidden" name="scope" value="${scope}">
       <input type="hidden" name="code_challenge" value="${codeChallenge ?? ''}">
       <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod ?? ''}">
+
+      <label for="personal_email">Tu email</label>
+      <input type="email" id="personal_email" name="personal_email" placeholder="tu@empresa.com" required autocomplete="email" inputmode="email" value="${escapeHtml(prefill.personalEmail ?? '')}">
+      <p class="hint">Lo usamos para vincular la conexion a tu empresa y avisarte de eventos importantes.</p>
+
       <label for="holded_api_key">Tu API key de Holded</label>
       <input type="password" id="holded_api_key" name="holded_api_key" placeholder="Pega aqui tu API key..." required autocomplete="off">
       <p class="hint">La encuentras en Holded &rarr; Ajustes &rarr; Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">&iquest;Como generarla?</a></p>
+
+      <div class="terms">
+        <label class="checkbox-row">
+          <input type="checkbox" name="accepted_terms" value="1"${prefill.acceptedTerms ? ' checked' : ''} required>
+          <span>Acepto los <a href="https://holded.verifactu.business/conectores/claude/terms" target="_blank" rel="noopener">terminos del conector</a>.</span>
+        </label>
+        <label class="checkbox-row">
+          <input type="checkbox" name="accepted_privacy" value="1"${prefill.acceptedPrivacy ? ' checked' : ''} required>
+          <span>Acepto la <a href="https://holded.verifactu.business/conectores/claude/privacy" target="_blank" rel="noopener">politica de privacidad</a> y la <a href="https://holded.verifactu.business/conectores/claude/dpa" target="_blank" rel="noopener">DPA</a>.</span>
+        </label>
+      </div>
+
       <button type="submit">Conectar Holded</button>
     </form>
-    <p style="margin-top:20px;font-size:11px;color:#9ca3af;text-align:center;">
-      Al conectar, aceptas el
-      <a href="https://holded.verifactu.business/conectores/claude/dpa" target="_blank" rel="noopener" style="color:#D97706;">Acuerdo de tratamiento de datos</a>
-      y la
-      <a href="https://holded.verifactu.business/conectores/claude/privacy" target="_blank" rel="noopener" style="color:#D97706;">Politica de privacidad</a>.
-    </p>
   </div>
 </body>
 </html>`;

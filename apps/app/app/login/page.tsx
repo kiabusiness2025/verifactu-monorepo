@@ -17,7 +17,10 @@ export default function LoginPage() {
     next.includes('holded.verifactu.business');
   const captureMode = searchParams?.get('capture') === '1' || /(?:\?|&)capture=1(?:&|$)/.test(next);
   const landingUrl = getLandingUrl();
-  const loginPath = holdedMode ? '/auth/holded' : '/auth/login';
+  // F2.3: el flujo Holded ahora pasa por el form self-contained
+  // /auth/holded-direct (sobrevive al iOS in-app browser de ChatGPT mobile),
+  // no por Firebase (/auth/holded).
+  const loginPath = holdedMode ? '/auth/holded-direct' : '/auth/login';
   const loginBase = holdedMode ? HOLDED_SITE_URL : landingUrl;
   const loginUrl = new URL(loginPath, loginBase);
 

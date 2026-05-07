@@ -23,7 +23,8 @@ jest.mock('@/lib/session', () => ({
 jest.mock('@/lib/oauth/mcp', () => ({
   buildLoginUrl: jest.fn((next: string, source?: string) => {
     const sourceParam = source ? `&source=${encodeURIComponent(source)}` : '';
-    return `https://holded.verifactu.business/auth/holded?next=${encodeURIComponent(next)}${sourceParam}`;
+    // F2.3: buildLoginUrl apunta al form self-contained sin Firebase.
+    return `https://holded.verifactu.business/auth/holded-direct?next=${encodeURIComponent(next)}${sourceParam}`;
   }),
   ensureScopesAllowed: jest.fn(() => true),
   getDefaultScopes: jest.fn(() => ['mcp.read', 'holded.invoices.read']),
@@ -77,7 +78,7 @@ describe('oauth authorize holded flow', () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
-    expect(location).toContain('/auth/holded');
+    expect(location).toContain('/auth/holded-direct');
     expect(location).toContain('source=holded_chat_requires_session');
     expect(location).toContain(encodeURIComponent('holded_login_confirmed=1'));
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
@@ -116,7 +117,7 @@ describe('oauth authorize holded flow', () => {
     const location = response.headers.get('location');
 
     expect(response.status).toBe(307);
-    expect(location).toContain('/auth/holded');
+    expect(location).toContain('/auth/holded-direct');
     expect(location).toContain('source=holded_chat_requires_session');
     expect(location).toContain(encodeURIComponent('holded_login_confirmed=1'));
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
@@ -138,7 +139,7 @@ describe('oauth authorize holded flow', () => {
     const location = response.headers.get('location');
 
     expect(response.status).toBe(307);
-    expect(location).toContain('/auth/holded');
+    expect(location).toContain('/auth/holded-direct');
     expect(location).toContain('source=holded_chat_requires_session');
     expect(location).toContain(encodeURIComponent('holded_login_confirmed=1'));
     expect(mintAuthorizationCode).not.toHaveBeenCalled();

@@ -131,11 +131,120 @@ export function withHoldedFetchMock(valid: boolean) {
       });
     }
 
+    // F3: el consent screen llama al endpoint común F1 en `apps/app`.
+    // Cuando este mock se usa solo, devolvemos un éxito sintético para que
+    // los tests preexistentes que no se ocupan de F1 sigan funcionando.
+    if (url.startsWith('https://app.verifactu.business/api/integrations/holded/upsert-from-key')) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          userId: 'verifactu-user-123',
+          tenantId: 'verifactu-tenant-456',
+          connectionId: 'connection-789',
+          status: 'connected',
+          legalAcceptedAt: '2026-05-06T12:00:00.000Z',
+          created: { user: true, tenant: true, membership: true },
+        }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     return originalFetch(input as RequestInfo, init);
   }) as typeof fetch;
 
   return () => {
     global.fetch = originalFetch;
+  };
+}
+
+/**
+ * Mock dedicado para el endpoint F1 (`apps/app`) que llama el consent
+ * screen del MCP. Permite probar específicamente la traducción de errores y
+ * el rebind de userId real.
+ */
+export interface VerifactuF1Call {
+  url: string;
+  body: string;
+  headers: Record<string, string>;
+}
+
+export function withVerifactuF1Mock(
+  options:
+    | { ok: true; userId?: string; tenantId?: string }
+    | { ok: false; reason: string; status?: number; detail?: string }
+    | { networkError: true }
+) {
+  const calls: VerifactuF1Call[] = [];
+  const originalFetch = global.fetch;
+
+  global.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
+    const url =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+
+    if (url.startsWith('https://api.holded.com/')) {
+      // delegamos al holded mock si está activo, si no devolvemos 200 vacío
+      return new Response('[]', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (url.startsWith('https://app.verifactu.business/api/integrations/holded/upsert-from-key')) {
+      const headers: Record<string, string> = {};
+      const initHeaders = init?.headers as Record<string, string> | undefined;
+      if (initHeaders) {
+        for (const [k, v] of Object.entries(initHeaders)) headers[k.toLowerCase()] = String(v);
+      }
+      calls.push({
+        url,
+        body: typeof init?.body === 'string' ? init.body : JSON.stringify(init?.body ?? {}),
+        headers,
+      });
+
+      if ('networkError' in options) {
+        throw new Error('ECONNREFUSED test-network-error');
+      }
+
+      if (options.ok) {
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            userId: options.userId ?? 'verifactu-user-123',
+            tenantId: options.tenantId ?? 'verifactu-tenant-456',
+            connectionId: 'connection-789',
+            status: 'connected',
+            legalAcceptedAt: '2026-05-06T12:00:00.000Z',
+            created: { user: true, tenant: true, membership: true },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } }
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          stage: 'probe',
+          reason: options.reason,
+          detail: options.detail ?? 'test',
+        }),
+        {
+          status: options.status ?? 422,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    return originalFetch(input as RequestInfo, init);
+  }) as typeof fetch;
+
+  return {
+    calls,
+    restore() {
+      global.fetch = originalFetch;
+    },
   };
 }
 

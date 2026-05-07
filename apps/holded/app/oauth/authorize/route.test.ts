@@ -12,7 +12,7 @@ describe('GET /oauth/authorize', () => {
         status: 302,
         headers: {
           location:
-            'https://holded.verifactu.business/auth/holded?next=https%3A%2F%2Fholded.verifactu.business%2Foauth%2Fauthorize',
+            'https://holded.verifactu.business/auth/holded-direct?next=https%3A%2F%2Fholded.verifactu.business%2Foauth%2Fauthorize',
           'x-upstream': 'app-oauth',
         },
       })
@@ -43,7 +43,7 @@ describe('GET /oauth/authorize', () => {
     );
     expect(response.status).toBe(302);
     expect(response.headers.get('location')).toContain(
-      'https://holded.verifactu.business/auth/holded'
+      'https://holded.verifactu.business/auth/holded-direct'
     );
     expect(response.headers.get('x-upstream')).toBe('app-oauth');
   });

@@ -135,7 +135,11 @@ export async function middleware(req: NextRequest) {
     const isHoldedFlow =
       returnPath.startsWith('/onboarding/holded') ||
       req.nextUrl.searchParams.get('source')?.startsWith('holded') === true;
-    const loginPath = isHoldedFlow ? '/auth/holded' : '/auth/login';
+    // F2.3 (Holded Connectors Unified Architecture): el flujo Holded ya no
+    // pasa por Firebase (`/auth/holded`) sino por el form self-contained en
+    // `holded.verifactu.business/auth/holded-direct`, que sobrevive al iOS
+    // in-app browser de ChatGPT mobile.
+    const loginPath = isHoldedFlow ? '/auth/holded-direct' : '/auth/login';
     const loginBase = isHoldedFlow ? holdedUrl : landingUrl;
     const loginUrl = `${loginBase}${loginPath}?next=${encodeURIComponent(`${returnUrl}${returnQuery}`)}`;
     return applyCrossOriginOpenerPolicy(NextResponse.redirect(loginUrl), pathname, source);

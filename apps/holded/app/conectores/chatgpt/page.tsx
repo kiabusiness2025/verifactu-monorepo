@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ConnectorLandingClient } from '@/app/components/ConnectorLandingClient';
+import { ConnectorMobileBanner } from '@/app/components/ConnectorMobileBanner';
 
 const SITE_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 const PAGE_URL = `${SITE_URL}/conectores/chatgpt`;
@@ -126,6 +127,9 @@ export default function ChatGPTConnectorPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      {/* F4.3: banner mobile-only que invita a usar /auth/holded-direct
+          (sobrevive al iOS in-app browser de ChatGPT mobile). */}
+      <ConnectorMobileBanner provider="chatgpt" />
       <ConnectorLandingClient connector="chatgpt" />
     </>
   );
