@@ -10,12 +10,21 @@ export const metadata: Metadata = {
   alternates: { canonical: '/conectores/chatgpt/openai-review-demo' },
 };
 
-// When the recorded demo is published, set YOUTUBE_URL (preferred) or place the
-// MP4 at /public/video/holded-chatgpt-demo.mp4. Until then we render a stable
-// fallback card so reviewers don't see a broken <video> element.
-const YOUTUBE_URL = '';
+// Demo video wiring para la review de OpenAI.
+//
+// Precedencia: YOUTUBE_URL > LOCAL (HAS_LOCAL_VIDEO) > fallback card.
+// La URL publica de la pagina (`/conectores/chatgpt/openai-review-demo`) es la
+// que se mete en el campo "Demo Recording URL" de OpenAI — nunca cambia.
+//
+// Para sustituir el video sin tocar la URL publica:
+//   - Si subes una nueva version a YouTube: cambia YOUTUBE_URL con el nuevo
+//     embed (`https://www.youtube.com/embed/<videoId>`). YouTube tiene prioridad
+//     sobre el MP4 local.
+//   - Si re-grabas localmente: reemplaza /public/video/holded-chatgpt-demo.mp4
+//     manteniendo el mismo nombre de archivo.
+const YOUTUBE_URL = 'https://www.youtube.com/embed/zcIGk6bf_dg?si=lL3fFhJYt5PE_wGl&start=11';
 const LOCAL_VIDEO_URL = '/video/holded-chatgpt-demo.mp4';
-const HAS_LOCAL_VIDEO = false; // flip to true once the mp4 is deployed
+const HAS_LOCAL_VIDEO = true; // mp4 ya desplegado en apps/holded/public/video/
 
 function VideoEmbed() {
   if (YOUTUBE_URL) {
