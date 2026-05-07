@@ -590,6 +590,8 @@ model Tenant {
   seConnections               SeConnection[]
   seAccounts                  SeAccount[]
   seTransactions              SeTransaction[]
+  seTransactionMatchAudits    SeTransactionMatchAudit[]
+  bankReconciliationConfig    BankReconciliationConfig?
 
   @@map("tenants")
 }
@@ -2028,13 +2030,56 @@ model SeTransaction {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
 
-  tenant  Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  account SeAccount @relation(fields: [accountId], references: [id])
+  tenant        Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account       SeAccount                     @relation(fields: [accountId], references: [id])
+  matchAudits   SeTransactionMatchAudit[]
 
   @@index([tenantId])
   @@index([accountId])
   @@index([madeOn])
   @@map("se_transactions")
+}
+
+// ==================== BANK RECONCILIATION CONFIG ====================
+
+model BankReconciliationConfig {
+  tenantId            String  @id @map("tenant_id") @db.Uuid
+  tenant              Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  amountToleranceEur  Decimal @default(1.00) @map("amount_tolerance_eur") @db.Decimal(10, 2)
+  dateWindowDays      Int     @default(3)    @map("date_window_days")
+  confidenceThreshold Float   @default(0.85) @map("confidence_threshold")
+  autoMatchEnabled    Boolean @default(true) @map("auto_match_enabled")
+
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt      @map("updated_at") @db.Timestamptz
+
+  @@map("bank_reconciliation_configs")
+}
+
+// ==================== BANK RECONCILIATION AUDIT ====================
+
+model SeTransactionMatchAudit {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String   @map("tenant_id") @db.Uuid
+  seTransactionId       String   @map("se_transaction_id")
+  matchedExpenseId      String?  @map("matched_expense_id") @db.Uuid
+  matchScore            Float    @map("match_score")
+  scoreComponents       Json     @map("score_components") // { amountScore, dateScore, textScore, amountMatch?, dateMatch?, textSimilarity? }
+  evidenceReasons       Json     @map("evidence_reasons") // array of reason strings
+  autoMatched           Boolean  @map("auto_matched")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant               Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  seTransaction        SeTransaction       @relation(fields: [seTransactionId], references: [id], onDelete: Cascade)
+  matchedExpense       ExpenseRecord?      @relation(fields: [matchedExpenseId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([seTransactionId])
+  @@index([matchedExpenseId])
+  @@index([createdAt])
+  @@map("se_transaction_match_audits")
 }
 
 // ==================== DEMO REQUESTS ====================

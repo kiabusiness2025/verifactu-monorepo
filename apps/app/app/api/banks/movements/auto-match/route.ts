@@ -104,6 +104,11 @@ export async function POST(request: NextRequest) {
       reference: string | null;
       score: number;
       reasons: string[];
+      details: {
+        amountDelta: number;
+        dayDistance: number;
+        textSimilarity: number;
+      };
     } | null = null;
 
     for (const candidate of candidates) {
@@ -131,6 +136,7 @@ export async function POST(request: NextRequest) {
           reference: candidate.reference,
           score: scored.score,
           reasons: scored.reasons,
+          details: scored.details,
         };
       }
     }
@@ -138,10 +144,71 @@ export async function POST(request: NextRequest) {
     const shouldAutoMatch =
       Boolean(best) && config.autoMatchEnabled && (best?.score ?? 0) >= config.confidenceThreshold;
 
-    if (shouldAutoMatch && !dryRun) {
+    if (shouldAutoMatch && !dryRun && best) {
+      // Update movement to mark as reconciled
       await prisma.seTransaction.update({
         where: { id: movement.id },
         data: { reconciledAt: new Date() },
+      });
+
+      // Persist audit record with evidence
+      await prisma.seTransactionMatchAudit.create({
+        data: {
+          tenantId: auth.tenantId,
+          seTransactionId: movement.id,
+          matchedExpenseId: best.expenseId,
+          matchScore: best.score,
+          scoreComponents: {
+            amountScore: Math.min(
+              0.55,
+              Math.max(
+                0,
+                0.55 *
+                  (1 - best.details.amountDelta / Math.max(config.amountToleranceEur, 0.01) / 3)
+              )
+            ),
+            dateScore:
+              best.details.dayDistance <= config.dateWindowDays
+                ? 0.3 * (1 - best.details.dayDistance / (config.dateWindowDays + 1))
+                : 0,
+            textScore: 0.15 * best.details.textSimilarity,
+            amountDelta: best.details.amountDelta,
+            dayDistance: best.details.dayDistance,
+            textSimilarity: best.details.textSimilarity,
+          },
+          evidenceReasons: best.reasons,
+          autoMatched: true,
+        },
+      });
+    } else if (best && !dryRun) {
+      // Also persist for suggested matches (not auto-matched)
+      await prisma.seTransactionMatchAudit.create({
+        data: {
+          tenantId: auth.tenantId,
+          seTransactionId: movement.id,
+          matchedExpenseId: best.expenseId,
+          matchScore: best.score,
+          scoreComponents: {
+            amountScore: Math.min(
+              0.55,
+              Math.max(
+                0,
+                0.55 *
+                  (1 - best.details.amountDelta / Math.max(config.amountToleranceEur, 0.01) / 3)
+              )
+            ),
+            dateScore:
+              best.details.dayDistance <= config.dateWindowDays
+                ? 0.3 * (1 - best.details.dayDistance / (config.dateWindowDays + 1))
+                : 0,
+            textScore: 0.15 * best.details.textSimilarity,
+            amountDelta: best.details.amountDelta,
+            dayDistance: best.details.dayDistance,
+            textSimilarity: best.details.textSimilarity,
+          },
+          evidenceReasons: best.reasons,
+          autoMatched: false,
+        },
       });
     }
 
