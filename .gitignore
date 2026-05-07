@@ -76,3 +76,9 @@ env-audit.txt
 .tmp-*.env
 .tmp-*.json
 .tmp/
+
+# Workspace cleanup guards
+.sixth/
+.tmp-video/
+**/__MACOSX/
+scripts/video-pipeline/output/
