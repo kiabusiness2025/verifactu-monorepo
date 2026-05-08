@@ -71,6 +71,24 @@ function buildCanonicalHoldedOnboardingUrl(input: {
   return onboardingUrl;
 }
 
+// Redirige a la nueva pantalla unificada de conexión Holded (F2.2):
+// auth (Google/magic link) + API key en un único formulario, sin el
+// wizard multi-step de onboarding. Usado cuando el tenant ya existe pero
+// no tiene conexión Holded activa, o cuando el provider fingerprint cambió.
+function buildCanonicalHoldedDirectUrl(input: { next: string; tenantId?: string | null }) {
+  const holdedSiteUrl = resolveCanonicalHoldedSiteUrl();
+  const directUrl = new URL('/auth/holded-direct', holdedSiteUrl);
+  directUrl.searchParams.set('source', 'holded_chatgpt_entry');
+  directUrl.searchParams.set('next', input.next);
+
+  const tenantId = input.tenantId?.trim();
+  if (tenantId) {
+    directUrl.searchParams.set('tenant_id', tenantId);
+  }
+
+  return directUrl;
+}
+
 function buildCanonicalPublicAuthorizeUrl(url: URL) {
   const holdedSiteUrl = resolveCanonicalHoldedSiteUrl();
   const publicAuthorizeUrl = new URL('/oauth/authorize', holdedSiteUrl);
@@ -340,28 +358,21 @@ export async function GET(request: NextRequest) {
       connectedProviderAccountId !== (currentProviderAccountId ?? '')
     );
 
-    if (
-      resolved.tenantId &&
-      (!hasHoldedConnection || !connectionConfirmed || hasProviderMismatch)
-    ) {
+    if (resolved.tenantId && (!hasHoldedConnection || hasProviderMismatch)) {
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.delete('connection_confirmed');
       authorizeUrl.searchParams.delete('connected_provider_account_id');
       const redirectTenantId = tenantIdQuery ?? onboardingSession?.tenantId ?? resolved.tenantId;
-      if (onboardingToken) {
-        authorizeUrl.searchParams.set('onboarding_token', onboardingToken);
-      }
       if (redirectTenantId) {
         authorizeUrl.searchParams.set('tenant_id', redirectTenantId);
       }
 
-      const onboardingUrl = buildCanonicalHoldedOnboardingUrl({
+      const holdedDirectUrl = buildCanonicalHoldedDirectUrl({
         next: buildCanonicalPublicAuthorizeUrl(authorizeUrl),
-        onboardingToken,
         tenantId: redirectTenantId,
       });
 
-      return withConnectorRequestId(NextResponse.redirect(onboardingUrl), requestId);
+      return withConnectorRequestId(NextResponse.redirect(holdedDirectUrl), requestId);
     }
 
     const user = mapSessionToOAuthUser({

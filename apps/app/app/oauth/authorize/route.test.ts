@@ -167,7 +167,9 @@ describe('oauth authorize holded flow', () => {
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
   });
 
-  it('redirects to onboarding even when a chatgpt connection already exists until the user confirms reconnection', async () => {
+  it('emite el código directamente cuando ya existe conexión Holded aunque no llegue connection_confirmed', async () => {
+    // Fix tercera pantalla: el DB check (hasHoldedConnection) es autoritativo.
+    // Ya no se exige connection_confirmed para usuarios con conexión activa.
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
       email: 'demo@example.com',
@@ -185,13 +187,14 @@ describe('oauth authorize holded flow', () => {
 
     expect(response.status).toBe(307);
     expect(response.headers.get('x-verifactu-request-id')).toBeTruthy();
-    expect(location).toContain('/onboarding/holded');
-    expect(location).toContain('channel=chatgpt');
-    expect(location).not.toContain('onboarding_token=');
-    expect(location).not.toContain('connection_confirmed=1');
+    expect(mintAuthorizationCode).toHaveBeenCalled();
+    expect(location).toContain('chat.openai.com/aip/oauth/callback');
+    expect(location).toContain('code=code-123');
+    expect(location).not.toContain('/onboarding/holded');
+    expect(location).not.toContain('/auth/holded-direct');
   });
 
-  it('preserves the selected tenant hint while redirecting back to onboarding', async () => {
+  it('preserves the selected tenant hint while redirecting to holded-direct', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
       email: 'demo@example.com',
@@ -208,7 +211,7 @@ describe('oauth authorize holded flow', () => {
     const location = response.headers.get('location');
 
     expect(response.status).toBe(307);
-    expect(location).toContain('/onboarding/holded');
+    expect(location).toContain('/auth/holded-direct');
     expect(location).toContain('tenant_id=tenant-demo');
   });
 
@@ -234,7 +237,7 @@ describe('oauth authorize holded flow', () => {
     expect(location).toBe('https://chat.openai.com/aip/oauth/callback?code=code-123&state=abc123');
   });
 
-  it('redirects back to onboarding when confirmed provider fingerprint does not match current tenant connection', async () => {
+  it('redirects back to holded-direct when confirmed provider fingerprint does not match current tenant connection', async () => {
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
       email: 'demo@example.com',
@@ -254,7 +257,7 @@ describe('oauth authorize holded flow', () => {
     const location = response.headers.get('location');
 
     expect(response.status).toBe(307);
-    expect(location).toContain('/onboarding/holded');
+    expect(location).toContain('/auth/holded-direct');
     expect(location).not.toContain('connected_provider_account_id=');
     expect(mintAuthorizationCode).not.toHaveBeenCalled();
   });
