@@ -385,51 +385,51 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                   </div>
                 </div>
 
-                {/* Step indicator: lo escondemos en step 2 (UI calmada
-                    estilo Claude — ya hay un saludo personalizado, no hace
-                    falta repetir el progreso). */}
-                {!isApiKeyStep ? (
-                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#ff5460] text-[10px] text-white">
-                      1
-                    </span>
-                    <span>Acceso</span>
-                    <span className="h-px w-4 bg-slate-300" />
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-slate-400 ring-1 ring-slate-300">
-                      2
-                    </span>
-                    <span>API key</span>
-                  </div>
-                ) : null}
-
+                {/* Saludo unificado tipo Claude para TODOS los phases.
+                    Sin step indicator — la UI debe sentirse calmada y
+                    consistente entre paso de auth y paso de API key. */}
                 {authPhase === 'consuming' ? (
                   <>
-                    <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
+                    <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950">
                       Verificando acceso…
                     </h1>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                    <p className="mt-3 text-sm leading-6 text-slate-500">
                       Estamos completando tu inicio de sesión, un momento.
                     </p>
                   </>
                 ) : authPhase === 'magic_sent' ? (
                   <>
-                    <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
+                    <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950">
+                      <span aria-hidden="true" className="mr-2 inline-block">
+                        ✉
+                      </span>
                       Revisa tu email
                     </h1>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
+                    <p className="mt-3 text-sm leading-6 text-slate-500">
                       Te hemos enviado un enlace a{' '}
                       <strong className="font-semibold text-slate-700">{magicSentTo}</strong>. Haz
-                      click en él para continuar.
+                      click para continuar.
                     </p>
                   </>
                 ) : !isApiKeyStep ? (
+                  // Step 1 (auth choosing): saludo amistoso sin nombre
+                  // (todavia no hay sesion). Mismo tono que step 2 — el
+                  // usuario percibe el flujo como una sola pantalla con
+                  // dos pasos, no como dos formularios distintos.
                   <>
-                    <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
-                      {isChatgptFlow ? 'Conecta Holded a ChatGPT' : 'Accede a tu cuenta'}
+                    <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950">
+                      <span aria-hidden="true" className="mr-2 inline-block">
+                        ✦
+                      </span>
+                      {getTimeGreeting()}
+                      <span aria-hidden="true" className="ml-2 inline-block">
+                        👋
+                      </span>
                     </h1>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Elige cómo quieres identificarte. Después introduces tu API key de Holded y
-                      listo.
+                    <p className="mt-3 text-sm leading-6 text-slate-500">
+                      {isChatgptFlow
+                        ? 'Identifícate para conectar Holded con ChatGPT.'
+                        : 'Identifícate para conectar tu cuenta de Holded.'}
                     </p>
                   </>
                 ) : (
