@@ -160,6 +160,13 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
     return () => window.clearTimeout(t);
   }, []);
 
+  // Saludo calculado solo en cliente para evitar hydration mismatch (el
+  // servidor no conoce la hora local del usuario).
+  const [timeGreeting, setTimeGreeting] = useState('');
+  useEffect(() => {
+    setTimeGreeting(getTimeGreeting());
+  }, []);
+
   // Auth phase state
   const [authPhase, setAuthPhase] = useState<AuthPhase>(sessionEmail ? 'authed' : 'choosing');
   const [authedEmail, setAuthedEmail] = useState<string | null>(sessionEmail);
@@ -421,7 +428,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                       <span aria-hidden="true" className="mr-2 inline-block">
                         ✦
                       </span>
-                      {getTimeGreeting()}
+                      {timeGreeting}
                       <span aria-hidden="true" className="ml-2 inline-block">
                         👋
                       </span>
@@ -443,7 +450,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                       <span aria-hidden="true" className="mr-2 inline-block">
                         ✦
                       </span>
-                      {getTimeGreeting()}
+                      {timeGreeting}
                       {firstName ? `, ${firstName}` : ''}
                     </h1>
                     <p className="mt-3 text-sm leading-6 text-slate-500">
