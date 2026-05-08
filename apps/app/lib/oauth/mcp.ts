@@ -82,7 +82,14 @@ type HoldedEmailVerificationPayload = {
 export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
 
 const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
-const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'holded_public_campaign_v1';
+// C2 (auditoria OpenAI 2026-05-07): el preset por defecto del flujo publico se
+// alinea con `openai_review_v2` para que `tools/list` exponga exactamente los
+// 11 tools declarados en docs/openai-submission/tool-hint-justifications.json.
+// Anteriormente era `holded_public_campaign_v1` (5 scopes / 7 tools), y si la
+// env var MCP_PUBLIC_SCOPE_PRESET no estaba seteada en produccion, el revisor
+// de OpenAI veia un set de tools distinto al que firmamos en la submission —
+// causa textbook de rechazo.
+const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_v2';
 const AUTHORIZATION_CODE_REDEMPTIONS_TABLE = 'oauth_authorization_code_redemptions';
 
 type MintAuthorizationCodeInput = Omit<AuthorizationCodePayload, 'codeId'>;
@@ -337,11 +344,18 @@ export async function consumeAuthorizationCode(codeId: string, exp?: number) {
   return rows.length > 0;
 }
 
+// C3 (auditoria OpenAI 2026-05-07): TTL extendido a 24h (era 1h).
+// Motivo: el revisor de OpenAI ejecuta entre 6 y 12 prompts en la sesion de
+// review, frecuentemente espaciados (notas, comparaciones, cambios de pagina).
+// Con TTL=1h era frecuente que la sesion expirara mid-review y ChatGPT
+// mostrara "connector disconnected" en mitad de las pruebas. 24h cubre la
+// review completa sin necesidad de refresh tokens. Mantener este valor en
+// sincronia con `expires_in` devuelto por /oauth/token.
 export async function mintAccessToken(input: AccessTokenPayload) {
   return signSessionToken({
     payload: input,
     secret: readOAuthSecret(),
-    expiresIn: '1h',
+    expiresIn: '24h',
   });
 }
 

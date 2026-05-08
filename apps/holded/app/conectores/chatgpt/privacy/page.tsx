@@ -274,6 +274,48 @@ export default function ChatGPTPrivacyPage() {
         </p>
       </div>
 
+      {/* ── Documentación legal complementaria — A2 (auditoria OpenAI 2026-05-07) ── */}
+      <div className="mt-6 rounded-3xl border border-emerald-200 bg-emerald-50/40 p-6 shadow-sm">
+        <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+          <Scale className="h-4 w-4 text-emerald-600" />
+          Documentación legal complementaria
+        </div>
+        <p className="mt-3 text-sm leading-7 text-slate-600">
+          Esta política de privacidad se complementa con los siguientes documentos. Léelos para
+          entender cómo se reparten responsabilidades entre Verifactu Business, OpenAI y Holded:
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/conectores/chatgpt/dpa"
+            className="inline-flex items-start gap-3 rounded-2xl border border-emerald-200 bg-white p-4 text-sm transition hover:bg-emerald-50"
+          >
+            <Database className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            <div>
+              <div className="font-semibold text-slate-900">
+                Acuerdo de Tratamiento de Datos (DPA)
+              </div>
+              <div className="mt-0.5 text-xs leading-5 text-slate-500">
+                Subprocesadores (OpenAI, Vercel, Neon, Resend), SCC, plazos de conservación,
+                derechos RGPD.
+              </div>
+            </div>
+          </Link>
+          <Link
+            href="/conectores/chatgpt/terms"
+            className="inline-flex items-start gap-3 rounded-2xl border border-emerald-200 bg-white p-4 text-sm transition hover:bg-emerald-50"
+          >
+            <BookOpen className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
+            <div>
+              <div className="font-semibold text-slate-900">Términos de Servicio</div>
+              <div className="mt-0.5 text-xs leading-5 text-slate-500">
+                Alcance del conector, OAuth, responsabilidades del usuario y limitaciones de
+                Verifactu Business.
+              </div>
+            </div>
+          </Link>
+        </div>
+      </div>
+
       {/* ── Contacto ── */}
       <div className="mt-6 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">

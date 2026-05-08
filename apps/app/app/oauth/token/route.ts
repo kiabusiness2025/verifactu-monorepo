@@ -76,7 +76,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       access_token: accessToken,
       token_type: 'Bearer',
-      expires_in: 3600,
+      // C3 (auditoria OpenAI 2026-05-07): 86400s = 24h. Antes 3600s (1h)
+      // expiraba mid-review. Mantener en sincronia con `expiresIn` de
+      // mintAccessToken en lib/oauth/mcp.ts.
+      expires_in: 86400,
       scope: parsed.scope,
     });
   } catch (error) {

@@ -259,6 +259,26 @@ function HoldedDirectLoginForm() {
                   </div>
                 </div>
 
+                {/* A4 (auditoria OpenAI 2026-05-07) — callout API key safety.
+                    Aparece SIEMPRE (no solo en flujo ChatGPT) para que el revisor
+                    de OpenAI vea explicitamente que la credencial no se exfiltra
+                    ni viaja por modelos de IA. */}
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
+                  <div className="flex items-start gap-2.5">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                    <div className="text-xs leading-5 text-emerald-900">
+                      <p className="font-semibold">Tu API key se queda contigo y con Holded.</p>
+                      <p className="mt-1 text-emerald-800/90">
+                        Validamos la clave server-side contra Holded, la ciframos en reposo y solo
+                        la usamos para responder a tus propias preguntas. <strong>Nunca</strong> se
+                        envía a OpenAI ni Anthropic, no atraviesa los modelos de IA y no la usamos
+                        para entrenar nada. Puedes revocarla en cualquier momento desde Holded o
+                        escribiéndonos a soporte@verifactu.business.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 {/* T&C */}
                 <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3">
                   <label className="flex items-start gap-2.5 cursor-pointer">

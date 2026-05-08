@@ -36,10 +36,13 @@ const SUBPROCESSORS = [
     guarantee: 'Cláusulas contractuales tipo (SCC)',
   },
   {
-    name: 'Render / Vercel',
-    purpose: 'Infraestructura y alojamiento del conector',
-    country: 'EE.UU. / UE',
-    guarantee: 'SCC / DPA del proveedor',
+    // M3 (auditoria OpenAI 2026-05-07): Render hostea el server MCP de Claude
+    // Desktop (apps/holded-mcp) y NO interviene en el conector ChatGPT. El
+    // conector ChatGPT vive integramente en Vercel (apps/app + apps/holded).
+    name: 'Vercel Inc.',
+    purpose: 'Infraestructura y alojamiento del conector ChatGPT (Apps SDK)',
+    country: 'EE.UU.',
+    guarantee: 'Cláusulas contractuales tipo (SCC) · DPA de Vercel',
   },
   {
     name: 'Neon (PostgreSQL gestionado)',
