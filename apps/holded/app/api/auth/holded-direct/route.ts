@@ -30,6 +30,7 @@ import {
   buildSessionCookieOptions,
   readSessionSecret,
   signSessionToken,
+  verifySessionToken,
 } from '@/app/lib/session';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -93,13 +94,28 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400 });
   }
 
-  const { email, apiKey, acceptedTerms, acceptedPrivacy, next } = body as Record<string, unknown>;
+  const { apiKey, acceptedTerms, acceptedPrivacy, next } = body as Record<string, unknown>;
 
-  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  // El email se obtiene de la session cookie firmada, minteada por
+  // /api/auth/session tras autentificacion via Google OAuth o magic link.
+  // No se acepta email del body — la session es la fuente de verdad.
+  const sessionToken = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  if (!sessionToken) {
+    return NextResponse.json({ error: 'NOT_AUTHENTICATED' }, { status: 401 });
+  }
+  let normalizedEmail: string;
+  try {
+    const session = await verifySessionToken(sessionToken, readSessionSecret());
+    if (!session?.email) throw new Error('no email in session');
+    normalizedEmail = session.email;
+  } catch {
+    return NextResponse.json({ error: 'NOT_AUTHENTICATED' }, { status: 401 });
+  }
+
   const normalizedApiKey = typeof apiKey === 'string' ? apiKey.trim() : '';
   const normalizedNext = typeof next === 'string' ? next.trim() : '';
 
-  if (!normalizedEmail || !normalizedApiKey) {
+  if (!normalizedApiKey) {
     return NextResponse.json({ error: 'MISSING_FIELDS' }, { status: 400 });
   }
   if (!acceptedTerms || !acceptedPrivacy) {
@@ -230,5 +246,6 @@ export async function POST(request: NextRequest) {
     domain: cookieOptions.domain,
     maxAge: cookieOptions.maxAge,
   });
+
   return response;
 }

@@ -1,5 +1,16 @@
 /** @jest-environment node */
 
+/**
+ * Tests del wrapper /api/auth/holded-direct.
+ *
+ * F2.2 — wrapper que llama al endpoint F1 (upsert-from-key) y mintea cookie
+ *   de sesion sobre `.verifactu.business`.
+ *
+ * Autentificacion (2026-05-08): el email se obtiene de la session cookie
+ *   firmada (SESSION_COOKIE_NAME) minteada por /api/auth/session tras Google
+ *   OAuth o magic link de Firebase. Sin session valida → NOT_AUTHENTICATED.
+ */
+
 jest.mock('@/app/lib/holded-navigation', () => ({
   APP_PUBLIC_URL: 'https://app.verifactu.business',
   sanitizeHoldedReturnTarget: jest.fn((next?: string, fallback = '/dashboard') => {
@@ -23,19 +34,28 @@ jest.mock('@/app/lib/session', () => ({
   })),
   readSessionSecret: jest.fn(() => 'test-secret'),
   signSessionToken: jest.fn(async () => 'jwt-token'),
+  verifySessionToken: jest.fn(),
 }));
 
+import { signSessionToken, verifySessionToken } from '@/app/lib/session';
 import { NextRequest } from 'next/server';
 import { POST } from './route';
-import { signSessionToken } from '@/app/lib/session';
 
+const verifySessionMock = verifySessionToken as jest.MockedFunction<typeof verifySessionToken>;
 const fetchMock = jest.fn();
 const originalFetch = global.fetch;
 
-function buildRequest(body: unknown) {
+function buildRequest(body: unknown, opts: { withSessionCookie?: boolean } = {}) {
+  const headers: Record<string, string> = {
+    'content-type': 'application/json',
+    host: 'holded.verifactu.business',
+  };
+  if (opts.withSessionCookie) {
+    headers.cookie = 'verifactu_session=signed-jwt';
+  }
   return new NextRequest('https://holded.verifactu.business/api/auth/holded-direct', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', host: 'holded.verifactu.business' },
+    headers,
     body: typeof body === 'string' ? body : JSON.stringify(body),
   });
 }
@@ -44,6 +64,19 @@ function fetchOk(json: unknown, status = 200) {
   return new Response(JSON.stringify(json), {
     status,
     headers: { 'content-type': 'application/json' },
+  });
+}
+
+function mockSessionEmail(email: string) {
+  verifySessionMock.mockResolvedValueOnce({
+    uid: 'test-uid',
+    email,
+    tenantId: undefined,
+    role: 'member',
+    roles: [],
+    tenants: [],
+    ver: 1,
+    rememberDevice: true,
   });
 }
 
@@ -57,54 +90,120 @@ afterAll(() => {
   global.fetch = originalFetch;
 });
 
-describe('POST /api/auth/holded-direct (F2.2 wrapper)', () => {
-  it('rechaza body sin email/apiKey con MISSING_FIELDS sin llamar a F1', async () => {
-    const response = await POST(buildRequest({ acceptedTerms: true, acceptedPrivacy: true }));
-    expect(response.status).toBe(400);
+describe('POST /api/auth/holded-direct — autentificacion via session cookie', () => {
+  it('rechaza con NOT_AUTHENTICATED 401 si no hay session cookie', async () => {
+    const response = await POST(
+      buildRequest({
+        apiKey: 'a'.repeat(32),
+        acceptedTerms: true,
+        acceptedPrivacy: true,
+      })
+    );
+    expect(response.status).toBe(401);
     const json = await response.json();
-    expect(json).toEqual({ error: 'MISSING_FIELDS' });
+    expect(json).toEqual({ error: 'NOT_AUTHENTICATED' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('rechaza con NOT_AUTHENTICATED si la session cookie es invalida', async () => {
+    verifySessionMock.mockRejectedValueOnce(new Error('invalid token'));
+    const response = await POST(
+      buildRequest(
+        { apiKey: 'a'.repeat(32), acceptedTerms: true, acceptedPrivacy: true },
+        { withSessionCookie: true }
+      )
+    );
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'NOT_AUTHENTICATED' });
+  });
+
+  it('rechaza con NOT_AUTHENTICATED si la session no tiene email', async () => {
+    verifySessionMock.mockResolvedValueOnce({
+      uid: 'test-uid',
+      email: null,
+      role: 'member',
+      roles: [],
+      tenants: [],
+      ver: 1,
+      rememberDevice: false,
+    });
+    const response = await POST(
+      buildRequest(
+        { apiKey: 'a'.repeat(32), acceptedTerms: true, acceptedPrivacy: true },
+        { withSessionCookie: true }
+      )
+    );
+    expect(response.status).toBe(401);
+    expect(await response.json()).toEqual({ error: 'NOT_AUTHENTICATED' });
+  });
+
+  it('lee el email de la session cookie — no del body', async () => {
+    mockSessionEmail('real@example.com');
+    fetchMock.mockResolvedValue(
+      fetchOk({
+        ok: true,
+        userId: 'u',
+        tenantId: 't',
+        connectionId: 'c',
+        status: 'connected',
+        legalAcceptedAt: '2026-05-08T12:01:00.000Z',
+      })
+    );
+
+    await POST(
+      buildRequest(
+        { apiKey: 'a'.repeat(32), acceptedTerms: true, acceptedPrivacy: true },
+        { withSessionCookie: true }
+      )
+    );
+
+    const sentBody = JSON.parse(fetchMock.mock.calls[0][1].body);
+    expect(sentBody.personalEmail).toBe('real@example.com');
+  });
+});
+
+describe('POST /api/auth/holded-direct — F2.2 wrapper', () => {
+  it('rechaza body sin apiKey con MISSING_FIELDS sin llamar a F1', async () => {
+    mockSessionEmail('demo@example.com');
+    const response = await POST(
+      buildRequest({ acceptedTerms: true, acceptedPrivacy: true }, { withSessionCookie: true })
+    );
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ error: 'MISSING_FIELDS' });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('rechaza si T&C/privacidad no aceptados con TERMS_NOT_ACCEPTED', async () => {
+    mockSessionEmail('demo@example.com');
     const response = await POST(
-      buildRequest({
-        email: 'a@b.com',
-        apiKey: 'k1234',
-        acceptedTerms: false,
-        acceptedPrivacy: true,
-      })
+      buildRequest(
+        { apiKey: 'k1234', acceptedTerms: false, acceptedPrivacy: true },
+        { withSessionCookie: true }
+      )
     );
     expect(response.status).toBe(400);
-    const json = await response.json();
-    expect(json).toEqual({ error: 'TERMS_NOT_ACCEPTED' });
+    expect(await response.json()).toEqual({ error: 'TERMS_NOT_ACCEPTED' });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('llama al endpoint F1 con channel=mobile y traduce reason invalid_api_key', async () => {
+    mockSessionEmail('demo@example.com');
     fetchMock.mockResolvedValue(
-      fetchOk(
-        {
-          ok: false,
-          stage: 'probe',
-          reason: 'invalid_api_key',
-          detail: 'Holded API key validation failed',
-        },
-        422
-      )
+      fetchOk({ ok: false, stage: 'probe', reason: 'invalid_api_key', detail: 'failed' }, 422)
     );
 
     const response = await POST(
-      buildRequest({
-        email: 'demo@example.com',
-        apiKey: 'badkey',
-        acceptedTerms: true,
-        acceptedPrivacy: true,
-        next: 'https://holded.verifactu.business/dashboard?source=test',
-      })
+      buildRequest(
+        {
+          apiKey: 'badkey',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+          next: 'https://holded.verifactu.business/dashboard?source=test',
+        },
+        { withSessionCookie: true }
+      )
     );
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
     const [calledUrl, calledInit] = fetchMock.mock.calls[0];
     expect(String(calledUrl)).toBe(
       'https://app.verifactu.business/api/integrations/holded/upsert-from-key'
@@ -120,68 +219,62 @@ describe('POST /api/auth/holded-direct (F2.2 wrapper)', () => {
     });
 
     expect(response.status).toBe(400);
-    const json = await response.json();
-    expect(json).toEqual({ error: 'INVALID_API_KEY' });
+    expect(await response.json()).toEqual({ error: 'INVALID_API_KEY' });
     expect(signSessionToken).not.toHaveBeenCalled();
   });
 
-  it('traduce probe_failed (red caída) a PROBE_ERROR 502', async () => {
+  it('traduce probe_failed a PROBE_ERROR 502', async () => {
+    mockSessionEmail('demo@example.com');
     fetchMock.mockResolvedValue(
       fetchOk({ ok: false, stage: 'probe', reason: 'probe_failed', detail: 'timeout' }, 422)
     );
 
     const response = await POST(
-      buildRequest({
-        email: 'demo@example.com',
-        apiKey: 'apikey',
-        acceptedTerms: true,
-        acceptedPrivacy: true,
-      })
+      buildRequest(
+        { apiKey: 'apikey', acceptedTerms: true, acceptedPrivacy: true },
+        { withSessionCookie: true }
+      )
     );
 
     expect(response.status).toBe(502);
-    const json = await response.json();
-    expect(json).toEqual({ error: 'PROBE_ERROR' });
+    expect(await response.json()).toEqual({ error: 'PROBE_ERROR' });
   });
 
   it('traduce persist_failed a DB_ERROR 500', async () => {
+    mockSessionEmail('demo@example.com');
     fetchMock.mockResolvedValue(
       fetchOk({ ok: false, stage: 'persist', reason: 'persist_failed', detail: 'db down' }, 500)
     );
 
     const response = await POST(
-      buildRequest({
-        email: 'demo@example.com',
-        apiKey: 'apikey',
-        acceptedTerms: true,
-        acceptedPrivacy: true,
-      })
+      buildRequest(
+        { apiKey: 'apikey', acceptedTerms: true, acceptedPrivacy: true },
+        { withSessionCookie: true }
+      )
     );
 
     expect(response.status).toBe(500);
-    const json = await response.json();
-    expect(json).toEqual({ error: 'DB_ERROR' });
+    expect(await response.json()).toEqual({ error: 'DB_ERROR' });
   });
 
   it('si fetch al endpoint F1 lanza, devuelve PROBE_ERROR 502', async () => {
+    mockSessionEmail('demo@example.com');
     fetchMock.mockRejectedValue(new Error('ECONNREFUSED'));
 
     const response = await POST(
-      buildRequest({
-        email: 'demo@example.com',
-        apiKey: 'apikey',
-        acceptedTerms: true,
-        acceptedPrivacy: true,
-      })
+      buildRequest(
+        { apiKey: 'apikey', acceptedTerms: true, acceptedPrivacy: true },
+        { withSessionCookie: true }
+      )
     );
 
     expect(response.status).toBe(502);
-    const json = await response.json();
-    expect(json).toEqual({ error: 'PROBE_ERROR' });
+    expect(await response.json()).toEqual({ error: 'PROBE_ERROR' });
     expect(signSessionToken).not.toHaveBeenCalled();
   });
 
-  it('happy path: mintea cookie y devuelve {ok, redirectUrl}', async () => {
+  it('happy path: mintea session cookie y devuelve {ok, redirectUrl}', async () => {
+    mockSessionEmail('demo@example.com');
     fetchMock.mockResolvedValue(
       fetchOk({
         ok: true,
@@ -195,13 +288,15 @@ describe('POST /api/auth/holded-direct (F2.2 wrapper)', () => {
     );
 
     const response = await POST(
-      buildRequest({
-        email: 'Demo@Example.com',
-        apiKey: 'apikey',
-        acceptedTerms: true,
-        acceptedPrivacy: true,
-        next: 'https://holded.verifactu.business/dashboard?source=mobile',
-      })
+      buildRequest(
+        {
+          apiKey: 'apikey',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+          next: 'https://holded.verifactu.business/dashboard?source=mobile',
+        },
+        { withSessionCookie: true }
+      )
     );
 
     expect(response.status).toBe(200);
@@ -231,6 +326,7 @@ describe('POST /api/auth/holded-direct (F2.2 wrapper)', () => {
   });
 
   it('cae en redirectUrl=/dashboard si next no apunta al dominio holded', async () => {
+    mockSessionEmail('demo@example.com');
     fetchMock.mockResolvedValue(
       fetchOk({
         ok: true,
@@ -244,17 +340,51 @@ describe('POST /api/auth/holded-direct (F2.2 wrapper)', () => {
     );
 
     const response = await POST(
-      buildRequest({
-        email: 'demo@example.com',
-        apiKey: 'k',
-        acceptedTerms: true,
-        acceptedPrivacy: true,
-        next: 'https://evil.example.com/exfil',
-      })
+      buildRequest(
+        {
+          apiKey: 'k',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+          next: 'https://evil.example.com/exfil',
+        },
+        { withSessionCookie: true }
+      )
     );
 
     expect(response.status).toBe(200);
-    const json = await response.json();
-    expect(json.redirectUrl).toBe('/dashboard');
+    expect((await response.json()).redirectUrl).toBe('/dashboard');
+  });
+
+  it('inyecta flags OAuth cuando next es /oauth/authorize', async () => {
+    mockSessionEmail('demo@example.com');
+    fetchMock.mockResolvedValue(
+      fetchOk({
+        ok: true,
+        userId: 'u',
+        tenantId: 'tenant-xyz',
+        connectionId: 'conn-abc',
+        status: 'connected',
+        legalAcceptedAt: '2026-05-08T12:00:00.000Z',
+      })
+    );
+
+    const response = await POST(
+      buildRequest(
+        {
+          apiKey: 'apikey',
+          acceptedTerms: true,
+          acceptedPrivacy: true,
+          next: 'https://holded.verifactu.business/oauth/authorize?client_id=x&state=s1',
+        },
+        { withSessionCookie: true }
+      )
+    );
+
+    expect(response.status).toBe(200);
+    const url = new URL((await response.json()).redirectUrl);
+    expect(url.pathname).toBe('/oauth/authorize');
+    expect(url.searchParams.get('connection_confirmed')).toBe('1');
+    expect(url.searchParams.get('connected_provider_account_id')).toBe('conn-abc');
+    expect(url.searchParams.get('tenant_id')).toBe('tenant-xyz');
   });
 });
