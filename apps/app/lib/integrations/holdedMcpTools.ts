@@ -800,7 +800,76 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_invoice(apiKey, input) {
-    const item = await holdedAdapter.getInvoice(apiKey, requiredString(input, 'invoiceId'));
+    const idOrNumber = requiredString(input, 'invoiceId');
+
+    // B5 (sesion 7 hardening): smart lookup. Holded tiene 2 identificadores
+    // por documento: el `id` interno (cuid de 24 chars hex) y el docNumber
+    // visible (ej. "F0030"). ChatGPT casi siempre intenta llamar este tool
+    // pasando el docNumber porque es lo que ve en la respuesta de
+    // holded_list_invoices. Antes el handler exigia el cuid → 404 desde
+    // Holded → respuesta sin contenido → ChatGPT frontend mostraba "Cannot
+    // read properties of undefined (reading 'role')" y se quedaba colgado.
+    //
+    // Logica:
+    //   1. Si parece un cuid (24 hex chars) → llamada directa.
+    //   2. Si parece un docNumber → listar y matchear, despues llamada con
+    //      el id resuelto.
+    //   3. Si nada matchea → error claro indicando como buscar.
+    if (/^[a-f0-9]{24}$/i.test(idOrNumber)) {
+      const item = await holdedAdapter.getInvoice(apiKey, idOrNumber);
+      return { item };
+    }
+
+    type InvoiceLike = {
+      id?: string;
+      _id?: string;
+      docNumber?: string;
+      number?: string;
+    };
+
+    const matchByDocNumber = (items: unknown): InvoiceLike | undefined => {
+      if (!Array.isArray(items)) return undefined;
+      return (items as InvoiceLike[]).find(
+        (inv) =>
+          inv?.docNumber === idOrNumber ||
+          inv?.number === idOrNumber ||
+          inv?.docNumber?.toLowerCase() === idOrNumber.toLowerCase() ||
+          inv?.number?.toLowerCase() === idOrNumber.toLowerCase()
+      );
+    };
+
+    const defaultList = await holdedAdapter.listInvoices(apiKey, { page: 1, limit: 100 });
+    let candidate = matchByDocNumber(defaultList);
+
+    if (!candidate) {
+      const currentYear = new Date().getUTCFullYear();
+      const historyResult = await holdedAdapter.listInvoicesHistory(apiKey, {
+        page: 1,
+        limit: 100,
+        year: currentYear,
+      });
+      candidate = matchByDocNumber(historyResult?.items);
+
+      if (!candidate) {
+        const previousResult = await holdedAdapter.listInvoicesHistory(apiKey, {
+          page: 1,
+          limit: 100,
+          year: currentYear - 1,
+        });
+        candidate = matchByDocNumber(previousResult?.items);
+      }
+    }
+
+    if (!candidate) {
+      throw new Error(
+        `No invoice found with id or document number "${idOrNumber}". ` +
+          `If you have the internal Holded id (a 24-character hex string) pass it directly. ` +
+          `Otherwise, call holded_list_invoices first to find the invoice and pass its docNumber (e.g. "F0030") here.`
+      );
+    }
+
+    const resolvedId = candidate.id ?? candidate._id ?? idOrNumber;
+    const item = await holdedAdapter.getInvoice(apiKey, resolvedId);
     return { item };
   },
 
@@ -1668,11 +1737,15 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_get_invoice',
     'Get one invoice from Holded',
-    'Retrieve a single invoice document from Holded by its invoice id.',
+    // B5 (sesion 7 hardening): description actualizada para que ChatGPT
+    // entienda que puede pasar tanto el id interno (cuid 24 hex) como el
+    // docNumber visible (e.g. "F0030"). El handler resuelve el lookup
+    // automaticamente.
+    'Retrieve a single invoice document from Holded. Accepts EITHER the internal Holded invoice id (a 24-character hex string returned by a previous listing) OR the visible document number such as "F0030" / "F-0030". When you receive a list of invoices from holded_list_invoices, you can pass the value of the `docNumber` field directly here — the connector resolves it to the internal id automatically.',
     simpleSchema(
       {
         invoiceId: stringProperty(
-          'The Holded invoice identifier returned by a previous invoice listing.'
+          'Either the internal Holded invoice id (24-char hex) or the visible docNumber (e.g. "F0030"). The connector accepts both.'
         ),
       },
       ['invoiceId']

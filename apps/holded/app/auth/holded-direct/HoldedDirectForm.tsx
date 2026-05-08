@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 /**
  * HoldedDirectForm — F2.1 (rediseño auth 2026-05-08)
@@ -25,6 +25,7 @@ import {
   sendMagicLinkEmail,
   startGoogleRedirectSignIn,
 } from '@/app/lib/auth';
+import { auth as firebaseAuth } from '@/app/lib/firebase';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -48,6 +49,36 @@ const HOLDED_API_KEY_HELP_URL = 'https://support.holded.com/hc/es/articles/36000
 
 const HOLDED_API_KEY_REGEX = /^[a-f0-9]{32}$/i;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Saludo contextual segun la hora local del usuario. Devuelve siempre el
+ * tono "Buenos {tiempo}" para alinear con el patrón Claude (captura de
+ * referencia: brand/Screenshot Claude.png).
+ */
+function getTimeGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 6) return 'Buenas noches';
+  if (hour < 12) return 'Buenos días';
+  if (hour < 21) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
+/**
+ * Extrae el primer nombre de un displayName de Firebase ("Ksenia Ilicheva" →
+ * "Ksenia"). Si el displayName esta vacio o solo tiene un email, devuelve
+ * null para que el saludo caiga al genérico sin nombre — preferimos no
+ * mostrar nombre antes que mostrar el prefijo del email (que casi nunca
+ * coincide con el nombre real).
+ */
+function firstNameFrom(displayName: string | null | undefined): string | null {
+  if (!displayName) return null;
+  const trimmed = displayName.trim();
+  if (!trimmed || trimmed.includes('@')) return null;
+  const first = trimmed.split(/\s+/)[0];
+  if (!first || first.length < 2) return null;
+  // Capitaliza solo si el usuario lo dejo en minúsculas todo
+  return first.charAt(0).toUpperCase() + first.slice(1);
+}
 
 const ERROR_MESSAGES: Record<string, string> = {
   MISSING_FIELDS: 'Por favor, completa todos los campos.',
@@ -131,8 +162,12 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
   // Auth phase state
   const [authPhase, setAuthPhase] = useState<AuthPhase>(sessionEmail ? 'authed' : 'choosing');
   const [authedEmail, setAuthedEmail] = useState<string | null>(sessionEmail);
+  // displayName de Firebase (solo Google lo trae). Magic link no aporta nombre,
+  // en ese caso queda null y el saludo cae al genérico sin nombre.
+  const [authedName, setAuthedName] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const firstName = useMemo(() => firstNameFrom(authedName), [authedName]);
 
   // Magic link state
   const [magicEmail, setMagicEmail] = useState('');
@@ -153,9 +188,19 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
   const apiKeyFormatValid = apiKeyTrimmed === '' || HOLDED_API_KEY_REGEX.test(apiKeyTrimmed);
   const showApiKeyFormatError = apiKeyTouched && apiKeyTrimmed !== '' && !apiKeyFormatValid;
 
-  // On mount: detect Firebase magic link or Google redirect result
+  // On mount: detect Firebase magic link or Google redirect result, y rescatar
+  // el displayName de Firebase para personalizar el saludo del paso 2.
   useEffect(() => {
-    if (sessionEmail) return; // already authed from server session
+    if (sessionEmail) {
+      // Sesion ya válida desde el server. Firebase persiste displayName en
+      // IndexedDB, así que `auth.currentUser.displayName` está disponible
+      // sin un nuevo round-trip.
+      const current = firebaseAuth?.currentUser;
+      if (current?.displayName) {
+        setAuthedName(current.displayName);
+      }
+      return;
+    }
 
     if (detectMagicLinkInUrl()) {
       setAuthPhase('consuming');
@@ -168,6 +213,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
       consumeMagicLink(storedEmail, { source: 'holded_magic_link' }).then((result) => {
         if (result.user) {
           setAuthedEmail(result.user.email ?? storedEmail);
+          setAuthedName(result.user.displayName ?? null);
           setAuthPhase('authed');
         } else {
           setAuthPhase('choosing');
@@ -181,6 +227,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
     consumeGoogleRedirectResult({ source: 'holded_google_oauth' }).then((result) => {
       if (result.user) {
         setAuthedEmail(result.user.email ?? null);
+        setAuthedName(result.user.displayName ?? null);
         setAuthPhase('authed');
       }
     });
@@ -329,28 +376,22 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                   </div>
                 </div>
 
-                {/* Step indicator */}
-                <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
-                      isApiKeyStep ? 'bg-emerald-500 text-white' : 'bg-[#ff5460] text-white'
-                    }`}
-                  >
-                    {isApiKeyStep ? '✓' : '1'}
-                  </span>
-                  <span>Acceso</span>
-                  <span className="h-px w-4 bg-slate-300" />
-                  <span
-                    className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] ${
-                      isApiKeyStep
-                        ? 'bg-[#ff5460] text-white'
-                        : 'bg-white text-slate-400 ring-1 ring-slate-300'
-                    }`}
-                  >
-                    2
-                  </span>
-                  <span>API key</span>
-                </div>
+                {/* Step indicator: lo escondemos en step 2 (UI calmada
+                    estilo Claude — ya hay un saludo personalizado, no hace
+                    falta repetir el progreso). */}
+                {!isApiKeyStep ? (
+                  <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#ff5460] text-[10px] text-white">
+                      1
+                    </span>
+                    <span>Acceso</span>
+                    <span className="h-px w-4 bg-slate-300" />
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[10px] text-slate-400 ring-1 ring-slate-300">
+                      2
+                    </span>
+                    <span>API key</span>
+                  </div>
+                ) : null}
 
                 {authPhase === 'consuming' ? (
                   <>
@@ -383,13 +424,21 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                     </p>
                   </>
                 ) : (
+                  // Step 2: saludo personalizado tipo Claude. El nombre solo
+                  // aparece si Firebase devolvio displayName (Google si, magic
+                  // link no). Fallback genérico sin nombre — nunca usamos el
+                  // prefijo del email porque casi nunca coincide con el
+                  // nombre real del usuario.
                   <>
-                    <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
-                      Conecta tu cuenta de Holded
+                    <h1 className="mt-6 text-3xl font-semibold tracking-tight text-slate-950">
+                      <span aria-hidden="true" className="mr-2 inline-block">
+                        ✦
+                      </span>
+                      {getTimeGreeting()}
+                      {firstName ? `, ${firstName}` : ''}
                     </h1>
-                    <p className="mt-2 text-sm leading-6 text-slate-500">
-                      Introduce la API key de Holded. La encriptamos con AES-256 y la vinculamos
-                      solo a tu empresa.
+                    <p className="mt-3 text-sm leading-6 text-slate-500">
+                      Pega tu API key de Holded para terminar la conexión.
                     </p>
                   </>
                 )}
@@ -525,39 +574,33 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                 </div>
               ) : null}
 
-              {/* === PASO 2: API key === */}
+              {/* === PASO 2: API key (rediseño calmado tipo Claude) === */}
               {isApiKeyStep ? (
                 <>
+                  {/* Email verificado — chip compacto, no ocupa espacio */}
+                  <div className="mt-5 flex justify-center">
+                    <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/70 px-3 py-1 text-[11px] font-medium text-emerald-800">
+                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
+                      <span className="truncate max-w-[14rem]">{authedEmail}</span>
+                    </div>
+                  </div>
+
                   {step2Error ? (
                     <div
                       role="alert"
-                      className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800"
+                      className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800"
                     >
                       {step2Error}
                     </div>
                   ) : null}
 
                   <form onSubmit={handleStep2Submit} className="mt-6 space-y-4">
-                    {/* Email autenticado — read-only */}
+                    {/* API key — input prominente estilo "prompt box" */}
                     <div className="space-y-1.5">
-                      <label className="block text-sm font-medium text-slate-700">
-                        Email verificado
-                      </label>
-                      <div className="flex h-12 w-full items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 text-sm text-slate-700">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600" />
-                        <span className="flex-1 truncate font-medium">{authedEmail}</span>
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700">
-                          Verificado
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* API key */}
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-baseline justify-between px-1">
                         <label
-                          htmlFor="apiKey"
-                          className="block text-sm font-medium text-slate-700"
+                          htmlFor="holded-secret-token-input"
+                          className="text-xs font-medium uppercase tracking-wider text-slate-500"
                         >
                           API key de Holded
                         </label>
@@ -570,7 +613,13 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                           ¿Dónde la encuentro?
                         </a>
                       </div>
-                      <div className="relative">
+                      <div
+                        className={`relative rounded-2xl border bg-white shadow-sm transition focus-within:shadow-md ${
+                          showApiKeyFormatError
+                            ? 'border-rose-300 focus-within:border-rose-400 focus-within:ring-2 focus-within:ring-rose-300/40'
+                            : 'border-slate-200 focus-within:border-[#ff5460] focus-within:ring-2 focus-within:ring-[#ff5460]/30'
+                        }`}
+                      >
                         <input
                           id="holded-secret-token-input"
                           name="holded_secret_token"
@@ -601,16 +650,12 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                           aria-describedby={
                             showApiKeyFormatError ? 'apikey-format-error' : undefined
                           }
-                          className={`block h-12 w-full rounded-2xl border bg-white px-4 pr-12 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 ${
-                            showApiKeyFormatError
-                              ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-300/40'
-                              : 'border-slate-200 focus:border-[#ff5460] focus:ring-[#ff5460]/30'
-                          }`}
+                          className="block h-14 w-full rounded-2xl border-0 bg-transparent px-5 pr-12 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0"
                         />
                         <button
                           type="button"
                           onClick={() => setShowApiKey((v) => !v)}
-                          className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 transition hover:text-slate-700"
+                          className="absolute inset-y-0 right-0 flex items-center pr-5 text-slate-400 transition hover:text-slate-700"
                           aria-label={showApiKey ? 'Ocultar API key' : 'Mostrar API key'}
                         >
                           {showApiKey ? (
@@ -624,7 +669,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                         <p
                           id="apikey-format-error"
                           role="alert"
-                          className="mt-1 text-xs leading-5 text-rose-700"
+                          className="mt-1 px-1 text-xs leading-5 text-rose-700"
                         >
                           Formato inválido. La API key de Holded son{' '}
                           <strong>32 caracteres hexadecimales</strong> (solo dígitos 0–9 y letras
@@ -633,66 +678,39 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                       ) : null}
                     </div>
 
-                    {/* API key safety callout */}
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 px-4 py-3">
-                      <div className="flex items-start gap-2.5">
-                        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
-                        <div className="text-xs leading-5 text-emerald-900">
-                          <p className="font-semibold">Tu API key se queda contigo y con Holded.</p>
-                          <p className="mt-1 text-emerald-800/90">
-                            Validamos la clave server-side contra Holded, la ciframos en reposo y
-                            solo la usamos para responder a tus propias preguntas.{' '}
-                            <strong>Nunca</strong> se envía a OpenAI ni Anthropic, no atraviesa los
-                            modelos de IA y no la usamos para entrenar nada. Puedes revocarla en
-                            cualquier momento desde Holded o escribiéndonos a {SUPPORT_EMAIL}.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* T&C */}
-                    <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50/60 px-4 py-3">
-                      <label className="flex cursor-pointer items-start gap-2.5">
-                        <input
-                          type="checkbox"
-                          checked={acceptedTerms}
-                          onChange={(e) => setAcceptedTerms(e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                        />
-                        <span className="text-xs leading-5 text-slate-600">
-                          Acepto los{' '}
-                          <a
-                            href={`${HOLDED_SITE_URL}/conectores/holded/terms`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-semibold text-slate-800 underline"
-                          >
-                            términos de uso
-                          </a>{' '}
-                          del conector.
-                        </span>
-                      </label>
-                      <label className="flex cursor-pointer items-start gap-2.5">
-                        <input
-                          type="checkbox"
-                          checked={acceptedPrivacy}
-                          onChange={(e) => setAcceptedPrivacy(e.target.checked)}
-                          className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
-                        />
-                        <span className="text-xs leading-5 text-slate-600">
-                          Acepto la{' '}
-                          <a
-                            href={`${HOLDED_SITE_URL}/conectores/holded/privacy`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="font-semibold text-slate-800 underline"
-                          >
-                            política de privacidad
-                          </a>
-                          .
-                        </span>
-                      </label>
-                    </div>
+                    {/* T&C — un solo check combinado, microcopy compacto */}
+                    <label className="flex cursor-pointer items-start gap-2.5 px-1">
+                      <input
+                        type="checkbox"
+                        checked={acceptedTerms && acceptedPrivacy}
+                        onChange={(e) => {
+                          setAcceptedTerms(e.target.checked);
+                          setAcceptedPrivacy(e.target.checked);
+                        }}
+                        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-[#ff5460] focus:ring-[#ff5460]"
+                      />
+                      <span className="text-xs leading-5 text-slate-600">
+                        Acepto los{' '}
+                        <a
+                          href={`${HOLDED_SITE_URL}/conectores/holded/terms`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-slate-800 underline"
+                        >
+                          términos de uso
+                        </a>{' '}
+                        y la{' '}
+                        <a
+                          href={`${HOLDED_SITE_URL}/conectores/holded/privacy`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-semibold text-slate-800 underline"
+                        >
+                          política de privacidad
+                        </a>
+                        .
+                      </span>
+                    </label>
 
                     <button
                       type="submit"
@@ -706,25 +724,56 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                           ? 'Conectar Holded a ChatGPT'
                           : 'Conectar Holded'}
                     </button>
+
+                    {/* Mini banner safety — una linea, sin sombra grande */}
+                    <div className="flex items-start gap-2 px-1 text-xs leading-5 text-slate-500">
+                      <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                      <span>
+                        Tu API key se cifra con AES-256 y se queda en tu tenant.{' '}
+                        <strong className="font-semibold text-slate-600">Nunca</strong> viaja por
+                        modelos de IA, ni se usa para entrenar.
+                      </span>
+                    </div>
                   </form>
                 </>
               ) : null}
 
-              {/* Trust hints */}
-              <ul className="mt-5 space-y-2 text-xs text-slate-500">
-                <li className="flex items-start gap-2">
-                  <ShieldCheck className="mt-0.5 h-3.5 w-3.5 text-[#ff5460]" />
-                  Sin contraseñas: tu API key viaja cifrada y se guarda solo en tu tenant.
-                </li>
-                <li className="flex items-start gap-2">
-                  <Sparkles className="mt-0.5 h-3.5 w-3.5 text-[#ff5460]" />
-                  Puedes revocar la conexión cuando quieras desde tu dashboard.
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 text-[#ff5460]" />
-                  Cumple RGPD y la DPA del conector. Sin venta de datos.
-                </li>
-              </ul>
+              {/* Trust hints — solo en step 1 (pre-auth). En step 2 ya
+                  mostramos el mini banner de seguridad bajo el submit. */}
+              {!isApiKeyStep ? (
+                <ul className="mt-5 space-y-2 text-xs text-slate-500">
+                  <li className="flex items-start gap-2">
+                    <ShieldCheck className="mt-0.5 h-3.5 w-3.5 text-[#ff5460]" />
+                    Sin contraseñas: tu API key viaja cifrada y se guarda solo en tu tenant.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Sparkles className="mt-0.5 h-3.5 w-3.5 text-[#ff5460]" />
+                    Puedes revocar la conexión cuando quieras desde tu dashboard.
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 text-[#ff5460]" />
+                    Cumple RGPD y la DPA del conector. Sin venta de datos.
+                  </li>
+                </ul>
+              ) : (
+                <div className="mt-5 flex items-center justify-center gap-3 text-[11px] text-slate-400">
+                  <span className="flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                    RGPD
+                  </span>
+                  <span className="text-slate-300">·</span>
+                  <a
+                    href={`${HOLDED_SITE_URL}/conectores/holded/dpa`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-slate-600 hover:underline"
+                  >
+                    DPA
+                  </a>
+                  <span className="text-slate-300">·</span>
+                  <span>Sin venta de datos</span>
+                </div>
+              )}
 
               {/* Volver */}
               <div className="mt-6 text-center">
