@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Button } from '@/components/ui/button';
 
 interface Movement {
   id: string;
@@ -189,9 +188,13 @@ export function MovementsList() {
       <div className="space-y-4 rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
         <h2 className="font-semibold text-red-900">Error</h2>
         <p className="text-sm text-red-800">{error}</p>
-        <Button onClick={loadMovements} variant="outline" size="sm">
+        <button
+          type="button"
+          onClick={loadMovements}
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
           Reintentar
-        </Button>
+        </button>
       </div>
     );
   }
@@ -216,20 +219,20 @@ export function MovementsList() {
 
         {/* Filter buttons */}
         <div className="flex gap-2">
-          <Button
-            variant={filterState === 'unmatched' ? 'default' : 'outline'}
-            size="sm"
+          <button
+            type="button"
             onClick={() => setFilterState('unmatched')}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${filterState === 'unmatched' ? 'bg-[#2361d8] text-white' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
           >
             Sin concordancia ({unmatched.length})
-          </Button>
-          <Button
-            variant={filterState === 'suggested' ? 'default' : 'outline'}
-            size="sm"
+          </button>
+          <button
+            type="button"
             onClick={() => setFilterState('suggested')}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${filterState === 'suggested' ? 'bg-[#2361d8] text-white' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
           >
             Sugeridos ({suggested.length})
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -331,24 +334,24 @@ export function MovementsList() {
                           )}
                         </div>
                         <div className="flex gap-2 pt-2">
-                          <Button
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700"
+                          <button
+                            type="button"
+                            className="rounded-lg bg-blue-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-50"
                             disabled={actionInProgress === movement.id}
                             onClick={() =>
                               handleConfirmMatch(movement.id, score.candidate!.expenseId)
                             }
                           >
                             {actionInProgress === movement.id ? 'Confirmar...' : 'Confirmar'}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                             onClick={() => setExpandedId(null)}
                             disabled={actionInProgress === movement.id}
                           >
                             Rechazar
-                          </Button>
+                          </button>
                         </div>
                       </div>
                     )}
@@ -394,16 +397,16 @@ export function MovementsList() {
 
                     {/* Create new expense */}
                     <div className="border-t border-slate-200 pt-3">
-                      <Button
-                        size="sm"
-                        variant="outline"
+                      <button
+                        type="button"
+                        className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
                         disabled={actionInProgress === movement.id}
                         onClick={() => handleCreateExpense(movement.id)}
                       >
                         {actionInProgress === movement.id
                           ? 'Creando gasto...'
                           : '+ Crear nuevo gasto'}
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 )}

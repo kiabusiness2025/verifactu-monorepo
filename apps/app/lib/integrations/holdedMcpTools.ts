@@ -351,8 +351,19 @@ function requireConfirm(input: Record<string, unknown>) {
     // tool response and surface it to the user for confirmation. Without this
     // friendly phrasing the model often interprets the error as a hard failure
     // and gives up instead of asking the user to confirm.
+    //
+    // A5 (auditoria OpenAI 2026-05-07): el wording previo se interpretaba a
+    // veces como un error duro durante review (revisor escribia "tool returned
+    // an error, app does not work"). Reescrito para (1) afirmar claramente
+    // que NO se ha cambiado nada, (2) pedir al modelo que repita la llamada
+    // con confirm:true cuando el usuario diga "si"/"yes"/"confirm", y (3)
+    // dejar al usuario una salida explicita ("if you don't want to proceed,
+    // tell me and I will discard this draft").
     throw new Error(
-      'Confirmation pending. No changes were made. To proceed, call this tool again with the same input plus confirm: true.'
+      'Awaiting your confirmation. Nothing has been written to Holded yet — no changes have been made. ' +
+        'If you want to proceed, please confirm explicitly (for example: "Yes, create the draft"). ' +
+        'On confirmation, the assistant should call this same tool again with the identical input plus confirm: true. ' +
+        "If you don't want to proceed, tell me and I will discard the request."
     );
   }
 }
@@ -2570,7 +2581,18 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_create_invoice_draft',
     'Create invoice draft in Holded',
-    'Create a draft invoice in Holded. The draft is NEVER sent, finalized, charged, or emailed — only saved as a draft. Requires explicit confirmation (confirm: true). The connector accepts two input shapes:\n\n  • FLAT (preferred for ChatGPT and Claude): pass contactId or contactName, subject, and lines (or a single desc/units/price/tax) at the top level.\n  • NESTED (legacy): pass a payload object with contactId, subject, lines, etc.\n\nWhen contactName is provided without contactId, the connector resolves it via holded_list_contacts automatically.',
+    // M1 (auditoria OpenAI 2026-05-07): wording explicito para que el revisor
+    // no tenga dudas sobre la naturaleza de la unica operacion de escritura
+    // expuesta en el preset openai_review_v2.
+    "Create a DRAFT invoice in the user's connected Holded account. " +
+      'The draft is saved with Holded `draft: true` and is NEVER sent, finalized, charged, emailed, or otherwise irreversibly transmitted. ' +
+      'No payment is taken, no email is sent to the recipient, and no AEAT/Verifactu submission is triggered. ' +
+      'After creation the user can review, edit, or discard the draft from the Holded UI before issuing it. ' +
+      'Requires explicit user confirmation: the assistant must call this tool with `confirm: true` only after the user has explicitly approved the action. ' +
+      'The connector accepts two input shapes:\n\n' +
+      '  • FLAT (preferred for ChatGPT and Claude): pass contactId or contactName, subject, and lines (or a single desc/units/price/tax) at the top level.\n' +
+      '  • NESTED (legacy): pass a payload object with contactId, subject, lines, etc.\n\n' +
+      'When contactName is provided without contactId, the connector resolves it via holded_list_contacts automatically.',
     writeSchema(
       {
         docType: stringProperty('Document type to create in Holded.', { defaultValue: 'invoice' }),

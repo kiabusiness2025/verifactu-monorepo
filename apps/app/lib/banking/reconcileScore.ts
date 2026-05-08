@@ -39,13 +39,11 @@ function jaccardSimilarity(a: string, b: string): number {
   }
 
   let intersection = 0;
-  for (const token of aTokens) {
-    if (bTokens.has(token)) {
-      intersection++;
-    }
-  }
+  Array.from(aTokens).forEach((token) => {
+    if (bTokens.has(token)) intersection++;
+  });
 
-  const union = new Set([...aTokens, ...bTokens]).size;
+  const union = new Set([...Array.from(aTokens), ...Array.from(bTokens)]).size;
   return union === 0 ? 0 : intersection / union;
 }
 
