@@ -193,7 +193,31 @@ export async function POST(request: NextRequest) {
     maxAgeSeconds: SESSION_MAX_AGE_SECONDS,
   });
 
-  const redirectUrl = sanitizeHoldedReturnTarget(normalizedNext || undefined, '/dashboard');
+  // F2 (auditoria OpenAI 2026-05-08, sesion video demo): cuando el `next`
+  // apunta a `/oauth/authorize`, el endpoint /oauth/authorize requiere los
+  // flags `connection_confirmed=1` + `connected_provider_account_id` +
+  // `tenant_id` para confirmar que el upsert via F1 ya genero una conexion
+  // valida. Sin estos flags, oauth/authorize evalua hasSharedHoldedConnection
+  // → redirige a /onboarding/holded LEGACY → el usuario tiene que pegar la
+  // API key OTRA VEZ. Bug que aparecio en el video del demo: dos pantallas
+  // pidiendo la API key consecutivamente.
+  //
+  // Fix: si el next es un /oauth/authorize, aumentamos su querystring con
+  // los flags de confirmacion antes de devolverlo al cliente. Para otros
+  // destinos (dashboard normal) no tocamos nada.
+  let redirectUrl = sanitizeHoldedReturnTarget(normalizedNext || undefined, '/dashboard');
+  try {
+    const parsedRedirect = new URL(redirectUrl);
+    if (parsedRedirect.pathname === '/oauth/authorize') {
+      parsedRedirect.searchParams.set('connection_confirmed', '1');
+      parsedRedirect.searchParams.set('connected_provider_account_id', upsertJson.connectionId);
+      parsedRedirect.searchParams.set('tenant_id', tenantId);
+      redirectUrl = parsedRedirect.toString();
+    }
+  } catch {
+    // El redirectUrl puede ser una ruta relativa (e.g. "/dashboard") cuando
+    // no hay `next`. En ese caso no aplican los flags OAuth — seguimos.
+  }
 
   const response = NextResponse.json({ ok: true, redirectUrl });
   response.cookies.set({
