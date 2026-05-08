@@ -1,4 +1,4 @@
-/** @jest-environment node */
+﻿/** @jest-environment node */
 
 /**
  * Tests del wrapper /api/auth/holded-direct.
@@ -212,7 +212,10 @@ describe('POST /api/auth/holded-direct — F2.2 wrapper', () => {
     expect(sentBody).toMatchObject({
       personalEmail: 'demo@example.com',
       holdedApiKey: 'badkey',
-      channel: 'mobile',
+      // 2026-05-08: cambiado de 'mobile' a 'chatgpt' para que el lookup
+      // posterior en /oauth/authorize encuentre la conexion (normalizeHolded-
+      // Channel solo reconoce 'chatgpt' | 'dashboard').
+      channel: 'chatgpt',
       source: 'chatgpt_mobile_form',
       acceptedTerms: true,
       acceptedPrivacy: true,

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/auth/holded-direct  (canal = mobile)
  *
  * Wrapper F2.2 de la arquitectura unificada de conectores Holded.
@@ -38,7 +38,14 @@ export const runtime = 'nodejs';
 
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 días
 const UPSERT_PATH = '/api/integrations/holded/upsert-from-key';
-const F2_CHANNEL = 'mobile' as const;
+// 2026-05-08 fix bucle redirect: el canal `mobile` rompía la resolucion en
+// /oauth/authorize porque normalizeHoldedChannel() en holdedConnectionResolver
+// solo reconoce 'chatgpt' | 'dashboard' — `mobile` caia a 'dashboard' al
+// guardar y no se encontraba al buscar como 'chatgpt'. Resultado: hasHolded-
+// Connection=false en /oauth/authorize → bounce a /onboarding/holded → form
+// → submit → bounce → bucle infinito.
+// Fix: el wrapper aqui es siempre el flow ChatGPT → guardamos como 'chatgpt'.
+const F2_CHANNEL = 'chatgpt' as const;
 const F2_SOURCE = 'chatgpt_mobile_form' as const;
 
 /** Errores F1 (helper) → códigos UI F2 (los que conoce `page.tsx`). */

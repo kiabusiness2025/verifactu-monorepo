@@ -26,6 +26,7 @@ import {
   startGoogleRedirectSignIn,
 } from '@/app/lib/auth';
 import { auth as firebaseAuth } from '@/app/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -192,14 +193,22 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
   // el displayName de Firebase para personalizar el saludo del paso 2.
   useEffect(() => {
     if (sessionEmail) {
-      // Sesion ya válida desde el server. Firebase persiste displayName en
-      // IndexedDB, así que `auth.currentUser.displayName` está disponible
-      // sin un nuevo round-trip.
-      const current = firebaseAuth?.currentUser;
-      if (current?.displayName) {
-        setAuthedName(current.displayName);
+      // Sesion ya válida desde el server. Firebase restaura el usuario desde
+      // IndexedDB de forma asincrona — si leemos `currentUser` en mount, casi
+      // siempre es null. Nos suscribimos a onAuthStateChanged para capturar
+      // el displayName en cuanto Firebase lo restaure.
+      if (!firebaseAuth) return;
+      // Si ya esta cargado, capturarlo de inmediato (puede pasar en navegacion
+      // dentro del SPA).
+      if (firebaseAuth.currentUser?.displayName) {
+        setAuthedName(firebaseAuth.currentUser.displayName);
       }
-      return;
+      const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
+        if (user?.displayName) {
+          setAuthedName(user.displayName);
+        }
+      });
+      return () => unsubscribe();
     }
 
     if (detectMagicLinkInUrl()) {
