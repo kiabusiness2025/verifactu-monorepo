@@ -4,10 +4,7 @@ import {
   logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
-import {
-  hasSharedHoldedConnectionForTenant,
-  resolveSharedHoldedConnectionStatusForTenant,
-} from '@/lib/integrations/holdedConnectionResolver';
+import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import {
   getHoldedOnboardingTokenFromSearchParams,
   resolveHoldedOnboardingSession,
@@ -156,9 +153,6 @@ export async function GET(request: NextRequest) {
     ? requestedScope.trim()
     : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
-  const connectionConfirmed = url.searchParams.get('connection_confirmed')?.trim() === '1';
-  const connectedProviderAccountId =
-    url.searchParams.get('connected_provider_account_id')?.trim() || null;
   const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
   const loginConfirmed = url.searchParams.get('holded_login_confirmed')?.trim() === '1';
   const isChatgptClient = isLikelyChatgptOAuthRequest({ clientId, redirectUri });
@@ -330,15 +324,8 @@ export async function GET(request: NextRequest) {
     }
 
     let hasHoldedConnection = false;
-    let currentProviderAccountId: string | null = null;
     if (resolved.tenantId) {
       try {
-        const snapshot = await resolveSharedHoldedConnectionStatusForTenant(
-          resolved.tenantId,
-          'chatgpt'
-        );
-        currentProviderAccountId = snapshot?.providerAccountId ?? null;
-
         hasHoldedConnection = await hasSharedHoldedConnectionForTenant(
           resolved.tenantId,
           'chatgpt'
@@ -352,13 +339,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const hasProviderMismatch = Boolean(
-      connectionConfirmed &&
-      connectedProviderAccountId &&
-      connectedProviderAccountId !== (currentProviderAccountId ?? '')
-    );
-
-    if (resolved.tenantId && (!hasHoldedConnection || hasProviderMismatch)) {
+    // hasProviderMismatch was removed: upsertAccountingIntegration never sets
+    // provider_account_id (stays NULL), so the check always evaluated to true
+    // and caused an infinite redirect loop back to holded-direct even after a
+    // successful connection. hasHoldedConnection (api_key_enc != NULL) is the
+    // authoritative signal.
+    if (resolved.tenantId && !hasHoldedConnection) {
       const authorizeUrl = new URL(url.toString());
       authorizeUrl.searchParams.delete('connection_confirmed');
       authorizeUrl.searchParams.delete('connected_provider_account_id');

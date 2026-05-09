@@ -13,7 +13,6 @@ jest.mock('@/lib/integrations/holdedOnboardingSession', () => ({
 
 jest.mock('@/lib/integrations/holdedConnectionResolver', () => ({
   hasSharedHoldedConnectionForTenant: jest.fn(),
-  resolveSharedHoldedConnectionStatusForTenant: jest.fn(async () => null),
 }));
 
 jest.mock('@/lib/session', () => ({
@@ -46,10 +45,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
   verifyHoldedOnboardingToken: jest.fn(async () => null),
 }));
 
-import {
-  hasSharedHoldedConnectionForTenant,
-  resolveSharedHoldedConnectionStatusForTenant,
-} from '@/lib/integrations/holdedConnectionResolver';
+import { hasSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
 import { upsertChannelIdentity } from '@/lib/integrations/channelIdentityStore';
 import { resolveHoldedOnboardingSession } from '@/lib/integrations/holdedOnboardingSession';
 import {
@@ -237,7 +233,11 @@ describe('oauth authorize holded flow', () => {
     expect(location).toBe('https://chat.openai.com/aip/oauth/callback?code=code-123&state=abc123');
   });
 
-  it('redirects back to holded-direct when confirmed provider fingerprint does not match current tenant connection', async () => {
+  it('issues the authorization code when a connection exists regardless of connected_provider_account_id flag', async () => {
+    // provider_account_id is never set by upsertAccountingIntegration (stays NULL),
+    // so comparing connectedProviderAccountId against it always mismatched and caused
+    // an infinite redirect loop. hasSharedHoldedConnectionForTenant (api_key_enc != NULL)
+    // is now the only gate — if connection exists, issue the code.
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
       email: 'demo@example.com',
@@ -245,21 +245,17 @@ describe('oauth authorize holded flow', () => {
       tenantId: 'tenant-1',
     });
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
-    (resolveSharedHoldedConnectionStatusForTenant as jest.Mock).mockResolvedValue({
-      providerAccountId: 'legacy-fingerprint',
-    });
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&connection_confirmed=1&connected_provider_account_id=new-fingerprint&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&connection_confirmed=1&connected_provider_account_id=some-db-uuid&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);
     const location = response.headers.get('location');
 
     expect(response.status).toBe(307);
-    expect(location).toContain('/auth/holded-direct');
-    expect(location).not.toContain('connected_provider_account_id=');
-    expect(mintAuthorizationCode).not.toHaveBeenCalled();
+    expect(location).toBe('https://chat.openai.com/aip/oauth/callback?code=code-123&state=abc123');
+    expect(mintAuthorizationCode).toHaveBeenCalled();
   });
 
   it('passes the selected tenant hint into the final oauth tenant resolution', async () => {
