@@ -264,7 +264,7 @@ async function main() {
 
   const introHtml  = resolve(DOCS, 'intro-chatgpt-holded.html');
   const outroHtml  = resolve(DOCS, 'outro-tutorial.html');
-  const mainVideo  = resolve(PUBLIC, 'Video Holded App 1.mp4');
+  const mainVideo  = resolve(PUBLIC, 'ChatGPT Apps _ Browse and chat with your favorite apps in ChatGPT - 9 May 2026.mp4');
   const introMp4   = resolve(TMP, 'intro.mp4');
   const outroMp4   = resolve(TMP, 'outro.mp4');
   const mainTrimmed = resolve(TMP, 'main_trimmed.mp4');

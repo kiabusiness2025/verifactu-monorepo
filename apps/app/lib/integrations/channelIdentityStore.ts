@@ -3,7 +3,7 @@ import { one, query } from '@/lib/db';
 type ChannelIdentityInput = {
   userId: string;
   tenantId?: string | null;
-  channelType: 'dashboard' | 'chatgpt' | 'internal';
+  channelType: 'dashboard' | 'chatgpt' | 'claude' | 'internal';
   channelSubjectId: string;
   email?: string | null;
   displayName?: string | null;

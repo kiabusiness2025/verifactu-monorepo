@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 //     sobre el MP4 local.
 //   - Si re-grabas localmente: reemplaza /public/video/holded-chatgpt-demo.mp4
 //     manteniendo el mismo nombre de archivo.
-const YOUTUBE_URL = 'https://www.youtube.com/embed/zcIGk6bf_dg?si=lL3fFhJYt5PE_wGl&start=11';
+const YOUTUBE_URL = 'https://www.youtube.com/embed/Sa0n7xUkSNM';
 const LOCAL_VIDEO_URL = '/video/holded-chatgpt-demo.mp4';
 const HAS_LOCAL_VIDEO = true; // mp4 ya desplegado en apps/holded/public/video/
 

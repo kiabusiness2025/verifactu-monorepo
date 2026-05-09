@@ -524,13 +524,17 @@ export function buildHoldedProfileCompletionEmail(input: {
 export function buildHoldedDisconnectedEmail(input: {
   name: string;
   companyName: string;
-  channel: 'dashboard' | 'chatgpt' | 'claude';
+  channel: 'dashboard' | 'chatgpt' | 'claude' | 'mobile';
   reconnectUrl: string;
 }): EmailTemplate {
   const hello = greeting(input.name);
   const company = sanitizeCompanyName(input.companyName);
   const channelLabel =
-    input.channel === 'chatgpt' ? 'ChatGPT' : input.channel === 'claude' ? 'Claude' : 'el panel';
+    input.channel === 'chatgpt' || input.channel === 'mobile'
+      ? 'ChatGPT'
+      : input.channel === 'claude'
+        ? 'Claude'
+        : 'el panel';
 
   return {
     subject: `Has desconectado Holded de ${channelLabel}`,
@@ -562,12 +566,16 @@ export function buildHoldedDisconnectedAdminEmail(input: {
   name: string;
   userEmail: string;
   companyName: string;
-  channel: 'dashboard' | 'chatgpt' | 'claude';
+  channel: 'dashboard' | 'chatgpt' | 'claude' | 'mobile';
   adminPanelUrl: string;
 }): EmailTemplate {
   const company = sanitizeCompanyName(input.companyName);
   const channelLabel =
-    input.channel === 'chatgpt' ? 'ChatGPT' : input.channel === 'claude' ? 'Claude' : 'Panel';
+    input.channel === 'chatgpt' || input.channel === 'mobile'
+      ? 'ChatGPT'
+      : input.channel === 'claude'
+        ? 'Claude'
+        : 'Panel';
   const now = new Date().toLocaleString('es-ES', {
     timeZone: 'Europe/Madrid',
     dateStyle: 'short',

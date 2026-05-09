@@ -28,7 +28,7 @@ let externalConnectionsTableAvailable: boolean | null = null;
 let externalConnectionsChannelColumnAvailable: boolean | null = null;
 const externalConnectionsColumnAvailability = new Map<string, boolean>();
 
-export type HoldedConnectionChannel = 'dashboard' | 'chatgpt';
+export type HoldedConnectionChannel = 'dashboard' | 'chatgpt' | 'claude';
 export type HoldedConnectionSource = 'external_connection';
 
 export type HoldedConnectionStatusSnapshot = {
@@ -58,7 +58,9 @@ export type HoldedResolvedConnection = HoldedConnectionStatusSnapshot & {
 };
 
 function normalizeHoldedChannel(channel?: string | null): HoldedConnectionChannel {
-  return channel === 'chatgpt' ? 'chatgpt' : 'dashboard';
+  if (channel === 'chatgpt' || channel === 'mobile') return 'chatgpt';
+  if (channel === 'claude') return 'claude';
+  return 'dashboard';
 }
 
 async function hasExternalConnectionsTable() {

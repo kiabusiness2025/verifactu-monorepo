@@ -47,6 +47,12 @@ export function maskSecret(value: string) {
   return `${normalized.slice(0, 4)}${'*'.repeat(Math.max(normalized.length - 8, 4))}${normalized.slice(-4)}`;
 }
 
+export type HoldedCompanyInfo = {
+  email?: string | null;
+  name?: string | null;
+  taxId?: string | null;
+};
+
 export type HoldedProbeResult = {
   ok: boolean;
   provider: 'holded';
@@ -60,6 +66,7 @@ export type HoldedProbeResult = {
   requiredCapabilities: HoldedProbeCapabilityKey[];
   missingCapabilities: HoldedProbeCapabilityKey[];
   error?: string | null;
+  companyInfo?: HoldedCompanyInfo | null;
 };
 
 type HoldedRequestOptions = {
@@ -270,6 +277,33 @@ async function holdedMultipartRequest(
   }
 }
 
+async function fetchHoldedCompanyInfo(apiKey: string): Promise<HoldedCompanyInfo | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), HOLDED_TIMEOUT_MS);
+  try {
+    const response = await fetch(buildHoldedUrl('/api/company/v1/'), {
+      method: 'GET',
+      headers: buildHoldedHeaders(apiKey),
+      signal: controller.signal,
+      cache: 'no-store',
+    });
+    if (!response.ok) return null;
+    const raw = await response.text();
+    const parsed = raw ? safeJsonParse(raw) : null;
+    if (!parsed || typeof parsed !== 'object') return null;
+    const data = parsed as Record<string, unknown>;
+    return {
+      email: typeof data.email === 'string' ? data.email.trim() || null : null,
+      name: typeof data.socialName === 'string' ? data.socialName.trim() || null : null,
+      taxId: typeof data.cifNumber === 'string' ? data.cifNumber.trim() || null : null,
+    };
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function probeEndpoint(apiKey: string, path: string, query?: HoldedRequestOptions['query']) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), HOLDED_TIMEOUT_MS);
@@ -341,17 +375,19 @@ export async function probeAccountingApiConnection(
   const normalizedApiKey = apiKey.trim();
   const profile = options?.profile ?? 'dashboard';
 
-  const [invoiceApi, contactsApi, accountingApi, crmApi, projectsApi, teamApi] = await Promise.all([
-    probeEndpoint(normalizedApiKey, '/api/invoicing/v1/documents/invoice', {
-      limit: 1,
-      page: 1,
-    }),
-    probeEndpoint(normalizedApiKey, '/api/invoicing/v1/contacts', { limit: 1, page: 1 }),
-    probeEndpoint(normalizedApiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, { limit: 1, page: 1 }),
-    probeEndpoint(normalizedApiKey, '/api/crm/v1/bookings', { limit: 1, page: 1 }),
-    probeEndpoint(normalizedApiKey, '/api/projects/v1/projects', { limit: 1, page: 1 }),
-    probeEndpoint(normalizedApiKey, '/api/team/v1/employees', { limit: 1, page: 1 }),
-  ]);
+  const [invoiceApi, contactsApi, accountingApi, crmApi, projectsApi, teamApi, companyInfo] =
+    await Promise.all([
+      probeEndpoint(normalizedApiKey, '/api/invoicing/v1/documents/invoice', {
+        limit: 1,
+        page: 1,
+      }),
+      probeEndpoint(normalizedApiKey, '/api/invoicing/v1/contacts', { limit: 1, page: 1 }),
+      probeEndpoint(normalizedApiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, { limit: 1, page: 1 }),
+      probeEndpoint(normalizedApiKey, '/api/crm/v1/bookings', { limit: 1, page: 1 }),
+      probeEndpoint(normalizedApiKey, '/api/projects/v1/projects', { limit: 1, page: 1 }),
+      probeEndpoint(normalizedApiKey, '/api/team/v1/employees', { limit: 1, page: 1 }),
+      fetchHoldedCompanyInfo(normalizedApiKey),
+    ]);
 
   const readiness = summarizeHoldedProbeReadiness(
     {
@@ -377,6 +413,7 @@ export async function probeAccountingApiConnection(
     requiredCapabilities: readiness.requiredCapabilities,
     missingCapabilities: readiness.missingCapabilities,
     error: readiness.error,
+    companyInfo: companyInfo ?? null,
   };
 }
 

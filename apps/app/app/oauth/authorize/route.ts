@@ -103,6 +103,43 @@ function redirectWithError(redirectUri: string, error: string, state?: string | 
   return NextResponse.redirect(url);
 }
 
+function isLikelyClaudeOAuthRequest(input: { clientId: string; redirectUri: string }) {
+  const normalizedClientId = input.clientId.trim().toLowerCase();
+  if (
+    normalizedClientId.startsWith('claude-') ||
+    normalizedClientId.startsWith('anthropic-') ||
+    normalizedClientId.includes('claude')
+  ) {
+    return true;
+  }
+
+  try {
+    const parsedRedirect = new URL(input.redirectUri);
+    const host = parsedRedirect.hostname.toLowerCase();
+    if (host.includes('claude.ai') || host.includes('anthropic.com')) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
+function buildCanonicalHoldedClaudeUrl(input: { next: string; tenantId?: string | null }) {
+  const holdedSiteUrl = resolveCanonicalHoldedSiteUrl();
+  const claudeUrl = new URL('/auth/holded-claude', holdedSiteUrl);
+  claudeUrl.searchParams.set('source', 'holded_claude_entry');
+  claudeUrl.searchParams.set('next', input.next);
+
+  const tenantId = input.tenantId?.trim();
+  if (tenantId) {
+    claudeUrl.searchParams.set('tenant_id', tenantId);
+  }
+
+  return claudeUrl;
+}
+
 function isLikelyChatgptOAuthRequest(input: { clientId: string; redirectUri: string }) {
   const normalizedClientId = input.clientId.trim().toLowerCase();
   if (
@@ -155,7 +192,8 @@ export async function GET(request: NextRequest) {
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
   const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
   const loginConfirmed = url.searchParams.get('holded_login_confirmed')?.trim() === '1';
-  const isChatgptClient = isLikelyChatgptOAuthRequest({ clientId, redirectUri });
+  const isClaudeClient = isLikelyClaudeOAuthRequest({ clientId, redirectUri });
+  const isChatgptClient = !isClaudeClient && isLikelyChatgptOAuthRequest({ clientId, redirectUri });
 
   try {
     if (responseType !== 'code') {
@@ -302,7 +340,7 @@ export async function GET(request: NextRequest) {
         await upsertChannelIdentity({
           userId: resolved.resolvedUserId,
           tenantId: resolved.tenantId,
-          channelType: 'chatgpt',
+          channelType: isClaudeClient ? 'claude' : 'chatgpt',
           channelSubjectId: clientId + ':' + subject.uid,
           email: subject.email,
           displayName: subject.name,
@@ -353,12 +391,17 @@ export async function GET(request: NextRequest) {
         authorizeUrl.searchParams.set('tenant_id', redirectTenantId);
       }
 
-      const holdedDirectUrl = buildCanonicalHoldedDirectUrl({
-        next: buildCanonicalPublicAuthorizeUrl(authorizeUrl),
-        tenantId: redirectTenantId,
-      });
+      const connectionFormUrl = isClaudeClient
+        ? buildCanonicalHoldedClaudeUrl({
+            next: buildCanonicalPublicAuthorizeUrl(authorizeUrl),
+            tenantId: redirectTenantId,
+          })
+        : buildCanonicalHoldedDirectUrl({
+            next: buildCanonicalPublicAuthorizeUrl(authorizeUrl),
+            tenantId: redirectTenantId,
+          });
 
-      return withConnectorRequestId(NextResponse.redirect(holdedDirectUrl), requestId);
+      return withConnectorRequestId(NextResponse.redirect(connectionFormUrl), requestId);
     }
 
     const user = mapSessionToOAuthUser({

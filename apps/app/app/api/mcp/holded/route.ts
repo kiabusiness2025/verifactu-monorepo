@@ -1,4 +1,8 @@
-import { markAccountingIntegrationRevoked } from '@/lib/integrations/accountingStore';
+import {
+  markAccountingIntegrationRevoked,
+  ACCOUNTING_INTEGRATION_CHANNELS,
+  type AccountingIntegrationChannel,
+} from '@/lib/integrations/accountingStore';
 import {
   resolveSharedHoldedConnectionForTenant,
   type HoldedConnectionChannel,
@@ -199,7 +203,9 @@ async function resolveHoldedApiKey(access?: {
       access.mode === 'pat'
         ? access.channelKey === 'dashboard'
           ? 'dashboard'
-          : 'chatgpt'
+          : access.channelKey === 'claude'
+            ? 'claude'
+            : 'chatgpt'
         : access.mode === 'oauth'
           ? 'chatgpt'
           : 'dashboard';
@@ -430,9 +436,17 @@ async function callTool(
   } catch (error) {
     if (access.tenantId && isHoldedCredentialRevocationError(error)) {
       try {
+        const revokeChannel: AccountingIntegrationChannel =
+          access.mode === 'oauth'
+            ? 'chatgpt'
+            : access.mode === 'pat' &&
+                typeof access.channelKey === 'string' &&
+                (ACCOUNTING_INTEGRATION_CHANNELS as readonly string[]).includes(access.channelKey)
+              ? (access.channelKey as AccountingIntegrationChannel)
+              : 'dashboard';
         await markAccountingIntegrationRevoked(
           access.tenantId,
-          access.mode === 'oauth' ? 'chatgpt' : 'dashboard',
+          revokeChannel,
           error instanceof Error ? error.message : String(error)
         );
       } catch (markError) {

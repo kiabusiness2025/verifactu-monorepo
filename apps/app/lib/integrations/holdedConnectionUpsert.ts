@@ -36,7 +36,10 @@ import {
   type AccountingIntegrationChannel,
 } from '@/lib/integrations/accountingStore';
 import { normalizeHoldedApiKey } from '@/lib/integrations/holdedApiKey';
-import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
+import {
+  sendHoldedConnectionLifecycleEmails,
+  sendWelcomeLifecycleEmails,
+} from '@/lib/email/holdedConnectionEmails';
 import { getPreferredFullName, splitFullName } from '@/lib/personName';
 
 const DEFAULT_LEGAL_VERSION =
@@ -473,9 +476,12 @@ export async function upsertHoldedConnectionFromApiKey(
       });
 
       const companyEmailFinal =
-        normalizeText(rawInput.companyEmail) ?? tenantRecord?.profile?.email ?? null;
+        normalizeText(rawInput.companyEmail) ??
+        normalizeText(probe.companyInfo?.email) ??
+        tenantRecord?.profile?.email ??
+        null;
 
-      await sendHoldedConnectionLifecycleEmails({
+      const emailContext = {
         userEmail: personalEmail,
         userName: normalizeText(rawInput.personalName),
         tenantName: tenantRecord?.profile?.tradeName || tenantRecord?.name || 'tu empresa',
@@ -484,9 +490,18 @@ export async function upsertHoldedConnectionFromApiKey(
         contactEmail: personalEmail,
         companyEmail: companyEmailFinal,
         contactPhone: tenantRecord?.profile?.phone || normalizeText(rawInput.companyPhone),
-        action: 'connected',
         channel,
-      });
+      };
+
+      if (userCreated || tenantCreated) {
+        await sendWelcomeLifecycleEmails(emailContext);
+      } else {
+        await sendHoldedConnectionLifecycleEmails({
+          ...emailContext,
+          action: 'connected',
+          channel,
+        });
+      }
     } catch (notifyError) {
       console.error('[holdedConnectionUpsert] notify_failed', {
         userId,

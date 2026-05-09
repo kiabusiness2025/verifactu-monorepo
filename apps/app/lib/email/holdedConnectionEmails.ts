@@ -21,6 +21,7 @@ type TenantEmailContext = {
   contactEmail?: string | null;
   companyEmail?: string | null;
   contactPhone?: string | null;
+  channel?: HoldedLifecycleChannel;
 };
 
 function renderActionLabel(action: HoldedLifecycleAction) {
@@ -81,15 +82,34 @@ function renderDetailLine(label: string, value?: string | null) {
   return `<p style="margin:0 0 8px 0;"><strong>${label}:</strong> ${normalized}</p>`;
 }
 
-function buildHoldedChatGptShell(input: {
+type EmailChannel = 'chatgpt' | 'mobile' | 'claude' | 'dashboard';
+
+function buildConnectorShell(input: {
   title: string;
   body: string;
   ctaLabel?: string;
   ctaUrl?: string;
   timestamp?: string;
+  channel?: EmailChannel;
 }) {
-  const holdedLogoUrl = new URL('/brand/holded/holded-diamond-logo.png', getAppUrl()).toString();
-  const chatgptLogoUrl = new URL('/brand/chatgpt/chatgpt-logo.png', getAppUrl()).toString();
+  const isClaudeChannel = input.channel === 'claude';
+  const appUrl = getAppUrl();
+  const holdedLogoUrl = new URL('/brand/holded/holded-diamond-logo.png', appUrl).toString();
+  const aiLogoUrl = isClaudeChannel
+    ? new URL('/brand/claude-logo.svg', appUrl).toString()
+    : new URL('/brand/chatgpt/chatgpt-logo.png', appUrl).toString();
+  const aiAlt = isClaudeChannel ? 'Claude' : 'ChatGPT';
+  const aiLogoBorder = isClaudeChannel ? '#fde68a' : '#dbe7ff';
+
+  const accentColor = isClaudeChannel ? '#d97706' : '#ff5460';
+  const headerGradient = isClaudeChannel
+    ? 'linear-gradient(135deg,#fffbeb 0%,#fef3c7 52%,#ecfdf5 100%)'
+    : 'linear-gradient(135deg,#fff7ed 0%,#fff1f2 52%,#eef6ff 100%)';
+  const headerBorder = isClaudeChannel ? '#fde68a' : '#f2dbe0';
+  const headerLabel = isClaudeChannel ? 'Conector Claude' : 'Conector Holded';
+  const headerLabelColor = isClaudeChannel ? '#92400e' : '#7a1f2a';
+  const holdedLogoBorder = isClaudeChannel ? '#fde68a' : '#f1d4d9';
+
   const timestamp =
     input.timestamp ??
     new Date().toLocaleString('es-ES', { dateStyle: 'long', timeStyle: 'short' });
@@ -98,7 +118,7 @@ function buildHoldedChatGptShell(input: {
     input.ctaLabel && input.ctaUrl
       ? `<div style="margin:24px 0 8px 0;text-align:left;">
           <a href="${input.ctaUrl}"
-            style="display:inline-block;background:#ff5460;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:50px;letter-spacing:0.02em;">
+            style="display:inline-block;background:${accentColor};color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:12px 28px;border-radius:50px;letter-spacing:0.02em;">
             ${input.ctaLabel}
           </a>
         </div>`
@@ -109,19 +129,19 @@ function buildHoldedChatGptShell(input: {
       <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 24px; overflow: hidden; box-shadow: 0 18px 40px rgba(15,23,42,0.08);">
 
         <!-- Header -->
-        <div style="padding: 20px 28px; background: linear-gradient(135deg,#fff7ed 0%,#fff1f2 52%,#eef6ff 100%); border-bottom: 1px solid #f2dbe0;">
+        <div style="padding: 20px 28px; background: ${headerGradient}; border-bottom: 1px solid ${headerBorder};">
           <table role="presentation" width="100%" style="border-collapse: collapse;">
             <tr>
-              <td style="vertical-align: middle; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: #7a1f2a;">
-                Conector Holded
+              <td style="vertical-align: middle; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 700; color: ${headerLabelColor};">
+                ${headerLabel}
               </td>
               <td align="right" style="vertical-align: middle; white-space: nowrap;">
-                <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid #f1d4d9;border-radius:14px;padding:8px;">
+                <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid ${holdedLogoBorder};border-radius:14px;padding:8px;">
                   <img src="${holdedLogoUrl}" alt="Holded" width="22" height="22" style="display:block;border:0;" />
                 </span>
                 <span style="display:inline-block;vertical-align:middle;font-size:15px;font-weight:700;color:#7b8794;padding:0 8px;">+</span>
-                <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid #dbe7ff;border-radius:14px;padding:8px;">
-                  <img src="${chatgptLogoUrl}" alt="ChatGPT" width="22" height="22" style="display:block;border:0;" />
+                <span style="display:inline-block;vertical-align:middle;background:#fff;border:1px solid ${aiLogoBorder};border-radius:14px;padding:8px;">
+                  <img src="${aiLogoUrl}" alt="${aiAlt}" width="22" height="22" style="display:block;border:0;" />
                 </span>
               </td>
             </tr>
@@ -143,7 +163,7 @@ function buildHoldedChatGptShell(input: {
         <!-- Footer -->
         <div style="padding: 16px 28px 24px 28px;">
           <p style="margin:0;color:#94a3b8;font-size:11px; line-height:1.8;">
-            Powered by <a href="https://verifactu.business" style="color:#ff5460;text-decoration:none;">verifactu.business</a>
+            Powered by <a href="https://verifactu.business" style="color:${accentColor};text-decoration:none;">verifactu.business</a>
             &nbsp;·&nbsp;
             <a href="https://holded.verifactu.business/legal" style="color:#94a3b8;text-decoration:none;">Aviso legal</a>
             &nbsp;·&nbsp;
@@ -155,6 +175,17 @@ function buildHoldedChatGptShell(input: {
       </div>
     </div>
   `;
+}
+
+// Legacy alias: keeps call sites that don't pass a channel unchanged
+function buildHoldedChatGptShell(input: {
+  title: string;
+  body: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  timestamp?: string;
+}) {
+  return buildConnectorShell({ ...input, channel: 'chatgpt' });
 }
 
 function buildUserHtml(args: {
@@ -181,15 +212,17 @@ function buildUserHtml(args: {
       ? new URL('/dashboard', appUrl).toString()
       : new URL('/dashboard/integrations/holded', appUrl).toString();
 
-  return buildHoldedChatGptShell({
+  const accentColor = args.channel === 'claude' ? '#d97706' : '#ff5460';
+  return buildConnectorShell({
     title: `Holded: ${actionLabel}`,
     ctaLabel,
     ctaUrl,
+    channel: args.channel,
     body: `
       <p style="margin:0 0 12px 0;">Hola <strong>${args.userFirstName}</strong>,</p>
       <p style="margin:0 0 12px 0;">Te confirmamos que la <strong>${actionLabel}</strong> para la empresa <strong>${args.tenantDisplayName}</strong> se ha realizado correctamente a través de <strong>${channelLabel}</strong>.</p>
       ${contactLine}
-      <p style="margin:16px 0 0 0; font-size:13px; color:#64748b;">Si no reconoces este cambio, responde a este correo o escríbenos a <a href="mailto:soporte@verifactu.business" style="color:#ff5460;">soporte@verifactu.business</a>.</p>
+      <p style="margin:16px 0 0 0; font-size:13px; color:#64748b;">Si no reconoces este cambio, responde a este correo o escríbenos a <a href="mailto:soporte@verifactu.business" style="color:${accentColor};">soporte@verifactu.business</a>.</p>
     `,
   });
 }
@@ -208,8 +241,9 @@ function buildAdminHtml(args: {
   const actionLabel = renderActionLabel(args.action);
   const channelLabel = renderChannelLabel(args.channel);
 
-  return buildHoldedChatGptShell({
+  return buildConnectorShell({
     title: `[Admin] Holded: ${actionLabel}`,
+    channel: args.channel,
     body: `
       <div style="padding:12px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0; margin-bottom:12px;">
         ${renderDetailLine('Usuario', `${args.userName} (${args.userEmail})`)}
@@ -230,14 +264,19 @@ function buildWelcomeUserHtml(args: {
   contactEmail?: string | null;
   companyEmail?: string | null;
   contactPhone?: string | null;
+  channel?: EmailChannel;
 }) {
+  const isClaudeChannel = args.channel === 'claude';
+  const accentColor = isClaudeChannel ? '#d97706' : '#ff5460';
+  const aiLabel = isClaudeChannel ? 'Claude' : 'ChatGPT';
   const appUrl = getAppUrl();
   const dashboardUrl = new URL('/dashboard', appUrl).toString();
 
-  return buildHoldedChatGptShell({
-    title: 'Bienvenido al Conector Holded',
+  return buildConnectorShell({
+    title: isClaudeChannel ? 'Bienvenido al Conector Claude' : 'Bienvenido al Conector Holded',
     ctaLabel: 'Abrir mi dashboard',
     ctaUrl: dashboardUrl,
+    channel: args.channel,
     body: `
       <p style="margin:0 0 12px 0;">Hola <strong>${args.userFirstName}</strong>,</p>
       <p style="margin:0 0 12px 0;">La conexión de Holded para <strong>${args.tenantDisplayName}</strong> ya está lista. Desde este momento puedes usar el conector directo con la empresa ya enlazada.</p>
@@ -252,7 +291,7 @@ function buildWelcomeUserHtml(args: {
           </div>`
           : ''
       }
-      <p style="margin:16px 0 0 0; font-size:13px; color:#64748b;">Primer paso: vuelve a tu flujo en ChatGPT o entra en tu área de Verifactu para revisar que todo responde como esperas. Si necesitas ayuda escríbenos a <a href="mailto:soporte@verifactu.business" style="color:#ff5460;">soporte@verifactu.business</a>.</p>
+      <p style="margin:16px 0 0 0; font-size:13px; color:#64748b;">Primer paso: vuelve a tu flujo en ${aiLabel} o entra en tu área de Verifactu para revisar que todo responde como esperas. Si necesitas ayuda escríbenos a <a href="mailto:soporte@verifactu.business" style="color:${accentColor};">soporte@verifactu.business</a>.</p>
     `,
   });
 }
@@ -263,9 +302,11 @@ function buildWelcomeAdminHtml(args: {
   tenantDisplayName: string;
   companyEmail?: string | null;
   contactPhone?: string | null;
+  channel?: EmailChannel;
 }) {
-  return buildHoldedChatGptShell({
+  return buildConnectorShell({
     title: '[Admin] Nueva empresa activada',
+    channel: args.channel,
     body: `
       <div style="padding:12px 16px; background:#f8fafc; border-radius:12px; border:1px solid #e2e8f0;">
         ${renderDetailLine('Contacto principal', `${args.userName} (${args.userEmail})`)}
@@ -306,6 +347,7 @@ export async function sendWelcomeLifecycleEmails(args: TenantEmailContext) {
           contactEmail: contact.email,
           companyEmail: company.companyEmail,
           contactPhone: contact.phone,
+          channel: args.channel,
         }),
       })
     );
@@ -322,6 +364,7 @@ export async function sendWelcomeLifecycleEmails(args: TenantEmailContext) {
         tenantDisplayName: company.displayName,
         companyEmail: company.companyEmail,
         contactPhone: contact.phone,
+        channel: args.channel,
       }),
     })
   );

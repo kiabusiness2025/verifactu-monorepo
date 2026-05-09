@@ -11,6 +11,7 @@ jest.mock('@/lib/integrations/accountingStore', () => ({
 
 jest.mock('@/lib/email/holdedConnectionEmails', () => ({
   sendHoldedConnectionLifecycleEmails: jest.fn(async () => []),
+  sendWelcomeLifecycleEmails: jest.fn(async () => []),
 }));
 
 const userFindUnique = jest.fn();
@@ -60,7 +61,10 @@ jest.mock('@/lib/prisma', () => ({
 import { upsertHoldedConnectionFromApiKey } from './holdedConnectionUpsert';
 import { probeAccountingApiConnection } from '@/lib/integrations/accounting';
 import { upsertAccountingIntegration } from '@/lib/integrations/accountingStore';
-import { sendHoldedConnectionLifecycleEmails } from '@/lib/email/holdedConnectionEmails';
+import {
+  sendHoldedConnectionLifecycleEmails,
+  sendWelcomeLifecycleEmails,
+} from '@/lib/email/holdedConnectionEmails';
 
 const probeMock = probeAccountingApiConnection as jest.MockedFunction<
   typeof probeAccountingApiConnection
@@ -70,6 +74,9 @@ const upsertConnectionMock = upsertAccountingIntegration as jest.MockedFunction<
 >;
 const sendLifecycleEmailsMock = sendHoldedConnectionLifecycleEmails as jest.MockedFunction<
   typeof sendHoldedConnectionLifecycleEmails
+>;
+const sendWelcomeMock = sendWelcomeLifecycleEmails as jest.MockedFunction<
+  typeof sendWelcomeLifecycleEmails
 >;
 
 const okProbe = {
@@ -117,6 +124,7 @@ beforeEach(() => {
     updated_at: '2026-05-06',
   });
   sendLifecycleEmailsMock.mockResolvedValue([] as never);
+  sendWelcomeMock.mockResolvedValue([] as never);
 });
 
 describe('upsertHoldedConnectionFromApiKey', () => {
@@ -209,7 +217,9 @@ describe('upsertHoldedConnectionFromApiKey', () => {
         connectedByUserId: 'user-new',
       })
     );
-    expect(sendLifecycleEmailsMock).toHaveBeenCalledTimes(1);
+    // Primera conexión (userCreated=true, tenantCreated=true) → welcome email
+    expect(sendWelcomeMock).toHaveBeenCalledTimes(1);
+    expect(sendLifecycleEmailsMock).not.toHaveBeenCalled();
   });
 
   it('reutiliza tenant existente cuando el user ya tiene membership activa', async () => {
@@ -254,6 +264,9 @@ describe('upsertHoldedConnectionFromApiKey', () => {
     expect(tenantCreate).not.toHaveBeenCalled();
     expect(membershipCreate).not.toHaveBeenCalled();
     expect(probeMock).toHaveBeenCalledWith('apikey-xx', { profile: 'dashboard' });
+    // Reconexión (user+tenant existentes) → lifecycle email, no welcome
+    expect(sendLifecycleEmailsMock).toHaveBeenCalledTimes(1);
+    expect(sendWelcomeMock).not.toHaveBeenCalled();
   });
 
   it('retorna stage=probe cuando probeAccountingApiConnection lanza', async () => {
@@ -298,6 +311,7 @@ describe('upsertHoldedConnectionFromApiKey', () => {
     expect(tenantCreate).not.toHaveBeenCalled();
     expect(upsertConnectionMock).not.toHaveBeenCalled();
     expect(sendLifecycleEmailsMock).not.toHaveBeenCalled();
+    expect(sendWelcomeMock).not.toHaveBeenCalled();
   });
 
   it('respeta validatedProbe si se proporciona y no llama a la red', async () => {
@@ -324,6 +338,7 @@ describe('upsertHoldedConnectionFromApiKey', () => {
     });
     expect(result.ok).toBe(true);
     expect(sendLifecycleEmailsMock).not.toHaveBeenCalled();
+    expect(sendWelcomeMock).not.toHaveBeenCalled();
   });
 
   it('escoge profile chatgpt para canal mobile y dashboard para canal claude', async () => {

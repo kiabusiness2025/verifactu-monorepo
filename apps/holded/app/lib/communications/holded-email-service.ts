@@ -317,7 +317,7 @@ export async function sendHoldedDisconnectedCommunication(input: {
   name: string;
   userEmail: string;
   companyName: string;
-  channel: 'dashboard' | 'chatgpt' | 'claude';
+  channel: 'dashboard' | 'chatgpt' | 'claude' | 'mobile';
 }) {
   const { resend, from, replyTo } = createResendTransport();
 
