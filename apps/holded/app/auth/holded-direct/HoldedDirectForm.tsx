@@ -4,10 +4,10 @@
  * HoldedDirectForm — F2.1 (rediseño auth 2026-05-08)
  *
  * Paso 1 — Acceso (authPhase = 'choosing' | 'magic_sent' | 'consuming'):
- *   - Continuar con Google: Firebase redirect (startGoogleRedirectSignIn)
+ *   - Continuar con Google: Firebase signInWithPopup (popup, no redirect)
  *   - Continuar con correo: Firebase magic link (sendMagicLinkEmail)
- *   Al volver a la pagina, consumeGoogleRedirectResult / consumeMagicLink
- *   mintan la session cookie (.verifactu.business) con uid+email+tenantId.
+ *   Popup minta la session cookie inmediatamente; magic link la minta al
+ *   volver a la pagina via consumeMagicLink.
  *
  * Paso 2 — API key (authPhase = 'authed'):
  *   Mismo form que antes. El backend /api/auth/holded-direct lee el email
@@ -18,12 +18,11 @@
  */
 
 import {
-  consumeGoogleRedirectResult,
   consumeMagicLink,
   detectMagicLinkInUrl,
   getStoredMagicLinkEmail,
   sendMagicLinkEmail,
-  startGoogleRedirectSignIn,
+  signInWithGoogle,
 } from '@/app/lib/auth';
 import { auth as firebaseAuth } from '@/app/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -238,29 +237,20 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
       });
       return;
     }
-
-    // Check for Google redirect result (safe to call even when there's none)
-    consumeGoogleRedirectResult({ source: 'holded_google_oauth' }).then((result) => {
-      if (result.user) {
-        setAuthedEmail(result.user.email ?? null);
-        setAuthedName(result.user.displayName ?? null);
-        setAuthPhase('authed');
-      } else if (result.error?.code && result.error.code !== 'auth/no-redirect-result') {
-        // Only show error if there was an actual attempt (not just a clean page load)
-        setAuthError(result.error.userMessage);
-      }
-    });
   }, [sessionEmail]);
 
   async function handleGoogleSignIn() {
     setAuthError(null);
     setGoogleLoading(true);
-    const result = await startGoogleRedirectSignIn();
-    if (!result.redirecting) {
+    const result = await signInWithGoogle({ source: 'holded_google_oauth' });
+    if (result.user) {
+      setAuthedEmail(result.user.email ?? null);
+      setAuthedName(result.user.displayName ?? null);
+      setAuthPhase('authed');
+    } else {
       setAuthError(result.error.userMessage);
-      setGoogleLoading(false);
     }
-    // If redirecting=true the browser navigates away — no state update needed
+    setGoogleLoading(false);
   }
 
   async function handleMagicLinkSubmit(e: FormEvent) {
