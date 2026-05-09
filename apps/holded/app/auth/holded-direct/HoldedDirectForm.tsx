@@ -245,6 +245,9 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
         setAuthedEmail(result.user.email ?? null);
         setAuthedName(result.user.displayName ?? null);
         setAuthPhase('authed');
+      } else if (result.error?.code && result.error.code !== 'auth/no-redirect-result') {
+        // Only show error if there was an actual attempt (not just a clean page load)
+        setAuthError(result.error.userMessage);
       }
     });
   }, [sessionEmail]);
