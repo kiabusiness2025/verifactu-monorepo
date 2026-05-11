@@ -161,6 +161,20 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
     return () => window.clearTimeout(t);
   }, []);
 
+  // Google OAuth no funciona en WebViews (ChatGPT app, Instagram, etc.) —
+  // Error 403 disallowed_useragent. Detectamos el WebView en el cliente
+  // (post-mount) para evitar hydration mismatch y ocultamos el botón de Google.
+  const [isWebView, setIsWebView] = useState(false);
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const detected =
+      /\bwv\b/.test(ua) || // Android WebView flag
+      /ChatGPT|OpenAI/.test(ua) || // ChatGPT app UA
+      /FBAN|FBAV|Instagram|Twitter|LinkedIn/.test(ua) || // otros in-app browsers
+      (/iPhone|iPad/.test(ua) && !/Safari/.test(ua) && !/CriOS/.test(ua)); // iOS WebView (sin Safari ni Chrome)
+    setIsWebView(detected);
+  }, []);
+
   // Saludo calculado solo en cliente para evitar hydration mismatch (el
   // servidor no conoce la hora local del usuario).
   const [timeGreeting, setTimeGreeting] = useState('');
@@ -526,27 +540,38 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
               {/* === PASO 1: elegir método de acceso === */}
               {authPhase === 'choosing' ? (
                 <div className="mt-6 space-y-4">
-                  {/* Google */}
-                  <button
-                    type="button"
-                    disabled={googleLoading}
-                    onClick={handleGoogleSignIn}
-                    className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {googleLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
-                    ) : (
-                      <GoogleIcon className="h-5 w-5 shrink-0" />
-                    )}
-                    {googleLoading ? 'Redirigiendo…' : 'Continuar con Google'}
-                  </button>
+                  {/* Google — oculto en WebViews (ChatGPT app, etc.) por
+                      Error 403 disallowed_useragent de Google OAuth */}
+                  {!isWebView ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={googleLoading}
+                        onClick={handleGoogleSignIn}
+                        className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {googleLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
+                        ) : (
+                          <GoogleIcon className="h-5 w-5 shrink-0" />
+                        )}
+                        {googleLoading ? 'Redirigiendo…' : 'Continuar con Google'}
+                      </button>
 
-                  {/* Divider */}
-                  <div className="flex items-center gap-3">
-                    <span className="h-px flex-1 bg-slate-200" />
-                    <span className="text-xs font-medium text-slate-400">o</span>
-                    <span className="h-px flex-1 bg-slate-200" />
-                  </div>
+                      {/* Divider */}
+                      <div className="flex items-center gap-3">
+                        <span className="h-px flex-1 bg-slate-200" />
+                        <span className="text-xs font-medium text-slate-400">o</span>
+                        <span className="h-px flex-1 bg-slate-200" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs leading-5 text-amber-800">
+                      <strong>Usa tu correo electrónico</strong> para continuar. Google no permite
+                      el inicio de sesión desde aplicaciones como ChatGPT — abre el enlace en Safari
+                      o Chrome si prefieres usar Google.
+                    </div>
+                  )}
 
                   {/* Magic link */}
                   <form onSubmit={handleMagicLinkSubmit} className="space-y-3">
