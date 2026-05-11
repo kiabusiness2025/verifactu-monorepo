@@ -236,7 +236,10 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
 
     if (detectMagicLinkInUrl()) {
       setAuthPhase('consuming');
-      const storedEmail = getStoredMagicLinkEmail();
+      // Fallback a magic_email en la URL para cuando localStorage no está
+      // disponible (link abierto en Safari/Chrome desde un WebView).
+      const emailFromUrl = new URLSearchParams(window.location.search).get('magic_email') ?? '';
+      const storedEmail = getStoredMagicLinkEmail() || emailFromUrl;
       if (!storedEmail) {
         setAuthPhase('choosing');
         setAuthError('No pudimos encontrar tu email. Inténtalo de nuevo.');
@@ -281,9 +284,11 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
     }
 
     setMagicLoading(true);
-    // Return URL = current page (with all query params) so Firebase brings the user back here
-    const returnUrl = window.location.href;
-    const result = await sendMagicLinkEmail(trimmedEmail, returnUrl);
+    // Embed the email in the return URL so consumeMagicLink can read it even
+    // when localStorage is unavailable (WebView → link opens in Safari/Chrome).
+    const returnUrlObj = new URL(window.location.href);
+    returnUrlObj.searchParams.set('magic_email', trimmedEmail);
+    const result = await sendMagicLinkEmail(trimmedEmail, returnUrlObj.toString());
     if (result.ok) {
       setMagicSentTo(trimmedEmail);
       setAuthPhase('magic_sent');
