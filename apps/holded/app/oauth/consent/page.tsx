@@ -100,9 +100,9 @@ function resolveClientName(clientId: string): {
     return {
       name: 'ChatGPT',
       vendor: 'OpenAI · openai.com',
-      logoSrc: '/brand/chatgpt-logo.png',
-      logoBg: 'bg-[#10a37f]',
-      logoBorder: 'border-[#10a37f]/30',
+      logoSrc: '/brand/chatgpt-logo-official.png',
+      logoBg: 'bg-white',
+      logoBorder: 'border-slate-200',
     };
   if (/claude|anthropic/i.test(clientId))
     return {
