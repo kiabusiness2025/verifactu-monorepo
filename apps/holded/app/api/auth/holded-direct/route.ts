@@ -25,6 +25,7 @@
  */
 
 import { sanitizeHoldedReturnTarget, APP_PUBLIC_URL } from '@/app/lib/holded-navigation';
+import { redactSecrets } from '@/lib/redactSecrets';
 import {
   SESSION_COOKIE_NAME,
   buildSessionCookieOptions,
@@ -153,7 +154,9 @@ export async function POST(request: NextRequest) {
       cache: 'no-store',
     });
   } catch (err) {
-    console.error('[holded-direct] upsert HTTP failed:', err);
+    // R1 hardening: aplicamos redactSecrets para no filtrar la API key si
+    // viniera dentro de un error HTTP (Error.message podría incluir headers).
+    console.error('[holded-direct] upsert HTTP failed:', redactSecrets(err));
     return NextResponse.json({ error: 'PROBE_ERROR' }, { status: 502 });
   }
 
@@ -170,10 +173,11 @@ export async function POST(request: NextRequest) {
   if (!upsertJson.ok) {
     const { code, status } = translateUpsertReason(upsertJson.reason);
     if (process.env.NODE_ENV !== 'production') {
+      // R1 hardening: redactamos el detail por si trae la API key dentro.
       console.warn('[holded-direct] upsert rejected', {
         stage: upsertJson.stage,
         reason: upsertJson.reason,
-        detail: upsertJson.detail,
+        detail: redactSecrets(upsertJson.detail),
       });
     }
     return NextResponse.json({ error: code }, { status });

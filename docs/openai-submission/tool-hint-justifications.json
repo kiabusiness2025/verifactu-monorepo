@@ -86,6 +86,30 @@
         "destructive_justification": "This tool has no destructive or mutating effect. It only returns existing booking records."
       }
     },
+    "holded_list_crm_funnels": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists CRM funnels (sales pipelines) configured in the authenticated user's connected Holded account. It does not create, modify, reorder, or delete funnels.",
+        "open_world_justification": "This tool is restricted to the tenant's connected Holded CRM data. It does not access external sources or unrelated third-party systems.",
+        "destructive_justification": "This tool is a pure read operation with no side effects. It does not modify CRM configuration or pipeline data."
+      }
+    },
+    "holded_list_leads": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists CRM leads (sales opportunities) from the authenticated user's connected Holded account. It does not create, convert, move stage, or delete leads.",
+        "open_world_justification": "This tool is restricted to lead data in the tenant's connected Holded CRM. It does not access external sources or other tenants.",
+        "destructive_justification": "This tool performs no write or delete operations. It only returns existing lead records."
+      }
+    },
     "holded_list_projects": {
       "annotations": {
         "readOnlyHint": true,
@@ -120,6 +144,18 @@
         "read_only_justification": "This tool lists existing tasks associated with a project in the authenticated user's connected Holded account. It does not create, reassign, complete, update, or delete tasks.",
         "open_world_justification": "This tool is limited to project task data within the authenticated tenant's connected Holded account. It does not browse the web or access unrelated third-party systems.",
         "destructive_justification": "This tool only reads existing task data and performs no destructive or mutating operation."
+      }
+    },
+    "holded_list_time_records": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists existing time tracking records (hour logs) for projects in the authenticated user's connected Holded account. It does not create, modify, or delete time entries.",
+        "open_world_justification": "This tool is limited to project time records within the authenticated tenant's connected Holded account. It does not access external systems or unrelated data.",
+        "destructive_justification": "This tool is a read-only operation with no side effects on time tracking data."
       }
     },
     "holded_create_invoice_draft": {

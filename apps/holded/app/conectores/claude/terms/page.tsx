@@ -37,7 +37,7 @@ export default function ClaudeTermsPage() {
             Business.
           </>
         }
-        lastUpdated="Última actualización: 4 de mayo de 2026."
+        lastUpdated="Última actualización: 11 de mayo de 2026."
         asideCard={
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">

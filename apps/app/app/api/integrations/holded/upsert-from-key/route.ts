@@ -46,8 +46,16 @@ import {
   logConnectorEvent,
   withConnectorRequestId,
 } from '@/lib/integrations/connectorObservability';
+import { rateLimit } from '@/lib/rateLimit';
 
 export const runtime = 'nodejs';
+
+// R2 hardening (auditoría 2026-05-11): el endpoint pone la API key del usuario
+// contra Holded para validarla. Sin rate limit, se convierte en un oracle para
+// fuzzing de API keys. Limitamos a 10 intentos por minuto por IP. Cualquier
+// throughput legítimo del wrapper F2 o de la consent screen F3 está muy por
+// debajo de ese umbral (1 request por usuario por sesión).
+const UPSERT_RATE_LIMIT = { limit: 10, windowMs: 60_000, keyPrefix: 'upsert-holded' } as const;
 
 const VALID_CHANNELS: HoldedConnectionUpsertChannel[] = [
   'dashboard',
@@ -69,6 +77,39 @@ function readChannel(value: unknown): HoldedConnectionUpsertChannel | null {
 export async function POST(request: NextRequest) {
   const requestId = getConnectorRequestId(request);
   const respond = (response: NextResponse) => withConnectorRequestId(response, requestId);
+
+  // R2: rate limit ANTES de parsear o ejecutar nada — primera línea de defensa.
+  const limit = rateLimit(request, UPSERT_RATE_LIMIT);
+  if (!limit.ok) {
+    logConnectorEvent(
+      'api/integrations/holded/upsert-from-key',
+      'warn',
+      buildConnectorEvent({
+        requestId,
+        outcome: 'rate_limited',
+        stage: 'input',
+      })
+    );
+    return respond(
+      NextResponse.json(
+        {
+          ok: false,
+          stage: 'input',
+          reason: 'rate_limited',
+          detail: 'Too many requests. Please retry after a few seconds.',
+          requestId,
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(limit.retryAfter),
+            'X-RateLimit-Limit': String(UPSERT_RATE_LIMIT.limit),
+            'X-RateLimit-Remaining': '0',
+          },
+        }
+      )
+    );
+  }
 
   let body: Record<string, unknown> = {};
   try {

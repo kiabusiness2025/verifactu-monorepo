@@ -1794,7 +1794,11 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_update_document',
     'Update a document in Holded',
-    'Update an existing Holded document with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): wording explícito para revisor OpenAI.
+    "Update fields on an existing Holded document (invoice, estimate, purchase, etc.) in the user's connected Holded account. " +
+      'This is a WRITE operation that modifies persistent business data. If the document has already been approved/issued (i.e., not a draft), modifications may have legal/accounting implications and cannot always be cleanly rolled back. ' +
+      'The connector does NOT change document status by itself; status fields stay as the caller passes them. ' +
+      'Requires explicit user confirmation: the assistant MUST first show the user what will change and call this tool with `confirm: true` only after the user has explicitly approved.',
     writeSchema(
       {
         docType: stringProperty('The Holded document type to update.'),
@@ -1807,7 +1811,11 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_delete_document',
     'Delete a document in Holded',
-    'Delete an existing Holded document with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): destructive irreversible.
+    "Permanently delete an existing Holded document (invoice, estimate, etc.) from the user's connected Holded account. " +
+      'This operation is IRREVERSIBLE: once deleted, the document cannot be recovered through this connector. Holded may retain a soft-delete record server-side for accounting compliance, but the document will no longer be visible in lists, exports, or downloads via the Holded UI or API. ' +
+      'For approved/issued invoices already submitted to AEAT/Verifactu, deletion does NOT cancel the fiscal submission — the user must issue a rectifying invoice through Holded separately if legally required. ' +
+      'Requires explicit user confirmation: the assistant MUST clearly describe the document being deleted (number, recipient, amount) and call this tool with `confirm: true` only after the user has explicitly approved the deletion.',
     writeSchema(
       {
         docType: stringProperty('The Holded document type to delete.'),
@@ -1820,7 +1828,12 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_send_document',
     'Send a document from Holded',
-    'Send an existing Holded document by email with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): email immediately sent, no preview, no recall.
+    "Send an existing Holded document to the recipient(s) by email immediately from the user's connected Holded account. " +
+      'This operation is IRREVERSIBLE in the sense that the email is delivered to the recipient(s) the moment the call succeeds — there is no scheduled send, no preview, and no recall mechanism. ' +
+      'The email goes out from the user`s configured Holded sender identity, not from the assistant. ' +
+      'For invoices, sending also typically marks the document as `sent` in Holded, which may have downstream effects (CRM stage, billing automations). ' +
+      'Requires explicit user confirmation: the assistant MUST show the recipient list and subject/message before calling, and pass `confirm: true` only after the user has explicitly approved sending.',
     writeSchema(
       {
         docType: stringProperty('The Holded document type to send.'),
@@ -1835,7 +1848,12 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_pay_document',
     'Register a document payment in Holded',
-    'Register a payment for an existing Holded document with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): records financial payment; not a card charge.
+    "Register a payment row against an existing Holded document (invoice, purchase, purchase order) in the user's connected Holded account. " +
+      'IMPORTANT — this does NOT charge a card, initiate a bank transfer, or move money. It records that a payment was received/made for the document, updating Holded`s accounts-receivable/payable status. ' +
+      'This is a WRITE operation against financial books: the payment row is persisted into Holded`s accounting and the document`s outstanding balance is adjusted. Reverting this requires manually editing or deleting the payment row in the Holded UI, which can complicate audit trails. ' +
+      'The connector does not call any payment processor, so the assistant must NEVER use this tool to "charge a customer" — it is exclusively for marking a payment as already received/made through external means (bank transfer, cash, Stripe webhook, etc.). ' +
+      'Requires explicit user confirmation: the assistant MUST state the amount, date and account before calling, and pass `confirm: true` only after the user has explicitly approved.',
     writeSchema(
       {
         docType: stringProperty(
@@ -2018,7 +2036,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_delete_contact',
     'Delete a contact in Holded',
-    'Delete a Holded contact with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): destructive irreversible.
+    'IRREVERSIBLE — Permanently delete a contact from the connected Holded account. The contact, including its associated email/phone/address records, will no longer appear in lists, exports, or related-record lookups via the Holded UI or API. Historical documents (invoices, estimates) that referenced this contact are preserved in Holded but lose their live link to the contact. Requires explicit user confirmation: the assistant MUST show the contact name/CIF before calling, and pass `confirm: true` only after the user has explicitly approved.',
     writeSchema({ contactId: stringProperty('The Holded contact identifier.') }, ['contactId']),
     { destructiveHint: true }
   ),
@@ -2219,7 +2238,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_delete_product',
     'Delete a product in Holded',
-    'Delete a Holded product with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): destructive irreversible.
+    'IRREVERSIBLE — Permanently delete a product from the connected Holded catalog. Stock movements, prices, and product images linked to this SKU will no longer be queryable. Existing document lines that referenced this product are preserved as historical line items but lose their live product link. Requires explicit user confirmation: the assistant MUST show the product name/SKU and current stock before calling, and pass `confirm: true` only after the user has explicitly approved.',
     writeSchema({ productId: stringProperty('The Holded product identifier.') }, ['productId']),
     { destructiveHint: true }
   ),
@@ -2310,7 +2330,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_delete_warehouse',
     'Delete a warehouse in Holded',
-    'Delete a Holded warehouse with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): destructive irreversible.
+    'IRREVERSIBLE — Permanently delete a warehouse from Holded. All stock movement history attributed to this warehouse becomes orphan. Cannot be undone via this connector. Requires explicit user confirmation: the assistant MUST show the warehouse name and current stock summary before calling, and pass `confirm: true` only after the user has explicitly approved.',
     writeSchema({ warehouseId: stringProperty('The Holded warehouse identifier.') }, [
       'warehouseId',
     ]),
@@ -2352,7 +2373,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_delete_payment',
     'Delete a payment in Holded',
-    'Delete a Holded payment with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): destructive irreversible against financial books.
+    'IRREVERSIBLE — Permanently delete a payment record from Holded`s books. This modifies financial/accounting history: the related document (invoice/purchase) regains its outstanding balance and AR/AP totals are recomputed. Audit trails preserved by Holded server-side may not be visible through this connector after deletion. Does NOT initiate a refund or chargeback in any payment processor — this is purely a bookkeeping operation. Requires explicit user confirmation: the assistant MUST show the payment amount, date and related document before calling, and pass `confirm: true` only after the user has explicitly approved.',
     writeSchema({ paymentId: stringProperty('The Holded payment identifier.') }, ['paymentId']),
     { destructiveHint: true }
   ),
@@ -2403,7 +2425,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_delete_contact_group',
     'Delete a contact group in Holded',
-    'Delete a Holded contact group with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): destructive irreversible.
+    'IRREVERSIBLE — Permanently delete a contact group from Holded. Contacts assigned to the group will lose this label/segment; they are NOT deleted themselves. Cannot be undone via this connector. Requires explicit user confirmation: the assistant MUST show the group name and member count before calling, and pass `confirm: true` only after the user has explicitly approved.',
     writeSchema({ contactGroupId: stringProperty('The Holded contact group identifier.') }, [
       'contactGroupId',
     ]),
@@ -2456,7 +2479,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   writeTool(
     'holded_delete_service',
     'Delete a service in Holded',
-    'Delete a Holded service with explicit confirmation.',
+    // B2 (auditoría 2026-05-11): destructive irreversible.
+    'IRREVERSIBLE — Permanently delete a service definition from Holded`s catalog. Existing document lines that referenced this service are preserved as historical line items but lose their live service link. Cannot be undone via this connector. Requires explicit user confirmation: the assistant MUST show the service name and current price before calling, and pass `confirm: true` only after the user has explicitly approved.',
     writeSchema({ serviceId: stringProperty('The Holded service identifier.') }, ['serviceId']),
     { destructiveHint: true }
   ),

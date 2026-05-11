@@ -7,7 +7,10 @@ import {
   resolveSharedHoldedConnectionForTenant,
   type HoldedConnectionChannel,
 } from '@/lib/integrations/holdedConnectionResolver';
-import { getAllowedHoldedMcpToolNames } from '@/lib/integrations/holdedMcpScopes';
+import {
+  getAllowedHoldedMcpToolNames,
+  getHoldedMcpScopePreset,
+} from '@/lib/integrations/holdedMcpScopes';
 import {
   callHoldedMcpTool,
   holdedMcpTools,
@@ -21,6 +24,7 @@ import {
   getDefaultScopes,
   getMcpResourceUrl,
   getProtectedResourceMetadataUrl,
+  getPublicScopePreset,
   getRegistrationEndpoint,
   getSupportedScopes,
   getTokenEndpoint,
@@ -31,6 +35,7 @@ import {
 } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
 import { resolveActiveTenant } from '@/src/server/tenant/resolveActiveTenant';
+import { randomUUID } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -65,6 +70,18 @@ function getVisibleTools(scopes: string | readonly string[]) {
   return TOOLS.filter((tool) => visibleToolNames.has(tool.name));
 }
 
+/**
+ * B1 hardening (auditoría 2026-05-11): el flujo OAuth público SIEMPRE queda
+ * clampado al preset `openai_review_v2` declarado en la submission a OpenAI,
+ * independientemente de qué scopes haya solicitado el cliente o concedido
+ * históricamente el authorization server. Esto cierra el riesgo de exponer
+ * delete/send/pay tools si un revisor solicita scopes adicionales en su
+ * client registration.
+ *
+ * - mode === 'oauth' → intersección de access.scope con preset público.
+ * - mode === 'shared_secret' → acceso administrativo interno, full surface.
+ * - mode === 'pat' → respeta scope del PAT (auth flow privado).
+ */
 function resolveVisibleTools(
   access?: {
     mode: 'oauth' | 'shared_secret' | 'pat';
@@ -72,11 +89,25 @@ function resolveVisibleTools(
   } | null
 ) {
   if (!access) {
+    // Pre-auth (initialize, tools/list sin token) → preset público estricto.
     return getVisibleTools(getDefaultScopes());
   }
 
   if (access.mode === 'shared_secret') {
     return getVisibleTools(getSupportedScopes());
+  }
+
+  if (access.mode === 'oauth') {
+    // Defense in depth: aunque el authorize endpoint debería clampar el scope
+    // antes de mintar el código, intersectamos aquí también para que ninguna
+    // ruta pueda devolver tools fuera del preset público.
+    const publicPresetScopes = new Set<string>(getHoldedMcpScopePreset(getPublicScopePreset()));
+    const grantedScopes: string[] = (access.scope ?? '')
+      .split(/[\s,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .filter((s) => publicPresetScopes.has(s));
+    return getVisibleTools(grantedScopes);
   }
 
   // PATs default to the same scope set as a typical OAuth grant. Specific
@@ -527,12 +558,27 @@ export async function GET(request: NextRequest) {
   const access = await assertMcpAccess(request);
   const visibleTools = resolveVisibleTools(access);
 
+  // R5 hardening (auditoría 2026-05-11): exponer logo_uri + contact + privacy + tos
+  // en el discovery metadata para que el revisor de OpenAI tenga toda la branding
+  // info accesible sin tener que buscarla en otro sitio.
+  const connectorPublicUrl =
+    process.env.MCP_PUBLIC_CONNECTOR_URL?.trim() ||
+    process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() ||
+    'https://holded.verifactu.business';
+
   return applyMcpCors(
     NextResponse.json({
       name: MCP_CONNECTOR_NAME,
       description: MCP_CONNECTOR_DESCRIPTION,
       protocol: 'MCP over JSON-RPC HTTP',
       endpoint: '/api/mcp/holded',
+      logo_uri: `${connectorPublicUrl}/brand/holded/holded-diamond-logo.png`,
+      contact: 'soporte@verifactu.business',
+      tos_uri: `${connectorPublicUrl}/conectores/chatgpt/terms`,
+      privacy_uri: `${connectorPublicUrl}/conectores/chatgpt/privacy`,
+      dpa_uri: `${connectorPublicUrl}/conectores/chatgpt/dpa`,
+      docs_uri: `${connectorPublicUrl}/conectores/chatgpt/docs`,
+      demo_uri: `${connectorPublicUrl}/conectores/chatgpt/openai-review-demo`,
       oauth: {
         authorizationEndpoint: getAuthorizationEndpoint(),
         tokenEndpoint: getTokenEndpoint(),
@@ -619,9 +665,21 @@ export async function POST(request: NextRequest) {
         });
     }
   } catch (error) {
+    // R4 hardening (auditoría 2026-05-11): NO devolver `error.message` literal al
+    // cliente — un error interno puede traer paths server-side, IDs internos, o
+    // detalles que el revisor de OpenAI marcaría como leak. Loguear server-side
+    // con un requestId correlacionable y devolver un mensaje genérico.
+    const requestId = randomUUID();
+    console.error('[MCP Holded] unhandled JSON-RPC error', {
+      requestId,
+      method: body?.method,
+      id: body?.id ?? null,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return jsonRpc(request, body.id, undefined, {
       code: -32000,
-      message: error instanceof Error ? error.message : 'Unknown MCP error',
+      message: `Internal MCP error. Reference: ${requestId}`,
     });
   }
 }

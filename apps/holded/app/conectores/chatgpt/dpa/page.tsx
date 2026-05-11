@@ -100,7 +100,7 @@ export default function ChatGPTDpaPage() {
             2016/679 (RGPD).
           </>
         }
-        lastUpdated="Última actualización: 7 de mayo de 2026."
+        lastUpdated="Última actualización: 11 de mayo de 2026."
         asideCard={
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -216,7 +216,11 @@ export default function ChatGPTDpaPage() {
         <div className="mt-3 grid gap-4 text-sm leading-7 text-slate-600 sm:grid-cols-3">
           <div>
             <p className="font-semibold text-slate-800">Tokens OAuth</p>
-            <p>Access token: 1 hora. Refresh token: 30 días con rotación en cada uso.</p>
+            <p>
+              Access token: 24 horas (TTL alineado con la duración típica de una sesión de revisión
+              por ChatGPT). Refresh token: 30 días con rotación en cada uso. La revocación manual
+              desde el panel del responsable es inmediata.
+            </p>
           </div>
           <div>
             <p className="font-semibold text-slate-800">Cuenta de usuario</p>

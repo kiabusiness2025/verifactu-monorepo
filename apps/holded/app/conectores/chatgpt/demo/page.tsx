@@ -10,11 +10,19 @@ export const metadata: Metadata = {
   alternates: { canonical: '/conectores/chatgpt/demo' },
 };
 
-// When ready, replace these with the YouTube embed URL or local mp4 paths.
-const INTRO_YOUTUBE_URL = '';
-const INTRO_LOCAL_VIDEO_URL = '/video/holded-chatgpt-intro.mp4';
+// B6 hardening (auditoría 2026-05-11): la demo del conector ChatGPT usaba 24
+// placeholders "GIF en preparacion" que un revisor de OpenAI veía como
+// "demo not ready". Reorientamos la página al video real del hero mock
+// (5 escenas con tools reales) embedido como video local mp4 servido
+// estáticamente desde /demo/hero-mock-chatgpt.mp4, más el video oficial de
+// YouTube alojado en https://www.youtube.com/embed/Sa0n7xUkSNM (unlisted).
+// Cuando existan GIFs grabados desde Nova Gestión añadimos `src` a cada
+// entrada de GIF_CATEGORIES; las que no tengan src NO se renderizan ya
+// (en lugar de mostrar el placeholder).
+const INTRO_YOUTUBE_URL = 'https://www.youtube.com/embed/Sa0n7xUkSNM';
+const INTRO_LOCAL_VIDEO_URL = '/demo/hero-mock-chatgpt.mp4';
 const OUTRO_YOUTUBE_URL = '';
-const OUTRO_LOCAL_VIDEO_URL = '/video/holded-chatgpt-outro.mp4';
+const OUTRO_LOCAL_VIDEO_URL = '';
 
 type GifCategory = {
   slug: string;
@@ -270,7 +278,14 @@ function GifPlaceholder({
 }
 
 export default function ChatGPTDemoPage() {
-  const totalGifs = GIF_CATEGORIES.reduce((acc, cat) => acc + cat.gifs.length, 0);
+  // B6 hardening (auditoría 2026-05-11): solo renderizamos los GIFs que tengan
+  // `src` real. Mientras no haya material grabado, la página muestra el video
+  // hero + el video de YouTube oficial sin mostrar placeholders al revisor.
+  const visibleCategories = GIF_CATEGORIES.map((cat) => ({
+    ...cat,
+    gifs: cat.gifs.filter((g) => Boolean(g.src)),
+  })).filter((cat) => cat.gifs.length > 0);
+  const totalGifs = visibleCategories.reduce((acc, cat) => acc + cat.gifs.length, 0);
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-5xl px-4 py-16">
@@ -300,7 +315,7 @@ export default function ChatGPTDemoPage() {
 
           <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">
             <VideoIcon className="h-3.5 w-3.5" />
-            Demo Conector ChatGPT · {totalGifs} ejemplos
+            Demo Conector ChatGPT
           </div>
 
           <h1 className="text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
@@ -308,8 +323,7 @@ export default function ChatGPTDemoPage() {
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-600">
             Todo el flujo del conector en accion: conexion segura con OAuth + PKCE, consulta de
-            datos en lenguaje natural y borradores que requieren confirmacion explicita. {totalGifs}{' '}
-            GIFs cortos organizados por valor comercial.
+            datos en lenguaje natural y borradores que requieren confirmacion explicita.
           </p>
         </div>
 
@@ -328,8 +342,8 @@ export default function ChatGPTDemoPage() {
           />
         </section>
 
-        {/* GIFS GRID */}
-        {GIF_CATEGORIES.map((cat) => (
+        {/* GIFS GRID — solo categorías con material real grabado */}
+        {visibleCategories.map((cat) => (
           <section key={cat.slug} id={cat.slug} className="mt-12 scroll-mt-20">
             <div className="mb-5">
               <h2 className="text-xl font-bold text-slate-950">{cat.title}</h2>
@@ -349,20 +363,22 @@ export default function ChatGPTDemoPage() {
           </section>
         ))}
 
-        {/* OUTRO VIDEO */}
-        <section className="mt-12">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
-              Outro
-            </span>
-            <span className="text-xs text-slate-500">Pasos siguientes</span>
-          </div>
-          <VideoBlock
-            youtubeUrl={OUTRO_YOUTUBE_URL}
-            localUrl={OUTRO_LOCAL_VIDEO_URL}
-            title="Outro Conector Holded para ChatGPT"
-          />
-        </section>
+        {/* OUTRO VIDEO — solo si hay material real grabado */}
+        {(OUTRO_YOUTUBE_URL || OUTRO_LOCAL_VIDEO_URL) && (
+          <section className="mt-12">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
+                Outro
+              </span>
+              <span className="text-xs text-slate-500">Pasos siguientes</span>
+            </div>
+            <VideoBlock
+              youtubeUrl={OUTRO_YOUTUBE_URL}
+              localUrl={OUTRO_LOCAL_VIDEO_URL}
+              title="Outro Conector Holded para ChatGPT"
+            />
+          </section>
+        )}
 
         {/* STATS */}
         <div className="mt-10 grid gap-3 sm:grid-cols-3">

@@ -5,9 +5,16 @@ import {
   verifyAuthorizationCode,
   verifyPkce,
 } from '@/lib/oauth/mcp';
+import { rateLimit } from '@/lib/rateLimit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
+
+// R2 hardening (auditoría 2026-05-11): rate limit en /oauth/token para evitar
+// que un atacante haga brute-force de authorization codes o code_verifiers.
+// 20 intentos/min/IP cubre con holgura cualquier flujo legítimo (ChatGPT
+// intercambia 1 código + opcionalmente 1 refresh por sesión).
+const TOKEN_RATE_LIMIT = { limit: 20, windowMs: 60_000, keyPrefix: 'oauth-token' } as const;
 
 function parseFormEncoded(body: string) {
   const params = new URLSearchParams(body);
@@ -15,6 +22,20 @@ function parseFormEncoded(body: string) {
 }
 
 export async function POST(request: NextRequest) {
+  const limit = rateLimit(request, TOKEN_RATE_LIMIT);
+  if (!limit.ok) {
+    return NextResponse.json(
+      { error: 'rate_limited', error_description: 'Too many token requests. Retry shortly.' },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(limit.retryAfter),
+          'X-RateLimit-Limit': String(TOKEN_RATE_LIMIT.limit),
+          'X-RateLimit-Remaining': '0',
+        },
+      }
+    );
+  }
   const contentType = request.headers.get('content-type') || '';
   const raw = await request.text();
   let body: Record<string, unknown>;

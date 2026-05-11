@@ -520,6 +520,25 @@ export function getSupportedScopes() {
 
 export function getPublicScopePreset(): HoldedMcpScopePreset {
   const requested = process.env.MCP_PUBLIC_SCOPE_PRESET?.trim();
+
+  // R6 hardening (auditoría 2026-05-11): fail-closed en producción.
+  // El flujo OAuth público SOLO puede correr con el preset declarado en la
+  // submission firmada con OpenAI (`openai_review_v2`). Si un operador setea
+  // por error la env var a otro valor (full, claude_parity, etc.) ampliaría
+  // silenciosamente la superficie de tools expuesta al revisor.
+  //
+  // En producción, cualquier valor distinto al default es un error de config:
+  // se ignora y emitimos un warning para que se note en los logs.
+  if (process.env.NODE_ENV === 'production') {
+    if (requested && requested !== DEFAULT_PUBLIC_SCOPE_PRESET) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        `[mcp.getPublicScopePreset] MCP_PUBLIC_SCOPE_PRESET="${requested}" ignored in production; falling back to "${DEFAULT_PUBLIC_SCOPE_PRESET}" to honour the OpenAI submission preset.`
+      );
+    }
+    return DEFAULT_PUBLIC_SCOPE_PRESET;
+  }
+
   if (requested && isHoldedMcpScopePreset(requested)) {
     return requested;
   }

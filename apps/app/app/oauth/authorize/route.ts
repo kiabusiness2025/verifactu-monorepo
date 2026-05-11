@@ -9,11 +9,13 @@ import {
   getHoldedOnboardingTokenFromSearchParams,
   resolveHoldedOnboardingSession,
 } from '@/lib/integrations/holdedOnboardingSession';
+import { getHoldedMcpScopePreset } from '@/lib/integrations/holdedMcpScopes';
 import {
   buildLoginUrl,
   ensureScopesAllowed,
   getDefaultScopes,
   getMcpResourceUrl,
+  getPublicScopePreset,
   isValidPkceCodeChallenge,
   mapSessionToOAuthUser,
   mintAuthorizationCode,
@@ -186,12 +188,34 @@ export async function GET(request: NextRequest) {
   const codeChallengeRaw = url.searchParams.get('code_challenge')?.trim() || '';
   const codeChallengeMethodRaw = url.searchParams.get('code_challenge_method')?.trim() || '';
   const requestedScope = url.searchParams.get('scope');
-  const normalizedScope = requestedScope?.trim()
-    ? requestedScope.trim()
-    : getDefaultScopes().join(' ');
+  // B1 hardening (auditoría 2026-05-11): el authorization code se mintará SIEMPRE
+  // con scopes clampados al preset público (MCP_PUBLIC_SCOPE_PRESET, default
+  // openai_review_v2). Si un cliente OAuth solicita scopes adicionales — sea por
+  // error o por intentar ampliar superficie — los ignoramos en silencio en lugar
+  // de devolver invalid_scope, para que la integración no se rompa pero la lista
+  // de tools quede limitada a la submission firmada con OpenAI.
+  const publicPresetScopeSet = new Set<string>(getHoldedMcpScopePreset(getPublicScopePreset()));
+  const requestedScopeList = (requestedScope?.trim() ?? '')
+    .split(/[\s,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const clampedScopeList =
+    requestedScopeList.length > 0
+      ? requestedScopeList.filter((s) => publicPresetScopeSet.has(s))
+      : getDefaultScopes();
+  // Si la intersección está vacía (cliente pidió solo scopes fuera del preset),
+  // caemos a los defaults en lugar de mintar un token sin scope.
+  const normalizedScope =
+    clampedScopeList.length > 0 ? clampedScopeList.join(' ') : getDefaultScopes().join(' ');
   const resource = url.searchParams.get('resource')?.trim() || getMcpResourceUrl();
   const tenantIdQuery = url.searchParams.get('tenant_id')?.trim() || null;
   const loginConfirmed = url.searchParams.get('holded_login_confirmed')?.trim() === '1';
+  // B4 hardening (auditoría 2026-05-11): el flujo OAuth público requiere un
+  // consent screen explícito antes de mintar el authorization code. La página
+  // /oauth/consent muestra los scopes solicitados en lenguaje humano, los links
+  // legales (T&C / Privacy / DPA) y los botones Authorize / Cancel. Al pulsar
+  // Authorize, redirige de vuelta a /oauth/authorize con consent_confirmed=1.
+  const consentConfirmed = url.searchParams.get('consent_confirmed')?.trim() === '1';
   const isClaudeClient = isLikelyClaudeOAuthRequest({ clientId, redirectUri });
   const isChatgptClient = !isClaudeClient && isLikelyChatgptOAuthRequest({ clientId, redirectUri });
 
@@ -416,6 +440,30 @@ export async function GET(request: NextRequest) {
         NextResponse.json({ error: 'no_tenant_selected', requestId }, { status: 400 }),
         requestId
       );
+    }
+
+    // B4 hardening: si el usuario aún no ha confirmado consent, redirigimos a
+    // /oauth/consent con todos los parámetros necesarios. Esa página muestra el
+    // scope solicitado en lenguaje humano, los links legales y los botones
+    // Authorize/Cancel. Al autorizar redirige a /oauth/authorize con
+    // consent_confirmed=1 manteniendo el resto de params.
+    //
+    // El consent screen se sirve bajo el dominio canónico público
+    // (holded.verifactu.business) mediante un proxy ligero en apps/holded
+    // para que el usuario no vea un cambio de dominio durante la auth flow.
+    if (!consentConfirmed) {
+      const holdedSiteUrl = resolveCanonicalHoldedSiteUrl();
+      const consentUrl = new URL('/oauth/consent', holdedSiteUrl);
+      consentUrl.searchParams.set('client_id', clientId);
+      consentUrl.searchParams.set('redirect_uri', redirectUri);
+      consentUrl.searchParams.set('scope', normalizedScope);
+      if (state) consentUrl.searchParams.set('state', state);
+      consentUrl.searchParams.set('code_challenge', codeChallengeRaw);
+      consentUrl.searchParams.set('code_challenge_method', codeChallengeMethodRaw);
+      consentUrl.searchParams.set('response_type', 'code');
+      consentUrl.searchParams.set('email', user.email ?? '');
+      if (resource) consentUrl.searchParams.set('resource', resource);
+      return withConnectorRequestId(NextResponse.redirect(consentUrl), requestId);
     }
 
     const code = await mintAuthorizationCode({

@@ -208,8 +208,20 @@ export function createApp() {
 
   app.use(
     (err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-      logger.error('Error no capturado:', err);
-      res.status(500).json({ error: 'internal_error', message: err.message });
+      // R4 hardening (auditoría 2026-05-11): NO devolver `err.message` al cliente
+      // — puede contener paths del filesystem de Render, IDs internos o detalles
+      // que un revisor marcaría como information disclosure. Loguear con un
+      // requestId correlacionable y devolver mensaje genérico.
+      const requestId =
+        typeof (globalThis as { crypto?: { randomUUID?: () => string } }).crypto?.randomUUID ===
+        'function'
+          ? (globalThis as { crypto: { randomUUID: () => string } }).crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+      logger.error('Error no capturado', { requestId, message: err.message, stack: err.stack });
+      res.status(500).json({
+        error: 'internal_error',
+        message: `Internal server error. Reference: ${requestId}`,
+      });
     }
   );
 

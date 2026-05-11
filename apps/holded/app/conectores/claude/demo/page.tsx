@@ -270,7 +270,13 @@ function GifPlaceholder({
 }
 
 export default function ClaudeDemoPage() {
-  const totalGifs = GIF_CATEGORIES.reduce((acc, cat) => acc + cat.gifs.length, 0);
+  // B6 hardening (auditoría 2026-05-11): mismo cleanup que /chatgpt/demo,
+  // sólo renderizamos los GIFs con src real para evitar placeholders al reviewer.
+  const visibleCategories = GIF_CATEGORIES.map((cat) => ({
+    ...cat,
+    gifs: cat.gifs.filter((g) => Boolean(g.src)),
+  })).filter((cat) => cat.gifs.length > 0);
+  const totalGifs = visibleCategories.reduce((acc, cat) => acc + cat.gifs.length, 0);
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <div className="mx-auto max-w-5xl px-4 py-16">
@@ -328,8 +334,8 @@ export default function ClaudeDemoPage() {
           />
         </section>
 
-        {/* GIFS GRID */}
-        {GIF_CATEGORIES.map((cat) => (
+        {/* GIFS GRID — solo categorías con material real grabado */}
+        {visibleCategories.map((cat) => (
           <section key={cat.slug} id={cat.slug} className="mt-12 scroll-mt-20">
             <div className="mb-5">
               <h2 className="text-xl font-bold text-slate-950">{cat.title}</h2>
@@ -349,20 +355,24 @@ export default function ClaudeDemoPage() {
           </section>
         ))}
 
-        {/* OUTRO VIDEO */}
-        <section className="mt-12">
-          <div className="mb-3 flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-widest text-amber-700">
-              Outro
-            </span>
-            <span className="text-xs text-slate-500">Pasos siguientes</span>
-          </div>
-          <VideoBlock
-            youtubeUrl={OUTRO_YOUTUBE_URL}
-            localUrl={OUTRO_LOCAL_VIDEO_URL}
-            title="Outro Conector Holded para Claude"
-          />
-        </section>
+        {/* OUTRO VIDEO — solo si hay material real grabado */}
+        {(OUTRO_YOUTUBE_URL ||
+          (OUTRO_LOCAL_VIDEO_URL &&
+            !OUTRO_LOCAL_VIDEO_URL.includes('/video/holded-claude-outro.mp4'))) && (
+          <section className="mt-12">
+            <div className="mb-3 flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-amber-700">
+                Outro
+              </span>
+              <span className="text-xs text-slate-500">Pasos siguientes</span>
+            </div>
+            <VideoBlock
+              youtubeUrl={OUTRO_YOUTUBE_URL}
+              localUrl={OUTRO_LOCAL_VIDEO_URL}
+              title="Outro Conector Holded para Claude"
+            />
+          </section>
+        )}
 
         {/* STATS */}
         <div className="mt-10 grid gap-3 sm:grid-cols-3">
