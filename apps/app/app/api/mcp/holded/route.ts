@@ -408,6 +408,7 @@ async function callTool(
     scope?: string | null;
     uid?: string | null;
     channelKey?: string | null;
+    patId?: string | null;
   },
   name: string,
   args: Record<string, unknown> | undefined
@@ -422,6 +423,17 @@ async function callTool(
       outcome: 'denied',
       reason: 'missing_scope',
     });
+    if (access.mode === 'pat' && access.tenantId) {
+      void logPatUsage({
+        tenantId: access.tenantId,
+        patId: access.patId ?? null,
+        channel: access.channelKey ?? null,
+        toolName: name,
+        status: 403,
+        event: 'rejected',
+        meta: { reason: 'missing_scope' },
+      });
+    }
     throw new Error(`Missing required scope for tool ${name}`);
   }
 
@@ -434,6 +446,18 @@ async function callTool(
   try {
     result = await callHoldedMcpTool(apiKey, name, args);
   } catch (error) {
+    if (access.mode === 'pat' && access.tenantId) {
+      void logPatUsage({
+        tenantId: access.tenantId,
+        patId: access.patId ?? null,
+        channel: access.channelKey ?? null,
+        toolName: name,
+        status: isHoldedCredentialRevocationError(error) ? 401 : 500,
+        event: 'rejected',
+        meta: { message: error instanceof Error ? error.message : String(error) },
+      });
+    }
+
     if (access.tenantId && isHoldedCredentialRevocationError(error)) {
       try {
         const revokeChannel: AccountingIntegrationChannel =
@@ -471,6 +495,18 @@ async function callTool(
     uid: access.uid ?? null,
     outcome: 'allowed',
   });
+
+  if (access.mode === 'pat' && access.tenantId) {
+    void logPatUsage({
+      tenantId: access.tenantId,
+      patId: access.patId ?? null,
+      channel: access.channelKey ?? null,
+      toolName: name,
+      status: 200,
+      event: 'used',
+      meta: { source },
+    });
+  }
 
   return formatToolResult({ source, ...result });
 }
@@ -569,6 +605,7 @@ export async function POST(request: NextRequest) {
             scope: 'scope' in access ? access.scope : null,
             uid: 'uid' in access ? access.uid : null,
             channelKey: 'channelKey' in access ? access.channelKey : null,
+            patId: 'patId' in access ? access.patId : null,
           },
           name,
           args

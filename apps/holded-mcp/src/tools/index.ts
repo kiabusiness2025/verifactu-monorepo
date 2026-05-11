@@ -17,9 +17,10 @@ export function registerProductionTools(
   // F5.3: contexto opcional con datos del token (userId, channel) para que
   // tools con side-effects (p.ej. create_invoice_draft) puedan disparar
   // eventos al endpoint receptor de apps/holded.
-  getContext?: () => ToolContext
+  getContext?: () => ToolContext,
+  options: { includeWriteTools?: boolean } = {}
 ) {
-  registerInvoicingTools(server, getClient, getContext);
+  registerInvoicingTools(server, getClient, getContext, options);
   registerContactsTools(server, getClient);
   registerProductsTools(server, getClient);
   registerCatalogsTools(server, getClient);

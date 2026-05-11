@@ -16,6 +16,10 @@ import { registerProductionTools } from './tools/index.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.resolve(__dirname, '../public');
 
+function tokenHasScope(scope: string | null | undefined, required: 'holded:read' | 'holded:write') {
+  return new Set((scope ?? '').split(/[\s,]+/).filter(Boolean)).has(required);
+}
+
 export function createApp() {
   const app = express();
 
@@ -25,7 +29,19 @@ export function createApp() {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
-      contentSecurityPolicy: false,
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          baseUri: ["'self'"],
+          connectSrc: ["'self'", config.VERIFACTU_APP_URL],
+          formAction: ["'self'"],
+          frameAncestors: ["'none'"],
+          imgSrc: ["'self'", 'data:', 'https://holded.verifactu.business'],
+          objectSrc: ["'none'"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+        },
+      },
     })
   );
   app.use(corsMiddleware);
@@ -142,7 +158,7 @@ export function createApp() {
 
   app.get('/.well-known/oauth-protected-resource', (_req, res) => {
     res.json({
-      resource: config.BASE_URL,
+      resource: `${config.BASE_URL}/mcp`,
       authorization_servers: [config.BASE_URL],
       bearer_methods_supported: ['header'],
       scopes_supported: ['holded:read', 'holded:write'],
@@ -166,7 +182,9 @@ export function createApp() {
       userId: record.userId,
       channel: 'claude' as const,
     });
-    registerProductionTools(mcpServer, getClient, getContext);
+    registerProductionTools(mcpServer, getClient, getContext, {
+      includeWriteTools: tokenHasScope(record.scope, 'holded:write'),
+    });
 
     const transport = new StreamableHTTPServerTransport({
       sessionIdGenerator: undefined,

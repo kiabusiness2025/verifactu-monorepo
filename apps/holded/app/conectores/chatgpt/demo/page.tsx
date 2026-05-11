@@ -39,22 +39,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Resumen mensual de facturacion',
-        tool: 'list_documents + get_document',
+        tool: 'holded_list_documents + holded_get_document',
         description: 'Top clientes, evolucion mes a mes y outliers detectados automaticamente.',
       },
       {
         title: 'Comparativa trimestral',
-        tool: 'list_documents (rango fechas)',
+        tool: 'holded_list_documents (rango fechas)',
         description: 'Q3 vs Q4 con variacion % por categoria de producto.',
       },
       {
         title: 'Distribucion de gastos',
-        tool: 'get_chart_of_accounts + get_journal',
+        tool: 'holded_list_accounts + holded_list_daily_ledger',
         description: 'Pie chart de partidas y deteccion de gastos atipicos.',
       },
       {
         title: 'Embudo CRM visual',
-        tool: 'list_crm_funnels + list_leads',
+        tool: 'holded_list_crm_funnels + holded_list_leads',
         description: 'Funnel con conversiones por etapa y leads en riesgo.',
       },
     ],
@@ -66,12 +66,12 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'IVA acumulado del trimestre',
-        tool: 'list_documents + list_taxes',
+        tool: 'holded_list_documents + holded_list_taxes',
         description: 'Calculo aproximado de IVA repercutido vs soportado.',
       },
       {
         title: 'Que falta para cerrar el trimestre',
-        tool: 'list_documents (filtro estado)',
+        tool: 'holded_list_documents (filtro estado)',
         description: 'Facturas pendientes, gastos sin categorizar, conciliaciones.',
       },
       {
@@ -81,7 +81,7 @@ const GIF_CATEGORIES: GifCategory[] = [
       },
       {
         title: 'Apuntes contables del mes',
-        tool: 'get_daily_book',
+        tool: 'holded_list_daily_ledger',
         description: 'Diario contable de un rango de fechas en formato legible.',
       },
     ],
@@ -93,22 +93,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Facturas vencidas',
-        tool: 'list_documents (filtro estado)',
+        tool: 'holded_list_documents (filtro estado)',
         description: 'Listado de facturas pendientes de cobro con dias de retraso.',
       },
       {
         title: 'Top 10 clientes morosos',
-        tool: 'list_documents + list_contacts',
+        tool: 'holded_list_documents + holded_list_contacts',
         description: 'Ranking por importe pendiente y antiguedad.',
       },
       {
         title: 'Detectar duplicadas',
-        tool: 'list_documents',
+        tool: 'holded_list_documents',
         description: 'Posibles facturas duplicadas por cliente y fecha.',
       },
       {
         title: 'Recordatorios sugeridos',
-        tool: 'list_documents + draft de email',
+        tool: 'holded_list_documents + draft de email',
         description: 'ChatGPT redacta el email de cobro (no lo envia).',
       },
     ],
@@ -120,22 +120,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'PDF de factura para cliente',
-        tool: 'get_document_pdf',
+        tool: 'holded_get_document_pdf',
         description: 'Descarga el PDF de la ultima factura emitida a un cliente.',
       },
       {
         title: 'PDF para adjuntar a email',
-        tool: 'get_document_pdf',
+        tool: 'holded_get_document_pdf',
         description: 'Localiza la factura por importe + fecha y obtiene el PDF.',
       },
       {
         title: 'PDF de presupuesto',
-        tool: 'get_document_pdf (estimate)',
+        tool: 'holded_get_document_pdf (estimate)',
         description: 'Recupera el PDF de un presupuesto Q-2026-XXX.',
       },
       {
         title: 'Lote de PDFs por cliente',
-        tool: 'list_documents + get_document_pdf',
+        tool: 'holded_list_documents + holded_get_document_pdf',
         description: 'Todas las facturas de un cliente del trimestre en PDF.',
       },
     ],
@@ -147,22 +147,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Borrador de factura simple',
-        tool: 'create_invoice_draft',
+        tool: 'holded_create_invoice_draft',
         description: 'Cliente existente + concepto + importe. Confirmacion antes de crear.',
       },
       {
         title: 'Borrador con varias lineas',
-        tool: 'create_invoice_draft',
+        tool: 'holded_create_invoice_draft',
         description: 'Tres conceptos con IVA distinto. ChatGPT pide confirmar antes.',
       },
       {
         title: 'Borrador en serie por cliente',
-        tool: 'create_invoice_draft + list_contacts',
+        tool: 'holded_create_invoice_draft + holded_list_contacts',
         description: 'Tres clientes con misma plantilla. Cada uno requiere confirmacion.',
       },
       {
         title: 'Categorizacion de gasto',
-        tool: 'get_chart_of_accounts',
+        tool: 'holded_list_accounts',
         description: 'Sugiere cuenta contable para un gasto basandose en concepto.',
       },
     ],
@@ -179,17 +179,17 @@ const GIF_CATEGORIES: GifCategory[] = [
       },
       {
         title: 'Lista de productos',
-        tool: 'list_products',
+        tool: 'holded_list_products',
         description: 'Catalogo con stock disponible cuando esta habilitado.',
       },
       {
         title: 'Proyectos abiertos',
-        tool: 'list_projects + list_project_tasks',
+        tool: 'holded_list_projects + holded_list_project_tasks',
         description: 'Tareas pendientes esta semana por proyecto.',
       },
       {
         title: 'Equipo y roles',
-        tool: 'list_employees',
+        tool: 'holded_list_employees',
         description: 'Empleados, departamentos y puestos.',
       },
     ],

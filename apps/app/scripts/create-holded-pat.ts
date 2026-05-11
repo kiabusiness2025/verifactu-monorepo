@@ -23,7 +23,7 @@
  */
 
 import { prisma } from '@verifactu/db';
-import { createPat } from '../lib/integrations/holdedPatStore';
+import { DEFAULT_PAT_TTL_DAYS, createPat } from '../lib/integrations/holdedPatStore';
 
 type Args = {
   email: string;
@@ -63,9 +63,11 @@ function parseArgs(argv: string[]): Args {
 
   const expiresInDaysRaw = args.get('expires-in-days');
   const expiresInDays =
-    expiresInDaysRaw === undefined || expiresInDaysRaw === '0'
-      ? null
-      : Number.parseInt(expiresInDaysRaw, 10);
+    expiresInDaysRaw === undefined
+      ? DEFAULT_PAT_TTL_DAYS
+      : expiresInDaysRaw === '0'
+        ? null
+        : Number.parseInt(expiresInDaysRaw, 10);
   if (expiresInDays !== null && (!Number.isFinite(expiresInDays) || expiresInDays <= 0)) {
     throw new Error('--expires-in-days must be a positive integer or 0 for no expiry');
   }
@@ -146,7 +148,7 @@ async function main() {
   console.log('Tenant ID: ', tenantId);
   console.log('Channel:   ', args.channel);
   console.log('Scopes:    ', result.scopes.length, 'scopes (claude_parity preset)');
-  console.log('Expires:   ', expiresAt ? expiresAt.toISOString() : 'never');
+  console.log('Expires:   ', result.expiresAt ? result.expiresAt.toISOString() : 'never');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('');
   console.log('To use in ChatGPT mobile:');

@@ -92,7 +92,7 @@ function brandHeader(label: string) {
             </div>
           </td>
           <td align="right" style="vertical-align:middle;color:#b4233c;font-size:12px;font-weight:700;letter-spacing:0.04em;">
-            Conector oficial
+            Conector Verifactu
           </td>
         </tr>
       </table>

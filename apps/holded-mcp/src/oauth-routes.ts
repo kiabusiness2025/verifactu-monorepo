@@ -46,6 +46,9 @@ function escapeHtml(value: string): string {
 }
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const SUPPORTED_OAUTH_SCOPES = new Set(['holded:read', 'holded:write']);
+const DEFAULT_OAUTH_SCOPE = 'holded:read holded:write';
+const DEFAULT_ALLOWED_REDIRECT_ORIGINS = ['https://claude.ai', 'https://app.claude.ai'];
 
 const F1_UPSERT_PATH = '/api/integrations/holded/upsert-from-key';
 
@@ -79,6 +82,53 @@ interface F1UpsertFailurePayload {
 }
 
 type F1UpsertResponse = F1UpsertSuccessPayload | F1UpsertFailurePayload;
+
+function splitEnvList(value?: string | null) {
+  return (value ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function getAllowedRedirectOrigins() {
+  const origins = new Set([
+    ...DEFAULT_ALLOWED_REDIRECT_ORIGINS,
+    ...splitEnvList(config.OAUTH_ALLOWED_REDIRECT_ORIGINS),
+  ]);
+
+  if (config.NODE_ENV !== 'production') {
+    origins.add('http://localhost');
+    origins.add('http://127.0.0.1');
+  }
+
+  return origins;
+}
+
+function isAllowedRedirectUri(redirectUri: string) {
+  try {
+    const parsed = new URL(redirectUri);
+    const isLocalDev =
+      config.NODE_ENV !== 'production' &&
+      (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1');
+    if (parsed.protocol !== 'https:' && !isLocalDev) return false;
+
+    const origin = `${parsed.protocol}//${parsed.host}`;
+    return getAllowedRedirectOrigins().has(origin);
+  } catch {
+    return false;
+  }
+}
+
+function normalizeOAuthScope(scope?: string | null) {
+  const requested = (scope?.trim() || DEFAULT_OAUTH_SCOPE)
+    .split(/[\s,]+/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const unique = [...new Set(requested)];
+  if (unique.length === 0) return DEFAULT_OAUTH_SCOPE;
+  if (!unique.every((item) => SUPPORTED_OAUTH_SCOPES.has(item))) return null;
+  return unique.join(' ');
+}
 
 /**
  * Llama al endpoint comun F1 (`apps/app`) para crear o actualizar el grafo
@@ -202,7 +252,7 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       clientId: bodyClientId,
       redirectUri: bodyRedirectUri,
       state: bodyState,
-      scope: bodyScope || queryScope || 'holded:read holded:write',
+      scope: bodyScope || queryScope || DEFAULT_OAUTH_SCOPE,
       codeChallenge: bodyCodeChallenge || queryCodeChallenge,
       codeChallengeMethod: bodyCodeChallengeMethod || queryCodeChallengeMethod,
     };
@@ -213,7 +263,7 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       clientId: queryClientId,
       redirectUri: queryRedirectUri,
       state: bodyState || queryState,
-      scope: bodyScope || queryScope || 'holded:read holded:write',
+      scope: bodyScope || queryScope || DEFAULT_OAUTH_SCOPE,
       codeChallenge: bodyCodeChallenge || queryCodeChallenge,
       codeChallengeMethod: bodyCodeChallengeMethod || queryCodeChallengeMethod,
     };
@@ -236,7 +286,7 @@ function resolveAuthorizeContext(req: Request): AuthorizeContext | null {
       clientId: refererClientId,
       redirectUri: refererRedirectUri,
       state: bodyState || refererState,
-      scope: bodyScope || refererUrl.searchParams.get('scope') || 'holded:read holded:write',
+      scope: bodyScope || refererUrl.searchParams.get('scope') || DEFAULT_OAUTH_SCOPE,
       codeChallenge: bodyCodeChallenge || refererUrl.searchParams.get('code_challenge'),
       codeChallengeMethod:
         bodyCodeChallengeMethod ||
@@ -252,15 +302,30 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
   const { redirect_uris, client_name } = req.body;
 
   const redirectUris = Array.isArray(redirect_uris)
-    ? redirect_uris.filter(
-        (value): value is string => typeof value === 'string' && value.length > 0
-      )
+    ? [
+        ...new Set(
+          redirect_uris
+            .filter(
+              (value): value is string => typeof value === 'string' && value.trim().length > 0
+            )
+            .map((value) => value.trim())
+        ),
+      ]
     : [];
 
   if (redirectUris.length === 0) {
     res.status(400).json({
       error: 'invalid_client_metadata',
       error_description: 'redirect_uris requerido',
+    });
+    return;
+  }
+
+  if (!redirectUris.every(isAllowedRedirectUri)) {
+    res.status(400).json({
+      error: 'invalid_redirect_uri',
+      error_description: 'redirect_uri no autorizado',
+      allowed_origins: [...getAllowedRedirectOrigins()],
     });
     return;
   }
@@ -305,6 +370,17 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
     return;
   }
 
+  if (!isAllowedRedirectUri(String(redirect_uri))) {
+    res.status(400).send('redirect_uri no autorizado.');
+    return;
+  }
+
+  const normalizedScope = normalizeOAuthScope(typeof scope === 'string' ? scope : null);
+  if (!normalizedScope) {
+    res.status(400).send('scope no autorizado.');
+    return;
+  }
+
   if (code_challenge_method && code_challenge_method !== 'S256') {
     res.status(400).send('code_challenge_method debe ser "S256"');
     return;
@@ -325,7 +401,7 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
       String(redirect_uri),
       String(state ?? ''),
       false,
-      typeof scope === 'string' && scope.trim() ? scope.trim() : 'holded:read holded:write',
+      normalizedScope,
       typeof code_challenge === 'string' ? code_challenge : null,
       code_challenge_method === 'S256' ? 'S256' : null
     )
@@ -344,7 +420,7 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
   const acceptedPrivacy = req.body?.accepted_privacy === '1' || req.body?.accepted_privacy === 'on';
   const authorizeContext = resolveAuthorizeContext(req);
 
-  if (!holdedApiKey || !personalEmailRaw || !authorizeContext) {
+  if (!authorizeContext) {
     logger.warn('POST /oauth/authorize sin contexto suficiente', {
       hasHoldedApiKey: holdedApiKey.length > 0,
       hasPersonalEmail: personalEmailRaw.length > 0,
@@ -357,10 +433,31 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
       hasReferer: Boolean(req.get('referer')),
       contentType: req.get('content-type') ?? '',
     });
-    if (!authorizeContext) {
-      res.status(400).json({ error: 'Faltan parametros' });
-      return;
-    }
+    res.status(400).json({ error: 'Faltan parametros' });
+    return;
+  }
+
+  if (!isAllowedRedirectUri(authorizeContext.redirectUri)) {
+    res.status(400).send('redirect_uri no autorizado.');
+    return;
+  }
+
+  const normalizedScope = normalizeOAuthScope(authorizeContext.scope);
+  if (!normalizedScope) {
+    res.status(400).send('scope no autorizado.');
+    return;
+  }
+  authorizeContext.scope = normalizedScope;
+
+  if (!holdedApiKey || !personalEmailRaw) {
+    logger.warn('POST /oauth/authorize sin credenciales suficientes', {
+      hasHoldedApiKey: holdedApiKey.length > 0,
+      hasPersonalEmail: personalEmailRaw.length > 0,
+      hasBodyClientId: typeof req.body?.client_id === 'string' && req.body.client_id.length > 0,
+      hasBodyRedirectUri:
+        typeof req.body?.redirect_uri === 'string' && req.body.redirect_uri.length > 0,
+      contentType: req.get('content-type') ?? '',
+    });
     res
       .status(400)
       .send(
@@ -542,6 +639,14 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
       return;
     }
 
+    if (!isAllowedRedirectUri(authCodePayload.redirectUri)) {
+      res.status(400).json({
+        error: 'invalid_grant',
+        error_description: 'redirect_uri no autorizado',
+      });
+      return;
+    }
+
     if (
       clientRecord.redirectUris.length > 0 &&
       !clientRecord.redirectUris.includes(authCodePayload.redirectUri)
@@ -663,7 +768,7 @@ function consentPage(
   redirectUri: string,
   state: string,
   error: false | string = false,
-  scope = 'holded:read holded:write',
+  scope = DEFAULT_OAUTH_SCOPE,
   codeChallenge: string | null = null,
   codeChallengeMethod: 'S256' | null = null,
   prefill: { personalEmail?: string; acceptedTerms?: boolean; acceptedPrivacy?: boolean } = {}
@@ -675,6 +780,13 @@ function consentPage(
   actionUrl.searchParams.set('scope', scope);
   if (codeChallenge) actionUrl.searchParams.set('code_challenge', codeChallenge);
   if (codeChallengeMethod) actionUrl.searchParams.set('code_challenge_method', codeChallengeMethod);
+  const escapedActionUrl = escapeHtml(actionUrl.toString());
+  const escapedClientId = escapeHtml(clientId);
+  const escapedRedirectUri = escapeHtml(redirectUri);
+  const escapedState = escapeHtml(state);
+  const escapedScope = escapeHtml(scope);
+  const escapedCodeChallenge = escapeHtml(codeChallenge ?? '');
+  const escapedCodeChallengeMethod = escapeHtml(codeChallengeMethod ?? '');
 
   return `<!DOCTYPE html>
 <html lang="es">
@@ -690,85 +802,131 @@ function consentPage(
   <meta name="twitter:image" content="/holded-diamond-logo.png">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, sans-serif; background: #f5f5f0; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .card { background: white; border-radius: 12px; padding: 40px; max-width: 440px; width: 100%; box-shadow: 0 2px 16px rgba(0,0,0,0.08); }
-    .logo-row { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
-    .logo-img { width: 40px; height: 40px; object-fit: contain; }
-    .arrow { color: #9ca3af; font-size: 20px; }
-    h1 { font-size: 20px; font-weight: 600; margin-bottom: 8px; color: #111; }
-    p { color: #6b7280; font-size: 14px; line-height: 1.6; margin-bottom: 24px; }
-    label { display: block; font-size: 13px; font-weight: 500; color: #374151; margin-bottom: 6px; }
-    input { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; font-family: monospace; margin-bottom: 6px; }
-    input:focus { outline: none; border-color: #1D9E75; box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
-    .hint { font-size: 12px; color: #9ca3af; margin-bottom: 20px; }
-    .hint a { color: #1D9E75; text-decoration: none; }
-    button { width: 100%; padding: 11px; background: #1D9E75; color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
-    button:hover { background: #0F6E56; }
-    .error { background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 16px; }
-    .scopes { background: #f9fafb; border-radius: 8px; padding: 14px; margin-bottom: 20px; }
-    .scope { font-size: 13px; color: #374151; padding: 3px 0; }
-    .scope::before { content: '\\2713 '; color: #1D9E75; }
-    .terms { margin: 8px 0 18px; padding: 12px 14px; background: #f9fafb; border: 1px solid #eef2f7; border-radius: 8px; }
-    .checkbox-row { display: flex; align-items: flex-start; gap: 8px; margin: 6px 0; cursor: pointer; }
-    .checkbox-row input { width: 16px; height: 16px; margin: 2px 0 0; padding: 0; flex: 0 0 auto; accent-color: #1D9E75; }
-    .checkbox-row span { font-size: 12px; color: #4b5563; line-height: 1.5; }
-    .checkbox-row a { color: #1D9E75; text-decoration: none; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: radial-gradient(circle at top left, #fff5f2 0%, #f8fafc 44%, #f8fafc 100%); color: #0f172a; min-height: 100vh; padding: 32px 16px; }
+    .wrap { max-width: 460px; margin: 0 auto; }
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 32px; padding: 36px 32px 28px; box-shadow: 0 30px 90px -56px rgba(15,23,42,0.35); }
+    .badge-row { display: flex; justify-content: center; margin-bottom: 24px; }
+    .badge { display: inline-flex; align-items: center; gap: 12px; border: 1px solid #e2e8f0; border-radius: 999px; padding: 6px 16px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+    .badge-icon { width: 36px; height: 36px; border-radius: 50%; background: #fff1f2; display: flex; align-items: center; justify-content: center; }
+    .badge-icon img { width: 20px; height: 20px; object-fit: contain; }
+    .badge-text { text-align: left; }
+    .badge-title { font-size: 14px; font-weight: 600; color: #0f172a; }
+    .badge-sub { font-size: 12px; color: #64748b; }
+    h1 { font-size: 28px; font-weight: 600; text-align: center; letter-spacing: -0.025em; color: #0f172a; margin: 12px 0 8px; }
+    h1 .star { display: inline-block; margin-right: 6px; }
+    .lead { text-align: center; font-size: 14px; line-height: 1.5; color: #64748b; margin-bottom: 24px; }
+    .error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 16px; border-radius: 16px; font-size: 13px; line-height: 1.5; margin-bottom: 18px; }
+    .field { margin-bottom: 16px; }
+    .label-row { display: flex; align-items: baseline; justify-content: space-between; padding: 0 4px; margin-bottom: 6px; }
+    .label { font-size: 12px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; }
+    .help { font-size: 12px; font-weight: 500; color: #ff5460; text-decoration: none; }
+    .help:hover { text-decoration: underline; }
+    input[type="email"], input[type="password"], input[type="text"] { width: 100%; height: 56px; border: 1px solid #e2e8f0; border-radius: 16px; padding: 0 20px; font-size: 16px; background: #ffffff; color: #0f172a; transition: box-shadow 120ms, border-color 120ms; }
+    input[type="email"]:focus, input[type="password"]:focus, input[type="text"]:focus { outline: none; border-color: #ff5460; box-shadow: 0 0 0 3px rgba(255,84,96,0.15); }
+    input::placeholder { color: #94a3b8; }
+    .terms-row { display: flex; align-items: flex-start; gap: 10px; padding: 0 4px; margin-bottom: 16px; cursor: pointer; }
+    .terms-row input[type="checkbox"] { width: 16px; height: 16px; margin-top: 2px; accent-color: #ff5460; flex: 0 0 auto; }
+    .terms-row span { font-size: 12px; line-height: 1.5; color: #64748b; }
+    .terms-row a { font-weight: 500; color: #1f2937; text-decoration: underline; text-underline-offset: 2px; }
+    .submit { width: 100%; height: 48px; background: #ff5460; color: #ffffff; border: none; border-radius: 16px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 120ms; margin-bottom: 16px; }
+    .submit:hover { background: #ef4654; }
+    .safety { display: flex; align-items: flex-start; gap: 8px; padding: 0 4px; font-size: 12px; line-height: 1.5; color: #64748b; margin-bottom: 18px; }
+    .safety .check { color: #059669; flex-shrink: 0; margin-top: 1px; }
+    .scopes { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: 16px; padding: 14px 18px; margin-bottom: 16px; }
+    .scopes-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #64748b; margin-bottom: 8px; }
+    .scope { font-size: 13px; color: #334155; padding: 3px 0; line-height: 1.5; }
+    .scope::before { content: '✓ '; color: #059669; font-weight: 700; }
+    .trust { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 11px; color: #94a3b8; margin-bottom: 16px; }
+    .trust a { color: inherit; }
+    .trust a:hover { color: #475569; text-decoration: underline; }
+    .footer { padding-top: 18px; border-top: 1px solid #e2e8f0; text-align: center; }
+    .footer-text { font-size: 12px; color: #64748b; }
+    .footer-text a { color: #1f2937; font-weight: 500; text-decoration: underline; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <div class="logo-row">
-      <img src="/holded-diamond-logo.png" alt="Holded" class="logo-img">
-      <span class="arrow">&harr;</span>
-      <img src="/claude.svg" alt="Claude" class="logo-img">
-    </div>
-    <h1>Conectar Holded con Claude</h1>
-    <p>Claude necesita acceder a tu cuenta de Holded para consultar tus datos y ayudarte con facturas, contactos, proyectos y contabilidad.</p>
-
-    ${
-      error
-        ? `<div class="error">${typeof error === 'string' ? escapeHtml(error) : 'API key invalida o sin permisos. Comprueba que es correcta y que tu plan de Holded esta activo.'}</div>`
-        : ''
-    }
-
-    <div class="scopes">
-      <div class="scope">Leer facturas, presupuestos y documentos</div>
-      <div class="scope">Leer y buscar contactos y clientes</div>
-      <div class="scope">Leer productos e inventario</div>
-      <div class="scope">Leer proyectos y tareas</div>
-      <div class="scope">Leer contabilidad y diario</div>
-      <div class="scope">Crear borradores de factura (con tu confirmacion)</div>
-    </div>
-
-    <form method="POST" action="${actionUrl.toString()}">
-      <input type="hidden" name="client_id" value="${clientId}">
-      <input type="hidden" name="redirect_uri" value="${redirectUri}">
-      <input type="hidden" name="state" value="${state}">
-      <input type="hidden" name="scope" value="${scope}">
-      <input type="hidden" name="code_challenge" value="${codeChallenge ?? ''}">
-      <input type="hidden" name="code_challenge_method" value="${codeChallengeMethod ?? ''}">
-
-      <label for="personal_email">Tu email</label>
-      <input type="email" id="personal_email" name="personal_email" placeholder="tu@empresa.com" required autocomplete="email" inputmode="email" value="${escapeHtml(prefill.personalEmail ?? '')}">
-      <p class="hint">Lo usamos para vincular la conexion a tu empresa y avisarte de eventos importantes.</p>
-
-      <label for="holded_api_key">Tu API key de Holded</label>
-      <input type="password" id="holded_api_key" name="holded_api_key" placeholder="Pega aqui tu API key..." required autocomplete="off">
-      <p class="hint">La encuentras en Holded &rarr; Ajustes &rarr; Desarrolladores. <a href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">&iquest;Como generarla?</a></p>
-
-      <div class="terms">
-        <label class="checkbox-row">
-          <input type="checkbox" name="accepted_terms" value="1"${prefill.acceptedTerms ? ' checked' : ''} required>
-          <span>Acepto los <a href="https://holded.verifactu.business/conectores/claude/terms" target="_blank" rel="noopener">terminos del conector</a>.</span>
-        </label>
-        <label class="checkbox-row">
-          <input type="checkbox" name="accepted_privacy" value="1"${prefill.acceptedPrivacy ? ' checked' : ''} required>
-          <span>Acepto la <a href="https://holded.verifactu.business/conectores/claude/privacy" target="_blank" rel="noopener">politica de privacidad</a> y la <a href="https://holded.verifactu.business/conectores/claude/dpa" target="_blank" rel="noopener">DPA</a>.</span>
-        </label>
+  <div class="wrap">
+    <div class="card">
+      <div class="badge-row">
+        <div class="badge">
+          <div class="badge-icon"><img src="/holded-diamond-logo.png" alt="Holded"></div>
+          <div class="badge-text">
+            <div class="badge-title">holded</div>
+            <div class="badge-sub">Conexion Holded para Claude</div>
+          </div>
+        </div>
       </div>
 
-      <button type="submit">Conectar Holded</button>
-    </form>
+      <h1><span class="star" aria-hidden="true">✦</span>Conecta Holded con Claude</h1>
+      <p class="lead">Introduce tu email y la API key de Holded. Claude podra consultar tus datos y crear borradores con tu confirmacion explicita.</p>
+
+      ${
+        error
+          ? `<div class="error">${typeof error === 'string' ? escapeHtml(error) : 'API key invalida o sin permisos. Comprueba que es correcta y que tu plan de Holded esta activo.'}</div>`
+          : ''
+      }
+
+      <div class="scopes">
+        <div class="scopes-title">Permisos solicitados</div>
+        <div class="scope">Leer facturas, presupuestos y documentos</div>
+        <div class="scope">Leer y buscar contactos y clientes</div>
+        <div class="scope">Leer productos e inventario</div>
+        <div class="scope">Leer proyectos y tareas</div>
+        <div class="scope">Leer contabilidad y diario</div>
+        <div class="scope">Crear borradores de factura (con tu confirmacion)</div>
+      </div>
+
+      <form method="POST" action="${escapedActionUrl}">
+        <input type="hidden" name="client_id" value="${escapedClientId}">
+        <input type="hidden" name="redirect_uri" value="${escapedRedirectUri}">
+        <input type="hidden" name="state" value="${escapedState}">
+        <input type="hidden" name="scope" value="${escapedScope}">
+        <input type="hidden" name="code_challenge" value="${escapedCodeChallenge}">
+        <input type="hidden" name="code_challenge_method" value="${escapedCodeChallengeMethod}">
+
+        <div class="field">
+          <div class="label-row">
+            <label class="label" for="personal_email">Tu email</label>
+          </div>
+          <input type="email" id="personal_email" name="personal_email" placeholder="tu@empresa.com" required autocomplete="email" inputmode="email" value="${escapeHtml(prefill.personalEmail ?? '')}">
+        </div>
+
+        <div class="field">
+          <div class="label-row">
+            <label class="label" for="holded_api_key">API key de Holded</label>
+            <a class="help" href="https://help.holded.com/en/articles/6896051" target="_blank" rel="noopener">&iquest;Donde la encuentro?</a>
+          </div>
+          <input type="password" id="holded-secret-token-input" name="holded_api_key" placeholder="32 caracteres hexadecimales (0-9, a-f)" required autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false" data-1p-ignore="true" data-lpignore="true" data-form-type="other">
+        </div>
+
+        <label class="terms-row">
+          <input type="checkbox" name="accepted_terms" value="1"${prefill.acceptedTerms ? ' checked' : ''} required>
+          <span>Acepto los <a href="https://holded.verifactu.business/conectores/claude/terms" target="_blank" rel="noopener">terminos de uso</a> y la <a href="https://holded.verifactu.business/conectores/claude/privacy" target="_blank" rel="noopener">politica de privacidad</a>.</span>
+        </label>
+        <input type="hidden" name="accepted_privacy" value="1">
+
+        <button type="submit" class="submit">Conectar Holded a Claude</button>
+
+        <div class="safety">
+          <span class="check" aria-hidden="true">🛡</span>
+          <span>Tu API key se cifra con AES-256 y se queda en tu tenant. <strong>Nunca</strong> viaja por modelos de IA, ni se usa para entrenar.</span>
+        </div>
+      </form>
+
+      <div class="trust">
+        <span>✓ RGPD</span>
+        <span>·</span>
+        <a href="https://holded.verifactu.business/conectores/claude/dpa" target="_blank" rel="noopener">DPA</a>
+        <span>·</span>
+        <span>Sin venta de datos</span>
+      </div>
+
+      <div class="footer">
+        <p class="footer-text">
+          Si necesitas ayuda, escribenos a <a href="mailto:soporte@verifactu.business">soporte@verifactu.business</a>.
+        </p>
+      </div>
+    </div>
   </div>
 </body>
 </html>`;

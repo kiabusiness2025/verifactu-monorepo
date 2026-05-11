@@ -22,6 +22,7 @@ export const PAT_PREFIX = 'hldmcp_';
 const VISIBLE_PREFIX_LENGTH = 4;
 /** Number of random bytes encoded into the cleartext token (~43 chars base64url). */
 const PAT_RANDOM_BYTES = 32;
+export const DEFAULT_PAT_TTL_DAYS = 90;
 
 /**
  * Default scopes for a freshly created PAT — set to `claude_parity` so
@@ -43,7 +44,7 @@ export type CreatePatInput = {
   connectionId?: string | null;
   /** Optional scopes — defaults to DEFAULT_PAT_SCOPES. */
   scopes?: readonly string[];
-  /** Optional expiry. Null = no expiry. */
+  /** Optional expiry. Undefined = default TTL. Null = explicit no expiry. */
   expiresAt?: Date | null;
 };
 
@@ -84,6 +85,10 @@ export function patPrefixOf(token: string): string {
   return token.slice(0, PAT_PREFIX.length + VISIBLE_PREFIX_LENGTH);
 }
 
+export function defaultPatExpiresAt(now = new Date()): Date {
+  return new Date(now.getTime() + DEFAULT_PAT_TTL_DAYS * 24 * 60 * 60 * 1000);
+}
+
 /**
  * Create a new PAT for a tenant. Returns the cleartext token ONLY here —
  * downstream callers must surface it to the user once and never persist it
@@ -94,6 +99,7 @@ export async function createPat(input: CreatePatInput): Promise<CreatePatResult>
   const keyHash = hashPat(token);
   const keyPrefix = patPrefixOf(token);
   const scopes = [...(input.scopes ?? DEFAULT_PAT_SCOPES)];
+  const expiresAt = input.expiresAt === null ? null : (input.expiresAt ?? defaultPatExpiresAt());
 
   const created = await prisma.holdedMcpPersonalAccessToken.create({
     data: {
@@ -105,7 +111,7 @@ export async function createPat(input: CreatePatInput): Promise<CreatePatResult>
       keyHash,
       keyPrefix,
       scopes,
-      expiresAt: input.expiresAt ?? null,
+      expiresAt,
     },
   });
 
@@ -115,7 +121,7 @@ export async function createPat(input: CreatePatInput): Promise<CreatePatResult>
       patId: created.id,
       event: 'created',
       channel: input.channelKey,
-      meta: { scopes, expiresAt: input.expiresAt ?? null },
+      meta: { scopes, expiresAt },
     },
   });
 

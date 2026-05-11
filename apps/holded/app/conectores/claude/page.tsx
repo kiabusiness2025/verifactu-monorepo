@@ -9,7 +9,7 @@ const OG_IMAGE = `${SITE_URL}/brand/holded/holded-diamond-logo.png`;
 export const metadata: Metadata = {
   title: 'Conector Holded para Claude | Verifactu Business',
   description:
-    'Conector oficial Holded para Claude (Anthropic): consulta facturas, contactos, contabilidad, productos, proyectos y CRM en lenguaje natural. OAuth 2.0 + PKCE. 24 herramientas. Plan gratis durante el lanzamiento.',
+    'Conector Holded de Verifactu Business para Claude (Anthropic): consulta facturas, contactos, contabilidad, productos, proyectos y CRM en lenguaje natural. OAuth 2.0 + PKCE. Hasta 24 herramientas. Plan gratis durante el lanzamiento.',
   keywords: [
     'conector Holded',
     'Claude Holded',
@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Conector Holded para Claude | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde Claude. 24 tools de lectura + borrador con confirmacion. OAuth seguro. Gratis durante el lanzamiento.',
+      'Habla con tus datos de Holded desde Claude. Hasta 24 tools, lectura segun permisos y borrador con confirmacion. OAuth seguro. Gratis durante el lanzamiento.',
     url: PAGE_URL,
     siteName: 'Holded by Verifactu Business',
     images: [
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Conector Holded para Claude | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde Claude. 24 tools de lectura + borrador con confirmacion. OAuth seguro.',
+      'Habla con tus datos de Holded desde Claude. Hasta 24 tools, lectura segun permisos y borrador con confirmacion. OAuth seguro.',
     images: [OG_IMAGE],
   },
   robots: {
@@ -74,7 +74,7 @@ const jsonLd = {
       applicationSubCategory: 'AI Connector',
       operatingSystem: 'Web (Claude.ai)',
       description:
-        'Conector MCP que permite a Claude consultar facturas, contactos, contabilidad, productos, proyectos y CRM de Holded en lenguaje natural. OAuth 2.0 + PKCE + DCR. 24 tools.',
+        'Conector MCP de Verifactu Business que permite a Claude consultar facturas, contactos, contabilidad, productos, proyectos y CRM de Holded en lenguaje natural. OAuth 2.0 + PKCE + DCR. Hasta 24 tools segun permisos.',
       url: PAGE_URL,
       image: OG_IMAGE,
       author: {
@@ -117,7 +117,7 @@ const jsonLd = {
       url: PAGE_URL,
       name: 'Conector Holded para Claude | Verifactu Business',
       description:
-        'Pagina oficial del conector Holded para Claude. Documentacion, demo, privacidad, DPA y soporte.',
+        'Pagina del conector Holded para Claude. Documentacion, demo, privacidad, DPA y soporte.',
       isPartOf: {
         '@type': 'WebSite',
         name: 'Holded by Verifactu Business',

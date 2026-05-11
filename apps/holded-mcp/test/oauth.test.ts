@@ -90,6 +90,64 @@ test('dynamic client registration and token exchange work with valid Holded cred
   }
 });
 
+test('OAuth registration rejects redirect_uri outside the Claude allowlist', async () => {
+  const runtime = await startTestServer();
+
+  try {
+    const response = await fetch(`${runtime.baseUrl}/oauth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        client_name: 'Evil client',
+        redirect_uris: ['https://evil.example/auth/callback'],
+      }),
+    });
+
+    assert.equal(response.status, 400);
+    const body = (await response.json()) as Record<string, unknown>;
+    assert.equal(body.error, 'invalid_redirect_uri');
+  } finally {
+    await runtime.close();
+  }
+});
+
+test('OAuth authorize rejects redirect_uri outside the Claude allowlist', async () => {
+  const runtime = await startTestServer();
+
+  try {
+    const response = await fetch(
+      `${runtime.baseUrl}/oauth/authorize?response_type=code&client_id=test&redirect_uri=${encodeURIComponent(
+        'https://evil.example/auth/callback'
+      )}`
+    );
+
+    assert.equal(response.status, 400);
+    assert.match(await response.text(), /redirect_uri no autorizado/i);
+  } finally {
+    await runtime.close();
+  }
+});
+
+test('OAuth consent page escapes hidden input values', async () => {
+  const runtime = await startTestServer();
+
+  try {
+    const state = `"><script>alert(1)</script>`;
+    const response = await fetch(
+      `${runtime.baseUrl}/oauth/authorize?response_type=code&client_id=test&redirect_uri=${encodeURIComponent(
+        'https://claude.ai/api/mcp/auth_callback'
+      )}&state=${encodeURIComponent(state)}`
+    );
+
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.doesNotMatch(html, /"><script>alert\(1\)<\/script>/);
+    assert.match(html, /&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+  } finally {
+    await runtime.close();
+  }
+});
+
 test('invalid Holded API keys fail safely on authorization', async () => {
   const runtime = await startTestServer();
   // F3.1: el consent screen llama al endpoint común F1 antes de validar

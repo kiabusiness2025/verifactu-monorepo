@@ -45,7 +45,8 @@ const HOLDED_SITE_URL =
 
 const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business';
 
-const HOLDED_API_KEY_HELP_URL = 'https://support.holded.com/hc/es/articles/360009694799';
+const HOLDED_API_KEY_HELP_URL =
+  'https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded';
 
 const HOLDED_API_KEY_REGEX = /^[a-f0-9]{32}$/i;
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -701,7 +702,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                       <span className="text-xs leading-5 text-slate-600">
                         Acepto los{' '}
                         <a
-                          href={`${HOLDED_SITE_URL}/conectores/holded/terms`}
+                          href={`${HOLDED_SITE_URL}/conectores/chatgpt/terms`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-semibold text-slate-800 underline"
@@ -710,7 +711,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                         </a>{' '}
                         y la{' '}
                         <a
-                          href={`${HOLDED_SITE_URL}/conectores/holded/privacy`}
+                          href={`${HOLDED_SITE_URL}/conectores/chatgpt/privacy`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-semibold text-slate-800 underline"
@@ -772,7 +773,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                   </span>
                   <span className="text-slate-300">·</span>
                   <a
-                    href={`${HOLDED_SITE_URL}/conectores/holded/dpa`}
+                    href={`${HOLDED_SITE_URL}/conectores/chatgpt/dpa`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="hover:text-slate-600 hover:underline"

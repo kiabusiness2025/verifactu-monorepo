@@ -29,7 +29,7 @@ const modules = [
     label: 'Facturación',
     color: 'text-[#ff5460]',
     bg: 'bg-[#ff5460]/8',
-    tools: ['list_documents', 'get_document', 'create_invoice_draft'],
+    tools: ['holded_list_invoices', 'holded_get_invoice', 'holded_create_invoice_draft'],
     desc: 'Lista facturas, consulta detalles y crea borradores sin modificar datos reales.',
   },
   {
@@ -37,7 +37,13 @@ const modules = [
     label: 'Contactos / CRM',
     color: 'text-violet-500',
     bg: 'bg-violet-50',
-    tools: ['list_contacts', 'get_contact', 'list_crm_funnels', 'list_leads'],
+    tools: [
+      'holded_list_contacts',
+      'holded_get_contact',
+      'holded_list_bookings',
+      'holded_list_crm_funnels',
+      'holded_list_leads',
+    ],
     desc: 'Clientes, proveedores, embudos de venta y leads.',
   },
   {
@@ -45,7 +51,7 @@ const modules = [
     label: 'Productos',
     color: 'text-sky-500',
     bg: 'bg-sky-50',
-    tools: ['list_products', 'get_product', 'list_warehouses'],
+    tools: ['holded_list_products', 'holded_get_product', 'holded_list_warehouses'],
     desc: 'Catálogo de productos, precios y almacenes.',
   },
   {
@@ -53,7 +59,12 @@ const modules = [
     label: 'Proyectos',
     color: 'text-amber-500',
     bg: 'bg-amber-50',
-    tools: ['list_projects', 'get_project', 'list_project_tasks', 'list_time_records'],
+    tools: [
+      'holded_list_projects',
+      'holded_get_project',
+      'holded_list_project_tasks',
+      'holded_list_time_records',
+    ],
     desc: 'Estado de proyectos, tareas y registros de tiempo.',
   },
   {
@@ -61,7 +72,7 @@ const modules = [
     label: 'Contabilidad',
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
-    tools: ['get_chart_of_accounts', 'get_journal', 'get_daily_book'],
+    tools: ['holded_list_accounts', 'holded_list_daily_ledger'],
     desc: 'Plan de cuentas, libro diario y libro mayor.',
   },
   {
@@ -69,7 +80,7 @@ const modules = [
     label: 'Equipo',
     color: 'text-indigo-500',
     bg: 'bg-indigo-50',
-    tools: ['list_employees', 'get_employee'],
+    tools: ['holded_list_employees', 'holded_get_employee'],
     desc: 'Lista de empleados y datos por persona.',
   },
   {
@@ -77,7 +88,7 @@ const modules = [
     label: 'Tesorería',
     color: 'text-teal-600',
     bg: 'bg-teal-50',
-    tools: ['list_treasury_accounts'],
+    tools: ['holded_list_treasury_accounts'],
     desc: 'Cuentas bancarias y saldos.',
   },
 ];

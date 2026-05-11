@@ -115,3 +115,37 @@ test('MCP tools/list returns the exact intended production tools with safety ann
     await runtime.close();
   }
 });
+
+test('MCP tools/list hides write tools for read-only OAuth scopes', async () => {
+  const runtime = await startTestServer();
+
+  try {
+    const { createTokenPair } = await import('../src/auth.ts');
+    const tokenPair = await createTokenPair({
+      holdedApiKey: 'holded-api-key-test',
+      clientId: 'test-client',
+      scope: 'holded:read',
+    });
+
+    const transport = new StreamableHTTPClientTransport(new URL(`${runtime.baseUrl}/mcp`), {
+      requestInit: {
+        headers: {
+          Authorization: `Bearer ${tokenPair.accessToken}`,
+        },
+      },
+    });
+
+    const client = new Client({ name: 'holded-mcp-test', version: '1.0.0' });
+    await client.connect(transport);
+
+    const result = await client.listTools();
+    const names = result.tools.map((tool) => tool.name).sort();
+
+    assert.deepEqual(names, [...READ_ONLY_TOOL_NAMES].sort());
+    assert.equal(names.includes('create_invoice_draft'), false);
+
+    await transport.close();
+  } finally {
+    await runtime.close();
+  }
+});

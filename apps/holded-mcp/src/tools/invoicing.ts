@@ -23,7 +23,8 @@ export interface ToolContext {
 export function registerInvoicingTools(
   server: McpServer,
   getClient: () => HoldedClient,
-  getContext?: () => ToolContext
+  getContext?: () => ToolContext,
+  options: { includeWriteTools?: boolean } = {}
 ) {
   server.tool(
     'list_documents',
@@ -119,6 +120,10 @@ export function registerInvoicingTools(
       };
     }
   );
+
+  if (options.includeWriteTools === false) {
+    return;
+  }
 
   server.tool(
     'create_invoice_draft',

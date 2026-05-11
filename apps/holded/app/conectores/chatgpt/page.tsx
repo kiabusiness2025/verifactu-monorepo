@@ -9,7 +9,7 @@ const OG_IMAGE = `${SITE_URL}/brand/holded/holded-diamond-logo.png`;
 export const metadata: Metadata = {
   title: 'Conector Holded para ChatGPT | Verifactu Business',
   description:
-    'Conector oficial Holded para ChatGPT (OpenAI): consulta facturas, contactos, contabilidad, productos, proyectos y CRM en lenguaje natural. 24 herramientas. Borradores solo con confirmacion.',
+    'Conector Holded de Verifactu Business para ChatGPT: consulta facturas, contactos, contabilidad, proyectos y CRM en lenguaje natural. Tools segun permisos. Borradores solo con confirmacion.',
   keywords: [
     'conector Holded',
     'ChatGPT Holded',
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Conector Holded para ChatGPT | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde ChatGPT. 24 tools de lectura + borrador con confirmacion.',
+      'Habla con tus datos de Holded desde ChatGPT. Lectura segun permisos y borrador con confirmacion.',
     url: PAGE_URL,
     siteName: 'Holded by Verifactu Business',
     images: [
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Conector Holded para ChatGPT | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde ChatGPT. 24 tools de lectura + borrador con confirmacion.',
+      'Habla con tus datos de Holded desde ChatGPT. Lectura segun permisos y borrador con confirmacion.',
     images: [OG_IMAGE],
   },
   robots: {
@@ -72,7 +72,7 @@ const jsonLd = {
       applicationSubCategory: 'AI Connector',
       operatingSystem: 'Web (ChatGPT)',
       description:
-        'Conector oficial que permite a ChatGPT consultar datos de Holded en lenguaje natural. 24 tools.',
+        'Conector de Verifactu Business que permite a ChatGPT consultar datos de Holded en lenguaje natural. La superficie de tools depende de los permisos concedidos.',
       url: PAGE_URL,
       image: OG_IMAGE,
       author: {

@@ -12,7 +12,9 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('production'),
   BASE_URL: z.string().url(),
   CORS_ALLOWED_ORIGINS: z.string().optional(),
+  OAUTH_ALLOWED_REDIRECT_ORIGINS: z.string().optional(),
   DATABASE_URL: z.string().url().optional(),
+  ALLOW_STATELESS_OAUTH_IN_PRODUCTION: z.enum(['0', '1']).default('0'),
   OAUTH_JWT_SECRET: z.string().min(32),
   OAUTH_DATA_ENCRYPTION_SECRET: z.string().min(32).optional(),
   OAUTH_AUTH_CODE_TTL_SECONDS: z.coerce.number().default(600),
@@ -40,6 +42,17 @@ function loadConfig() {
   if (!result.success) {
     console.error('Variables de entorno invalidas:');
     console.error(result.error.flatten().fieldErrors);
+    process.exit(1);
+  }
+
+  if (
+    result.data.NODE_ENV === 'production' &&
+    !result.data.DATABASE_URL &&
+    result.data.ALLOW_STATELESS_OAUTH_IN_PRODUCTION !== '1'
+  ) {
+    console.error(
+      'DATABASE_URL is required in production for the Claude MCP OAuth store. Set ALLOW_STATELESS_OAUTH_IN_PRODUCTION=1 only for an emergency degraded rollout.'
+    );
     process.exit(1);
   }
 

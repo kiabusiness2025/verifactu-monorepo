@@ -1711,11 +1711,11 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
       }
     }
 
-    const created = await holdedAdapter.createDocument(
-      apiKey,
-      docType,
-      normalizeDocumentCreatePayload(payload)
-    );
+    const normalizedPayload = normalizeDocumentCreatePayload(payload);
+    const created = await holdedAdapter.createDocument(apiKey, docType, {
+      ...normalizedPayload,
+      approveDoc: false,
+    });
     return { created };
   },
 };
@@ -2658,7 +2658,7 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
     // no tenga dudas sobre la naturaleza de la unica operacion de escritura
     // expuesta en el preset openai_review_v2.
     "Create a DRAFT invoice in the user's connected Holded account. " +
-      'The draft is saved with Holded `draft: true` and is NEVER sent, finalized, charged, emailed, or otherwise irreversibly transmitted. ' +
+      'The server forces Holded `approveDoc: false` at the wire level, so the draft is NEVER sent, finalized, charged, emailed, or otherwise irreversibly transmitted. ' +
       'No payment is taken, no email is sent to the recipient, and no AEAT/Verifactu submission is triggered. ' +
       'After creation the user can review, edit, or discard the draft from the Holded UI before issuing it. ' +
       'Requires explicit user confirmation: the assistant must call this tool with `confirm: true` only after the user has explicitly approved the action. ' +

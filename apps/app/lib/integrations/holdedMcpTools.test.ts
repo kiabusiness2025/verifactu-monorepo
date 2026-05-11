@@ -216,10 +216,13 @@ describe('holdedMcpTools', () => {
         'holded_list_accounts',
         'holded_list_bookings',
         'holded_list_contacts',
+        'holded_list_crm_funnels',
         'holded_list_daily_ledger',
         'holded_list_invoices',
+        'holded_list_leads',
         'holded_list_project_tasks',
         'holded_list_projects',
+        'holded_list_time_records',
       ].sort()
     );
   });
@@ -252,6 +255,7 @@ describe('holdedMcpTools', () => {
         expect.objectContaining({
           contactId: '69c5037c6ec42f8c1301f957',
           date: 1_712_016_000,
+          approveDoc: false,
           subject: 'Factura de prueba',
           lines: [
             expect.objectContaining({
@@ -267,6 +271,34 @@ describe('holdedMcpTools', () => {
     } finally {
       dateNowSpy.mockRestore();
     }
+  });
+
+  it('forces draft invoice creation to approveDoc=false even if payload tries to override it', async () => {
+    mockedHoldedAdapter.createDocument.mockResolvedValue({ id: 'doc-draft' });
+
+    await callHoldedMcpTool('demo-key', 'holded_create_invoice_draft', {
+      confirm: true,
+      payload: {
+        contactId: '69c5037c6ec42f8c1301f957',
+        subject: 'Factura segura',
+        approveDoc: true,
+        lines: [
+          {
+            desc: 'Servicio',
+            units: 1,
+            price: 100,
+          },
+        ],
+      },
+    });
+
+    expect(mockedHoldedAdapter.createDocument).toHaveBeenCalledWith(
+      'demo-key',
+      'invoice',
+      expect.objectContaining({
+        approveDoc: false,
+      })
+    );
   });
 
   it('fails fast when draft payloads omit any usable line items', async () => {
@@ -286,14 +318,14 @@ describe('holdedMcpTools', () => {
         page: 1,
         endTimestamp: 1_704_153_599,
       })
-    ).rejects.toThrow('startTimestamp is required');
+    ).rejects.toThrow('Either startTimestamp (Unix seconds) or startDate (YYYY-MM-DD) is required');
 
     await expect(
       callHoldedMcpTool('demo-key', 'holded_list_daily_ledger', {
         page: 1,
         startTimestamp: 1_704_067_200,
       })
-    ).rejects.toThrow('endTimestamp is required');
+    ).rejects.toThrow('Either endTimestamp (Unix seconds) or endDate (YYYY-MM-DD) is required');
   });
 
   it('passes the required timestamp range to the daily ledger adapter', async () => {
@@ -813,7 +845,7 @@ describe('holdedMcpTools', () => {
       callHoldedMcpTool('demo-key', 'holded_create_contact', {
         payload: { name: 'Demo Contact' },
       })
-    ).rejects.toThrow('confirm=true is required for write operations');
+    ).rejects.toThrow('Awaiting your confirmation');
   });
 
   it('requires projectId for project task listing', async () => {
