@@ -167,6 +167,7 @@ function legalFooter() {
 
 export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
   const hello = greeting(input.name);
+  const company = sanitizeCompanyName(input.companyName);
 
   return {
     subject: 'Bienvenido al Conector Holded',
@@ -175,7 +176,7 @@ export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
       title: 'Tu acceso gratuito ya esta preparado',
       body: `
         <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
-        <p style="margin:0 0 14px;">Gracias por empezar con <strong>el Conector Holded</strong>. Ya puedes conectar tu empresa <strong>${escapeHtml(input.companyName)}</strong> y empezar a trabajar con tus datos reales.</p>
+        <p style="margin:0 0 14px;">Gracias por empezar con <strong>el Conector Holded</strong>. Ya puedes conectar <strong>${escapeHtml(company)}</strong> y empezar a trabajar con tus datos reales.</p>
         <p style="margin:0 0 18px;">Si quieres, responde a este correo y te ayudamos paso a paso en menos de 24h.</p>
         <a href="https://holded.verifactu.business" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:12px 20px;border-radius:999px;font-weight:700;">Continuar onboarding</a>
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
@@ -183,7 +184,7 @@ export function buildHoldedWelcomeEmail(input: LeadInput): EmailTemplate {
       `,
       footer: legalFooter(),
     }),
-    text: `${hello}\n\nGracias por empezar con el Conector Holded. Tu acceso gratuito para ${input.companyName} ya esta preparado.\n\nContinua aqui: https://holded.verifactu.business\n\nSi necesitas ayuda, responde a este correo o escribe a soporte@verifactu.business.`,
+    text: `${hello}\n\nGracias por empezar con el Conector Holded. Tu acceso gratuito para ${company} ya esta preparado.\n\nContinua aqui: https://holded.verifactu.business\n\nSi necesitas ayuda, responde a este correo o escribe a soporte@verifactu.business.`,
   };
 }
 

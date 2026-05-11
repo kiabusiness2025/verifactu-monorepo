@@ -323,13 +323,11 @@ export async function sendWelcomeLifecycleEmails(args: TenantEmailContext) {
   const deliveries: Array<Promise<unknown>> = [];
   const safeUserName = getPreferredFullName({
     fullName: normalizeText(args.userName) || normalizeText(args.contactName),
-    email: normalizeText(args.userEmail) || normalizeText(args.contactEmail),
     fallback: 'equipo',
   });
   const safeUserEmail = normalizeText(args.userEmail) || normalizeText(args.contactEmail);
   const safeUserFirstName = getPreferredFirstName({
     fullName: safeUserName,
-    email: safeUserEmail,
     fallback: 'equipo',
   });
   const company = buildCompanySummary(args);
@@ -387,13 +385,11 @@ export async function sendHoldedConnectionLifecycleEmails(args: {
   const deliveries: Array<Promise<unknown>> = [];
   const safeUserName = getPreferredFullName({
     fullName: normalizeText(args.userName) || normalizeText(args.contactName),
-    email: normalizeText(args.userEmail) || normalizeText(args.contactEmail),
     fallback: 'equipo',
   });
   const safeUserEmail = normalizeText(args.userEmail) || normalizeText(args.contactEmail);
   const safeUserFirstName = getPreferredFirstName({
     fullName: safeUserName,
-    email: safeUserEmail,
     fallback: 'equipo',
   });
   const actionLabel = renderActionLabel(args.action);

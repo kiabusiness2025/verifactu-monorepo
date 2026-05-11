@@ -123,7 +123,6 @@ async function resolveTenantReviewRecipients(input: { tenantId: string; connecti
       fullName:
         normalizeText(membership.user?.name) ||
         [membership.user?.firstName, membership.user?.lastName].filter(Boolean).join(' '),
-      email: membership.user?.email ?? null,
       fallback: 'equipo',
     });
     rememberRecipient(result, membership.user?.email ?? null, fullName);
@@ -175,7 +174,6 @@ export async function sendAccessRequestResolvedEmails(input: { accessRequestId: 
       [accessRequest.requesterUser?.firstName, accessRequest.requesterUser?.lastName]
         .filter(Boolean)
         .join(' '),
-    email: requesterEmail,
     fallback: 'equipo',
   });
   const tenantDisplayName = buildTenantDisplayName({
@@ -223,12 +221,10 @@ export async function sendClaimCreatedEmails(input: { claimId: string }) {
     fullName:
       normalizeText(claim.createdByUser?.name) ||
       [claim.createdByUser?.firstName, claim.createdByUser?.lastName].filter(Boolean).join(' '),
-    email: requesterEmail,
     fallback: 'equipo',
   });
   const requesterFirstName = getPreferredFirstName({
     fullName: requesterFullName,
-    email: requesterEmail,
     fallback: 'equipo',
   });
   const tenantDisplayName = buildTenantDisplayName({
@@ -306,7 +302,6 @@ export async function sendClaimResolvedEmails(input: {
     fullName:
       normalizeText(claim.createdByUser?.name) ||
       [claim.createdByUser?.firstName, claim.createdByUser?.lastName].filter(Boolean).join(' '),
-    email: requesterEmail,
     fallback: 'equipo',
   });
   const tenantDisplayName = buildTenantDisplayName({

@@ -178,7 +178,6 @@ export async function resolveHoldedSecurityAlertRecipients(args: {
       fullName:
         normalizeText(membership.user.name) ||
         [membership.user.firstName, membership.user.lastName].filter(Boolean).join(' '),
-      email: membership.user.email,
       fallback: 'equipo',
     });
 
@@ -224,7 +223,6 @@ export async function sendHoldedSecurityAlertEmails(args: {
     args.recipients.map((recipient) => {
       const recipientDisplayName = getPreferredFirstName({
         fullName: normalizeText(recipient.name),
-        email: recipient.email,
         fallback: 'equipo',
       });
 
