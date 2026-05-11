@@ -7,6 +7,7 @@
  * causing a blank page on mobile and desktop.
  */
 
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -88,11 +89,36 @@ function buildCancelUrl(redirectUri: string, state: string): string {
   }
 }
 
-function resolveClientName(clientId: string): { name: string; vendor: string } {
-  if (/chatgpt|openai/i.test(clientId)) return { name: 'ChatGPT', vendor: 'OpenAI · openai.com' };
+function resolveClientName(clientId: string): {
+  name: string;
+  vendor: string;
+  logoSrc: string | null;
+  logoBg: string;
+  logoBorder: string;
+} {
+  if (/chatgpt|openai/i.test(clientId))
+    return {
+      name: 'ChatGPT',
+      vendor: 'OpenAI · openai.com',
+      logoSrc: '/brand/chatgpt-logo.png',
+      logoBg: 'bg-[#10a37f]',
+      logoBorder: 'border-[#10a37f]/30',
+    };
   if (/claude|anthropic/i.test(clientId))
-    return { name: 'Claude', vendor: 'Anthropic · anthropic.com' };
-  return { name: 'Aplicación externa', vendor: 'Cliente OAuth' };
+    return {
+      name: 'Claude',
+      vendor: 'Anthropic · anthropic.com',
+      logoSrc: '/brand/claude-logo.svg',
+      logoBg: 'bg-[#d97757]',
+      logoBorder: 'border-[#d97757]/30',
+    };
+  return {
+    name: 'Aplicación externa',
+    vendor: 'Cliente OAuth',
+    logoSrc: null,
+    logoBg: 'bg-slate-100',
+    logoBorder: 'border-slate-200',
+  };
 }
 
 export default async function ConsentPage({
@@ -127,12 +153,32 @@ export default async function ConsentPage({
       <div className="mx-auto flex max-w-2xl flex-col items-center px-4 py-12 sm:py-16">
         {/* Brand row */}
         <div className="mb-8 flex items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-200 bg-white shadow-sm">
-            <span className="text-xs font-bold text-emerald-700">{client.name.slice(0, 2)}</span>
+          {/* Client logo */}
+          <div
+            className={`flex h-14 w-14 items-center justify-center rounded-2xl border ${client.logoBorder} ${client.logoBg} shadow-sm`}
+          >
+            {client.logoSrc ? (
+              <Image
+                src={client.logoSrc}
+                alt={client.name}
+                width={36}
+                height={36}
+                className="h-9 w-9 object-contain"
+              />
+            ) : (
+              <span className="text-xs font-bold text-slate-600">{client.name.slice(0, 2)}</span>
+            )}
           </div>
           <span className="text-2xl text-slate-400">+</span>
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 shadow-sm">
-            <span className="text-xs font-bold text-rose-700">H</span>
+          {/* Holded logo */}
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[#ff5460]/20 bg-[#fff1f2] shadow-sm">
+            <Image
+              src="/brand/holded/holded-diamond-logo.png"
+              alt="Holded"
+              width={36}
+              height={36}
+              className="h-9 w-9 object-contain"
+            />
           </div>
         </div>
 
