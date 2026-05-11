@@ -598,7 +598,7 @@ export const MAGIC_LINK_EMAIL_KEY = 'holded_magic_link_email';
 export async function sendMagicLinkEmail(
   email: string,
   returnUrl: string
-): Promise<{ ok: true } | { ok: false; error: AuthErrorMessage }> {
+): Promise<{ ok: true; otpToken?: string } | { ok: false; error: AuthErrorMessage }> {
   try {
     const res = await fetch('/api/auth/magic-link', {
       method: 'POST',
@@ -628,12 +628,49 @@ export async function sendMagicLinkEmail(
       window.localStorage.setItem(MAGIC_LINK_EMAIL_KEY, email);
     }
 
-    return { ok: true };
+    const json = (await res.json().catch(() => ({}))) as { otpToken?: string };
+    return { ok: true, otpToken: json.otpToken };
   } catch (err) {
     const message = 'Error de red al enviar el enlace. Comprueba tu conexión.';
     return {
       ok: false,
       error: { code: 'magic-link/network-error', message: String(err), userMessage: message },
+    };
+  }
+}
+
+export async function verifyOtp(
+  token: string,
+  otp: string
+): Promise<{ ok: true; email: string } | { ok: false; error: AuthErrorMessage }> {
+  try {
+    const res = await fetch('/api/auth/otp/verify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, otp }),
+    });
+
+    let json: { ok?: boolean; email?: string; error?: string };
+    try {
+      json = (await res.json()) as typeof json;
+    } catch {
+      json = {};
+    }
+
+    if (!res.ok || !json.ok) {
+      const msg = json.error || 'Código incorrecto o expirado. Inténtalo de nuevo.';
+      return {
+        ok: false,
+        error: { code: `otp/verify-failed-${res.status}`, message: msg, userMessage: msg },
+      };
+    }
+
+    return { ok: true, email: json.email || '' };
+  } catch (err) {
+    const message = 'Error de red al verificar el código. Comprueba tu conexión.';
+    return {
+      ok: false,
+      error: { code: 'otp/network-error', message: String(err), userMessage: message },
     };
   }
 }

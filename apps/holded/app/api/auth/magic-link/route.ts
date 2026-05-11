@@ -14,7 +14,9 @@
  *   RESEND_FROM_HOLDED  (opcional, default: Holded <no-reply@holded.verifactu.business>)
  */
 
+import crypto from 'node:crypto';
 import admin from 'firebase-admin';
+import { SignJWT } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -75,7 +77,23 @@ function getFirebaseAdminApp() {
   );
 }
 
-function buildMagicLinkEmail(link: string): { html: string; text: string } {
+function generateOtp(): string {
+  return String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+}
+
+function computeOtpHmac(secret: string, email: string, otp: string): string {
+  return crypto.createHmac('sha256', secret).update(`${email}:${otp}`).digest('hex');
+}
+
+async function signOtpToken(secret: string, email: string, otpHmac: string): Promise<string> {
+  return new SignJWT({ email, h: otpHmac })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('10m')
+    .sign(new TextEncoder().encode(secret));
+}
+
+function buildMagicLinkEmail(link: string, otpCode?: string): { html: string; text: string } {
   const holdedLogoUrl =
     (process.env.NEXT_PUBLIC_HOLDED_SITE_URL?.trim() || 'https://holded.verifactu.business') +
     '/brand/holded/holded-diamond-logo.png';
@@ -102,9 +120,17 @@ function buildMagicLinkEmail(link: string): { html: string; text: string } {
             style="display:block;text-align:center;background:#ff5460;color:#ffffff;font-weight:700;font-size:15px;padding:14px 24px;border-radius:50px;text-decoration:none;margin-bottom:24px;">
             Acceder al Conector Holded →
           </a>
+          ${
+            otpCode
+              ? `<div style="margin:0 0 20px;padding:20px;background:#f8fafc;border-radius:12px;text-align:center;border:1px solid #e2e8f0;">
+            <p style="margin:0 0 10px;font-size:12px;color:#64748b;">O introduce este código en la aplicación:</p>
+            <div style="font-size:40px;font-weight:800;letter-spacing:12px;color:#0f172a;font-family:monospace;padding:4px 0;">${otpCode}</div>
+          </div>`
+              : ''
+          }
           <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.5;">
             Si no solicitaste este acceso, puedes ignorar este correo con total seguridad.<br>
-            Este enlace caduca automáticamente en 10 minutos.
+            El enlace y el código caducan automáticamente en 10 minutos.
           </p>
         </td></tr>
         <tr><td style="padding-top:20px;text-align:center;">
@@ -120,7 +146,12 @@ function buildMagicLinkEmail(link: string): { html: string; text: string } {
 </body>
 </html>`;
 
-  const text = `Accede al Conector Holded:\n${link}\n\nEste enlace caduca en 10 minutos y solo puede usarse una vez.\n\nSi no lo solicitaste, ignora este correo.`;
+  const text = [
+    `Accede al Conector Holded:\n${link}`,
+    otpCode ? `\nO introduce este código en la aplicación: ${otpCode}` : '',
+    `\nEl enlace${otpCode ? ' y el código' : ''} caducan en 10 minutos y solo pueden usarse una vez.`,
+    '\nSi no lo solicitaste, ignora este correo.',
+  ].join('');
 
   return { html, text };
 }
@@ -188,7 +219,16 @@ export async function POST(req: NextRequest) {
       process.env.RESEND_FROM?.trim() ||
       'Holded <no-reply@holded.verifactu.business>';
 
-    const { html, text } = buildMagicLinkEmail(link);
+    const sessionSecret = process.env.SESSION_SECRET?.trim();
+    let otpToken: string | undefined;
+    let otpCode: string | undefined;
+    if (sessionSecret) {
+      otpCode = generateOtp();
+      const otpHmac = computeOtpHmac(sessionSecret, email, otpCode);
+      otpToken = await signOtpToken(sessionSecret, email, otpHmac);
+    }
+
+    const { html, text } = buildMagicLinkEmail(link, otpCode);
 
     const sendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -214,7 +254,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, ...(otpToken ? { otpToken } : {}) });
   } catch (err) {
     console.error('[magic-link] Unexpected error', err);
     return NextResponse.json({ error: 'Error interno. Inténtalo de nuevo.' }, { status: 500 });
