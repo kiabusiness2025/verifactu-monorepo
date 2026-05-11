@@ -184,7 +184,9 @@ export async function POST(req: NextRequest) {
     });
 
     const fromEmail =
-      process.env.RESEND_FROM_HOLDED?.trim() || 'Holded <no-reply@holded.verifactu.business>';
+      process.env.RESEND_FROM_HOLDED?.trim() ||
+      process.env.RESEND_FROM?.trim() ||
+      'Holded <no-reply@holded.verifactu.business>';
 
     const { html, text } = buildMagicLinkEmail(link);
 
