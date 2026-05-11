@@ -24,7 +24,13 @@ import {
   resetHoldedAuthState,
   sendMagicLinkEmail,
   signInWithGoogle,
+  verifyOtp,
 } from '@/app/lib/auth';
+import {
+  getDetectedHostApp,
+  getWebViewWarningMessage,
+  isLikelyEmbeddedWebView,
+} from '@/app/lib/detectWebview';
 import { auth as firebaseAuth } from '@/app/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
@@ -161,18 +167,22 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
     return () => window.clearTimeout(t);
   }, []);
 
-  // Google OAuth no funciona en WebViews (ChatGPT app, Instagram, etc.) —
-  // Error 403 disallowed_useragent. Detectamos el WebView en el cliente
+  // Google OAuth no funciona en WebViews (ChatGPT app, Claude app, Instagram,
+  // etc.) — Error 403 disallowed_useragent. Detectamos el WebView en el cliente
   // (post-mount) para evitar hydration mismatch y ocultamos el botón de Google.
+  // Heurísticas centralizadas en `@/app/lib/detectWebview` para mantener una
+  // sola fuente de verdad y soporte explícito de ChatGPT/Claude/Instagram/etc.
   const [isWebView, setIsWebView] = useState(false);
+  const [webViewWarning, setWebViewWarning] = useState<{
+    title: string;
+    body: string;
+  } | null>(null);
   useEffect(() => {
-    const ua = navigator.userAgent;
-    const detected =
-      /\bwv\b/.test(ua) || // Android WebView flag
-      /ChatGPT|OpenAI/.test(ua) || // ChatGPT app UA
-      /FBAN|FBAV|Instagram|Twitter|LinkedIn/.test(ua) || // otros in-app browsers
-      (/iPhone|iPad/.test(ua) && !/Safari/.test(ua) && !/CriOS/.test(ua)); // iOS WebView (sin Safari ni Chrome)
+    const detected = isLikelyEmbeddedWebView();
     setIsWebView(detected);
+    if (detected) {
+      setWebViewWarning(getWebViewWarningMessage(getDetectedHostApp()));
+    }
   }, []);
 
   // Saludo calculado solo en cliente para evitar hydration mismatch (el
@@ -196,6 +206,12 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
   const [magicEmail, setMagicEmail] = useState('');
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
+
+  // OTP state (code shown in form so user doesn't need to open link in a browser)
+  const [otpToken, setOtpToken] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
 
   // API key step state
   const [apiKey, setApiKey] = useState('');
@@ -291,11 +307,34 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
     const result = await sendMagicLinkEmail(trimmedEmail, returnUrlObj.toString());
     if (result.ok) {
       setMagicSentTo(trimmedEmail);
+      setOtpToken(result.otpToken ?? null);
+      setOtpCode('');
+      setOtpError(null);
       setAuthPhase('magic_sent');
     } else {
       setAuthError(result.error.userMessage);
     }
     setMagicLoading(false);
+  }
+
+  async function handleOtpSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!otpToken) return;
+    const digits = otpCode.replace(/\D/g, '');
+    if (digits.length !== 6) {
+      setOtpError('Introduce los 6 dígitos del código.');
+      return;
+    }
+    setOtpError(null);
+    setOtpLoading(true);
+    const result = await verifyOtp(otpToken, digits);
+    if (result.ok) {
+      setAuthedEmail(result.email);
+      setAuthPhase('authed');
+    } else {
+      setOtpError(result.error.userMessage);
+    }
+    setOtpLoading(false);
   }
 
   async function handleSwitchAccount() {
@@ -512,18 +551,59 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-emerald-900">Email enviado</p>
                       <p className="text-xs leading-5 text-emerald-800">
-                        Abre el correo en <strong className="font-semibold">{magicSentTo}</strong> y
-                        haz click en el enlace para continuar. Si no lo encuentras, revisa spam.
+                        Hemos enviado un enlace y un código de 6 dígitos a{' '}
+                        <strong className="font-semibold">{magicSentTo}</strong>. Si no lo
+                        encuentras, revisa spam.
                       </p>
                     </div>
                   </div>
-                  <div className="mt-5 text-center text-xs text-slate-500">
+
+                  {/* OTP code entry — alternative to clicking the link */}
+                  {otpToken ? (
+                    <form onSubmit={handleOtpSubmit} className="mt-5 space-y-3">
+                      <p className="text-center text-xs font-medium text-slate-500">
+                        Introduce el código del correo para continuar aquí
+                      </p>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        maxLength={6}
+                        placeholder="123456"
+                        value={otpCode}
+                        onChange={(e) => {
+                          const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+                          setOtpCode(v);
+                          if (otpError) setOtpError(null);
+                        }}
+                        className="block h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-center text-2xl font-bold tracking-[0.5em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:border-[#ff5460] focus:outline-none focus:ring-2 focus:ring-[#ff5460]/30"
+                      />
+                      {otpError ? (
+                        <p role="alert" className="px-1 text-xs text-rose-700">
+                          {otpError}
+                        </p>
+                      ) : null}
+                      <button
+                        type="submit"
+                        disabled={otpLoading || otpCode.replace(/\D/g, '').length !== 6}
+                        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#ff5460] px-4 text-sm font-semibold text-white transition hover:bg-[#ff3a48] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {otpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                        {otpLoading ? 'Verificando…' : 'Confirmar código'}
+                      </button>
+                    </form>
+                  ) : null}
+
+                  <div className="mt-4 text-center text-xs text-slate-500">
                     ¿No llegó?{' '}
                     <button
                       type="button"
                       onClick={() => {
                         setAuthPhase('choosing');
                         setMagicSentTo(null);
+                        setOtpToken(null);
+                        setOtpCode('');
+                        setOtpError(null);
                         setAuthError(null);
                       }}
                       className="font-semibold text-[#ff5460] underline-offset-2 hover:underline"
@@ -572,9 +652,17 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                     </>
                   ) : (
                     <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs leading-5 text-amber-800">
-                      <strong>Usa tu correo electrónico</strong> para continuar. Google no permite
-                      el inicio de sesión desde aplicaciones como ChatGPT — abre el enlace en Safari
-                      o Chrome si prefieres usar Google.
+                      {webViewWarning ? (
+                        <>
+                          <strong>{webViewWarning.title}.</strong> {webViewWarning.body}
+                        </>
+                      ) : (
+                        <>
+                          <strong>Usa tu correo electrónico</strong> para continuar. Google no
+                          permite el inicio de sesión desde aplicaciones embebidas — abre el enlace
+                          en Safari o Chrome si prefieres usar Google.
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -706,7 +794,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                           }}
                           onBlur={() => setApiKeyTouched(true)}
                           placeholder="32 caracteres hexadecimales (0-9, a-f)"
-                          aria-invalid={showApiKeyFormatError ? 'true' : undefined}
+                          aria-invalid={showApiKeyFormatError || undefined}
                           aria-describedby={
                             showApiKeyFormatError ? 'apikey-format-error' : undefined
                           }
