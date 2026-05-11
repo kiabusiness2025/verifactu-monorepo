@@ -599,23 +599,42 @@ export async function sendMagicLinkEmail(
   email: string,
   returnUrl: string
 ): Promise<{ ok: true } | { ok: false; error: AuthErrorMessage }> {
-  if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) {
-    return { ok: false, error: authUnavailable().error! };
-  }
-
   try {
-    await sendSignInLinkToEmail(auth, email, {
-      url: returnUrl,
-      handleCodeInApp: true,
+    const res = await fetch('/api/auth/magic-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, continueUrl: returnUrl }),
     });
+
+    if (!res.ok) {
+      let serverMessage = 'No se pudo enviar el enlace de acceso. Inténtalo de nuevo.';
+      try {
+        const json = (await res.json()) as { error?: string };
+        if (json.error) serverMessage = json.error;
+      } catch {
+        // ignore parse error
+      }
+      return {
+        ok: false,
+        error: {
+          code: `magic-link/send-failed-${res.status}`,
+          message: serverMessage,
+          userMessage: serverMessage,
+        },
+      };
+    }
 
     if (typeof window !== 'undefined') {
       window.localStorage.setItem(MAGIC_LINK_EMAIL_KEY, email);
     }
 
     return { ok: true };
-  } catch (error) {
-    return { ok: false, error: getErrorMessage(error as AuthError) };
+  } catch (err) {
+    const message = 'Error de red al enviar el enlace. Comprueba tu conexión.';
+    return {
+      ok: false,
+      error: { code: 'magic-link/network-error', message: String(err), userMessage: message },
+    };
   }
 }
 
