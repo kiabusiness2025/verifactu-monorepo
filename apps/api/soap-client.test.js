@@ -3,9 +3,24 @@ import soap from 'soap';
 import { getClient, queryInvoice, registerInvoice, resetClient } from './soap-client.js';
 
 // Mock the soap library
-jest.mock('soap', () => ({
-  createClientAsync: jest.fn(),
-}));
+jest.mock('soap', () => {
+  const createClientAsync = jest.fn();
+  const ClientSSLSecurityPFX = jest.fn(function ClientSSLSecurityPFX(pfx, passphrase, options) {
+    this.pfx = pfx;
+    this.passphrase = passphrase;
+    this.options = options;
+  });
+
+  return {
+    __esModule: true,
+    default: {
+      createClientAsync,
+      ClientSSLSecurityPFX,
+    },
+    createClientAsync,
+    ClientSSLSecurityPFX,
+  };
+});
 
 // Mock the fs library
 jest.mock('fs', () => ({
@@ -22,12 +37,13 @@ describe('SOAP Client', () => {
   describe('getClient', () => {
     it('should create a SOAP client', async () => {
       // Mock the return values of fs.readFileSync
-      fs.readFileSync.mockReturnValueOnce('http://aeat.es/wsdl/VeriFactu.wsdl');
       fs.readFileSync.mockReturnValueOnce('cert-content');
       fs.readFileSync.mockReturnValueOnce('password');
+      fs.readFileSync.mockReturnValueOnce('http://aeat.es/wsdl/VeriFactu.wsdl');
 
       // Mock the return value of soap.createClientAsync
       const mockClient = {
+        setSecurity: jest.fn(),
         RegFactuSistemaFacturacionAsync: jest.fn(),
         ConsultaFactuSistemaFacturacionAsync: jest.fn(),
       };
@@ -39,11 +55,18 @@ describe('SOAP Client', () => {
       expect(fs.readFileSync).toHaveBeenCalledWith('/var/secrets/aeat_cert/cert.p12');
       expect(fs.readFileSync).toHaveBeenCalledWith('/var/secrets/aeat_pass/cert_pass.txt', 'utf8');
       expect(soap.createClientAsync).toHaveBeenCalledWith('http://aeat.es/wsdl/VeriFactu.wsdl', {
-        soapOptions: {
+        pfx: 'cert-content',
+        passphrase: 'password',
+        wsdl_options: {
           pfx: 'cert-content',
           passphrase: 'password',
+          rejectUnauthorized: true,
         },
       });
+      expect(soap.ClientSSLSecurityPFX).toHaveBeenCalledWith('cert-content', 'password', {
+        rejectUnauthorized: true,
+      });
+      expect(mockClient.setSecurity).toHaveBeenCalledWith(expect.any(soap.ClientSSLSecurityPFX));
       expect(client).toBe(mockClient);
     });
   });
@@ -51,12 +74,13 @@ describe('SOAP Client', () => {
   describe('registerInvoice', () => {
     it('should register an invoice', async () => {
       // Mock the return values of fs.readFileSync
-      fs.readFileSync.mockReturnValueOnce('http://aeat.es/wsdl/VeriFactu.wsdl');
       fs.readFileSync.mockReturnValueOnce('cert-content');
       fs.readFileSync.mockReturnValueOnce('password');
+      fs.readFileSync.mockReturnValueOnce('http://aeat.es/wsdl/VeriFactu.wsdl');
 
       // Mock the return value of soap.createClientAsync
       const mockClient = {
+        setSecurity: jest.fn(),
         RegFactuSistemaFacturacionAsync: jest.fn().mockResolvedValue('result'),
       };
       soap.createClientAsync.mockResolvedValue(mockClient);
@@ -84,11 +108,22 @@ describe('SOAP Client', () => {
 
       expect(mockClient.RegFactuSistemaFacturacionAsync).toHaveBeenCalledWith(
         expect.objectContaining({
-          datosFactura: expect.objectContaining({
-            Facturae: expect.objectContaining({
-              Factura: expect.any(Object),
+          Cabecera: expect.objectContaining({
+            ObligadoEmision: expect.objectContaining({
+              NIF: 'A12345678',
+              NombreRazon: 'Mi Empresa',
             }),
           }),
+          RegistroFactura: [
+            expect.objectContaining({
+              RegistroAlta: expect.objectContaining({
+                IDFactura: expect.objectContaining({
+                  NumSerieFactura: 'F2023-0001',
+                }),
+                ImporteTotal: '121.00',
+              }),
+            }),
+          ],
         })
       );
       expect(result).toBe('result');
@@ -98,12 +133,13 @@ describe('SOAP Client', () => {
   describe('queryInvoice', () => {
     it('should query an invoice', async () => {
       // Mock the return values of fs.readFileSync
-      fs.readFileSync.mockReturnValueOnce('http://aeat.es/wsdl/VeriFactu.wsdl');
       fs.readFileSync.mockReturnValueOnce('cert-content');
       fs.readFileSync.mockReturnValueOnce('password');
+      fs.readFileSync.mockReturnValueOnce('http://aeat.es/wsdl/VeriFactu.wsdl');
 
       // Mock the return value of soap.createClientAsync
       const mockClient = {
+        setSecurity: jest.fn(),
         ConsultaFactuSistemaFacturacionAsync: jest.fn().mockResolvedValue('result'),
       };
       soap.createClientAsync.mockResolvedValue(mockClient);
