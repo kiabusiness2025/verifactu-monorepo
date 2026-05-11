@@ -26,7 +26,7 @@ describe('POST /api/cron', () => {
     jest.clearAllMocks();
     process.env = { ...envBackup };
     delete process.env.CRON_SECRET;
-    process.env.NODE_ENV = 'test';
+    Object.assign(process.env, { NODE_ENV: 'test' });
   });
 
   afterAll(() => {
