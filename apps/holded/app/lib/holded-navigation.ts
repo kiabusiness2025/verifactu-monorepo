@@ -23,7 +23,17 @@ export const ADMIN_PUBLIC_URL = getOrigin(
   'https://admin.verifactu.business'
 );
 
-const ALLOWED_RETURN_ORIGINS = new Set([HOLDED_PUBLIC_URL, APP_PUBLIC_URL]);
+// T#50 Opción 2: el conector Claude × Holded redirige al usuario de vuelta
+// a su consent screen tras completar /auth/holded-direct (Firebase auth).
+// Permitimos `claude.verifactu.business` como origen de retorno válido para
+// que `sanitizeHoldedReturnTarget()` no caiga al fallback al volver desde
+// el bridge.
+export const CLAUDE_MCP_PUBLIC_URL = getOrigin(
+  process.env.NEXT_PUBLIC_CLAUDE_MCP_URL,
+  'https://claude.verifactu.business'
+);
+
+const ALLOWED_RETURN_ORIGINS = new Set([HOLDED_PUBLIC_URL, APP_PUBLIC_URL, CLAUDE_MCP_PUBLIC_URL]);
 
 export const buildLeadCaptureUrl = (source?: string) => {
   const base = `${HOLDED_PUBLIC_URL}/`;

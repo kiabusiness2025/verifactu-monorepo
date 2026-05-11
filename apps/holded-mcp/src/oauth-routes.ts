@@ -48,6 +48,82 @@ function escapeHtml(value: string): string {
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const SUPPORTED_OAUTH_SCOPES = new Set(['holded:read', 'holded:write']);
 const DEFAULT_OAUTH_SCOPE = 'holded:read holded:write';
+
+// ──────────────────────────────────────────────────────────────────────────
+// T#50 Opción 2 — Bridge a Firebase auth de apps/holded
+// ──────────────────────────────────────────────────────────────────────────
+// El consent screen de Claude (HTML server-rendered) NO debe aceptar email
+// libre: el usuario podría poner cualquier dirección y nos quedamos con un
+// email no verificado asociado a una API key real de Holded. Para resolverlo,
+// reutilizamos el flow Firebase ya existente en /auth/holded-direct (Vercel)
+// que verifica email vía Google OAuth popup o magic link.
+//
+// Flow:
+//   1. ChatGPT → GET /oauth/authorize?... (este server)
+//   2. ¿Hay cookie `__session` válida firmada con SESSION_SECRET?
+//      - NO → redirect 302 a holded.verifactu.business/auth/holded-direct
+//             ?source=claude_consent&next=<this-authorize-url>
+//      - SÍ → mostrar consent screen con email VERIFIED (read-only)
+//   3. Tras Firebase auth, el wrapper /api/auth/holded-direct mintea la
+//      cookie `__session` con domain `.verifactu.business` y redirige al
+//      `next` que apunta de vuelta a este server.
+//   4. En esta segunda visita, la cookie YA existe → consent screen "Authorize"
+//      ya con email verificado.
+const VERIFACTU_SESSION_COOKIE_NAME = '__session';
+
+interface VerifactuSessionPayload {
+  uid: string;
+  email: string;
+  name?: string | null;
+  tenantId?: string;
+}
+
+function readVerifactuSessionCookieRaw(req: Request): string | null {
+  const cookieHeader = req.headers.cookie;
+  if (typeof cookieHeader !== 'string' || !cookieHeader) return null;
+  const cookies = cookieHeader.split(';').map((c) => c.trim());
+  for (const c of cookies) {
+    const eq = c.indexOf('=');
+    if (eq < 0) continue;
+    const name = c.slice(0, eq);
+    if (name === VERIFACTU_SESSION_COOKIE_NAME) {
+      try {
+        return decodeURIComponent(c.slice(eq + 1));
+      } catch {
+        return c.slice(eq + 1);
+      }
+    }
+  }
+  return null;
+}
+
+async function verifyVerifactuSession(req: Request): Promise<VerifactuSessionPayload | null> {
+  if (!config.SESSION_SECRET) return null;
+  const token = readVerifactuSessionCookieRaw(req);
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(config.SESSION_SECRET));
+    const uid = typeof payload.uid === 'string' ? payload.uid : null;
+    const email = typeof payload.email === 'string' ? payload.email : null;
+    if (!uid || !email) return null;
+    return {
+      uid,
+      email,
+      name: typeof payload.name === 'string' ? payload.name : null,
+      tenantId: typeof payload.tenantId === 'string' ? payload.tenantId : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+function buildFirebaseBridgeUrl(req: Request): string {
+  const directUrl = new URL('/auth/holded-direct', config.HOLDED_PUBLIC_URL);
+  directUrl.searchParams.set('source', 'claude_consent');
+  const currentUrl = new URL(req.originalUrl, config.BASE_URL);
+  directUrl.searchParams.set('next', currentUrl.toString());
+  return directUrl.toString();
+}
 const DEFAULT_ALLOWED_REDIRECT_ORIGINS = ['https://claude.ai', 'https://app.claude.ai'];
 
 const F1_UPSERT_PATH = '/api/integrations/holded/upsert-from-key';
@@ -348,7 +424,7 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
   });
 });
 
-oauthRouter.get('/authorize', (req: Request, res: Response) => {
+oauthRouter.get('/authorize', async (req: Request, res: Response) => {
   const {
     client_id,
     redirect_uri,
@@ -395,6 +471,22 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
     return;
   }
 
+  // T#50 Opción 2: si no hay sesión .verifactu.business verificada por Firebase,
+  // redirigir al flow /auth/holded-direct ANTES de mostrar el consent screen.
+  // Si SESSION_SECRET no está seteado en env, fallback al consent screen plano
+  // (modo legacy) para que el flow siga funcionando aunque el bridge no esté
+  // activado.
+  const verifactuSession = await verifyVerifactuSession(req);
+  if (!verifactuSession && config.SESSION_SECRET) {
+    const bridgeUrl = buildFirebaseBridgeUrl(req);
+    logger.info('[oauth/authorize] No verifactu session — bridging to Firebase auth', {
+      clientId: String(client_id),
+      next: bridgeUrl,
+    });
+    res.redirect(302, bridgeUrl);
+    return;
+  }
+
   res.send(
     consentPage(
       String(client_id),
@@ -403,7 +495,14 @@ oauthRouter.get('/authorize', (req: Request, res: Response) => {
       false,
       normalizedScope,
       typeof code_challenge === 'string' ? code_challenge : null,
-      code_challenge_method === 'S256' ? 'S256' : null
+      code_challenge_method === 'S256' ? 'S256' : null,
+      verifactuSession
+        ? {
+            personalEmail: verifactuSession.email,
+            personalName: verifactuSession.name ?? null,
+            verifiedUid: verifactuSession.uid,
+          }
+        : null
     )
   );
 });
@@ -412,10 +511,29 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
   res.set('Cache-Control', 'no-store');
   const holdedApiKey =
     typeof req.body?.holded_api_key === 'string' ? req.body.holded_api_key.trim() : '';
-  const personalEmailRaw =
+
+  // T#50 Opción 2: si hay sesión .verifactu.business verificada por Firebase,
+  // ignoramos el `personal_email` del form (user-controllable) y usamos el
+  // email firmado server-side. NUNCA confiamos en `verified_uid` del body —
+  // siempre re-verificamos la cookie aquí.
+  const verifactuSession = await verifyVerifactuSession(req);
+  const bodyEmailRaw =
     typeof req.body?.personal_email === 'string'
       ? req.body.personal_email.trim().toLowerCase()
       : '';
+  const personalEmailRaw = verifactuSession
+    ? verifactuSession.email.trim().toLowerCase()
+    : bodyEmailRaw;
+  if (verifactuSession && bodyEmailRaw && bodyEmailRaw !== personalEmailRaw) {
+    logger.warn(
+      '[oauth/authorize] body.personal_email distinto de session.email — usamos session',
+      {
+        sessionEmail: personalEmailRaw,
+        bodyEmail: bodyEmailRaw,
+      }
+    );
+  }
+
   const acceptedTerms = req.body?.accepted_terms === '1' || req.body?.accepted_terms === 'on';
   const acceptedPrivacy = req.body?.accepted_privacy === '1' || req.body?.accepted_privacy === 'on';
   const authorizeContext = resolveAuthorizeContext(req);
@@ -763,6 +881,17 @@ oauthRouter.post('/revoke', async (req: Request, res: Response) => {
   res.status(200).send();
 });
 
+type ConsentPagePrefill = {
+  personalEmail?: string;
+  acceptedTerms?: boolean;
+  acceptedPrivacy?: boolean;
+  // T#50 Opción 2: si está rellenado, el email viene verificado por Firebase
+  // (Google OAuth o magic link). El consent screen lo renderiza como read-only
+  // con badge "✓ Verificado".
+  personalName?: string | null;
+  verifiedUid?: string;
+};
+
 function consentPage(
   clientId: string,
   redirectUri: string,
@@ -771,8 +900,9 @@ function consentPage(
   scope = DEFAULT_OAUTH_SCOPE,
   codeChallenge: string | null = null,
   codeChallengeMethod: 'S256' | null = null,
-  prefill: { personalEmail?: string; acceptedTerms?: boolean; acceptedPrivacy?: boolean } = {}
+  prefillInput: ConsentPagePrefill | null = {}
 ): string {
+  const prefill: ConsentPagePrefill = prefillInput ?? {};
   const actionUrl = new URL('/oauth/authorize', config.BASE_URL);
   actionUrl.searchParams.set('client_id', clientId);
   actionUrl.searchParams.set('redirect_uri', redirectUri);

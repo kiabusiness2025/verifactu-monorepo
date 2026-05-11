@@ -35,6 +35,15 @@ const envSchema = z.object({
   // al endpoint F1. Si no se define, el MCP llamará sin auth header (válido si
   // el endpoint F1 está abierto, p.ej. detrás de Vercel rate-limit).
   VERIFACTU_APP_SHARED_SECRET: z.string().optional(),
+  // T#50 Opción 2 — Bridge Claude OAuth → Firebase auth (apps/holded).
+  // Compartido con apps/app y apps/holded en Vercel para verificar la cookie
+  // `__session` (.verifactu.business, HS256). Si no está seteado, el bridge
+  // queda desactivado y el consent screen sigue pidiendo email plano (legacy).
+  SESSION_SECRET: z.string().min(16).optional(),
+  // URL pública del Next.js de Holded donde vive `/auth/holded-direct`
+  // (Firebase Google + magic link). Usado para redirect-bridge desde el
+  // consent screen Claude cuando no hay sesión verificada.
+  HOLDED_PUBLIC_URL: z.string().url().default('https://holded.verifactu.business'),
 });
 
 function loadConfig() {
