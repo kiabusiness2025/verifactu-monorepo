@@ -157,7 +157,7 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null }) {
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || `${HOLDED_SITE_URL}/dashboard`;
+  const next = searchParams.get('next') || `${HOLDED_SITE_URL}/auth/holded-direct/success`;
   const source = searchParams.get('source') || 'holded_direct';
   const isChatgptFlow = useMemo(() => detectChatgptFlow(source, next), [source, next]);
 
@@ -319,10 +319,17 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
 
   async function handleOtpSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!otpToken) return;
     const digits = otpCode.replace(/\D/g, '');
     if (digits.length !== 6) {
       setOtpError('Introduce los 6 dígitos del código.');
+      return;
+    }
+    if (!otpToken) {
+      // El backend no devolvió un token (deploy desfasado, cache stale, o
+      // SESSION_SECRET ausente). Pedimos al usuario reenviar para reintentar.
+      setOtpError(
+        'No podemos verificar el código en esta ventana. Pulsa "Reenviar" o abre el enlace del correo.'
+      );
       return;
     }
     setOtpError(null);
@@ -558,41 +565,43 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                     </div>
                   </div>
 
-                  {/* OTP code entry — alternative to clicking the link */}
-                  {otpToken ? (
-                    <form onSubmit={handleOtpSubmit} className="mt-5 space-y-3">
-                      <p className="text-center text-xs font-medium text-slate-500">
-                        Introduce el código del correo para continuar aquí
+                  {/* OTP code entry — alternativa a hacer clic en el enlace.
+                      Se renderiza SIEMPRE en magic_sent (no condicionado a
+                      otpToken) para que el usuario nunca se quede sin el campo.
+                      Si el token no llegó (deploy desfasado / cache), el submit
+                      mostrará un mensaje claro y le invitamos a reenviar. */}
+                  <form onSubmit={handleOtpSubmit} className="mt-5 space-y-3">
+                    <p className="text-center text-xs font-medium text-slate-500">
+                      Introduce el código del correo para continuar aquí
+                    </p>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={otpCode}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setOtpCode(v);
+                        if (otpError) setOtpError(null);
+                      }}
+                      className="block h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-center text-2xl font-bold tracking-[0.5em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:border-[#ff5460] focus:outline-none focus:ring-2 focus:ring-[#ff5460]/30"
+                    />
+                    {otpError ? (
+                      <p role="alert" className="px-1 text-xs text-rose-700">
+                        {otpError}
                       </p>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
-                        maxLength={6}
-                        placeholder="123456"
-                        value={otpCode}
-                        onChange={(e) => {
-                          const v = e.target.value.replace(/\D/g, '').slice(0, 6);
-                          setOtpCode(v);
-                          if (otpError) setOtpError(null);
-                        }}
-                        className="block h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-center text-2xl font-bold tracking-[0.5em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:border-[#ff5460] focus:outline-none focus:ring-2 focus:ring-[#ff5460]/30"
-                      />
-                      {otpError ? (
-                        <p role="alert" className="px-1 text-xs text-rose-700">
-                          {otpError}
-                        </p>
-                      ) : null}
-                      <button
-                        type="submit"
-                        disabled={otpLoading || otpCode.replace(/\D/g, '').length !== 6}
-                        className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#ff5460] px-4 text-sm font-semibold text-white transition hover:bg-[#ff3a48] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {otpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                        {otpLoading ? 'Verificando…' : 'Confirmar código'}
-                      </button>
-                    </form>
-                  ) : null}
+                    ) : null}
+                    <button
+                      type="submit"
+                      disabled={otpLoading || otpCode.replace(/\D/g, '').length !== 6}
+                      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#ff5460] px-4 text-sm font-semibold text-white transition hover:bg-[#ff3a48] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {otpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {otpLoading ? 'Verificando…' : 'Confirmar código'}
+                    </button>
+                  </form>
 
                   <div className="mt-4 text-center text-xs text-slate-500">
                     ¿No llegó?{' '}

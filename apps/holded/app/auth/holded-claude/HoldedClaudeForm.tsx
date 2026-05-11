@@ -6,7 +6,13 @@ import {
   getStoredMagicLinkEmail,
   sendMagicLinkEmail,
   signInWithGoogle,
+  verifyOtp,
 } from '@/app/lib/auth';
+import {
+  getDetectedHostApp,
+  getWebViewWarningMessage,
+  isLikelyEmbeddedWebView,
+} from '@/app/lib/detectWebview';
 import { auth as firebaseAuth } from '@/app/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import {
@@ -113,9 +119,26 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
   const [googleLoading, setGoogleLoading] = useState(false);
   const firstName = useMemo(() => firstNameFrom(authedName), [authedName]);
 
+  const [isWebView, setIsWebView] = useState(false);
+  const [webViewWarning, setWebViewWarning] = useState<{ title: string; body: string } | null>(
+    null
+  );
+  useEffect(() => {
+    const detected = isLikelyEmbeddedWebView();
+    setIsWebView(detected);
+    if (detected) {
+      setWebViewWarning(getWebViewWarningMessage(getDetectedHostApp()));
+    }
+  }, []);
+
   const [magicEmail, setMagicEmail] = useState('');
   const [magicLoading, setMagicLoading] = useState(false);
   const [magicSentTo, setMagicSentTo] = useState<string | null>(null);
+
+  const [otpToken, setOtpToken] = useState<string | null>(null);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState<string | null>(null);
 
   const [apiKey, setApiKey] = useState('');
   const [showApiKey, setShowApiKey] = useState(false);
@@ -195,11 +218,37 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
     const result = await sendMagicLinkEmail(trimmedEmail, returnUrl);
     if (result.ok) {
       setMagicSentTo(trimmedEmail);
+      setOtpToken(result.otpToken ?? null);
+      setOtpCode('');
+      setOtpError(null);
       setAuthPhase('magic_sent');
     } else {
       setAuthError(result.error.userMessage);
     }
     setMagicLoading(false);
+  }
+
+  async function handleOtpSubmit(e: FormEvent) {
+    e.preventDefault();
+    const digits = otpCode.replace(/\D/g, '');
+    if (digits.length !== 6) {
+      setOtpError('Introduce los 6 dígitos del código.');
+      return;
+    }
+    if (!otpToken) {
+      setOtpError('No se recibió el token. Pulsa "Reenviar" para pedir un nuevo código.');
+      return;
+    }
+    setOtpError(null);
+    setOtpLoading(true);
+    const result = await verifyOtp(otpToken, digits);
+    if (result.ok) {
+      setAuthedEmail(result.email);
+      setAuthPhase('authed');
+    } else {
+      setOtpError(result.error.userMessage);
+    }
+    setOtpLoading(false);
   }
 
   async function handleStep2Submit(e: FormEvent) {
@@ -396,11 +445,47 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-emerald-900">Email enviado</p>
                       <p className="text-xs leading-5 text-emerald-800">
-                        Abre el correo en <strong className="font-semibold">{magicSentTo}</strong> y
-                        haz click en el enlace para continuar. Si no lo encuentras, revisa spam.
+                        Abre el correo en <strong className="font-semibold">{magicSentTo}</strong>.
+                        Contiene un enlace <strong>y un código de 6 dígitos</strong> — usa el código
+                        aquí abajo si el enlace abre en otro navegador.
                       </p>
                     </div>
                   </div>
+
+                  {/* OTP — se renderiza SIEMPRE (no condicionado a otpToken) */}
+                  <form onSubmit={handleOtpSubmit} className="mt-5 space-y-3">
+                    <p className="text-center text-xs font-medium text-slate-500">
+                      Introduce el código del correo para continuar aquí
+                    </p>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={otpCode}
+                      onChange={(e) => {
+                        const v = e.target.value.replace(/\D/g, '').slice(0, 6);
+                        setOtpCode(v);
+                        if (otpError) setOtpError(null);
+                      }}
+                      className="block h-14 w-full rounded-2xl border border-slate-200 bg-white px-4 text-center text-2xl font-bold tracking-[0.5em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-[0.5em] focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30"
+                    />
+                    {otpError ? (
+                      <p role="alert" className="px-1 text-xs text-rose-700">
+                        {otpError}
+                      </p>
+                    ) : null}
+                    <button
+                      type="submit"
+                      disabled={otpLoading || otpCode.replace(/\D/g, '').length !== 6}
+                      className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-amber-600 px-4 text-sm font-semibold text-white transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {otpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      {otpLoading ? 'Verificando…' : 'Confirmar código'}
+                    </button>
+                  </form>
+
                   <div className="mt-5 text-center text-xs text-slate-500">
                     ¿No llegó?{' '}
                     <button
@@ -408,6 +493,9 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
                       onClick={() => {
                         setAuthPhase('choosing');
                         setMagicSentTo(null);
+                        setOtpToken(null);
+                        setOtpCode('');
+                        setOtpError(null);
                         setAuthError(null);
                       }}
                       className="font-semibold text-amber-600 underline-offset-2 hover:underline"
@@ -428,25 +516,43 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
 
               {authPhase === 'choosing' ? (
                 <div className="mt-6 space-y-4">
-                  <button
-                    type="button"
-                    disabled={googleLoading}
-                    onClick={handleGoogleSignIn}
-                    className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {googleLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
-                    ) : (
-                      <GoogleIcon className="h-5 w-5 shrink-0" />
-                    )}
-                    {googleLoading ? 'Redirigiendo…' : 'Continuar con Google'}
-                  </button>
+                  {!isWebView ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={googleLoading}
+                        onClick={handleGoogleSignIn}
+                        className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {googleLoading ? (
+                          <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
+                        ) : (
+                          <GoogleIcon className="h-5 w-5 shrink-0" />
+                        )}
+                        {googleLoading ? 'Redirigiendo…' : 'Continuar con Google'}
+                      </button>
 
-                  <div className="flex items-center gap-3">
-                    <span className="h-px flex-1 bg-slate-200" />
-                    <span className="text-xs font-medium text-slate-400">o</span>
-                    <span className="h-px flex-1 bg-slate-200" />
-                  </div>
+                      <div className="flex items-center gap-3">
+                        <span className="h-px flex-1 bg-slate-200" />
+                        <span className="text-xs font-medium text-slate-400">o</span>
+                        <span className="h-px flex-1 bg-slate-200" />
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-3 text-xs leading-5 text-amber-800">
+                      {webViewWarning ? (
+                        <>
+                          <strong>{webViewWarning.title}.</strong> {webViewWarning.body}
+                        </>
+                      ) : (
+                        <>
+                          <strong>Usa tu correo electrónico</strong> para continuar. Google no
+                          permite el inicio de sesión desde aplicaciones embebidas — abre el enlace
+                          en Safari o Chrome si prefieres usar Google.
+                        </>
+                      )}
+                    </div>
+                  )}
 
                   <form onSubmit={handleMagicLinkSubmit} className="space-y-3">
                     <div className="space-y-1.5">
@@ -564,7 +670,7 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
                           }}
                           onBlur={() => setApiKeyTouched(true)}
                           placeholder="32 caracteres hexadecimales (0-9, a-f)"
-                          aria-invalid={showApiKeyFormatError ? 'true' : undefined}
+                          aria-invalid={showApiKeyFormatError || undefined}
                           aria-describedby={
                             showApiKeyFormatError ? 'apikey-format-error' : undefined
                           }

@@ -58,21 +58,40 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json();
   } catch {
-    return NextResponse.json({ error: 'Cuerpo de la petición inválido.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Cuerpo de la petición inválido.', code: 'BAD_BODY' },
+      { status: 400 }
+    );
   }
 
   const token = (body.token || '').trim();
   const otp = (body.otp || '').replace(/\D/g, '');
 
-  if (!token || otp.length !== 6) {
-    return NextResponse.json({ error: 'Token o código inválido.' }, { status: 400 });
+  if (!token) {
+    return NextResponse.json(
+      {
+        error: 'No se recibió el token de verificación. Pulsa "Reenviar" para solicitar uno nuevo.',
+        code: 'MISSING_TOKEN',
+      },
+      { status: 400 }
+    );
+  }
+  if (otp.length !== 6) {
+    return NextResponse.json(
+      { error: 'El código debe tener 6 dígitos.', code: 'BAD_OTP_FORMAT' },
+      { status: 400 }
+    );
   }
 
   let secret: string;
   try {
     secret = readSessionSecret();
   } catch {
-    return NextResponse.json({ error: 'Servicio no disponible.' }, { status: 503 });
+    console.error('[otp/verify] SESSION_SECRET not configured');
+    return NextResponse.json(
+      { error: 'Servicio no disponible.', code: 'NO_SECRET' },
+      { status: 503 }
+    );
   }
 
   let email: string;
@@ -82,9 +101,17 @@ export async function POST(req: NextRequest) {
     email = typeof payload.email === 'string' ? payload.email : '';
     storedHmac = typeof payload.h === 'string' ? payload.h : '';
     if (!email || !storedHmac) throw new Error('invalid payload');
-  } catch {
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isExpired = /expired|exp.*claim/i.test(msg);
+    console.warn('[otp/verify] JWT verify failed', { isExpired, hint: msg.slice(0, 80) });
     return NextResponse.json(
-      { error: 'El código ha expirado o no es válido. Solicita uno nuevo.' },
+      {
+        error: isExpired
+          ? 'El código ha caducado (10 min). Pulsa "Reenviar" para solicitar uno nuevo.'
+          : 'El código no es válido. Pulsa "Reenviar" para solicitar uno nuevo.',
+        code: isExpired ? 'OTP_EXPIRED' : 'OTP_INVALID',
+      },
       { status: 400 }
     );
   }
@@ -97,7 +124,10 @@ export async function POST(req: NextRequest) {
     storedBuf.length === expectedBuf.length && crypto.timingSafeEqual(storedBuf, expectedBuf);
 
   if (!match) {
-    return NextResponse.json({ error: 'Código incorrecto. Inténtalo de nuevo.' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Código incorrecto. Comprueba los 6 dígitos del email.', code: 'OTP_WRONG' },
+      { status: 400 }
+    );
   }
 
   const sessionToken = await signSessionToken({
