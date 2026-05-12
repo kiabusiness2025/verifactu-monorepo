@@ -2,8 +2,10 @@ import {
   consumeAuthorizationCode,
   isValidPkceCodeVerifier,
   mintAccessToken,
+  mintRefreshToken,
   verifyAuthorizationCode,
   verifyPkce,
+  verifyRefreshToken,
 } from '@/lib/oauth/mcp';
 import { rateLimit } from '@/lib/rateLimit';
 import { NextRequest, NextResponse } from 'next/server';
@@ -48,8 +50,48 @@ export async function POST(request: NextRequest) {
   }
 
   const grantType = typeof body.grant_type === 'string' ? body.grant_type.trim() : '';
-  const code = typeof body.code === 'string' ? body.code.trim() : '';
   const clientId = typeof body.client_id === 'string' ? body.client_id.trim() : '';
+
+  if (grantType === 'refresh_token') {
+    const refreshTokenRaw = typeof body.refresh_token === 'string' ? body.refresh_token.trim() : '';
+    if (!refreshTokenRaw || !clientId) {
+      return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+    }
+    try {
+      const parsed = await verifyRefreshToken(refreshTokenRaw);
+      if (!parsed || parsed.clientId !== clientId) {
+        return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
+      }
+      const tokenBase = {
+        clientId: parsed.clientId,
+        scope: parsed.scope,
+        resource: parsed.resource,
+        uid: parsed.uid,
+        email: parsed.email,
+        name: parsed.name,
+        tenantId: parsed.tenantId,
+      };
+      const [accessToken, refreshToken] = await Promise.all([
+        mintAccessToken({ type: 'mcp_access_token', ...tokenBase }),
+        mintRefreshToken(tokenBase),
+      ]);
+      return NextResponse.json({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        token_type: 'Bearer',
+        expires_in: 86400,
+        scope: parsed.scope,
+      });
+    } catch (error) {
+      console.error('[oauth/token] refresh_token error', {
+        clientId,
+        message: error instanceof Error ? error.message : String(error),
+      });
+      return NextResponse.json({ error: 'server_error' }, { status: 500 });
+    }
+  }
+
+  const code = typeof body.code === 'string' ? body.code.trim() : '';
   const redirectUri = typeof body.redirect_uri === 'string' ? body.redirect_uri.trim() : '';
   const codeVerifier = typeof body.code_verifier === 'string' ? body.code_verifier.trim() : '';
 
@@ -83,8 +125,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'invalid_grant' }, { status: 400 });
     }
 
-    const accessToken = await mintAccessToken({
-      type: 'mcp_access_token',
+    const tokenBase = {
       clientId: parsed.clientId,
       scope: parsed.scope,
       resource: parsed.resource,
@@ -92,14 +133,17 @@ export async function POST(request: NextRequest) {
       email: parsed.email,
       name: parsed.name,
       tenantId: parsed.tenantId,
-    });
+    };
+    const [accessToken, refreshToken] = await Promise.all([
+      mintAccessToken({ type: 'mcp_access_token', ...tokenBase }),
+      mintRefreshToken(tokenBase),
+    ]);
 
     return NextResponse.json({
       access_token: accessToken,
+      refresh_token: refreshToken,
       token_type: 'Bearer',
-      // C3 (auditoria OpenAI 2026-05-07): 86400s = 24h. Antes 3600s (1h)
-      // expiraba mid-review. Mantener en sincronia con `expiresIn` de
-      // mintAccessToken en lib/oauth/mcp.ts.
+      // C3 (auditoria OpenAI 2026-05-07): 86400s = 24h.
       expires_in: 86400,
       scope: parsed.scope,
     });

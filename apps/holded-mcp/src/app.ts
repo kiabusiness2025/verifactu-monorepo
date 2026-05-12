@@ -62,7 +62,7 @@ export function createApp() {
   // X-Icon-Version fuerza a Claude.ai y a proxies intermedios a tratar la
   // respuesta como nueva aunque tengan una copia en caché. El valor incluye
   // la fecha de la última regeneración del asset para facilitar la depuración.
-  const ICON_VERSION = 'holded-diamond-2026-05-03';
+  const ICON_VERSION = 'holded-diamond-2026-05-12';
 
   // ⚠️ Anthropic Connectors Directory fetchea el logo desde
   // https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64
@@ -152,7 +152,7 @@ export function createApp() {
       token_endpoint_auth_methods_supported: ['client_secret_post'],
       scopes_supported: ['holded:read', 'holded:write'],
       service_documentation: `${config.BASE_URL}/docs`,
-      logo_uri: `${config.BASE_URL}/holded-diamond-logo.png?v=holded-diamond-2026-05-03`,
+      logo_uri: `${config.BASE_URL}/holded-diamond-logo.png?v=holded-diamond-2026-05-12`,
     });
   });
 

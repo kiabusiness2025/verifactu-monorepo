@@ -26,7 +26,9 @@ import {
   getSupportedScopes,
   mintHoldedOnboardingToken,
   mintHoldedOnboardingTokenForSubject,
+  mintRefreshToken,
   verifyHoldedOnboardingToken,
+  verifyRefreshToken,
 } from './mcp';
 import {
   HOLDED_MCP_SUPPORTED_SCOPES,
@@ -164,6 +166,49 @@ describe('MCP OAuth metadata helpers', () => {
         }),
       })
     );
+  });
+
+  describe('mintRefreshToken / verifyRefreshToken', () => {
+    it('round-trips a refresh token payload', async () => {
+      (signSessionToken as jest.Mock).mockImplementation(
+        async ({ payload }: { payload: Record<string, unknown> }) =>
+          Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
+      );
+      (verifySessionToken as jest.Mock).mockImplementation(async (token: string) => {
+        try {
+          return JSON.parse(Buffer.from(token, 'base64url').toString('utf8'));
+        } catch {
+          return null;
+        }
+      });
+
+      const input = {
+        clientId: 'openai-chatgpt-test',
+        scope: 'mcp.read holded.invoices.read',
+        resource: 'https://holded.verifactu.business/api/mcp/holded',
+        uid: 'user-1',
+        email: 'demo@example.com',
+        name: 'Demo User',
+        tenantId: 'tenant-1',
+      };
+      const token = await mintRefreshToken(input);
+      expect(typeof token).toBe('string');
+
+      const parsed = await verifyRefreshToken(token);
+      expect(parsed).toMatchObject({ type: 'mcp_refresh_token', ...input });
+    });
+
+    it('returns null for a token with the wrong type', async () => {
+      (verifySessionToken as jest.Mock).mockResolvedValue({ type: 'mcp_access_token', uid: 'u1' });
+      const result = await verifyRefreshToken('some-token');
+      expect(result).toBeNull();
+    });
+
+    it('returns null for an invalid token', async () => {
+      (verifySessionToken as jest.Mock).mockResolvedValue(null);
+      const result = await verifyRefreshToken('bad-token');
+      expect(result).toBeNull();
+    });
   });
 
   it('returns expanded onboarding payloads from verification', async () => {

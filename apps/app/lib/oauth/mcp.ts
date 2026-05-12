@@ -15,6 +15,7 @@ export const MCP_AUTHORIZATION_PATH = '/oauth/authorize';
 export const MCP_TOKEN_PATH = '/oauth/token';
 export const MCP_USERINFO_PATH = '/oauth/userinfo';
 export const MCP_REGISTRATION_PATH = '/oauth/register';
+export const MCP_REVOCATION_PATH = '/oauth/revoke';
 export const MCP_AUTH_SERVER_METADATA_PATH = '/.well-known/oauth-authorization-server';
 export const MCP_PROTECTED_RESOURCE_METADATA_PATH = '/.well-known/oauth-protected-resource';
 
@@ -190,6 +191,10 @@ export function getAuthorizationServerIssuer() {
 
 export function getAuthorizationServerMetadataUrl() {
   return `${getHoldedConnectorPublicUrl()}${MCP_AUTH_SERVER_METADATA_PATH}`;
+}
+
+export function getRevocationEndpoint() {
+  return `${getHoldedConnectorPublicUrl()}${MCP_REVOCATION_PATH}`;
 }
 
 function getProtectedResourceMetadataPath(resourcePath: string) {
@@ -368,6 +373,31 @@ export async function verifyAccessToken(token: string) {
 
   if (!payload || payload.type !== 'mcp_access_token') return null;
   return payload as AccessTokenPayload & { exp?: number; iat?: number };
+}
+
+type RefreshTokenPayload = {
+  type: 'mcp_refresh_token';
+  clientId: string;
+  scope: string;
+  resource: string;
+  uid: string;
+  email: string | null;
+  name: string | null;
+  tenantId: string;
+};
+
+export async function mintRefreshToken(input: Omit<RefreshTokenPayload, 'type'>) {
+  return signSessionToken({
+    payload: { ...input, type: 'mcp_refresh_token' } satisfies RefreshTokenPayload,
+    secret: readOAuthSecret(),
+    expiresIn: '30d',
+  });
+}
+
+export async function verifyRefreshToken(token: string) {
+  const payload = await verifySessionToken(token, readOAuthSecret());
+  if (!payload || payload.type !== 'mcp_refresh_token') return null;
+  return payload as RefreshTokenPayload & { exp?: number; iat?: number };
 }
 
 function buildHoldedGuestUid(seed: string) {

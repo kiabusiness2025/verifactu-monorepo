@@ -28,6 +28,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
   ensureScopesAllowed: jest.fn(() => true),
   getDefaultScopes: jest.fn(() => ['mcp.read', 'holded.invoices.read']),
   getMcpResourceUrl: jest.fn(() => 'https://app.verifactu.business/api/mcp/holded'),
+  getPublicScopePreset: jest.fn(() => 'holded_full_read_v1'),
   isValidPkceCodeChallenge: jest.fn(() => true),
   mapSessionToOAuthUser: jest.fn((input) => ({
     uid: input.uid,
@@ -166,6 +167,7 @@ describe('oauth authorize holded flow', () => {
   it('emite el código directamente cuando ya existe conexión Holded aunque no llegue connection_confirmed', async () => {
     // Fix tercera pantalla: el DB check (hasHoldedConnection) es autoritativo.
     // Ya no se exige connection_confirmed para usuarios con conexión activa.
+    // B4: consent_confirmed=1 es requerido (consent screen) antes de mintar.
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
       email: 'demo@example.com',
@@ -175,7 +177,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&consent_confirmed=1&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);
@@ -221,7 +223,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&connection_confirmed=1&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&consent_confirmed=1&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);
@@ -247,7 +249,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&connection_confirmed=1&connected_provider_account_id=some-db-uuid&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&consent_confirmed=1&connected_provider_account_id=some-db-uuid&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
     );
 
     const response = await GET(request);

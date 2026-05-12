@@ -4,6 +4,7 @@ import {
   consumeMagicLink,
   detectMagicLinkInUrl,
   getStoredMagicLinkEmail,
+  resetHoldedAuthState,
   sendMagicLinkEmail,
   signInWithGoogle,
   verifyOtp,
@@ -148,6 +149,7 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
   const [step2Error, setStep2Error] = useState<string | null>(null);
   const [apiKeyReadOnly, setApiKeyReadOnly] = useState(true);
   const [apiKeyTouched, setApiKeyTouched] = useState(false);
+  const [switchingAccount, setSwitchingAccount] = useState(false);
 
   const apiKeyTrimmed = apiKey.trim();
   const apiKeyFormatValid = apiKeyTrimmed === '' || HOLDED_API_KEY_REGEX.test(apiKeyTrimmed);
@@ -249,6 +251,16 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
       setOtpError(result.error.userMessage);
     }
     setOtpLoading(false);
+  }
+
+  async function handleSwitchAccount() {
+    setSwitchingAccount(true);
+    await resetHoldedAuthState();
+    setAuthedEmail(null);
+    setAuthedName(null);
+    setAuthPhase('choosing');
+    setStep2Error(null);
+    setSwitchingAccount(false);
   }
 
   async function handleStep2Submit(e: FormEvent) {
@@ -603,11 +615,19 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
 
               {isApiKeyStep ? (
                 <>
-                  <div className="mt-5 flex justify-center">
+                  <div className="mt-5 flex flex-col items-center gap-2">
                     <div className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50/70 px-3 py-1 text-[11px] font-medium text-emerald-800">
                       <CheckCircle2 className="h-3 w-3 text-emerald-600" />
                       <span className="truncate max-w-[14rem]">{authedEmail}</span>
                     </div>
+                    <button
+                      type="button"
+                      disabled={switchingAccount}
+                      onClick={handleSwitchAccount}
+                      className="text-[11px] text-slate-400 underline-offset-2 hover:text-slate-600 hover:underline disabled:opacity-50"
+                    >
+                      {switchingAccount ? 'Cerrando sesión…' : '¿No eres tú? Cambiar cuenta'}
+                    </button>
                   </div>
 
                   {step2Error ? (

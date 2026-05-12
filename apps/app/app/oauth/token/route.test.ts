@@ -66,7 +66,7 @@ jest.mock('@verifactu/utils', () => ({
 import { createHash } from 'crypto';
 import { NextRequest } from 'next/server';
 import { POST } from './route';
-import { mintAuthorizationCode } from '@/lib/oauth/mcp';
+import { mintAuthorizationCode, mintRefreshToken } from '@/lib/oauth/mcp';
 
 function buildPkceChallenge(codeVerifier: string) {
   return createHash('sha256').update(codeVerifier).digest('base64url');
@@ -144,6 +144,106 @@ describe('POST /oauth/token', () => {
 
     expect(secondResponse.status).toBe(400);
     expect(secondPayload).toEqual({ error: 'invalid_grant' });
+  });
+
+  it('issues a refresh_token alongside the access_token on code exchange', async () => {
+    const codeVerifier = 'verifier-value-abcdefghijklmnopqrstuvwxyz-123456789';
+    const codeChallenge = buildPkceChallenge(codeVerifier);
+    const code = await mintAuthorizationCode({
+      type: 'mcp_auth_code',
+      clientId: 'openai-chatgpt-test',
+      redirectUri: 'https://chat.openai.com/aip/oauth/callback',
+      scope: 'mcp.read holded.invoices.read',
+      codeChallenge,
+      codeChallengeMethod: 'S256',
+      resource: 'https://app.verifactu.business/api/mcp/holded',
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+
+    const response = await POST(
+      createTokenRequest({
+        grant_type: 'authorization_code',
+        code,
+        client_id: 'openai-chatgpt-test',
+        redirect_uri: 'https://chat.openai.com/aip/oauth/callback',
+        code_verifier: codeVerifier,
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(typeof payload.access_token).toBe('string');
+    expect(typeof payload.refresh_token).toBe('string');
+    expect(payload.token_type).toBe('Bearer');
+    expect(payload.expires_in).toBe(86400);
+  });
+
+  it('issues new tokens on a valid refresh_token grant', async () => {
+    const refreshToken = await mintRefreshToken({
+      clientId: 'openai-chatgpt-test',
+      scope: 'mcp.read holded.invoices.read',
+      resource: 'https://app.verifactu.business/api/mcp/holded',
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+
+    const response = await POST(
+      createTokenRequest({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: 'openai-chatgpt-test',
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(typeof payload.access_token).toBe('string');
+    expect(typeof payload.refresh_token).toBe('string');
+    expect(payload.token_type).toBe('Bearer');
+    expect(payload.scope).toBe('mcp.read holded.invoices.read');
+  });
+
+  it('rejects refresh_token grant when client_id does not match', async () => {
+    const refreshToken = await mintRefreshToken({
+      clientId: 'openai-chatgpt-test',
+      scope: 'mcp.read',
+      resource: 'https://app.verifactu.business/api/mcp/holded',
+      uid: 'user-1',
+      email: null,
+      name: null,
+      tenantId: 'tenant-1',
+    });
+
+    const response = await POST(
+      createTokenRequest({
+        grant_type: 'refresh_token',
+        refresh_token: refreshToken,
+        client_id: 'different-client',
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: 'invalid_grant' });
+  });
+
+  it('rejects refresh_token grant with a malformed token', async () => {
+    const response = await POST(
+      createTokenRequest({
+        grant_type: 'refresh_token',
+        refresh_token: 'not-a-valid-jwt',
+        client_id: 'openai-chatgpt-test',
+      })
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: 'invalid_grant' });
   });
 
   it('rejects token exchange requests without a valid code_verifier', async () => {
