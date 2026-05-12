@@ -1631,6 +1631,7 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     });
     const items = await holdedAdapter.listDailyLedger(apiKey, {
       page: readPage(input),
+      limit: readLimit(input),
       starttmp: starttmp!,
       endtmp: endtmp!,
     });
