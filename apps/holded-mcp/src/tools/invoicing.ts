@@ -1,15 +1,17 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { HoldedClient, HOLDED_DOC_TYPES } from '../holded-client.js';
-import { toUnixSecondsNumber, toUnixSecondsString } from '../utils.js';
+import {
+  dateInput,
+  dateInputOptional,
+  enrichDocumentDates,
+  toUnixSecondsNumber,
+  toUnixSecondsString,
+} from '../utils.js';
 import { readOnlyAnnotations, writeAnnotations } from './policy.js';
 import { dispatchConnectorEventBackground } from '../connector-events.js';
 
 const DOC_TYPES = HOLDED_DOC_TYPES;
-
-const dateInput = z
-  .union([z.string(), z.number()])
-  .describe('Date as ISO 8601 (recommended) or Unix timestamp in seconds.');
 
 /**
  * F5.3: contexto del request que las tools reciben para que las que tengan
@@ -28,7 +30,7 @@ export function registerInvoicingTools(
 ) {
   server.tool(
     'list_documents',
-    'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only. Paginated — use page and limit to control response size.',
+    'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only. Paginated. Each document is enriched with *Formatted fields in Europe/Madrid timezone so the model does not need to parse Unix timestamps.',
     {
       docType: z
         .enum(DOC_TYPES)
@@ -36,8 +38,12 @@ export function registerInvoicingTools(
           'Document type. One of: invoice, salesreceipt, creditnote, salesorder, proform, waybill, estimate, purchase, purchaseorder, purchaserefund.'
         ),
       page: z.string().optional().describe('Results page number (default 1).'),
-      starttmp: dateInput.optional().describe('Start date (ISO 8601 or Unix seconds).'),
-      endtmp: dateInput.optional().describe('End date (ISO 8601 or Unix seconds).'),
+      starttmp: dateInputOptional.describe(
+        'Start date (ISO 8601 or Unix seconds). Optional — omit or null for no lower bound.'
+      ),
+      endtmp: dateInputOptional.describe(
+        'End date (ISO 8601 or Unix seconds). Optional — omit or null for no upper bound.'
+      ),
       contactId: z.string().optional().describe('Optional Holded contact ID filter.'),
       limit: z.coerce
         .number()
@@ -61,13 +67,19 @@ export function registerInvoicingTools(
       const raw = await getClient().listDocuments(docType, params);
       const all = Array.isArray(raw) ? raw : [];
       const truncated = all.length > limit;
-      const documents = all.slice(0, limit);
+      const documents = all
+        .slice(0, limit)
+        .map((d) =>
+          d && typeof d === 'object' ? enrichDocumentDates(d as Record<string, unknown>) : d
+        );
       const payload: Record<string, unknown> = {
         docType,
         documents,
         count: documents.length,
         totalReceived: all.length,
         truncated,
+        timezoneNote:
+          'Dates with *Formatted suffix are YYYY-MM-DD in Europe/Madrid (peninsular Spain). Raw Unix timestamps are kept for reference.',
       };
       if (truncated) {
         payload.hint = `Showing first ${limit} of ${all.length} documents received from Holded. Use page=2 (or higher) for the next batch, or narrow with starttmp/endtmp/contactId.`;
@@ -78,7 +90,7 @@ export function registerInvoicingTools(
 
   server.tool(
     'get_document',
-    'Returns the full details of a specific Holded document, including line items, taxes and contact information. Read-only.',
+    'Returns the full details of a specific Holded document, including line items, taxes and contact information. Read-only. Dates are enriched with *Formatted fields in Europe/Madrid timezone.',
     {
       docType: z.enum(DOC_TYPES).describe('Document type.'),
       documentId: z.string().describe('Holded document ID.'),
@@ -86,7 +98,11 @@ export function registerInvoicingTools(
     readOnlyAnnotations('get_document'),
     async ({ docType, documentId }) => {
       const data = await getClient().getDocument(docType, documentId);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      const enriched =
+        data && typeof data === 'object'
+          ? enrichDocumentDates(data as Record<string, unknown>)
+          : data;
+      return { content: [{ type: 'text', text: JSON.stringify(enriched, null, 2) }] };
     }
   );
 
@@ -140,7 +156,9 @@ export function registerInvoicingTools(
           'Customer or contact name (e.g. "Kappa Digital Zaragoza SL"). The connector resolves it to a contactId via list_contacts. Provide either contactId or contactName.'
         ),
       date: dateInput.describe('Invoice date (ISO 8601 or Unix seconds).'),
-      dueDate: dateInput.optional().describe('Optional due date (ISO 8601 or Unix seconds).'),
+      dueDate: dateInputOptional.describe(
+        'Optional due date (ISO 8601 or Unix seconds). Omit or null for no due date.'
+      ),
       notes: z.string().optional().describe('Optional invoice notes.'),
       numSerieId: z
         .string()
@@ -160,7 +178,7 @@ export function registerInvoicingTools(
     },
     writeAnnotations('create_invoice_draft'),
     async ({ date, dueDate, contactId, contactName, ...rest }) => {
-      // contactName → contactId resolution. Mirror of F2a in the ChatGPT
+      // contactName -> contactId resolution. Mirror of F2a in the ChatGPT
       // adapter. Avoids forcing the caller to chain list_contacts first.
       let resolvedContactId = contactId?.trim();
       if (!resolvedContactId) {
@@ -185,8 +203,8 @@ export function registerInvoicingTools(
         resolvedContactId = chosenId.trim();
       }
 
-      // approveDoc se fuerza al final del spread para que ningún input pueda
-      // anularlo. NO mover esta línea.
+      // approveDoc se fuerza al final del spread para que ningun input pueda
+      // anularlo. NO mover esta linea.
       const body: Record<string, unknown> = {
         ...rest,
         contactId: resolvedContactId,
