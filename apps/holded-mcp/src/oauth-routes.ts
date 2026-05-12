@@ -118,11 +118,14 @@ async function verifyVerifactuSession(req: Request): Promise<VerifactuSessionPay
 }
 
 function buildFirebaseBridgeUrl(req: Request): string {
-  const directUrl = new URL('/auth/holded-direct', config.HOLDED_PUBLIC_URL);
-  directUrl.searchParams.set('source', 'claude_consent');
+  // Always redirect to the Claude-specific form (amber UI, Google + OTP).
+  // claude.verifactu.business is a Claude-only MCP server — holded-direct
+  // (ChatGPT red form) is never the right target here.
+  const claudeUrl = new URL('/auth/holded-claude', config.HOLDED_PUBLIC_URL);
+  claudeUrl.searchParams.set('source', 'holded_claude_entry');
   const currentUrl = new URL(req.originalUrl, config.BASE_URL);
-  directUrl.searchParams.set('next', currentUrl.toString());
-  return directUrl.toString();
+  claudeUrl.searchParams.set('next', currentUrl.toString());
+  return claudeUrl.toString();
 }
 const DEFAULT_ALLOWED_REDIRECT_ORIGINS = ['https://claude.ai', 'https://app.claude.ai'];
 
@@ -472,19 +475,70 @@ oauthRouter.get('/authorize', async (req: Request, res: Response) => {
   }
 
   // T#50 Opción 2: si no hay sesión .verifactu.business verificada por Firebase,
-  // redirigir al flow /auth/holded-direct ANTES de mostrar el consent screen.
+  // redirigir al flow /auth/holded-claude ANTES de mostrar el consent screen.
   // Si SESSION_SECRET no está seteado en env, fallback al consent screen plano
   // (modo legacy) para que el flow siga funcionando aunque el bridge no esté
   // activado.
   const verifactuSession = await verifyVerifactuSession(req);
   if (!verifactuSession && config.SESSION_SECRET) {
     const bridgeUrl = buildFirebaseBridgeUrl(req);
-    logger.info('[oauth/authorize] No verifactu session — bridging to Firebase auth', {
+    logger.info('[oauth/authorize] No verifactu session — bridging to holded-claude auth', {
       clientId: String(client_id),
       next: bridgeUrl,
     });
     res.redirect(302, bridgeUrl);
     return;
+  }
+
+  // Auto-issue: if the session already has a tenantId (set by holded-claude
+  // after connecting the Holded API key), look up the existing API key from
+  // apps/app and mint the auth code directly — no consent form needed.
+  if (verifactuSession?.tenantId && config.VERIFACTU_APP_SHARED_SECRET) {
+    const authorizeContext = resolveAuthorizeContext(req);
+    const ctxScope = authorizeContext ? normalizeOAuthScope(authorizeContext.scope) : null;
+    if (authorizeContext && ctxScope) {
+      try {
+        const apiKeyResponse = await fetch(
+          `${config.VERIFACTU_APP_URL}/api/integrations/holded/api-key?tenant_id=${encodeURIComponent(verifactuSession.tenantId)}`,
+          {
+            headers: { 'x-mcp-shared-secret': config.VERIFACTU_APP_SHARED_SECRET },
+            signal: AbortSignal.timeout(5000),
+          }
+        );
+        if (apiKeyResponse.ok) {
+          const apiKeyJson = (await apiKeyResponse.json()) as { apiKey?: string };
+          if (typeof apiKeyJson.apiKey === 'string' && apiKeyJson.apiKey) {
+            const code = await createAuthorizationCode({
+              holdedApiKey: apiKeyJson.apiKey,
+              clientId: authorizeContext.clientId,
+              redirectUri: authorizeContext.redirectUri,
+              scope: ctxScope,
+              codeChallenge: authorizeContext.codeChallenge,
+              codeChallengeMethod: authorizeContext.codeChallengeMethod,
+              userId: verifactuSession.uid,
+              tenantId: verifactuSession.tenantId,
+              personalEmail: verifactuSession.email,
+            });
+            logger.info('[oauth/authorize] Auto-issued auth code from existing connection', {
+              clientId: authorizeContext.clientId,
+              tenantId: verifactuSession.tenantId,
+            });
+            const callbackUrl = new URL(authorizeContext.redirectUri);
+            callbackUrl.searchParams.set('code', code);
+            if (authorizeContext.state)
+              callbackUrl.searchParams.set('state', authorizeContext.state);
+            res.redirect(callbackUrl.toString());
+            return;
+          }
+        }
+        // 404 = no connection yet → fall through to consent form
+      } catch (err) {
+        logger.warn('[oauth/authorize] API key lookup failed, falling back to consent form', {
+          message: err instanceof Error ? err.message : String(err),
+          tenantId: verifactuSession.tenantId,
+        });
+      }
+    }
   }
 
   res.send(
@@ -907,14 +961,20 @@ function consentPage(
   prefillInput: ConsentPagePrefill | null = {}
 ): string {
   const prefill: ConsentPagePrefill = prefillInput ?? {};
-  const actionUrl = new URL('/oauth/authorize', config.BASE_URL);
-  actionUrl.searchParams.set('client_id', clientId);
-  actionUrl.searchParams.set('redirect_uri', redirectUri);
-  if (state) actionUrl.searchParams.set('state', state);
-  actionUrl.searchParams.set('scope', scope);
-  if (codeChallenge) actionUrl.searchParams.set('code_challenge', codeChallenge);
-  if (codeChallengeMethod) actionUrl.searchParams.set('code_challenge_method', codeChallengeMethod);
-  const escapedActionUrl = escapeHtml(actionUrl.toString());
+  // Use a relative path for the form action so that the browser's
+  // `form-action 'self'` CSP directive always matches (relative URLs
+  // resolve to the document origin, making them unconditionally 'self').
+  // An absolute URL with the same origin should also match, but Chrome has
+  // been observed blocking it when query params contain cross-origin values
+  // (e.g. redirect_uri=https://claude.ai/...).
+  const actionParams = new URLSearchParams();
+  actionParams.set('client_id', clientId);
+  actionParams.set('redirect_uri', redirectUri);
+  if (state) actionParams.set('state', state);
+  actionParams.set('scope', scope);
+  if (codeChallenge) actionParams.set('code_challenge', codeChallenge);
+  if (codeChallengeMethod) actionParams.set('code_challenge_method', codeChallengeMethod);
+  const escapedActionUrl = escapeHtml(`/oauth/authorize?${actionParams.toString()}`);
   const escapedClientId = escapeHtml(clientId);
   const escapedRedirectUri = escapeHtml(redirectUri);
   const escapedState = escapeHtml(state);
