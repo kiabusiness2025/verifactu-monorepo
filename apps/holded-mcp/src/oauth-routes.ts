@@ -776,7 +776,11 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
       return;
     }
 
-    if (redirect_uri && authCodePayload.redirectUri !== String(redirect_uri)) {
+    // RFC 6749 §4.1.3: redirect_uri is REQUIRED in the token request when it
+    // was present in the authorization request (which it always is here).
+    // Accepting a token request without redirect_uri would let an attacker
+    // redeem a stolen auth code without knowing the registered redirect URI.
+    if (!redirect_uri || authCodePayload.redirectUri !== String(redirect_uri)) {
       res.status(400).json({
         error: 'invalid_grant',
         error_description: 'redirect_uri no coincide con el codigo de autorizacion',
