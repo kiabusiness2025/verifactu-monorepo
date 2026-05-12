@@ -51,3 +51,24 @@ export async function GET(request: NextRequest) {
     headers: upstream.headers,
   });
 }
+
+export async function POST(request: NextRequest) {
+  const target = new URL('/oauth/authorize', APP_PUBLIC_URL);
+  request.nextUrl.searchParams.forEach((value, key) => {
+    target.searchParams.set(key, value);
+  });
+
+  const upstream = await fetch(target, {
+    method: 'POST',
+    headers: buildForwardHeaders(request),
+    redirect: 'manual',
+    body: request.body,
+    // @ts-expect-error — Node.js fetch requires duplex when body is a ReadableStream
+    duplex: 'half',
+  });
+
+  return new Response(upstream.body, {
+    status: upstream.status,
+    headers: upstream.headers,
+  });
+}

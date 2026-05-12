@@ -915,12 +915,15 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_document(apiKey, input) {
-    const item = await holdedAdapter.getDocument(
-      apiKey,
-      requiredString(input, 'docType'),
-      requiredString(input, 'documentId')
-    );
-    return { item };
+    const docType = requiredString(input, 'docType');
+    const documentId = requiredString(input, 'documentId');
+    try {
+      const item = await holdedAdapter.getDocument(apiKey, docType, documentId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('document', documentId);
+      throw err;
+    }
   },
 
   async holded_create_document(apiKey, input) {
@@ -1066,12 +1069,16 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_contact_attachment(apiKey, input) {
-    const attachment = await holdedAdapter.getContactAttachment(
-      apiKey,
-      requiredString(input, 'contactId'),
-      requiredString(input, 'fileName')
-    );
-    return { attachment };
+    const contactId = requiredString(input, 'contactId');
+    const fileName = requiredString(input, 'fileName');
+    try {
+      const attachment = await holdedAdapter.getContactAttachment(apiKey, contactId, fileName);
+      return { attachment };
+    } catch (err) {
+      if (isHoldedNotFound(err))
+        return notFoundResponse('contact_attachment', `${contactId}/${fileName}`);
+      throw err;
+    }
   },
 
   async holded_create_contact(apiKey, input) {
@@ -1102,11 +1109,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_treasury_account(apiKey, input) {
-    const item = await holdedAdapter.getTreasuryAccount(
-      apiKey,
-      requiredString(input, 'treasuryAccountId')
-    );
-    return { item };
+    const treasuryAccountId = requiredString(input, 'treasuryAccountId');
+    try {
+      const item = await holdedAdapter.getTreasuryAccount(apiKey, treasuryAccountId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('treasury_account', treasuryAccountId);
+      throw err;
+    }
   },
 
   async holded_create_treasury_account(apiKey, input) {
@@ -1134,11 +1144,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_expense_account(apiKey, input) {
-    const item = await holdedAdapter.getExpenseAccount(
-      apiKey,
-      requiredString(input, 'expenseAccountId')
-    );
-    return { item };
+    const expenseAccountId = requiredString(input, 'expenseAccountId');
+    try {
+      const item = await holdedAdapter.getExpenseAccount(apiKey, expenseAccountId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('expense_account', expenseAccountId);
+      throw err;
+    }
   },
 
   async holded_create_expense_account(apiKey, input) {
@@ -1214,16 +1227,25 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_product(apiKey, input) {
-    const item = await holdedAdapter.getProduct(apiKey, requiredString(input, 'productId'));
-    return { item };
+    const productId = requiredString(input, 'productId');
+    try {
+      const item = await holdedAdapter.getProduct(apiKey, productId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('product', productId);
+      throw err;
+    }
   },
 
   async holded_get_product_main_image(apiKey, input) {
-    const image = await holdedAdapter.getProductMainImage(
-      apiKey,
-      requiredString(input, 'productId')
-    );
-    return { image };
+    const productId = requiredString(input, 'productId');
+    try {
+      const image = await holdedAdapter.getProductMainImage(apiKey, productId);
+      return { image };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('product', productId);
+      throw err;
+    }
   },
 
   async holded_list_product_images(apiKey, input) {
@@ -1232,12 +1254,15 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_product_secondary_image(apiKey, input) {
-    const image = await holdedAdapter.getProductSecondaryImage(
-      apiKey,
-      requiredString(input, 'productId'),
-      requiredString(input, 'imageFileName')
-    );
-    return { image };
+    const productId = requiredString(input, 'productId');
+    const imageFileName = requiredString(input, 'imageFileName');
+    try {
+      const image = await holdedAdapter.getProductSecondaryImage(apiKey, productId, imageFileName);
+      return { image };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('product', productId);
+      throw err;
+    }
   },
 
   async holded_update_product_stock(apiKey, input) {
@@ -1281,11 +1306,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_sales_channel(apiKey, input) {
-    const item = await holdedAdapter.getSalesChannel(
-      apiKey,
-      requiredString(input, 'salesChannelId')
-    );
-    return { item };
+    const salesChannelId = requiredString(input, 'salesChannelId');
+    try {
+      const item = await holdedAdapter.getSalesChannel(apiKey, salesChannelId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('sales_channel', salesChannelId);
+      throw err;
+    }
   },
 
   async holded_create_sales_channel(apiKey, input) {
@@ -1322,8 +1350,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_warehouse(apiKey, input) {
-    const item = await holdedAdapter.getWarehouse(apiKey, requiredString(input, 'warehouseId'));
-    return { item };
+    const warehouseId = requiredString(input, 'warehouseId');
+    try {
+      const item = await holdedAdapter.getWarehouse(apiKey, warehouseId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('warehouse', warehouseId);
+      throw err;
+    }
   },
 
   async holded_list_warehouse_stock(apiKey, input) {
@@ -1370,8 +1404,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_payment(apiKey, input) {
-    const item = await holdedAdapter.getPayment(apiKey, requiredString(input, 'paymentId'));
-    return { item };
+    const paymentId = requiredString(input, 'paymentId');
+    try {
+      const item = await holdedAdapter.getPayment(apiKey, paymentId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('payment', paymentId);
+      throw err;
+    }
   },
 
   async holded_create_payment(apiKey, input) {
@@ -1426,11 +1466,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_contact_group(apiKey, input) {
-    const item = await holdedAdapter.getContactGroup(
-      apiKey,
-      requiredString(input, 'contactGroupId')
-    );
-    return { item };
+    const contactGroupId = requiredString(input, 'contactGroupId');
+    try {
+      const item = await holdedAdapter.getContactGroup(apiKey, contactGroupId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('contact_group', contactGroupId);
+      throw err;
+    }
   },
 
   async holded_create_contact_group(apiKey, input) {
@@ -1464,8 +1507,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_remittance(apiKey, input) {
-    const item = await holdedAdapter.getRemittance(apiKey, requiredString(input, 'remittanceId'));
-    return { item };
+    const remittanceId = requiredString(input, 'remittanceId');
+    try {
+      const item = await holdedAdapter.getRemittance(apiKey, remittanceId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('remittance', remittanceId);
+      throw err;
+    }
   },
 
   async holded_list_services(apiKey, input) {
@@ -1477,8 +1526,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_service(apiKey, input) {
-    const item = await holdedAdapter.getService(apiKey, requiredString(input, 'serviceId'));
-    return { item };
+    const serviceId = requiredString(input, 'serviceId');
+    try {
+      const item = await holdedAdapter.getService(apiKey, serviceId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('service', serviceId);
+      throw err;
+    }
   },
 
   async holded_create_service(apiKey, input) {
@@ -1512,8 +1567,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_employee(apiKey, input) {
-    const item = await holdedAdapter.getEmployee(apiKey, requiredString(input, 'employeeId'));
-    return { item };
+    const employeeId = requiredString(input, 'employeeId');
+    try {
+      const item = await holdedAdapter.getEmployee(apiKey, employeeId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('employee', employeeId);
+      throw err;
+    }
   },
 
   async holded_create_employee(apiKey, input) {
