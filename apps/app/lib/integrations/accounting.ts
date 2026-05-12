@@ -147,7 +147,9 @@ async function holdedRequest<T>(options: HoldedRequestOptions): Promise<T> {
       const payload =
         parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
       const message = buildHoldedErrorMessage(response.status, payload, rawText);
-      throw new Error(message);
+      const err = new Error(message) as Error & { status?: number };
+      err.status = response.status;
+      throw err;
     }
 
     return (parsed as T) ?? (null as T);
@@ -1660,14 +1662,26 @@ export const holdedAdapter = {
     projectId: string,
     args?: { page?: number; limit?: number }
   ) {
-    return holdedRequest<HoldedProjectTask[]>({
+    // Holded NO expone endpoint público `/projects/{id}/tasks` — devuelve HTML
+    // 404 (incidencia QA 2026-05-11). Las tasks vienen embebidas dentro del
+    // objeto Project, así que hacemos GET al proyecto y extraemos el array
+    // `tasks` con paginación cliente-side.
+    const project = await holdedRequest<Record<string, unknown>>({
       apiKey,
-      path: '/api/projects/v1/projects/' + projectId + '/tasks',
-      query: {
-        page: args?.page ?? 1,
-        limit: args?.limit ?? 25,
-      },
+      path: '/api/projects/v1/projects/' + projectId,
     });
+
+    const rawTasks =
+      (project && Array.isArray(project.tasks) && project.tasks) ||
+      (project && Array.isArray((project as Record<string, unknown>).tasksList)
+        ? ((project as Record<string, unknown>).tasksList as unknown[])
+        : []);
+
+    const tasks = (rawTasks as HoldedProjectTask[]).map((t) => ({ ...t, projectId }));
+    const page = Math.max(1, Math.trunc(args?.page ?? 1));
+    const limit = Math.max(1, Math.min(100, Math.trunc(args?.limit ?? 25)));
+    const start = (page - 1) * limit;
+    return tasks.slice(start, start + limit);
   },
 
   async listEmployees(apiKey: string, args?: { page?: number; limit?: number }) {

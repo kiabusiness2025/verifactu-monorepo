@@ -746,6 +746,22 @@ function normalizeProductStockPayload(payload: Record<string, unknown>) {
   return payload;
 }
 
+function isHoldedNotFound(err: unknown): boolean {
+  if (!err || typeof err !== 'object') return false;
+  const e = err as { status?: number; message?: string };
+  if (e.status === 404) return true;
+  return typeof e.message === 'string' && /\b404\b/.test(e.message);
+}
+
+function notFoundResponse(entity: string, id: string) {
+  return {
+    error: 'not_found' as const,
+    entity,
+    id,
+    message: `${entity} con id "${id}" no existe en Holded o no es accesible con esta API key.`,
+  };
+}
+
 function hasHistoricalFilters(input: Record<string, unknown>) {
   return (
     input.year !== undefined ||
@@ -816,8 +832,13 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     //      el id resuelto.
     //   3. Si nada matchea → error claro indicando como buscar.
     if (/^[a-f0-9]{24}$/i.test(idOrNumber)) {
-      const item = await holdedAdapter.getInvoice(apiKey, idOrNumber);
-      return { item };
+      try {
+        const item = await holdedAdapter.getInvoice(apiKey, idOrNumber);
+        return { item };
+      } catch (err) {
+        if (isHoldedNotFound(err)) return notFoundResponse('invoice', idOrNumber);
+        throw err;
+      }
     }
 
     type InvoiceLike = {
@@ -1026,8 +1047,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_contact(apiKey, input) {
-    const item = await holdedAdapter.getContact(apiKey, requiredString(input, 'contactId'));
-    return { item };
+    const contactId = requiredString(input, 'contactId');
+    try {
+      const item = await holdedAdapter.getContact(apiKey, contactId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('contact', contactId);
+      throw err;
+    }
   },
 
   async holded_list_contact_attachments(apiKey, input) {
@@ -1621,8 +1648,14 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_project(apiKey, input) {
-    const item = await holdedAdapter.getProject(apiKey, requiredString(input, 'projectId'));
-    return { item };
+    const projectId = requiredString(input, 'projectId');
+    try {
+      const item = await holdedAdapter.getProject(apiKey, projectId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('project', projectId);
+      throw err;
+    }
   },
 
   async holded_list_project_tasks(apiKey, input) {
