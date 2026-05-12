@@ -4,6 +4,7 @@ import { HoldedApiError, HoldedClient } from '../holded-client.js';
 import {
   buildPaginationMeta,
   dateInputOptional,
+  defaultDailyLedgerRange,
   parsePageParam,
   toUnixSecondsString,
 } from '../utils.js';
@@ -11,7 +12,7 @@ import { readOnlyAnnotations } from './policy.js';
 
 /**
  * Devuelve `true` si un error de Holded indica que el endpoint no aplica para
- * esta cuenta concreta (módulo no activado, sin datos, etc.). Estos casos no
+ * esta cuenta concreta (modulo no activado, sin datos, etc.). Estos casos no
  * son fallos del MCP server — son condiciones esperables que merecen una
  * respuesta amable al LLM en lugar de un stack trace crudo.
  */
@@ -25,7 +26,7 @@ function isHoldedNotConfigured(err: unknown): boolean {
 export function registerProductsTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_products',
-    'Returns the list of Holded products and services in the catalog. Read-only. Paginated — use page and limit to control response size.',
+    'Returns the list of Holded products and services in the catalog. Read-only. Paginated.',
     {
       page: z.string().optional().describe('Results page number (default 1).'),
       limit: z.coerce
@@ -232,13 +233,13 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
 
   server.tool(
     'get_journal',
-    'Returns Holded journal entries (daily ledger) for a date range. Read-only. PAGINATED — always check the `pagination.likelyHasMorePages` flag and fetch all pages before computing aggregates (totals, balances, sums). A partial answer on accounting data is worse than no answer.',
+    'Returns Holded journal entries (daily ledger) for a date range. Read-only. PAGINATED — always check the `pagination.likelyHasMorePages` flag and fetch all pages before computing aggregates. If you omit starttmp and endtmp, the connector defaults to the current calendar year (Jan 1 to today).',
     {
       starttmp: dateInputOptional.describe(
-        'Start date (ISO 8601 or Unix seconds). Optional — omit it or send null if you want the full journal from the beginning.'
+        'Start date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to Jan 1 of the current calendar year.'
       ),
       endtmp: dateInputOptional.describe(
-        'End date (ISO 8601 or Unix seconds). Optional — omit it or send null if you want the journal up to today.'
+        'End date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to today.'
       ),
       page: z
         .string()
@@ -253,49 +254,96 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
       for (const [k, v] of Object.entries(rest)) {
         if (v !== undefined) params[k] = String(v);
       }
-      if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
-      if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
+      // Holded /dailyledger REQUIERE starttmp y endtmp como mandatory.
+      // Aplicamos defaults conservadores (anyo en curso) si el LLM los omite.
+      // Task #106 (12-may-2026).
+      const defaults = defaultDailyLedgerRange();
+      params.starttmp = starttmp !== undefined ? toUnixSecondsString(starttmp) : defaults.starttmp;
+      params.endtmp = endtmp !== undefined ? toUnixSecondsString(endtmp) : defaults.endtmp;
 
       const data = await getClient().getDailyLedger(params);
       const entries = Array.isArray(data) ? data : [];
       const page = parsePageParam(rest.page);
       const pagination = buildPaginationMeta(entries.length, page);
+      const usedDefaults = {
+        starttmp: starttmp === undefined,
+        endtmp: endtmp === undefined,
+      };
       return {
-        content: [{ type: 'text', text: JSON.stringify({ entries, pagination }, null, 2) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                entries,
+                pagination,
+                rangeApplied: {
+                  starttmp: params.starttmp,
+                  endtmp: params.endtmp,
+                  defaultsAppliedByConnector: usedDefaults,
+                },
+              },
+              null,
+              2
+            ),
+          },
+        ],
       };
     }
   );
 
   server.tool(
     'get_daily_book',
-    'Returns the Holded daily accounting book (daily ledger) for a date range. Read-only. PAGINATED — check `pagination.likelyHasMorePages` and fetch all pages before computing aggregates.',
+    'Returns the Holded daily accounting book (daily ledger) for a date range. Read-only. PAGINATED. If you omit starttmp and endtmp, the connector defaults to the current calendar year.',
     {
       starttmp: dateInputOptional.describe(
-        'Start date (ISO 8601 or Unix seconds). Optional — omit or null for full range.'
+        'Start date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to Jan 1 of the current calendar year.'
       ),
       endtmp: dateInputOptional.describe(
-        'End date (ISO 8601 or Unix seconds). Optional — omit or null for full range up to today.'
+        'End date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to today.'
       ),
       page: z
         .string()
         .optional()
         .describe(
-          'Results page number, as string (e.g. "1", "2"). Default 1. Increment until `pagination.likelyHasMorePages` is false.'
+          'Results page number, as string. Default 1. Increment until `pagination.likelyHasMorePages` is false.'
         ),
     },
     readOnlyAnnotations('get_daily_book'),
     async ({ starttmp, endtmp, page }) => {
       const params: Record<string, string> = {};
-      if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
-      if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
+      const defaults = defaultDailyLedgerRange();
+      params.starttmp = starttmp !== undefined ? toUnixSecondsString(starttmp) : defaults.starttmp;
+      params.endtmp = endtmp !== undefined ? toUnixSecondsString(endtmp) : defaults.endtmp;
       if (page !== undefined) params.page = String(page);
 
       const data = await getClient().getDailyLedger(params);
       const entries = Array.isArray(data) ? data : [];
       const pageNum = parsePageParam(page);
       const pagination = buildPaginationMeta(entries.length, pageNum);
+      const usedDefaults = {
+        starttmp: starttmp === undefined,
+        endtmp: endtmp === undefined,
+      };
       return {
-        content: [{ type: 'text', text: JSON.stringify({ entries, pagination }, null, 2) }],
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                entries,
+                pagination,
+                rangeApplied: {
+                  starttmp: params.starttmp,
+                  endtmp: params.endtmp,
+                  defaultsAppliedByConnector: usedDefaults,
+                },
+              },
+              null,
+              2
+            ),
+          },
+        ],
       };
     }
   );

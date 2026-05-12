@@ -187,3 +187,24 @@ export function enrichDocumentDates<T extends Record<string, unknown>>(doc: T): 
   }
   return out as T;
 }
+
+/**
+ * Holded `/api/accounting/v1/dailyledger` requiere `starttmp` y `endtmp` como
+ * mandatory. El schema Zod permite omitirlos para que el LLM no falle al
+ * llamar (bug #101), pero el handler tiene que rellenarlos antes de la
+ * llamada HTTP o Holded responde 400.
+ *
+ * Default conservador: rango del año fiscal en curso (1-enero hasta ahora).
+ * Si el usuario quiere otro rango, debe pasar starttmp y endtmp explicitos.
+ *
+ * Bug original (12-may-2026, task #106): el smoke test post-deploy de #101
+ * devolvio "Query params starttmp & endtmp are mandatory" del API de Holded.
+ */
+export function defaultDailyLedgerRange(): { starttmp: string; endtmp: string } {
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1);
+  return {
+    starttmp: String(Math.floor(yearStart.getTime() / 1000)),
+    endtmp: String(Math.floor(now.getTime() / 1000)),
+  };
+}
