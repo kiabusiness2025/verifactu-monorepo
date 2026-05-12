@@ -95,8 +95,15 @@ export interface PaginationMeta {
 export function buildPaginationMeta(
   itemsInPage: number,
   page: number = 1,
-  pageSize: number = 100
+  pageSize: number = 500
 ): PaginationMeta {
+  // Holded /dailyledger devuelve por defecto hasta ~500 entradas por pagina
+  // (observado empiricamente; no documentado oficialmente). Si itemsInPage
+  // iguala o supera ese umbral, asumimos que hay mas paginas.
+  //
+  // Bug arreglado (12-may-2026, task #107): antes el default era 100, lo que
+  // hacia que el smoke test reportara pageSize=100 cuando Holded devolvia 250.
+  // El modelo veia la discrepancia y se confundia.
   const likelyHasMorePages = itemsInPage >= pageSize;
   return {
     page,
@@ -105,7 +112,7 @@ export function buildPaginationMeta(
     likelyHasMorePages,
     suggestedNextPage: likelyHasMorePages ? page + 1 : null,
     hint: likelyHasMorePages
-      ? `Holded returned ${itemsInPage} items in page ${page} (a full page). MORE PAGES LIKELY EXIST. Call again with page=${page + 1} to continue, and merge results client-side. Do NOT report aggregate values (totals, sums, counts) until you have fetched every page or you will return a partial answer.`
+      ? `Holded returned ${itemsInPage} items in page ${page} (matches expected pageSize=${pageSize}, page is full). MORE PAGES LIKELY EXIST. Call again with page=${page + 1} to continue, and merge results client-side. Do NOT report aggregate values (totals, sums, counts) until you have fetched every page or you will return a partial answer.`
       : null,
   };
 }
