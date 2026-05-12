@@ -740,6 +740,16 @@ async function scanTypedDocumentsHistory(
   let oldestScannedDate: Date | null = null;
   let newestScannedDate: Date | null = null;
 
+  // Filtrado server-side via starttmp/endtmp (Unix seconds). Antes de este
+  // fix el scan pedía TODAS las facturas paginadas y filtraba cliente-side,
+  // limitado a HOLDED_HISTORY_SCAN_PAGES * 100 = 1200 docs. Tenants con más
+  // historial no podían acceder a años anteriores (ej. 2025). Ahora Holded
+  // filtra por rango y devolvemos exactamente lo que cabe en el rango sin
+  // tope artificial de páginas. Mantenemos el filtrado cliente-side como
+  // safety net por si Holded ignora los timestamps en algún endpoint.
+  const starttmp = Math.floor(args.range.from.getTime() / 1000);
+  const endtmp = Math.floor(args.range.to.getTime() / 1000);
+
   for (let currentPage = 1; currentPage <= scanLimit; currentPage += 1) {
     const batch = await holdedRequest<Record<string, unknown>[]>({
       apiKey,
@@ -748,6 +758,8 @@ async function scanTypedDocumentsHistory(
         page: currentPage,
         limit: HOLDED_HISTORY_FETCH_LIMIT,
         status: args.status,
+        starttmp,
+        endtmp,
       },
     });
 
