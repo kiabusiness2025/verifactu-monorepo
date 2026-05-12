@@ -89,7 +89,11 @@ const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
 // env var MCP_PUBLIC_SCOPE_PRESET no estaba seteada en produccion, el revisor
 // de OpenAI veia un set de tools distinto al que firmamos en la submission —
 // causa textbook de rechazo.
-const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_v2';
+// 2026-05-11: default público actualizado a holded_full_read_v1 para exponer
+// las 9 tools de lectura que faltaban en openai_review_v2 (documents, payments,
+// products, services, employees, etc.) — manteniendo invoices.write como única
+// escritura. OpenAI permite actualizar el catálogo de tools durante el review.
+const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'holded_full_read_v1';
 const AUTHORIZATION_CODE_REDEMPTIONS_TABLE = 'oauth_authorization_code_redemptions';
 
 type MintAuthorizationCodeInput = Omit<AuthorizationCodePayload, 'codeId'>;

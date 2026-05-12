@@ -145,6 +145,7 @@ export type HoldedMcpScopePreset =
   | 'holded_public_campaign_v1'
   | 'holded_priority1'
   | 'openai_review_v2'
+  | 'holded_full_read_v1'
   | 'claude_parity';
 
 const READONLY_SCOPE_SET = HOLDED_MCP_SUPPORTED_SCOPES.filter((scope) => !scope.endsWith('.write'));
@@ -186,6 +187,44 @@ const OPENAI_REVIEW_V2_SCOPE_SET = [
   'holded.crm.read',
   'holded.projects.read',
   'holded.invoices.write',
+] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
+
+/**
+ * holded_full_read_v1 — preset de read-only ampliado (2026-05-11).
+ *
+ * Supersedes openai_review_v2 como default público. Incluye todos los .read
+ * disponibles para exponer las 9 tools que el smoke-test detectó como N/D
+ * (list_documents, list_payments, list_products, list_services, list_employees,
+ * list_time_records, etc.). Mantiene `invoices.write` como única superficie de
+ * escritura, alineado con la promesa "lectura amplia + escritura mínima" de la
+ * submission OpenAI.
+ *
+ * Diferencias vs openai_review_v2: añade .read sobre documents, payments,
+ * products (+media), services, employees, expenses, treasury, numbering, taxes,
+ * paymentmethods, remittances, contactgroups, contacts.attachments.
+ */
+const HOLDED_FULL_READ_V1_SCOPE_SET = [
+  'mcp.read',
+  'holded.invoices.read',
+  'holded.invoices.write',
+  'holded.documents.read',
+  'holded.contacts.read',
+  'holded.contacts.attachments.read',
+  'holded.contactgroups.read',
+  'holded.accounts.read',
+  'holded.expenses.read',
+  'holded.treasury.read',
+  'holded.products.read',
+  'holded.products.media.read',
+  'holded.services.read',
+  'holded.payments.read',
+  'holded.paymentmethods.read',
+  'holded.taxes.read',
+  'holded.numbering.read',
+  'holded.remittances.read',
+  'holded.employees.read',
+  'holded.crm.read',
+  'holded.projects.read',
 ] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
 
 const HOLDED_PUBLIC_CAMPAIGN_V1_SCOPE_SET = [
@@ -257,6 +296,7 @@ export function getHoldedMcpScopePreset(preset: HoldedMcpScopePreset) {
   if (preset === 'readonly') return READONLY_SCOPE_SET;
   if (preset === 'holded_public_campaign_v1') return HOLDED_PUBLIC_CAMPAIGN_V1_SCOPE_SET;
   if (preset === 'openai_review_v2') return OPENAI_REVIEW_V2_SCOPE_SET;
+  if (preset === 'holded_full_read_v1') return HOLDED_FULL_READ_V1_SCOPE_SET;
   if (preset === 'holded_phase2_accounting') return HOLDED_PHASE2_ACCOUNTING_SCOPE_SET;
   if (preset === 'holded_priority1') return HOLDED_PRIORITY1_SCOPE_SET;
   if (preset === 'invoicing_accounting') return INVOICING_ACCOUNTING_SCOPE_SET;
