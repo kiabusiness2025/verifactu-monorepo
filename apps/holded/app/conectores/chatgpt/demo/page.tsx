@@ -15,11 +15,7 @@ export const metadata: Metadata = {
 // "demo not ready". Reorientamos la página al video real del hero mock
 // (5 escenas con tools reales) embedido como video local mp4 servido
 // estáticamente desde /demo/hero-mock-chatgpt.mp4, más el video oficial de
-// YouTube alojado en https://www.youtube.com/embed/Sa0n7xUkSNM (unlisted).
-// Cuando existan GIFs grabados desde Nova Gestión añadimos `src` a cada
-// entrada de GIF_CATEGORIES; las que no tengan src NO se renderizan ya
-// (en lugar de mostrar el placeholder).
-const INTRO_YOUTUBE_URL = 'https://www.youtube.com/embed/Sa0n7xUkSNM';
+const INTRO_YOUTUBE_URL = 'https://www.youtube.com/embed/QUdSSakdI_c';
 const INTRO_LOCAL_VIDEO_URL = '/demo/hero-mock-chatgpt.mp4';
 const OUTRO_YOUTUBE_URL = '';
 const OUTRO_LOCAL_VIDEO_URL = '';
