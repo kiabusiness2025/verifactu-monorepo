@@ -67,6 +67,7 @@ env/
 **/.vercel/.env*
 archive/env/
 docs/legacy/.env.txt
+docs/video-assets/YouTube/
 apps/landing/.env.local.vercel-token.bak
 env-audit.txt
 
