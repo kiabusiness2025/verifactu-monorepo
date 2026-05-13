@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>LinkedIn Mock 3 — 7 bugs fixed en 1 día</title>
+<style>
+  body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; padding: 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .card {
+    width: 1200px; height: 627px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+  }
+  .left {
+    background: linear-gradient(160deg, #2361d8 0%, #081936 100%);
+    color: white;
+    padding: 44px 36px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 2px;
+    opacity: 0.7;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  h1 { font-size: 46px; margin: 0; font-weight: 800; line-height: 1.05; letter-spacing: -1.5px; }
+  .hero-num { font-size: 96px; font-weight: 900; color: #f7c948; line-height: 1; margin: 12px 0 8px; }
+  .lead { font-size: 18px; opacity: 0.85; line-height: 1.4; margin: 0; }
+  .footer-left {
+    font-size: 12px;
+    opacity: 0.6;
+    margin-top: 24px;
+    letter-spacing: 1px;
+  }
+  .right { padding: 32px 36px; display: flex; flex-direction: column; }
+  .right h2 { font-size: 20px; margin: 0 0 18px; color: #081936; }
+  .bug-row {
+    display: grid;
+    grid-template-columns: 50px 60px 1fr 90px;
+    align-items: center;
+    padding: 9px 0;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+  }
+  .bug-row:last-child { border-bottom: none; }
+  .bug-id { font-weight: 700; color: #2361d8; }
+  .prio { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; text-align: center; }
+  .p0 { background: #fee2e2; color: #b91c1c; }
+  .p1 { background: #fef3c7; color: #92400e; }
+  .p2 { background: #dbeafe; color: #1e40af; }
+  .p3 { background: #e5e7eb; color: #6b7280; }
+  .bug-title { color: #1f2937; }
+  .check { color: #16a34a; font-weight: 700; text-align: right; font-size: 13px; }
+  .stats {
+    margin-top: 18px;
+    padding-top: 16px;
+    border-top: 2px solid #e5e7eb;
+    display: flex;
+    justify-content: space-around;
+    text-align: center;
+  }
+  .stat-block { font-size: 12px; color: #6b7280; }
+  .stat-block strong { display: block; font-size: 24px; color: #081936; font-weight: 800; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="left">
+    <div>
+      <div class="eyebrow">★ Sprint del 12 mayo 2026</div>
+      <h1>7 bugs detectados</h1>
+      <div class="hero-num">→ fixed</div>
+      <p class="lead">Demo side-by-side con Holded. 70 tests verde. Deploy a producción mismo día.</p>
+    </div>
+    <div class="footer-left">VERIFACTU · CONECTOR HOLDED</div>
+  </div>
+  <div class="right">
+    <h2>Backlog cerrado en 1 día</h2>
+    <div class="bug-row">
+      <span class="bug-id">#101</span>
+      <span class="prio p0">P0</span>
+      <span class="bug-title">get_journal rechazaba endtmp=null en bucle</span>
+      <span class="check">✓ fixed</span>
+    </div>
+    <div class="bug-row">
+      <span class="bug-id">#102</span>
+      <span class="prio p1">P1</span>
+      <span class="bug-title">list_contacts orden no determinista</span>
+      <span class="check">✓ fixed</span>
+    </div>
+    <div class="bug-row">
+      <span class="bug-id">#103</span>
+      <span class="prio p1">P1</span>
+      <span class="bug-title">Sin flag truncated → respuestas parciales sin avisar</span>
+      <span class="check">✓ fixed</span>
+    </div>
+    <div class="bug-row">
+      <span class="bug-id">#104</span>
+      <span class="prio p2">P2</span>
+      <span class="bug-title">Desfase 1 día en fechas (timezone Madrid)</span>
+      <span class="check">✓ fixed</span>
+    </div>
+    <div class="bug-row">
+      <span class="bug-id">#105</span>
+      <span class="prio p3">P3</span>
+      <span class="bug-title">Investigación ChatGPT tool calls limit</span>
+      <span class="check">✓ cerrada</span>
+    </div>
+    <div class="bug-row">
+      <span class="bug-id">#106</span>
+      <span class="prio p0">P0</span>
+      <span class="bug-title">Defaults starttmp/endtmp en get_journal</span>
+      <span class="check">✓ fixed</span>
+    </div>
+    <div class="bug-row">
+      <span class="bug-id">#107</span>
+      <span class="prio p1">P1</span>
+      <span class="bug-title">pageSize hardcoded 100 → ahora 500 real</span>
+      <span class="check">✓ fixed</span>
+    </div>
+    <div class="stats">
+      <div class="stat-block"><strong>70</strong>Tests verde</div>
+      <div class="stat-block"><strong>3</strong>Deploys hoy</div>
+      <div class="stat-block"><strong>0</strong>Downtime</div>
+      <div class="stat-block"><strong>200%</strong>Ready</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

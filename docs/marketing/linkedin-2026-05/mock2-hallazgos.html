@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>LinkedIn Mock 2 — Hallazgos Claude</title>
+<style>
+  body { margin: 0; background: #f5f5f5; display: flex; justify-content: center; padding: 40px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .card {
+    width: 1080px; height: 1080px;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .header {
+    background: linear-gradient(135deg, #2361d8 0%, #081936 100%);
+    color: white;
+    padding: 44px 56px 32px;
+    text-align: center;
+  }
+  .eyebrow {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    padding: 6px 18px;
+    border-radius: 20px;
+    font-size: 14px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  h1 { font-size: 52px; margin: 0 0 8px; font-weight: 800; letter-spacing: -1px; line-height: 1.1; }
+  .subtitle { font-size: 22px; opacity: 0.85; margin: 0; }
+  .body { flex: 1; padding: 48px 56px; }
+  .findings { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 22px; }
+  .finding {
+    background: #fafafa;
+    border-left: 4px solid #2361d8;
+    border-radius: 8px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .finding-num {
+    font-size: 28px;
+    font-weight: 800;
+    color: #2361d8;
+    line-height: 1;
+    min-width: 36px;
+  }
+  .finding-text { font-size: 17px; line-height: 1.4; color: #1f2937; }
+  .finding-text strong { color: #081936; }
+  .vs-row {
+    margin-top: 36px;
+    padding: 24px;
+    background: #fff8e1;
+    border-radius: 12px;
+    border: 1px dashed #f7c948;
+    text-align: center;
+  }
+  .vs-row .lead { font-size: 18px; color: #6b7280; margin: 0 0 6px; }
+  .vs-row .money { font-size: 38px; font-weight: 800; color: #d97706; }
+  .footer {
+    background: #081936;
+    color: white;
+    padding: 22px 56px;
+    text-align: center;
+    font-size: 16px;
+  }
+  .footer strong { color: #f7c948; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="eyebrow">★ Lo que Claude detectó en 4:46</div>
+    <h1>6 problemas reales</h1>
+    <p class="subtitle">en tu contabilidad de Holded</p>
+  </div>
+  <div class="body">
+    <div class="findings">
+      <div class="finding">
+        <div class="finding-num">1</div>
+        <div class="finding-text"><strong>28 cuentas bancarias VF Smoke</strong> a saldo 0 — entorno de demo, no operativo real</div>
+      </div>
+      <div class="finding">
+        <div class="finding-num">2</div>
+        <div class="finding-text"><strong>IVA de compras a medio contabilizar</strong> — pago = base, falta el IVA</div>
+      </div>
+      <div class="finding">
+        <div class="finding-num">3</div>
+        <div class="finding-text"><strong>Falta retención IRPF 15%</strong> en facturas de asesoría profesional</div>
+      </div>
+      <div class="finding">
+        <div class="finding-num">4</div>
+        <div class="finding-text"><strong>Serie de facturas inconsistente</strong> entre F250001 (2025) y F0001 (2026) — rompe VeriFactu</div>
+      </div>
+      <div class="finding">
+        <div class="finding-num">5</div>
+        <div class="finding-text"><strong>Iota Construcción = 28%</strong> de la facturación — riesgo de concentración alto</div>
+      </div>
+      <div class="finding">
+        <div class="finding-num">6</div>
+        <div class="finding-text"><strong>costPrice = 0</strong> en todos los productos — imposible calcular margen unitario</div>
+      </div>
+    </div>
+    <div class="vs-row">
+      <p class="lead">Bonus: ChatGPT detectó un descuadre contable de</p>
+      <p class="money">68.398,05 €</p>
+      <p class="lead">…entre la P&G de 2025 calculada y la apertura del 2026.</p>
+    </div>
+  </div>
+  <div class="footer">
+    VERIFACTU · CONECTOR HOLDED · <strong>claude.verifactu.business</strong>
+  </div>
+</div>
+</body>
+</html>
