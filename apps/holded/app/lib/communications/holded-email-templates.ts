@@ -138,6 +138,44 @@ function cardLayoutClaude(input: { label: string; title: string; body: string; f
   `.trim();
 }
 
+function brandHeaderChatgpt(label: string) {
+  const siteUrl = holdedSiteUrl();
+  const holdedLogo = `${siteUrl}/brand/holded/holded-diamond-logo.png`;
+
+  return `
+    <div style="padding:28px 28px 18px;background:linear-gradient(135deg,#f0fdf4 0%,#dcfce7 55%,#ecfdf5 100%);border-radius:24px 24px 0 0;border:1px solid #bbf7d0;border-bottom:none;">
+      <table role="presentation" width="100%" style="border-collapse:collapse;">
+        <tr>
+          <td style="vertical-align:middle;">
+            <div style="display:inline-flex;align-items:center;gap:10px;padding:7px 14px;border-radius:999px;background:#ffffff;border:1px solid #bbf7d0;color:#065f46;font-size:12px;font-weight:700;letter-spacing:0.04em;">
+              <img src="${holdedLogo}" alt="Holded" width="18" height="18" style="display:block;border:0;" />
+              ${label}
+            </div>
+          </td>
+          <td align="right" style="vertical-align:middle;color:#10a37f;font-size:12px;font-weight:700;letter-spacing:0.04em;">
+            Conector ChatGPT
+          </td>
+        </tr>
+      </table>
+    </div>
+  `.trim();
+}
+
+function cardLayoutChatgpt(input: { label: string; title: string; body: string; footer?: string }) {
+  return `
+    <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
+      <div style="background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 18px 40px rgba(15,23,42,0.08);">
+        ${brandHeaderChatgpt(input.label)}
+        <div style="padding:28px;">
+          <h1 style="font-size:28px;line-height:1.15;margin:0 0 12px;">${input.title}</h1>
+          ${input.body}
+          ${input.footer || ''}
+        </div>
+      </div>
+    </div>
+  `.trim();
+}
+
 function cardLayout(input: { label: string; title: string; body: string; footer?: string }) {
   return `
     <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#f8fafc;">
@@ -403,26 +441,26 @@ export function buildHoldedWelcomeChatgptEmail(input: {
   const promptRows = chatgptPromptExamples
     .map(
       (p, i) =>
-        `<div style="padding:10px 16px;${i < chatgptPromptExamples.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}font-size:13px;color:#334155;"><span style="color:#ff5460;font-weight:700;margin-right:8px;">›</span>${escapeHtml(p)}</div>`
+        `<div style="padding:10px 16px;${i < chatgptPromptExamples.length - 1 ? 'border-bottom:1px solid #dcfce7;' : ''}font-size:13px;color:#334155;"><span style="color:#10a37f;font-weight:700;margin-right:8px;">›</span>${escapeHtml(p)}</div>`
     )
     .join('');
 
   return {
     subject: 'Tu conexion de Holded ya esta lista',
-    html: cardLayout({
-      label: 'Primera conexion',
+    html: cardLayoutChatgpt({
+      label: 'Primera conexion ChatGPT',
       title: 'Ya puedes consultar Holded desde ChatGPT',
       body: `
         <p style="margin:0 0 14px;">${escapeHtml(hello)}</p>
         <p style="margin:0 0 18px;">Tu cuenta de Holded ya esta conectada. Puedes empezar ahora mismo con preguntas como estas directamente en ChatGPT:</p>
-        <div style="margin:0 0 22px;background:#f8fafc;border-radius:16px;border:1px solid #e2e8f0;overflow:hidden;">
+        <div style="margin:0 0 22px;background:#f0fdf4;border-radius:16px;border:1px solid #bbf7d0;overflow:hidden;">
           ${promptRows}
         </div>
         <p style="margin:0 0 18px;font-size:13px;color:#64748b;">El conector accede a la API oficial de Holded. Solo prepara borradores de factura cuando tu lo confirmas explicitamente. Todo lo demas es lectura.</p>
-        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;margin-right:10px;">Ir a ChatGPT ahora</a>
-        <a href="${escapeHtml(input.profileCompletionUrl)}" style="display:inline-block;background:#ffffff;color:#b4233c;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;border:1px solid #f3d0d7;">Completar contexto</a>
+        <a href="${escapeHtml(primaryUrl)}" style="display:inline-block;background:#10a37f;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;margin-right:10px;">Ir a ChatGPT ahora</a>
+        <a href="${escapeHtml(input.profileCompletionUrl)}" style="display:inline-block;background:#ffffff;color:#065f46;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;border:1px solid #bbf7d0;">Completar contexto</a>
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
-        <p style="font-size:12px;color:#64748b;margin:0;">Si necesitas ayuda, responde a este correo o escribe a <a href="mailto:soporte@verifactu.business" style="color:#b4233c;">soporte@verifactu.business</a></p>
+        <p style="font-size:12px;color:#64748b;margin:0;">Si necesitas ayuda, responde a este correo o escribe a <a href="mailto:soporte@verifactu.business" style="color:#10a37f;">soporte@verifactu.business</a></p>
       `,
       footer: legalFooter(),
     }),
@@ -530,16 +568,16 @@ export function buildHoldedDisconnectedEmail(input: {
 }): EmailTemplate {
   const hello = greeting(input.name);
   const company = sanitizeCompanyName(input.companyName);
-  const channelLabel =
-    input.channel === 'chatgpt' || input.channel === 'mobile'
-      ? 'ChatGPT'
-      : input.channel === 'claude'
-        ? 'Claude'
-        : 'el panel';
+  const isClaude = input.channel === 'claude';
+  const isChatgpt = input.channel === 'chatgpt' || input.channel === 'mobile';
+  const channelLabel = isChatgpt ? 'ChatGPT' : isClaude ? 'Claude' : 'el panel';
+  const ctaColor = isClaude ? '#d97706' : isChatgpt ? '#10a37f' : '#ff5460';
+  const supportLinkColor = isClaude ? '#d97706' : isChatgpt ? '#10a37f' : '#b4233c';
+  const layout = isClaude ? cardLayoutClaude : isChatgpt ? cardLayoutChatgpt : cardLayout;
 
   return {
     subject: `Has desconectado Holded de ${channelLabel}`,
-    html: cardLayout({
+    html: layout({
       label: 'Conexion desactivada',
       title: `Tu Holded ya no esta conectado a ${channelLabel}`,
       body: `
@@ -553,9 +591,9 @@ export function buildHoldedDisconnectedEmail(input: {
             <li>Puedes volver a conectar en cualquier momento.</li>
           </ul>
         </div>
-        <a href="${escapeHtml(input.reconnectUrl)}" style="display:inline-block;background:#ff5460;color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;">Volver a conectar</a>
+        <a href="${escapeHtml(input.reconnectUrl)}" style="display:inline-block;background:${ctaColor};color:#fff;text-decoration:none;padding:13px 24px;border-radius:999px;font-weight:700;">Volver a conectar</a>
         <hr style="border:none;border-top:1px solid #e2e8f0;margin:22px 0;" />
-        <p style="font-size:12px;color:#64748b;margin:0;">Si no fuiste tu quien desconecto, responde a este correo o escribe a <a href="mailto:soporte@verifactu.business" style="color:#b4233c;">soporte@verifactu.business</a></p>
+        <p style="font-size:12px;color:#64748b;margin:0;">Si no fuiste tu quien desconecto, responde a este correo o escribe a <a href="mailto:soporte@verifactu.business" style="color:${supportLinkColor};">soporte@verifactu.business</a></p>
       `,
       footer: legalFooter(),
     }),

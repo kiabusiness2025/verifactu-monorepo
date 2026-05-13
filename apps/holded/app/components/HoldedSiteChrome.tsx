@@ -55,13 +55,13 @@ export default function HoldedSiteChrome({ children }: Props) {
 
   // Nav: keep Hub + both connectors visible always, then context-aware secondary links.
   const navLinks = [
-    { href: '/conectores', label: 'Conectores' },
-    { href: '/conectores/chatgpt', label: 'ChatGPT' },
-    { href: '/conectores/claude', label: 'Claude' },
-    { href: links.docs, label: 'Docs' },
-    { href: links.privacy, label: 'Privacidad' },
-    { href: links.dpa, label: 'DPA' },
-    { href: links.soporte, label: 'Soporte' },
+    { href: '/conectores', label: 'Conectores', dotClass: '' },
+    { href: '/conectores/claude', label: 'Claude', dotClass: 'bg-[#D4570C]' },
+    { href: '/conectores/chatgpt', label: 'ChatGPT', dotClass: 'bg-[#10a37f]' },
+    { href: links.docs, label: 'Docs', dotClass: '' },
+    { href: links.privacy, label: 'Privacidad', dotClass: '' },
+    { href: links.dpa, label: 'DPA', dotClass: '' },
+    { href: links.soporte, label: 'Soporte', dotClass: '' },
   ];
   const hubReturnUrl = `${HOLDED_PUBLIC_URL}/conectores`;
 
@@ -97,7 +97,14 @@ export default function HoldedSiteChrome({ children }: Props) {
 
             <nav className="hidden items-center gap-4 text-xs font-semibold text-slate-600 lg:flex xl:text-sm">
               {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className="transition hover:text-slate-900">
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className="inline-flex items-center gap-1.5 transition hover:text-slate-900"
+                >
+                  {link.dotClass && (
+                    <span className={`h-1.5 w-1.5 rounded-full ${link.dotClass}`} />
+                  )}
                   {link.label}
                 </Link>
               ))}
@@ -158,6 +165,9 @@ export default function HoldedSiteChrome({ children }: Props) {
                       onClick={() => setMenuOpen(false)}
                       className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
                     >
+                      {link.dotClass && (
+                        <span className={`h-1.5 w-1.5 rounded-full ${link.dotClass}`} />
+                      )}
                       {link.label}
                     </Link>
                   </li>

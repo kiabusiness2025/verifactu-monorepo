@@ -3,7 +3,7 @@
  *
  * Sustituye el re-export de `/docs/chatgpt` (Holded brand rojo) por una version
  * que usa `ConnectorPageShell` + theme verde ChatGPT, en linea con
- * terms/privacy/dpa. El contenido es el mismo (requisitos, pasos, herramientas,
+ * terms/privacy/dpa. El contenido es el mismo (requisitos, pasos, capacidades,
  * seguridad, FAQ) pero con paleta emerald y enlaces que apuntan a
  * /conectores/chatgpt/* en vez de las rutas raiz.
  */
@@ -42,7 +42,7 @@ const MODULES = [
     label: 'Facturación',
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
-    tools: ['holded_list_invoices', 'holded_get_invoice', 'holded_create_invoice_draft'],
+    capabilities: ['Facturas recientes', 'Detalle de factura', 'Borradores con confirmación'],
     desc: 'Lista facturas, consulta detalles y crea borradores con confirmación explícita.',
   },
   {
@@ -50,12 +50,10 @@ const MODULES = [
     label: 'Contactos / CRM',
     color: 'text-violet-500',
     bg: 'bg-violet-50',
-    tools: [
-      'holded_list_contacts',
-      'holded_get_contact',
-      'holded_list_bookings',
-      'holded_list_crm_funnels',
-      'holded_list_leads',
+    capabilities: [
+      'Contactos y datos fiscales',
+      'Reservas si están disponibles',
+      'Embudo CRM y leads',
     ],
     desc: 'Clientes, proveedores, embudos de venta y leads.',
   },
@@ -64,7 +62,7 @@ const MODULES = [
     label: 'Productos',
     color: 'text-sky-500',
     bg: 'bg-sky-50',
-    tools: ['holded_list_products', 'holded_get_product', 'holded_list_warehouses'],
+    capabilities: ['Catálogo de productos', 'Ficha y precios', 'Almacenes'],
     desc: 'Catálogo de productos, precios y almacenes.',
   },
   {
@@ -72,12 +70,7 @@ const MODULES = [
     label: 'Proyectos',
     color: 'text-amber-500',
     bg: 'bg-amber-50',
-    tools: [
-      'holded_list_projects',
-      'holded_get_project',
-      'holded_list_project_tasks',
-      'holded_list_time_records',
-    ],
+    capabilities: ['Proyectos abiertos', 'Tareas', 'Registros de tiempo'],
     desc: 'Estado de proyectos, tareas y registros de tiempo.',
   },
   {
@@ -85,7 +78,7 @@ const MODULES = [
     label: 'Contabilidad',
     color: 'text-emerald-700',
     bg: 'bg-emerald-50',
-    tools: ['holded_list_accounts', 'holded_list_daily_ledger'],
+    capabilities: ['Plan de cuentas', 'Diario contable'],
     desc: 'Plan de cuentas, libro diario y libro mayor.',
   },
   {
@@ -93,7 +86,7 @@ const MODULES = [
     label: 'Equipo',
     color: 'text-indigo-500',
     bg: 'bg-indigo-50',
-    tools: ['holded_list_employees', 'holded_get_employee'],
+    capabilities: ['Empleados', 'Detalle por persona'],
     desc: 'Lista de empleados y datos por persona.',
   },
   {
@@ -101,7 +94,7 @@ const MODULES = [
     label: 'Tesorería',
     color: 'text-teal-600',
     bg: 'bg-teal-50',
-    tools: ['holded_list_treasury_accounts'],
+    capabilities: ['Cuentas de tesorería'],
     desc: 'Cuentas bancarias y saldos.',
   },
 ];
@@ -139,7 +132,7 @@ const STEPS = [
     title: 'Introduce tu API key y autoriza',
     body: (
       <>
-        En la pantalla de autorización OAuth introduce tu API key de Holded. El conector verifica el
+        En la pantalla de autorización introduce tu API key de Holded. El conector verifica el
         acceso y genera un token seguro — tu API key nunca se envía a OpenAI.
       </>
     ),
@@ -182,10 +175,7 @@ const FAQS = [
 ];
 
 const SECURITY_HIGHLIGHTS: ReadonlyArray<readonly [string, string]> = [
-  [
-    'OAuth 2.0 estándar',
-    'Flujo authorization code — compatible con la especificación oficial de ChatGPT connectors.',
-  ],
+  ['Conexión segura', 'Flujo de autorización compatible con conectores de ChatGPT.'],
   [
     'API key cifrada',
     'Tu API key de Holded se almacena cifrada. Nunca se expone a OpenAI ni a terceros.',
@@ -303,11 +293,11 @@ export default function ChatGPTDocsPage() {
         </ol>
       </article>
 
-      {/* ── Modulos / herramientas ── */}
+      {/* ── Modulos y capacidades ── */}
       <div className="mt-4">
         <div className="mb-4 flex items-center gap-2 px-1 text-sm font-semibold text-slate-900">
           <FileText className="h-4 w-4 text-emerald-600" />
-          Módulos y herramientas disponibles
+          Módulos y capacidades disponibles
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           {MODULES.map((mod) => {
@@ -325,13 +315,13 @@ export default function ChatGPTDocsPage() {
                 </div>
                 <p className="mt-2 text-xs leading-5 text-slate-500">{mod.desc}</p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
-                  {mod.tools.map((tool) => (
-                    <code
-                      key={tool}
-                      className="rounded-md bg-slate-100 px-2 py-0.5 font-mono text-[10px] text-slate-600"
+                  {mod.capabilities.map((capability) => (
+                    <span
+                      key={capability}
+                      className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600"
                     >
-                      {tool}
-                    </code>
+                      {capability}
+                    </span>
                   ))}
                 </div>
               </article>

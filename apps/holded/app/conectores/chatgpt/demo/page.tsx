@@ -6,14 +6,14 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Demo Conector Holded para ChatGPT | Verifactu Business',
   description:
-    'Demo del conector Holded para ChatGPT: conexion segura con OAuth + PKCE, consulta de facturas, contactos, contabilidad y borrador con confirmacion explicita. 24 ejemplos en video.',
+    'Demo del conector Holded para ChatGPT: conexion segura, consulta de facturas, contactos, contabilidad y borradores con confirmacion explicita.',
   alternates: { canonical: '/conectores/chatgpt/demo' },
 };
 
 // B6 hardening (auditoría 2026-05-11): la demo del conector ChatGPT usaba 24
 // placeholders "GIF en preparacion" que un revisor de OpenAI veía como
 // "demo not ready". Reorientamos la página al video real del hero mock
-// (5 escenas con tools reales) embedido como video local mp4 servido
+// (5 escenas con datos reales) embedido como video local mp4 servido
 // estáticamente desde /demo/hero-mock-chatgpt.mp4, más el video oficial de
 const INTRO_YOUTUBE_URL = 'https://www.youtube.com/embed/QUdSSakdI_c';
 const INTRO_LOCAL_VIDEO_URL = '/demo/hero-mock-chatgpt.mp4';
@@ -26,14 +26,14 @@ type GifCategory = {
   blurb: string;
   gifs: Array<{
     title: string;
-    tool: string;
+    capability: string;
     description: string;
     src?: string;
   }>;
 };
 
 // Roadmap de los 24 GIFs ordenados por valor comercial.
-// Sin `src` se renderiza como placeholder con el titulo + tool.
+// Sin `src` se renderiza como placeholder con el titulo + capacidad.
 // Cuando tengamos los GIFs grabados desde Nova Gestion, anadimos `src: '/gif/holded-chatgpt/<slug>.gif'`.
 const GIF_CATEGORIES: GifCategory[] = [
   {
@@ -43,22 +43,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Resumen mensual de facturacion',
-        tool: 'holded_list_documents + holded_get_document',
+        capability: 'Facturas y clientes',
         description: 'Top clientes, evolucion mes a mes y outliers detectados automaticamente.',
       },
       {
         title: 'Comparativa trimestral',
-        tool: 'holded_list_documents (rango fechas)',
+        capability: 'Facturas por rango de fechas',
         description: 'Q3 vs Q4 con variacion % por categoria de producto.',
       },
       {
         title: 'Distribucion de gastos',
-        tool: 'holded_list_accounts + holded_list_daily_ledger',
+        capability: 'Cuentas y diario contable',
         description: 'Pie chart de partidas y deteccion de gastos atipicos.',
       },
       {
         title: 'Embudo CRM visual',
-        tool: 'holded_list_crm_funnels + holded_list_leads',
+        capability: 'CRM y leads',
         description: 'Funnel con conversiones por etapa y leads en riesgo.',
       },
     ],
@@ -70,22 +70,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'IVA acumulado del trimestre',
-        tool: 'holded_list_documents + holded_list_taxes',
+        capability: 'Facturas e impuestos',
         description: 'Calculo aproximado de IVA repercutido vs soportado.',
       },
       {
         title: 'Que falta para cerrar el trimestre',
-        tool: 'holded_list_documents (filtro estado)',
+        capability: 'Facturas pendientes',
         description: 'Facturas pendientes, gastos sin categorizar, conciliaciones.',
       },
       {
         title: 'Resumen para asesoria',
-        tool: 'multi-tool',
+        capability: 'Resumen combinado',
         description: 'Documento listo para enviar a tu asesor con todo lo relevante.',
       },
       {
         title: 'Apuntes contables del mes',
-        tool: 'holded_list_daily_ledger',
+        capability: 'Diario contable',
         description: 'Diario contable de un rango de fechas en formato legible.',
       },
     ],
@@ -97,22 +97,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Facturas vencidas',
-        tool: 'holded_list_documents (filtro estado)',
+        capability: 'Facturas vencidas',
         description: 'Listado de facturas pendientes de cobro con dias de retraso.',
       },
       {
         title: 'Top 10 clientes morosos',
-        tool: 'holded_list_documents + holded_list_contacts',
+        capability: 'Facturas y contactos',
         description: 'Ranking por importe pendiente y antiguedad.',
       },
       {
         title: 'Detectar duplicadas',
-        tool: 'holded_list_documents',
+        capability: 'Facturas existentes',
         description: 'Posibles facturas duplicadas por cliente y fecha.',
       },
       {
         title: 'Recordatorios sugeridos',
-        tool: 'holded_list_documents + draft de email',
+        capability: 'Facturas y borrador de email',
         description: 'ChatGPT redacta el email de cobro (no lo envia).',
       },
     ],
@@ -124,22 +124,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'PDF de factura para cliente',
-        tool: 'holded_get_document_pdf',
+        capability: 'PDF de factura',
         description: 'Descarga el PDF de la ultima factura emitida a un cliente.',
       },
       {
         title: 'PDF para adjuntar a email',
-        tool: 'holded_get_document_pdf',
+        capability: 'Busqueda y PDF',
         description: 'Localiza la factura por importe + fecha y obtiene el PDF.',
       },
       {
         title: 'PDF de presupuesto',
-        tool: 'holded_get_document_pdf (estimate)',
+        capability: 'PDF de presupuesto',
         description: 'Recupera el PDF de un presupuesto Q-2026-XXX.',
       },
       {
         title: 'Lote de PDFs por cliente',
-        tool: 'holded_list_documents + holded_get_document_pdf',
+        capability: 'PDFs por cliente',
         description: 'Todas las facturas de un cliente del trimestre en PDF.',
       },
     ],
@@ -151,22 +151,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Borrador de factura simple',
-        tool: 'holded_create_invoice_draft',
+        capability: 'Borrador de factura',
         description: 'Cliente existente + concepto + importe. Confirmacion antes de crear.',
       },
       {
         title: 'Borrador con varias lineas',
-        tool: 'holded_create_invoice_draft',
+        capability: 'Borrador con varias lineas',
         description: 'Tres conceptos con IVA distinto. ChatGPT pide confirmar antes.',
       },
       {
         title: 'Borrador en serie por cliente',
-        tool: 'holded_create_invoice_draft + holded_list_contacts',
+        capability: 'Borradores por cliente',
         description: 'Tres clientes con misma plantilla. Cada uno requiere confirmacion.',
       },
       {
         title: 'Categorizacion de gasto',
-        tool: 'holded_list_accounts',
+        capability: 'Plan de cuentas',
         description: 'Sugiere cuenta contable para un gasto basandose en concepto.',
       },
     ],
@@ -177,23 +177,23 @@ const GIF_CATEGORIES: GifCategory[] = [
     blurb: 'Las 4 GIFs imprescindibles que validan el alcance basico del conector.',
     gifs: [
       {
-        title: 'Conexion inicial OAuth',
-        tool: 'flujo de autorizacion',
-        description: 'Activacion del conector desde ChatGPT con OAuth + PKCE.',
+        title: 'Conexion inicial',
+        capability: 'Conexion inicial',
+        description: 'Activacion del conector desde ChatGPT con conexion segura.',
       },
       {
         title: 'Lista de productos',
-        tool: 'holded_list_products',
+        capability: 'Productos y stock',
         description: 'Catalogo con stock disponible cuando esta habilitado.',
       },
       {
         title: 'Proyectos abiertos',
-        tool: 'holded_list_projects + holded_list_project_tasks',
+        capability: 'Proyectos y tareas',
         description: 'Tareas pendientes esta semana por proyecto.',
       },
       {
         title: 'Equipo y roles',
-        tool: 'holded_list_employees',
+        capability: 'Equipo',
         description: 'Empleados, departamentos y puestos.',
       },
     ],
@@ -235,12 +235,12 @@ function VideoBlock({
 
 function GifPlaceholder({
   title,
-  tool,
+  capability,
   description,
   src,
 }: {
   title: string;
-  tool: string;
+  capability: string;
   description: string;
   src?: string;
 }) {
@@ -267,7 +267,7 @@ function GifPlaceholder({
         )}
       </div>
       <h3 className="mt-3 text-sm font-bold text-slate-900">{title}</h3>
-      <code className="mt-1 block text-[11px] text-emerald-700">{tool}</code>
+      <span className="mt-1 block text-[11px] font-semibold text-emerald-700">{capability}</span>
       <p className="mt-2 text-xs leading-5 text-slate-600">{description}</p>
     </article>
   );
@@ -318,8 +318,8 @@ export default function ChatGPTDemoPage() {
             Conector Holded para ChatGPT — Demo en video
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-600">
-            Todo el flujo del conector en accion: conexion segura con OAuth + PKCE, consulta de
-            datos en lenguaje natural y borradores que requieren confirmacion explicita.
+            Todo el flujo del conector en accion: conexion segura, consulta de datos en lenguaje
+            natural y borradores que requieren confirmacion explicita.
           </p>
         </div>
 
@@ -350,7 +350,7 @@ export default function ChatGPTDemoPage() {
                 <GifPlaceholder
                   key={gif.title}
                   title={gif.title}
-                  tool={gif.tool}
+                  capability={gif.capability}
                   description={gif.description}
                   src={gif.src}
                 />
@@ -379,8 +379,8 @@ export default function ChatGPTDemoPage() {
         {/* STATS */}
         <div className="mt-10 grid gap-3 sm:grid-cols-3">
           {[
-            ['Protocolo', 'MCP Streamable HTTP'],
-            ['Auth', 'OAuth 2.0 + PKCE + DCR'],
+            ['Acceso', 'Datos de Holded'],
+            ['Conexion', 'Credenciales server-side'],
             ['Escritura', 'Solo con confirmacion'],
           ].map(([label, value]) => (
             <div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-3">

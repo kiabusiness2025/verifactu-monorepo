@@ -6,7 +6,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Demo Conector Holded para Claude | Verifactu Business',
   description:
-    'Demo del conector Holded para Claude: conexion segura con OAuth + PKCE, consulta de facturas, contactos, contabilidad y borrador con confirmacion explicita. 24 ejemplos en video.',
+    'Demo del conector Holded para Claude: conexion segura, consulta de facturas, contactos, contabilidad y borradores con confirmacion explicita.',
   alternates: { canonical: '/conectores/claude/demo' },
 };
 
@@ -21,14 +21,14 @@ type GifCategory = {
   blurb: string;
   gifs: Array<{
     title: string;
-    tool: string;
+    capability: string;
     description: string;
     src?: string;
   }>;
 };
 
 // Roadmap de los 24 GIFs ordenados por valor comercial.
-// Sin `src` se renderiza como placeholder con el titulo + tool.
+// Sin `src` se renderiza como placeholder con el titulo + capacidad.
 // Cuando tengamos los GIFs grabados desde Nova Gestion, anadimos `src: '/gif/holded-claude/<slug>.gif'`.
 const GIF_CATEGORIES: GifCategory[] = [
   {
@@ -38,22 +38,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Resumen mensual de facturacion',
-        tool: 'list_documents + get_document',
+        capability: 'Facturas y clientes',
         description: 'Top clientes, evolucion mes a mes y outliers detectados automaticamente.',
       },
       {
         title: 'Comparativa trimestral',
-        tool: 'list_documents (rango fechas)',
+        capability: 'Facturas por rango de fechas',
         description: 'Q3 vs Q4 con variacion % por categoria de producto.',
       },
       {
         title: 'Distribucion de gastos',
-        tool: 'get_chart_of_accounts + get_journal',
+        capability: 'Cuentas y diario contable',
         description: 'Pie chart de partidas y deteccion de gastos atipicos.',
       },
       {
         title: 'Embudo CRM visual',
-        tool: 'list_crm_funnels + list_leads',
+        capability: 'CRM y leads',
         description: 'Funnel con conversiones por etapa y leads en riesgo.',
       },
     ],
@@ -65,22 +65,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'IVA acumulado del trimestre',
-        tool: 'list_documents + list_taxes',
+        capability: 'Facturas e impuestos',
         description: 'Calculo aproximado de IVA repercutido vs soportado.',
       },
       {
         title: 'Que falta para cerrar el trimestre',
-        tool: 'list_documents (filtro estado)',
+        capability: 'Facturas pendientes',
         description: 'Facturas pendientes, gastos sin categorizar, conciliaciones.',
       },
       {
         title: 'Resumen para asesoria',
-        tool: 'multi-tool',
+        capability: 'Resumen combinado',
         description: 'Documento listo para enviar a tu asesor con todo lo relevante.',
       },
       {
         title: 'Apuntes contables del mes',
-        tool: 'get_daily_book',
+        capability: 'Diario contable',
         description: 'Diario contable de un rango de fechas en formato legible.',
       },
     ],
@@ -92,22 +92,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Facturas vencidas',
-        tool: 'list_documents (filtro estado)',
+        capability: 'Facturas vencidas',
         description: 'Listado de facturas pendientes de cobro con dias de retraso.',
       },
       {
         title: 'Top 10 clientes morosos',
-        tool: 'list_documents + list_contacts',
+        capability: 'Facturas y contactos',
         description: 'Ranking por importe pendiente y antiguedad.',
       },
       {
         title: 'Detectar duplicadas',
-        tool: 'list_documents',
+        capability: 'Facturas existentes',
         description: 'Posibles facturas duplicadas por cliente y fecha.',
       },
       {
         title: 'Recordatorios sugeridos',
-        tool: 'list_documents + draft de email',
+        capability: 'Facturas y borrador de email',
         description: 'Claude redacta el email de cobro (no lo envia).',
       },
     ],
@@ -119,22 +119,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'PDF de factura para cliente',
-        tool: 'get_document_pdf',
+        capability: 'PDF de factura',
         description: 'Descarga el PDF de la ultima factura emitida a un cliente.',
       },
       {
         title: 'PDF para adjuntar a email',
-        tool: 'get_document_pdf',
+        capability: 'Busqueda y PDF',
         description: 'Localiza la factura por importe + fecha y obtiene el PDF.',
       },
       {
         title: 'PDF de presupuesto',
-        tool: 'get_document_pdf (estimate)',
+        capability: 'PDF de presupuesto',
         description: 'Recupera el PDF de un presupuesto Q-2026-XXX.',
       },
       {
         title: 'Lote de PDFs por cliente',
-        tool: 'list_documents + get_document_pdf',
+        capability: 'PDFs por cliente',
         description: 'Todas las facturas de un cliente del trimestre en PDF.',
       },
     ],
@@ -146,22 +146,22 @@ const GIF_CATEGORIES: GifCategory[] = [
     gifs: [
       {
         title: 'Borrador de factura simple',
-        tool: 'create_invoice_draft',
+        capability: 'Borrador de factura',
         description: 'Cliente existente + concepto + importe. Confirmacion antes de crear.',
       },
       {
         title: 'Borrador con varias lineas',
-        tool: 'create_invoice_draft',
+        capability: 'Borrador con varias lineas',
         description: 'Tres conceptos con IVA distinto. Claude pide confirmar antes.',
       },
       {
         title: 'Borrador en serie por cliente',
-        tool: 'create_invoice_draft + list_contacts',
+        capability: 'Borradores por cliente',
         description: 'Tres clientes con misma plantilla. Cada uno requiere confirmacion.',
       },
       {
         title: 'Categorizacion de gasto',
-        tool: 'get_chart_of_accounts',
+        capability: 'Plan de cuentas',
         description: 'Sugiere cuenta contable para un gasto basandose en concepto.',
       },
     ],
@@ -172,23 +172,23 @@ const GIF_CATEGORIES: GifCategory[] = [
     blurb: 'Las 4 GIFs imprescindibles que validan el alcance basico del conector.',
     gifs: [
       {
-        title: 'Conexion inicial OAuth',
-        tool: 'flujo de autorizacion',
-        description: 'Activacion del conector desde Claude.ai con OAuth + PKCE.',
+        title: 'Conexion inicial',
+        capability: 'Conexion inicial',
+        description: 'Activacion del conector desde Claude.ai con conexion segura.',
       },
       {
         title: 'Lista de productos',
-        tool: 'list_products',
+        capability: 'Productos y stock',
         description: 'Catalogo con stock disponible cuando esta habilitado.',
       },
       {
         title: 'Proyectos abiertos',
-        tool: 'list_projects + list_project_tasks',
+        capability: 'Proyectos y tareas',
         description: 'Tareas pendientes esta semana por proyecto.',
       },
       {
         title: 'Equipo y roles',
-        tool: 'list_employees',
+        capability: 'Equipo',
         description: 'Empleados, departamentos y puestos.',
       },
     ],
@@ -230,12 +230,12 @@ function VideoBlock({
 
 function GifPlaceholder({
   title,
-  tool,
+  capability,
   description,
   src,
 }: {
   title: string;
-  tool: string;
+  capability: string;
   description: string;
   src?: string;
 }) {
@@ -262,7 +262,7 @@ function GifPlaceholder({
         )}
       </div>
       <h3 className="mt-3 text-sm font-bold text-slate-900">{title}</h3>
-      <code className="mt-1 block text-[11px] text-amber-700">{tool}</code>
+      <span className="mt-1 block text-[11px] font-semibold text-amber-700">{capability}</span>
       <p className="mt-2 text-xs leading-5 text-slate-600">{description}</p>
     </article>
   );
@@ -312,9 +312,9 @@ export default function ClaudeDemoPage() {
             Conector Holded para Claude — Demo en video
           </h1>
           <p className="max-w-2xl text-base leading-7 text-slate-600">
-            Todo el flujo del conector en accion: conexion segura con OAuth + PKCE, consulta de
-            datos en lenguaje natural y borradores que requieren confirmacion explicita. {totalGifs}{' '}
-            GIFs cortos organizados por valor comercial.
+            Todo el flujo del conector en accion: conexion segura, consulta de datos en lenguaje
+            natural y borradores que requieren confirmacion explicita. {totalGifs} GIFs cortos
+            organizados por valor comercial.
           </p>
         </div>
 
@@ -345,7 +345,7 @@ export default function ClaudeDemoPage() {
                 <GifPlaceholder
                   key={gif.title}
                   title={gif.title}
-                  tool={gif.tool}
+                  capability={gif.capability}
                   description={gif.description}
                   src={gif.src}
                 />
@@ -376,8 +376,8 @@ export default function ClaudeDemoPage() {
         {/* STATS */}
         <div className="mt-10 grid gap-3 sm:grid-cols-3">
           {[
-            ['Protocolo', 'MCP Streamable HTTP'],
-            ['Auth', 'OAuth 2.0 + PKCE + DCR'],
+            ['Acceso', 'Datos de Holded'],
+            ['Conexion', 'Credenciales server-side'],
             ['Escritura', 'Solo con confirmacion'],
           ].map(([label, value]) => (
             <div key={label} className="rounded-lg border border-slate-200 bg-white px-4 py-3">

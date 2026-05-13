@@ -80,7 +80,7 @@ export default function ContactForm() {
         </div>
         <p className="text-base font-semibold text-emerald-800">Mensaje enviado</p>
         <p className="mt-1 text-sm leading-6 text-emerald-700">
-          Te hemos enviado una confirmacion por email. Te responderemos lo antes posible.
+          Te hemos enviado una confirmación por email. Te responderemos lo antes posible.
         </p>
       </div>
     );
@@ -149,7 +149,7 @@ export default function ContactForm() {
           rows={5}
           value={form.message}
           onChange={(event) => set('message', event.target.value)}
-          placeholder="Dinos en que punto estas y que necesitas."
+          placeholder="Dinos en qué punto estás y qué necesitas."
           className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#ff5460] focus:outline-none focus:ring-2 focus:ring-[#ff5460]/20"
         />
       </div>
@@ -165,7 +165,7 @@ export default function ContactForm() {
         <span className="text-xs leading-5 text-slate-500">
           Acepto el tratamiento de mis datos para gestionar esta solicitud conforme a la{' '}
           <a href="/privacy" className="underline hover:text-slate-700">
-            politica de privacidad
+            política de privacidad
           </a>
           .
         </span>

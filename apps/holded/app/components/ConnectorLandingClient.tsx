@@ -8,7 +8,9 @@ import {
   FileText,
   FolderKanban,
   HelpCircle,
+  KeyRound,
   Landmark,
+  Link2,
   LockKeyhole,
   Mail,
   MessageSquareText,
@@ -19,6 +21,7 @@ import {
   Sparkles,
   TrendingUp,
   Users,
+  Zap,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -59,7 +62,6 @@ type Capability = {
   title: string;
   subtitle: string;
   Icon: ComponentType<{ className?: string }>;
-  tools: Record<ConnectorId, string[]>;
   examples: string[];
 };
 
@@ -125,20 +127,12 @@ const CAPABILITIES: Capability[] = [
     title: 'Facturas',
     subtitle: 'Lista facturas recientes y consulta el detalle de una factura existente.',
     Icon: Receipt,
-    tools: {
-      claude: ['list_documents', 'get_document'],
-      chatgpt: ['holded_list_invoices', 'holded_get_invoice'],
-    },
     examples: ['¿Cuánto he facturado este mes?', 'Enséñame las últimas facturas de un cliente.'],
   },
   {
     title: 'Contactos',
     subtitle: 'Revisa contactos y datos disponibles sin crear ni modificar registros.',
     Icon: Users,
-    tools: {
-      claude: ['list_contacts', 'get_contact'],
-      chatgpt: ['holded_list_contacts', 'holded_get_contact'],
-    },
     examples: [
       'Busca los datos fiscales de este cliente.',
       '¿Qué contactos tienen facturas pendientes?',
@@ -148,30 +142,18 @@ const CAPABILITIES: Capability[] = [
     title: 'Cuentas contables',
     subtitle: 'Consulta el plan de cuentas y resume codigos, nombres y tipos cuando existan.',
     Icon: Landmark,
-    tools: {
-      claude: ['get_chart_of_accounts'],
-      chatgpt: ['holded_list_accounts'],
-    },
     examples: ['Resume mis principales cuentas contables.', '¿Dónde se concentra el gasto?'],
   },
   {
     title: 'Diario contable',
     subtitle: 'Lee apuntes existentes solo cuando el usuario indique fecha inicial y final.',
     Icon: BookOpen,
-    tools: {
-      claude: ['get_journal', 'get_daily_book'],
-      chatgpt: ['holded_list_daily_ledger'],
-    },
     examples: ['Muéstrame los apuntes de marzo.', 'Explícame este asiento en lenguaje claro.'],
   },
   {
     title: 'Borradores de factura',
     subtitle: 'Prepara borradores solo después de confirmación explícita del usuario.',
     Icon: FileText,
-    tools: {
-      claude: ['create_invoice_draft'],
-      chatgpt: ['holded_create_invoice_draft'],
-    },
     examples: [
       'Prepara un borrador para Acme por 100 € + IVA.',
       'Pídeme confirmación antes de crearlo.',
@@ -181,40 +163,24 @@ const CAPABILITIES: Capability[] = [
     title: 'Productos y stock',
     subtitle: 'Lista catálogo, ficha de producto y stock disponible cuando está habilitado.',
     Icon: Package,
-    tools: {
-      claude: ['list_products', 'get_product', 'list_products_stock'],
-      chatgpt: ['holded_list_products', 'holded_get_product', 'holded_list_products_stock'],
-    },
     examples: ['¿Qué productos tengo con stock bajo?', 'Enséñame precio y stock de este SKU.'],
   },
   {
     title: 'Proyectos y tareas',
     subtitle: 'Consulta proyectos abiertos, tareas pendientes e imputaciones de horas.',
     Icon: FolderKanban,
-    tools: {
-      claude: ['list_projects', 'get_project', 'list_project_tasks', 'list_time_records'],
-      chatgpt: ['holded_list_projects', 'holded_get_project', 'holded_list_project_tasks'],
-    },
     examples: ['Resume mis proyectos activos.', '¿Qué tareas están pendientes esta semana?'],
   },
   {
     title: 'CRM: leads y embudo',
     subtitle: 'Visualiza el embudo de ventas y los leads asignados sin modificar nada.',
     Icon: TrendingUp,
-    tools: {
-      claude: ['list_crm_funnels', 'list_leads'],
-      chatgpt: ['holded_list_crm_funnels', 'holded_list_leads'],
-    },
     examples: ['Resume mi embudo por fases.', '¿Qué leads esperan seguimiento?'],
   },
   {
     title: 'PDFs de documentos',
     subtitle: 'Descarga el PDF de una factura, presupuesto o albaran existente.',
     Icon: FileDown,
-    tools: {
-      claude: ['get_document_pdf'],
-      chatgpt: ['holded_get_document_pdf'],
-    },
     examples: [
       'Dame el PDF de la última factura de este cliente.',
       'Recupera el presupuesto que necesito adjuntar.',
@@ -224,23 +190,6 @@ const CAPABILITIES: Capability[] = [
     title: 'Equipo, tesoreria y catalogos',
     subtitle: 'Empleados, cuentas de tesoreria, tipos de IVA, almacenes y series de numeracion.',
     Icon: Briefcase,
-    tools: {
-      claude: [
-        'list_employees',
-        'get_employee',
-        'list_treasury_accounts',
-        'list_taxes',
-        'list_warehouses',
-        'list_numbering_series',
-      ],
-      chatgpt: [
-        'holded_list_employees',
-        'holded_list_treasury_accounts',
-        'holded_list_taxes',
-        'holded_list_warehouses',
-        'holded_list_numbering_series',
-      ],
-    },
     examples: [
       'Muéstrame mi equipo y cuentas de tesorería.',
       'Lista almacenes y series antes de crear un borrador.',
@@ -249,8 +198,8 @@ const CAPABILITIES: Capability[] = [
 ];
 
 const TRUST_POINTS = [
-  'Tenant-scoped: solo accede a la cuenta de Holded conectada por el usuario autenticado.',
-  'Credenciales protegidas server-side por Verifactu; no se muestran a la IA ni al cliente.',
+  'Solo accede a la cuenta de Holded conectada por el usuario autenticado.',
+  'Credenciales protegidas en servidores de Verifactu; no se muestran a la IA ni al cliente.',
   'Solo lectura por defecto; crear un borrador de factura requiere confirmación explícita.',
   'No envía, emite, cobra, finaliza, elimina ni sobrescribe facturas o registros existentes.',
 ];
@@ -328,6 +277,128 @@ function ConnectorLogo({ cfg }: { cfg: ConnectorConfig }) {
   );
 }
 
+const QUICK_CONNECT_STEPS: Record<
+  ConnectorId,
+  { n: string; Icon: ComponentType<{ className?: string }>; title: string; text: string }[]
+> = {
+  claude: [
+    {
+      n: '01',
+      Icon: Link2,
+      title: 'Pulsa el botón "Añadir a Claude"',
+      text: 'Claude.ai abre el diálogo de conector personalizado con Holded ya preconfigurado — nombre y URL del servidor MCP rellenados automáticamente.',
+    },
+    {
+      n: '02',
+      Icon: Zap,
+      title: 'Confirma en Claude',
+      text: 'Revisa el nombre "Holded" y la URL del servidor. Haz clic en "Añadir conector" para iniciar el flujo de autorización.',
+    },
+    {
+      n: '03',
+      Icon: KeyRound,
+      title: 'Autoriza con tu API key de Holded',
+      text: 'La pantalla segura de Verifactu solicita tu API key de Holded. Se guarda en servidor y no se devuelve a Claude ni al navegador.',
+    },
+  ],
+  chatgpt: [
+    {
+      n: '01',
+      Icon: Link2,
+      title: 'Conecta tu cuenta de Holded',
+      text: 'Haz clic en el botón y accede a la pantalla de autorización de Verifactu. Puedes entrar con Google o con tu email.',
+    },
+    {
+      n: '02',
+      Icon: KeyRound,
+      title: 'Introduce tu API key de Holded',
+      text: 'Tu clave queda guardada en servidor y no se muestra a ChatGPT ni al navegador. El alcance queda limitado a tu cuenta.',
+    },
+    {
+      n: '03',
+      Icon: Zap,
+      title: 'El conector queda activo en ChatGPT',
+      text: 'ChatGPT recibe el token de acceso vía OAuth. A partir de ese momento puedes preguntar a Holded directamente desde ChatGPT.',
+    },
+  ],
+};
+
+function ConnectorQuickConnect({ cfg, theme }: { cfg: ConnectorConfig; theme: Theme }) {
+  if (!cfg.connectHref) return null;
+
+  const steps = QUICK_CONNECT_STEPS[cfg.id];
+  const isExternal = isExternalHref(cfg.connectHref);
+
+  return (
+    <section className={`border-y border-slate-100 py-14 sm:py-20 ${theme.sectionBg}`}>
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            {cfg.id === 'claude' && (
+              <div
+                className={`mb-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${theme.pill}`}
+              >
+                <Sparkles className="h-3 w-3" />
+                Disponible ahora como conector personalizado
+              </div>
+            )}
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+              Conectar en 3 pasos
+            </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">
+              Añade Holded a {cfg.aiName} en menos de dos minutos.
+            </h2>
+            {cfg.id === 'claude' && (
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
+                El conector usa el flujo de conector personalizado de Claude mientras finaliza la
+                revisión en el directorio oficial de Anthropic. Ya está operativo.
+              </p>
+            )}
+          </div>
+          <ConnectorPrimaryCta
+            href={cfg.connectHref}
+            aiName={cfg.aiName}
+            className={`inline-flex shrink-0 items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
+          />
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {steps.map((step) => {
+            const { Icon } = step;
+            return (
+              <div
+                key={step.n}
+                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <span className="text-[11px] font-bold tabular-nums tracking-widest text-slate-300">
+                  {step.n}
+                </span>
+                <div
+                  className={`mt-3 flex h-9 w-9 items-center justify-center rounded-xl ${theme.accentBg}`}
+                >
+                  <Icon className={`h-5 w-5 ${theme.accentText}`} />
+                </div>
+                <h3 className="mt-3 text-base font-bold text-slate-950">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{step.text}</p>
+              </div>
+            );
+          })}
+        </div>
+
+        {cfg.id === 'claude' && (
+          <div className="mt-5 flex items-start gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-500">
+            <ShieldCheck className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${theme.accentText}`} />
+            <span>
+              Si ya tienes cuenta en Verifactu Business, el flujo detecta tu sesión activa y omite
+              el paso de registro. La autorización se completa en segundos.
+            </span>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export function ConnectorLandingClient({ connector }: { connector: ConnectorId }) {
   const theme = THEMES[connector];
   const cfg = CONFIGS[connector];
@@ -363,8 +434,8 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
             Consulta facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural. Crea
-            borradores de factura solo con confirmación explícita. Tus credenciales se guardan
-            server-side y el acceso queda limitado a tu cuenta conectada.
+            borradores de factura solo con confirmación explícita. Tus credenciales se guardan en
+            servidor y el acceso queda limitado a tu cuenta conectada.
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
@@ -406,8 +477,8 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
             {[
               'Solo lectura por defecto',
               'Borradores con confirmación',
-              'Tenant-scoped',
-              'Credenciales server-side',
+              'Cuenta conectada',
+              'Credenciales en servidor',
             ].map((chip) => (
               <span
                 key={chip}
@@ -422,6 +493,8 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
         </div>
       </section>
 
+      <ConnectorQuickConnect cfg={cfg} theme={theme} />
+
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10 text-center">
@@ -433,7 +506,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
               Estas son las capacidades actuales del conector. El usuario pregunta en lenguaje
-              natural y {cfg.aiName} consulta Holded dentro del tenant autorizado.
+              natural y {cfg.aiName} consulta Holded dentro de la cuenta autorizada.
             </p>
           </div>
 
@@ -512,7 +585,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               },
               {
                 title: 'Pregunta con control',
-                text: `${cfg.aiName} consulta datos de Holded dentro del tenant conectado. Las acciones de borrador requieren confirmación antes de ejecutarse.`,
+                text: `${cfg.aiName} consulta datos de Holded dentro de la cuenta conectada. Las acciones de borrador requieren confirmación antes de ejecutarse.`,
                 Icon: MessageSquareText,
               },
             ].map((step, index) => {
@@ -549,7 +622,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               Solo lectura por defecto. Borradores con confirmación.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
-              El conector está diseñado para un alcance cerrado y reproducible. No cambia de tenant,
+              El conector está diseñado para un alcance cerrado y reproducible. No cambia de cuenta,
               no muestra credenciales, no envía facturas y no realiza acciones contables amplias de
               forma autónoma.
             </p>
@@ -596,7 +669,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               },
               {
                 title: 'Formulario autenticado',
-                text: 'Usuarios registrados pueden abrir un ticket vinculado a su tenant y enviar contexto al equipo.',
+                text: 'Usuarios registrados pueden abrir un ticket vinculado a su cuenta conectada y enviar contexto al equipo.',
                 href: cfg.supportHref,
                 label: 'Abrir soporte',
                 Icon: FileText,

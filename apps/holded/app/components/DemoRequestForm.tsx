@@ -93,7 +93,7 @@ export default function DemoRequestForm({ source = 'holded_demo' }: { source?: s
         </div>
         <p className="text-lg font-bold text-emerald-800">Solicitud recibida</p>
         <p className="mt-2 text-sm leading-6 text-emerald-700">
-          Te contactamos en las proximas 24 horas para confirmar fecha y preparar la demo con tu
+          Te contactamos en las próximas 24 horas para confirmar fecha y preparar la demo con tu
           contexto.
         </p>
       </div>
@@ -149,7 +149,7 @@ export default function DemoRequestForm({ source = 'holded_demo' }: { source?: s
       {/* Opcionales */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className={labelClass}>Telefono</label>
+          <label className={labelClass}>Teléfono</label>
           <input
             type="tel"
             value={form.phone}
@@ -164,7 +164,7 @@ export default function DemoRequestForm({ source = 'holded_demo' }: { source?: s
             type="text"
             value={form.role}
             onChange={(e) => set('role', e.target.value)}
-            placeholder="Directora financiera, autonomo..."
+            placeholder="Directora financiera, autónomo..."
             className={inputClass}
           />
         </div>
@@ -210,7 +210,7 @@ export default function DemoRequestForm({ source = 'holded_demo' }: { source?: s
       </div>
 
       <div>
-        <label className={labelClass}>¿Que quieres ver en la demo?</label>
+        <label className={labelClass}>¿Qué quieres ver en la demo?</label>
         <textarea
           rows={3}
           value={form.objective}
@@ -231,7 +231,7 @@ export default function DemoRequestForm({ source = 'holded_demo' }: { source?: s
         <span className="text-xs leading-5 text-slate-500">
           Acepto el tratamiento de mis datos para gestionar esta solicitud conforme a la{' '}
           <a href="/privacy" className="underline hover:text-slate-700">
-            politica de privacidad
+            política de privacidad
           </a>
           .
         </span>

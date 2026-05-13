@@ -5,7 +5,7 @@
  *
  * Objetivo: el visitante que aterriza en la landing entiende en segundos por
  * que el conector convierte una IA generica en una herramienta operativa
- * sobre sus datos reales de Holded — sin necesidad de explicar MCP.
+ * sobre sus datos reales de Holded.
  *
  * Estructura: tabla side-by-side con 6 escenarios + bloque de cierre con CTA.
  */

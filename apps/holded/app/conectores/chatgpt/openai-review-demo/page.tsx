@@ -161,7 +161,7 @@ export default function OpenAIReviewDemoPage() {
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {[
-            ['Protocolo', 'MCP / Apps SDK'],
+            ['Acceso', 'Datos de Holded'],
             ['Conexion', 'Credenciales server-side'],
             ['Escritura', 'Solo con confirmacion'],
           ].map(([label, value]) => (

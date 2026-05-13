@@ -8,28 +8,27 @@ const PAGE_URL = `${SITE_URL}/conectores/claude`;
 const OG_IMAGE = `${SITE_URL}/brand/holded/holded-diamond-logo.png`;
 
 export const metadata: Metadata = {
-  title: 'Conector Holded para Claude | Verifactu Business',
+  title: 'Pregunta a Holded desde Claude | Verifactu Business',
   description:
-    'Conector Holded de Verifactu Business para Claude (Anthropic): consulta facturas, contactos, contabilidad, productos, proyectos y CRM en lenguaje natural. OAuth 2.0 + PKCE. Hasta 24 herramientas. Plan gratis durante el lanzamiento.',
+    'Conecta Holded con Claude para consultar facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural. Borradores de factura solo con confirmación.',
   keywords: [
     'conector Holded',
     'Claude Holded',
-    'MCP Holded',
     'Anthropic Holded',
     'Verifactu',
     'facturas IA',
     'contabilidad IA',
-    'OAuth Holded',
-    'PKCE',
+    'Claude IA Holded',
+    'asistente Holded',
     'asistente fiscal',
   ],
   alternates: {
     canonical: '/conectores/claude',
   },
   openGraph: {
-    title: 'Conector Holded para Claude | Verifactu Business',
+    title: 'Pregunta a Holded desde Claude | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde Claude. Hasta 24 tools, lectura segun permisos y borrador con confirmacion. OAuth seguro. Gratis durante el lanzamiento.',
+      'Consulta tus datos de Holded desde Claude. Solo lectura por defecto y borradores con confirmación.',
     url: PAGE_URL,
     siteName: 'Holded by Verifactu Business',
     images: [
@@ -37,7 +36,7 @@ export const metadata: Metadata = {
         url: OG_IMAGE,
         width: 1200,
         height: 630,
-        alt: 'Conector Holded para Claude',
+        alt: 'Pregunta a Holded desde Claude',
       },
     ],
     locale: 'es_ES',
@@ -45,9 +44,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Conector Holded para Claude | Verifactu Business',
+    title: 'Pregunta a Holded desde Claude | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde Claude. Hasta 24 tools, lectura segun permisos y borrador con confirmacion. OAuth seguro.',
+      'Consulta tus datos de Holded desde Claude. Solo lectura por defecto y borradores con confirmación.',
     images: [OG_IMAGE],
   },
   robots: {
@@ -70,12 +69,12 @@ const jsonLd = {
       '@type': 'SoftwareApplication',
       '@id': `${PAGE_URL}#software`,
       name: 'Conector Holded para Claude',
-      alternateName: 'Holded MCP Connector',
+      alternateName: 'Holded para Claude',
       applicationCategory: 'BusinessApplication',
       applicationSubCategory: 'AI Connector',
       operatingSystem: 'Web (Claude.ai)',
       description:
-        'Conector MCP de Verifactu Business que permite a Claude consultar facturas, contactos, contabilidad, productos, proyectos y CRM de Holded en lenguaje natural. OAuth 2.0 + PKCE + DCR. Hasta 24 tools segun permisos.',
+        'Conector de Verifactu Business que permite a Claude consultar datos de Holded en lenguaje natural. El alcance depende de los permisos concedidos.',
       url: PAGE_URL,
       image: OG_IMAGE,
       author: {
@@ -116,9 +115,9 @@ const jsonLd = {
       '@type': 'WebPage',
       '@id': PAGE_URL,
       url: PAGE_URL,
-      name: 'Conector Holded para Claude | Verifactu Business',
+      name: 'Pregunta a Holded desde Claude | Verifactu Business',
       description:
-        'Pagina del conector Holded para Claude. Documentacion, demo, privacidad, DPA y soporte.',
+        'Consulta datos de Holded desde Claude en lenguaje natural. Solo lectura por defecto, borradores con confirmación y soporte separado.',
       isPartOf: {
         '@type': 'WebSite',
         name: 'Holded by Verifactu Business',

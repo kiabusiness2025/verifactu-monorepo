@@ -35,7 +35,7 @@ export function buildFaqs(aiName: string, provider: string): FaqItem[] {
     },
     {
       q: '¿Puedo conectar varias cuentas de Holded a la vez?',
-      a: `En la versión actual del conector cada usuario de ${aiName} se vincula a una única cuenta de Holded (multi-tenant aislado). Si gestionas varias empresas en Holded distintas, hoy necesitas alternar la conexión. Para uso simultáneo multi-cuenta — típico de asesorías y despachos — escríbenos a soporte@verifactu.business y te explicamos cómo encajarlo.`,
+      a: `En la versión actual del conector cada usuario de ${aiName} se vincula a una única cuenta de Holded, aislada del resto de cuentas. Si gestionas varias empresas en Holded distintas, hoy necesitas alternar la conexión. Para uso simultáneo multi-cuenta — típico de asesorías y despachos — escríbenos a soporte@verifactu.business y te explicamos cómo encajarlo.`,
     },
     {
       q: '¿Funciona en inglés u otros idiomas?',
@@ -43,7 +43,7 @@ export function buildFaqs(aiName: string, provider: string): FaqItem[] {
     },
     {
       q: '¿Qué hago si algo no responde como espero?',
-      a: 'Tres vías de soporte: chat de soporte (asistente guiado en ventana independiente), formulario autenticado vinculado a tu tenant Holded, o email directo a soporte@verifactu.business. Para incidencias urgentes el email es la vía más rápida — tiempo de respuesta medio en beta: menos de 4 h hábiles.',
+      a: 'Tres vías de soporte: chat de soporte (asistente guiado en ventana independiente), formulario autenticado vinculado a tu cuenta de Holded, o email directo a soporte@verifactu.business. Para incidencias urgentes el email es la vía más rápida — tiempo de respuesta medio en beta: menos de 4 h hábiles.',
     },
   ];
 }

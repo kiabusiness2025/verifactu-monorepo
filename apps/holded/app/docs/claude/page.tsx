@@ -4,7 +4,6 @@ import {
   CheckCircle2,
   ChevronRight,
   FileText,
-  FlaskConical,
   FolderKanban,
   Key,
   ListOrdered,
@@ -13,7 +12,6 @@ import {
   PlugZap,
   Receipt,
   ShieldCheck,
-  Terminal,
   Users,
   Wallet,
 } from 'lucide-react';
@@ -21,9 +19,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: 'Documentación Conector Claude — Holded | verifactu.business',
+  title: 'Documentación | Conector Holded para Claude — Verifactu Business',
   description:
-    'Guía completa para conectar tu cuenta de Holded con Claude (Anthropic). Requisitos, pasos de configuración, herramientas disponibles y solución de problemas.',
+    'Guía para preguntar a Holded desde Claude: requisitos, conexión por API key, capacidades disponibles, seguridad y solución de problemas.',
   // Canonical points to the connector-tree URL — that's where users actually land
   // from the connector landing. Both /docs/claude and /conectores/claude/docs serve
   // this same content; setting canonical here unifies their SEO signal.
@@ -38,7 +36,12 @@ const modules = [
     label: 'Facturación',
     color: 'text-amber-600',
     bg: 'bg-amber-50',
-    tools: ['list_documents', 'get_document', 'get_document_pdf', 'create_invoice_draft'],
+    capabilities: [
+      'Facturas recientes',
+      'Detalle de factura',
+      'PDFs',
+      'Borradores con confirmación',
+    ],
     desc: 'Lista facturas, consulta detalles, descarga PDFs y crea borradores sin modificar datos reales.',
   },
   {
@@ -46,7 +49,7 @@ const modules = [
     label: 'Contactos / CRM',
     color: 'text-violet-500',
     bg: 'bg-violet-50',
-    tools: ['list_contacts', 'get_contact', 'list_crm_funnels', 'list_leads'],
+    capabilities: ['Contactos y datos fiscales', 'Embudo CRM', 'Leads'],
     desc: 'Clientes, proveedores, embudos de venta y leads.',
   },
   {
@@ -54,7 +57,7 @@ const modules = [
     label: 'Productos',
     color: 'text-sky-500',
     bg: 'bg-sky-50',
-    tools: ['list_products', 'get_product', 'list_products_stock', 'list_warehouses'],
+    capabilities: ['Catálogo de productos', 'Ficha y precios', 'Stock y almacenes'],
     desc: 'Catálogo de productos, precios, stock por almacén y ubicaciones.',
   },
   {
@@ -62,7 +65,7 @@ const modules = [
     label: 'Proyectos',
     color: 'text-emerald-500',
     bg: 'bg-emerald-50',
-    tools: ['list_projects', 'get_project', 'list_project_tasks', 'list_time_records'],
+    capabilities: ['Proyectos abiertos', 'Tareas', 'Registros de tiempo'],
     desc: 'Estado de proyectos, tareas y registros de tiempo.',
   },
   {
@@ -70,7 +73,7 @@ const modules = [
     label: 'Contabilidad',
     color: 'text-indigo-600',
     bg: 'bg-indigo-50',
-    tools: ['get_chart_of_accounts', 'get_journal', 'get_daily_book'],
+    capabilities: ['Plan de cuentas', 'Diario contable', 'Libro mayor'],
     desc: 'Plan de cuentas, libro diario y libro mayor.',
   },
   {
@@ -78,7 +81,7 @@ const modules = [
     label: 'Equipo',
     color: 'text-rose-500',
     bg: 'bg-rose-50',
-    tools: ['list_employees', 'get_employee'],
+    capabilities: ['Empleados', 'Detalle por persona'],
     desc: 'Lista de empleados y datos por persona.',
   },
   {
@@ -86,7 +89,7 @@ const modules = [
     label: 'Tesorería',
     color: 'text-teal-600',
     bg: 'bg-teal-50',
-    tools: ['list_treasury_accounts'],
+    capabilities: ['Cuentas de tesorería'],
     desc: 'Cuentas bancarias y saldos.',
   },
   {
@@ -94,7 +97,7 @@ const modules = [
     label: 'Catálogos',
     color: 'text-orange-500',
     bg: 'bg-orange-50',
-    tools: ['list_taxes', 'list_numbering_series'],
+    capabilities: ['Impuestos', 'Series de numeración'],
     desc: 'IDs de impuestos y series numéricas necesarios para crear facturas borrador.',
   },
 ];
@@ -130,7 +133,7 @@ const steps = [
     title: 'Autoriza con tu API key de Holded',
     body: (
       <>
-        La pantalla de autorización OAuth te pedirá tu API key de Holded. Introdúcela y confirma. El
+        La pantalla de autorización te pedirá tu API key de Holded. Introdúcela y confirma. El
         conector generará un token seguro — tu API key nunca se envía a Anthropic.
       </>
     ),
@@ -152,7 +155,7 @@ const steps = [
 const faqs = [
   {
     q: '¿Necesito Claude Pro o Team?',
-    a: 'Los conectores externos con OAuth están disponibles en Claude Pro, Team y Enterprise. No están disponibles en el plan gratuito de claude.ai.',
+    a: 'Los conectores externos están disponibles en Claude Pro, Team y Enterprise. No están disponibles en el plan gratuito de claude.ai.',
   },
   {
     q: '¿El conector puede modificar mis datos de Holded?',
@@ -163,8 +166,8 @@ const faqs = [
     a: 'Tu API key se cifra y se almacena protegida en el backend de Verifactu Business. Nunca se envía a Anthropic ni a terceros. Puedes revocar el acceso en cualquier momento.',
   },
   {
-    q: '¿El servidor MCP está en producción?',
-    a: 'El endpoint MCP está operativo bajo holded.verifactu.business. La inclusión en el directorio oficial de Anthropic está en proceso de revisión — ya puedes añadirlo como conector personalizado.',
+    q: '¿El conector ya está operativo?',
+    a: 'Sí. Puedes añadirlo como conector personalizado en Claude mientras la inclusión en el directorio oficial de Anthropic está en proceso de revisión.',
   },
   {
     q: '¿Qué pasa si mi API key caduca o la cambio?',
@@ -291,7 +294,7 @@ export default function ClaudeDocsPage() {
               {
                 n: '2',
                 title: 'Claude Pro / Team / Enterprise',
-                desc: 'Los conectores OAuth requieren un plan de pago de Anthropic.',
+                desc: 'Los conectores externos requieren un plan de pago de Anthropic.',
               },
               {
                 n: '3',
@@ -333,11 +336,11 @@ export default function ClaudeDocsPage() {
           </ol>
         </article>
 
-        {/* ── Herramientas disponibles ── */}
+        {/* ── Capacidades disponibles ── */}
         <div className="mt-4">
           <div className="mb-4 flex items-center gap-2 px-1 text-sm font-semibold text-slate-900">
             <FileText className="h-4 w-4 text-amber-500" />
-            Módulos y herramientas disponibles
+            Módulos y capacidades disponibles
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {modules.map((mod) => {
@@ -355,13 +358,13 @@ export default function ClaudeDocsPage() {
                   </div>
                   <p className="mt-2 text-xs leading-5 text-slate-500">{mod.desc}</p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {mod.tools.map((tool) => (
-                      <code
-                        key={tool}
-                        className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-mono text-amber-700"
+                    {mod.capabilities.map((capability) => (
+                      <span
+                        key={capability}
+                        className="rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700"
                       >
-                        {tool}
-                      </code>
+                        {capability}
+                      </span>
                     ))}
                   </div>
                 </article>
@@ -379,8 +382,8 @@ export default function ClaudeDocsPage() {
           <div className="mt-4 grid gap-4 text-sm leading-7 text-slate-600 sm:grid-cols-2">
             {[
               [
-                'OAuth 2.0 estándar',
-                'Flujo de autorización con código — compatible con la especificación MCP de Anthropic.',
+                'Conexión segura',
+                'Flujo de autorización compatible con conectores externos de Claude.',
               ],
               [
                 'API key cifrada',
@@ -447,61 +450,11 @@ export default function ClaudeDocsPage() {
             ))}
           </div>
           <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-7 text-amber-900">
-            <strong>Safety and permissions.</strong> Claude.ai muestra permisos por herramienta.
-            Este conector es mayoritariamente de solo lectura y la única acción de escritura es{' '}
-            <code className="rounded bg-white px-1 py-0.5 text-xs text-amber-700">
-              create_invoice_draft
-            </code>
-            , que crea borradores revisables por el usuario. No envía emails automáticamente, no
+            <strong>Safety and permissions.</strong> Claude.ai muestra permisos de acceso antes de
+            conectar. Este conector es mayoritariamente de solo lectura y la única acción de
+            escritura crea borradores revisables por el usuario. No envía emails automáticamente, no
             emite ni cobra facturas, no mueve dinero, no borra registros y no cierra asientos
             contables de forma autónoma.
-          </div>
-        </article>
-
-        {/* ── MCP Inspector ── */}
-        <article className="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-            <FlaskConical className="h-4 w-4 text-amber-500" />
-            Probar con MCP Inspector
-          </div>
-          <p className="mt-2 text-sm leading-7 text-slate-600">
-            El MCP Inspector es la herramienta oficial de debug del protocolo MCP. Con un solo
-            comando puedes listar los 24 tools del conector, ver sus annotations y ejecutar llamadas
-            directamente desde el navegador.
-          </p>
-          <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-            <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-800 px-4 py-3">
-              <Terminal className="h-3.5 w-3.5 text-slate-400" />
-              <span className="text-xs font-medium text-slate-400">Terminal</span>
-            </div>
-            <pre className="overflow-x-auto bg-slate-900 p-4 text-sm text-slate-200">
-              <code>npx @modelcontextprotocol/inspector@latest</code>
-            </pre>
-          </div>
-          <ol className="mt-4 space-y-2 text-sm leading-6 text-slate-600">
-            {[
-              'Abre la URL con el token que imprime la consola.',
-              'Transport: Streamable HTTP',
-              'URL: https://claude.verifactu.business/mcp',
-              'Pulsa Connect → la página OAuth se abre en el navegador.',
-              'Introduce tu API key de Holded y pulsa Conectar.',
-              'Verás 24 tools con readOnlyHint: true (23) y writeAnnotations (create_invoice_draft).',
-            ].map((step, i) => (
-              <li key={i} className="flex gap-2">
-                <span className="flex-shrink-0 font-bold text-amber-500">{i + 1}.</span>
-                <span>{step}</span>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            ¿Necesitas la documentación técnica completa de los conectores Holded? Escríbenos a{' '}
-            <a
-              href="mailto:soporte@verifactu.business"
-              className="font-medium underline hover:text-amber-900"
-            >
-              soporte@verifactu.business
-            </a>
-            .
           </div>
         </article>
 
@@ -530,8 +483,8 @@ export default function ClaudeDocsPage() {
             ¿Listo para conectar Holded con Claude?
           </p>
           <p className="max-w-md text-sm leading-7 text-slate-600">
-            El servidor MCP ya está operativo. Añádelo como conector personalizado en claude.ai
-            ahora mismo.
+            La conexión ya está operativa. Añádela como conector personalizado en claude.ai ahora
+            mismo.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link

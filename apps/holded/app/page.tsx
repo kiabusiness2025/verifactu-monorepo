@@ -37,9 +37,9 @@ function SectionPill({ icon: Icon, children }: { icon: LucideIcon; children: Rea
 }
 
 const connectorFeatures = [
-  'Facturas y contactos',
-  'Cuentas contables y diario',
-  'Alcance cerrado por tenant',
+  'Facturas, contactos y contabilidad',
+  'CRM, proyectos, productos y stock',
+  'Alcance limitado a tu cuenta',
   'Borradores de factura con confirmación',
 ];
 
@@ -158,7 +158,7 @@ export default function HoldedHomePage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-slate-900">Claude</p>
-                        <p className="text-[11px] text-slate-500">MCP · OAuth 2.0</p>
+                        <p className="text-[11px] text-slate-500">Conexión segura</p>
                       </div>
                     </div>
                     <span className="flex items-center gap-1.5 rounded-full border border-[#D4570C]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#D4570C]">
@@ -202,7 +202,7 @@ export default function HoldedHomePage() {
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-slate-900">ChatGPT</p>
-                        <p className="text-[11px] text-slate-500">Apps SDK / MCP</p>
+                        <p className="text-[11px] text-slate-500">Conexión segura</p>
                       </div>
                     </div>
                     <span className="flex items-center gap-1.5 rounded-full border border-[#10a37f]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#10a37f]">
@@ -245,7 +245,7 @@ export default function HoldedHomePage() {
             </h2>
             <p className="mt-4 text-base leading-8 text-slate-600">
               Ambos conectores dan acceso a las mismas capacidades de Holded. La diferencia está en
-              el protocolo y el flujo de conexión.
+              dónde trabajas cada día: Claude o ChatGPT.
             </p>
           </div>
 
@@ -271,15 +271,14 @@ export default function HoldedHomePage() {
                 Holded para Claude
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Conectate mediante el flujo seguro de Verifactu para usar Holded desde Claude. Las
-                credenciales se guardan server-side y no se muestran a Claude.
+                Conecta mediante el flujo seguro de Verifactu para usar Holded desde Claude. Las
+                credenciales se guardan en servidor y no se muestran a Claude.
               </p>
               <ul className="mt-5 space-y-2">
                 {[
                   'Claude.ai Desktop y Web',
-                  'Credenciales protegidas server-side',
-                  'Protocolo MCP para Claude',
-                  ...connectorFeatures.slice(2),
+                  'Credenciales protegidas en servidor',
+                  ...connectorFeatures,
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
                     <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-[#D4570C]" />
@@ -296,7 +295,7 @@ export default function HoldedHomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/docs/claude"
+                  href="/conectores/claude/docs"
                   className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Documentación
@@ -325,15 +324,14 @@ export default function HoldedHomePage() {
                 Holded para ChatGPT
               </h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Conectate mediante el flujo seguro de Verifactu para usar Holded desde ChatGPT. Las
-                credenciales se guardan server-side y no se muestran a OpenAI.
+                Conecta mediante el flujo seguro de Verifactu para usar Holded desde ChatGPT. Las
+                credenciales se guardan en servidor y no se muestran a OpenAI.
               </p>
               <ul className="mt-5 space-y-2">
                 {[
                   'ChatGPT Plus, Pro, Business, Enterprise y Edu',
-                  'Credenciales protegidas server-side',
-                  'Apps SDK / MCP para ChatGPT',
-                  connectorFeatures[3],
+                  'Credenciales protegidas en servidor',
+                  ...connectorFeatures,
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-slate-700">
                     <CheckCircle2 className="mt-1 h-3.5 w-3.5 shrink-0 text-[#10a37f]" />
