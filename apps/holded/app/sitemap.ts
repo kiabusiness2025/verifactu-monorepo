@@ -27,15 +27,43 @@ const routes = [
   '/conectores/claude/terms',
   '/conectores/claude/dpa',
   '/conectores/claude/soporte',
+  '/conectores/claude/demo',
 ];
+
+// Paginas de alta prioridad: los dos conectores principales son la entrada
+// comercial del hub. Su prioridad debe equipararse a /conectores (0.95) y no
+// quedar al nivel de las paginas legales/soporte (0.65). Las paginas de demo
+// tambien suben porque son CTA dentro del flujo de conversion.
+const HIGH_PRIORITY_ROUTES = new Set([
+  '/conectores/claude',
+  '/conectores/chatgpt',
+  '/conectores/claude/demo',
+  '/conectores/chatgpt/openai-review-demo',
+]);
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
-  return routes.map((route) => ({
-    url: `${siteUrl}${route}`,
-    lastModified: now,
-    changeFrequency: route === '/' || route === '/conectores' ? 'weekly' : 'monthly',
-    priority: route === '/' ? 1 : route === '/conectores' ? 0.95 : 0.65,
-  }));
+  return routes.map((route) => {
+    const priority =
+      route === '/'
+        ? 1
+        : route === '/conectores'
+          ? 0.95
+          : HIGH_PRIORITY_ROUTES.has(route)
+            ? 0.9
+            : 0.65;
+    const changeFrequency: MetadataRoute.Sitemap[number]['changeFrequency'] =
+      route === '/' || route === '/conectores'
+        ? 'weekly'
+        : HIGH_PRIORITY_ROUTES.has(route)
+          ? 'weekly'
+          : 'monthly';
+    return {
+      url: `${siteUrl}${route}`,
+      lastModified: now,
+      changeFrequency,
+      priority,
+    };
+  });
 }

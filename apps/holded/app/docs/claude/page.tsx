@@ -494,14 +494,12 @@ export default function ClaudeDocsPage() {
             ))}
           </ol>
           <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Guía completa con los tres conectores (Claude, ChatGPT, Isaak) en{' '}
+            ¿Necesitas la documentación técnica completa de los conectores Holded? Escríbenos a{' '}
             <a
-              href="https://isaak.verifactu.business/developers"
+              href="mailto:soporte@verifactu.business"
               className="font-medium underline hover:text-amber-900"
-              target="_blank"
-              rel="noopener noreferrer"
             >
-              isaak.verifactu.business/developers
+              soporte@verifactu.business
             </a>
             .
           </div>

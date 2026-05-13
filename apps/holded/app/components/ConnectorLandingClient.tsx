@@ -23,6 +23,8 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ComponentType } from 'react';
+import { ConnectorComparison } from '@/app/components/ConnectorComparison';
+import { ConnectorFAQ } from '@/app/components/ConnectorFAQ';
 
 type ConnectorId = 'claude' | 'chatgpt';
 
@@ -114,6 +116,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     dpaHref: '/conectores/chatgpt/dpa',
     privacyHref: '/conectores/chatgpt/privacy',
     termsHref: '/conectores/chatgpt/terms',
+    connectHref: '/auth/holded-direct?source=chatgpt_connector_landing',
   },
 };
 
@@ -126,10 +129,7 @@ const CAPABILITIES: Capability[] = [
       claude: ['list_documents', 'get_document'],
       chatgpt: ['holded_list_invoices', 'holded_get_invoice'],
     },
-    examples: [
-      'List my latest Holded invoices.',
-      'Show me the details of one invoice from the list.',
-    ],
+    examples: ['¿Cuánto he facturado este mes?', 'Enséñame las últimas facturas de un cliente.'],
   },
   {
     title: 'Contactos',
@@ -139,7 +139,10 @@ const CAPABILITIES: Capability[] = [
       claude: ['list_contacts', 'get_contact'],
       chatgpt: ['holded_list_contacts', 'holded_get_contact'],
     },
-    examples: ['List my Holded contacts.', 'Show me the details of one contact from that list.'],
+    examples: [
+      'Busca los datos fiscales de este cliente.',
+      '¿Qué contactos tienen facturas pendientes?',
+    ],
   },
   {
     title: 'Cuentas contables',
@@ -149,7 +152,7 @@ const CAPABILITIES: Capability[] = [
       claude: ['get_chart_of_accounts'],
       chatgpt: ['holded_list_accounts'],
     },
-    examples: ['List my main accounting accounts in Holded.'],
+    examples: ['Resume mis principales cuentas contables.', '¿Dónde se concentra el gasto?'],
   },
   {
     title: 'Diario contable',
@@ -159,32 +162,30 @@ const CAPABILITIES: Capability[] = [
       claude: ['get_journal', 'get_daily_book'],
       chatgpt: ['holded_list_daily_ledger'],
     },
-    examples: ['Show my Holded daily ledger entries from 2026-03-01 to 2026-03-31.'],
+    examples: ['Muéstrame los apuntes de marzo.', 'Explícame este asiento en lenguaje claro.'],
   },
   {
     title: 'Borradores de factura',
-    subtitle: 'Prepara borradores solo despues de confirmacion explicita del usuario.',
+    subtitle: 'Prepara borradores solo después de confirmación explícita del usuario.',
     Icon: FileText,
     tools: {
       claude: ['create_invoice_draft'],
       chatgpt: ['holded_create_invoice_draft'],
     },
     examples: [
-      'Create a draft invoice for an existing customer for 100 euros plus VAT. Ask for confirmation before creating it.',
+      'Prepara un borrador para Acme por 100 € + IVA.',
+      'Pídeme confirmación antes de crearlo.',
     ],
   },
   {
     title: 'Productos y stock',
-    subtitle: 'Lista catalogo, ficha de producto y stock disponible cuando esta habilitado.',
+    subtitle: 'Lista catálogo, ficha de producto y stock disponible cuando está habilitado.',
     Icon: Package,
     tools: {
       claude: ['list_products', 'get_product', 'list_products_stock'],
       chatgpt: ['holded_list_products', 'holded_get_product', 'holded_list_products_stock'],
     },
-    examples: [
-      'Lista mis productos mas vendidos y dime cuales estan bajo minimos.',
-      'Show me product details and current stock for SKU ABC-123.',
-    ],
+    examples: ['¿Qué productos tengo con stock bajo?', 'Enséñame precio y stock de este SKU.'],
   },
   {
     title: 'Proyectos y tareas',
@@ -194,10 +195,7 @@ const CAPABILITIES: Capability[] = [
       claude: ['list_projects', 'get_project', 'list_project_tasks', 'list_time_records'],
       chatgpt: ['holded_list_projects', 'holded_get_project', 'holded_list_project_tasks'],
     },
-    examples: [
-      'Resume los proyectos activos y las tareas pendientes de esta semana.',
-      'Show hours imputed to project X this month.',
-    ],
+    examples: ['Resume mis proyectos activos.', '¿Qué tareas están pendientes esta semana?'],
   },
   {
     title: 'CRM: leads y embudo',
@@ -207,10 +205,7 @@ const CAPABILITIES: Capability[] = [
       claude: ['list_crm_funnels', 'list_leads'],
       chatgpt: ['holded_list_crm_funnels', 'holded_list_leads'],
     },
-    examples: [
-      'Resume mi embudo: cuantos leads en cada fase y prioridad.',
-      'List qualified leads waiting for follow-up.',
-    ],
+    examples: ['Resume mi embudo por fases.', '¿Qué leads esperan seguimiento?'],
   },
   {
     title: 'PDFs de documentos',
@@ -221,8 +216,8 @@ const CAPABILITIES: Capability[] = [
       chatgpt: ['holded_get_document_pdf'],
     },
     examples: [
-      'Damelo el PDF de la ultima factura emitida al cliente X.',
-      'Get the PDF of estimate Q-2026-042 to attach in an email.',
+      'Dame el PDF de la última factura de este cliente.',
+      'Recupera el presupuesto que necesito adjuntar.',
     ],
   },
   {
@@ -247,8 +242,8 @@ const CAPABILITIES: Capability[] = [
       ],
     },
     examples: [
-      'Muestrame mi equipo, cuentas bancarias y los tipos de IVA configurados.',
-      'List my warehouses and active numbering series before creating a draft.',
+      'Muéstrame mi equipo y cuentas de tesorería.',
+      'Lista almacenes y series antes de crear un borrador.',
     ],
   },
 ];
@@ -256,8 +251,8 @@ const CAPABILITIES: Capability[] = [
 const TRUST_POINTS = [
   'Tenant-scoped: solo accede a la cuenta de Holded conectada por el usuario autenticado.',
   'Credenciales protegidas server-side por Verifactu; no se muestran a la IA ni al cliente.',
-  'Solo lectura por defecto; crear un borrador de factura requiere confirmacion explicita.',
-  'No envia, emite, cobra, finaliza, elimina ni sobrescribe facturas o registros existentes.',
+  'Solo lectura por defecto; crear un borrador de factura requiere confirmación explícita.',
+  'No envía, emite, cobra, finaliza, elimina ni sobrescribe facturas o registros existentes.',
 ];
 
 const CONNECTOR_STATUS: Record<ConnectorId, string> = {
@@ -265,8 +260,47 @@ const CONNECTOR_STATUS: Record<ConnectorId, string> = {
     process.env.NEXT_PUBLIC_HOLDED_CLAUDE_CONNECTOR_STATUS || 'Disponible en acceso controlado',
   chatgpt:
     process.env.NEXT_PUBLIC_HOLDED_CHATGPT_CONNECTOR_STATUS ||
-    'Disponibilidad publica sujeta a revision',
+    'Acceso controlado durante lanzamiento',
 };
+
+function isExternalHref(href: string) {
+  return /^https?:\/\//.test(href);
+}
+
+function ConnectorPrimaryCta({
+  href,
+  aiName,
+  className,
+}: {
+  href: string;
+  aiName: string;
+  className: string;
+}) {
+  const content = (
+    <>
+      {isExternalHref(href) ? (
+        <ExternalLink className="h-4 w-4" />
+      ) : (
+        <ArrowRight className="h-4 w-4" />
+      )}
+      Conectar Holded con {aiName}
+    </>
+  );
+
+  if (isExternalHref(href)) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <Link href={href} className={className}>
+      {content}
+    </Link>
+  );
+}
 
 function ConnectorLogo({ cfg }: { cfg: ConnectorConfig }) {
   return (
@@ -313,7 +347,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
             className={`mx-auto mb-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] shadow-sm ${theme.pill}`}
           >
             <Sparkles className="h-3.5 w-3.5" />
-            Plan Gratis Para Siempre · sin límites en lanzamiento
+            Acceso gratuito durante lanzamiento
           </div>
 
           <div
@@ -324,26 +358,22 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           </div>
 
           <h1 className="mt-7 text-4xl font-bold tracking-tight text-slate-950 sm:text-5xl sm:leading-[1.06]">
-            Trabaja con datos clave de Holded desde {cfg.aiName}.
+            Pregunta a Holded desde {cfg.aiName}.
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            Consulta facturas, contactos, cuentas contables y apuntes del diario con rango de
-            fechas. Crea borradores de factura solo tras confirmacion explicita. El conector esta
-            limitado a la cuenta de Holded conectada por el usuario.
+            Consulta facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural. Crea
+            borradores de factura solo con confirmación explícita. Tus credenciales se guardan
+            server-side y el acceso queda limitado a tu cuenta conectada.
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             {cfg.connectHref && (
-              <a
+              <ConnectorPrimaryCta
                 href={cfg.connectHref}
-                target="_blank"
-                rel="noopener noreferrer"
+                aiName={cfg.aiName}
                 className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
-              >
-                <ExternalLink className="h-4 w-4" />
-                Conectar con {cfg.aiName}
-              </a>
+              />
             )}
             <Link
               href={cfg.demoHref}
@@ -360,7 +390,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               href={cfg.docsHref}
               className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-7 py-3.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
             >
-              Como conectar
+              Cómo conectar
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
@@ -375,7 +405,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           <div className="mt-7 flex flex-wrap justify-center gap-2">
             {[
               'Solo lectura por defecto',
-              'Borradores con confirmacion',
+              'Borradores con confirmación',
               'Tenant-scoped',
               'Credenciales server-side',
             ].map((chip) => (
@@ -396,14 +426,14 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10 text-center">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-              Alcance validado
+              Capacidades actuales
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-              Trabaja con datos clave de Holded en lenguaje natural.
+              Preguntas de negocio, no menús.
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Alcance actual del conector, validado con datos reales. Nuevos modulos de Holded se
-              incorporaran progresivamente.
+              Estas son las capacidades actuales del conector. El usuario pregunta en lenguaje
+              natural y {cfg.aiName} consulta Holded dentro del tenant autorizado.
             </p>
           </div>
 
@@ -422,14 +452,14 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
                   </div>
                   <h3 className="mt-4 text-base font-bold text-slate-950">{cap.title}</h3>
                   <p className="mt-1.5 flex-1 text-sm leading-6 text-slate-500">{cap.subtitle}</p>
-                  <div className="mt-4 space-y-1">
-                    {cap.tools[connector].map((tool) => (
-                      <code
-                        key={tool}
-                        className="block rounded-md bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-600"
+                  <div className="mt-4 space-y-1.5">
+                    {cap.examples.map((example) => (
+                      <span
+                        key={example}
+                        className="block rounded-md bg-slate-50 px-2 py-1.5 text-[11px] font-medium leading-4 text-slate-600"
                       >
-                        {tool}
-                      </code>
+                        {example}
+                      </span>
                     ))}
                   </div>
                 </article>
@@ -439,54 +469,23 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
 
           {cfg.connectHref && (
             <div className="mt-10 flex justify-center">
-              <a
+              <ConnectorPrimaryCta
                 href={cfg.connectHref}
-                target="_blank"
-                rel="noopener noreferrer"
+                aiName={cfg.aiName}
                 className={`inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
-              >
-                <ExternalLink className="h-4 w-4" />
-                Conectar con {cfg.aiName}
-              </a>
+              />
             </div>
           )}
         </div>
       </section>
 
-      {/* Cross-link banner: Holded connector → Isaak (orquestador principal).
-          Aparece despues de capabilities y antes de "Como funciona". */}
-      <section className="border-y border-slate-200 bg-gradient-to-br from-[#011c67] via-[#0d2b4a] to-[#011c67] py-12 text-white">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] lg:items-center">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-blue-100">
-                <Sparkles className="h-3.5 w-3.5" />
-                Quieres mas?
-              </div>
-              <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-                Isaak hace lo mismo + memoria, libros AEAT y sync con tu ERP.
-              </h2>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-blue-100">
-                El conector de Holded para {cfg.aiName} es la entrada gratuita. Cuando necesites
-                trazabilidad, modo ejecucion controlado y multi-conector (Holded + bancos + Excel +
-                email), Isaak es la capa empresarial.
-              </p>
-            </div>
-            <div className="flex flex-col items-start gap-3 lg:items-end">
-              <a
-                href="https://isaak.verifactu.business"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#011c67] shadow-sm hover:bg-slate-100"
-              >
-                Conoce Isaak
-                <ExternalLink className="h-4 w-4" />
-              </a>
-              <span className="text-xs text-blue-200">14 dias gratis · sin tarjeta</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Comparativa Con conector vs Sin conector — argumento de valor del
+          conector frente a usar Claude/ChatGPT solo, sin acceso a Holded. */}
+      <ConnectorComparison
+        connector={connector}
+        aiName={cfg.aiName}
+        connectHref={cfg.connectHref}
+      />
 
       <section className={`border-y border-slate-100 py-16 sm:py-20 ${theme.sectionBg}`}>
         <div className="mx-auto max-w-6xl px-4">
@@ -502,18 +501,18 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           <div className="grid gap-4 md:grid-cols-3">
             {[
               {
-                title: 'Abre la documentacion',
-                text: `Sigue el flujo del conector Holded para ${cfg.aiName}. Cada pagina mantiene enlaces exclusivos a su propia documentacion, soporte y demo.`,
+                title: 'Inicia la conexión',
+                text: `Empieza desde ${cfg.aiName} o desde el acceso directo de Verifactu. Solo necesitas tu API key de Holded y una cuenta autorizada.`,
                 Icon: BookOpen,
               },
               {
-                title: 'Autoriza la conexion',
-                text: `Verifactu valida la conexion y guarda las credenciales de Holded en servidor. Las credenciales no se devuelven a ${cfg.aiName} ni al navegador.`,
+                title: 'Autoriza Holded',
+                text: `Verifactu valida la API key y guarda la conexión en servidor. Las credenciales no se devuelven a ${cfg.aiName} ni al navegador.`,
                 Icon: LockKeyhole,
               },
               {
                 title: 'Pregunta con control',
-                text: `${cfg.aiName} consulta datos de Holded dentro del tenant conectado. Las acciones de borrador requieren confirmacion antes de ejecutarse.`,
+                text: `${cfg.aiName} consulta datos de Holded dentro del tenant conectado. Las acciones de borrador requieren confirmación antes de ejecutarse.`,
                 Icon: MessageSquareText,
               },
             ].map((step, index) => {
@@ -547,12 +546,12 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
               Seguridad y alcance
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-              Solo lectura por defecto. Borradores con confirmacion.
+              Solo lectura por defecto. Borradores con confirmación.
             </h2>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600">
-              El conector esta disenado para un alcance cerrado y reproducible. No cambia de tenant,
-              no muestra credenciales, no envia facturas y no realiza acciones contables amplias de
-              forma autonoma.
+              El conector está diseñado para un alcance cerrado y reproducible. No cambia de tenant,
+              no muestra credenciales, no envía facturas y no realiza acciones contables amplias de
+              forma autónoma.
             </p>
           </div>
 
@@ -569,6 +568,11 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
         </div>
       </section>
 
+      {/* FAQ — preguntas frecuentes con JSON-LD FAQPage inyectado en page.tsx.
+          Posicionada justo antes de Soporte porque resuelve objeciones que
+          podrian llevar al usuario a contactar (privacidad, planes, costes). */}
+      <ConnectorFAQ connector={connector} aiName={cfg.aiName} provider={cfg.provider} />
+
       <section className={`border-y border-slate-100 py-16 sm:py-20 ${theme.sectionBg}`}>
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-8 text-center">
@@ -581,7 +585,7 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           <div className="grid gap-4 md:grid-cols-3">
             {[
               {
-                title: 'Chat con Isaak',
+                title: 'Chat de soporte',
                 text: 'Ayuda guiada en una ventana independiente, sin incrustar chats dentro de la landing.',
                 href: `/support/chat?source=${cfg.id}_connector&prompt=${encodeURIComponent(
                   `Necesito ayuda con el conector Holded para ${cfg.aiName}`
@@ -656,23 +660,19 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
             Operado por Verifactu Business - no por {cfg.provider} ni Holded
           </div>
           <h2 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">
-            Conecta tu cuenta de Holded con {cfg.aiName}.
+            Conecta Holded con {cfg.aiName}.
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-600">
             Autoriza el conector en segundos. Solo lectura por defecto; los borradores requieren
-            confirmacion explicita antes de crearse.
+            confirmación explícita antes de crearse.
           </p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             {cfg.connectHref && (
-              <a
+              <ConnectorPrimaryCta
                 href={cfg.connectHref}
-                target="_blank"
-                rel="noopener noreferrer"
+                aiName={cfg.aiName}
                 className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-white transition ${theme.ctaBg} ${theme.ctaShadow}`}
-              >
-                <ExternalLink className="h-4 w-4" />
-                Conectar con {cfg.aiName}
-              </a>
+              />
             )}
             <Link
               href={cfg.demoHref}

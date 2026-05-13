@@ -68,7 +68,7 @@ export function DualConnectorHero({ className = '' }: Props) {
         </div>
         <div className="flex items-center gap-2 px-4 py-2.5">
           <span className="h-2 w-2 rounded-full bg-emerald-400" />
-          <span className="text-xs font-semibold text-slate-700">ChatGPT · Plugin</span>
+          <span className="text-xs font-semibold text-slate-700">ChatGPT · Connector</span>
         </div>
       </div>
 

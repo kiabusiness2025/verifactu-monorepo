@@ -40,7 +40,7 @@ export default function HoldedConnectorsHubPage() {
         </h1>
         <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
           Este dominio agrupa los conectores, la documentacion y los flujos publicos minimos de
-          Holded. Isaak sigue siendo el producto orquestador principal en un dominio separado.
+          Holded.
         </p>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-500">
           Integracion independiente sobre API de Holded. No somos Holded, OpenAI ni Anthropic.

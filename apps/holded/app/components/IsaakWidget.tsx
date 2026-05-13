@@ -31,9 +31,9 @@ const BUBBLE_SUGGESTIONS: Record<PageContext, string[]> = {
     'Error de API key de Holded',
   ],
   chatgpt: [
-    '¿Cómo instalo el plugin de Holded en ChatGPT?',
+    '¿Cómo instalo el conector de Holded en ChatGPT?',
     '¿Qué módulos de Holded están disponibles?',
-    'El plugin no aparece, ¿qué hago?',
+    'El conector no aparece, ¿qué hago?',
   ],
   holded_hub: [
     '¿Qué diferencia hay entre Claude y ChatGPT?',
@@ -69,13 +69,13 @@ const SUGGESTION_POOL: Record<PageContext, string[]> = {
     'Hablar con soporte directamente',
   ],
   chatgpt: [
-    '¿Necesito ChatGPT Plus para usar el plugin?',
+    '¿Necesito un plan de pago de ChatGPT para usar el conector?',
     '¿Puedo crear facturas desde ChatGPT?',
     '¿Es seguro conectar mi Holded con ChatGPT?',
     '¿Qué módulos de Holded están disponibles?',
     '¿Cuánto cuesta el conector ChatGPT?',
     'Error de autenticación en ChatGPT',
-    'El plugin me da error al conectar',
+    'El conector me da error al conectar',
     'Los datos de Holded no aparecen en ChatGPT',
     'Quiero ver la demo de Holded gratis',
     'Quiero migrar mis datos a Holded',
@@ -96,7 +96,7 @@ const SUGGESTION_POOL: Record<PageContext, string[]> = {
   ],
   verifactu: [
     '¿Qué es el conector Claude MCP?',
-    '¿Qué es el conector ChatGPT Plugin?',
+    '¿Qué es el conector ChatGPT?',
     '¿Cuánto cuesta el onboarding de Holded?',
     'Servicios de migración disponibles',
     'Formación personalizada en Holded',

@@ -1,4 +1,4 @@
-import { ExternalLink, Sparkles, VideoIcon } from 'lucide-react';
+import { ArrowRight, Sparkles, VideoIcon } from 'lucide-react';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -394,15 +394,13 @@ export default function ChatGPTDemoPage() {
 
         {/* CTAS */}
         <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <a
-            href="https://chatgpt.com/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/auth/holded-direct?source=chatgpt_demo_cta"
             className="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
           >
-            <ExternalLink className="h-4 w-4" />
-            Conectar en ChatGPT
-          </a>
+            <ArrowRight className="h-4 w-4" />
+            Conectar Holded con ChatGPT
+          </Link>
           <Link
             href="/conectores/chatgpt"
             className="inline-flex items-center gap-2 rounded-full border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"

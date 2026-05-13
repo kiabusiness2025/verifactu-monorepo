@@ -142,7 +142,7 @@ export async function ConnectorSupportPage({ connector }: { connector: Connector
               </span>
             </h1>
             <p className="max-w-2xl text-base leading-7 text-slate-600">
-              Elige una via de contacto. El chat de Isaak se abre en una ventana independiente; el
+              Elige una via de contacto. El chat de soporte se abre en una ventana independiente; el
               formulario crea un ticket solo para usuarios autenticados; y el email directo queda
               disponible para urgencias o adjuntos.
             </p>
@@ -195,7 +195,7 @@ export async function ConnectorSupportPage({ connector }: { connector: Connector
             >
               <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
                 <MessageSquareText className={`h-4 w-4 ${cfg.accent}`} />
-                Chat con Isaak
+                Chat de soporte
               </div>
               <p className="mt-2 text-xs leading-5 text-slate-500">
                 Ayuda guiada en ventana independiente, con la pregunta de soporte ya preparada.

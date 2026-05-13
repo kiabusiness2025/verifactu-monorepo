@@ -13,7 +13,7 @@ type ContactFormState = {
 const SUBJECT_OPTIONS = [
   { value: '', label: 'Selecciona un asunto' },
   { value: 'claude', label: 'Conector Claude (MCP)' },
-  { value: 'chatgpt', label: 'Conector ChatGPT (Plugin)' },
+  { value: 'chatgpt', label: 'Conector ChatGPT' },
   { value: 'servicios', label: 'Servicios y migración' },
   { value: 'formacion', label: 'Formación en Holded' },
   { value: 'demo', label: 'Demo gratuita de Holded' },

@@ -90,7 +90,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
   const supportOptions: SupportOption[] = [
     {
       title: 'Abrir chat de soporte',
-      body: 'Isaak se abre en una ventana independiente con el contexto de soporte tecnico ya preparado.',
+      body: 'El chat de soporte se abre en una ventana independiente con el contexto tecnico ya preparado.',
       actionLabel: 'Abrir chat',
       actionHref: supportChatHref,
       external: true,
@@ -223,7 +223,7 @@ export default async function HoldedSupportPage({ searchParams }: PageProps) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-[#ff5460]/25 bg-[#fff7f7] px-4 py-2 text-sm font-semibold text-[#ff5460] transition hover:border-[#ff5460]/40 hover:bg-[#ffeef0]"
             >
-              Abrir chat con Isaak
+              Abrir chat de soporte
               <ExternalLink className="h-4 w-4" />
             </a>
           </div>

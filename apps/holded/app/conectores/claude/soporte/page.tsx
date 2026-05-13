@@ -4,7 +4,7 @@ import { ConnectorSupportPage } from '@/app/components/ConnectorSupportPage';
 export const metadata: Metadata = {
   title: 'Soporte | Conector Holded para Claude - Verifactu Business',
   description:
-    'Soporte del conector Holded para Claude: chat con Isaak, formulario autenticado y email directo.',
+    'Soporte del conector Holded para Claude: chat de soporte, formulario autenticado y email directo.',
   alternates: { canonical: '/conectores/claude/soporte' },
 };
 

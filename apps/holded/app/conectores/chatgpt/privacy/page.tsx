@@ -33,7 +33,7 @@ export default function ChatGPTPrivacyPage() {
         intro={
           <>
             Qué datos tratamos, cómo gestionamos la conexión con Holded mediante OAuth 2.0 y los
-            derechos que puedes ejercer como usuario del plugin disponible en ChatGPT.
+            derechos que puedes ejercer como usuario del conector disponible en ChatGPT.
           </>
         }
         lastUpdated="Última actualización: 11 de mayo de 2026."
@@ -67,7 +67,7 @@ export default function ChatGPTPrivacyPage() {
             </p>
             <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2">
               <BadgeCheck className="h-4 w-4 shrink-0 text-emerald-600" />
-              <span className="text-xs text-emerald-800">Plugin OAuth · OpenAI GPT Store</span>
+              <span className="text-xs text-emerald-800">Conector OAuth · ChatGPT</span>
             </div>
           </>
         }
@@ -80,15 +80,15 @@ export default function ChatGPTPrivacyPage() {
           Qué es este servicio
         </div>
         <p className="mt-3 text-sm leading-7 text-slate-600">
-          El <strong>Conector Holded para ChatGPT</strong> es un plugin OAuth desarrollado por
+          El <strong>Conector Holded para ChatGPT</strong> es un conector OAuth desarrollado por
           Expert Estudios Profesionales, SLU que permite a los usuarios de ChatGPT (OpenAI) acceder
           a los datos de su cuenta de Holded —facturas, contactos, proyectos, tesorería, empleados—
           en lenguaje natural, sin salir del chat.
         </p>
         <p className="mt-3 text-sm leading-7 text-slate-600">
-          El plugin opera bajo el protocolo <strong>Model Context Protocol (MCP)</strong> y utiliza{' '}
-          <strong>OAuth 2.0</strong> para autenticar de forma segura al usuario con Holded sin
-          exponer credenciales. Expert Estudios Profesionales, SLU es{' '}
+          El conector opera bajo el protocolo <strong>Model Context Protocol (MCP)</strong> y
+          utiliza <strong>OAuth 2.0</strong> para autenticar de forma segura al usuario con Holded
+          sin exponer credenciales. Expert Estudios Profesionales, SLU es{' '}
           <strong>Holded Solution Partner</strong>, con acceso a recursos técnicos y formación
           oficial de Holded para la integración de su API.
         </p>
@@ -192,7 +192,7 @@ export default function ChatGPTPrivacyPage() {
             Seguridad
           </div>
           <p className="mt-3 text-sm leading-7 text-slate-600">
-            Los tokens OAuth se almacenan cifrados. La comunicación entre el plugin y la API de
+            Los tokens OAuth se almacenan cifrados. La comunicación entre el conector y la API de
             Holded se realiza siempre mediante HTTPS. Aplicamos medidas técnicas y organizativas
             conforme al RGPD para minimizar el riesgo de acceso no autorizado.
           </p>

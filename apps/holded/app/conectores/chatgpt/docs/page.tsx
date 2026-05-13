@@ -32,7 +32,7 @@ import { ConnectorPageHero, ConnectorPageShell } from '@/app/components/Connecto
 export const metadata: Metadata = {
   title: 'Documentación | Conector Holded para ChatGPT — Verifactu Business',
   description:
-    'Guía completa para conectar tu cuenta de Holded con ChatGPT. Requisitos, pasos de configuración, herramientas disponibles y solución de problemas.',
+    'Guía para preguntar a Holded desde ChatGPT: requisitos, conexión por API key, capacidades disponibles, seguridad y solución de problemas.',
   alternates: { canonical: '/conectores/chatgpt/docs' },
 };
 
@@ -160,8 +160,8 @@ const STEPS = [
 
 const FAQS = [
   {
-    q: '¿Necesito ChatGPT Plus, Team o Enterprise?',
-    a: 'Sí. Los conectores (Apps SDK con OAuth) solo están disponibles en los planes de pago de ChatGPT. No funciona en el plan gratuito.',
+    q: '¿Necesito ChatGPT Plus, Pro, Business, Enterprise o Edu?',
+    a: 'Sí. Los conectores personalizados están disponibles en planes de pago de ChatGPT. No están pensados para el plan gratuito.',
   },
   {
     q: '¿El conector puede modificar mis datos de Holded?',
@@ -207,12 +207,12 @@ export default function ChatGPTDocsPage() {
         provider="chatgpt"
         badgeIcon={<MessageSquare className="h-4 w-4" />}
         badgeLabel="Documentación del conector"
-        title="Conector Holded para ChatGPT"
-        subtitle="Guía de configuración y uso"
+        title="Pregunta a Holded desde ChatGPT"
+        subtitle="Guía de conexión y uso"
         intro={
           <>
-            Conecta tu cuenta de Holded con ChatGPT y consulta facturas, contactos, contabilidad y
-            mucho más con lenguaje natural — sin salir del chat.
+            Conecta tu cuenta de Holded con ChatGPT y consulta facturas, contactos, contabilidad,
+            CRM y proyectos en lenguaje natural — sin salir del chat.
           </>
         }
         asideCard={
@@ -222,7 +222,7 @@ export default function ChatGPTDocsPage() {
               Empieza en 2 minutos
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Solo necesitas tu API key de Holded y un plan de ChatGPT Plus, Team o Enterprise.
+              Solo necesitas tu API key de Holded y un plan de ChatGPT compatible con conectores.
             </p>
             <div className="mt-4 flex flex-col gap-2">
               <Link
@@ -264,8 +264,8 @@ export default function ChatGPTDocsPage() {
               2
             </span>
             <div>
-              <p className="font-semibold text-slate-800">ChatGPT Plus / Team / Enterprise</p>
-              <p>Los conectores OAuth requieren un plan de pago de OpenAI.</p>
+              <p className="font-semibold text-slate-800">ChatGPT compatible con conectores</p>
+              <p>Plus, Pro, Business, Enterprise o Edu, según disponibilidad de OpenAI.</p>
             </div>
           </div>
           <div className="flex gap-3">
@@ -389,7 +389,7 @@ export default function ChatGPTDocsPage() {
       <div className="mt-8 flex flex-col items-center gap-4 rounded-3xl bg-emerald-50/60 px-6 py-10 text-center ring-1 ring-emerald-100">
         <p className="text-xl font-bold text-slate-900">¿Listo para conectar Holded con ChatGPT?</p>
         <p className="max-w-md text-sm leading-7 text-slate-600">
-          Empieza en menos de 2 minutos — solo necesitas tu API key de Holded.
+          Empieza en menos de 2 minutos con tu API key de Holded.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link

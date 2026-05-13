@@ -21,7 +21,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Holded con IA — Claude y ChatGPT | Verifactu Business',
   description:
-    'Conecta Holded con Claude o ChatGPT. Consulta contabilidad, facturas e impuestos en lenguaje claro. Dos conectores en producción.',
+    'Conecta Holded con Claude o ChatGPT. Pregunta por facturas, clientes, contabilidad y proyectos en lenguaje claro.',
   alternates: {
     canonical: '/',
   },
@@ -40,14 +40,14 @@ const connectorFeatures = [
   'Facturas y contactos',
   'Cuentas contables y diario',
   'Alcance cerrado por tenant',
-  'Borradores de factura con confirmacion',
+  'Borradores de factura con confirmación',
 ];
 
 const whyItems = [
   {
     icon: ShieldCheck,
     title: 'Solo lectura por defecto',
-    desc: 'Consulta datos de Holded sin modificar tu cuenta. Crear un borrador de factura requiere confirmacion explicita antes.',
+    desc: 'Consulta datos de Holded sin modificar tu cuenta. Crear un borrador de factura requiere confirmación explícita antes.',
   },
   {
     icon: Zap,
@@ -57,7 +57,7 @@ const whyItems = [
   {
     icon: Users,
     title: 'Soporte real incluido',
-    desc: 'Isaak te ayuda al instante en cualquier página. Y si necesitas soporte humano, el equipo de Verifactu Business está disponible.',
+    desc: 'Chat de soporte disponible en cualquier página. Y si necesitas ayuda humana, el equipo de Verifactu Business responde por email en horario laboral.',
   },
 ];
 
@@ -101,8 +101,8 @@ export default function HoldedHomePage() {
               </h1>
 
               <p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">
-                Dos conectores en producción — Claude MCP y ChatGPT Plugin. Consulta tu
-                contabilidad, facturas e impuestos en lenguaje claro, sin aprender el ERP.
+                Pregunta por facturas, clientes, contabilidad y proyectos en lenguaje claro, sin
+                navegar menús ni exportar hojas de cálculo.
               </p>
 
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -124,7 +124,7 @@ export default function HoldedHomePage() {
 
               <p className="mt-5 flex items-center gap-2 text-sm text-slate-500">
                 <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-500" />
-                Solo lectura por defecto - borradores solo con confirmacion
+                Solo lectura por defecto - borradores solo con confirmación
               </p>
             </div>
 
@@ -207,7 +207,7 @@ export default function HoldedHomePage() {
                     </div>
                     <span className="flex items-center gap-1.5 rounded-full border border-[#10a37f]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#10a37f]">
                       <span className="h-1.5 w-1.5 rounded-full bg-[#10a37f]" />
-                      Activo
+                      Lanzamiento
                     </span>
                   </div>
                   <ul className="mt-3 space-y-1.5">
@@ -318,7 +318,7 @@ export default function HoldedHomePage() {
                 </div>
                 <div className="inline-flex items-center gap-1.5 rounded-full border border-[#10a37f]/25 bg-white px-3 py-1 text-xs font-semibold text-[#10a37f]">
                   <CheckCircle2 className="h-3.5 w-3.5" />
-                  En producción
+                  En lanzamiento
                 </div>
               </div>
               <h3 className="mt-4 text-xl font-bold tracking-tight text-slate-950">
@@ -330,7 +330,7 @@ export default function HoldedHomePage() {
               </p>
               <ul className="mt-5 space-y-2">
                 {[
-                  'ChatGPT Plus y Team',
+                  'ChatGPT Plus, Pro, Business, Enterprise y Edu',
                   'Credenciales protegidas server-side',
                   'Apps SDK / MCP para ChatGPT',
                   connectorFeatures[3],
@@ -350,7 +350,7 @@ export default function HoldedHomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/docs/chatgpt"
+                  href="/conectores/chatgpt/docs"
                   className="inline-flex items-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                 >
                   Documentación
@@ -364,8 +364,8 @@ export default function HoldedHomePage() {
             <MessageCircleMore className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
             <p>
               <strong className="text-slate-900">¿No sabes cuál elegir?</strong> Si ya usas
-              Claude.ai en tu trabajo, elige el conector Claude. Si usas ChatGPT Plus, elige
-              ChatGPT. Ambos ofrecen las mismas capacidades de Holded.{' '}
+              Claude.ai en tu trabajo, elige el conector Claude. Si usas ChatGPT con conectores,
+              elige ChatGPT. Ambos ofrecen las mismas capacidades de Holded.{' '}
               <Link href="/contacto" className="font-medium text-[#ff5460] hover:underline">
                 Pregúntanos →
               </Link>
@@ -451,7 +451,7 @@ export default function HoldedHomePage() {
                 </h2>
                 <p className="mt-4 max-w-xl text-base leading-8 text-slate-600">
                   Una demo real con datos de Holded: facturas, contactos, cuentas contables, diario
-                  con rango de fechas y borradores con confirmacion. Sin registro.
+                  con rango de fechas y borradores con confirmación. Sin registro.
                 </p>
               </div>
               <div className="shrink-0">

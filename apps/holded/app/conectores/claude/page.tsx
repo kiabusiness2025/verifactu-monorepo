@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { ConnectorLandingClient } from '@/app/components/ConnectorLandingClient';
 import { ConnectorMobileBanner } from '@/app/components/ConnectorMobileBanner';
+import { getFaqJsonLd } from '@/app/components/ConnectorFAQData';
 
 const SITE_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 const PAGE_URL = `${SITE_URL}/conectores/claude`;
@@ -145,10 +146,15 @@ const jsonLd = {
         '@type': 'PostalAddress',
         addressCountry: 'ES',
       },
-      sameAs: ['https://holded.verifactu.business', 'https://isaak.verifactu.business'],
+      sameAs: ['https://holded.verifactu.business'],
     },
   ],
 };
+
+// FAQ JSON-LD aparte: schema.org recomienda FAQPage como entidad de primer
+// nivel y muchos validadores penalizan mezclarla dentro de un @graph con
+// SoftwareApplication/WebPage. Mantenemos dos <script> separados.
+const faqJsonLd = getFaqJsonLd('Claude', 'Anthropic');
 
 export default function ClaudeConnectorPage() {
   return (
@@ -156,6 +162,10 @@ export default function ClaudeConnectorPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       {/* F4.3: banner mobile-only que invita a usar /auth/holded-direct
           (sobrevive al iOS in-app browser de Claude mobile). */}

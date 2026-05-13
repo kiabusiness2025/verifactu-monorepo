@@ -1,15 +1,16 @@
 import type { Metadata } from 'next';
 import { ConnectorLandingClient } from '@/app/components/ConnectorLandingClient';
 import { ConnectorMobileBanner } from '@/app/components/ConnectorMobileBanner';
+import { getFaqJsonLd } from '@/app/components/ConnectorFAQData';
 
 const SITE_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 const PAGE_URL = `${SITE_URL}/conectores/chatgpt`;
 const OG_IMAGE = `${SITE_URL}/brand/holded/holded-diamond-logo.png`;
 
 export const metadata: Metadata = {
-  title: 'Conector Holded para ChatGPT | Verifactu Business',
+  title: 'Pregunta a Holded desde ChatGPT | Verifactu Business',
   description:
-    'Conector Holded de Verifactu Business para ChatGPT: consulta facturas, contactos, contabilidad, proyectos y CRM en lenguaje natural. Tools segun permisos. Borradores solo con confirmacion.',
+    'Conecta Holded con ChatGPT para consultar facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural. Borradores de factura solo con confirmación.',
   keywords: [
     'conector Holded',
     'ChatGPT Holded',
@@ -24,9 +25,9 @@ export const metadata: Metadata = {
     canonical: '/conectores/chatgpt',
   },
   openGraph: {
-    title: 'Conector Holded para ChatGPT | Verifactu Business',
+    title: 'Pregunta a Holded desde ChatGPT | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde ChatGPT. Lectura segun permisos y borrador con confirmacion.',
+      'Consulta tus datos de Holded desde ChatGPT. Solo lectura por defecto y borradores con confirmación.',
     url: PAGE_URL,
     siteName: 'Holded by Verifactu Business',
     images: [
@@ -42,9 +43,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Conector Holded para ChatGPT | Verifactu Business',
+    title: 'Pregunta a Holded desde ChatGPT | Verifactu Business',
     description:
-      'Habla con tus datos de Holded desde ChatGPT. Lectura segun permisos y borrador con confirmacion.',
+      'Consulta tus datos de Holded desde ChatGPT. Solo lectura por defecto y borradores con confirmación.',
     images: [OG_IMAGE],
   },
   robots: {
@@ -72,7 +73,7 @@ const jsonLd = {
       applicationSubCategory: 'AI Connector',
       operatingSystem: 'Web (ChatGPT)',
       description:
-        'Conector de Verifactu Business que permite a ChatGPT consultar datos de Holded en lenguaje natural. La superficie de tools depende de los permisos concedidos.',
+        'Conector de Verifactu Business que permite a ChatGPT consultar datos de Holded en lenguaje natural. El alcance depende de los permisos concedidos.',
       url: PAGE_URL,
       image: OG_IMAGE,
       author: {
@@ -101,7 +102,7 @@ const jsonLd = {
       '@type': 'WebPage',
       '@id': PAGE_URL,
       url: PAGE_URL,
-      name: 'Conector Holded para ChatGPT | Verifactu Business',
+      name: 'Pregunta a Holded desde ChatGPT | Verifactu Business',
       isPartOf: {
         '@type': 'WebSite',
         name: 'Holded by Verifactu Business',
@@ -120,12 +121,20 @@ const jsonLd = {
   ],
 };
 
+// FAQ JSON-LD aparte (mismas Q/A que renderiza ConnectorFAQ) — schema.org
+// recomienda FAQPage como entidad de primer nivel.
+const faqJsonLd = getFaqJsonLd('ChatGPT', 'OpenAI');
+
 export default function ChatGPTConnectorPage() {
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
       />
       {/* F4.3: banner mobile-only que invita a usar /auth/holded-direct
           (sobrevive al iOS in-app browser de ChatGPT mobile). */}
