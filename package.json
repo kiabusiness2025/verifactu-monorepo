@@ -47,7 +47,8 @@
     "video:reels": "node scripts/generate-reels-sora.mjs",
     "video:outro": "node scripts/generate-outro-sora.mjs",
     "video:outro:tutorial": "node scripts/generate-outro-tutorial-sora.mjs",
-    "video:build-demo": "node scripts/build-demo-video.mjs"
+    "video:build-demo": "node scripts/build-demo-video.mjs",
+    "video:youtube": "node scripts/build-youtube-videos.mjs"
   },
   "devDependencies": {
     "@next/env": "^16.1.1",

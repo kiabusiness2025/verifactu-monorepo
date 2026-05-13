@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intro — Conector Claude con Holded</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --amber:    #D97757;
+      --amber-lt: #E8A87C;
+      --amber-bg: #FEF3C7;
+      --navy:     #1C1917;
+      --warm-bg:  #F5F0E8;
+      --shadow:   0 8px 32px rgba(217, 119, 87, 0.14);
+      --card-bg:  rgba(255,255,255,0.92);
+    }
+
+    html, body {
+      width: 1920px; height: 1080px;
+      overflow: hidden;
+      font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    }
+
+    .bg {
+      position: fixed; inset: 0;
+      background: linear-gradient(140deg, #FEF9F5 0%, #FAF5EE 35%, #F5F0E8 70%, #F9F7F4 100%);
+      animation: bg-brighten 1.2s ease 9.5s forwards;
+    }
+    @keyframes bg-brighten {
+      to { background: linear-gradient(140deg, #FFFDFB 0%, #FAF9F8 50%, #FFFFFF 100%); }
+    }
+
+    .stage {
+      position: fixed; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Scene 1: Logo cards ── */
+    .logo-card {
+      position: absolute;
+      width: 180px; height: 180px;
+      background: var(--card-bg);
+      border-radius: 28px;
+      box-shadow: var(--shadow), 0 2px 8px rgba(0,0,0,0.06);
+      display: flex; align-items: center; justify-content: center;
+      top: 50%; transform: translateY(-50%);
+    }
+    .logo-card img { width: 82%; height: 82%; object-fit: contain; }
+    .logo-card svg { width: 82%; height: 82%; }
+
+    .logo-card-left {
+      left: 180px; opacity: 0;
+      animation: enter-left 1s cubic-bezier(.16,1,.3,1) 0.4s forwards,
+                 card-float 4s ease-in-out 1.4s infinite,
+                 card-shrink-left 0.6s ease 7.8s forwards;
+    }
+    @keyframes enter-left {
+      from { opacity: 0; transform: translateY(-50%) translateX(-120px); }
+      to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    @keyframes card-shrink-left {
+      to { opacity: 0; transform: translateY(-50%) scale(0.7); }
+    }
+
+    .logo-card-right {
+      right: 180px; opacity: 0;
+      animation: enter-right 1s cubic-bezier(.16,1,.3,1) 0.6s forwards,
+                 card-float-inv 4.2s ease-in-out 1.6s infinite,
+                 card-shrink-right 0.6s ease 7.8s forwards;
+    }
+    @keyframes enter-right {
+      from { opacity: 0; transform: translateY(-50%) translateX(120px); }
+      to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    @keyframes card-shrink-right {
+      to { opacity: 0; transform: translateY(-50%) scale(0.7); }
+    }
+
+    @keyframes card-float     { 0%,100% { margin-top:0; } 50% { margin-top:-12px; } }
+    @keyframes card-float-inv { 0%,100% { margin-top:0; } 50% { margin-top: 12px; } }
+
+    /* ── Scene 2: Connector line + particles ── */
+    .connector {
+      position: absolute;
+      top: 50%; left: 370px; right: 370px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--amber), var(--amber-lt), var(--amber));
+      border-radius: 2px;
+      transform-origin: left center;
+      transform: scaleX(0) translateY(-50%);
+      opacity: 0;
+      box-shadow: 0 0 12px rgba(217,119,87,0.5);
+      animation: line-grow 0.8s cubic-bezier(.4,0,.2,1) 1.8s forwards;
+    }
+    @keyframes line-grow {
+      from { transform: scaleX(0) translateY(-50%); opacity: 0; }
+      to   { transform: scaleX(1) translateY(-50%); opacity: 1; }
+    }
+
+    .particle {
+      position: absolute;
+      top: 50%; width: 8px; height: 8px;
+      border-radius: 50%; background: var(--amber);
+      box-shadow: 0 0 8px var(--amber), 0 0 16px var(--amber-lt);
+      transform: translateY(-50%);
+      opacity: 0;
+    }
+    .particle-1 { left: 370px; animation: particle-run 1.4s ease-in-out 2.7s infinite; }
+    .particle-2 { left: 370px; animation: particle-run 1.4s ease-in-out 3.1s infinite; }
+    .particle-3 { left: 370px; animation: particle-run 1.4s ease-in-out 3.5s infinite; }
+    @keyframes particle-run {
+      0%   { opacity: 0; left: 370px; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { opacity: 0; left: calc(100% - 370px); }
+    }
+
+    /* Background glassmorphism cards */
+    .bg-card {
+      position: absolute;
+      background: rgba(255,255,255,0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(217,119,87,0.08);
+      opacity: 0;
+    }
+    .bg-card-inner { padding: 18px 22px; display: flex; flex-direction: column; gap: 8px; }
+    .bg-card-bar   { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--amber-bg), var(--amber)); }
+    .bg-card-line  { height: 6px; border-radius: 3px; background: #e5e7eb; }
+
+    .bg-card-1 { width:200px; top:80px; left:120px;
+      animation: bg-card-in 0.7s ease 2.3s forwards, bg-card-out 0.5s ease 7.5s forwards; }
+    .bg-card-2 { width:180px; bottom:100px; left:180px;
+      animation: bg-card-in 0.7s ease 2.6s forwards, bg-card-out 0.5s ease 7.5s forwards; }
+    .bg-card-3 { width:200px; top:80px; right:120px;
+      animation: bg-card-in 0.7s ease 2.5s forwards, bg-card-out 0.5s ease 7.5s forwards; }
+    .bg-card-4 { width:180px; bottom:100px; right:180px;
+      animation: bg-card-in 0.7s ease 2.8s forwards, bg-card-out 0.5s ease 7.5s forwards; }
+    @keyframes bg-card-in  { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes bg-card-out { to   { opacity:0; transform:translateY(-10px); } }
+
+    .mini-chart { display:flex; align-items:flex-end; gap:5px; height:40px; }
+    .mini-bar   { width:14px; border-radius:3px 3px 0 0; background:var(--amber); opacity:0.7; }
+
+    /* ── Scene 3: Chat interface ── */
+    .chat-card {
+      position: absolute;
+      width: 620px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 16px 56px rgba(217,119,87,0.14), 0 2px 8px rgba(0,0,0,0.05);
+      overflow: hidden; opacity: 0; transform: translateY(60px);
+      animation: chat-in 0.8s cubic-bezier(.16,1,.3,1) 3.6s forwards,
+                 chat-out 0.5s ease 7.5s forwards;
+    }
+    @keyframes chat-in  { to { opacity:1; transform:translateY(0); } }
+    @keyframes chat-out { to { opacity:0; transform:translateY(-20px); } }
+
+    .chat-header {
+      background: var(--navy); padding:14px 20px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .chat-header-dot   { width:8px; height:8px; border-radius:50%; background:rgba(255,255,255,0.4); }
+    .chat-header-title { color:#E8A87C; font-size:14px; font-weight:600; letter-spacing:0.01em; }
+    .chat-body { padding:24px 20px; display:flex; flex-direction:column; gap:16px; }
+    .chat-bubble { max-width:80%; padding:12px 18px; border-radius:18px; font-size:15px; line-height:1.5; }
+    .chat-bubble-user {
+      background: var(--navy); color: white;
+      align-self:flex-end; border-bottom-right-radius:4px; font-weight:500;
+    }
+    .chat-bubble-ai {
+      background: #F5F0E8; color: var(--navy);
+      align-self:flex-start; border-bottom-left-radius:4px;
+    }
+    .chat-bubble-ai strong { color:var(--amber); font-size:17px; }
+
+    /* ── Scene 4: Feature cards ── */
+    .feature-row { position:absolute; display:flex; gap:14px; opacity:0; }
+    .feature-row-top {
+      top:280px;
+      animation: feat-in-top 0.7s cubic-bezier(.16,1,.3,1) 5.2s forwards, feat-out 0.4s ease 7.4s forwards;
+    }
+    .feature-row-bot {
+      top:390px;
+      animation: feat-in-bot 0.7s cubic-bezier(.16,1,.3,1) 5.6s forwards, feat-out 0.4s ease 7.4s forwards;
+    }
+    @keyframes feat-in-top { from{opacity:0;transform:translateX(-40px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes feat-in-bot { from{opacity:0;transform:translateX(40px)}  to{opacity:1;transform:translateX(0)} }
+    @keyframes feat-out    { to{opacity:0} }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid rgba(217,119,87,0.12);
+      border-radius: 14px; padding:10px 18px;
+      display:flex; align-items:center; gap:10px;
+      box-shadow: 0 4px 16px rgba(217,119,87,0.08);
+      white-space:nowrap;
+    }
+    .feature-icon   { font-size:20px; line-height:1; }
+    .feature-label  { font-size:13px; font-weight:600; color:var(--navy); letter-spacing:0.01em; }
+    .feature-accent { width:3px; height:24px; border-radius:2px; background:var(--amber); opacity:0.5; }
+
+    /* ── Scene 5: Security panel ── */
+    .security-panel {
+      position:absolute; width:480px; background:#fff;
+      border-radius:24px; box-shadow:var(--shadow);
+      padding:36px 40px; display:flex; flex-direction:column;
+      gap:20px; align-items:center; opacity:0;
+      animation: sec-in 0.7s ease 7.9s forwards, sec-out 0.6s ease 9.2s forwards;
+    }
+    @keyframes sec-in  { from{opacity:0;transform:scale(0.94)} to{opacity:1;transform:scale(1)} }
+    @keyframes sec-out { to{opacity:0} }
+    .sec-icons   { display:flex; gap:20px; align-items:center; }
+    .sec-icon-wrap {
+      width:60px; height:60px; border-radius:50%;
+      display:flex; align-items:center; justify-content:center; font-size:26px;
+    }
+    .sec-icon-shield { background:rgba(217,119,87,0.1); box-shadow:0 0 20px rgba(217,119,87,0.2); }
+    .sec-icon-lock   { background:rgba(217,119,87,0.06); }
+    .sec-toggle {
+      width:52px; height:28px; background:var(--amber); border-radius:14px; position:relative;
+    }
+    .sec-toggle::after {
+      content:''; position:absolute; right:4px; top:4px;
+      width:20px; height:20px; border-radius:50%; background:white;
+      box-shadow:0 1px 4px rgba(0,0,0,0.15);
+    }
+    .sec-label    { font-size:18px; font-weight:700; color:var(--navy); text-align:center; }
+    .sec-sublabel { font-size:13px; color:#6b7280; text-align:center; }
+
+    /* ── Scene 6: Hero final ── */
+    .hero-overlay {
+      position:fixed; inset:0;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      opacity:0; animation: hero-in 0.9s ease 9.5s forwards;
+    }
+    @keyframes hero-in { to{opacity:1} }
+
+    .hero-logos { display:flex; align-items:center; gap:28px; margin-bottom:36px; }
+    .hero-logo-card {
+      width:120px; height:120px; background:var(--card-bg);
+      border-radius:22px; box-shadow:var(--shadow);
+      display:flex; align-items:center; justify-content:center;
+      animation: card-float 3s ease-in-out infinite;
+    }
+    .hero-logo-card img { width:86%; height:86%; object-fit:contain; }
+    .hero-logo-card svg { width:80%; height:80%; }
+    .hero-connector-wrap { display:flex; align-items:center; }
+    .hero-arc-line {
+      width:90px; height:2px;
+      background: linear-gradient(90deg, var(--amber), var(--amber-lt));
+      border-radius:2px; box-shadow:0 0 10px rgba(217,119,87,0.5);
+      position:relative;
+    }
+    .hero-arc-line::before {
+      content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+      width:10px; height:10px; border-radius:50%; background:var(--amber);
+      box-shadow:0 0 16px rgba(217,119,87,0.8);
+      animation: pulse 1.5s ease-in-out 9.5s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { transform:translate(-50%,-50%) scale(1); opacity:1; }
+      50%      { transform:translate(-50%,-50%) scale(1.8); opacity:0.5; }
+    }
+
+    .hero-text { text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px; }
+    .hero-title {
+      font-size:64px; font-weight:800; color:var(--navy);
+      letter-spacing:-0.03em; line-height:1.05;
+      opacity:0; animation: fade-up 0.7s ease 10.0s forwards;
+    }
+    .hero-title .a { color:var(--amber); }
+    .hero-sub {
+      font-size:22px; color:#44403C; font-weight:400;
+      max-width:700px; line-height:1.6;
+      opacity:0; animation: fade-up 0.7s ease 10.4s forwards;
+    }
+    .hero-cta {
+      margin-top:8px; padding:14px 36px;
+      background:var(--navy); color:white;
+      border-radius:12px; font-size:16px; font-weight:600;
+      box-shadow:0 4px 20px rgba(28,25,23,0.22);
+      opacity:0; animation: fade-up 0.6s ease 10.8s forwards;
+    }
+    .hero-url {
+      font-size:14px; color:var(--amber); font-weight:500; letter-spacing:0.02em;
+      opacity:0; animation: fade-up 0.5s ease 11.2s forwards;
+    }
+
+    @keyframes fade-up {
+      from { opacity:0; transform:translateY(12px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <div class="stage">
+
+    <!-- Scene 1: Logo cards -->
+    <div class="logo-card logo-card-left">
+      <!-- Claude asterisk logo -->
+      <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="cg" x1="50" y1="8" x2="50" y2="92" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#D97757"/>
+            <stop offset="100%" stop-color="#C4622D"/>
+          </linearGradient>
+        </defs>
+        <rect x="45" y="8"  width="10" height="84" rx="5" fill="url(#cg)" transform="rotate(0 50 50)"/>
+        <rect x="45" y="8"  width="10" height="84" rx="5" fill="url(#cg)" transform="rotate(60 50 50)"/>
+        <rect x="45" y="8"  width="10" height="84" rx="5" fill="url(#cg)" transform="rotate(120 50 50)"/>
+        <circle cx="50" cy="50" r="7" fill="url(#cg)" opacity="0.9"/>
+      </svg>
+    </div>
+
+    <div class="logo-card logo-card-right">
+      <img src="../Holded logos/holded-diamond-logo.png" alt="Holded" />
+    </div>
+
+    <!-- Scene 2: Connector -->
+    <div class="connector"></div>
+    <div class="particle particle-1"></div>
+    <div class="particle particle-2"></div>
+    <div class="particle particle-3"></div>
+
+    <!-- Background data cards -->
+    <div class="bg-card bg-card-1">
+      <div class="bg-card-inner">
+        <div class="bg-card-bar" style="width:70%"></div>
+        <div class="bg-card-line" style="width:90%"></div>
+        <div class="bg-card-line" style="width:60%"></div>
+        <div class="bg-card-line" style="width:80%"></div>
+      </div>
+    </div>
+    <div class="bg-card bg-card-2">
+      <div class="bg-card-inner">
+        <div class="bg-card-bar" style="width:55%; background:linear-gradient(90deg,#E8A87C,#D97757);"></div>
+        <div class="bg-card-line" style="width:85%"></div>
+        <div class="bg-card-line" style="width:50%"></div>
+      </div>
+    </div>
+    <div class="bg-card bg-card-3">
+      <div class="bg-card-inner">
+        <div class="mini-chart">
+          <div class="mini-bar" style="height:50%"></div>
+          <div class="mini-bar" style="height:70%"></div>
+          <div class="mini-bar" style="height:45%"></div>
+          <div class="mini-bar" style="height:90%"></div>
+          <div class="mini-bar" style="height:65%"></div>
+          <div class="mini-bar" style="height:80%"></div>
+        </div>
+      </div>
+    </div>
+    <div class="bg-card bg-card-4">
+      <div class="bg-card-inner">
+        <div class="bg-card-bar" style="width:80%; background:linear-gradient(90deg,#78716C,#A8A29E);"></div>
+        <div class="bg-card-line" style="width:75%"></div>
+        <div class="bg-card-line" style="width:95%"></div>
+        <div class="bg-card-line" style="width:55%"></div>
+      </div>
+    </div>
+
+    <!-- Scene 3: Chat interface -->
+    <div class="chat-card">
+      <div class="chat-header">
+        <div class="chat-header-dot"></div>
+        <div class="chat-header-dot"></div>
+        <div class="chat-header-title">Claude · Holded</div>
+      </div>
+      <div class="chat-body">
+        <div class="chat-bubble chat-bubble-user">
+          ¿Cuánto hemos facturado este trimestre?
+        </div>
+        <div class="chat-bubble chat-bubble-ai">
+          Tu facturación ha <strong>aumentado un 18%</strong> respecto al trimestre anterior.
+        </div>
+      </div>
+    </div>
+
+    <!-- Scene 4: Feature cards -->
+    <div class="feature-row feature-row-top" style="top:270px;">
+      <div class="feature-card"><div class="feature-accent"></div><div class="feature-icon">🧾</div><div class="feature-label">Facturas</div></div>
+      <div class="feature-card"><div class="feature-accent"></div><div class="feature-icon">👥</div><div class="feature-label">Clientes</div></div>
+      <div class="feature-card"><div class="feature-accent"></div><div class="feature-icon">📈</div><div class="feature-label">Ingresos</div></div>
+    </div>
+    <div class="feature-row feature-row-bot" style="top:750px;">
+      <div class="feature-card"><div class="feature-accent"></div><div class="feature-icon">📊</div><div class="feature-label">Gastos</div></div>
+      <div class="feature-card"><div class="feature-accent"></div><div class="feature-icon">📋</div><div class="feature-label">Informes</div></div>
+      <div class="feature-card"><div class="feature-accent"></div><div class="feature-icon">📁</div><div class="feature-label">Proyectos</div></div>
+    </div>
+
+    <!-- Scene 5: Security panel -->
+    <div class="security-panel">
+      <div class="sec-icons">
+        <div class="sec-icon-wrap sec-icon-shield">🛡️</div>
+        <div class="sec-icon-wrap sec-icon-lock">🔒</div>
+        <div class="sec-toggle"></div>
+      </div>
+      <div class="sec-label">Tú decides qué datos conectar.</div>
+      <div class="sec-sublabel">Credenciales seguras · Solo tu tenant · Sin acceso a terceros</div>
+    </div>
+
+  </div><!-- /stage -->
+
+  <!-- Scene 6: Hero overlay -->
+  <div class="hero-overlay">
+    <div class="hero-logos">
+      <div class="hero-logo-card">
+        <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="cg2" x1="50" y1="8" x2="50" y2="92" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#D97757"/><stop offset="100%" stop-color="#C4622D"/>
+          </linearGradient></defs>
+          <rect x="45" y="8" width="10" height="84" rx="5" fill="url(#cg2)" transform="rotate(0 50 50)"/>
+          <rect x="45" y="8" width="10" height="84" rx="5" fill="url(#cg2)" transform="rotate(60 50 50)"/>
+          <rect x="45" y="8" width="10" height="84" rx="5" fill="url(#cg2)" transform="rotate(120 50 50)"/>
+          <circle cx="50" cy="50" r="7" fill="url(#cg2)" opacity="0.9"/>
+        </svg>
+      </div>
+      <div class="hero-connector-wrap">
+        <div class="hero-arc-line"></div>
+      </div>
+      <div class="hero-logo-card" style="animation-delay:0.4s">
+        <img src="../Holded logos/holded-diamond-logo.png" alt="Holded" />
+      </div>
+    </div>
+
+    <div class="hero-text">
+      <div class="hero-title">Conector <span class="a">Claude</span> con Holded</div>
+      <div class="hero-sub">La información de tu empresa, al alcance de tu conversación.</div>
+      <div class="hero-cta">Conecta tu cuenta</div>
+      <div class="hero-url">claude.verifactu.business</div>
+    </div>
+  </div>
+</body>
+</html>

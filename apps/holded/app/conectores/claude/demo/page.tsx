@@ -10,8 +10,7 @@ export const metadata: Metadata = {
   alternates: { canonical: '/conectores/claude/demo' },
 };
 
-// When ready, replace these with the YouTube embed URL or local mp4 paths.
-const INTRO_YOUTUBE_URL = '';
+const INTRO_YOUTUBE_URL = 'https://www.youtube.com/embed/A1SCtziMpd0';
 const INTRO_LOCAL_VIDEO_URL = '/video/holded-claude-intro.mp4';
 const OUTRO_YOUTUBE_URL = '';
 const OUTRO_LOCAL_VIDEO_URL = '/video/holded-claude-outro.mp4';
