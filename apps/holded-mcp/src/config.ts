@@ -65,6 +65,20 @@ function loadConfig() {
     process.exit(1);
   }
 
+  if (result.data.NODE_ENV === 'production' && !result.data.SESSION_SECRET) {
+    console.error(
+      'SESSION_SECRET is required in production so Claude OAuth must bridge through verified Verifactu auth before consent.'
+    );
+    process.exit(1);
+  }
+
+  if (result.data.NODE_ENV === 'production' && !result.data.VERIFACTU_APP_SHARED_SECRET) {
+    console.error(
+      'VERIFACTU_APP_SHARED_SECRET is required in production so Claude OAuth can use the central Verifactu connection registry.'
+    );
+    process.exit(1);
+  }
+
   return result.data;
 }
 

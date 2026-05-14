@@ -14,7 +14,6 @@ import {
   verifyAccessToken,
   verifyPkceCodeVerifier,
 } from './auth.js';
-import { HoldedClient } from './holded-client.js';
 
 export const oauthRouter: Router = Router();
 
@@ -142,6 +141,8 @@ const F1_ERROR_MESSAGES: Record<string, string> = {
   probe_failed: 'No hemos podido contactar con Holded. Intentalo de nuevo en unos segundos.',
   persist_failed:
     'Error interno guardando la conexion. Si persiste, escribenos a soporte@verifactu.business.',
+  central_registry_unavailable:
+    'No hemos podido registrar la conexion en Verifactu. Intentalo de nuevo en unos segundos para mantener el alta bajo control del panel de administracion.',
 };
 
 interface F1UpsertSuccessPayload {
@@ -684,12 +685,10 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
   }
 
   // Single source of truth: delegamos el upsert User+Tenant+Connection en F1.
-  // Si el endpoint cae o devuelve un error de red, hacemos un fallback "best
-  // effort" en local para no bloquear a Claude (validamos solo la API key
-  // contra Holded y persistimos el authorization code con userId = sha256
-  // legacy). Esto se ejecuta SOLO si la red entre el MCP y `apps/app` falla.
-  let upsertResult: F1UpsertResponse | null = null;
-  let networkErrored = false;
+  // Si F1 no responde, no emitimos un authorization code local. El conector
+  // solo puede quedar activo si existe antes el grafo central User -> Tenant ->
+  // ExternalConnection visible en admin.
+  let upsertResult: F1UpsertResponse;
   try {
     upsertResult = await callUpsertFromKey({
       personalEmail: personalEmailRaw,
@@ -698,13 +697,27 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
       acceptedPrivacy,
     });
   } catch (err) {
-    networkErrored = true;
-    logger.error('F1 upsert network failure, falling back to local-only mode', {
+    logger.error('F1 upsert network failure, refusing local-only OAuth code', {
       message: err instanceof Error ? err.message : String(err),
     });
+    res
+      .status(503)
+      .send(
+        consentPage(
+          authorizeContext.clientId,
+          authorizeContext.redirectUri,
+          authorizeContext.state,
+          F1_ERROR_MESSAGES.central_registry_unavailable,
+          authorizeContext.scope,
+          authorizeContext.codeChallenge,
+          authorizeContext.codeChallengeMethod,
+          { personalEmail: personalEmailRaw, acceptedTerms, acceptedPrivacy }
+        )
+      );
+    return;
   }
 
-  if (!networkErrored && upsertResult && !upsertResult.ok) {
+  if (!upsertResult.ok) {
     const reason = upsertResult.reason ?? 'persist_failed';
     const message = F1_ERROR_MESSAGES[reason] ?? F1_ERROR_MESSAGES.persist_failed;
     res
@@ -724,35 +737,6 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
     return;
   }
 
-  // Si la red estaba caída, validamos al menos contra Holded para no emitir
-  // un authorization code con una API key claramente inválida.
-  if (networkErrored) {
-    const client = new HoldedClient(holdedApiKey);
-    const valid = await client.validateApiKey();
-    if (!valid) {
-      res
-        .status(400)
-        .send(
-          consentPage(
-            authorizeContext.clientId,
-            authorizeContext.redirectUri,
-            authorizeContext.state,
-            F1_ERROR_MESSAGES.invalid_api_key,
-            authorizeContext.scope,
-            authorizeContext.codeChallenge,
-            authorizeContext.codeChallengeMethod,
-            { personalEmail: personalEmailRaw, acceptedTerms, acceptedPrivacy }
-          )
-        );
-      return;
-    }
-  }
-
-  const realUserId =
-    !networkErrored && upsertResult && upsertResult.ok ? upsertResult.userId : null;
-  const realTenantId =
-    !networkErrored && upsertResult && upsertResult.ok ? upsertResult.tenantId : null;
-
   const code = await createAuthorizationCode({
     holdedApiKey,
     clientId: authorizeContext.clientId,
@@ -760,13 +744,11 @@ oauthRouter.post('/authorize', async (req: Request, res: Response) => {
     scope: authorizeContext.scope,
     codeChallenge: authorizeContext.codeChallenge,
     codeChallengeMethod: authorizeContext.codeChallengeMethod,
-    userId: realUserId,
-    tenantId: realTenantId,
+    userId: upsertResult.userId,
+    tenantId: upsertResult.tenantId,
     personalEmail: personalEmailRaw,
   });
-  logger.info(
-    `Authorization code generado para ${authorizeContext.clientId} (userId=${realUserId ? 'real' : 'legacy-hash'})`
-  );
+  logger.info(`Authorization code generado para ${authorizeContext.clientId} (userId=real)`);
 
   const callbackUrl = new URL(authorizeContext.redirectUri);
   callbackUrl.searchParams.set('code', code);
