@@ -5,7 +5,10 @@
     {
       "src": "src/index.ts",
       "use": "@vercel/node",
-      "config": { "maxLambdaSize": "50mb" }
+      "config": {
+        "maxLambdaSize": "50mb",
+        "includeFiles": ["public/**"]
+      }
     }
   ],
   "routes": [{ "src": "/(.*)", "dest": "/src/index.ts" }]
