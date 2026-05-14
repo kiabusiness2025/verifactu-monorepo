@@ -67,4 +67,17 @@ Eliminar solo despues de una segunda revision si:
 - no tiene referencias;
 - no contiene informacion legal/operativa/historica util.
 
-Actualizado: 2026-04-30
+## Archivado
+
+### Tanda 2026-05-14 — limpieza de coherencia conectores
+
+Documentos point-in-time sin referencias vivas, superados por el estado
+actual del conector. Cumplen los 4 criterios de archivo.
+
+- `HOLDED_DIRECT_CONNECTOR_ONBOARDING_LIGHT_PROFILE_EXECUTION_PLAN_2026-04-14.md` — plan de ejecucion ya completado.
+- `HOLDED_DIRECT_CONNECTOR_ONBOARDING_LIGHT_PROFILE_QA_MATRIX_2026-04-14.md` — matriz QA de esa misma entrega.
+- `HOLDED_PUBLIC_LANDINGS_REMEDIATION_2026-04-30.md` — remediacion puntual de landings, ya desplegada.
+- `INTEGRATIONS_PUBLIC_LAYER_PLAN_2026-04-10.md` — plan de capa publica, superado por la estructura `/conectores/*`.
+- `LANDING_AUDIT_2026.md` — auditoria visual puntual (2026-05-03).
+
+Actualizado: 2026-05-14
