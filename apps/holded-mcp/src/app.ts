@@ -1,4 +1,5 @@
 import path from 'path';
+import { fileURLToPath } from 'url';
 import express from 'express';
 import helmet from 'helmet';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
@@ -12,7 +13,9 @@ import { oauthRouter } from './oauth-routes.js';
 import { renderLandingPage } from './public-pages.js';
 import { registerProductionTools } from './tools/index.js';
 
-const publicDir = path.resolve(process.cwd(), 'public');
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const publicDir = path.join(__dirname, 'public');
 
 function tokenHasScope(scope: string | null | undefined, required: 'holded:read' | 'holded:write') {
   return new Set((scope ?? '').split(/[\s,]+/).filter(Boolean)).has(required);
