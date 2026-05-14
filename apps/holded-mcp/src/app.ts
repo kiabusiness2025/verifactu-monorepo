@@ -228,9 +228,7 @@ export function createApp() {
   return app;
 }
 
-export function startServer() {
-  const app = createApp();
-
+export function startServer(app: ReturnType<typeof createApp> = createApp()) {
   return app.listen(config.PORT, () => {
     logger.info(`Holded MCP Server arrancado en puerto ${config.PORT}`);
     logger.info(`   MCP endpoint: ${config.BASE_URL}/mcp`);
