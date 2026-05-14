@@ -341,6 +341,7 @@ describe('holdedMcpTools', () => {
       page: 3,
       starttmp: 1_704_067_200,
       endtmp: 1_704_153_599,
+      limit: 25,
     });
     expect(result).toEqual({ items: [{ id: 'entry-1' }] });
   });

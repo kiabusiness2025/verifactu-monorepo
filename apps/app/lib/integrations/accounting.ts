@@ -583,6 +583,36 @@ function normalizePagingArgs(args?: HoldedPaginationArgs) {
   };
 }
 
+function paginateArrayResponse<T>(
+  items: T[],
+  args?: HoldedPaginationArgs,
+  options?: { enabled?: boolean }
+) {
+  if (options?.enabled === false) return items;
+
+  const { page, limit } = normalizePagingArgs(args);
+  if (items.length <= limit) return items;
+
+  const offset = (page - 1) * limit;
+  return items.slice(offset, offset + limit);
+}
+
+function normalizeSearchText(value: unknown) {
+  return typeof value === 'string' ? value.trim().toLowerCase() : '';
+}
+
+function filterContactsByName(contacts: HoldedContact[], name?: string) {
+  const needle = normalizeSearchText(name);
+  if (!needle) return contacts;
+
+  return contacts.filter((contact) => {
+    const raw = contact as Record<string, unknown>;
+    return ['name', 'tradeName', 'code', 'vatnumber', 'email'].some((key) =>
+      normalizeSearchText(raw[key]).includes(needle)
+    );
+  });
+}
+
 function normalizeHistoryScanPages(value?: number) {
   const scanPages = Number(value ?? HOLDED_HISTORY_SCAN_PAGES);
   if (!Number.isFinite(scanPages)) return HOLDED_HISTORY_SCAN_PAGES;
@@ -1054,7 +1084,7 @@ export const holdedAdapter = {
   },
 
   async listContacts(apiKey: string, args?: { page?: number; limit?: number; name?: string }) {
-    return holdedRequest<HoldedContact[]>({
+    const contacts = await holdedRequest<HoldedContact[]>({
       apiKey,
       path: '/api/invoicing/v1/contacts',
       query: {
@@ -1062,6 +1092,9 @@ export const holdedAdapter = {
         limit: args?.limit ?? 25,
         ...(args?.name ? { name: args.name } : {}),
       },
+    });
+    return paginateArrayResponse(filterContactsByName(contacts, args?.name), args, {
+      enabled: true,
     });
   },
 
@@ -1073,10 +1106,12 @@ export const holdedAdapter = {
   },
 
   async listContactAttachments(apiKey: string, contactId: string) {
-    return holdedRequest<unknown[]>({
+    // Holded returns {status:1, attachments:[...]} — extract the array defensively.
+    const raw = await holdedRequest<{ attachments?: unknown[] } | unknown[]>({
       apiKey,
       path: `/api/invoicing/v1/contacts/${contactId}/attachments/list`,
     });
+    return Array.isArray(raw) ? raw : ((raw as { attachments?: unknown[] }).attachments ?? []);
   },
 
   async getContactAttachment(apiKey: string, contactId: string, fileName: string) {
@@ -1232,7 +1267,7 @@ export const holdedAdapter = {
     apiKey: string,
     args?: { page?: number; limit?: number; starttmp?: number; endtmp?: number }
   ) {
-    return holdedRequest<Record<string, unknown>[]>({
+    const entries = await holdedRequest<Record<string, unknown>[]>({
       apiKey,
       path: '/api/accounting/v1/dailyledger',
       query: {
@@ -1242,6 +1277,7 @@ export const holdedAdapter = {
         endtmp: args?.endtmp,
       },
     });
+    return paginateArrayResponse(entries, args, { enabled: true });
   },
 
   async createDailyLedgerEntry(apiKey: string, payload: HoldedEntityPayload) {
@@ -1254,7 +1290,7 @@ export const holdedAdapter = {
   },
 
   async listAccounts(apiKey: string, args?: HoldedAccountListArgs) {
-    return holdedRequest<HoldedAccount[]>({
+    const accounts = await holdedRequest<HoldedAccount[]>({
       apiKey,
       path: HOLDED_CHART_OF_ACCOUNTS_PATH,
       query: {
@@ -1264,6 +1300,9 @@ export const holdedAdapter = {
         endtmp: args?.endtmp,
         includeEmpty: args?.includeEmpty === false ? 0 : 1,
       },
+    });
+    return paginateArrayResponse(accounts, args, {
+      enabled: args?.page !== undefined || args?.limit !== undefined,
     });
   },
 
@@ -1631,7 +1670,7 @@ export const holdedAdapter = {
   ) {
     return holdedRequest<unknown[]>({
       apiKey,
-      path: `/api/projects/v1/projects/${projectId}/timerecords`,
+      path: `/api/projects/v1/projects/${projectId}/times`,
       query: {
         page: args?.page ?? 1,
         limit: args?.limit ?? 25,

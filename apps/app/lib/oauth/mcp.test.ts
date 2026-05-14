@@ -94,6 +94,13 @@ describe('MCP OAuth metadata helpers', () => {
     });
   });
 
+  it('accepts the expanded public read preset when configured explicitly', () => {
+    process.env.MCP_PUBLIC_SCOPE_PRESET = 'holded_full_read_v1';
+
+    expect(getPublicScopePreset()).toBe('holded_full_read_v1');
+    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('holded_full_read_v1')]);
+  });
+
   it('can advertise the accounting phase preset when configured explicitly', () => {
     process.env.MCP_PUBLIC_SCOPE_PRESET = 'holded_phase2_accounting';
 

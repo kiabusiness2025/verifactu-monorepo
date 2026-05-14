@@ -2069,7 +2069,7 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
     'List customer or supplier contacts from Holded for the currently authorized tenant. Use the optional `name` filter when the user mentions a customer or supplier by name to avoid scanning every page.',
     listSchema({
       name: stringProperty(
-        'Optional case-insensitive substring search by contact name (e.g. "Garcia"). Returned by Holded server-side filtering, so it scales to tenants with thousands of contacts.'
+        'Optional case-insensitive substring search by contact name, trade name, code, tax id or email (e.g. "Garcia"). The connector also applies this filter locally when Holded returns an unfiltered page.'
       ),
     })
   ),
