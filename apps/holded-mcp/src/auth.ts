@@ -566,20 +566,16 @@ export async function verifyAccessToken(token: string): Promise<TokenRecord | nu
       // Fire-and-forget: si la red al endpoint receptor falla no degradamos
       // el flujo del MCP. Importacion lazy para no romper si el modulo
       // todavia no esta compilado en algun entorno (smoke tests, etc.).
-      try {
-        // Dynamic import to avoid bundling overhead at module load.
-        // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
-        const { dispatchConnectorEventBackground } =
-          require('./connector-events.js') as typeof import('./connector-events.js');
-        dispatchConnectorEventBackground({
-          type: 'first_activity',
-          userId: row.user_id,
-          channel: 'claude',
-          toolUsed: null,
-        });
-      } catch {
-        // ignored - fire-and-forget
-      }
+      import('./connector-events.js')
+        .then(({ dispatchConnectorEventBackground }) => {
+          dispatchConnectorEventBackground({
+            type: 'first_activity',
+            userId: row.user_id,
+            channel: 'claude',
+            toolUsed: null,
+          });
+        })
+        .catch(() => {});
     }
 
     return mapDbTokenRow(row);

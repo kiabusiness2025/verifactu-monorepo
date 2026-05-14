@@ -21,6 +21,7 @@ export function getDbPool() {
     pool = new Pool({
       connectionString: config.DATABASE_URL,
       ssl: shouldUseSsl(config.DATABASE_URL) ? { rejectUnauthorized: false } : undefined,
+      max: 1,
     });
 
     pool.on('error', (error: Error) => {
