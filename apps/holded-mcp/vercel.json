@@ -1,10 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "functions": {
-    "src/index.ts": {
-      "maxDuration": 60
+  "builds": [
+    {
+      "src": "src/index.ts",
+      "use": "@vercel/node",
+      "config": { "maxLambdaSize": "50mb" }
     }
-  },
-  "rewrites": [{ "source": "/(.*)", "destination": "/index" }]
+  ],
+  "routes": [{ "src": "/(.*)", "dest": "/src/index.ts" }]
 }
