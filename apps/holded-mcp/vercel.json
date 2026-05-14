@@ -7,7 +7,7 @@
       "use": "@vercel/node",
       "config": {
         "maxLambdaSize": "50mb",
-        "includeFiles": ["public/**"]
+        "includeFiles": ["../public/**"]
       }
     }
   ],
