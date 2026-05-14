@@ -1,4 +1,11 @@
-import Link from 'next/link';
+import {
+  type HoldedDirectConversation,
+  type HoldedDirectSession,
+  type HoldedDirectSummary,
+  type HoldedDirectTenant,
+  type HoldedDirectUser,
+} from '@/lib/holdedDirectAdmin';
+import { formatDateTime, formatNumber } from '@/src/lib/formatters';
 import {
   AlertTriangle,
   Building2,
@@ -8,14 +15,7 @@ import {
   MessageSquareText,
   UserRound,
 } from 'lucide-react';
-import {
-  type HoldedDirectConversation,
-  type HoldedDirectSession,
-  type HoldedDirectSummary,
-  type HoldedDirectTenant,
-  type HoldedDirectUser,
-} from '@/lib/holdedDirectAdmin';
-import { formatDateTime, formatNumber } from '@/src/lib/formatters';
+import Link from 'next/link';
 
 function badgeClasses(status: string) {
   return status === 'connected'
@@ -252,65 +252,108 @@ export function HoldedDirectUsersSection({
       {users.length === 0 ? (
         <EmptyState message="No hay usuarios registrados todavía para este conector." />
       ) : (
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           {users.map((user) => (
             <article
               key={user.userId}
-              className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <h3 className="truncate text-base font-semibold text-slate-900">
-                    {user.userName}
+                  <h3 className="truncate text-lg font-semibold text-slate-900">
+                    {user.userName || user.userEmail}
                   </h3>
-                  <p className="truncate text-sm text-slate-600">{user.userEmail}</p>
+                  <p className="mt-1 truncate text-sm text-slate-600">{user.userEmail}</p>
                 </div>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <span
-                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClasses(user.isConnected ? 'connected' : 'disconnected')}`}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeClasses(
+                      user.isConnected ? 'connected' : 'disconnected'
+                    )}`}
                   >
                     {user.isConnected ? 'Conectado' : 'Desconectado'}
                   </span>
                   <span
-                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${profileBadgeClasses(user.profileStatus)}`}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${profileBadgeClasses(
+                      user.profileStatus
+                    )}`}
                   >
                     {profileStatusLabel(user.profileStatus)}
                   </span>
                 </div>
               </div>
+
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3">
                   <div className="text-[11px] uppercase tracking-wide text-slate-500">
                     Conversaciones
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                  <div className="mt-2 text-lg font-semibold text-slate-900">
                     {formatNumber(user.conversationCount)}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3">
                   <div className="text-[11px] uppercase tracking-wide text-slate-500">
                     Sesiones activas
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                  <div className="mt-2 text-lg font-semibold text-slate-900">
                     {formatNumber(user.activeSessions)}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3">
                   <div className="text-[11px] uppercase tracking-wide text-slate-500">
                     Última validación
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                  <div className="mt-2 text-lg font-semibold text-slate-900">
                     {user.lastValidatedAt ? formatDateTime(user.lastValidatedAt) : 'Sin validar'}
                   </div>
                 </div>
               </div>
-              <div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-                <div>Nombre: {user.firstName || 'Sin dato'}</div>
-                <div>Apellidos: {user.lastName || 'Sin dato'}</div>
-                <div>Rol en la empresa: {user.roleInCompany || 'Sin dato'}</div>
-                <div>Telefono: {user.phone || 'Sin dato'}</div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Nombre</div>
+                  <div className="mt-2 text-sm text-slate-900">{user.firstName || 'Sin dato'}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Apellidos</div>
+                  <div className="mt-2 text-sm text-slate-900">{user.lastName || 'Sin dato'}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Rol en la empresa</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {user.roleInCompany || 'Sin dato'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Teléfono</div>
+                  <div className="mt-2 text-sm text-slate-900">{user.phone || 'Sin dato'}</div>
+                </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Última conexión</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {user.lastConnectedAt ? formatDateTime(user.lastConnectedAt) : 'Sin dato'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Última actividad</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {user.lastActivity ? formatDateTime(user.lastActivity) : 'Sin actividad'}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {user.duplicateEmailConflict ? (
+                  <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-800">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    {user.duplicateEmailCount} conflicto{user.duplicateEmailCount === 1 ? '' : 's'}{' '}
+                    de email
+                  </span>
+                ) : null}
                 {user.missingFields.length > 0 ? (
                   user.missingFields.map((field) => (
                     <span
@@ -327,26 +370,29 @@ export function HoldedDirectUsersSection({
                   </span>
                 )}
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {user.tenants.map((tenant) => (
-                  <span
-                    key={`${user.userId}-${tenant.tenantId}`}
-                    className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${badgeClasses(tenant.connectionStatus)}`}
-                  >
-                    <span className="truncate">{tenant.tenantLegalName}</span>
-                    <span className="uppercase">{statusLabel(tenant.connectionStatus)}</span>
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
-                <span>
-                  Última conexión:{' '}
-                  {user.lastConnectedAt ? formatDateTime(user.lastConnectedAt) : 'Sin dato'}
-                </span>
-                <span>
-                  Última actividad:{' '}
-                  {user.lastActivity ? formatDateTime(user.lastActivity) : 'Sin actividad'}
-                </span>
+
+              {user.tenants.length > 0 ? (
+                <div className="mt-5 space-y-2">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    Tenants relacionados
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {user.tenants.map((tenant) => (
+                      <span
+                        key={`${user.userId}-${tenant.tenantId}`}
+                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${badgeClasses(
+                          tenant.connectionStatus
+                        )}`}
+                      >
+                        <span className="truncate">{tenant.tenantLegalName}</span>
+                        <span className="uppercase">{statusLabel(tenant.connectionStatus)}</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="mt-5 flex flex-wrap gap-4 text-xs text-slate-500">
                 <span>Recordatorio: {reminderLabel(user.reminderState)}</span>
                 <span>
                   Plazo:{' '}
@@ -380,82 +426,111 @@ export function HoldedDirectTenantsSection({
       {tenants.length === 0 ? (
         <EmptyState message="No hay tenants con actividad del conector todavía." />
       ) : (
-        <div className="grid gap-3 xl:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-2">
           {tenants.map((tenant) => (
             <article
               key={tenant.tenantId}
-              className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm"
+              className="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="min-w-0">
-                  <h3 className="truncate text-base font-semibold text-slate-900">
+                  <h3 className="truncate text-lg font-semibold text-slate-900">
                     {tenant.tenantLegalName}
                   </h3>
-                  <p className="text-sm text-slate-600">Tenant del conector directo</p>
+                  <p className="mt-1 text-sm text-slate-600">Tenant del conector directo</p>
                 </div>
-                <div className="flex flex-wrap justify-end gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   <span
-                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClasses(tenant.connectionStatus)}`}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeClasses(
+                      tenant.connectionStatus
+                    )}`}
                   >
                     {statusLabel(tenant.connectionStatus)}
                   </span>
                   <span
-                    className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${profileBadgeClasses(tenant.profileStatus)}`}
+                    className={`rounded-full border px-2.5 py-1 text-xs font-semibold ${profileBadgeClasses(
+                      tenant.profileStatus
+                    )}`}
                   >
                     {profileStatusLabel(tenant.profileStatus)}
                   </span>
                 </div>
               </div>
+
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3">
                   <div className="text-[11px] uppercase tracking-wide text-slate-500">Usuarios</div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                  <div className="mt-2 text-lg font-semibold text-slate-900">
                     {formatNumber(tenant.usersCount)}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3">
                   <div className="text-[11px] uppercase tracking-wide text-slate-500">
                     Conversaciones
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                  <div className="mt-2 text-lg font-semibold text-slate-900">
                     {formatNumber(tenant.conversationCount)}
                   </div>
                 </div>
-                <div className="rounded-2xl bg-slate-50 px-3 py-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3">
                   <div className="text-[11px] uppercase tracking-wide text-slate-500">
                     Sesiones activas
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                  <div className="mt-2 text-lg font-semibold text-slate-900">
                     {formatNumber(tenant.activeSessions)}
                   </div>
                 </div>
               </div>
-              <div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-                <div>NIF/CIF: {tenant.taxId || 'Sin dato'}</div>
-                <div>Correo: {tenant.email || 'Sin dato'}</div>
-                <div>Telefono: {tenant.phone || 'Sin dato'}</div>
-                <div>Representante: {tenant.representative || 'Sin dato'}</div>
-                <div>Rol representante: {tenant.representativeRole || 'Sin dato'}</div>
-                <div>Destinatarios aviso: {formatNumber(tenant.notificationRecipients.length)}</div>
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">NIF/CIF</div>
+                  <div className="mt-2 text-sm text-slate-900">{tenant.taxId || 'Sin dato'}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Correo</div>
+                  <div className="mt-2 text-sm text-slate-900">{tenant.email || 'Sin dato'}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Teléfono</div>
+                  <div className="mt-2 text-sm text-slate-900">{tenant.phone || 'Sin dato'}</div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Representante</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {tenant.representative || 'Sin dato'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Rol representante</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {tenant.representativeRole || 'Sin dato'}
+                  </div>
+                </div>
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Avisos</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {formatNumber(tenant.notificationRecipients.length)} destinatarios
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 grid gap-2 text-xs text-slate-500 sm:grid-cols-2">
-                <div>
-                  Conectado: {tenant.connectedAt ? formatDateTime(tenant.connectedAt) : 'Sin dato'}
+
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Conectado</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {tenant.connectedAt ? formatDateTime(tenant.connectedAt) : 'Sin dato'}
+                  </div>
                 </div>
-                <div>
-                  Desconectado:{' '}
-                  {tenant.disconnectedAt ? formatDateTime(tenant.disconnectedAt) : 'Sin dato'}
-                </div>
-                <div>
-                  Última validación:{' '}
-                  {tenant.lastValidatedAt ? formatDateTime(tenant.lastValidatedAt) : 'Sin validar'}
-                </div>
-                <div>
-                  Última sincronización:{' '}
-                  {tenant.lastSyncAt ? formatDateTime(tenant.lastSyncAt) : 'Sin sincronizar'}
+                <div className="rounded-2xl bg-slate-50 px-3 py-3 text-sm text-slate-700">
+                  <div className="font-semibold">Desconectado</div>
+                  <div className="mt-2 text-sm text-slate-900">
+                    {tenant.disconnectedAt ? formatDateTime(tenant.disconnectedAt) : 'Sin dato'}
+                  </div>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-2">
+
+              <div className="mt-5 flex flex-wrap gap-2">
                 {tenant.missingFields.length > 0 ? (
                   tenant.missingFields.map((field) => (
                     <span
@@ -472,12 +547,14 @@ export function HoldedDirectTenantsSection({
                   </span>
                 )}
               </div>
+
               {tenant.lastError ? (
-                <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
                   Último error: {tenant.lastError}
                 </div>
               ) : null}
-              <div className="mt-4 flex flex-wrap gap-4 text-xs text-slate-500">
+
+              <div className="mt-5 flex flex-wrap gap-4 text-sm text-slate-500">
                 <span>Recordatorio: {reminderLabel(tenant.reminderState)}</span>
                 <span>
                   Plazo:{' '}

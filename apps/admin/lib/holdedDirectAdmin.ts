@@ -277,6 +277,7 @@ const TENANT_REQUIRED_FIELDS = [
   'Representante',
   'Rol del representante',
 ] as const;
+const ADMIN_CONTROL_CHANNEL_SQL = "('chatgpt', 'mobile', 'claude')";
 
 function clampLimit(value: number | undefined, fallback = 12) {
   if (!Number.isFinite(value)) return fallback;
@@ -577,7 +578,7 @@ export async function getHoldedDirectSummary(): Promise<HoldedDirectSummary> {
       INNER JOIN external_connections ec
         ON ec.tenant_id = m.tenant_id
        AND ec.provider = 'holded'
-       AND ec.channel_key = 'chatgpt'
+       AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
       WHERE COALESCE(m.status, 'active') <> 'disabled'
       GROUP BY m.user_id
     )
@@ -588,7 +589,7 @@ export async function getHoldedDirectSummary(): Promise<HoldedDirectSummary> {
         SELECT COUNT(DISTINCT ec.tenant_id)::int
         FROM external_connections ec
         WHERE ec.provider = 'holded'
-          AND ec.channel_key = 'chatgpt'
+          AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
       ) AS tenants,
       (
         SELECT COUNT(*)::int
@@ -600,7 +601,7 @@ export async function getHoldedDirectSummary(): Promise<HoldedDirectSummary> {
             INNER JOIN external_connections ec
               ON ec.tenant_id = m.tenant_id
              AND ec.provider = 'holded'
-             AND ec.channel_key = 'chatgpt'
+             AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
              AND ec.connection_status = 'connected'
               WHERE m.user_id = s."userId"
               AND COALESCE(m.status, 'active') <> 'disabled'
@@ -614,7 +615,7 @@ export async function getHoldedDirectSummary(): Promise<HoldedDirectSummary> {
           FROM external_connections ec
           WHERE ec.tenant_id = c.tenant_id
             AND ec.provider = 'holded'
-            AND ec.channel_key = 'chatgpt'
+            AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
         )
       ) AS conversations
     FROM connector_users
@@ -669,7 +670,7 @@ export async function listHoldedDirectUsers(limit?: number): Promise<HoldedDirec
     INNER JOIN external_connections ec
       ON ec.tenant_id = m.tenant_id
      AND ec.provider = 'holded'
-     AND ec.channel_key = 'chatgpt'
+     AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
     LEFT JOIN isaak_conversations c
       ON c.user_id = u.id
      AND c.tenant_id = m.tenant_id
@@ -700,16 +701,22 @@ export async function listHoldedDirectUsers(limit?: number): Promise<HoldedDirec
             m.user_id,
             t.id AS tenant_id,
             COALESCE(t.legal_name, t.name) AS tenant_legal_name,
-            ec.connection_status
+            CASE
+              WHEN BOOL_OR(ec.connection_status = 'connected') THEN 'connected'
+              WHEN BOOL_OR(ec.connection_status = 'error') THEN 'error'
+              WHEN BOOL_OR(ec.connection_status = 'revoked_api') THEN 'revoked_api'
+              ELSE COALESCE(MAX(ec.connection_status), 'disconnected')
+            END AS connection_status
           FROM memberships m
           INNER JOIN tenants t
             ON t.id = m.tenant_id
           INNER JOIN external_connections ec
             ON ec.tenant_id = m.tenant_id
            AND ec.provider = 'holded'
-           AND ec.channel_key = 'chatgpt'
+           AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
           WHERE m.user_id = ANY($1::text[])
             AND COALESCE(m.status, 'active') <> 'disabled'
+          GROUP BY m.user_id, t.id, COALESCE(t.legal_name, t.name)
           ORDER BY COALESCE(t.legal_name, t.name) ASC
           `,
           [userIds]
@@ -889,12 +896,17 @@ export async function listHoldedDirectTenants(limit?: number): Promise<HoldedDir
       t.id AS tenant_id,
       COALESCE(t.legal_name, t.name) AS tenant_legal_name,
       t.created_at::text AS tenant_created_at,
-      ec.connection_status,
-      ec.connected_at::text AS connected_at,
-      ec.disconnected_at::text AS disconnected_at,
-      ec.last_validated_at::text AS last_validated_at,
-      ec.last_sync_at::text AS last_sync_at,
-      ec.last_error,
+      CASE
+        WHEN BOOL_OR(ec.connection_status = 'connected') THEN 'connected'
+        WHEN BOOL_OR(ec.connection_status = 'error') THEN 'error'
+        WHEN BOOL_OR(ec.connection_status = 'revoked_api') THEN 'revoked_api'
+        ELSE COALESCE(MAX(ec.connection_status), 'disconnected')
+      END AS connection_status,
+      MAX(ec.connected_at)::text AS connected_at,
+      MAX(ec.disconnected_at)::text AS disconnected_at,
+      MAX(ec.last_validated_at)::text AS last_validated_at,
+      MAX(ec.last_sync_at)::text AS last_sync_at,
+      (ARRAY_AGG(ec.last_error ORDER BY COALESCE(ec.updated_at, ec.created_at) DESC) FILTER (WHERE ec.last_error IS NOT NULL))[1] AS last_error,
       COUNT(DISTINCT CASE WHEN COALESCE(m.status, 'active') <> 'disabled' THEN m.user_id END)::int AS users_count,
       COUNT(DISTINCT c.id)::int AS conversation_count,
       COUNT(DISTINCT s.id)::int AS active_sessions
@@ -909,19 +921,12 @@ export async function listHoldedDirectTenants(limit?: number): Promise<HoldedDir
       ON s."userId" = m.user_id
      AND s.expires > now()
     WHERE ec.provider = 'holded'
-      AND ec.channel_key = 'chatgpt'
+      AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
     GROUP BY
       t.id,
       COALESCE(t.legal_name, t.name),
-      t.created_at,
-      ec.connection_status,
-      ec.connected_at,
-      ec.disconnected_at,
-      ec.last_validated_at,
-      ec.last_sync_at,
-      ec.last_error,
-      ec.updated_at
-    ORDER BY COALESCE(ec.last_validated_at, ec.connected_at, ec.disconnected_at, ec.updated_at) DESC NULLS LAST
+      t.created_at
+    ORDER BY COALESCE(MAX(ec.last_validated_at), MAX(ec.connected_at), MAX(ec.disconnected_at), MAX(ec.updated_at)) DESC NULLS LAST
     LIMIT $1
     `,
     [safeLimit]
@@ -1129,7 +1134,7 @@ export async function listHoldedDirectConversations(
       FROM external_connections ec
       WHERE ec.tenant_id = c.tenant_id
         AND ec.provider = 'holded'
-        AND ec.channel_key = 'chatgpt'
+        AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
     )
     ORDER BY c.last_activity DESC
     LIMIT $1
@@ -1203,7 +1208,7 @@ export async function listHoldedDirectActiveSessions(
         INNER JOIN external_connections ec
           ON ec.tenant_id = m.tenant_id
          AND ec.provider = 'holded'
-         AND ec.channel_key = 'chatgpt'
+         AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
          AND ec.connection_status = 'connected'
           WHERE m.user_id = s."userId"
           AND COALESCE(m.status, 'active') <> 'disabled'
@@ -1229,7 +1234,7 @@ export async function listHoldedDirectActiveSessions(
           INNER JOIN external_connections ec
             ON ec.tenant_id = m.tenant_id
            AND ec.provider = 'holded'
-           AND ec.channel_key = 'chatgpt'
+           AND ec.channel_key IN ${ADMIN_CONTROL_CHANNEL_SQL}
            AND ec.connection_status = 'connected'
           WHERE m.user_id = ANY($1::text[])
             AND COALESCE(m.status, 'active') <> 'disabled'
