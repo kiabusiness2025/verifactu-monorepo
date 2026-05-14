@@ -4,7 +4,7 @@ import { adminPost } from '@/lib/adminApi';
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 
-const HOLDED_ROUTINE_URL = 'https://claude.ai/code/routines/trig_01J3j1P2g2R3iEypg9n47qhY';
+const ROUTINE_URL = 'https://claude.ai/code/routines/trig_014Tu48jx7ndzn7q7Av9NAUG';
 
 type CheckResult = {
   name: string;
@@ -122,7 +122,7 @@ export default function ClaudeSmokeTestsPage() {
             Tests ChatGPT →
           </Link>
           <a
-            href={HOLDED_ROUTINE_URL}
+            href={ROUTINE_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-soft hover:bg-slate-50"
@@ -222,7 +222,7 @@ export default function ClaudeSmokeTestsPage() {
       <p className="text-xs text-slate-400">
         Checks read-only · timeout 8s por endpoint · rutina automática lunes–viernes a las 9:00 ·{' '}
         <a
-          href={HOLDED_ROUTINE_URL}
+          href={ROUTINE_URL}
           target="_blank"
           rel="noopener noreferrer"
           className="underline hover:text-slate-600"
