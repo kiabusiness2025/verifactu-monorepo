@@ -244,7 +244,7 @@ export class HoldedClient {
   }
 
   async listTimeRecords(projectId: string) {
-    return this.request<unknown[]>(`/api/projects/v1/projects/${projectId}/timerecords`);
+    return this.request<unknown[]>(`/api/projects/v1/projects/${projectId}/times`);
   }
 
   // ── Contabilidad ─────────────────────────────────────────────────────────

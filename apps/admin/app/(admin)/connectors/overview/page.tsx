@@ -483,12 +483,20 @@ export default function ConnectorsOverviewPage() {
           F6.2b · Datos en tiempo casi real (sin cache). El stream completo por tenant esta en
           /admin/tenants/[id]/connectors y proximamente en el audit log viewer (F6.4).
         </p>
-        <Link
-          href="/admin/connectors/smoke-tests"
-          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-soft hover:bg-slate-50"
-        >
-          🧪 Smoke Tests API →
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/connectors/smoke-tests"
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-soft hover:bg-slate-50"
+          >
+            🧪 Tests ChatGPT →
+          </Link>
+          <Link
+            href="/admin/connectors/claude-smoke-tests"
+            className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 shadow-soft hover:bg-amber-100"
+          >
+            🧪 Tests Claude →
+          </Link>
+        </div>
       </div>
     </main>
   );
