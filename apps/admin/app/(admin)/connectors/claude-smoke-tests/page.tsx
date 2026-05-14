@@ -32,7 +32,8 @@ const CHECK_LABELS: Record<string, { module: string; op: string }> = {
   'holded.products': { module: 'Productos', op: 'list' },
   'holded.warehouses': { module: 'Almacenes', op: 'list' },
   'holded.taxes': { module: 'Impuestos', op: 'list' },
-  'holded.numbering_series': { module: 'Numeración', op: 'list' },
+  'holded.numbering_invoice': { module: 'Numeración F', op: 'list' },
+  'holded.numbering_estimate': { module: 'Numeración P', op: 'list' },
   'holded.treasury': { module: 'Tesorería', op: 'list' },
   'holded.crm_funnels': { module: 'CRM Embudos', op: 'list' },
   'holded.crm_leads': { module: 'CRM Leads', op: 'list' },
@@ -129,6 +130,7 @@ export default function ClaudeSmokeTestsPage() {
             Rutina diaria →
           </a>
           <button
+            type="button"
             onClick={runTests}
             disabled={loading}
             className="flex items-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-soft hover:bg-amber-600 disabled:opacity-60"
@@ -208,6 +210,7 @@ export default function ClaudeSmokeTestsPage() {
             Pulsa «Ejecutar ahora» para lanzar los checks del conector Claude.
           </p>
           <button
+            type="button"
             onClick={runTests}
             className="mt-4 rounded-lg bg-amber-500 px-5 py-2 text-sm font-medium text-white hover:bg-amber-600"
           >

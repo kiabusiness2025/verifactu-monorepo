@@ -239,7 +239,14 @@ export async function POST(req: NextRequest) {
     { name: 'holded.products', url: `${HOLDED_BASE}/api/invoicing/v1/products?limit=5&page=1` },
     { name: 'holded.warehouses', url: `${HOLDED_BASE}/api/invoicing/v1/warehouses` },
     { name: 'holded.taxes', url: `${HOLDED_BASE}/api/invoicing/v1/taxes` },
-    { name: 'holded.numbering_series', url: `${HOLDED_BASE}/api/invoicing/v1/numberingseries` },
+    {
+      name: 'holded.numbering_invoice',
+      url: `${HOLDED_BASE}/api/invoicing/v1/numberingseries/invoice`,
+    },
+    {
+      name: 'holded.numbering_estimate',
+      url: `${HOLDED_BASE}/api/invoicing/v1/numberingseries/estimate`,
+    },
     { name: 'holded.treasury', url: `${HOLDED_BASE}/api/invoicing/v1/treasury` },
     { name: 'holded.crm_funnels', url: `${HOLDED_BASE}/api/crm/v1/funnels` },
     { name: 'holded.crm_leads', url: `${HOLDED_BASE}/api/crm/v1/leads?limit=5&page=1` },

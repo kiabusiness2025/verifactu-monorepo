@@ -226,7 +226,15 @@ export class HoldedClient {
   }
 
   async listNumberingSeries() {
-    return this.request<unknown[]>('/api/invoicing/v1/numberingseries');
+    // Holded's base /numberingseries endpoint returns HTML; type-specific ones return JSON.
+    const [invoiceSeries, estimateSeries] = await Promise.all([
+      this.request<unknown[]>('/api/invoicing/v1/numberingseries/invoice').catch(() => []),
+      this.request<unknown[]>('/api/invoicing/v1/numberingseries/estimate').catch(() => []),
+    ]);
+    return [
+      ...(Array.isArray(invoiceSeries) ? invoiceSeries : []),
+      ...(Array.isArray(estimateSeries) ? estimateSeries : []),
+    ];
   }
 
   // ── Proyectos y Tareas ───────────────────────────────────────────────────
