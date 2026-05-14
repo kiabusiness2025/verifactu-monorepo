@@ -54,6 +54,8 @@ ADMIN_ALLOWED_EMAIL = 'support@verifactu.business';
 ADMIN_ALLOWED_DOMAIN = 'verifactu.business';
 ```
 
+````
+
 **Características:**
 
 - ✅ Permite rutas públicas: `/api/auth`, `/_next`, assets
@@ -73,7 +75,9 @@ const emailOk = email === 'support@verifactu.business' || email.endsWith('@verif
 const roleOk = role === 'SUPPORT' || role === 'ADMIN';
 
 // Acceso permitido si AMBOS son true
-```
+````
+
+````
 
 ### Verificación en 3 Capas
 
@@ -100,7 +104,9 @@ const roleOk = role === 'SUPPORT' || role === 'ADMIN';
   startedAt: number;        // Timestamp inicio
   expiresAt: number;        // Timestamp expiración
 }
-```
+````
+
+````
 
 ### API Endpoints
 
@@ -141,7 +147,9 @@ const roleOk = role === 'SUPPORT' || role === 'ADMIN';
   userAgent: string;          // Navegador del actor
   timestamp: Date;            // Momento exacto
 }
-```
+````
+
+````
 
 ### Funciones Disponibles
 
@@ -275,7 +283,9 @@ enum Role {
   SUPPORT
   ADMIN
 }
-```
+````
+
+````
 
 2. **Actualizar APIs** (reemplazar mock data):
 
@@ -294,7 +304,9 @@ const users = await prisma.user.findMany({
     _count: { select: { companies: true } },
   },
 });
-```
+````
+
+````
 
 3. **Actualizar Audit Log** (`lib/audit.ts`):
 
@@ -309,7 +321,9 @@ export async function createAuditLog(entry) {
     },
   });
 }
-```
+````
+
+````
 
 ## 🚀 Próximos Pasos
 
@@ -373,6 +387,8 @@ pnpm --filter @verifactu/admin lint
 # Desarrollo
 pnpm --filter @verifactu/admin dev
 # Abrir: http://localhost:3003
+````
+
 ```
 
 ## 📚 Referencias
@@ -385,6 +401,7 @@ pnpm --filter @verifactu/admin dev
 
 ---
 
-**Estado**: ✅ MVP Completo - Listo para conectar base de datos  
-**Autor**: GitHub Copilot  
+**Estado**: ✅ MVP Completo - Listo para conectar base de datos
+**Autor**: GitHub Copilot
 **Fecha**: 21 Enero 2026
+```

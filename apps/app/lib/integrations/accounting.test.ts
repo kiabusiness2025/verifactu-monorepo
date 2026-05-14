@@ -39,14 +39,32 @@ describe('Holded accounting adapter', () => {
     );
   });
 
+  it('paginates chart of accounts locally when Holded ignores page and limit', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify([
+          { id: 'account-1' },
+          { id: 'account-2' },
+          { id: 'account-3' },
+          { id: 'account-4' },
+        ]),
+    });
+
+    const result = await holdedAdapter.listAccounts('demo-key', { page: 2, limit: 2 });
+
+    expect(result).toEqual([{ id: 'account-3' }, { id: 'account-4' }]);
+  });
+
   it('lists the complete chart of accounts by default', async () => {
     (global.fetch as jest.Mock).mockResolvedValue({
       ok: true,
       status: 200,
-      text: async () => '[]',
+      text: async () => JSON.stringify([{ id: 'account-1' }, { id: 'account-2' }]),
     });
 
-    await holdedAdapter.listAccounts('demo-key');
+    const result = await holdedAdapter.listAccounts('demo-key');
 
     expect(global.fetch).toHaveBeenCalledWith(
       'https://api.holded.com/api/accounting/v1/chartofaccounts?includeEmpty=1',
@@ -54,6 +72,28 @@ describe('Holded accounting adapter', () => {
         method: 'GET',
       })
     );
+    expect(result).toEqual([{ id: 'account-1' }, { id: 'account-2' }]);
+  });
+
+  it('filters and paginates contacts locally when Holded ignores query params', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify([
+          { id: 'contact-1', name: 'Kappa Digital Zaragoza SL' },
+          { id: 'contact-2', name: 'Other Customer' },
+          { id: 'contact-3', tradeName: 'Kappa Labs' },
+        ]),
+    });
+
+    const result = await holdedAdapter.listContacts('demo-key', {
+      page: 2,
+      limit: 1,
+      name: 'kappa',
+    });
+
+    expect(result).toEqual([{ id: 'contact-3', tradeName: 'Kappa Labs' }]);
   });
 
   it('probes accounting access against the chart of accounts endpoint', async () => {
@@ -144,10 +184,10 @@ describe('Holded accounting adapter', () => {
     const fetchCalls = (global.fetch as jest.Mock).mock.calls.map((call) => String(call[0]));
 
     expect(fetchCalls).toContain(
-      'https://api.holded.com/api/invoicing/v1/documents/invoice?page=1&limit=100'
+      'https://api.holded.com/api/invoicing/v1/documents/invoice?page=1&limit=100&starttmp=1735689600&endtmp=1767225599'
     );
     expect(fetchCalls).toContain(
-      'https://api.holded.com/api/invoicing/v1/documents/invoice?page=2&limit=100'
+      'https://api.holded.com/api/invoicing/v1/documents/invoice?page=2&limit=100&starttmp=1735689600&endtmp=1767225599'
     );
     expect(result.items).toEqual([
       { id: 'inv-2025-a', date: '2025-12-20T00:00:00.000Z' },
@@ -204,7 +244,7 @@ describe('Holded accounting adapter', () => {
     });
 
     expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.holded.com/api/invoicing/v1/documents/purchase?page=1&limit=100',
+      'https://api.holded.com/api/invoicing/v1/documents/purchase?page=1&limit=100&starttmp=1735689600&endtmp=1767225599',
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -275,6 +315,23 @@ describe('Holded accounting adapter', () => {
         }),
       })
     );
+  });
+
+  it('paginates daily ledger entries locally when Holded ignores page and limit', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify([{ id: 'entry-1' }, { id: 'entry-2' }, { id: 'entry-3' }]),
+    });
+
+    const result = await holdedAdapter.listDailyLedger('demo-key', {
+      page: 2,
+      limit: 1,
+      starttmp: 1_704_067_200,
+      endtmp: 1_704_153_599,
+    });
+
+    expect(result).toEqual([{ id: 'entry-2' }]);
   });
 
   it('surfaces the Holded response body when daily ledger listing fails', async () => {
@@ -395,7 +452,7 @@ describe('Holded accounting adapter', () => {
       .mockResolvedValueOnce({
         ok: true,
         status: 200,
-        text: async () => '[{"fileName":"contract.pdf"}]',
+        text: async () => '{"status":1,"attachments":[{"fileName":"contract.pdf"}]}',
       })
       .mockResolvedValueOnce({
         ok: true,
@@ -632,6 +689,37 @@ describe('Holded accounting adapter', () => {
     expect(fetchCalls).toContain(
       'https://api.holded.com/api/invoicing/v1/warehouses/warehouse-1/stock'
     );
+  });
+
+  it('lists project time records through the /times route', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '[{"id":"time-1","duration":3600}]',
+    });
+
+    const result = await holdedAdapter.listProjectTimeRecords('demo-key', 'project-1', {
+      page: 1,
+      limit: 10,
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      'https://api.holded.com/api/projects/v1/projects/project-1/times?page=1&limit=10',
+      expect.objectContaining({ method: 'GET' })
+    );
+    expect(result).toEqual([{ id: 'time-1', duration: 3600 }]);
+  });
+
+  it('unpacks the attachments wrapper from the contact attachments list endpoint', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => '{"status":1,"attachments":[{"fileName":"doc.pdf"}]}',
+    });
+
+    const items = await holdedAdapter.listContactAttachments('demo-key', 'contact-2');
+
+    expect(items).toEqual([{ fileName: 'doc.pdf' }]);
   });
 
   it('uploads document attachments through multipart form data', async () => {

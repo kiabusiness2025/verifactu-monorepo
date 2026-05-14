@@ -58,6 +58,8 @@ verifactu-monorepo/
 USER
 ```
 
+````
+
 ### apps/admin (Equipo)
 
 ```typescript
@@ -68,6 +70,8 @@ USER
 // Roles jerárquicos
 ADMIN   → Acceso total
 SUPPORT → Acceso limitado por scope
+````
+
 ```
 
 ## 🛣️ Migración de Rutas
@@ -75,7 +79,9 @@ SUPPORT → Acceso limitado por scope
 ### Rutas que se MUEVEN a apps/admin
 
 ```
-apps/app/dashboard/admin/*  →  apps/admin/dashboard/*
+
+apps/app/dashboard/admin/_ → apps/admin/dashboard/_
+
 ```
 
 **Rutas específicas:**
@@ -92,13 +98,15 @@ apps/app/dashboard/admin/*  →  apps/admin/dashboard/*
 ### Rutas que PERMANECEN en apps/app
 
 ```
+
 ✅ /dashboard/facturas
 ✅ /dashboard/clientes (propios del user)
 ✅ /dashboard/gastos
 ✅ /dashboard/presupuestos
 ✅ /dashboard/settings (usuario)
 ✅ /dashboard/isaak
-```
+
+````
 
 ## 📦 Packages Compartidos
 
@@ -109,7 +117,9 @@ Componentes reutilizables:
 ```typescript
 // Usados en AMBOS apps
 -AccessibleButton - AccessibleInput - Badge - Card - Modal - Table;
-```
+````
+
+````
 
 ### @verifactu/auth
 
@@ -124,7 +134,9 @@ requireRole([ADMIN, SUPPORT]);
 // Utils
 checkPermission(user, 'canViewDocuments');
 canImpersonate(user);
-```
+````
+
+````
 
 ### @verifactu/integrations
 
@@ -133,7 +145,9 @@ canImpersonate(user);
 -stripeClient - eInformaClient - resendClient - vercelClient - githubClient;
 
 // Usado mayormente en apps/admin
-```
+````
+
+````
 
 ## 🚀 Flujo de Desarrollo
 
@@ -147,10 +161,22 @@ cd apps/admin
 mkdir -p app/dashboard/users
 touch app/dashboard/users/page.tsx
 
+```bash
+# Desde raíz del monorepo
+cd apps/admin
+
+# Crear página
+mkdir -p app/dashboard/users
+touch app/dashboard/users/page.tsx
+
 # Usar packages compartidos
 import { AccessibleButton } from '@verifactu/ui';
 import { requireRole, UserRole } from '@verifactu/auth';
 import { stripeClient } from '@verifactu/integrations';
+````
+
+```
+
 ```
 
 ### 2. Compartir código entre apps
@@ -167,6 +193,8 @@ echo "export { UserCard } from './components/UserCard';" >> index.ts
 import { UserCard } from '@verifactu/ui';
 ```
 
+````
+
 ### 3. Ejecutar en desarrollo
 
 ```bash
@@ -180,7 +208,9 @@ pnpm dev # Puerto 3003
 
 # Terminal 3: Toda la monorepo (con turbo)
 pnpm dev # Inicia apps/app + apps/admin + apps/landing
-```
+````
+
+````
 
 ## 🔒 Seguridad en apps/admin
 
@@ -212,7 +242,9 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: ['/dashboard/:path*', '/api/:path*'],
 };
-```
+````
+
+````
 
 ### Audit Log Automático
 
@@ -262,7 +294,9 @@ await withAudit(
   },
   { userId, reason: 'GDPR request' }
 );
-```
+````
+
+````
 
 ## 🌐 Despliegues Independientes
 
@@ -290,12 +324,15 @@ await withAudit(
     }
   ]
 }
-```
+````
+
+````
 
 ## 📊 Base de Datos Compartida
 
 Ambas apps usan la **misma** base de datos PostgreSQL:
 
+```typescript
 ```typescript
 // packages/db/prisma/schema.prisma
 
@@ -336,7 +373,9 @@ model AuditLog {
   ip              String?
   userAgent       String?
 }
-```
+````
+
+````
 
 ## 🎨 Diseño UI Diferenciado
 
@@ -365,7 +404,9 @@ model AuditLog {
 - Incidencias abiertas
 - Pagos fallidos (últimas 24h)
 - Webhooks fallando
-```
+````
+
+````
 
 ## 🧪 Testing
 
@@ -379,13 +420,17 @@ pnpm test
 
 # E2E específicos
 pnpm test:e2e:admin
+````
+
 ```
 
 ## 📚 Documentación por App
 
 ```
-apps/app/README.md     → Para clientes y devs de features
-apps/admin/README.md   → Para equipo interno
+
+apps/app/README.md → Para clientes y devs de features
+apps/admin/README.md → Para equipo interno
+
 ```
 
 ## 🚀 Roadmap
@@ -419,6 +464,7 @@ apps/admin/README.md   → Para equipo interno
 
 ---
 
-**Status:** 🟢 En progreso  
-**Owner:** @kiabusiness2025  
+**Status:** 🟢 En progreso
+**Owner:** @kiabusiness2025
 **Última actualización:** 21 Enero 2026
+```

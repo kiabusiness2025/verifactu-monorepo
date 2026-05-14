@@ -300,12 +300,9 @@ test('F3.2 — happy path persiste authorization code llamando a F1 con channel=
   }
 });
 
-test('F3 fallback — si F1 está caído, valida apiKey contra Holded y emite code legacy', async () => {
+test('F3 refuses to issue a Claude OAuth code when F1 central registry is down', async () => {
   const runtime = await startTestServer();
-  // F1 endpoint network-error: el consent screen debe caer al fallback local.
   const f1 = withVerifactuF1Mock({ networkError: true });
-  // Pero `withVerifactuF1Mock` también responde 200 a `api.holded.com/...` por
-  // defecto (api key válida), así que el fallback procede.
 
   try {
     const pkce = buildPkcePair();
@@ -338,14 +335,11 @@ test('F3 fallback — si F1 está caído, valida apiKey contra Holded y emite co
       }),
     });
 
-    // El fallback emite el code igualmente (compatibilidad legacy).
-    assert.equal(authorizeResponse.status, 302);
-    const location = authorizeResponse.headers.get('location');
-    assert.ok(location);
-    const callbackUrl = new URL(location!);
-    assert.ok(callbackUrl.searchParams.get('code'));
+    assert.equal(authorizeResponse.status, 503);
+    const html = await authorizeResponse.text();
+    assert.match(html, /registrar la conexion en Verifactu/i);
+    assert.equal(authorizeResponse.headers.get('location'), null);
 
-    // Se intentó llamar a F1 una vez (y falló por la red).
     assert.equal(f1.calls.length, 1);
   } finally {
     f1.restore();

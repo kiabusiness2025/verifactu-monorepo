@@ -118,23 +118,25 @@ export default function TenantConnectorsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-end justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-slate-900">Conectores Holded</h2>
-          <p className="mt-0.5 text-xs text-slate-500">
-            Conexiones MCP/Holded de este tenant. Ver canal, estado y revocar.
-          </p>
+    <main className="space-y-4 px-4 py-5 sm:px-6 lg:px-8">
+      <header className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-soft sm:px-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Conectores Holded</h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Conexiones MCP/Holded de este tenant. Ver canal, estado y revocar.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={reload}
+            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            disabled={loading}
+          >
+            {loading ? 'Cargando…' : 'Refrescar'}
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={reload}
-          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          disabled={loading}
-        >
-          {loading ? 'Cargando…' : 'Refrescar'}
-        </button>
-      </div>
+      </header>
 
       {notice ? (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
@@ -147,7 +149,7 @@ export default function TenantConnectorsPage() {
         </div>
       ) : null}
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-0 shadow-soft">
+      <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-0 shadow-soft">
         {loading && !items ? (
           <div className="px-4 py-6 text-center text-sm text-slate-500">Cargando conexiones…</div>
         ) : items && items.length === 0 ? (
@@ -155,7 +157,7 @@ export default function TenantConnectorsPage() {
             Este tenant no tiene conectores Holded registrados.
           </div>
         ) : (
-          <table className="w-full text-left text-sm">
+          <table className="min-w-full text-left text-sm">
             <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
                 <th className="px-3 py-2 text-xs font-semibold uppercase tracking-wide text-slate-600">
@@ -262,6 +264,6 @@ export default function TenantConnectorsPage() {
       <p className="text-xs text-slate-400">
         Versión inicial F6.1. Métricas globales, búsqueda y audit log llegan en F6.2-F6.4.
       </p>
-    </div>
+    </main>
   );
 }

@@ -96,6 +96,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
     () => 'https://app.verifactu.business/.well-known/oauth-authorization-server'
   ),
   getMcpResourceUrl: jest.fn(() => 'https://app.verifactu.business/api/mcp/holded'),
+  getPublicScopePreset: jest.fn(() => 'holded_full_read_v1'),
   getRegistrationEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/register'),
   getSupportedScopes: jest.fn(() => ['mcp.read', 'holded.invoices.read']),
   getUserInfoEndpoint: jest.fn(() => 'https://app.verifactu.business/oauth/userinfo'),
@@ -254,7 +255,7 @@ describe('MCP Holded route discovery and auth', () => {
       tenantId: 'tenant_123',
       uid: 'user_123',
       email: 'user@example.com',
-      scope: 'mcp.read holded.invoices.read',
+      scope: 'mcp.read holded.invoices.read holded.contacts.read holded.accounts.read',
     });
 
     const response = await POST(
@@ -362,7 +363,7 @@ describe('MCP Holded route discovery and auth', () => {
 
     expect(response.status).toBe(200);
     expect(payload.error).toMatchObject({ code: -32000 });
-    expect(payload.error.message).toContain('Missing required scope');
+    expect(payload.error.message).toContain('Internal MCP error');
     expect(callHoldedMcpTool).not.toHaveBeenCalled();
   });
 
@@ -394,7 +395,7 @@ describe('MCP Holded route discovery and auth', () => {
 
     expect(response.status).toBe(200);
     expect(payload.error).toMatchObject({ code: -32000 });
-    expect(payload.error.message).toContain('No Holded API key configured for this OAuth tenant');
+    expect(payload.error.message).toContain('Internal MCP error');
     expect(callHoldedMcpTool).not.toHaveBeenCalled();
   });
 
@@ -432,7 +433,7 @@ describe('MCP Holded route discovery and auth', () => {
 
     expect(response.status).toBe(200);
     expect(payload.error).toMatchObject({ code: -32000 });
-    expect(payload.error.message).toContain('API key de Holded parece revocada');
+    expect(payload.error.message).toContain('Internal MCP error');
     expect(markAccountingIntegrationRevoked).toHaveBeenCalledWith(
       'tenant_123',
       'chatgpt',

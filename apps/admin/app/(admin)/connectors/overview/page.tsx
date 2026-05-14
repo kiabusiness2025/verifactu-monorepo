@@ -82,6 +82,35 @@ const CHANNEL_BADGE: Record<string, string> = {
   claude: 'bg-amber-50 text-amber-700 border-amber-200',
 };
 
+const HEIGHT_PCT_CLASSES: Record<number, string> = {
+  0: 'h-[0%]',
+  5: 'h-[5%]',
+  10: 'h-[10%]',
+  15: 'h-[15%]',
+  20: 'h-[20%]',
+  25: 'h-[25%]',
+  30: 'h-[30%]',
+  35: 'h-[35%]',
+  40: 'h-[40%]',
+  45: 'h-[45%]',
+  50: 'h-[50%]',
+  55: 'h-[55%]',
+  60: 'h-[60%]',
+  65: 'h-[65%]',
+  70: 'h-[70%]',
+  75: 'h-[75%]',
+  80: 'h-[80%]',
+  85: 'h-[85%]',
+  90: 'h-[90%]',
+  95: 'h-[95%]',
+  100: 'h-[100%]',
+};
+
+function pctHeightClass(value: number): string {
+  const step = Math.max(0, Math.min(100, Math.round(value / 5) * 5));
+  return HEIGHT_PCT_CLASSES[step] ?? HEIGHT_PCT_CLASSES[0];
+}
+
 function formatDate(value: string | null) {
   if (!value) return '—';
   try {
@@ -131,21 +160,25 @@ export default function ConnectorsOverviewPage() {
   const timelineByDay = useMemo(() => {
     if (!data)
       return [] as Array<{ bucket: string; channels: Record<string, number>; total: number }>;
+
     const buckets = new Map<
       string,
       { bucket: string; channels: Record<string, number>; total: number }
     >();
+
     for (const point of data.timeline) {
       const existing = buckets.get(point.bucket) ?? {
         bucket: point.bucket,
         channels: {},
         total: 0,
       };
+
       existing.channels[point.channelKey] =
         (existing.channels[point.channelKey] ?? 0) + point.count;
       existing.total += point.count;
       buckets.set(point.bucket, existing);
     }
+
     return Array.from(buckets.values()).sort((a, b) => a.bucket.localeCompare(b.bucket));
   }, [data]);
 
@@ -154,30 +187,34 @@ export default function ConnectorsOverviewPage() {
   }, [timelineByDay]);
 
   return (
-    <main className="space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Overview de conectores</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Estado agregado de las conexiones Holded en todos los canales (dashboard, ChatGPT,
-            mobile, Claude).
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={reload}
-            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-            disabled={loading}
-          >
-            {loading ? 'Cargando…' : 'Refrescar'}
-          </button>
-          <Link
-            href="/tenants"
-            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
-          >
-            Ver tenants
-          </Link>
+    <main className="space-y-6 px-4 py-5 sm:px-6 lg:px-8">
+      <header className="rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-soft sm:px-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">
+              Overview de conectores
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Estado agregado de las conexiones Holded en todos los canales (dashboard, ChatGPT,
+              mobile, Claude).
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={reload}
+              className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              disabled={loading}
+            >
+              {loading ? 'Cargando…' : 'Refrescar'}
+            </button>
+            <Link
+              href="/tenants"
+              className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Ver tenants
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -226,8 +263,9 @@ export default function ConnectorsOverviewPage() {
                     title={`${formatDay(bucket.bucket)} · ${bucket.total} nuevas`}
                   >
                     <div
-                      className="flex w-full flex-col-reverse rounded-t-md bg-slate-100"
-                      style={{ height: `${Math.max(heightPct, 4)}%` }}
+                      className={`flex w-full flex-col-reverse rounded-t-md bg-slate-100 ${pctHeightClass(
+                        Math.max(heightPct, 4)
+                      )}`}
                     >
                       {(['dashboard', 'chatgpt', 'mobile', 'claude'] as const).map((channel) => {
                         const value = bucket.channels[channel] ?? 0;
@@ -236,8 +274,7 @@ export default function ConnectorsOverviewPage() {
                         return (
                           <div
                             key={channel}
-                            className={CHANNEL_BAR[channel]}
-                            style={{ height: `${segmentPct}%` }}
+                            className={`${CHANNEL_BAR[channel]} ${pctHeightClass(segmentPct)}`}
                           />
                         );
                       })}
@@ -441,10 +478,18 @@ export default function ConnectorsOverviewPage() {
         </div>
       </section>
 
-      <p className="text-xs text-slate-400">
-        F6.2b · Datos en tiempo casi real (sin cache). El stream completo por tenant esta en
-        /admin/tenants/[id]/connectors y proximamente en el audit log viewer (F6.4).
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-slate-400">
+          F6.2b · Datos en tiempo casi real (sin cache). El stream completo por tenant esta en
+          /admin/tenants/[id]/connectors y proximamente en el audit log viewer (F6.4).
+        </p>
+        <Link
+          href="/admin/connectors/smoke-tests"
+          className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-soft hover:bg-slate-50"
+        >
+          🧪 Smoke Tests API →
+        </Link>
+      </div>
     </main>
   );
 }

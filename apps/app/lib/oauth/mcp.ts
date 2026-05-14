@@ -109,7 +109,9 @@ function isHoldedMcpScopePreset(value: string): value is HoldedMcpScopePreset {
     value === 'holded_phase2_accounting' ||
     value === 'holded_public_campaign_v1' ||
     value === 'holded_priority1' ||
-    value === 'openai_review_v2'
+    value === 'openai_review_v2' ||
+    value === 'holded_full_read_v1' ||
+    value === 'claude_parity'
   );
 }
 

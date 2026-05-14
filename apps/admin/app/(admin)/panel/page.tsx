@@ -2,6 +2,7 @@ import {
   HoldedDirectTenantsSection,
   HoldedDirectUsersSection,
 } from '@/components/admin/HoldedDirectControlSections';
+import { prisma } from '@/lib/db';
 import { getHoldedDirectPanelData } from '@/lib/holdedDirectAdmin';
 import { formatDateTime } from '@/src/lib/formatters';
 import Link from 'next/link';
@@ -21,7 +22,7 @@ function MetricCard({
 }) {
   return (
     <div
-      className={`rounded-2xl border px-5 py-4 shadow-sm ${
+      className={`rounded-2xl border px-5 py-4 shadow-soft ${
         accent ? 'border-[#2361d8]/20 bg-[#2361d8]/5' : 'border-slate-200 bg-white'
       }`}
     >
@@ -38,13 +39,38 @@ function MetricCard({
   );
 }
 
+async function getRecentActivity() {
+  try {
+    const auditLogs = await prisma.auditLog.findMany({
+      take: 5,
+      orderBy: { createdAt: 'desc' },
+      include: {
+        actorUser: {
+          select: { email: true, role: true },
+        },
+        targetUser: {
+          select: { email: true },
+        },
+        targetCompany: {
+          select: { name: true, taxId: true },
+        },
+      },
+    });
+    return auditLogs;
+  } catch (error) {
+    console.error('Error fetching recent activity:', error);
+    return [];
+  }
+}
+
 const anchors = [
   { href: '#usuarios', label: 'Usuarios' },
   { href: '#tenants', label: 'Tenants' },
+  { href: '#actividad', label: 'Actividad' },
 ];
 
 export default async function AdminPanelPage() {
-  const [data, refreshedAt] = await Promise.all([
+  const [data, refreshedAt, recentActivity] = await Promise.all([
     getHoldedDirectPanelData({
       userLimit: 8,
       tenantLimit: 8,
@@ -52,14 +78,15 @@ export default async function AdminPanelPage() {
       sessionLimit: 0,
     }),
     Promise.resolve(new Date().toISOString()),
+    getRecentActivity(),
   ]);
 
   const { summary } = data;
 
   return (
-    <main className="space-y-6">
+    <main className="space-y-6 px-4 py-5 sm:px-6 lg:px-8">
       {/* Header */}
-      <header className="rounded-[32px] border border-slate-200 bg-white px-5 py-5 shadow-sm sm:px-6">
+      <header className="rounded-[32px] border border-slate-200 bg-white px-5 py-5 shadow-soft sm:px-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -161,6 +188,58 @@ export default async function AdminPanelPage() {
               <p className="mt-1 text-xs text-slate-500">{item.desc}</p>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* Actividad reciente */}
+      <section id="actividad">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400">
+            Actividad reciente
+          </h2>
+          <Link
+            href="/audit"
+            className="text-xs font-semibold text-[#2361d8] hover:text-[#2361d8]/80"
+          >
+            Ver todo →
+          </Link>
+        </div>
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {recentActivity.length === 0 ? (
+            <div className="px-5 py-8 text-center text-sm text-slate-500">
+              No hay actividad reciente
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {recentActivity.map((log: any) => (
+                <div key={log.id} className="px-5 py-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-slate-900">
+                        {log.action.replace(/_/g, ' ')}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Por {log.actorUser?.email || 'Usuario desconocido'}
+                      </p>
+                      {log.targetUser && (
+                        <p className="mt-1 text-xs text-slate-600">
+                          Usuario: {log.targetUser.email}
+                        </p>
+                      )}
+                      {log.targetCompany && (
+                        <p className="mt-1 text-xs text-slate-600">
+                          Empresa: {log.targetCompany.name} ({log.targetCompany.taxId})
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-slate-400">{formatDateTime(log.createdAt)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
