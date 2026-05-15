@@ -19,7 +19,6 @@ on:
 
 env:
   NODE_VERSION: '22.x'
-  PNPM_VERSION: '10.27.0'
 
 jobs:
   detect-and-fix:
@@ -43,8 +42,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
 
       - name: Get pnpm store directory
         id: pnpm-cache
