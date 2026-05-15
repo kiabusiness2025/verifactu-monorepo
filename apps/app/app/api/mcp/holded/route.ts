@@ -14,6 +14,7 @@ import {
 import {
   callHoldedMcpTool,
   holdedMcpTools,
+  HoldedUserError,
   type HoldedMcpToolDefinition,
 } from '@/lib/integrations/holdedMcpTools';
 import { logPatUsage, PAT_PREFIX, verifyPat } from '@/lib/integrations/holdedPatStore';
@@ -427,9 +428,32 @@ function formatToolResult(data: unknown) {
   };
 }
 
-function isHoldedCredentialRevocationError(error: unknown) {
+function getHoldedErrorStatus(error: unknown): number | null {
+  const status = (error as { status?: unknown })?.status;
+  if (typeof status === 'number') return status;
   const message = error instanceof Error ? error.message : String(error || '');
-  return /status\s+(401|403)/i.test(message);
+  const match = message.match(/status\s+(\d{3})/i);
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * 401 → la API key de Holded fue revocada o es inválida. La conexión completa
+ * deja de funcionar, así que marcamos la integración como revocada y pedimos
+ * al usuario que reconecte.
+ */
+function isHoldedCredentialRevocationError(error: unknown) {
+  return getHoldedErrorStatus(error) === 401;
+}
+
+/**
+ * 403 → Holded acepta la API key pero deniega ESTE endpoint/módulo concreto
+ * (p. ej. el plan conectado no incluye CRM/reservas, o la key no tiene permiso
+ * sobre ese recurso). El resto de tools siguen funcionando, así que NO se debe
+ * marcar la integración como revocada: devolvemos un resultado explicativo
+ * para esta tool en vez de un error JSON-RPC.
+ */
+function isHoldedModuleForbiddenError(error: unknown) {
+  return getHoldedErrorStatus(error) === 403;
 }
 
 async function callTool(
@@ -477,19 +501,77 @@ async function callTool(
   try {
     result = await callHoldedMcpTool(apiKey, name, args);
   } catch (error) {
+    const moduleForbidden = isHoldedModuleForbiddenError(error);
+    const credentialRevoked = isHoldedCredentialRevocationError(error);
+    const userError = error instanceof HoldedUserError;
+
     if (access.mode === 'pat' && access.tenantId) {
       void logPatUsage({
         tenantId: access.tenantId,
         patId: access.patId ?? null,
         channel: access.channelKey ?? null,
         toolName: name,
-        status: isHoldedCredentialRevocationError(error) ? 401 : 500,
+        status: credentialRevoked ? 401 : moduleForbidden ? 403 : userError ? 400 : 500,
         event: 'rejected',
         meta: { message: error instanceof Error ? error.message : String(error) },
       });
     }
 
-    if (access.tenantId && isHoldedCredentialRevocationError(error)) {
+    // HoldedUserError: input inválido, falta confirmación, recurso no encontrado.
+    // No es un fallo del conector — devolvemos un resultado MCP legible para que
+    // ChatGPT/Claude muestren el mensaje al usuario en vez de "Internal MCP error".
+    if (userError) {
+      logMcpAccess({
+        method: 'tools/call',
+        tool: name,
+        tenantId: access.tenantId,
+        uid: access.uid ?? null,
+        outcome: 'denied',
+        reason: error.code,
+      });
+
+      return {
+        content: [{ type: 'text', text: error.message }],
+        structuredContent: {
+          error: error.code,
+          message: error.message,
+          tool: name,
+          ...error.data,
+        },
+      };
+    }
+
+    // 403 de Holded: el módulo/recurso no está disponible para esta cuenta,
+    // pero la credencial sigue siendo válida para el resto del conector. NO
+    // marcamos la integración como revocada y devolvemos un resultado legible
+    // en vez de un error JSON-RPC genérico (que ChatGPT muestra como fallo).
+    if (moduleForbidden) {
+      logMcpAccess({
+        method: 'tools/call',
+        tool: name,
+        tenantId: access.tenantId,
+        uid: access.uid ?? null,
+        outcome: 'denied',
+        reason: 'holded_module_forbidden',
+      });
+
+      const message =
+        `Holded ha denegado el acceso a este recurso (HTTP 403). ` +
+        `Normalmente significa que el plan de Holded conectado no incluye este módulo ` +
+        `(por ejemplo CRM/reservas) o que la API key no tiene permiso sobre él. ` +
+        `La conexión sigue activa: el resto de herramientas del conector funcionan con normalidad.`;
+
+      return {
+        content: [{ type: 'text', text: message }],
+        structuredContent: {
+          error: 'holded_module_forbidden',
+          tool: name,
+          status: 403,
+        },
+      };
+    }
+
+    if (access.tenantId && credentialRevoked) {
       try {
         const revokeChannel: AccountingIntegrationChannel =
           access.mode === 'oauth'

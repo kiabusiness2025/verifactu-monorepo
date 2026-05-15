@@ -2,6 +2,16 @@
 
 jest.mock('@/lib/integrations/holdedMcpTools', () => ({
   callHoldedMcpTool: jest.fn(),
+  HoldedUserError: class HoldedUserError extends Error {
+    code: string;
+    data: Record<string, unknown>;
+    constructor(code: string, message: string, data: Record<string, unknown> = {}) {
+      super(message);
+      this.name = 'HoldedUserError';
+      this.code = code;
+      this.data = data;
+    }
+  },
   holdedMcpTools: [
     {
       name: 'holded_list_invoices',
@@ -112,7 +122,7 @@ jest.mock('@/lib/oauth/mcp', () => ({
 import { GET, POST } from './route';
 import { applyOpenAiCorsHeaders, verifyAccessToken, hasRequiredScopes } from '@/lib/oauth/mcp';
 import { resolveSharedHoldedConnectionForTenant } from '@/lib/integrations/holdedConnectionResolver';
-import { callHoldedMcpTool } from '@/lib/integrations/holdedMcpTools';
+import { callHoldedMcpTool, HoldedUserError } from '@/lib/integrations/holdedMcpTools';
 import { markAccountingIntegrationRevoked } from '@/lib/integrations/accountingStore';
 
 describe('MCP Holded route discovery and auth', () => {
@@ -439,5 +449,93 @@ describe('MCP Holded route discovery and auth', () => {
       'chatgpt',
       expect.stringContaining('status 401')
     );
+  });
+
+  it('returns a graceful tool result (no JSON-RPC error) when a handler throws HoldedUserError', async () => {
+    (verifyAccessToken as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant_123',
+      uid: 'user_123',
+      email: 'user@example.com',
+      scope: 'mcp.read holded.invoices.read',
+    });
+    (resolveSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue({
+      apiKey: 'holded-api-key-abc',
+      source: 'external_connection',
+    });
+    (callHoldedMcpTool as jest.Mock).mockRejectedValue(
+      new HoldedUserError(
+        'confirmation_required',
+        'Awaiting your confirmation. Nothing has been written to Holded yet.'
+      )
+    );
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/mcp/holded', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer oauth-token',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 14,
+          method: 'tools/call',
+          params: { name: 'holded_create_accounting_account', arguments: {} },
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.error).toBeUndefined();
+    expect(payload.result.structuredContent).toMatchObject({
+      error: 'confirmation_required',
+      tool: 'holded_create_accounting_account',
+    });
+    expect(payload.result.content[0].text).toContain('Awaiting your confirmation');
+    expect(markAccountingIntegrationRevoked).not.toHaveBeenCalled();
+  });
+
+  it('returns a graceful tool result (no revocation) when Holded responds 403 module forbidden', async () => {
+    (verifyAccessToken as jest.Mock).mockResolvedValue({
+      tenantId: 'tenant_123',
+      uid: 'user_123',
+      email: 'user@example.com',
+      scope: 'mcp.read holded.invoices.read',
+    });
+    (resolveSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue({
+      apiKey: 'holded-api-key-abc',
+      source: 'external_connection',
+    });
+    const forbidden = Object.assign(
+      new Error('Holded API request failed with status 403: Forbidden'),
+      { status: 403 }
+    );
+    (callHoldedMcpTool as jest.Mock).mockRejectedValue(forbidden);
+
+    const response = await POST(
+      new Request('https://app.verifactu.business/api/mcp/holded', {
+        method: 'POST',
+        headers: {
+          authorization: 'Bearer oauth-token',
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 15,
+          method: 'tools/call',
+          params: { name: 'holded_list_invoices', arguments: {} },
+        }),
+      }) as never
+    );
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.error).toBeUndefined();
+    expect(payload.result.structuredContent).toMatchObject({
+      error: 'holded_module_forbidden',
+      status: 403,
+    });
+    expect(markAccountingIntegrationRevoked).not.toHaveBeenCalled();
   });
 });
