@@ -12,12 +12,20 @@ module.exports = {
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
-  // Antes era ['/node_modules/(?!(jose)/)'] (solo transformaba jose). El bump
-  // de deps d2694194 introdujo supertest@7.x cuyo árbol depende de paquetes
-  // ESM-only (superagent, formidable, qs, etc.) que Jest+babel-jest no parseaba
-  // → SyntaxError: Unexpected token 'export'. Allowlist explícita en vez de
-  // dejar [] vacío para no transformar packages CJS innecesariamente.
-  transformIgnorePatterns: [
-    '/node_modules/(?!(jose|supertest|superagent|formidable|qs|methods|cookiejar|fast-safe-stringify|component-emitter|mime-db|mime-types|debug)/)',
-  ],
+  // Antes: ['/node_modules/(?!(jose)/)'] (sólo transformaba jose). El bump
+  // d2694194 trajo supertest@7.x con un árbol que incluye varias deps
+  // ESM-only (superagent, formidable, qs, etc.) — Jest+babel-jest no parseaba
+  // → SyntaxError: Unexpected token 'export'.
+  //
+  // Una allowlist explícita es frágil con pnpm: la estructura es
+  // node_modules/.pnpm/<pkg>@<ver>/node_modules/<pkg>/ y la regex se matchea
+  // contra el primer `/node_modules/` que va seguido de `.pnpm`, no del
+  // nombre del paquete (por eso pasa local en Windows con paths `\` pero
+  // falla en CI Linux). Resolver eso correctamente requiere conocer la lista
+  // exacta de deps transitivas — frágil ante futuros bumps.
+  //
+  // Empty array = transformar todo, incluido node_modules. Coste: ~2× más
+  // lento en el primer test run (apps/api son 3 ficheros pequeños, despreciable).
+  // Beneficio: robusto ante cualquier dep ESM futura sin mantenimiento.
+  transformIgnorePatterns: [],
 };
