@@ -71,11 +71,14 @@ test('every client read calls the documented Holded URL with the API key header'
     { method: 'GET', url: 'https://api.holded.com/api/invoicing/v1/products/stock' },
     { method: 'GET', url: 'https://api.holded.com/api/invoicing/v1/warehouses' },
     { method: 'GET', url: 'https://api.holded.com/api/invoicing/v1/taxes' },
-    { method: 'GET', url: 'https://api.holded.com/api/invoicing/v1/numberingseries' },
+    // listNumberingSeries hace 2 llamadas paralelas (invoice + estimate) tras
+    // 248b3b4d: /numberingseries devolvía HTML, las versiones tipadas devuelven JSON.
+    { method: 'GET', url: 'https://api.holded.com/api/invoicing/v1/numberingseries/invoice' },
+    { method: 'GET', url: 'https://api.holded.com/api/invoicing/v1/numberingseries/estimate' },
     { method: 'GET', url: 'https://api.holded.com/api/projects/v1/projects' },
     { method: 'GET', url: 'https://api.holded.com/api/projects/v1/projects/proj-1' },
     { method: 'GET', url: 'https://api.holded.com/api/projects/v1/projects/proj-1/tasks' },
-    { method: 'GET', url: 'https://api.holded.com/api/projects/v1/projects/proj-1/timerecords' },
+    { method: 'GET', url: 'https://api.holded.com/api/projects/v1/projects/proj-1/times' },
     {
       method: 'GET',
       url: 'https://api.holded.com/api/accounting/v1/chartofaccounts?includeEmpty=1',
