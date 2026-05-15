@@ -111,6 +111,9 @@ export default async function AdminPanelPage() {
         </section>
       )}
 
+      {/* Widget visual de conectores — hero del panel */}
+      <ConnectorsPanelWidget />
+
       {/* KPIs — cada tarjeta enlaza a su sección */}
       <section>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -142,9 +145,6 @@ export default async function AdminPanelPage() {
           />
         </div>
       </section>
-
-      {/* Widget visual de conectores */}
-      <ConnectorsPanelWidget />
     </main>
   );
 }
