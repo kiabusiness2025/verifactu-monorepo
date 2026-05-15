@@ -59,6 +59,10 @@ jobs:
           DATABASE_URL: postgresql://mock:mock@localhost:5432/mock
           ADMIN_ALLOWED_EMAIL: support@verifactu.business
           ADMIN_ALLOWED_DOMAIN: verifactu.business
+          # Next.js collect-page-data step instancia routes que importan Resend
+          # a nivel módulo (apps/admin/app/api/admin/emails/send/**). Sin clave,
+          # `new Resend()` lanza "Missing API key" y rompe el build.
+          RESEND_API_KEY: re_dummy_key_for_build
 
       - name: Upload build artifacts
         if: failure()
