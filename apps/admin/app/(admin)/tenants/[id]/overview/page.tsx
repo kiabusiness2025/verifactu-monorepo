@@ -8,6 +8,7 @@ import { formatShortDate } from '@/src/lib/formatters';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { TenantProfileEditForm } from './TenantProfileEditForm';
 
 type TenantData = {
   id: string;
@@ -15,6 +16,7 @@ type TenantData = {
   taxId: string;
   address?: string | null;
   cnae?: string | null;
+  cnaeCode?: string | null;
   postalCode?: string | null;
   city?: string | null;
   province?: string | null;
@@ -22,9 +24,11 @@ type TenantData = {
   legalForm?: string | null;
   profileStatus?: string | null;
   website?: string | null;
+  taxRegime?: string | null;
   capitalSocial?: string | null;
   incorporationDate?: string | null;
   representative?: string | null;
+  representativeRole?: string | null;
   email?: string | null;
   phone?: string | null;
   employees?: number | null;
@@ -120,6 +124,7 @@ export default function TenantOverviewPage() {
   const [tenant, setTenant] = useState<TenantData | null>(null);
   const [customers, setCustomers] = useState<TenantCustomer[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
   useEffect(() => {
@@ -274,47 +279,74 @@ export default function TenantOverviewPage() {
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
-        <h2 className="text-sm font-semibold text-slate-900">Ficha completa</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div className="text-xs text-slate-500">Razón social</div>
-          <div className="text-sm text-slate-900">{tenant.legalName || '--'}</div>
-          <div className="text-xs text-slate-500">CIF/NIF</div>
-          <div className="text-sm text-slate-900">{tenant.taxId || '--'}</div>
-          <div className="text-xs text-slate-500">CNAE</div>
-          <div className="text-sm text-slate-900">{tenant.cnae || '--'}</div>
-          <div className="text-xs text-slate-500">Forma jurídica</div>
-          <div className="text-sm text-slate-900">{tenant.legalForm || '--'}</div>
-          <div className="text-xs text-slate-500">Estado</div>
-          <div className="text-sm text-slate-900">
-            {tenant.profileStatus || tenant.status || '--'}
-          </div>
-          <div className="text-xs text-slate-500">Web</div>
-          <div className="text-sm text-slate-900">{tenant.website || '--'}</div>
-          <div className="text-xs text-slate-500">Representante</div>
-          <div className="text-sm text-slate-900">{tenant.representative || '--'}</div>
-          <div className="text-xs text-slate-500">Email</div>
-          <div className="text-sm text-slate-900">{tenant.email || '--'}</div>
-          <div className="text-xs text-slate-500">Teléfono</div>
-          <div className="text-sm text-slate-900">{tenant.phone || '--'}</div>
-          <div className="text-xs text-slate-500">Dirección</div>
-          <div className="text-sm text-slate-900">
-            {[tenant.address, tenant.postalCode, tenant.city, tenant.province, tenant.country]
-              .filter(Boolean)
-              .join(', ') || '--'}
-          </div>
-          <div className="text-xs text-slate-500">Capital social</div>
-          <div className="text-sm text-slate-900">{tenant.capitalSocial || '--'}</div>
-          <div className="text-xs text-slate-500">Constitución</div>
-          <div className="text-sm text-slate-900">{tenant.incorporationDate || '--'}</div>
-          <div className="text-xs text-slate-500">Empleados</div>
-          <div className="text-sm text-slate-900">{tenant.employees ?? '--'}</div>
-          <div className="text-xs text-slate-500">Ventas</div>
-          <div className="text-sm text-slate-900">{tenant.sales || '--'}</div>
-          <div className="text-xs text-slate-500">Año ventas</div>
-          <div className="text-sm text-slate-900">{tenant.salesYear ?? '--'}</div>
-          <div className="text-xs text-slate-500">Último balance</div>
-          <div className="text-sm text-slate-900">{tenant.lastBalanceDate || '--'}</div>
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-900">Ficha completa</h2>
+          {!editing && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              className="rounded-lg border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              Editar
+            </button>
+          )}
         </div>
+
+        {editing ? (
+          <div className="mt-4">
+            <TenantProfileEditForm
+              tenantId={tenantId}
+              tenant={tenant}
+              onSaved={(updated) => {
+                setTenant((prev) => (prev ? { ...prev, ...updated } : prev));
+                setEditing(false);
+                success('Perfil actualizado');
+              }}
+              onCancel={() => setEditing(false)}
+            />
+          </div>
+        ) : (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="text-xs text-slate-500">Razón social</div>
+            <div className="text-sm text-slate-900">{tenant.legalName || '--'}</div>
+            <div className="text-xs text-slate-500">CIF/NIF</div>
+            <div className="text-sm text-slate-900">{tenant.taxId || '--'}</div>
+            <div className="text-xs text-slate-500">CNAE</div>
+            <div className="text-sm text-slate-900">{tenant.cnae || '--'}</div>
+            <div className="text-xs text-slate-500">Forma jurídica</div>
+            <div className="text-sm text-slate-900">{tenant.legalForm || '--'}</div>
+            <div className="text-xs text-slate-500">Estado</div>
+            <div className="text-sm text-slate-900">
+              {tenant.profileStatus || tenant.status || '--'}
+            </div>
+            <div className="text-xs text-slate-500">Web</div>
+            <div className="text-sm text-slate-900">{tenant.website || '--'}</div>
+            <div className="text-xs text-slate-500">Representante</div>
+            <div className="text-sm text-slate-900">{tenant.representative || '--'}</div>
+            <div className="text-xs text-slate-500">Email</div>
+            <div className="text-sm text-slate-900">{tenant.email || '--'}</div>
+            <div className="text-xs text-slate-500">Teléfono</div>
+            <div className="text-sm text-slate-900">{tenant.phone || '--'}</div>
+            <div className="text-xs text-slate-500">Dirección</div>
+            <div className="text-sm text-slate-900">
+              {[tenant.address, tenant.postalCode, tenant.city, tenant.province, tenant.country]
+                .filter(Boolean)
+                .join(', ') || '--'}
+            </div>
+            <div className="text-xs text-slate-500">Capital social</div>
+            <div className="text-sm text-slate-900">{tenant.capitalSocial || '--'}</div>
+            <div className="text-xs text-slate-500">Constitución</div>
+            <div className="text-sm text-slate-900">{tenant.incorporationDate || '--'}</div>
+            <div className="text-xs text-slate-500">Empleados</div>
+            <div className="text-sm text-slate-900">{tenant.employees ?? '--'}</div>
+            <div className="text-xs text-slate-500">Ventas</div>
+            <div className="text-sm text-slate-900">{tenant.sales || '--'}</div>
+            <div className="text-xs text-slate-500">Año ventas</div>
+            <div className="text-sm text-slate-900">{tenant.salesYear ?? '--'}</div>
+            <div className="text-xs text-slate-500">Último balance</div>
+            <div className="text-sm text-slate-900">{tenant.lastBalanceDate || '--'}</div>
+          </div>
+        )}
       </div>
 
       <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
