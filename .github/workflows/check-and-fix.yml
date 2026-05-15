@@ -26,10 +26,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --node-linker=isolated
 
-      - name: Generate Prisma Client
-        run: |
-          cd apps/app
-          pnpm exec prisma generate
+      # @verifactu/db's postinstall script ya corre `prisma generate` contra
+      # packages/db/prisma/schema.prisma (la schema completa con todos los
+      # modelos del workspace). Si en su lugar regeneramos desde
+      # apps/app/prisma/schema.prisma (narrow), sobrescribimos el cliente con
+      # un subset que falla al compilar packages/integrations/isaak/**.
+      - name: Generate Prisma Client (workspace schema)
+        run: pnpm -F @verifactu/db run prisma:generate
 
       - name: Type Check All
         run: |
