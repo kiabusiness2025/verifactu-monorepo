@@ -1,20 +1,28 @@
 # Admin Panel — Auditoría, Plan y Progreso
 
-**Última actualización**: 2026-05-15  
+**Última actualización**: 2026-05-15 (sesión 2)  
 **Proyecto**: Verifactu Business — Panel de Administración  
-**Objetivo**: Panel 100% orientado a la gestión de conectores Holded (Claude · ChatGPT · Dashboard · Mobile)
+**Objetivo**: Panel orientado a gestión de conectores Holded + preparación para lanzamiento público de Isaak
 
 ---
 
 ## Historial de sesiones
 
-| Fecha      | Qué se hizo                                                                   | Commits   |
-| ---------- | ----------------------------------------------------------------------------- | --------- |
-| 2026-05-14 | Auditoría inicial F6, panel básico, conectores overview                       | `bfac388` |
-| 2026-05-14 | Sidebar colapsable, ConnectorsPanelWidget hero, fix gráfico barras            | `dcfa34e` |
-| 2026-05-15 | Usuarios: paginación server-side, búsqueda, filtros, conexión Holded por fila | `eb40652` |
-| 2026-05-15 | Auditoría completa del panel, este documento, plan S0–S6                      | `0be7dbe` |
-| 2026-05-15 | S0: loading.tsx en 4 rutas + nav limpia (6 ítems activos)                     | `34f5b8e` |
+| Fecha      | Qué se hizo                                                                                 | Commits               |
+| ---------- | ------------------------------------------------------------------------------------------- | --------------------- |
+| 2026-05-14 | Auditoría inicial F6, panel básico, conectores overview                                     | `bfac388`             |
+| 2026-05-14 | Sidebar colapsable, ConnectorsPanelWidget hero, fix gráfico barras                          | `dcfa34e`             |
+| 2026-05-15 | Usuarios: paginación server-side, búsqueda, filtros, conexión Holded por fila               | `eb40652`             |
+| 2026-05-15 | Auditoría completa del panel, este documento, plan S0–S6                                    | `0be7dbe`             |
+| 2026-05-15 | S0: loading.tsx en 4 rutas + nav limpia (6 ítems activos)                                   | `34f5b8e`             |
+| 2026-05-15 | S1: /connectors tabla global + /connectors/[id] detalle completo                            | (sesión 2)            |
+| 2026-05-15 | S2: /users/[id] reescrito (con tenants, conexiones Holded, acciones)                        | (sesión 2)            |
+| 2026-05-15 | S3: Export CSV /users y /connectors con filtros activos                                     | (sesión 2)            |
+| 2026-05-15 | S4: Tokens PAT en /connectors/[id] + revocar individual                                     | (sesión 2)            |
+| 2026-05-15 | S5: Email marketing scaffold (/admin-marketing + CampaignForm + API)                        | (sesión 2)            |
+| 2026-05-15 | S6: KPIs alertas en /panel (errores conectores, demos pendientes)                           | (sesión 2)            |
+| 2026-05-15 | Fase A: Visibilidad real actividad (PAT audit log) en /panel, /connectors, /connectors/[id] | `feat(admin): Fase A` |
+| 2026-05-15 | Fase B: Edición directa perfil tenant + email "perfil incompleto" por tenant                | `feat(admin): Fase B` |
 
 ---
 
@@ -132,125 +140,174 @@ Content:
 
 ## 3. Plan de Implementación — Sprints
 
-### Sprint S0 · Rendimiento y limpieza de nav
+### Sprint S0 · Rendimiento y limpieza de nav — ✅ COMPLETADO
 
-**Estimación**: ~3 horas  
-**Estado**: ⬜ pendiente
-
-| Tarea                                                                                                               | Estado | Notas                               |
-| ------------------------------------------------------------------------------------------------------------------- | ------ | ----------------------------------- |
-| S0-A: `loading.tsx` en `/users`                                                                                     | ⬜     | Skeleton de tabla 10 filas          |
-| S0-B: `loading.tsx` en `/tenants`                                                                                   | ⬜     | Skeleton de tabla 10 filas          |
-| S0-C: `loading.tsx` en `/connectors/overview`                                                                       | ⬜     | Skeleton gráfico + cards            |
-| S0-D: `loading.tsx` en `/panel`                                                                                     | ⬜     | Skeleton widget + KPIs              |
-| S0-E: Ocultar nav vacía (Pedidos, Fulfillment, Catálogo, Marketing, Métricas, Reuniones, Inversores, Docs, Soporte) | ⬜     | Flag `hidden: true` en navAdmin.tsx |
-| S0-F: Reordenar nav: Panel · Conectores · Usuarios · Tenants · Demos                                                | ⬜     |                                     |
+| Tarea                                                                             | Estado | Notas |
+| --------------------------------------------------------------------------------- | ------ | ----- |
+| S0-A–D: `loading.tsx` en `/users`, `/tenants`, `/connectors`, `/panel`            | ✅     |       |
+| S0-E: Nav limpia (8 ítems vacíos ocultos)                                         | ✅     |       |
+| S0-F: Nav reordenada: Panel · Conectores · Usuarios · Tenants · Marketing · Demos | ✅     |       |
 
 ---
 
-### Sprint S1 · CRUD Completo de Conectores
+### Sprint S1 · CRUD Completo de Conectores — ✅ COMPLETADO (parcial)
 
-**Estimación**: ~1 día  
-**Estado**: ⬜ pendiente
-
-| Tarea                                                             | Estado | Notas                                  |
-| ----------------------------------------------------------------- | ------ | -------------------------------------- |
-| S1-A: Página `/connectors` — tabla global de todas las conexiones | ⬜     | Filtros: canal, estado, tenant, fechas |
-| S1-B: Página `/connectors/[id]` — detalle conexión                | ⬜     | Metadatos, audit log, tokens, acciones |
-| S1-C: Acción Revocar en detalle (reutiliza API existente)         | ⬜     |                                        |
-| S1-D: Acción Test Ping                                            | ⬜     | API nueva `POST /ping`                 |
-| S1-E: Acción Reactivar                                            | ⬜     | API nueva `POST /reactivate`           |
-| S1-F: Acción Eliminar (hard delete + confirmación)                | ⬜     |                                        |
-| S1-G: API `PATCH /api/admin/connectors/[id]`                      | ⬜     | Notas admin, alias                     |
-| S1-H: API `POST /api/admin/connectors/[id]/ping`                  | ⬜     | Test Holded API key                    |
-| S1-I: API `POST /api/admin/connectors/[id]/reactivate`            | ⬜     | Restaurar revocada                     |
+| Tarea                                                 | Estado | Notas                                                |
+| ----------------------------------------------------- | ------ | ---------------------------------------------------- |
+| S1-A: Página `/connectors` — tabla global con filtros | ✅     | Canal, estado, búsqueda, paginación, export CSV      |
+| S1-B: Página `/connectors/[id]` — detalle completo    | ✅     | Metadatos, actividad real (PAT log), tokens, revocar |
+| S1-C: Acción Revocar token                            | ✅     | `POST /api/admin/connectors/[id]/tokens/[id]/revoke` |
+| S1-D: Acción Test Ping                                | ⬜     | API `POST /ping` — pendiente                         |
+| S1-E: Acción Reactivar conector                       | ⬜     | API `POST /reactivate` — pendiente                   |
+| S1-F: Acción Eliminar conector (hard delete)          | ⬜     | Pendiente                                            |
 
 ---
 
-### Sprint S2 · Detalle de Usuario
+### Sprint S2 · Detalle de Usuario — ✅ COMPLETADO
 
-**Estimación**: ~4 horas  
-**Estado**: ⬜ pendiente
-
-| Tarea                                                 | Estado | Notas                                         |
-| ----------------------------------------------------- | ------ | --------------------------------------------- |
-| S2-A: Página `/users/[id]` nueva — detalle completo   | ⬜     | Llama a API existente `/api/admin/users/[id]` |
-| S2-B: Mostrar tenants + conexiones holded del usuario | ⬜     |                                               |
-| S2-C: Acciones: Bloquear/Desbloquear, Impersonar      | ⬜     | APIs ya existen                               |
-| S2-D: Link desde lista usuarios → detalle             | ⬜     | Ya está el `<Link href="/users/[id]">`        |
+| Tarea                                                     | Estado |
+| --------------------------------------------------------- | ------ |
+| `/users/[id]` reescrito: info, tenants, conexiones Holded | ✅     |
+| Acciones: Bloquear/Desbloquear, Eliminar                  | ✅     |
+| Loading skeleton                                          | ✅     |
 
 ---
 
-### Sprint S3 · Export de Tablas
+### Sprint S3 · Export de Tablas — ✅ COMPLETADO
 
-**Estimación**: ~3 horas  
-**Estado**: ⬜ pendiente
-
-| Tarea                                                            | Estado | Notas                                      |
-| ---------------------------------------------------------------- | ------ | ------------------------------------------ |
-| S3-A: Botón "Exportar CSV" en `/users`                           | ⬜     | Usa endpoint existente con filtros activos |
-| S3-B: API `GET /api/admin/connectors/export` — CSV de conexiones | ⬜     | Nuevo endpoint                             |
-| S3-C: Botón "Exportar CSV" en `/connectors`                      | ⬜     |                                            |
-| S3-D: Export con streaming (no bloquea en lotes grandes)         | ⬜     | ReadableStream con `text/csv`              |
+| Tarea                                        | Estado |
+| -------------------------------------------- | ------ |
+| Export CSV `/users` con filtros activos      | ✅     |
+| Export CSV `/connectors` con filtros activos | ✅     |
 
 ---
 
-### Sprint S4 · Gestión de Tokens PAT/MCP
+### Sprint S4 · Gestión de Tokens PAT/MCP — ✅ COMPLETADO
 
-**Estimación**: ~4 horas  
-**Estado**: ⬜ pendiente
-
-| Tarea                                                          | Estado | Notas                                       |
-| -------------------------------------------------------------- | ------ | ------------------------------------------- |
-| S4-A: Sección "Tokens activos" en `/connectors/[id]`           | ⬜     | Tabla: issued_at, last_used, canal, revocar |
-| S4-B: API `GET /api/admin/connectors/[id]/tokens`              | ⬜     | Lista PATs de la conexión                   |
-| S4-C: API `DELETE /api/admin/connectors/[id]/tokens/[tokenId]` | ⬜     | Revocar token individual                    |
-| S4-D: Contador de tokens activos en tabla global `/connectors` | ⬜     |                                             |
+| Tarea                                          | Estado |
+| ---------------------------------------------- | ------ |
+| Sección "Tokens activos" en `/connectors/[id]` | ✅     |
+| API lista + revocar tokens individuales        | ✅     |
 
 ---
 
-### Sprint S5 · Email Marketing Scaffold
+### Sprint S5 · Email Marketing Scaffold — ✅ COMPLETADO
 
-**Estimación**: ~1 día  
-**Estado**: ⬜ pendiente
-
-| Tarea                                                                                  | Estado | Notas                                                                      |
-| -------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------- |
-| S5-A: Página `/marketing/campaigns` — lista de campañas                                | ⬜     |                                                                            |
-| S5-B: Formulario nueva campaña: segmento + subject + body + preview                    | ⬜     |                                                                            |
-| S5-C: Segmentos disponibles                                                            | ⬜     | Todos conectados, solo Claude, solo ChatGPT, con errores, sin actividad 7d |
-| S5-D: API `POST /api/admin/marketing/campaigns`                                        | ⬜     | Crea y envía usando infra de emails existente                              |
-| S5-E: Modelo Prisma `MarketingCampaign` (id, segment, subject, sentAt, recipientCount) | ⬜     | Migración + seed                                                           |
-| S5-F: Reaactivar ítem "Marketing" en nav (apunta a `/marketing/campaigns`)             | ⬜     |                                                                            |
+| Tarea                                                         | Estado | Notas                                    |
+| ------------------------------------------------------------- | ------ | ---------------------------------------- |
+| Página `/admin-marketing` con 3 segmentos + CampaignForm      | ✅     |                                          |
+| API `POST /api/admin/marketing/send` con dry-run + envío real | ✅     |                                          |
+| Segmentos: all_users · holded_connected · holded_error        | ✅     |                                          |
+| Historial de campañas (modelo Prisma `MarketingCampaign`)     | ⬜     | Pendiente — actualmente sin persistencia |
 
 ---
 
-### Sprint S6 · Monitorización y Alertas
+### Sprint S6 · Monitorización y Alertas — ✅ COMPLETADO
 
-**Estimación**: ~4 horas  
-**Estado**: ⬜ pendiente
-
-| Tarea                                                                            | Estado | Notas                                        |
-| -------------------------------------------------------------------------------- | ------ | -------------------------------------------- |
-| S6-A: Badge de alertas en nav lateral (conexiones con error, tokens por expirar) | ⬜     |                                              |
-| S6-B: API `GET /api/admin/connectors/health` — resumen salud                     | ⬜     | OK, error, revocadas, inactivas              |
-| S6-C: Integrar resultado smoke test diario en dashboard `/panel`                 | ⬜     | Lee último resultado de la rutina programada |
+| Tarea                                                                        | Estado | Notas                                             |
+| ---------------------------------------------------------------------------- | ------ | ------------------------------------------------- |
+| KPIs en `/panel`: Activos 30d, dormant, queries hoy, errores conectores      | ✅     | Basado en PAT audit log (señal real de actividad) |
+| Alertas "Atención requerida" en panel (dormant, error, demos, recordatorios) | ✅     |                                                   |
+| Badge alertas en nav lateral                                                 | ⬜     | Pendiente — requiere entender AppShell API        |
 
 ---
 
-## 4. Orden de ejecución recomendado
+### Fase A · Visibilidad Real de Actividad — ✅ COMPLETADO
+
+| Tarea                                                                        | Estado |
+| ---------------------------------------------------------------------------- | ------ |
+| A1: "Actividad real" en `/connectors/[id]` (últimas 50 llamadas PAT)         | ✅     |
+| A2: Columna "Queries 7d" en tabla `/connectors` (badge azul)                 | ✅     |
+| A3: KPI tenant-céntrico en `/panel` (tenants activos vs usuarios conectados) | ✅     |
+
+---
+
+### Fase B · Gestión de Perfiles de Tenant — ✅ COMPLETADO
+
+| Tarea                                                                          | Estado |
+| ------------------------------------------------------------------------------ | ------ |
+| B1: Formulario inline de edición en `/tenants/[id]/overview`                   | ✅     |
+| B2: API `PATCH /api/admin/tenants/[id]/profile` con audit trail                | ✅     |
+| B3: API `POST /api/admin/tenants/[id]/profile-email` — email perfil incompleto | ✅     |
+
+---
+
+### Fase C · Recordatorios Automáticos de Perfil — ⬜ SIGUIENTE
+
+**Objetivo**: Email automático cada 2-3 días a tenants con perfil incompleto (sin email, teléfono, CNAE o representante), hasta que completen los datos.
+
+| Tarea                                                                                                       | Estado | Notas                                                                      |
+| ----------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------- |
+| C1: Script/API `GET /api/admin/tenants/incomplete-profiles` — lista tenants incompletos                     | ⬜     | Criterio: profile NULL o faltan ≥2 de {email, phone, cnae, representative} |
+| C2: Rutina diaria programada (CCR) que llama C1 + envía recordatorios por segmento                          | ⬜     | Cadencia: no más de 1 email cada 3 días por tenant                         |
+| C3: Tabla `profile_reminder_log` (tenant_id, sent_at) para respetar cadencia                                | ⬜     | O campo `last_profile_reminder_at` en tenant_profiles                      |
+| C4: Dashboard en `/admin-marketing` — "Recordatorios activos": cuántos tenants y cuándo fue el último envío | ⬜     |                                                                            |
+
+---
+
+### Fase D · Finalización Conectores — ⬜ PENDIENTE (pequeños items)
+
+| Tarea                                                         | Estado | Notas                                             |
+| ------------------------------------------------------------- | ------ | ------------------------------------------------- |
+| D1: Acción "Test Ping" en `/connectors/[id]`                  | ⬜     | Llama Holded API con la API key guardada          |
+| D2: Acción "Reactivar" conector revocado                      | ⬜     | Cambia `connection_status` + limpia `revoked_at`  |
+| D3: Acción "Eliminar" conector (hard delete con confirmación) | ⬜     |                                                   |
+| D4: Historial de campañas de marketing (modelo Prisma)        | ⬜     | `MarketingCampaign`: id, segment, subject, sentAt |
+| D5: Badge alertas en nav lateral                              | ⬜     | Requiere entender `AppShell` de `@verifactu/ui`   |
+
+---
+
+### Fase E · Isaak Admin Copilot — ⬜ PLANIFICADO
+
+**Objetivo**: Isaak visible **solo en el panel de admin** (interno), capaz de responder preguntas sobre métricas, detectar anomalías y recopilar datos. La preparación del contexto ahora (con perfiles completos + actividad real) es lo que hará que Isaak sea útil cuando se exponga públicamente.
+
+**Premisa**: mientras los perfiles de tenant no estén completos, Isaak no tiene con qué trabajar. Los recordatorios automáticos de Fase C son el prerequisito.
+
+| Tarea                                                                                         | Estado | Notas                                                             |
+| --------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
+| E1: Widget Isaak en `/panel` con `moduleKey: 'admin-analytics'`                               | ⬜     | Solo visible para admin; usa el widget existente `IsaakWidget`    |
+| E2: Herramientas Isaak para consultar métricas (`get_activity_stats`, `list_dormant_tenants`) | ⬜     | API `POST /api/admin/isaak/tools` — tools que Isaak puede llamar  |
+| E3: Isaak detecta anomalías: "3 tenants sin actividad 14d con conector activo"                | ⬜     | Tool `detect_anomalies` — Isaak analiza y notifica proactivamente |
+| E4: Isaak sugiere acción ("Envíales un recordatorio de perfil") con botón accionable          | ⬜     | Respuesta estructurada con `action: { type, payload }`            |
+
+---
+
+### Fase F · Isaak Público — ⬜ PLANIFICADO (tras Fase E estable)
+
+**Objetivo**: Exponer Isaak a usuarios finales (no admin) con onboarding, configuración y controles de privacidad claros.
+
+**Prerequisito**: Fase E estable + perfiles de tenant completados (Fase C) + revisión legal de acceso a datos de conversación.
+
+| Tarea                                                                               | Estado | Notas                                                     |
+| ----------------------------------------------------------------------------------- | ------ | --------------------------------------------------------- |
+| F1: Feature flag `ISAAK_PUBLIC_ENABLED` por tenant                                  | ⬜     | Admin lo activa manualmente por tenant mientras se valida |
+| F2: Onboarding de usuario: "Isaak puede ver tus datos fiscales para ayudarte"       | ⬜     | Consentimiento explícito antes de activar                 |
+| F3: Isaak accede a `IsaakConversation` para contexto personalizado                  | ⬜     | Solo si el usuario dio consentimiento en F2               |
+| F4: Panel admin: métricas de uso de Isaak por tenant (conversaciones, satisfacción) | ⬜     |                                                           |
+
+---
+
+## 4. Orden de ejecución recomendado (actualizado)
 
 ```text
-Semana 1:
-  Día 1 (hoy):   S0 — nav + loading.tsx (3h)
-  Día 2:         S1 — tabla global conectores + CRUD (1 día)
-  Día 3 mañana:  S2 — detalle usuario (4h)
-  Día 3 tarde:   S3 — exports CSV (3h)
+Inmediato (próxima sesión):
+  Fase C — Recordatorios automáticos perfil incompleto
+    C1: API /incomplete-profiles (1h)
+    C2: Rutina CCR programada (1h — usa /schedule)
+    C3: log de cadencia para no saturar usuarios (1h)
 
-Semana 2:
-  S4 — tokens PAT (4h)
-  S5 — email marketing (1 día)
-  S6 — alertas y monitorización (4h)
+A continuación:
+  Fase D — Finalizar pequeños items conectores
+    D1-D3: Ping, Reactivar, Eliminar (2h)
+    D4: Historial campañas (1h)
+
+Siguiente sprint:
+  Fase E — Isaak Admin Copilot (interno)
+    E1-E2: Widget + tools básicas (2-3h)
+    E3-E4: Anomalías + sugerencias accionables (2h)
+
+Futuro (tras validación interna):
+  Fase F — Isaak Público (con feature flag por tenant)
 ```
 
 ---
