@@ -1,5 +1,6 @@
 import { ConnectorsPanelWidget } from '@/components/admin/ConnectorsPanelWidget';
 import { prisma } from '@/lib/db';
+import { query } from '@/lib/db';
 import { getHoldedDirectPanelData } from '@/lib/holdedDirectAdmin';
 import { formatDateTime } from '@/src/lib/formatters';
 import Link from 'next/link';
@@ -51,7 +52,7 @@ function MetricCard({
 }
 
 export default async function AdminPanelPage() {
-  const [data, pendingDemos, refreshedAt] = await Promise.all([
+  const [data, pendingDemos, connectorsStatus, refreshedAt] = await Promise.all([
     getHoldedDirectPanelData({
       userLimit: 0,
       tenantLimit: 0,
@@ -59,10 +60,19 @@ export default async function AdminPanelPage() {
       sessionLimit: 0,
     }),
     prisma.demoRequest.count({ where: { status: 'PENDING' } }).catch(() => 0),
+    query<{ status: string; count: number }>(
+      `SELECT connection_status AS status, COUNT(*)::int AS count
+       FROM external_connections
+       WHERE provider = 'holded'
+       GROUP BY connection_status`,
+      []
+    ).catch(() => [] as { status: string; count: number }[]),
     Promise.resolve(new Date().toISOString()),
   ]);
 
   const { summary } = data;
+  const statusMap = Object.fromEntries(connectorsStatus.map((r) => [r.status, r.count]));
+  const errConnectors = (statusMap.error ?? 0) + (statusMap.revoked_api ?? 0);
 
   return (
     <main className="space-y-5 px-4 py-5 sm:px-6 lg:px-8">
@@ -82,10 +92,22 @@ export default async function AdminPanelPage() {
       </header>
 
       {/* Alertas */}
-      {(summary.dueReminders > 0 || summary.duplicateEmailUsers > 0 || pendingDemos > 0) && (
+      {(summary.dueReminders > 0 ||
+        summary.duplicateEmailUsers > 0 ||
+        pendingDemos > 0 ||
+        errConnectors > 0) && (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3">
           <p className="text-xs font-semibold text-amber-800">Atención requerida</p>
           <ul className="mt-1 space-y-0.5 text-xs text-amber-700">
+            {errConnectors > 0 && (
+              <li>
+                —{' '}
+                <Link href="/connectors?status=error" className="underline hover:text-amber-900">
+                  {errConnectors} conector{errConnectors > 1 ? 'es' : ''} con error o revocado
+                  {errConnectors > 1 ? 's' : ''}
+                </Link>
+              </li>
+            )}
             {pendingDemos > 0 && (
               <li>
                 —{' '}
@@ -142,6 +164,13 @@ export default async function AdminPanelPage() {
             value={summary.activeSessions}
             sub="en este momento"
             href="/sessions"
+          />
+          <MetricCard
+            label="Conectores OK"
+            value={statusMap.connected ?? 0}
+            sub={errConnectors > 0 ? `${errConnectors} con error` : 'sin errores'}
+            href="/connectors"
+            variant={errConnectors > 0 ? 'amber' : 'default'}
           />
         </div>
       </section>
