@@ -103,8 +103,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     dpaHref: '/conectores/claude/dpa',
     privacyHref: '/conectores/claude/privacy',
     termsHref: '/conectores/claude/terms',
-    connectHref:
-      'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp',
+    connectHref: 'https://claude.verifactu.business/launch',
   },
   chatgpt: {
     id: 'chatgpt',
@@ -286,13 +285,13 @@ const QUICK_CONNECT_STEPS: Record<
       n: '01',
       Icon: Link2,
       title: 'Pulsa el botón "Añadir a Claude"',
-      text: 'Claude.ai abre el diálogo de conector personalizado con Holded ya preconfigurado — nombre y URL del servidor MCP rellenados automáticamente.',
+      text: 'Claude.ai abre el diálogo "Añadir conector personalizado" con el nombre "Holded" y la URL del servidor MCP ya rellenados automáticamente.',
     },
     {
       n: '02',
       Icon: Zap,
-      title: 'Confirma en Claude',
-      text: 'Revisa el nombre "Holded" y la URL del servidor. Haz clic en "Añadir conector" para iniciar el flujo de autorización.',
+      title: 'Acepta el aviso y haz clic en "Añadir"',
+      text: 'Claude muestra un aviso de seguridad estándar indicando que el conector fue sugerido por un enlace externo — es el comportamiento esperado. Verifica que el nombre sea "Holded" y la URL "claude.verifactu.business/mcp", luego pulsa "Añadir".',
     },
     {
       n: '03',

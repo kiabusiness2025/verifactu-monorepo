@@ -205,6 +205,8 @@ export function createApp() {
       token_endpoint_auth_methods_supported: ['client_secret_post'],
       scopes_supported: ['holded:read', 'holded:write'],
       service_documentation: `${config.BASE_URL}/docs`,
+      op_policy_uri: 'https://holded.verifactu.business/conectores/claude/privacy',
+      op_tos_uri: 'https://holded.verifactu.business/conectores/claude/terms',
       logo_uri: `${config.BASE_URL}/holded-diamond-logo.png?v=holded-diamond-2026-05-12`,
     });
   });

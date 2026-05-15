@@ -24,8 +24,7 @@ const connectors = [
     badgeText: 'text-[#D4570C]',
     ctaBg: 'bg-[#D4570C] hover:bg-[#B84509] shadow-[0_10px_25px_-12px_rgba(212,87,12,0.5)]',
     checkColor: 'text-[#D4570C]',
-    connectHref:
-      'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp',
+    connectHref: 'https://claude.verifactu.business/launch',
     connectLabel: 'Añadir a Claude',
     connectExternal: true,
   },

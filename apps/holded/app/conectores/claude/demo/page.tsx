@@ -392,9 +392,7 @@ export default function ClaudeDemoPage() {
         {/* CTAS */}
         <div className="mt-10 flex flex-wrap justify-center gap-3">
           <a
-            href="https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="https://claude.verifactu.business/launch"
             className="inline-flex items-center gap-2 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700"
           >
             <ExternalLink className="h-4 w-4" />

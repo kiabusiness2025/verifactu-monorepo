@@ -16,6 +16,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       showThemeToggle={false}
       showIsaak={true}
       isaakExtraContext={{ moduleKey: 'admin', role: 'admin', context: 'backoffice' }}
+      sidebarIcon={
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#011c67] text-sm font-semibold text-white">
+          VB
+        </div>
+      }
       sidebarBrand={
         <div className="flex min-w-0 items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#011c67] text-sm font-semibold text-white">

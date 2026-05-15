@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import { IsaakDock } from '../isaak/IsaakDock';
@@ -13,6 +13,7 @@ type Props = {
   nav: NavItem[];
   pathname: string;
   sidebarBrand?: React.ReactNode;
+  sidebarIcon?: React.ReactNode;
   headerLeft?: React.ReactNode;
   headerRight?: React.ReactNode;
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export function AppShell({
   nav,
   pathname,
   sidebarBrand,
+  sidebarIcon,
   headerLeft,
   headerRight,
   children,
@@ -35,13 +37,39 @@ export function AppShell({
 }: Props) {
   const isAdmin = variant === 'admin';
   const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     setMobileNavOpen(false);
   }, [pathname]);
 
+  // Restore sidebar state from localStorage after mount (avoids SSR mismatch)
+  React.useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem('sidebar-collapsed') === '1');
+    } catch (_e) {
+      // localStorage unavailable (e.g. sandboxed iframe) — keep default
+    }
+  }, []);
+
+  const toggleCollapsed = () => {
+    const next = !collapsed;
+    setCollapsed(next);
+    try {
+      localStorage.setItem('sidebar-collapsed', next ? '1' : '0');
+    } catch (_e) {
+      // localStorage unavailable — state still works in memory
+    }
+  };
+
+  const defaultCollapsedIcon = (
+    <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-primary/15 bg-primary/10 text-xs font-bold">
+      V
+    </div>
+  );
+
   const brandNode = sidebarBrand ?? (
-    <div className="flex items-center gap-2 min-w-0">
+    <div className="flex min-w-0 items-center gap-2">
       <div className="h-8 w-8 rounded-xl bg-primary/10 border border-primary/15" />
       <div className="min-w-0">
         <div className="text-sm font-semibold leading-tight truncate">
@@ -60,21 +88,24 @@ export function AppShell({
       <Link
         key={item.href}
         href={item.href}
+        title={collapsed ? item.label : undefined}
         className={cn(
-          'flex items-center gap-2 rounded-xl px-3 py-2 transition',
+          'flex items-center rounded-xl py-2 transition',
+          collapsed ? 'justify-center px-2' : 'gap-2 px-3',
           active
             ? 'bg-primary/10 text-foreground border border-primary/15'
             : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground'
         )}
       >
         {item.icon}
-        <span className="truncate">{item.label}</span>
+        {!collapsed && <span className="truncate">{item.label}</span>}
       </Link>
     );
   });
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      {/* Mobile nav overlay */}
       <div
         className={cn(
           'fixed inset-0 z-40 md:hidden',
@@ -115,15 +146,54 @@ export function AppShell({
       </div>
 
       <div className="flex">
+        {/* Desktop sidebar */}
         <aside
-          className={`hidden md:flex md:flex-col border-r bg-card ${isAdmin ? 'w-[260px]' : 'w-[280px]'}`}
+          className={cn(
+            'hidden md:flex md:flex-col border-r bg-card transition-[width] duration-200 shrink-0',
+            collapsed ? 'w-[52px]' : isAdmin ? 'w-[260px]' : 'w-[280px]'
+          )}
         >
-          <div className="h-14 flex items-center px-4 border-b">{brandNode}</div>
+          <div
+            className={cn(
+              'h-14 flex items-center border-b overflow-hidden',
+              collapsed ? 'justify-center px-2' : 'px-4'
+            )}
+          >
+            {collapsed ? (sidebarIcon ?? defaultCollapsedIcon) : brandNode}
+          </div>
 
-          <nav className={`p-2 ${isAdmin ? 'text-sm' : 'text-[15px]'}`}>{navLinks}</nav>
+          <nav
+            className={cn(
+              'flex-1 overflow-y-auto overflow-x-hidden p-2',
+              isAdmin ? 'text-sm' : 'text-[15px]'
+            )}
+          >
+            {navLinks}
+          </nav>
 
-          <div className="mt-auto p-3 border-t text-xs text-muted-foreground">
-            {isAdmin ? 'Operaciones y soporte' : 'ERP + Veri*Factu + Isaak'}
+          <div
+            className={cn(
+              'border-t p-3',
+              collapsed ? 'flex justify-center' : 'flex items-center justify-between'
+            )}
+          >
+            {!collapsed && (
+              <span className="text-xs text-muted-foreground">
+                {isAdmin ? 'Operaciones' : 'ERP + Isaak'}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:text-foreground"
+              aria-label={collapsed ? 'Expandir sidebar' : 'Colapsar sidebar'}
+            >
+              {collapsed ? (
+                <ChevronRight className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronLeft className="h-3.5 w-3.5" />
+              )}
+            </button>
           </div>
         </aside>
 
