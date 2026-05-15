@@ -3,16 +3,8 @@ name: Build Check - Admin Panel
 on:
   push:
     branches: [main, develop]
-    paths:
-      - 'apps/admin/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
   pull_request:
     branches: [main, develop]
-    paths:
-      - 'apps/admin/**'
-      - 'packages/**'
-      - 'pnpm-lock.yaml'
 
 jobs:
   build-admin:
