@@ -8,7 +8,7 @@ export const navAdmin = [
   { label: 'Panel', href: '/panel', icon: <LayoutDashboard className="h-4 w-4" /> },
   {
     label: 'Conectores',
-    href: '/connectors/overview',
+    href: '/connectors',
     icon: <Plug className="h-4 w-4" />,
     match: (p: string) => p.startsWith('/connectors'),
   },

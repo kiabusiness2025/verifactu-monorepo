@@ -13,7 +13,8 @@
 | 2026-05-14 | Auditoría inicial F6, panel básico, conectores overview                       | `bfac388` |
 | 2026-05-14 | Sidebar colapsable, ConnectorsPanelWidget hero, fix gráfico barras            | `dcfa34e` |
 | 2026-05-15 | Usuarios: paginación server-side, búsqueda, filtros, conexión Holded por fila | `eb40652` |
-| 2026-05-15 | Auditoría completa del panel, este documento, plan S0–S6                      | —         |
+| 2026-05-15 | Auditoría completa del panel, este documento, plan S0–S6                      | `0be7dbe` |
+| 2026-05-15 | S0: loading.tsx en 4 rutas + nav limpia (6 ítems activos)                     | `34f5b8e` |
 
 ---
 
@@ -21,7 +22,7 @@
 
 ### 1.1 Navegación (`apps/admin/src/navAdmin.tsx`)
 
-```
+```text
 Operaciones:
   Panel             /panel              ✓ funcional
   Usuarios          /users              ✓ rediseñado (paginación + búsqueda)
@@ -239,7 +240,7 @@ Content:
 
 ## 4. Orden de ejecución recomendado
 
-```
+```text
 Semana 1:
   Día 1 (hoy):   S0 — nav + loading.tsx (3h)
   Día 2:         S1 — tabla global conectores + CRUD (1 día)
@@ -270,7 +271,7 @@ Semana 2:
 
 ## 6. Archivos clave
 
-```
+```text
 apps/admin/
   src/navAdmin.tsx                              — definición del menú
   app/(admin)/
