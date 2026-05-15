@@ -23,6 +23,27 @@ type HoldedMcpToolHandler = (
   input: Record<string, unknown>
 ) => Promise<Record<string, unknown>>;
 
+/**
+ * Error de usuario en una tool: input inválido, falta confirmación, recurso no
+ * encontrado, etc. NO es un fallo del conector ni de Holded; es una condición
+ * esperada que el route debe transformar en un resultado MCP legible
+ * (`content`+`structuredContent`) en vez de un error JSON-RPC genérico.
+ *
+ * El route.ts inspecciona `instanceof HoldedUserError` y devuelve un resultado
+ * normal con `structuredContent.error = code`, evitando que ChatGPT/Claude
+ * vean "Internal MCP error" para casos que son claramente del lado del input.
+ */
+export class HoldedUserError extends Error {
+  code: string;
+  data: Record<string, unknown>;
+  constructor(code: string, message: string, data: Record<string, unknown> = {}) {
+    super(message);
+    this.name = 'HoldedUserError';
+    this.code = code;
+    this.data = data;
+  }
+}
+
 const readOnlyAnnotations = {
   readOnlyHint: true,
   destructiveHint: false,
@@ -159,9 +180,11 @@ function documentCreatePayloadProperty(description: string) {
       lines: documentLineItemProperty(
         'Preferred Holded line format. Each item should include desc, units, price and usually tax.'
       ),
-      products: documentLineItemProperty(
-        'Compatibility alias accepted by the connector. It is normalized to lines before sending the payload to Holded.'
-      ),
+      // `products` se sigue aceptando en runtime como alias de `lines` por
+      // retrocompatibilidad, pero NO lo anunciamos en el inputSchema: cuando
+      // ChatGPT lo veía con `minItems: 1`, generaba a veces `products: []`
+      // junto a un `lines` válido y la validación lo rechazaba en lugar de
+      // aceptar el draft correcto. El normalizador interno lo absorbe si llega.
     },
     additionalProperties: true,
   };
@@ -359,7 +382,8 @@ function requireConfirm(input: Record<string, unknown>) {
     // con confirm:true cuando el usuario diga "si"/"yes"/"confirm", y (3)
     // dejar al usuario una salida explicita ("if you don't want to proceed,
     // tell me and I will discard this draft").
-    throw new Error(
+    throw new HoldedUserError(
+      'confirmation_required',
       'Awaiting your confirmation. Nothing has been written to Holded yet — no changes have been made. ' +
         'If you want to proceed, please confirm explicitly (for example: "Yes, create the draft"). ' +
         'On confirmation, the assistant should call this same tool again with the identical input plus confirm: true. ' +
@@ -746,11 +770,19 @@ function normalizeProductStockPayload(payload: Record<string, unknown>) {
   return payload;
 }
 
+/**
+ * Detecta el caso "el ID que pasaste no apunta a un recurso accesible". Cubre:
+ *   - 404 (Holded confirmó que no existe)
+ *   - 400 (Holded rechazó el ID porque está mal formado, p. ej. no es un
+ *     ObjectId válido — el revisor de OpenAI pasa cosas como
+ *     "test-invalid-id"; sin este caso Holded responde 400 y el route lo
+ *     convertía en "Internal MCP error" genérico).
+ */
 function isHoldedNotFound(err: unknown): boolean {
   if (!err || typeof err !== 'object') return false;
   const e = err as { status?: number; message?: string };
-  if (e.status === 404) return true;
-  return typeof e.message === 'string' && /\b404\b/.test(e.message);
+  if (e.status === 404 || e.status === 400) return true;
+  return typeof e.message === 'string' && /\b(?:400|404)\b/.test(e.message);
 }
 
 function notFoundResponse(entity: string, id: string) {
@@ -882,16 +914,21 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     }
 
     if (!candidate) {
-      throw new Error(
-        `No invoice found with id or document number "${idOrNumber}". ` +
-          `If you have the internal Holded id (a 24-character hex string) pass it directly. ` +
-          `Otherwise, call holded_list_invoices first to find the invoice and pass its docNumber (e.g. "F0030") here.`
-      );
+      // Antes lanzábamos `throw new Error(...)`, que el route convertía en
+      // "Internal MCP error -32000" por la R4 hardening (no expone mensajes
+      // crudos). Devolvemos notFoundResponse para que ChatGPT/Claude vean un
+      // resultado MCP normal con `error: not_found` y el id consultado.
+      return notFoundResponse('invoice', idOrNumber);
     }
 
     const resolvedId = candidate.id ?? candidate._id ?? idOrNumber;
-    const item = await holdedAdapter.getInvoice(apiKey, resolvedId);
-    return { item };
+    try {
+      const item = await holdedAdapter.getInvoice(apiKey, resolvedId);
+      return { item };
+    } catch (err) {
+      if (isHoldedNotFound(err)) return notFoundResponse('invoice', idOrNumber);
+      throw err;
+    }
   },
 
   async holded_list_documents(apiKey, input) {
@@ -1639,9 +1676,15 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_list_accounts(apiKey, input) {
+    // El plan contable español (PGC) puede tener cientos de cuentas — el tenant
+    // de demo devuelve ~206 con includeEmpty=1. Antes la paginación solo se
+    // activaba si el caller pasaba page/limit, así que una llamada sin args
+    // devolvía las 206 cuentas enteras dentro de structuredContent y ChatGPT
+    // rechazaba el payload. Ahora paginamos SIEMPRE con defaults (page 1,
+    // limit 25); el caller puede pedir más con page/limit explícitos.
     const items = await holdedAdapter.listAccounts(apiKey, {
-      ...(input.page !== undefined ? { page: readPage(input) } : {}),
-      ...(input.limit !== undefined ? { limit: readLimit(input) } : {}),
+      page: readPage(input),
+      limit: readLimit(input),
       starttmp: optionalUnixTimestamp(input, 'startTimestamp'),
       endtmp: optionalUnixTimestamp(input, 'endTimestamp'),
       includeEmpty: optionalBoolean(input, 'includeEmpty', true),
@@ -1721,11 +1764,19 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_list_project_tasks(apiKey, input) {
-    const items = await holdedAdapter.listProjectTasks(apiKey, requiredString(input, 'projectId'), {
-      page: readPage(input),
-      limit: readLimit(input),
-    });
-    return { items };
+    const projectId = requiredString(input, 'projectId');
+    try {
+      const items = await holdedAdapter.listProjectTasks(apiKey, projectId, {
+        page: readPage(input),
+        limit: readLimit(input),
+      });
+      return { items };
+    } catch (err) {
+      // El projectId puede ser inválido o inexistente — devolvemos un not_found
+      // legible en vez de dejar que el route lo convierta en "Internal MCP error".
+      if (isHoldedNotFound(err)) return notFoundResponse('project', projectId);
+      throw err;
+    }
   },
 
   async holded_create_invoice_draft(apiKey, input) {
@@ -1820,7 +1871,7 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_invoices',
     'List invoices in Holded',
-    'List invoice documents for the currently authorized tenant connected to Holded. Use year or from/to when you need older history such as 2025.',
+    'List SALES invoice documents (issued invoices, Holded docType=invoice) for the currently authorized tenant. Use year or from/to when you need older history such as 2025. This tool does NOT list received supplier invoices: for purchases call holded_list_documents with docType set to purchase, purchaseorder or purchaserefund.',
     listSchema({
       status: stringProperty(
         'Optional Holded invoice status filter, if supported by the tenant account.'
@@ -2645,7 +2696,7 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_accounts',
     'List accounting accounts in Holded',
-    'List the complete Holded chart of accounts for the currently authorized tenant. By default the connector calls chartofaccounts with includeEmpty=1 so empty accounts are not silently omitted.',
+    'List the Holded chart of accounts for the currently authorized tenant. Results are paginated (default 25 per page); pass page and limit to walk the full chart. By default the connector calls chartofaccounts with includeEmpty=1 so empty accounts are not silently omitted.',
     simpleSchema({
       page: pageProperty,
       limit: limitProperty,

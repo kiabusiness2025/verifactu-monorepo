@@ -46,7 +46,7 @@ import {
   getAllowedHoldedMcpToolNames,
   getHoldedMcpScopePreset,
 } from './holdedMcpScopes';
-import { callHoldedMcpTool, holdedMcpTools } from './holdedMcpTools';
+import { callHoldedMcpTool, holdedMcpTools, HoldedUserError } from './holdedMcpTools';
 
 const mockedHoldedAdapter = holdedAdapter as unknown as {
   listInvoices: jest.Mock;
@@ -346,15 +346,29 @@ describe('holdedMcpTools', () => {
     expect(result).toEqual({ items: [{ id: 'entry-1' }] });
   });
 
-  it('lists the full chart of accounts by default', async () => {
+  it('paginates the chart of accounts with defaults when no paging args are passed', async () => {
     mockedHoldedAdapter.listAccounts.mockResolvedValue([{ id: '70000001' }]);
 
     const result = await callHoldedMcpTool('demo-key', 'holded_list_accounts', {});
 
     expect(mockedHoldedAdapter.listAccounts).toHaveBeenCalledWith('demo-key', {
+      page: 1,
+      limit: 25,
       includeEmpty: true,
     });
     expect(result).toEqual({ items: [{ id: '70000001' }] });
+  });
+
+  it('forwards explicit page and limit to the chart of accounts adapter', async () => {
+    mockedHoldedAdapter.listAccounts.mockResolvedValue([{ id: '70000002' }]);
+
+    await callHoldedMcpTool('demo-key', 'holded_list_accounts', { page: 3, limit: 50 });
+
+    expect(mockedHoldedAdapter.listAccounts).toHaveBeenCalledWith('demo-key', {
+      page: 3,
+      limit: 50,
+      includeEmpty: true,
+    });
   });
 
   it('routes list document calls through the shared Holded adapter', async () => {
@@ -847,6 +861,58 @@ describe('holdedMcpTools', () => {
         payload: { name: 'Demo Contact' },
       })
     ).rejects.toThrow('Awaiting your confirmation');
+  });
+
+  it('throws HoldedUserError(confirmation_required) so the route can render it gracefully', async () => {
+    try {
+      await callHoldedMcpTool('demo-key', 'holded_create_invoice_draft', {
+        confirm: false,
+        payload: { contactId: 'c1', lines: [{ desc: 'x', units: 1, price: 1 }] },
+      });
+      throw new Error('expected HoldedUserError but call succeeded');
+    } catch (err) {
+      expect(err).toBeInstanceOf(HoldedUserError);
+      expect((err as HoldedUserError).code).toBe('confirmation_required');
+    }
+  });
+
+  it('returns a graceful not_found for holded_get_invoice when neither id nor docNumber matches', async () => {
+    mockedHoldedAdapter.listInvoices.mockResolvedValue([]);
+    mockedHoldedAdapter.listInvoicesHistory.mockResolvedValue({
+      items: [],
+      history: {
+        appliedRange: { from: '', to: '' },
+        pagesScanned: 0,
+        scanLimit: 12,
+        reachedEnd: true,
+        matchedItems: 0,
+        returnedItems: 0,
+        oldestScannedDate: null,
+        newestScannedDate: null,
+      },
+    });
+
+    const result = (await callHoldedMcpTool('demo-key', 'holded_get_invoice', {
+      invoiceId: 'test-invalid-invoice-id',
+    })) as { error?: string; entity?: string; id?: string };
+
+    expect(result.error).toBe('not_found');
+    expect(result.entity).toBe('invoice');
+    expect(result.id).toBe('test-invalid-invoice-id');
+  });
+
+  it('returns a graceful not_found for holded_list_project_tasks when Holded rejects the project id', async () => {
+    const err = Object.assign(new Error('Holded API request failed with status 400: invalid id'), {
+      status: 400,
+    });
+    mockedHoldedAdapter.listProjectTasks.mockRejectedValue(err);
+
+    const result = (await callHoldedMcpTool('demo-key', 'holded_list_project_tasks', {
+      projectId: 'test-invalid-project-id',
+    })) as { error?: string; entity?: string };
+
+    expect(result.error).toBe('not_found');
+    expect(result.entity).toBe('project');
   });
 
   it('requires projectId for project task listing', async () => {

@@ -8,6 +8,16 @@ const HOLDED_HISTORY_FETCH_LIMIT = Math.max(
   25,
   Math.min(100, Number(process.env.HOLDED_HISTORY_FETCH_LIMIT || '100'))
 );
+// Presupuesto de tiempo total para el escaneo histórico multi-página. Si Holded
+// ignora los filtros starttmp/endtmp en /documents, el scan podía encadenar
+// hasta HOLDED_HISTORY_SCAN_PAGES llamadas secuenciales (~12 × varios segundos)
+// y el cliente MCP (ChatGPT) cortaba la llamada antes de recibir respuesta.
+// Con el presupuesto devolvemos resultados parciales con reachedEnd=false en
+// vez de agotar el tiempo del cliente.
+const HOLDED_HISTORY_SCAN_BUDGET_MS = Math.max(
+  2000,
+  Number(process.env.HOLDED_HISTORY_SCAN_BUDGET_MS || '7000')
+);
 
 export { encryptIntegrationSecret };
 
@@ -782,7 +792,16 @@ async function scanTypedDocumentsHistory(
   const starttmp = Math.floor(args.range.from.getTime() / 1000);
   const endtmp = Math.floor(args.range.to.getTime() / 1000);
 
+  const scanStartedAt = Date.now();
+
   for (let currentPage = 1; currentPage <= scanLimit; currentPage += 1) {
+    // Si el escaneo ya consumió su presupuesto de tiempo, paramos y devolvemos
+    // lo acumulado. No marcamos reachedEnd: el meta refleja que el rango pudo
+    // no haberse cubierto entero (pagesScanned < scanLimit && !reachedEnd).
+    if (currentPage > 1 && Date.now() - scanStartedAt > HOLDED_HISTORY_SCAN_BUDGET_MS) {
+      break;
+    }
+
     const batch = await holdedRequest<Record<string, unknown>[]>({
       apiKey,
       path: `/api/invoicing/v1/documents/${docType}`,
