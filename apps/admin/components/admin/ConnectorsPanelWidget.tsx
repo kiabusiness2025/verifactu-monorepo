@@ -237,13 +237,17 @@ export function ConnectorsPanelWidget() {
       </div>
 
       <div className="space-y-6 p-5">
-        {/* Tarjetas por canal */}
+        {/* Tarjetas por canal — clicables → overview */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {CHANNELS.map((ch) => {
             const stats = byChannel?.[ch];
             const color = CHANNEL_COLOR[ch];
             return (
-              <div key={ch} className={`rounded-xl border px-3 py-2.5 ${color.badge}`}>
+              <Link
+                key={ch}
+                href="/connectors/overview"
+                className={`rounded-xl border px-3 py-2.5 transition-opacity hover:opacity-80 ${color.badge}`}
+              >
                 <div className="flex items-center gap-1.5">
                   <span className={`h-2 w-2 rounded-full ${color.dot}`} />
                   <span className="text-[11px] font-bold uppercase tracking-wider">
@@ -266,7 +270,7 @@ export function ConnectorsPanelWidget() {
                 ) : (
                   <div className="mt-0.5 h-3 w-16 animate-pulse rounded bg-current opacity-20" />
                 )}
-              </div>
+              </Link>
             );
           })}
         </div>
@@ -308,25 +312,24 @@ export function ConnectorsPanelWidget() {
                 return (
                   <div
                     key={bucket}
-                    className="group flex flex-1 flex-col items-stretch justify-end"
+                    className="flex flex-1 flex-col items-center justify-end"
                     title={tooltip}
                   >
-                    {/* Barra: altura proporcional al día de mayor actividad */}
+                    {/* flex + flex-col-reverse en la barra: los segmentos se
+                        distribuyen directamente sin div intermedio, igual que
+                        connectors/overview — resuelve h-[X%] correctamente */}
                     <div
-                      className={`w-full overflow-hidden rounded-t-sm transition-opacity group-hover:opacity-75 ${hPct(barHeightPct)}`}
+                      className={`flex w-full flex-col-reverse rounded-t-sm transition-opacity hover:opacity-75 ${hPct(barHeightPct)}`}
                     >
-                      {/* Segmentos apilados: cada canal ocupa su % de la barra */}
-                      <div className="flex h-full flex-col-reverse">
-                        {CHANNELS.filter((ch) => (channels[ch] ?? 0) > 0).map((ch) => {
-                          const segPct = total > 0 ? ((channels[ch] ?? 0) / total) * 100 : 0;
-                          return (
-                            <div
-                              key={ch}
-                              className={`w-full ${CHANNEL_COLOR[ch].bar} ${hPct(segPct)}`}
-                            />
-                          );
-                        })}
-                      </div>
+                      {CHANNELS.filter((ch) => (channels[ch] ?? 0) > 0).map((ch) => {
+                        const segPct = total > 0 ? ((channels[ch] ?? 0) / total) * 100 : 0;
+                        return (
+                          <div
+                            key={ch}
+                            className={`w-full ${CHANNEL_COLOR[ch].bar} ${hPct(segPct)}`}
+                          />
+                        );
+                      })}
                     </div>
                     <div className="mt-1.5 text-center text-[8px] text-slate-400">
                       {formatDay(bucket)}
