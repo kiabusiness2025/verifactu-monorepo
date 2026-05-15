@@ -1,81 +1,124 @@
-﻿import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/adminAuth';
+import { prisma } from '@/lib/prisma';
+import { Prisma } from '@verifactu/db';
+import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+const MAX_LIMIT = 200;
+const DEFAULT_LIMIT = 50;
+
+export async function GET(req: NextRequest) {
   try {
-    const databaseUrl = process.env.DATABASE_URL || '';
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      (!databaseUrl || !/^postgres(ql)?:\/\//.test(databaseUrl))
-    ) {
-      return NextResponse.json(
-        {
-          error: 'Invalid DATABASE_URL',
-          details: 'DATABASE_URL must start with postgres:// or postgresql://',
-        },
-        { status: 500 }
-      );
-    }
+    await requireAdmin(req);
 
-    await requireAdmin({} as Request);
+    const sp = req.nextUrl.searchParams;
+    const page = Math.max(1, parseInt(sp.get('page') ?? '1', 10) || 1);
+    const limit = Math.min(
+      MAX_LIMIT,
+      Math.max(1, parseInt(sp.get('limit') ?? String(DEFAULT_LIMIT), 10) || DEFAULT_LIMIT)
+    );
+    const search = sp.get('search')?.trim() ?? '';
+    const status = sp.get('status') ?? 'all';
+    const skip = (page - 1) * limit;
 
-    const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        isBlocked: true,
-        blockedReason: true,
-        createdAt: true,
-        tenantMemberships: {
-          select: {
-            role: true,
-            tenant: {
-              select: {
-                id: true,
-                legalName: true,
-                name: true,
+    const where: Prisma.UserWhereInput = {
+      ...(search
+        ? {
+            OR: [
+              { email: { contains: search, mode: 'insensitive' } },
+              { name: { contains: search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+      ...(status === 'blocked' ? { isBlocked: true } : {}),
+      ...(status === 'connected'
+        ? {
+            tenantMemberships: {
+              some: {
+                status: { not: 'disabled' },
+                tenant: {
+                  externalConnections: {
+                    some: { provider: 'holded', connectionStatus: 'connected' },
+                  },
+                },
               },
+            },
+          }
+        : {}),
+    };
+
+    const [users, total] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          isBlocked: true,
+          blockedReason: true,
+          createdAt: true,
+          tenantMemberships: {
+            where: { status: { not: 'disabled' } },
+            select: {
+              tenant: {
+                select: { id: true, name: true, legalName: true },
+              },
+              role: true,
             },
           },
         },
-      },
-    });
+      }),
+      prisma.user.count({ where }),
+    ]);
 
-    type UserRow = (typeof users)[number];
-    type MembershipRow = UserRow["tenantMemberships"][number];
+    const userIds = users.map((u) => u.id);
+    type ConnectedRow = { user_id: string };
+    const connectedRows: ConnectedRow[] =
+      userIds.length > 0
+        ? await prisma.$queryRaw<ConnectedRow[]>`
+            SELECT DISTINCT m.user_id
+            FROM memberships m
+            INNER JOIN external_connections ec ON ec.tenant_id = m.tenant_id
+            WHERE ec.provider = 'holded'
+              AND ec.connection_status = 'connected'
+              AND m.user_id = ANY(${userIds}::text[])
+              AND COALESCE(m.status, 'active') <> 'disabled'
+          `
+        : [];
+    const connectedSet = new Set(connectedRows.map((r) => r.user_id));
 
     return NextResponse.json({
-      users: users.map((user: UserRow) => ({
-        id: user.id,
-        email: user.email,
-        displayName: user.name,
-        isBlocked: user.isBlocked,
-        blockedReason: user.blockedReason,
-        createdAt: user.createdAt.toISOString(),
-        tenants: user.tenantMemberships.map((membership: MembershipRow) => ({
-          tenantId: membership.tenant.id,
-          legalName: membership.tenant.legalName ?? membership.tenant.name,
-          role: membership.role,
+      users: users.map((u) => ({
+        id: u.id,
+        email: u.email,
+        displayName: u.name,
+        isBlocked: u.isBlocked,
+        blockedReason: u.blockedReason,
+        isConnected: connectedSet.has(u.id),
+        createdAt: u.createdAt.toISOString(),
+        tenants: u.tenantMemberships.map((m) => ({
+          tenantId: m.tenant.id,
+          legalName: m.tenant.legalName ?? m.tenant.name,
+          role: m.role,
         })),
       })),
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
     const isForbidden = message.includes('FORBIDDEN');
-    const status = isForbidden ? 403 : 500;
-
-    console.error('Error loading users:', error);
     return NextResponse.json(
       {
         error: isForbidden ? 'Forbidden' : 'Failed to fetch users',
         ...(process.env.NODE_ENV !== 'production' ? { details: message } : {}),
       },
-      { status }
+      { status: isForbidden ? 403 : 500 }
     );
   }
 }
