@@ -45,6 +45,7 @@ type Row = {
   last_activity: string | null;
   last_error: string | null;
   connected_by_email: string | null;
+  queries_7d: number;
   total: number;
 };
 
@@ -122,10 +123,19 @@ export default async function ConnectorsPage({ searchParams }: PageProps) {
       COALESCE(ec.last_sync_at, ec.last_validated_at)::text AS last_activity,
       ec.last_error,
       u.email AS connected_by_email,
+      COALESCE(q7.queries_7d, 0)::int AS queries_7d,
       COUNT(*) OVER()::int AS total
     FROM external_connections ec
     LEFT JOIN tenants t ON t.id = ec.tenant_id
     LEFT JOIN users u ON u.id = ec.connected_by_user_id
+    LEFT JOIN (
+      SELECT pat.connection_id, COUNT(*)::int AS queries_7d
+      FROM holded_mcp_pat_audit_logs al
+      JOIN holded_mcp_personal_access_tokens pat ON pat.id = al.pat_id
+      WHERE al.event = 'used'
+        AND al.created_at >= NOW() - INTERVAL '7 days'
+      GROUP BY pat.connection_id
+    ) q7 ON q7.connection_id = ec.id
     WHERE ${where}
     ORDER BY
       CASE ec.connection_status
@@ -201,6 +211,9 @@ export default async function ConnectorsPage({ searchParams }: PageProps) {
               <th className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 lg:table-cell">
                 Última actividad
               </th>
+              <th className="hidden px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500 xl:table-cell">
+                Queries 7d
+              </th>
               <th className="px-4 py-3 text-right text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Acciones
               </th>
@@ -209,7 +222,7 @@ export default async function ConnectorsPage({ searchParams }: PageProps) {
           <tbody className="divide-y divide-slate-100">
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={7} className="px-4 py-10 text-center text-sm text-slate-400">
                   No se encontraron conexiones
                   {search ? ` para "${search}"` : ''}.
                 </td>
@@ -265,6 +278,15 @@ export default async function ConnectorsPage({ searchParams }: PageProps) {
                     </td>
                     <td className="hidden px-4 py-3 text-xs tabular-nums text-slate-500 lg:table-cell">
                       {fmt(row.last_activity)}
+                    </td>
+                    <td className="hidden px-4 py-3 text-center xl:table-cell">
+                      {row.queries_7d > 0 ? (
+                        <span className="inline-flex items-center rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-2 py-0.5 text-xs font-semibold tabular-nums text-[#2361d8]">
+                          {row.queries_7d}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-300">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link

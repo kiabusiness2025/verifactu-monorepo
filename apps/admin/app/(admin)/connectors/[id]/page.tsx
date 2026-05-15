@@ -77,6 +77,20 @@ type TokenRow = {
   created_at: string;
 };
 
+type ActivityRow = {
+  tool_name: string | null;
+  channel: string | null;
+  status: number | null;
+  created_at: string;
+};
+
+type ActivityStats = {
+  today: number;
+  week_7d: number;
+  month_30d: number;
+  unique_tools_7d: number;
+};
+
 type PageProps = { params: Promise<{ id: string }> };
 
 function fmt(v: string | null) {
@@ -176,6 +190,41 @@ export default async function ConnectorDetailPage({ params }: PageProps) {
     [id]
   );
 
+  const [activityRows, activityStats] = await Promise.all([
+    query<ActivityRow>(
+      `
+      SELECT
+        al.tool_name,
+        al.channel,
+        al.status,
+        al.created_at::text AS created_at
+      FROM holded_mcp_pat_audit_logs al
+      JOIN holded_mcp_personal_access_tokens pat ON pat.id = al.pat_id
+      WHERE pat.connection_id = $1
+        AND al.event = 'used'
+      ORDER BY al.created_at DESC
+      LIMIT 50
+      `,
+      [id]
+    ),
+    query<ActivityStats>(
+      `
+      SELECT
+        COUNT(*) FILTER (WHERE al.created_at >= NOW() - INTERVAL '24 hours')::int AS today,
+        COUNT(*) FILTER (WHERE al.created_at >= NOW() - INTERVAL '7 days')::int AS week_7d,
+        COUNT(*) FILTER (WHERE al.created_at >= NOW() - INTERVAL '30 days')::int AS month_30d,
+        COUNT(DISTINCT al.tool_name) FILTER (WHERE al.created_at >= NOW() - INTERVAL '7 days')::int AS unique_tools_7d
+      FROM holded_mcp_pat_audit_logs al
+      JOIN holded_mcp_personal_access_tokens pat ON pat.id = al.pat_id
+      WHERE pat.connection_id = $1
+        AND al.event = 'used'
+      `,
+      [id]
+    ),
+  ]);
+
+  const stats = activityStats[0] ?? { today: 0, week_7d: 0, month_30d: 0, unique_tools_7d: 0 };
+
   const ch = row.channel_key ?? 'dashboard';
   const chLabel = CHANNEL_LABELS[ch] ?? ch;
   const chBadge = CHANNEL_BADGE[ch] ?? 'border-slate-200 bg-slate-100 text-slate-700';
@@ -218,60 +267,126 @@ export default async function ConnectorDetailPage({ params }: PageProps) {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        {/* Metadata card */}
-        <div className="lg:col-span-2 overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-soft">
-          <h2 className="mb-2 text-sm font-semibold text-slate-700">Detalles de la conexión</h2>
-          <MetaRow
-            label="Tenant"
-            value={
-              <Link href={`/tenants/${row.tenant_id}/overview`} className="hover:text-[#2361d8]">
-                {row.tenant_name ?? row.tenant_id}
-                {row.tenant_tax_id && (
-                  <span className="ml-1.5 text-xs text-slate-400">{row.tenant_tax_id}</span>
-                )}
-              </Link>
-            }
-          />
-          <MetaRow label="ID conexión" value={<code className="text-xs">{row.id}</code>} />
-          <MetaRow label="Canal" value={chLabel} />
-          <MetaRow label="Estado" value={stLabel} />
-          <MetaRow
-            label="API key"
-            value={row.api_key_enc ? '●●●●●● (cifrada)' : 'Sin key (revocada)'}
-          />
-          <MetaRow
-            label="Conectado por"
-            value={
-              row.connected_by_email ? (
-                <Link href={`/users/${row.connected_by_user_id}`} className="hover:text-[#2361d8]">
-                  {row.connected_by_name
-                    ? `${row.connected_by_name} (${row.connected_by_email})`
-                    : row.connected_by_email}
-                </Link>
-              ) : null
-            }
-          />
-          <MetaRow label="Conectado el" value={fmt(row.connected_at)} />
-          <MetaRow label="Última validación" value={fmt(row.last_validated_at)} />
-          <MetaRow label="Último sync" value={fmt(row.last_sync_at)} />
-          {row.disconnected_at && <MetaRow label="Desconectado" value={fmt(row.disconnected_at)} />}
-          {row.revoked_at && <MetaRow label="Revocado" value={fmt(row.revoked_at)} />}
-          {row.last_error && (
+        {/* Left column */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Metadata card */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-soft">
+            <h2 className="mb-2 text-sm font-semibold text-slate-700">Detalles de la conexión</h2>
             <MetaRow
-              label="Último error"
-              value={<span className="text-rose-600">{row.last_error}</span>}
+              label="Tenant"
+              value={
+                <Link href={`/tenants/${row.tenant_id}/overview`} className="hover:text-[#2361d8]">
+                  {row.tenant_name ?? row.tenant_id}
+                  {row.tenant_tax_id && (
+                    <span className="ml-1.5 text-xs text-slate-400">{row.tenant_tax_id}</span>
+                  )}
+                </Link>
+              }
             />
-          )}
-          <MetaRow
-            label="Terms aceptados"
-            value={
-              row.legal_terms_accepted_at
-                ? `${fmt(row.legal_terms_accepted_at)}${row.legal_acceptance_version ? ` (v${row.legal_acceptance_version})` : ''}`
-                : null
-            }
-          />
-          <MetaRow label="Creado" value={fmt(row.created_at)} />
+            <MetaRow label="ID conexión" value={<code className="text-xs">{row.id}</code>} />
+            <MetaRow label="Canal" value={chLabel} />
+            <MetaRow label="Estado" value={stLabel} />
+            <MetaRow
+              label="API key"
+              value={row.api_key_enc ? '●●●●●● (cifrada)' : 'Sin key (revocada)'}
+            />
+            <MetaRow
+              label="Conectado por"
+              value={
+                row.connected_by_email ? (
+                  <Link
+                    href={`/users/${row.connected_by_user_id}`}
+                    className="hover:text-[#2361d8]"
+                  >
+                    {row.connected_by_name
+                      ? `${row.connected_by_name} (${row.connected_by_email})`
+                      : row.connected_by_email}
+                  </Link>
+                ) : null
+              }
+            />
+            <MetaRow label="Conectado el" value={fmt(row.connected_at)} />
+            <MetaRow label="Última validación" value={fmt(row.last_validated_at)} />
+            <MetaRow label="Último sync" value={fmt(row.last_sync_at)} />
+            {row.disconnected_at && (
+              <MetaRow label="Desconectado" value={fmt(row.disconnected_at)} />
+            )}
+            {row.revoked_at && <MetaRow label="Revocado" value={fmt(row.revoked_at)} />}
+            {row.last_error && (
+              <MetaRow
+                label="Último error"
+                value={<span className="text-rose-600">{row.last_error}</span>}
+              />
+            )}
+            <MetaRow
+              label="Terms aceptados"
+              value={
+                row.legal_terms_accepted_at
+                  ? `${fmt(row.legal_terms_accepted_at)}${row.legal_acceptance_version ? ` (v${row.legal_acceptance_version})` : ''}`
+                  : null
+              }
+            />
+            <MetaRow label="Creado" value={fmt(row.created_at)} />
+          </div>
+
+          {/* Actividad real — PAT audit log */}
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-soft">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+              <h2 className="text-sm font-semibold text-slate-700">Actividad real (tool calls)</h2>
+              <div className="flex items-center gap-3 text-xs text-slate-500">
+                <span>
+                  Hoy: <strong className="text-slate-800">{stats.today}</strong>
+                </span>
+                <span>
+                  7d: <strong className="text-slate-800">{stats.week_7d}</strong>
+                </span>
+                <span>
+                  30d: <strong className="text-slate-800">{stats.month_30d}</strong>
+                </span>
+                {stats.unique_tools_7d > 0 && (
+                  <span className="rounded-full border border-[#2361d8]/20 bg-[#2361d8]/5 px-2 py-0.5 text-[#2361d8]">
+                    {stats.unique_tools_7d} tools únicas / 7d
+                  </span>
+                )}
+              </div>
+            </div>
+            {activityRows.length === 0 ? (
+              <p className="px-5 py-6 text-center text-sm text-slate-400">
+                Sin actividad registrada en este conector.
+                {row.connection_status === 'connected' &&
+                  ' Los tool calls aparecerán aquí en cuanto el usuario use Claude o ChatGPT.'}
+              </p>
+            ) : (
+              <div className="divide-y divide-slate-50">
+                {activityRows.map((a, i) => {
+                  const isOk = !a.status || a.status < 400;
+                  return (
+                    <div key={i} className="flex items-center gap-3 px-5 py-2.5">
+                      <span
+                        className={`h-1.5 w-1.5 shrink-0 rounded-full ${isOk ? 'bg-emerald-400' : 'bg-rose-400'}`}
+                      />
+                      <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-700">
+                        {a.tool_name ?? 'tool_call'}
+                      </span>
+                      {a.channel && (
+                        <span className="shrink-0 text-[10px] text-slate-400">{a.channel}</span>
+                      )}
+                      {a.status && a.status >= 400 && (
+                        <span className="shrink-0 text-[10px] font-semibold text-rose-600">
+                          HTTP {a.status}
+                        </span>
+                      )}
+                      <span className="shrink-0 text-[10px] tabular-nums text-slate-400">
+                        {fmt(a.created_at)}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
+        {/* end left column */}
 
         {/* Actions + audit */}
         <div className="space-y-4">
