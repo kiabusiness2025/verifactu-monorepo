@@ -118,7 +118,14 @@ export async function POST(req: NextRequest) {
       }));
 
       try {
-        const result = await resend.batch.send(batch);
+        // Cast: el validator de arriba garantiza que html?.trim() || text?.trim()
+        // exista antes de entrar al loop. TypeScript no propaga ese narrowing
+        // al spread condicional `...(html ? { html } : {})`, así que el tipo
+        // del batch tiene html opcional. Resend.batch.send acepta items con
+        // html OR text en runtime; el tipo declarado pide html requerido.
+        const result = await resend.batch.send(
+          batch as Parameters<typeof resend.batch.send>[0]
+        );
         if ((result as { error?: unknown }).error) {
           failed += chunk.length;
           console.error('[marketing/send] batch error', (result as { error?: unknown }).error);
