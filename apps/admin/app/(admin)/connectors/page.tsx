@@ -144,6 +144,12 @@ export default async function ConnectorsPage({ searchParams }: PageProps) {
   const total = rows[0]?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  const exportSp = new URLSearchParams();
+  if (search) exportSp.set('search', search);
+  if (channel !== 'all') exportSp.set('channel', channel);
+  if (status !== 'all') exportSp.set('status', status);
+  const exportUrl = `/api/admin/connectors/export${exportSp.toString() ? `?${exportSp}` : ''}`;
+
   return (
     <main className="space-y-5 px-4 py-5 sm:px-6 lg:px-8">
       <header className="flex items-center justify-between">
@@ -158,12 +164,20 @@ export default async function ConnectorsPage({ searchParams }: PageProps) {
             )}
           </p>
         </div>
-        <Link
-          href="/connectors/overview"
-          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
-        >
-          Ver estadísticas →
-        </Link>
+        <div className="flex items-center gap-2">
+          <a
+            href={exportUrl}
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Exportar CSV
+          </a>
+          <Link
+            href="/connectors/overview"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Ver estadísticas →
+          </Link>
+        </div>
       </header>
 
       <ConnectorsFilters initialSearch={search} initialChannel={channel} initialStatus={status} />

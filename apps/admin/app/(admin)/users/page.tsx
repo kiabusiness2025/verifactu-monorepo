@@ -104,6 +104,11 @@ export default async function UsersPage({ searchParams }: PageProps) {
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
+  const exportSp = new URLSearchParams();
+  if (search) exportSp.set('search', search);
+  if (status !== 'all') exportSp.set('status', status);
+  const exportUrl = `/api/admin/users/export${exportSp.toString() ? `?${exportSp}` : ''}`;
+
   return (
     <main className="space-y-5 px-4 py-5 sm:px-6 lg:px-8">
       <header className="flex items-center justify-between">
@@ -118,6 +123,12 @@ export default async function UsersPage({ searchParams }: PageProps) {
             )}
           </p>
         </div>
+        <a
+          href={exportUrl}
+          className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          Exportar CSV
+        </a>
       </header>
 
       <UsersSearchBar initialSearch={search} initialStatus={status} />
