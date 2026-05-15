@@ -2,6 +2,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import helmet from 'helmet';
+import { jwtVerify } from 'jose';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { config } from './config.js';
@@ -16,6 +17,41 @@ import { registerProductionTools } from './tools/index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, '..', 'public');
+
+// Deep-link to Claude's "add custom connector" dialog with our MCP URL pre-filled.
+const CLAUDE_CONNECT_DEEPLINK =
+  'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp';
+
+// Read the shared __session JWT from the request cookies.
+// Returns tenantId if the user has an existing Verifactu connection, null otherwise.
+async function readLaunchSession(req: express.Request): Promise<{ tenantId?: string } | null> {
+  if (!config.SESSION_SECRET) return null;
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader) return null;
+  let token: string | null = null;
+  for (const part of cookieHeader.split(';')) {
+    const trimmed = part.trim();
+    const eq = trimmed.indexOf('=');
+    if (eq < 0) continue;
+    if (trimmed.slice(0, eq) === '__session') {
+      try {
+        token = decodeURIComponent(trimmed.slice(eq + 1));
+      } catch {
+        token = trimmed.slice(eq + 1);
+      }
+      break;
+    }
+  }
+  if (!token) return null;
+  try {
+    const { payload } = await jwtVerify(token, new TextEncoder().encode(config.SESSION_SECRET));
+    return {
+      tenantId: typeof payload.tenantId === 'string' ? payload.tenantId : undefined,
+    };
+  } catch {
+    return null;
+  }
+}
 
 function tokenHasScope(scope: string | null | undefined, required: 'holded:read' | 'holded:write') {
   return new Set((scope ?? '').split(/[\s,]+/).filter(Boolean)).has(required);
@@ -113,6 +149,22 @@ export function createApp() {
   // Static después de los overrides para que /favicon.ico y otras rutas
   // de branding NO se sirvan desde public/ con bytes obsoletos.
   app.use(express.static(publicDir));
+
+  // /launch — puerta de entrada al flujo de conexión.
+  // Si el usuario ya tiene sesión con tenantId → redirige a Claude directamente (OAuth auto-issue).
+  // Si no → redirige a holded-claude para autenticar primero (navegación normal, sin popup).
+  // Esto evita que el popup de OAuth de Claude quede bloqueado en incógnito.
+  app.get('/launch', async (req, res) => {
+    const session = await readLaunchSession(req);
+    if (session?.tenantId) {
+      res.redirect(302, CLAUDE_CONNECT_DEEPLINK);
+      return;
+    }
+    const bridgeUrl = new URL('/auth/holded-claude', config.HOLDED_PUBLIC_URL);
+    bridgeUrl.searchParams.set('source', 'holded_claude_landing');
+    bridgeUrl.searchParams.set('next', `${config.BASE_URL}/launch`);
+    res.redirect(302, bridgeUrl.toString());
+  });
 
   // Claude landing — landing local del servidor MCP. Las páginas legales
   // y de documentación NO viven aquí: existen únicamente en la app Next.js

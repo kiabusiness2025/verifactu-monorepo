@@ -1,7 +1,6 @@
 const SUPPORT_EMAIL = 'soporte@verifactu.business';
 const HOLDED_BASE = 'https://holded.verifactu.business/conectores/claude';
-const CONNECT_URL =
-  'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp';
+const CONNECT_URL = 'https://claude.verifactu.business/launch';
 
 function escapeHtml(value: string) {
   return value
