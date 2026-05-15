@@ -18,16 +18,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # IMPORTANT: setup-node@v4 con `cache: 'pnpm'` necesita encontrar pnpm en
+      # PATH para calcular la cache key. Si Setup Node corre antes que Setup
+      # pnpm, el step falla con "Unable to locate executable file: pnpm".
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 10.27.0
 
       - name: Install
         run: pnpm install --frozen-lockfile
