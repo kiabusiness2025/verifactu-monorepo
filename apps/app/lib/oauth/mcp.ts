@@ -85,16 +85,22 @@ export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
 const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
 // C2 (auditoria OpenAI 2026-05-07): el preset por defecto del flujo publico se
 // alinea con `openai_review_v2` para que `tools/list` exponga exactamente los
-// 11 tools declarados en docs/openai-submission/tool-hint-justifications.json.
+// 14 tools declarados en docs/openai-submission/tool-hint-justifications.json.
 // Anteriormente era `holded_public_campaign_v1` (5 scopes / 7 tools), y si la
 // env var MCP_PUBLIC_SCOPE_PRESET no estaba seteada en produccion, el revisor
 // de OpenAI veia un set de tools distinto al que firmamos en la submission —
 // causa textbook de rechazo.
-// 2026-05-11: default público actualizado a holded_full_read_v1 para exponer
-// las 9 tools de lectura que faltaban en openai_review_v2 (documents, payments,
-// products, services, employees, etc.) — manteniendo invoices.write como única
-// escritura. OpenAI permite actualizar el catálogo de tools durante el review.
-const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'holded_full_read_v1';
+//
+// 2026-05-11: default expandido a holded_full_read_v1 (22 tools) bajo la
+// asunción de que OpenAI permite ampliar el catálogo durante el review.
+//
+// 2026-05-15: REVERTIDO a `openai_review_v2`. La auditoría post-rechazo
+// recomienda volver a la superficie mínima firmada (14 tools en el manifest)
+// para resubmission. Un mismatch entre `tools/list` runtime y el manifest
+// `tool-hint-justifications.json` declarado en submission es una causa
+// frecuente de rechazo "Tool annotations match the MCP runtime" en App Review.
+// Una vez aprobada la app, abriremos submission v2 con el preset ampliado.
+const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_v2';
 const AUTHORIZATION_CODE_REDEMPTIONS_TABLE = 'oauth_authorization_code_redemptions';
 
 type MintAuthorizationCodeInput = Omit<AuthorizationCodePayload, 'codeId'>;
