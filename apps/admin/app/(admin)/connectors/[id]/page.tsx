@@ -3,6 +3,7 @@ import { one, query } from '@/lib/db';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ConnectorActions } from './ConnectorActions';
+import { ConnectorTokens } from './ConnectorTokens';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +63,17 @@ type AuditRow = {
   id: string;
   event_type: string;
   actor_email: string | null;
+  created_at: string;
+};
+
+type TokenRow = {
+  id: string;
+  name: string;
+  key_prefix: string;
+  channel_key: string;
+  scopes: string[];
+  last_used_at: string | null;
+  expires_at: string | null;
   created_at: string;
 };
 
@@ -139,6 +151,26 @@ export default async function ConnectorDetailPage({ params }: PageProps) {
     LEFT JOIN users u ON u.id = al.actor_user_id
     WHERE al.connection_id = $1
     ORDER BY al.created_at DESC
+    LIMIT 20
+    `,
+    [id]
+  );
+
+  const tokenRows = await query<TokenRow>(
+    `
+    SELECT
+      id,
+      name,
+      key_prefix,
+      channel_key,
+      scopes,
+      last_used_at::text AS last_used_at,
+      expires_at::text AS expires_at,
+      created_at::text AS created_at
+    FROM holded_mcp_personal_access_tokens
+    WHERE connection_id = $1
+      AND revoked_at IS NULL
+    ORDER BY created_at DESC
     LIMIT 20
     `,
     [id]
@@ -250,6 +282,28 @@ export default async function ConnectorDetailPage({ params }: PageProps) {
               tenantId={row.tenant_id}
               status={row.connection_status}
               hasApiKey={Boolean(row.api_key_enc)}
+            />
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-soft">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-700">Tokens activos</h2>
+              {tokenRows.length > 0 && (
+                <span className="text-xs text-slate-400">{tokenRows.length}</span>
+              )}
+            </div>
+            <ConnectorTokens
+              connectionId={row.id}
+              tokens={tokenRows.map((t) => ({
+                id: t.id,
+                name: t.name,
+                keyPrefix: t.key_prefix,
+                channelKey: t.channel_key,
+                scopes: t.scopes,
+                lastUsedAt: t.last_used_at,
+                expiresAt: t.expires_at,
+                createdAt: t.created_at,
+              }))}
             />
           </div>
 
