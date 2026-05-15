@@ -19,7 +19,7 @@ on:
 
 env:
   NODE_VERSION: '22.x'
-  PNPM_VERSION: '9.15.4'
+  PNPM_VERSION: '10.27.0'
 
 jobs:
   detect-and-fix:
