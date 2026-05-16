@@ -22,11 +22,23 @@ FORMATO DE RESPUESTA:
 - Usa tablas Markdown cuando presentes listas de tenants, errores o comparativas (columnas: Nombre | Estado | Última actividad).
 - Usa listas con guión para enumerar acciones recomendadas.
 - Usa encabezados ## solo si la respuesta tiene más de 3 secciones distintas.
-- Mantén las respuestas bajo 300 palabras salvo que el usuario pida un análisis detallado.`;
+- Mantén las respuestas bajo 300 palabras salvo que el usuario pida un análisis detallado.
+
+BLOQUES ESTRUCTURADOS (copia los JSON literalmente en bloques \`\`\`json):
+
+1. Gráfico de actividad: cuando uses get_activity_timeline, copia el campo "chart_block" del resultado EXACTAMENTE en un bloque \`\`\`json después de tu análisis. No modifiques el JSON.
+
+2. Exportación Excel: cuando presentes una lista de tenants o errores (más de 2 filas), añade al final un bloque \`\`\`json con este formato exacto:
+{"type":"excel_export","filename":"nombre-archivo.xlsx","label":"Descargar Excel","headers":["Col1","Col2","Col3"],"rows":[["val1","val2","val3"]]}
+Extrae headers y rows de los datos devueltos por la herramienta.`;
 
 export type ToolInput = Record<string, unknown>;
 
-export type ToolName = 'get_activity_stats' | 'list_dormant_tenants' | 'get_connector_errors';
+export type ToolName =
+  | 'get_activity_stats'
+  | 'list_dormant_tenants'
+  | 'get_connector_errors'
+  | 'get_activity_timeline';
 
 export const TOOLS = [
   {
@@ -54,6 +66,21 @@ export const TOOLS = [
     name: 'get_connector_errors' as ToolName,
     description: 'Lista los conectores en estado de error o revocado, con el tenant asociado.',
     input_schema: { type: 'object', properties: {}, required: [] },
+  },
+  {
+    name: 'get_activity_timeline' as ToolName,
+    description:
+      'Devuelve la actividad diaria (queries y tenants únicos) de los últimos N días. Usa esta herramienta cuando el usuario pida una gráfica, tendencia o evolución de la actividad. Devuelve un chart_block listo para renderizar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        days: {
+          type: 'number',
+          description: 'Número de días a consultar (por defecto 30, máximo 90)',
+        },
+      },
+      required: [],
+    },
   },
 ];
 
@@ -202,6 +229,43 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
         estado: r.status,
         actualizado: r.updated_at,
       })),
+    });
+  }
+
+  if (name === 'get_activity_timeline') {
+    const days = typeof input.days === 'number' ? Math.max(1, Math.min(90, input.days)) : 30;
+    const rows = await query<{ date: string; queries: number; tenants: number }>(
+      `SELECT
+        DATE(al.created_at)::text AS date,
+        COUNT(*)::int AS queries,
+        COUNT(DISTINCT ec.tenant_id)::int AS tenants
+       FROM holded_mcp_pat_audit_logs al
+       JOIN holded_mcp_personal_access_tokens pat ON pat.id = al.pat_id
+       JOIN external_connections ec ON ec.id = pat.connection_id
+       WHERE al.event = 'used'
+         AND al.created_at >= NOW() - ($1 * INTERVAL '1 day')
+       GROUP BY DATE(al.created_at)
+       ORDER BY DATE(al.created_at) ASC`,
+      [days]
+    ).catch(() => [] as { date: string; queries: number; tenants: number }[]);
+
+    const chartBlock = {
+      type: 'chart',
+      chartType: 'bar',
+      title: `Actividad diaria — últimos ${days} días`,
+      xKey: 'date',
+      series: [
+        { key: 'queries', label: 'Queries', color: '#2361d8' },
+        { key: 'tenants', label: 'Tenants activos', color: '#10b981' },
+      ],
+      data: rows,
+    };
+
+    return JSON.stringify({
+      dias: days,
+      total_queries: rows.reduce((s, r) => s + r.queries, 0),
+      pico_diario: rows.length > 0 ? Math.max(...rows.map((r) => r.queries)) : 0,
+      chart_block: chartBlock,
     });
   }
 

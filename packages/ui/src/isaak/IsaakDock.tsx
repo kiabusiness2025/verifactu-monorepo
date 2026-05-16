@@ -7,13 +7,144 @@ import {
   normalizeIsaakContext,
   type IsaakTone,
 } from '@verifactu/utils/isaak/persona';
-import { MessageCircle, Send, Sparkles, ThumbsDown, ThumbsUp, UserRoundCog, X } from 'lucide-react';
+import {
+  Download,
+  MessageCircle,
+  Send,
+  Sparkles,
+  ThumbsDown,
+  ThumbsUp,
+  UserRoundCog,
+  X,
+} from 'lucide-react';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import remarkGfm from 'remark-gfm';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 import { useIsaakContext } from './useIsaakContext';
+
+type IsaakChartData = {
+  type: 'chart';
+  chartType: 'bar' | 'line';
+  title?: string;
+  xKey: string;
+  series: { key: string; label: string; color: string }[];
+  data: Record<string, unknown>[];
+};
+
+type IsaakExcelData = {
+  type: 'excel_export';
+  filename: string;
+  label?: string;
+  headers: string[];
+  rows: unknown[][];
+};
+
+function IsaakChart({ data }: { data: IsaakChartData }) {
+  const ChartComponent = data.chartType === 'line' ? LineChart : BarChart;
+  return (
+    <div className="my-2 rounded-lg border bg-card p-3">
+      {data.title && (
+        <div className="mb-2 text-[11px] font-semibold text-slate-600">{data.title}</div>
+      )}
+      <ResponsiveContainer width="100%" height={180}>
+        {data.chartType === 'line' ? (
+          <ChartComponent data={data.data} margin={{ top: 4, right: 8, bottom: 4, left: -24 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey={data.xKey} tick={{ fontSize: 8 }} />
+            <YAxis tick={{ fontSize: 8 }} />
+            <Tooltip contentStyle={{ fontSize: '10px' }} />
+            <Legend wrapperStyle={{ fontSize: '10px' }} />
+            {data.series.map((s) => (
+              <Line
+                key={s.key}
+                type="monotone"
+                dataKey={s.key}
+                stroke={s.color}
+                dot={false}
+                name={s.label}
+              />
+            ))}
+          </ChartComponent>
+        ) : (
+          <ChartComponent data={data.data} margin={{ top: 4, right: 8, bottom: 4, left: -24 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey={data.xKey} tick={{ fontSize: 8 }} />
+            <YAxis tick={{ fontSize: 8 }} />
+            <Tooltip contentStyle={{ fontSize: '10px' }} />
+            <Legend wrapperStyle={{ fontSize: '10px' }} />
+            {data.series.map((s) => (
+              <Bar key={s.key} dataKey={s.key} fill={s.color} name={s.label} />
+            ))}
+          </ChartComponent>
+        )}
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+function IsaakExcelButton({
+  data,
+  exportPath,
+}: {
+  data: IsaakExcelData;
+  exportPath: string | null;
+}) {
+  const [busy, setBusy] = React.useState(false);
+
+  const download = React.useCallback(async () => {
+    if (!exportPath || busy) return;
+    setBusy(true);
+    try {
+      const res = await fetch(exportPath, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filename: data.filename,
+          headers: data.headers,
+          rows: data.rows,
+        }),
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = data.filename.endsWith('.xlsx') ? data.filename : `${data.filename}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Silent — best-effort
+    } finally {
+      setBusy(false);
+    }
+  }, [exportPath, busy, data]);
+
+  return (
+    <button
+      type="button"
+      onClick={() => void download()}
+      disabled={busy || !exportPath}
+      className="mt-1 flex items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+    >
+      <Download className="h-3 w-3" />
+      {busy ? 'Generando…' : (data.label ?? 'Descargar Excel')}
+    </button>
+  );
+}
 
 type ChatMessage = {
   id: string;
@@ -50,6 +181,7 @@ function IsaakPanel({
   const chatApiPath = typeof context.chatApiPath === 'string' ? context.chatApiPath : null;
   const feedbackApiPath =
     typeof context.feedbackApiPath === 'string' ? context.feedbackApiPath : null;
+  const exportApiPath = typeof context.exportApiPath === 'string' ? context.exportApiPath : null;
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -258,11 +390,33 @@ function IsaakPanel({
                       h3: ({ children }) => (
                         <h3 className="font-medium mt-1.5 mb-0.5">{children}</h3>
                       ),
-                      code: ({ children }) => (
-                        <code className="rounded bg-muted px-1 font-mono text-[10px]">
-                          {children}
-                        </code>
-                      ),
+                      pre: ({ children }) => <>{children}</>,
+                      code: ({ children }) => {
+                        const raw = String(children).trim();
+                        if (raw.startsWith('{')) {
+                          try {
+                            const parsed = JSON.parse(raw) as { type?: string };
+                            if (parsed.type === 'chart') {
+                              return <IsaakChart data={parsed as IsaakChartData} />;
+                            }
+                            if (parsed.type === 'excel_export') {
+                              return (
+                                <IsaakExcelButton
+                                  data={parsed as IsaakExcelData}
+                                  exportPath={exportApiPath}
+                                />
+                              );
+                            }
+                          } catch {
+                            // Not a structured block
+                          }
+                        }
+                        return (
+                          <code className="rounded bg-muted px-1 font-mono text-[10px]">
+                            {children}
+                          </code>
+                        );
+                      },
                     }}
                   >
                     {message.content}
