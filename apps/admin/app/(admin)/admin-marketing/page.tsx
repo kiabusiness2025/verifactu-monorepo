@@ -1,6 +1,7 @@
 import { requireAdminSession } from '@/lib/auth';
 import { query } from '@/lib/db';
 import { CampaignForm } from './CampaignForm';
+import { RemindersWidget } from './RemindersWidget';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,26 +58,41 @@ export default async function AdminMarketingPage() {
   ];
 
   return (
-    <main className="space-y-6 px-4 py-5 sm:px-6 lg:px-8">
+    <main className="space-y-8 px-4 py-5 sm:px-6 lg:px-8">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Marketing</h1>
-        <p className="mt-0.5 text-sm text-slate-500">Envía campañas de email por segmento</p>
+        <p className="mt-0.5 text-sm text-slate-500">
+          Campañas de email por segmento · Recordatorios automáticos de perfil
+        </p>
       </header>
 
+      {/* Recordatorios automáticos */}
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-slate-400">
+          Recordatorios de perfil incompleto
+        </h2>
+        <RemindersWidget />
+      </section>
+
       {/* Segment stats */}
-      <div className="grid gap-3 sm:grid-cols-3">
-        {segments.map((s) => (
-          <div
-            key={s.value}
-            className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-soft"
-          >
-            <p className="text-xs font-semibold text-slate-500">{s.label}</p>
-            <p className="mt-1 text-2xl font-bold tabular-nums text-slate-900">
-              {s.count.toLocaleString('es-ES')}
-            </p>
-          </div>
-        ))}
-      </div>
+      <section>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-widest text-slate-400">
+          Campañas manuales
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {segments.map((s) => (
+            <div
+              key={s.value}
+              className="rounded-2xl border border-slate-200 bg-white px-5 py-4 shadow-soft"
+            >
+              <p className="text-xs font-semibold text-slate-500">{s.label}</p>
+              <p className="mt-1 text-2xl font-bold tabular-nums text-slate-900">
+                {s.count.toLocaleString('es-ES')}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* Compose */}
       <div className="rounded-2xl border border-slate-200 bg-white px-6 py-5 shadow-soft">
