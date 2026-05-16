@@ -8,6 +8,7 @@ import {
   parsePageParam,
   toUnixSecondsString,
 } from '../utils.js';
+import { withControlledErrors } from './errors.js';
 import { readOnlyAnnotations } from './policy.js';
 
 /**
@@ -63,15 +64,16 @@ export function registerProductsTools(server: McpServer, getClient: () => Holded
 
   server.tool(
     'get_product',
-    'Returns the full details of a specific Holded product by its ID. Read-only.',
+    'Returns the full details of a specific Holded product by its ID. Read-only. ' +
+      'Si el productId no existe o está malformado, devuelve `{ "error": "not_found" }` con un mensaje legible.',
     {
       productId: z.string().describe('Holded product ID.'),
     },
     readOnlyAnnotations('get_product'),
-    async ({ productId }) => {
+    withControlledErrors('get_product', 'product', ({ productId }) => productId, async ({ productId }) => {
       const data = await getClient().getProduct(productId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    }
+    })
   );
 
   server.tool(
@@ -181,41 +183,44 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
 
   server.tool(
     'get_project',
-    'Returns the full details of a specific Holded project by its ID. Read-only.',
+    'Returns the full details of a specific Holded project by its ID. Read-only. ' +
+      'Si el projectId no existe o está malformado, devuelve `{ "error": "not_found" }` con un mensaje legible.',
     {
       projectId: z.string().describe('Holded project ID.'),
     },
     readOnlyAnnotations('get_project'),
-    async ({ projectId }) => {
+    withControlledErrors('get_project', 'project', ({ projectId }) => projectId, async ({ projectId }) => {
       const data = await getClient().getProject(projectId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    }
+    })
   );
 
   server.tool(
     'list_project_tasks',
-    'Returns the tasks belonging to a specific Holded project. Read-only.',
+    'Returns the tasks belonging to a specific Holded project. Read-only. ' +
+      'Si el projectId no existe o está malformado, devuelve `{ "error": "not_found" }` con un mensaje legible.',
     {
       projectId: z.string().describe('Holded project ID.'),
     },
     readOnlyAnnotations('list_project_tasks'),
-    async ({ projectId }) => {
+    withControlledErrors('list_project_tasks', 'project', ({ projectId }) => projectId, async ({ projectId }) => {
       const data = await getClient().listTasks(projectId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    }
+    })
   );
 
   server.tool(
     'list_time_records',
-    'Returns the time records logged against a Holded project. Read-only.',
+    'Returns the time records logged against a Holded project. Read-only. ' +
+      'Si el projectId no existe o está malformado, devuelve `{ "error": "not_found" }` con un mensaje legible.',
     {
       projectId: z.string().describe('Holded project ID.'),
     },
     readOnlyAnnotations('list_time_records'),
-    async ({ projectId }) => {
+    withControlledErrors('list_time_records', 'project', ({ projectId }) => projectId, async ({ projectId }) => {
       const data = await getClient().listTimeRecords(projectId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    }
+    })
   );
 }
 
@@ -363,15 +368,16 @@ export function registerTeamTools(server: McpServer, getClient: () => HoldedClie
 
   server.tool(
     'get_employee',
-    'Returns the full details of a specific Holded employee by ID. Read-only.',
+    'Returns the full details of a specific Holded employee by ID. Read-only. ' +
+      'Si el employeeId no existe o está malformado, devuelve `{ "error": "not_found" }` con un mensaje legible.',
     {
       employeeId: z.string().describe('Holded employee ID.'),
     },
     readOnlyAnnotations('get_employee'),
-    async ({ employeeId }) => {
+    withControlledErrors('get_employee', 'employee', ({ employeeId }) => employeeId, async ({ employeeId }) => {
       const data = await getClient().getEmployee(employeeId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    }
+    })
   );
 }
 
