@@ -1,145 +1,176 @@
-# Isaak — Plan Maestro de Evolución
+# Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-16  
-**Visión**: Isaak como genio de contabilidad y asistencia fiscal que opera con datos reales de ambos conectores (ChatGPT + Claude), genera reportes, lee documentos, emite presupuestos/facturas y aprende de cada interacción.
+**Última actualización**: 2026-05-16
+**Visión**: Isaak como agente fiscal y contable autónomo que conecta con datos reales del ERP, ejecuta acciones con confirmación, aprende de cada empresa y asesora en lenguaje llano.
 
----
-
-## Estado actual
-
-| Componente                                                                        | Estado    | Notas                              |
-| --------------------------------------------------------------------------------- | --------- | ---------------------------------- |
-| IsaakDock (widget flotante)                                                       | ✅ activo | Solo admin, respuestas texto plano |
-| POST /api/admin/isaak/chat                                                        | ✅ activo | Claude Haiku + 3 tools de BD       |
-| Tools admin: `get_activity_stats`, `list_dormant_tenants`, `get_connector_errors` | ✅ activo | Consultas BD en tiempo real        |
-| Smoke tests + fixtures                                                            | ✅ activo | Modos Live y Fixture, 5 casos      |
-| Markdown rendering                                                                | ⬜ G3     | Próxima sesión                     |
-| Sistema de feedback                                                               | ⬜ G1     | Próxima sesión                     |
+> Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
 
 ---
 
-## Fase G — Aprendizaje continuo y respuestas ricas (PRÓXIMA)
+## Estado actual — apps/isaak
 
-> Objetivo: Isaak aprende de interacciones reales y responde con contenido visualmente estructurado.
+| Componente                                   | Estado | Notas                                             |
+| -------------------------------------------- | ------ | ------------------------------------------------- |
+| Auth + workspace layout                      | ✅     | Sesión, onboarding, sidebar, bottom nav           |
+| `/api/holded/chat` (chat con ERP)            | ✅     | Holded context, historial, memoria, invoice tool  |
+| `/api/chat` (chat libre/público)             | ✅     | Auth opcional, fallback rules, rate-limit IP      |
+| `/resumen` dashboard KPIs                    | ✅     | Ventas, gastos, cobros, IVA, gráfico 6m           |
+| Verifactu — create + PDF + QR                | ✅     | S4 completo                                       |
+| Stripe billing (checkout/portal/cancel/cron) | ✅     | S5 completo; precios Stripe pendientes sync       |
+| OCR + upload gastos                          | ✅     | S6: `upload-expense`, Claude Vision, confirmación |
+| Voz STT + TTS                                | ✅     | S7: Web Speech API                                |
+| Google Calendar + Gmail + Drive              | ✅     | S8-A/B/C/D                                        |
+| Alertas fiscales cron                        | ✅     | S8-B: D-15/7/3/1                                  |
+| Push notifications                           | ✅     | S10-B: VAPID, Service Worker                      |
+| PWA                                          | ✅     | S10-A                                             |
+| Isaak admin copilot (IsaakDock)              | ✅     | Fase G-K base: chat + 4 tools BD                  |
+| Admin K1 — `get_tenant_holded_data`          | ✅     | Usa `external_connections.api_key_enc`            |
+| **Free tier diario (10 msg/día)**            | ❌     | P0-3: pendiente implementar                       |
+| **Pricing page actualizada**                 | ❌     | P0-1: muestra €49 Pro, falta Starter €19          |
 
-| ID  | Tarea                                                                   | Esfuerzo | Estado |
-| --- | ----------------------------------------------------------------------- | -------- | ------ |
-| G1  | `isaak_feedback` — thumbs up/down en dock → tabla BD                    | 1h       | ⬜     |
-| G2  | Top-rated responses visibles en `/connectors/isaak-tests`               | 30 min   | ⬜     |
-| G3  | Markdown rendering en IsaakDock (react-markdown + remark-gfm)           | 30 min   | ⬜     |
-| G4  | SYSTEM_PROMPT mejorado: instrucciones para usar tablas, negrita, listas | 10 min   | ⬜     |
+---
 
-**Ciclo de mejora continua:**
+## P0 — Bloqueantes inmediatos
 
+### P0-1: Actualizar pricing page
+
+**Archivo:** `apps/isaak/app/pricing/page.tsx`
+
+Cambios necesarios:
+
+- 4 planes: Free (€0) · Starter (€19) · Pro (€49) · Business (€149)
+- Eliminar el plan "Conector Holded para Claude" de esta página (es un producto separado)
+- Añadir badge "IA incluida" en todos los planes de Isaak
+- Añadir FAQ: "¿Necesito Claude.ai o ChatGPT?" → "No. Isaak incluye toda la IA."
+
+### P0-2: Free tier — límite diario 10 mensajes
+
+**Archivo principal:** `apps/isaak/app/api/chat/route.ts`
+
+Estrategia: campo `freeQueriesUsedToday` + `freeQueriesResetAt` en tabla `Tenant` (o tabla `IsaakDailyQuota` si se quiere separar).
+
+```typescript
+// Lógica a implementar en /api/chat
+const FREE_DAILY_LIMIT = 10;
+
+async function checkFreeLimit(
+  tenantId: string | null,
+  ip: string
+): Promise<{
+  allowed: boolean;
+  remaining: number;
+}> {
+  // Si tiene plan activo (Starter+), sin límite
+  // Si no (free/sin auth), verificar contador diario
+  // Reset automático a medianoche UTC
+}
 ```
-Interacción real → thumbs up/down → top-rated → few-shot en SYSTEM_PROMPT → mejor respuesta → repeat
+
+Respuesta cuando se alcanza el límite:
+
+```json
+{
+  "error": "daily_limit_reached",
+  "message": "Has llegado a tus 10 mensajes de hoy. Activa Isaak Starter desde 19 €/mes para seguir ahora.",
+  "ctaUrl": "/pricing",
+  "resetsAt": "2026-05-17T00:00:00Z"
+}
 ```
 
----
+### P0-3: Sincronizar precios Stripe
 
-## Fase H — Datos, exportaciones y gráficos
+Verificar en Stripe dashboard que existen price IDs para:
 
-> Objetivo: Isaak puede exportar cualquier dato a Excel y mostrar gráficos de tendencias.
+- Starter mensual: €19 → `STRIPE_PRICE_STARTER_MONTHLY`
+- Starter anual: €15.20/mes (=€182/año, −20%) → `STRIPE_PRICE_STARTER_ANNUAL`
+- Pro mensual: €49 → `STRIPE_PRICE_PRO_MONTHLY`
+- Pro anual: €39.20/mes (=€470/año, −20%) → `STRIPE_PRICE_PRO_ANNUAL`
+- Business mensual: €149 → `STRIPE_PRICE_BUSINESS_MONTHLY`
+- Business anual: €119.20/mes (=€1.430/año, −20%) → `STRIPE_PRICE_BUSINESS_ANNUAL`
 
-| ID  | Tarea                                                                  | Esfuerzo | Dependencia |
-| --- | ---------------------------------------------------------------------- | -------- | ----------- |
-| H1  | Tool `get_activity_timeline` — actividad diaria últimos 30d por tenant | 1h       | —           |
-| H2  | Bloque estructurado `{ type: 'chart', ... }` en respuestas Isaak       | 2h       | H1          |
-| H3  | Renderer de gráfico de barras/línea en IsaakDock (recharts)            | 2h       | H2          |
-| H4  | Tool `export_to_excel` — genera XLSX de cualquier dataset en BD        | 2h       | —           |
-| H5  | Botón "Descargar Excel" en respuestas con tablas                       | 1h       | H4          |
-| H6  | Bloque estructurado `{ type: 'table', headers, rows }` con sort/filter | 2h       | —           |
+Actualizar `createBillingCheckoutUrl` en `apps/isaak/app/lib/settings.ts` para usar los IDs correctos por plan seleccionado.
 
 ---
 
-## Fase I — Lectura y análisis de documentos
+## Fase K — Multi-conector e inteligencia fiscal (admin)
 
-> Objetivo: Isaak puede leer facturas, tickets y documentos PDF para extraer datos y analizarlos.
+| ID  | Tarea                                                            | Estado        | Esfuerzo |
+| --- | ---------------------------------------------------------------- | ------------- | -------- |
+| K1  | Tool `get_tenant_holded_data` en Isaak admin                     | ✅ COMPLETADO | —        |
+| K2  | Análisis fiscal por tenant: IVA trimestral estimado, retenciones | ⬜ P1-4       | 4h       |
+| K3  | Alerta proactiva: "3 facturas sin contabilizar"                  | ⬜ P2-1       | 2h       |
+| K4  | Comparativa mensual/anual tenant                                 | ⬜ P2-2       | 2h       |
+| K5  | Resumen modelo 303 estimado por tenant                           | ⬜ P2         | 3h       |
 
-| ID  | Tarea                                                                                | Esfuerzo | Dependencia |
-| --- | ------------------------------------------------------------------------------------ | -------- | ----------- |
-| I1  | Upload de PDF en IsaakDock (drag & drop, máx 10MB)                                   | 2h       | —           |
-| I2  | Extracción de texto de PDF server-side (pdf-parse o similar)                         | 1h       | I1          |
-| I3  | Tool `analyze_document` — envía texto extraído a Claude como contexto                | 2h       | I2          |
-| I4  | Tool `extract_invoice_data` — extrae importes, fecha, proveedor, IVA de un documento | 3h       | I3          |
-| I5  | Vision API para documentos con imágenes/escaneos (Claude vision)                     | 3h       | I1          |
-
----
-
-## Fase J — Acciones contables (asientos, presupuestos, facturas)
-
-> Objetivo: Isaak puede generar asientos contables, presupuestos y facturas directamente desde la conversación.
-
-| ID  | Tarea                                                                                       | Esfuerzo | Dependencia |
-| --- | ------------------------------------------------------------------------------------------- | -------- | ----------- |
-| J1  | Tool `suggest_accounting_entry` — genera asiento contable desde factura/ticket extraído     | 3h       | I4          |
-| J2  | Tool `create_holded_estimate` — crea presupuesto en Holded desde Isaak                      | 2h       | MCP write   |
-| J3  | Export presupuesto como PDF (react-pdf o puppeteer)                                         | 3h       | J2          |
-| J4  | Tool `create_holded_invoice_draft` — envuelve `create_invoice_draft` MCP con contexto Isaak | 1h       | MCP write   |
-| J5  | Validación Verifactu: check de datos obligatorios antes de emitir                           | 2h       | J4          |
-| J6  | Generación de QR Verifactu en PDF de factura                                                | 2h       | J5          |
+K2 depende de K1 (✅). Implementar K2 antes de K3/K4.
 
 ---
 
-## Fase K — Multi-conector e inteligencia fiscal
+## Fase G — Aprendizaje continuo y respuestas ricas (admin)
 
-> Objetivo: Isaak combina datos de ambos conectores (ChatGPT + Claude MCP) y actúa como asesor fiscal proactivo.
-
-| ID  | Tarea                                                                      | Esfuerzo | Dependencia |
-| --- | -------------------------------------------------------------------------- | -------- | ----------- |
-| K1  | Tool `get_holded_data` en Isaak admin — proxy al conector MCP de ChatGPT   | 3h       | —           |
-| K2  | Isaak accede a facturas, contactos, proyectos del tenant vía K1            | 1h       | K1          |
-| K3  | Análisis fiscal automatizado: IVA trimestral, retenciones, modelo 303      | 4h       | K2          |
-| K4  | Comparativa mensual/anual: "Este trimestre vs. el anterior"                | 2h       | K2          |
-| K5  | Alerta proactiva: "Tienes 3 facturas sin contabilizar con vencimiento hoy" | 2h       | K2          |
+| ID  | Tarea                                                         | Esfuerzo | Estado  |
+| --- | ------------------------------------------------------------- | -------- | ------- |
+| G1  | Feedback thumbs up/down en IsaakDock → tabla BD               | 1h       | ⬜ P1-3 |
+| G2  | Top-rated responses en `/connectors/isaak-tests`              | 30 min   | ⬜      |
+| G3  | Markdown rendering en IsaakDock (react-markdown + remark-gfm) | 30 min   | ⬜ P1-2 |
+| G4  | SYSTEM_PROMPT mejorado: tablas, negrita, listas               | 10 min   | ⬜      |
 
 ---
 
-## Fase L — Isaak público con aprendizaje por tenant
+## Fase H — Datos, exportaciones y gráficos (admin)
 
-> Objetivo: Isaak disponible para usuarios finales (no admin) con contexto personalizado por empresa.
-
-| ID  | Tarea                                                                          | Esfuerzo | Dependencia |
-| --- | ------------------------------------------------------------------------------ | -------- | ----------- |
-| L1  | Feature flag `ISAAK_PUBLIC_ENABLED` por tenant (admin lo activa manualmente)   | 1h       | —           |
-| L2  | Onboarding usuario: consentimiento explícito de acceso a datos                 | 2h       | L1          |
-| L3  | Isaak usa `IsaakConversation` del tenant para contexto personalizado           | 3h       | L2          |
-| L4  | SYSTEM_PROMPT personalizado por tenant: nombre empresa, sector, régimen fiscal | 2h       | L3          |
-| L5  | Few-shot examples por tenant: aprende del historial de cada empresa            | 3h       | G1, L3      |
-| L6  | Panel admin: métricas uso Isaak por tenant (preguntas/día, satisfacción)       | 2h       | G1, L1      |
+| ID  | Tarea                                                          | Esfuerzo | Dependencia |
+| --- | -------------------------------------------------------------- | -------- | ----------- |
+| H1  | Tool `get_activity_timeline` — actividad diaria 30d por tenant | 1h       | —           |
+| H2  | Bloque estructurado `{ type: 'chart', ... }` en respuestas     | 2h       | H1          |
+| H3  | Renderer barras/línea en IsaakDock (recharts)                  | 2h       | H2          |
+| H4  | Tool `export_to_excel` — XLSX de cualquier dataset BD          | 2h       | —           |
+| H5  | Botón "Descargar Excel" en respuestas con tablas               | 1h       | H4          |
 
 ---
 
-## Orden de ejecución recomendado
+## Fase L — Isaak público con contexto por tenant
 
-```
-G (aprendizaje + visuals)  ←── PRÓXIMA SESIÓN
-H (datos + exports)
-I (documentos)
-J (acciones contables)       ←── alto valor producto, requiere I
-K (multi-conector + fiscal)  ←── diferenciador clave
-L (Isaak público)            ←── cuando K esté validado
-```
+Depende de K1-K2 validados. Permite que el usuario final (no solo admin) use Isaak con datos reales.
+
+| ID  | Tarea                                                         | Esfuerzo | Dependencia |
+| --- | ------------------------------------------------------------- | -------- | ----------- |
+| L1  | Feature flag `ISAAK_PUBLIC_ENABLED` por tenant (admin activa) | 1h       | —           |
+| L2  | Consentimiento explícito de acceso a datos en onboarding      | 2h       | L1          |
+| L3  | Isaak usa `IsaakConversation` del tenant para contexto        | 3h       | L2          |
+| L4  | SYSTEM_PROMPT personalizado: empresa, sector, régimen         | 2h       | L3          |
+| L5  | Few-shot por tenant: aprende del historial                    | 3h       | G1, L3      |
+| L6  | Métricas uso Isaak por tenant en admin                        | 2h       | G1, L1      |
+
+---
+
+## Loop de conversión conector → Isaak (P1-1)
+
+El widget en `holded.verifactu.business` actualmente usa `/api/isaak/support` (soporte técnico, sin límite). Falta el tercer modo "vitrina" que accede a datos reales de Holded y tiene límite diario.
+
+**Implementación pendiente:**
+
+1. Nueva API en `apps/holded`: `POST /api/isaak/vitrina` — llama a Holded con la API key del tenant, responde con datos reales
+2. Contador diario por `tenantId` (o por `sessionId` si no autenticado): máximo 50 consultas/día
+3. Al superar límite: respuesta con CTA a `isaak.verifactu.business`
+4. El modo se activa cuando el usuario está conectado en `holded.verifactu.business` y hace preguntas con datos reales
 
 ---
 
 ## Stack técnico por fase
 
-| Fase | Librerías nuevas                | Notas                              |
-| ---- | ------------------------------- | ---------------------------------- |
-| G    | `react-markdown`, `remark-gfm`  | Ya en node_modules                 |
-| H    | `recharts`, `xlsx` (SheetJS)    | XLSX ya usado en admin exports     |
-| I    | `pdf-parse` o `pdfjs-dist`      | Server-side only                   |
-| J    | `@react-pdf/renderer` o `jsPDF` | Para PDF client/server             |
-| K    | —                               | Usa MCP tools existentes via proxy |
-| L    | —                               | Usa infraestructura existente      |
+| Fase | Librerías nuevas               | Notas                            |
+| ---- | ------------------------------ | -------------------------------- |
+| P0   | —                              | Solo cambios de código existente |
+| G    | `react-markdown`, `remark-gfm` | Ya en node_modules               |
+| H    | `recharts`, `xlsx` (SheetJS)   | XLSX ya usado en admin exports   |
+| L    | —                              | Infraestructura existente        |
 
 ---
 
 ## Decisiones de arquitectura
 
-- **Modelo**: Claude Haiku para respuestas rápidas en el dock. Escalar a Sonnet para análisis fiscal complejos (Fases J/K).
-- **Contexto por tenant**: `SYSTEM_PROMPT` base + sección dinámica con datos del tenant (empresa, sector, régimen).
-- **Aprendizaje**: few-shot examples añadidos manualmente desde top-rated feedback (Fase G) → automatizado por tenant en Fase L5.
-- **Structured responses**: formato `{ type: 'text'|'table'|'chart'|'excel_link'|'pdf_link', ... }` dentro del texto de respuesta como bloques JSON fenced.
-- **Seguridad**: todas las tools de escritura (J2-J4) requieren confirmación explícita del usuario antes de ejecutar.
+- **Motor IA:** `callLLM` en `@verifactu/utils` abstrae el provider. Free/Starter → Haiku (`claude-haiku-4-5`). Pro/Business → Sonnet (`claude-sonnet-4-6`). El plan del usuario determina qué modelo se inyecta.
+- **Rate limit free:** por `tenantId` cuando autenticado; por IP cuando público. Ventana 24h rolling, reset a medianoche UTC. NO usar solo el rate limit por IP actual (20/min) — es anti-abuso de red, no límite de producto.
+- **Acciones con escritura:** confirmación obligatoria. El assistant propone, el usuario confirma con "sí/confirmar/ok". Sin excepciones en ningún plan.
+- **Contexto tenant en admin:** `SYSTEM_PROMPT` base + contexto dinámico con `tenantId` extraído de la URL. K1 provee datos reales de Holded.

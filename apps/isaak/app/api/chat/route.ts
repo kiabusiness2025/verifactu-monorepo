@@ -8,6 +8,8 @@ import {
   loadIsaakWorkspaceSignals,
 } from '@/app/lib/isaak-workspace-signals';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import { prisma } from '@/app/lib/prisma';
+import { checkIsaakChatQuota, checkPublicChatQuota } from '@/app/lib/isaak-quota';
 
 type RateEntry = {
   count: number;
@@ -75,6 +77,38 @@ function describeRole(value: string | null | undefined) {
       return 'responsable financiero';
     default:
       return value;
+  }
+}
+
+type PlanTier = 'free' | 'starter' | 'pro' | 'business' | 'enterprise';
+
+async function loadTenantPlanCode(tenantId: string): Promise<PlanTier> {
+  try {
+    const sub = await prisma.tenantSubscription.findFirst({
+      where: { tenantId },
+      select: { plan: { select: { code: true } }, status: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    const code = sub?.plan?.code ?? 'free';
+    // Trial users get pro-level model access
+    if (sub?.status === 'trial') return 'pro';
+    return code as PlanTier;
+  } catch {
+    return 'free';
+  }
+}
+
+type ModelConfig = { provider: AIProvider; model: string };
+
+function resolveModelForPlan(plan: PlanTier): ModelConfig {
+  switch (plan) {
+    case 'pro':
+    case 'business':
+    case 'enterprise':
+      return { provider: 'anthropic', model: 'claude-sonnet-4-6' };
+    default:
+      // free + starter: Haiku (fast, cheap); GPT-4o-mini as fallback
+      return { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' };
   }
 }
 
@@ -263,10 +297,13 @@ async function loadAuthenticatedChatContext() {
 
 async function getLLMResponse(
   message: string,
-  authenticatedContext: AuthenticatedChatContext | null
+  authenticatedContext: AuthenticatedChatContext | null,
+  modelConfig: ModelConfig
 ): Promise<{ text: string; provider: AIProvider; model: string } | null> {
   try {
     const result = await callLLM({
+      provider: modelConfig.provider,
+      model: modelConfig.model,
       instructions: authenticatedContext
         ? buildAuthenticatedSystemPrompt(authenticatedContext)
         : buildPublicSystemPrompt(),
@@ -274,6 +311,7 @@ async function getLLMResponse(
       temperature: authenticatedContext ? 0.45 : 0.5,
       maxOutputTokens: authenticatedContext ? 550 : 450,
       feature: authenticatedContext ? 'workspace_chat_free' : 'public_chat',
+      enableFallback: true,
     });
     return result;
   } catch (error) {
@@ -316,6 +354,42 @@ export async function POST(request: NextRequest) {
     }
 
     const authenticated = await loadAuthenticatedChatContext();
+
+    // --- Quota check ---
+    if (authenticated) {
+      const quota = await checkIsaakChatQuota(authenticated.session.tenantId);
+      if (!quota.allowed) {
+        return NextResponse.json(
+          {
+            error: 'daily_limit_reached',
+            message: quota.message,
+            resetsAt: quota.resetsAt,
+            ctaUrl: '/pricing',
+          },
+          { status: 429 }
+        );
+      }
+    } else {
+      const quota = checkPublicChatQuota(ip);
+      if (!quota.allowed) {
+        return NextResponse.json(
+          {
+            error: 'daily_limit_reached',
+            message: quota.message,
+            resetsAt: quota.resetsAt,
+            ctaUrl: '/auth',
+          },
+          { status: 429 }
+        );
+      }
+    }
+
+    // --- Plan-based model selection ---
+    const planCode = authenticated
+      ? await loadTenantPlanCode(authenticated.session.tenantId)
+      : 'free';
+    const modelConfig = resolveModelForPlan(planCode);
+
     let conversation: Awaited<ReturnType<typeof ensureHoldedConversation>> | null = null;
 
     if (authenticated) {
@@ -333,7 +407,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const result = await getLLMResponse(message, authenticated?.promptContext ?? null);
+    const result = await getLLMResponse(message, authenticated?.promptContext ?? null, modelConfig);
     if (result) {
       logProvider(
         result.provider,

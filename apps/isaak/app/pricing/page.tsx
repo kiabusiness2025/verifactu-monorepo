@@ -1,123 +1,139 @@
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Check, Sparkles, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
   title: 'Isaak | Planes y precios',
   description:
-    'Empieza gratis con el conector Holded para Claude. Pasa a Isaak Pro cuando necesites memoria, libros AEAT, multi-conector y modo ejecucion controlado.',
+    'Empieza gratis con Isaak. Chat fiscal inteligente con IA incluida — sin necesidad de Claude.ai ni ChatGPT.',
 };
 
 type Plan = {
-  id: 'connector' | 'pro' | 'business' | 'asesoria';
+  id: 'free' | 'starter' | 'pro' | 'business';
   name: string;
   tagline: string;
   price: string;
   priceSuffix?: string;
+  annualNote?: string;
   highlight?: 'recommended' | 'free';
   features: string[];
   ctaLabel: string;
   ctaHref: string;
-  ctaExternal?: boolean;
   footnote?: string;
 };
 
 const PLANS: Plan[] = [
   {
-    id: 'connector',
-    name: 'Conector Holded para Claude',
-    tagline: 'La entrada gratuita. Habla con tus datos de Holded desde Claude.ai.',
+    id: 'free',
+    name: 'Free',
+    tagline: 'Empieza sin tarjeta. Chat fiscal sin límites de conocimiento.',
     price: '0 €',
     priceSuffix: '/ mes',
     highlight: 'free',
     features: [
-      '24 tools de Holded (facturas, contactos, contabilidad, CRM, productos)',
-      'Modo lectura por defecto',
-      'Borrador de factura con confirmacion explicita',
-      'Tenant-scoped: solo tu cuenta de Holded',
-      'OAuth seguro con PKCE + DCR',
+      '10 mensajes al día',
+      'Chat fiscal y contable en español',
+      'Respuestas sobre IVA, IRPF, Verifactu y trámites AEAT',
+      'IA incluida — sin suscripción adicional',
     ],
-    ctaLabel: 'Conectar en Claude',
-    ctaHref: 'https://holded.verifactu.business/conectores/claude',
-    ctaExternal: true,
-    footnote: 'Plan gratis para siempre durante el lanzamiento. Sin tarjeta.',
+    ctaLabel: 'Empezar gratis',
+    ctaHref: '/auth',
+    footnote: 'Sin tarjeta. Sin sorpresas.',
+  },
+  {
+    id: 'starter',
+    name: 'Starter',
+    tagline: 'Conecta Holded y trabaja con tus datos reales.',
+    price: '19 €',
+    priceSuffix: '/ mes',
+    annualNote: '15 €/mes facturado anual',
+    features: [
+      'Todo lo de Free, sin límite de mensajes (200/mes)',
+      'Holded conectado — ventas, gastos, cobros en tiempo real',
+      'Dashboard KPIs: facturado, gastos, IVA estimado',
+      'Historial de conversaciones (90 días)',
+      'IA incluida — sin suscripción adicional',
+    ],
+    ctaLabel: 'Empezar trial 14 días',
+    ctaHref: '/signup?plan=starter',
+    footnote: 'Trial 14 días sin tarjeta.',
   },
   {
     id: 'pro',
-    name: 'Isaak Pro',
-    tagline: 'Memoria, libros AEAT, multi-conector y modo ejecucion controlado.',
+    name: 'Pro',
+    tagline: 'Memoria, archivos, Google y modo de ejecución.',
     price: '49 €',
     priceSuffix: '/ mes',
+    annualNote: '39 €/mes facturado anual',
     highlight: 'recommended',
     features: [
-      'Todo lo del conector Holded +',
-      'Memoria persistente entre sesiones',
-      'Libros AEAT preconfigurados (modelos 130, 303, 390)',
-      'Multi-conector: Holded + Excel + Email + Drive',
-      'Modo ejecucion con confirmacion granular',
-      'Bancos via PSD2 (proximamente)',
+      'Todo lo de Starter, mensajes ilimitados',
+      'Subida de facturas y tickets con OCR automático',
+      'Google Calendar, Gmail y Drive conectados',
+      'Alertas fiscales proactivas (IVA, IRPF, Verifactu)',
+      'Voz: dicta a Isaak, escucha las respuestas',
+      'Push notifications',
+      'Historial de conversaciones (1 año)',
+      'IA incluida — Claude Sonnet, sin suscripción adicional',
     ],
-    ctaLabel: 'Empezar trial 14 dias',
+    ctaLabel: 'Empezar trial 14 días',
     ctaHref: '/signup?plan=pro',
-    footnote: 'Trial de 14 dias sin tarjeta. Cancela cuando quieras.',
+    footnote: 'Trial 14 días sin tarjeta.',
   },
   {
     id: 'business',
-    name: 'Isaak Business',
-    tagline: 'Multi-empresa, roles y auditoria completa para equipos.',
+    name: 'Business',
+    tagline: 'Multi-usuario, modelos AEAT y banca conectada.',
     price: '149 €',
     priceSuffix: '/ mes',
+    annualNote: '119 €/mes facturado anual',
     features: [
-      'Todo lo de Pro +',
-      'Multi-tenant / multi-empresa',
-      'Roles y permisos por usuario',
-      'Auditoria completa de acciones',
-      'Soporte prioritario',
-      'SLA 99.9 % uptime',
+      'Todo lo de Pro',
+      'Hasta 10 usuarios por workspace',
+      'Open Banking — movimientos bancarios en tiempo real',
+      'Modelos AEAT preconfigurados (303, 130, 390)',
+      'Multi-ERP (Sage, A3 próximamente)',
+      'Historial ilimitado',
+      'Soporte prioritario · SLA 99,9%',
+      'IA incluida — Claude Sonnet + GPT-4o opcional',
     ],
     ctaLabel: 'Hablar con ventas',
     ctaHref: '/support',
-    footnote: 'Facturacion anual disponible. IVA no incluido.',
-  },
-  {
-    id: 'asesoria',
-    name: 'Asesorias',
-    tagline: 'Para asesorias contables que gestionan varios clientes en Holded.',
-    price: 'A medida',
-    features: [
-      'Multi-cliente bajo una sola cuenta',
-      'Pricing por volumen de clientes',
-      'Onboarding guiado por nuestro equipo',
-      'Plantillas para cierre fiscal y modelos AEAT',
-      'White-label opcional',
-    ],
-    ctaLabel: 'Solicitar piloto asesoria',
-    ctaHref: '/asesorias',
+    footnote: 'Facturación anual disponible. IVA no incluido.',
   },
 ];
 
 const FAQ = [
   {
-    q: 'Necesito tarjeta para empezar el trial de Pro?',
-    a: 'No. Te damos 14 dias completos de Isaak Pro sin pedir tarjeta. Si decides continuar, te avisamos por email antes de cobrar.',
+    q: '¿Necesito Claude.ai, ChatGPT o cualquier otra suscripción de IA?',
+    a: 'No. Isaak incluye toda la IA en el precio — usamos Claude y GPT-4o a través de nuestra propia integración. No necesitas ninguna cuenta adicional en Anthropic ni OpenAI.',
   },
   {
-    q: 'Puedo seguir usando solo el conector de Holded en Claude sin pagar?',
-    a: 'Si. El conector de Holded para Claude es y seguira siendo gratis durante todo el lanzamiento. Cuando activemos limites, los avisaremos con antelacion.',
+    q: '¿Cuál es la diferencia entre el Conector de Holded (gratis) y el plan Free de Isaak?',
+    a: 'El Conector de Holded para Claude o ChatGPT conecta tus datos directamente en esas herramientas, pero requiere tu propia suscripción a Claude.ai o ChatGPT Plus. Isaak es un producto independiente donde la IA está incluida — no necesitas nada más.',
   },
   {
-    q: 'Que pasa con mis datos si cancelo?',
-    a: 'Tus datos siguen siendo tuyos. Puedes exportar todo desde Configuracion > Datos. Tras 30 dias de cancelacion, eliminamos los datos del workspace.',
+    q: '¿Necesito tarjeta para el trial de 14 días?',
+    a: 'No. Te damos 14 días completos de Isaak Pro sin pedir tarjeta. Si decides continuar, te avisamos por email antes de cobrar.',
   },
   {
-    q: 'Hay descuento si pago anual?',
-    a: 'Si. La facturacion anual aplica un descuento del 16 % (equivalente a 2 meses gratis). Disponible en Pro y Business.',
+    q: '¿Puedo cancelar en cualquier momento?',
+    a: 'Sí. Cancelas desde Ajustes > Facturación en cualquier momento. Mantienes el acceso hasta el final del periodo pagado.',
+  },
+  {
+    q: '¿Hay descuento si pago anual?',
+    a: 'Sí. La facturación anual aplica un descuento del 20% (equivalente a más de 2 meses gratis). Disponible en Starter, Pro y Business.',
+  },
+  {
+    q: '¿Qué pasa con mis datos si cancelo?',
+    a: 'Tus datos siguen siendo tuyos. Puedes exportar todo desde Ajustes > Datos. Tras 30 días de cancelación, eliminamos los datos del workspace.',
   },
 ];
 
 export default function IsaakPricingPage() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      {/* Hero */}
       <section className="border-b border-slate-200 bg-[linear-gradient(180deg,#eef4ff_0%,#ffffff_72%)] py-16 sm:py-20">
         <div className="mx-auto max-w-5xl px-4 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-[#2361d8]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
@@ -125,15 +141,20 @@ export default function IsaakPricingPage() {
             Planes y precios
           </div>
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl">
-            Empieza gratis. Crece cuando lo necesites.
+            Empieza gratis. La IA va incluida.
           </h1>
           <p className="mx-auto mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-            El conector de Holded para Claude es la entrada gratuita. Cuando necesites memoria,
-            libros AEAT, multi-conector y trazabilidad, Isaak Pro es el siguiente paso natural.
+            Isaak incluye Claude y GPT-4o en el precio. No necesitas suscripción a Claude.ai ni a
+            ChatGPT — solo Isaak.
           </p>
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
+            <Zap className="h-4 w-4" />
+            Sin tarjeta para empezar · Sin configuración · Listo en 2 minutos
+          </div>
         </div>
       </section>
 
+      {/* Plans */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4">
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
@@ -163,12 +184,19 @@ export default function IsaakPricingPage() {
                   <h2 className="text-lg font-bold text-[#011c67]">{plan.name}</h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{plan.tagline}</p>
 
-                  <div className="mt-6 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold tracking-tight text-slate-950">
-                      {plan.price}
-                    </span>
-                    {plan.priceSuffix && (
-                      <span className="text-sm text-slate-500">{plan.priceSuffix}</span>
+                  <div className="mt-6">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-bold tracking-tight text-slate-950">
+                        {plan.price}
+                      </span>
+                      {plan.priceSuffix && (
+                        <span className="text-sm text-slate-500">{plan.priceSuffix}</span>
+                      )}
+                    </div>
+                    {plan.annualNote && (
+                      <p className="mt-1 text-[11px] text-emerald-600 font-medium">
+                        {plan.annualNote}
+                      </p>
                     )}
                   </div>
 
@@ -185,33 +213,17 @@ export default function IsaakPricingPage() {
                   </ul>
 
                   <div className="mt-8">
-                    {plan.ctaExternal ? (
-                      <a
-                        href={plan.ctaHref}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
-                          isRecommended
-                            ? 'bg-[#2361d8] text-white hover:bg-[#1f55c0]'
-                            : 'border border-slate-300 text-slate-800 hover:bg-slate-50'
-                        }`}
-                      >
-                        {plan.ctaLabel}
-                        <ArrowRight className="h-4 w-4" />
-                      </a>
-                    ) : (
-                      <Link
-                        href={plan.ctaHref}
-                        className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
-                          isRecommended
-                            ? 'bg-[#2361d8] text-white hover:bg-[#1f55c0]'
-                            : 'border border-slate-300 text-slate-800 hover:bg-slate-50'
-                        }`}
-                      >
-                        {plan.ctaLabel}
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    )}
+                    <Link
+                      href={plan.ctaHref}
+                      className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
+                        isRecommended
+                          ? 'bg-[#2361d8] text-white hover:bg-[#1f55c0]'
+                          : 'border border-slate-300 text-slate-800 hover:bg-slate-50'
+                      }`}
+                    >
+                      {plan.ctaLabel}
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
                     {plan.footnote && (
                       <p className="mt-3 text-center text-xs text-slate-500">{plan.footnote}</p>
                     )}
@@ -220,9 +232,21 @@ export default function IsaakPricingPage() {
               );
             })}
           </div>
+
+          {/* AI included callout */}
+          <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-[#2361d8]/20 bg-[#2361d8]/5 px-6 py-5 text-center">
+            <p className="text-sm font-semibold text-[#011c67]">
+              IA incluida en todos los planes — sin suscripciones adicionales
+            </p>
+            <p className="mt-1 text-sm text-slate-600">
+              Isaak usa Claude (Anthropic) y GPT-4o (OpenAI) según el plan. Tú no necesitas cuenta
+              en ninguno de los dos. Todo está integrado y gestionado por nosotros.
+            </p>
+          </div>
         </div>
       </section>
 
+      {/* FAQ */}
       <section id="faq" className="border-y border-slate-200 bg-slate-50/70 py-16 sm:py-20">
         <div className="mx-auto max-w-4xl px-4">
           <div className="text-center">
@@ -247,30 +271,27 @@ export default function IsaakPricingPage() {
         </div>
       </section>
 
+      {/* CTA final */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-4xl rounded-[2rem] bg-[#011c67] px-8 py-12 text-center text-white shadow-sm">
-          <h2 className="text-2xl font-semibold sm:text-3xl">
-            Aun no tienes claro que plan elegir?
-          </h2>
+          <h2 className="text-2xl font-semibold sm:text-3xl">¿No sabes por dónde empezar?</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-blue-100">
-            Empieza con el conector de Holded en Claude. Es gratis, no pide tarjeta y puedes saltar
-            a Pro cuando notes que necesitas memoria o multi-conector.
+            Empieza con el plan Free — es gratis para siempre. Si en algún momento necesitas Holded
+            conectado o mensajes ilimitados, el salto a Starter o Pro es inmediato.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a
-              href="https://holded.verifactu.business/conectores/claude"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Link
+              href="/auth"
               className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#011c67] hover:bg-slate-100"
             >
-              Conectar Holded en Claude (gratis)
+              Empezar gratis ahora
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
             <Link
               href="/signup?plan=pro"
               className="inline-flex items-center gap-2 rounded-full border border-white/40 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10"
             >
-              Empezar trial Pro
+              Trial Pro 14 días (sin tarjeta)
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

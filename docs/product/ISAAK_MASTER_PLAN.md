@@ -1,483 +1,243 @@
 # Isaak — Plan Maestro de Producto
 
-> Última actualización: 2026-05-02  
-> Estado: documento vivo — añadir ✅ cuando se complete cada ítem
+> Última actualización: 2026-05-16
+> Estado: documento vivo — revisión completa post-auditoría
 
 ---
 
 ## Visión
 
-**Isaak** es el copiloto fiscal inteligente de Verifactu Business: el primer asistente para pymes españolas que no solo responde preguntas sino que **ejecuta acciones contables reales** sobre el ERP conectado (Holded primero), con voz, con archivos, con integraciones de Google y con alertas fiscales proactivas.
+**Isaak** es el copiloto fiscal y contable de la pyme española: un agente de IA que conecta con el ERP del cliente (Holded primero), lee sus datos reales, ejecuta acciones con confirmación explícita y asesora en lenguaje llano sobre IVA, IRPF, cobros, gastos y Verifactu. No sustituye al gestor — le da contexto de calidad y automatiza el trabajo repetitivo.
 
 ---
 
-## Arquitectura de apps
+## Ecosistema de productos — 3 canales, 1 producto de pago
 
-| App            | URL                         | Propósito                              |
-| -------------- | --------------------------- | -------------------------------------- |
-| `apps/isaak`   | `isaak.verifactu.business`  | App principal Isaak — workspace + chat |
-| `apps/holded`  | `holded.verifactu.business` | Widget flotante en páginas Holded      |
-| `apps/app`     | `app.verifactu.business`    | Conector ChatGPT/Claude — API REST     |
-| `apps/admin`   | `admin.verifactu.business`  | Panel de administración interno        |
-| `apps/landing` | `verifactu.business`        | Landing pública + checkout Stripe      |
+| Canal                | App               | URL                          | Estado                                           | Coste para usuario                    |
+| -------------------- | ----------------- | ---------------------------- | ------------------------------------------------ | ------------------------------------- |
+| **Conector ChatGPT** | `apps/app`        | `chatgpt.verifactu.business` | ✅ Operativo · ⏳ pendiente aprobación OpenAI    | Gratis (requiere ChatGPT Plus/Teams)  |
+| **Conector Claude**  | `apps/holded-mcp` | `claude.verifactu.business`  | ✅ Operativo · ⏳ pendiente aprobación Anthropic | Gratis (requiere Claude.ai Pro/Teams) |
+| **Isaak**            | `apps/isaak`      | `isaak.verifactu.business`   | ✅ En producción                                 | Ver tarifas abajo                     |
 
----
+**Regla fundamental:**
 
-## Estrategia de captación: conectores como funnel
-
-Los conectores públicos (ChatGPT y Claude) no son productos separados ni variantes de Isaak.
-Son el funnel deliberado de adquisición hacia Isaak como producto principal de pago.
-
-**La regla:**
-
-- Conector → gratuito, sin checkout, sin billing
-- Widget de Isaak en el conector → demostración de valor + invitación natural
-- `isaak.verifactu.business` → producto de pago con historial, memoria y sin límites
-
-**Los tres modos del widget en los conectores:**
-
-| Modo                | Función                                                                  | Límite                         |
-| ------------------- | ------------------------------------------------------------------------ | ------------------------------ |
-| Soporte técnico     | Resuelve errores del conector (OAuth, API key, conexión)                 | Sin límite                     |
-| Servicios puntuales | Migración, formación, onboarding, demo Holded (0–1.190 €)                | Sin límite                     |
-| Vitrina de Isaak    | Responde con datos reales de Holded — el usuario ve valor antes de pagar | 50 consultas/día → CTA a Isaak |
-
-**Copy correcto para el límite de cuota:**
-
-> "Has alcanzado el límite diario del conector. Para análisis continuo con historial y memoria de tu empresa, Isaak completo está disponible en isaak.verifactu.business"
-
-El mensaje incorrecto ("actualiza tu plan") asume que el usuario del conector tiene un plan que puede cambiar. No tiene ninguno.
-
-**Documento de referencia:** `docs/product/CONNECTOR_ACQUISITION_FUNNEL_PLAN_2026.md`
+- Los conectores son el **funnel de adquisición gratuito** — la IA corre a costa del usuario (Claude.ai / ChatGPT Plus).
+- **Isaak** es el producto de pago — la IA corre a cuenta de Verifactu Business (Anthropic API). El usuario no necesita ninguna suscripción adicional.
+- Esta distinción **debe estar explícita** en la landing de Isaak y en el pricing.
 
 ---
 
-## Estado actual — 2026-05-04 ✅ PLAN MAESTRO S1–S10 COMPLETADO
+## Tarifas — versión definitiva
 
-> Última actualización: 2026-05-04
+> Objetivo: resolver la inconsistencia entre `pricing/page.tsx` (€49), `ISAAK_SUBSCRIPTION_MODEL.md` (€69) y los sprints internos (€19/€49/€149).
 
-### ✅ TODOS LOS SPRINTS COMPLETADOS (S1–S10)
+| Plan           | Precio          | Límites                                                            | IA incluida                          |
+| -------------- | --------------- | ------------------------------------------------------------------ | ------------------------------------ |
+| **Free**       | 0 €             | 10 mensajes/día · solo chat fiscal general · sin Holded            | Sí — Claude Haiku                    |
+| **Starter**    | 19 €/mes        | Holded conectado · 200 consultas/mes · sin OCR ni Google           | Sí — Claude Haiku                    |
+| **Pro**        | 49 €/mes        | Ilimitado · OCR · Google Calendar/Gmail/Drive · voz · push         | Sí — Claude Sonnet                   |
+| **Business**   | 149 €/mes       | Todo Pro + multi-usuario (10) · modelos AEAT · banking · multi-ERP | Sí — Claude Sonnet + GPT-4o opcional |
+| **Enterprise** | Desde 499 €/mes | White-label · on-premise · SSO · SLA 99,9%                         | A medida                             |
 
-| Sprint | Área                                                                                                                         | Estado |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------- | ------ |
-| S1–S3  | Base: chat LLM, historial, workspace, KPIs, markdown, brand                                                                  | ✅     |
-| S4     | Verifactu nativo: `create_verifactu_invoice`, PDF+QR, links chat                                                             | ✅     |
-| S5     | Billing: 3 tiers 19/49/149€, trial badge, Stripe portal, cron expiry                                                         | ✅     |
-| S6     | Archivos+OCR: upload multipart `POST /api/holded/upload-expense`, OCR Claude (PDF+imagen), confirmación→Holded, UI Paperclip | ✅     |
-| S7     | Voz: STT (`toggleMic` Web Speech), TTS (`speakMessage`), botón Mic, VolumeX                                                  | ✅     |
-| S8-A   | Google Calendar: OAuth + sync + tarjeta /integrations                                                                        | ✅     |
-| S8-B   | Alertas fiscales: `IsaakAlert` model, cron D-15/D-7/D-3/D-1, Resend email                                                    | ✅     |
-| S8-C   | Gmail scan: `gmail.readonly` scope, scan+cache, `IsaakGmailScan`, `GmailCard`                                                | ✅     |
-| S8-D   | Google Drive: `drive.file` scope, `google-drive.ts`, `DriveCard`, folder «Isaak — Facturas»                                  | ✅     |
-| S9     | Admin Panel: Stripe MRR/trials, tenant billing completa con historial                                                        | ✅     |
-| S10-A  | PWA: manifest.json, sw.js (push handler incluido), 8 iconos                                                                  | ✅     |
-| S10-B  | Push notifications: `IsaakPushSubscription` model, VAPID JWT, subscribe API, `PushNotificationsCard` en settings             | ✅     |
+**Descuento anual:** −20% en todos los planes de pago (equivale a 2,4 meses gratis).
 
-### Conectores y T-0X (Connector Audit)
+**Add-ons disponibles (Starter+):**
 
-| Task                                           | Estado                                |
-| ---------------------------------------------- | ------------------------------------- |
-| T-01 sanitizeCompanyName                       | ✅                                    |
-| T-02 email admin con enlace panel              | ✅                                    |
-| T-03 email bienvenida primera conexión ChatGPT | ✅                                    |
-| T-04 email completar perfil                    | ✅                                    |
-| T-05/T-09 cron weekly summary admin            | ✅                                    |
-| T-06 auth screen copy                          | ✅                                    |
-| T-07 onboarding step 3 copy+UX                 | ✅                                    |
-| T-08 success screen copy+CTA                   | ✅                                    |
-| T-10 template email semanal admin              | ✅                                    |
-| T-11 email semanal usuario                     | ⏸ DIFERIDO — necesita métricas de uso |
+- Usuario adicional: 9 €/mes
+- ERP adicional (Sage, A3…): 15 €/mes/ERP
+- Banco adicional (>1 cuenta): 10 €/mes
 
-### Variables de entorno críticas (Isaak)
+---
+
+## Funnel de conversión
 
 ```
-# VAPID keys para push notifications
-VAPID_PUBLIC_KEY=<generado 2026-05-04>
-VAPID_PRIVATE_KEY=<generado 2026-05-04>
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=<igual que VAPID_PUBLIC_KEY>
-VAPID_SUBJECT=mailto:soporte@verifactu.business
+Conector ChatGPT / Claude (gratis, requiere licencia propia)
+  │
+  ├─ Widget Isaak en holded.verifactu.business
+  │    ├─ Modo soporte técnico → sin límite
+  │    ├─ Modo servicios puntuales → sin límite
+  │    └─ Modo vitrina (datos reales Holded) → 50 consultas/día → CTA Isaak
+  │
+  └─ Llegada a isaak.verifactu.business
+       ├─ Free (10 msg/día) → prueba valor sin fricción
+       ├─ Trial 14 días Pro (sin tarjeta) → onboarding activo
+       └─ Conversión a plan de pago
+```
+
+**Copy del límite en el widget del conector:**
+
+> "Has alcanzado el límite diario del conector. Para análisis continuo con memoria de tu empresa, Isaak está disponible en isaak.verifactu.business"
+
+**Copy del límite free en Isaak:**
+
+> "Has llegado a tus 10 mensajes de hoy. Tu progreso y contexto se guardan — mañana vuelves donde lo dejaste, o activa Isaak Starter desde 19 €/mes para seguir ahora."
+
+---
+
+## Estado actual del producto — mayo 2026
+
+### ✅ Completado
+
+| Área                      | Detalle                                                                                  |
+| ------------------------- | ---------------------------------------------------------------------------------------- |
+| Auth + workspace          | Login, sesión, onboarding Holded                                                         |
+| Chat Holded               | `/api/holded/chat` — contexto real, historial, memoria simple, herramientas              |
+| Chat libre (free/público) | `/api/chat` — sin Holded, con sistema de prompts contextual                              |
+| Dashboard KPIs            | `/resumen` — ventas, gastos, pendiente cobro, IVA estimado, gráfico 6m                   |
+| Verifactu nativo          | `create_verifactu_invoice`, PDF+QR, registro AEAT                                        |
+| Billing Stripe            | Checkout, portal, cancel, webhooks, trial banner, cron expiry                            |
+| OCR + upload              | `POST /api/holded/upload-expense`, Claude Vision, confirmación → Holded                  |
+| Voz                       | STT (Web Speech), TTS (Speech Synthesis), botón micrófono                                |
+| Google Calendar           | OAuth, sync, calendario fiscal automatizado                                              |
+| Gmail scan                | `gmail.readonly`, scan + caché, GmailCard                                                |
+| Google Drive              | `drive.file`, carpeta «Isaak — Facturas»                                                 |
+| Push notifications        | VAPID JWT, Service Worker, suscripción, preferencias                                     |
+| PWA                       | manifest.json, sw.js, 8 iconos                                                           |
+| Alertas fiscales          | `IsaakAlert`, cron D-15/7/3/1, email Resend                                              |
+| Admin K1                  | `get_tenant_holded_data` en Isaak admin — usa `external_connections` (todos los canales) |
+| Admin Isaak copilot       | IsaakDock en panel admin, 3 tools BD, chat route                                         |
+
+### ⚠️ Inconsistencias a resolver (P0)
+
+| Nº   | Problema                                                                                                | Archivo afectado                         | Acción                                         |
+| ---- | ------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------- |
+| I-01 | Precio Pro en UI = 49 € pero doc interna = 69 €                                                         | `apps/isaak/app/pricing/page.tsx`        | Decidir precio → sincronizar UI                |
+| I-02 | Plan Starter (19 €) no aparece en pricing UI                                                            | `apps/isaak/app/pricing/page.tsx`        | Añadir card Starter                            |
+| I-03 | Free tier en código = solo rate-limit por IP (20/min) — no hay límite diario de 10 mensajes por usuario | `apps/isaak/app/api/chat/route.ts`       | Implementar `dailyFreeQueries` por tenantId/IP |
+| I-04 | Pricing page no dice "IA incluida, sin Claude.ai"                                                       | `apps/isaak/app/pricing/page.tsx`        | Añadir copy explícito                          |
+| I-05 | FAQ pricing no responde "¿Necesito Claude.ai o ChatGPT?"                                                | `apps/isaak/app/pricing/page.tsx`        | Añadir FAQ entry                               |
+| I-06 | `ISAAK_SUBSCRIPTION_MODEL.md` tiene precios distintos al plan definitivo                                | `docs/isaak/ISAAK_SUBSCRIPTION_MODEL.md` | Actualizar con tabla definitiva                |
+
+---
+
+## Backlog priorizado
+
+### P0 — Bloqueantes de conversión (esta semana)
+
+| ID   | Tarea                                                                                                                                               | Esfuerzo |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| P0-1 | Actualizar `pricing/page.tsx`: 4 cards (Free €0 / Starter €19 / Pro €49 / Business €149) con copy "IA incluida"                                     | 2h       |
+| P0-2 | Añadir FAQ en pricing: "¿Necesito Claude.ai o ChatGPT para usar Isaak?" → "No. Isaak incluye toda la IA en el precio."                              | 30 min   |
+| P0-3 | Implementar límite diario Free: tabla `IsaakDailyQuota` o campo en `IsaakTenant`, contador por `tenantId` (auth) e IP (público), reset a medianoche | 3h       |
+| P0-4 | Sincronizar precios en Stripe dashboard con tabla definitiva (€19/€49/€149) y actualizar IDs en código                                              | 1h       |
+| P0-5 | Actualizar `ISAAK_SUBSCRIPTION_MODEL.md` con tarifas definitivas                                                                                    | 30 min   |
+
+### P1 — Diferenciadores de producto (próximas 2 semanas)
+
+| ID   | Tarea                                                                                                                                           | Esfuerzo | Dependencia |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------- |
+| P1-1 | Loop conversión widget conector → Isaak: contabilizar consultas del widget de holded.verifactu.business, mostrar CTA a Isaak al llegar a 50/día | 3h       | —           |
+| P1-2 | Markdown rendering en IsaakDock admin (Fase G3: react-markdown + remark-gfm)                                                                    | 30 min   | —           |
+| P1-3 | Feedback thumbs up/down en chat Isaak y en IsaakDock admin (Fase G1)                                                                            | 1h       | —           |
+| P1-4 | K2: Isaak admin — análisis fiscal automatizado por tenant (IVA trimestral estimado, retenciones, resumen 303) usando K1                         | 4h       | K1 ✅       |
+| P1-5 | Banners in-app por plan (Free ve CTA; Pro/Business no)                                                                                          | 1h       | P0-3        |
+
+### P2 — Crecimiento (mes 2)
+
+| ID   | Tarea                                                                                             | Esfuerzo | Dependencia |
+| ---- | ------------------------------------------------------------------------------------------------- | -------- | ----------- |
+| P2-1 | K3: Alertas proactivas Isaak admin — "3 facturas sin contabilizar con vencimiento hoy"            | 2h       | K2          |
+| P2-2 | K4: Comparativa mensual/anual por tenant en Isaak admin                                           | 2h       | K2          |
+| P2-3 | Fase L1: Feature flag `ISAAK_PUBLIC_ENABLED` por tenant — activación manual desde admin           | 1h       | —           |
+| P2-4 | Fase L2–L4: Onboarding Isaak público con consentimiento + SYSTEM_PROMPT personalizado por empresa | 5h       | L1          |
+| P2-5 | Gráficos y exports Excel en Isaak admin (Fase H: recharts + SheetJS)                              | 5h       | —           |
+| P2-6 | Open Banking Salt Edge — completar flujo mandato + transacciones en workspace Isaak               | 4h       | —           |
+
+### P3 — Asesorías y B2B (mes 3+)
+
+| ID   | Tarea                                                                       | Esfuerzo |
+| ---- | --------------------------------------------------------------------------- | -------- |
+| P3-1 | Modo Asesoría: workspace multi-cliente bajo una cuenta, pricing por volumen | —        |
+| P3-2 | White-label: Isaak con marca propia (Enterprise)                            | —        |
+| P3-3 | Modelos AEAT en Business: borradores 303, 130, 390 pre-rellenados           | —        |
+| P3-4 | Conector Sage / A3 (segundo ERP)                                            | —        |
+
+---
+
+## Métricas de negocio
+
+| Métrica                 | Target M3 | Target M6 | Target M12 |
+| ----------------------- | --------- | --------- | ---------- |
+| MRR                     | €1.500    | €5.000    | €15.000    |
+| Usuarios Free activos   | 200       | 800       | 2.000      |
+| Trial → Paid conversion | 20%       | 28%       | 35%        |
+| Churn mensual           | <8%       | <6%       | <4%        |
+| ARPU (pagando)          | €40       | €50       | €60        |
+| NPS                     | >40       | >55       | >65        |
+
+---
+
+## Variables de entorno críticas
+
+```env
+# Anthropic API (motor IA de Isaak — no necesario para los conectores)
+ANTHROPIC_API_KEY=...
+
+# Stripe
+STRIPE_SECRET_KEY=...
+STRIPE_WEBHOOK_SECRET=...
+STRIPE_PRICE_STARTER_MONTHLY=price_...   # €19/mes
+STRIPE_PRICE_PRO_MONTHLY=price_...       # €49/mes
+STRIPE_PRICE_BUSINESS_MONTHLY=price_...  # €149/mes
 
 # Google OAuth (Calendar + Gmail + Drive)
 GOOGLE_CLIENT_ID=...
 GOOGLE_CLIENT_SECRET=...
 
-# Fiscal alerts + trial cron
+# Push notifications
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=... (igual que VAPID_PUBLIC_KEY)
+VAPID_SUBJECT=mailto:soporte@verifactu.business
+
+# Alertas + cron
 CRON_SECRET=...
-```
-
-### Backlog S11+ (pendientes post-Plan-Maestro)
-
-Ver sección "SPRINT 11–12" al final de este documento.
-
----
-
-## Roadmap por sprints
-
----
-
-## SPRINT 4 — Verifactu nativo desde chat ✅ COMPLETADO (2026-05-02)
-
-> Sistema Verifactu ya ~70% implementado en `apps/app`. Exponer via tools en Isaak.
-
-### S4-A ✅ `create_verifactu_invoice` tool
-
-- Implementado en `apps/isaak/app/api/holded/chat/route.ts`
-- Flujo completo: `isInvoiceCreationIntent()` → `callAnthropicForInvoiceData()` (Claude tool) → `createIsaakInvoiceDraft()` → confirmación usuario → `issueIsaakInvoice()` → AEAT vía VeriFactu API
-
-### S4-B ✅ PDF de factura con QR Verifactu
-
-- `GET /api/invoices/[id]/pdf` en `apps/isaak` (sesión Isaak propia)
-- PDF raw con cabecera azul marino, bloques emisor/receptor, tabla de importes
-- QR dibujado como módulos rectangulares PDF nativos (sin dependencias de imagen)
-- Links "[📄 Ver borrador en PDF]" y "[📄 Descargar PDF]" en el chat tras crear/emitir
-
-### S4-C ✅ Dashboard Verifactu en Resumen
-
-- Card Verifactu en `/resumen`: emitidas / borradores / errores AEAT
-- Queries Prisma directas por `verifactuStatus` en tiempo real
-
----
-
-## SPRINT 5 — Suscripciones y monetización (3–4 días)
-
-> Base Stripe ya implementada (webhook, checkout, portal, modelos Prisma).
-> Falta la UI de usuario y completar admin.
-
-### S5-A: UI de planes en Isaak `/settings?section=billing`
-
-- Mostrar plan actual + estado trial (días restantes)
-- 3 tiers propuestos:
-
-| Plan        | Precio/mes | Límites                                                                |
-| ----------- | ---------- | ---------------------------------------------------------------------- |
-| **Starter** | 19 €/mes   | 1 ERP, 100 preguntas/mes, sin herramientas avanzadas                   |
-| **Pyme**    | 49 €/mes   | 1 ERP, ilimitado, tools avanzadas, integraciones Google                |
-| **Empresa** | 149 €/mes  | 3 ERPs, multi-usuario, API access, notificaciones, onboarding dedicado |
-
-- Trial 30 días gratis en todos los planes (ya implementado en `start-trial` route)
-- Botones: "Empezar prueba gratuita" / "Gestionar suscripción" (Stripe portal)
-- Sin tarjeta para el trial (Stripe SetupIntent diferido)
-
-### S5-B: Trial expiration automation
-
-- Cron job diario: detectar trials expirados → `status = 'past_due'`
-- Email D-7, D-3, D-0 recordando expiración (Resend)
-- Bloqueo soft en workspace: banner + modal, no cortar acceso abruptamente
-
-### S5-C: Admin panel — billing y Stripe (completar placeholders)
-
-- `apps/admin/app/(admin)/integrations/stripe/page.tsx` — actualmente stub
-  - Métricas Stripe: MRR, churn, trials activos, conversiones
-  - Estado webhook (último evento, latencia)
-- `apps/admin/app/(admin)/tenants/[id]/billing/page.tsx` — actualmente stub
-  - Ver plan + estado trial del tenant
-  - Extender/cancelar trial manualmente
-  - Ver historial de pagos Stripe
-  - Forzar cambio de plan (con motivo)
-- Panel de Isaak en admin: usuarios, conversaciones, uso por tenant
-
-### S5-D: Publicidad y configuración de usuario
-
-- En `/settings?section=isaak`: toggle para mensajes de marca Verifactu
-- En admin: gestión de campañas/banners por plan (Starter ve promo, Empresa no)
-- Metrics de CTR por banner en `UsageEvent`
-
----
-
-## SPRINT 6 — Carga de archivos con OCR (4–5 días)
-
-> Primera funcionalidad de "input de datos" que diferencia Isaak de cualquier chat genérico.
-
-### S6-A: Upload endpoint + storage
-
-- `POST /api/holded/upload` — multipart form data
-- Storage: Supabase Storage o S3 (bucket `isaak-user-files/{tenantId}/`)
-- Tipos aceptados: PDF, JPG/PNG, DOCX, XLSX, XML (Facturae), CSV
-- Límite por plan: Starter 10 MB/archivo, Pyme 25 MB, Empresa 100 MB
-- Registro en tabla `IsaakFile` (tenantId, userId, path, mimetype, ocrStatus)
-
-### S6-B: OCR y reconocimiento de documentos
-
-- Motor OCR: Google Vision API o Tesseract (fallback open-source)
-- Pipeline de extracción:
-  - **Facturas (PDF/imagen)**: NIF, número, fecha, importe, IVA, proveedor/cliente
-  - **Tickets de gastos**: fecha, comercio, importe, categoría sugerida
-  - **Movimientos bancarios (CSV/XLSX)**: fecha, concepto, importe, saldo
-  - **XML Facturae**: parse directo sin OCR (schema conocido)
-  - **Facturas de Word/Excel**: extracción estructurada + fallback LLM
-- Resultado: JSON normalizado → mostrado al usuario para confirmación
-
-### S6-C: Aplicar a Holded
-
-- Confirmación por el usuario antes de cualquier escritura
-- Factura de proveedor → `POST /api/holded/invoices` (purchase invoice)
-- Ticket de gasto → `POST /api/holded/expenses` (expense entry)
-- Movimientos bancarios → conciliación automática sugerida en Holded
-- Mensaje de Isaak: "He reconocido esta factura de [proveedor] por [importe]. ¿La registro en Holded?"
-
-### S6-D: UI de carga en el chat
-
-- Botón clip en `ChatInput` (junto al botón de enviar)
-- Preview inline del archivo antes de confirmar
-- Progress bar de OCR con mensajes de estado
-- Lista de archivos recientes en sidebar o en `/archivos` (nueva sección)
-
----
-
-## SPRINT 7 — Voz: entrada y salida (3–4 días)
-
-> Permite conversación natural con Isaak sin teclado. Diferenciador clave para autónomos.
-
-### S7-A: Voice input (Speech-to-Text)
-
-- Web Speech API (navegador) como primera implementación — cero coste
-- Fallback: OpenAI Whisper API para mayor precisión
-- Botón micrófono en `ChatInput`: graba, transcribe, envía automáticamente
-- Indicador visual de grabación (ondas animadas)
-- Idioma por defecto: `es-ES`, configurable en `/settings`
-
-### S7-B: Voice output (Text-to-Speech)
-
-- Web Speech Synthesis API para respuestas cortas (<200 palabras)
-- ElevenLabs API (futuro) para voz más natural tipo Isaak
-- Toggle de TTS en la UI: el usuario elige si Isaak habla
-- Solo leer respuestas del asistente, no las del usuario
-- Pausar TTS si el usuario empieza a escribir
-
-### S7-C: Modo "manos libres"
-
-- Escucha continua: después de que Isaak termina de hablar, activa micrófono
-- Wake word simple: doble tap o icono (no "hey Isaak" por complejidad)
-- Optimizado para móvil y tablet (autónomos en movimiento)
-
----
-
-## SPRINT 8 — Integraciones Google (4–5 días) 🟡 PARCIAL
-
-> MCP tools de Google Calendar, Gmail y Drive ya disponibles vía claude.ai.
-> El trabajo es conectarlas al workspace de Isaak con auth propia.
-
-### S8-A ✅ Google Calendar — Calendario Fiscal (rutas implementadas)
-
-- OAuth2 Google con scope `calendar.events` — guardar token en `ExternalConnection`
-- Crear/actualizar eventos en Google Calendar del usuario
-- **Calendario Fiscal Automatizado**:
-  - Modelo 303 IVA: trim. 1→20 abr, trim. 2→20 jul, trim. 3→20 oct, trim. 4→30 ene
-  - Modelo 100 IRPF: 1–30 junio (estimación directa)
-  - Modelo 130 IRPF trimestral (autónomos): mismas fechas que IVA
-  - Modelo 349 operaciones intracomunitarias: mensual o trimestral según volumen
-  - Personalizado según CNAE del usuario (actividades especiales, IAE)
-- Sync periódico: Isaak actualiza el calendario si cambian los datos del usuario
-
-### S8-B: Notificaciones proactivas
-
-- Sistema de alertas en `IsaakAlert` (Prisma): tipo, fecha, tenantId, canal, estado
-- Canales por prioridad:
-  - **Push web**: Service Worker + Web Push API (gratuito, ya en PWA)
-  - **Email**: Resend — plantilla HTML con el branding Isaak
-  - **WhatsApp** (Semana 12+): API de 360dialog o Twilio (previo consentimiento)
-- Tipos de alerta:
-  - Plazo fiscal próximo (D-15, D-7, D-3, D-1)
-  - Factura vencida sin cobrar (+30 días)
-  - Requerimiento AEAT recibido (detección en Gmail o entrada manual)
-  - IVA a devolver / a ingresar calculado
-  - Trial expirando
-- Configuración por usuario en `/settings?section=notificaciones`
-
-### S8-C: Gmail — Detección de documentos fiscales
-
-- OAuth2 Google scope `gmail.readonly`
-- Scan periódico: buscar facturas de proveedores, requerimientos AEAT
-- Extracción automática → pipeline OCR (S6-B) → propuesta a usuario
-- "Isaak ha detectado una factura de Iberdrola en tu Gmail. ¿La registro?"
-- Privacy-first: solo leer, nunca enviar sin confirmación explícita
-
-### S8-D: Google Drive — Archivo de documentos
-
-- OAuth2 Google scope `drive.file` (solo archivos creados por la app)
-- Guardar PDFs de facturas Verifactu en carpeta "Isaak — Facturas/{año}"
-- Guardar exportaciones de informes (CSV, PDF resumen mensual)
-- Mostrar documentos recientes en `/archivos` o desde chat
-
----
-
-## SPRINT 9 — Admin Panel completo (3–4 días)
-
-> Completar los placeholders existentes y añadir gestión de Isaak.
-
-### S9-A: Admin Stripe (completar stub)
-
-- Métricas en tiempo real: MRR, ARR, trials activos, churn rate
-- Lista de suscripciones con filtros: plan, estado, fecha expiración trial
-- Acciones: extender trial, cambiar plan, cancelar, emitir crédito
-
-### S9-B: Admin Tenant Billing (completar stub)
-
-- Vista billing por tenant: plan, estado, historial de facturas Stripe
-- Logs de `UsageEvent` por tenant (preguntas, uploads, acciones ejecutadas)
-- Alertas de uso anómalo (spike repentino)
-
-### S9-C: Admin Isaak Users ✅ COMPLETADO 2026-05-XX (commit `99113886`)
-
-- ✅ Vista global `/isaak` — KPIs (tenants, conversaciones, activos hoy), tabla por tenant con plan/estado/mensajes/última actividad
-- ✅ Enlace a overview individual por tenant
-- ✅ Sección "Sin actividad" con pills de tenants en 0 conversaciones
-- ✅ Nav link "Isaak" con icono Bot en `navAdmin.tsx`
-- Detalle de tenant con archivos subidos e integraciones — pendiente
-- Impersonación controlada — pendiente
-- Exportar CSV — pendiente
-
-### S9-D: Admin Notificaciones ✅ COMPLETADO 2026-05-XX (commit `08aa86f9`)
-
-- ✅ Cola `/isaak/alerts` — KPIs (total, pendientes+vencidas, esta semana, enviadas), tabla con canal/estado/vencimiento
-- ✅ Banner vencidas (rose) si hay alertas pending pasadas de dueDate
-- ✅ Acción "Marcar enviada" (client component `AlertActions.tsx`)
-- ✅ API `PATCH /api/admin/isaak/alerts/[alertId]` con acciones `mark_sent` / `dismiss`
-- Estadísticas de entrega por canal (open rate, CTR) — pendiente
-- Plantillas de email editables sin deploy — pendiente
-
----
-
-## SPRINT 10 — PWA + Móvil (2–3 días) 🟡 PARCIAL
-
-> Isaak en el bolsillo del autónomo. Voice input ya hace la experiencia mobile-first.
-
-### S10-A ✅ Progressive Web App
-
-- `manifest.json` completo con nombre, descripción, iconos 72–512 px, shortcuts, screenshots
-- Service Worker (`sw.js`) con estrategias: cache-first para estáticos, network-first para navegación, stale-while-revalidate para assets; push notifications futuro incluido
-- Iconos generados desde `isaak-avatar-2.png` (8 tamaños en `public/icons/`)
-- `next.config.js` headers para `sw.js` y `manifest.json`
-- Viewport export + `appleWebApp` metadata en root layout
-- Registro del Service Worker inline en `_document` (script en layout)
-
-### S10-B ⬜ Push notifications nativas
-
-- Service Worker registra push subscription → guardada en `PushSubscription` (Prisma)
-- Backend envía via Web Push API cuando se genera una alerta (S8-B)
-- Icono y vibración configurables
-
----
-
-## SPRINT 11–12 — Futuro / Backlog
-
-### ✅ COMPLETADO S11 (commit `4a5feecb`)
-
-- **Reporting P&L**: `GET /api/reports/pl` (año/mes, YTD), `/informes` workspace con KPIs, gráfico barras y desglose por categoría
-- **Dashboard asesor**: `GET /api/advisor/clients`, `/advisor` workspace con tarjetas de clientes, alertas pendientes y acciones rápidas
-- **Landings actualizadas** (commit `55b7a960`): cross-link Holded↔Isaak, banner Plan Gratis, `/pricing`, `/signup`, `ISAAK_SELF_SERVICE_SPEC.md`
-
-### Backlog pendiente (bloqueadores externos)
-
-| Ítem                   | Descripción                                          | Prioridad | Bloqueador                       |
-| ---------------------- | ---------------------------------------------------- | --------- | -------------------------------- |
-| Multi-ERP              | Conectar Sage, A3, Contaplus además de Holded        | Alta      | Credenciales API de cada ERP     |
-| WhatsApp Bot           | Isaak responde por WhatsApp vía Twilio/360dialog     | Alta      | Cuenta Twilio/360dialog + número |
-| Firma digital          | Firmar facturas con certificado digital (FNMT)       | Media     | Certificado FNMT                 |
-| Banco conectado        | PSD2/Open Banking: lectura automática de movimientos | Alta      | Contrato Belvo/Tink/Plaid        |
-| App nativa iOS/Android | Si PWA no es suficiente para push/voz                | Baja      | —                                |
-| ERP propio Verifactu   | Modulo básico de facturación sin Holded              | Baja      | —                                |
-
----
-
-## Sistema de suscripciones — estado actual
-
-### Ya implementado
-
-- `TenantSubscription` Prisma model con `trialEndsAt`, `stripeCustomerId`, `stripeSubscriptionId`
-- `Plan` model con `code` ('basico', 'pyme', 'empresa', 'pro', 'trial')
-- `POST /api/onboarding/start-trial` — crea tenant con trial 30 días
-- Stripe webhook handler (checkout.session, subscription events, invoice events)
-- `POST /api/subscriptions/portal` — Stripe billing portal
-- `GET /api/subscriptions/current` — estado suscripción con datos Stripe
-- Checkout Stripe: `apps/landing/app/api/checkout/route.ts` + `apps/isaak/app/api/settings/billing/checkout/route.ts`
-- Feature flags por plan en `apps/app/lib/billing/tenantPlan.ts`
-
-### Pendiente
-
-- UI de planes en `/settings?section=billing` (S5-A)
-- Banner de trial expirando en workspace (S5-B)
-- Cron de expiración automática (S5-B)
-- ~~Admin billing pages (S9-A / S9-B)~~ — **✅ COMPLETADO 2026-05-04**
-- Emails de recordatorio trial (S5-B)
-
----
-
-## Admin Panel — estado actual
-
-### Apps Admin (`apps/admin` → `admin.verifactu.business`)
-
-| Ruta                         | Estado                                                                                            |
-| ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| `/dashboard`                 | ✅ Operativo                                                                                      |
-| `/tenants`                   | ✅ Operativo                                                                                      |
-| `/tenants/[id]/overview`     | ✅ Operativo                                                                                      |
-| `/tenants/[id]/billing`      | ✅ Operativo — plan/estado/historial + acciones manuales (extender trial, cambiar plan, cancelar) |
-| `/tenants/[id]/users`        | ✅ Operativo                                                                                      |
-| `/tenants/[id]/emails`       | ✅ Operativo                                                                                      |
-| `/tenants/[id]/integrations` | ✅ Operativo                                                                                      |
-| `/tenants/[id]/audit`        | ✅ Operativo                                                                                      |
-| `/users`                     | ✅ Operativo                                                                                      |
-| `/integrations/stripe`       | ✅ Operativo — MRR, ARR, trials activos, conversión trial→pago, planes, subs expirando            |
-| `/integrations/resend`       | ✅ Operativo                                                                                      |
-| `/demo-requests`             | ✅ Operativo                                                                                      |
-| `/audit-log`                 | ✅ Operativo                                                                                      |
-| `/operations`                | ✅ Operativo                                                                                      |
-
-### Holded Admin (`apps/holded/app/admin`)
-
-| Ruta                 | Estado       |
-| -------------------- | ------------ |
-| `/admin/users`       | ✅ Operativo |
-| `/admin/connections` | ✅ Operativo |
-| `/admin/activity`    | ✅ Operativo |
-
-### Pendiente para Admin Isaak
-
-- ~~Vista global de usuarios Isaak~~ — **✅ COMPLETADO S9-C** commit `99113886` (`/isaak` global + nav link)
-- ~~Admin billing con datos Stripe en tiempo real~~ — **✅ COMPLETADO 2026-05-04** (`/integrations/stripe` + `/tenants/[id]/billing` con acciones manuales)
-- ~~Panel de alertas fiscales + cola de envío~~ — **✅ COMPLETADO S9-D** commit `08aa86f9` (`/isaak/alerts` + PATCH API)
-
----
-
-## Principios de diseño del sistema de alertas
-
-```
-Alerta fiscal → IsaakAlert (DB) → fan-out por canal configurado
-  ├── Web Push (Service Worker)
-  ├── Email (Resend template)
-  └── WhatsApp (futuro, previo consentimiento explícito)
-
-Configuración usuario → /settings?section=notificaciones
-  ├── Activar/desactivar por tipo de alerta
-  ├── Selección de canales por alerta
-  └── Horario de no molestar
+RESEND_API_KEY=...
+
+# Open Banking
+SALTEDGE_CLIENT_ID=...
+SALTEDGE_SERVICE_SECRET=...
 ```
 
 ---
 
-## Principios de privacidad (obligatorio por GDPR)
+## Decisiones de arquitectura vigentes
 
-- Google OAuth: pedir **solo los scopes mínimos necesarios** (no `gmail.modify`, solo `gmail.readonly`)
-- WhatsApp: consentimiento explícito + doble opt-in antes de enviar
-- Archivos subidos: encriptados en reposo, eliminados tras N días sin uso
-- Impersonación en admin: log inmutable de cada sesión
-- Datos LLM: no enviar datos fiscales identificables fuera del contexto de sesión
-
----
-
-## Métricas de éxito por sprint
-
-| Sprint             | KPI principal                                    |
-| ------------------ | ------------------------------------------------ |
-| S4 (Verifactu)     | Facturas creadas desde chat / mes                |
-| S5 (Suscripciones) | Trial → Paid conversion rate (objetivo: >15%)    |
-| S6 (Archivos)      | Documentos procesados por usuario activo / mes   |
-| S7 (Voz)           | % sesiones con voice input activado              |
-| S8 (Google)        | Calendarios fiscales creados, alertas entregadas |
-| S9 (Admin)         | TTFR (time to first resolution) soporte          |
-| S10 (PWA)          | % usuarios con PWA instalada                     |
+- **Motor IA por plan:** Free/Starter → Claude Haiku (coste ~€0.003/consulta). Pro → Claude Sonnet (coste ~€0.008/consulta). Business → Sonnet + GPT-4o opcional.
+- **Rate limit free tier:** por `tenantId` si autenticado, por IP si público. Ventana = 24h rolling. Almacenamiento: campo `freeQueriesUsedToday + freeQueriesResetAt` en `Tenant` o tabla dedicada `IsaakDailyQuota`.
+- **Contexto por tenant:** SYSTEM_PROMPT base + sección dinámica con empresa, sector, régimen, señales del workspace.
+- **Acciones con escritura:** siempre requieren confirmación explícita del usuario (factura, gasto, asiento). Sin excepciones.
+- **Conectores como funnel:** el widget en `holded.verifactu.business` llama a `/api/isaak/support` para soporte y a la Holded API para "vitrina". El límite de vitrina (50/día) dispara CTA a Isaak — este límite **no está implementado** aún (P1-1).
 
 ---
 
-_Este documento es la fuente de verdad del roadmap de Isaak. Actualizarlo con cada sprint completado._
+## Estrategia de captación — conectores pendientes de aprobación
+
+Mientras los conectores ChatGPT y Claude están **pendientes de aprobación** por OpenAI y Anthropic respectivamente, la captación se apoya en:
+
+1. Widget Isaak en `holded.verifactu.business` (activo, sin límite de aprobación externa)
+2. SEO y contenido en `isaak.verifactu.business`
+3. Campaña directa a usuarios de Holded (email, LinkedIn)
+4. Demo pública en `/demo`
+
+Una vez aprobados los conectores, se activa el loop principal:
+
+```
+Usuario en ChatGPT/Claude → conecta Holded → usa conector gratis
+  → llega al límite diario del widget
+  → CTA → registra en Isaak gratis
+  → trial 14 días Pro → conversión
+```
+
+---
+
+## Documentos relacionados
+
+| Doc                                                              | Descripción                                                          |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `docs/isaak/ISAAK_SUBSCRIPTION_MODEL.md`                         | Modelo de suscripción detallado (actualizar con precios definitivos) |
+| `docs/isaak/ISAAK_PLATFORM_VISION.md`                            | Visión de plataforma a largo plazo                                   |
+| `docs/engineering/ISAAK_MASTER_PLAN.md`                          | Plan técnico por fases (G-L) con desglose de implementación          |
+| `docs/product/CONNECTOR_ACQUISITION_FUNNEL_PLAN_2026.md`         | Estrategia detallada del funnel conector → Isaak                     |
+| `docs/engineering/ADMIN_PANEL_CONNECTORS_AUDIT_AND_PLAN_2026.md` | Auditoría y plan del panel de administración                         |

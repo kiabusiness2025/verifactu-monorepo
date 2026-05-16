@@ -17,6 +17,8 @@ export type CallLLMParams = {
   temperature?: number;
   maxOutputTokens?: number;
   responseFormat?: AIResponseFormat;
+  /** Try the other provider automatically on transient failures (rate_limit, network, quota, empty_response). Default: true. */
+  enableFallback?: boolean;
 };
 
 export type NormalizedLLMResponse = {
