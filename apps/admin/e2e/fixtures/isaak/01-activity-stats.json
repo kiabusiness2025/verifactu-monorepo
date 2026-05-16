@@ -1,0 +1,10 @@
+{
+  "id": "activity-stats",
+  "label": "Estadísticas de actividad",
+  "question": "¿Cuántos tenants activos hay esta semana y cuántas queries se han hecho hoy?",
+  "expected_tools": ["get_activity_stats"],
+  "expected_keywords": ["tenant", "activ"],
+  "recorded_at": null,
+  "recorded_response": null,
+  "recorded_tool_results": null
+}

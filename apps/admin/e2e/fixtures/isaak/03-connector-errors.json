@@ -1,0 +1,10 @@
+{
+  "id": "connector-errors",
+  "label": "Conectores con error",
+  "question": "¿Hay conectores con error o revocados ahora mismo?",
+  "expected_tools": ["get_connector_errors"],
+  "expected_keywords": ["conector", "error"],
+  "recorded_at": null,
+  "recorded_response": null,
+  "recorded_tool_results": null
+}

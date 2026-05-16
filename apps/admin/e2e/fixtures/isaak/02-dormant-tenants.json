@@ -1,0 +1,10 @@
+{
+  "id": "dormant-tenants",
+  "label": "Tenants dormidos (14 días)",
+  "question": "¿Qué tenants llevan más de 14 días sin usar el conector Holded?",
+  "expected_tools": ["list_dormant_tenants"],
+  "expected_keywords": ["tenant", "días"],
+  "recorded_at": null,
+  "recorded_response": null,
+  "recorded_tool_results": null
+}

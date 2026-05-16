@@ -1,0 +1,10 @@
+{
+  "id": "system-overview",
+  "label": "Resumen completo del sistema",
+  "question": "Dame un resumen del estado del sistema: actividad, tenants dormidos y errores.",
+  "expected_tools": ["get_activity_stats", "list_dormant_tenants", "get_connector_errors"],
+  "expected_keywords": ["tenant", "conector"],
+  "recorded_at": null,
+  "recorded_response": null,
+  "recorded_tool_results": null
+}

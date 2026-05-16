@@ -1,0 +1,10 @@
+{
+  "id": "anomaly-detection",
+  "label": "Detección de anomalías",
+  "question": "¿Ves alguna anomalía o algo que requiera atención urgente ahora mismo?",
+  "expected_tools": ["get_activity_stats", "get_connector_errors"],
+  "expected_keywords": ["atención", "conector"],
+  "recorded_at": null,
+  "recorded_response": null,
+  "recorded_tool_results": null
+}
