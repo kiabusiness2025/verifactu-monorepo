@@ -1,6 +1,6 @@
 'use client';
 
-import { adminPost } from '@/lib/adminApi';
+import { adminDelete, adminPost } from '@/lib/adminApi';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -65,6 +65,24 @@ export function ConnectorActions({ connectionId, tenantId, status, hasApiKey }: 
     }
   }
 
+  async function handleDelete() {
+    if (
+      !window.confirm(
+        'Vas a ELIMINAR esta conexión de forma permanente. Se borrarán también todos sus tokens y logs de auditoría. Esta acción es irreversible. ¿Confirmas?'
+      )
+    )
+      return;
+    setBusy('delete');
+    setError(null);
+    try {
+      await adminDelete(`/api/admin/connectors/${connectionId}`);
+      router.push('/connectors');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error al eliminar');
+      setBusy(null);
+    }
+  }
+
   async function handlePing() {
     setBusy('ping');
     setPingResult(null);
@@ -87,6 +105,7 @@ export function ConnectorActions({ connectionId, tenantId, status, hasApiKey }: 
   const canRevoke = status === 'connected' || status === 'error';
   const canReactivate = status === 'revoked_api';
   const canPing = hasApiKey && (status === 'connected' || status === 'error');
+  const canDelete = status === 'disconnected' || status === 'revoked_api';
 
   return (
     <div className="space-y-3">
@@ -130,6 +149,16 @@ export function ConnectorActions({ connectionId, tenantId, status, hasApiKey }: 
             className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-100 disabled:opacity-50"
           >
             {busy === 'reactivate' ? 'Reactivando…' : 'Reactivar conexión'}
+          </button>
+        )}
+        {canDelete && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={busy !== null}
+            className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-50"
+          >
+            {busy === 'delete' ? 'Eliminando…' : 'Eliminar conexión'}
           </button>
         )}
       </div>

@@ -98,7 +98,16 @@ export function AppShell({
         )}
       >
         {item.icon}
-        {!collapsed && <span className="truncate">{item.label}</span>}
+        {!collapsed && (
+          <>
+            <span className="truncate">{item.label}</span>
+            {item.badge != null && item.badge > 0 && (
+              <span className="ml-auto shrink-0 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white">
+                {item.badge > 99 ? '99+' : item.badge}
+              </span>
+            )}
+          </>
+        )}
       </Link>
     );
   });

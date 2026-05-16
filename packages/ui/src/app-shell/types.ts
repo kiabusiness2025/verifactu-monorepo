@@ -3,4 +3,5 @@ export type NavItem = {
   href: string;
   icon?: React.ReactNode;
   match?: (pathname: string) => boolean;
+  badge?: number;
 };

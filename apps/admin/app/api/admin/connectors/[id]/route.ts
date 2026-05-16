@@ -152,3 +152,36 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: 'Error al cargar conexión' }, { status: 500 });
   }
 }
+
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const { id } = await params;
+    const admin = await requireAdmin(req);
+
+    const row = await one<{ tenant_id: string; connection_status: string }>(
+      `SELECT tenant_id, connection_status
+       FROM external_connections
+       WHERE id = $1 AND provider = 'holded'`,
+      [id]
+    );
+
+    if (!row) {
+      return NextResponse.json({ error: 'Conexión no encontrada' }, { status: 404 });
+    }
+
+    // Hard delete: cascade removes related PATs and audit logs
+    await query(`DELETE FROM external_connections WHERE id = $1`, [id]);
+
+    console.info(
+      `[admin][connectors] hard-deleted ${id} (tenant ${row.tenant_id}, status ${row.connection_status}) by ${admin.email}`
+    );
+
+    return NextResponse.json({ ok: true, deleted: id });
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+    console.error('[admin][connectors/:id] delete failed', error);
+    return NextResponse.json({ error: 'Error al eliminar conexión' }, { status: 500 });
+  }
+}

@@ -1,17 +1,39 @@
 'use client';
 
 import { AppShell } from '@verifactu/ui';
+import type { NavItem } from '@verifactu/ui';
 import InstallPwaButton from '@/components/pwa/InstallPwaButton';
 import { usePathname } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { navAdmin } from '../../src/navAdmin';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/';
+  const [connectorErrors, setConnectorErrors] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/admin/connectors/health', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d?.errors === 'number') setConnectorErrors(d.errors);
+      })
+      .catch(() => null);
+  }, [pathname]);
+
+  const nav: NavItem[] = useMemo(
+    () =>
+      navAdmin.map((item) =>
+        item.href === '/connectors' && connectorErrors > 0
+          ? { ...item, badge: connectorErrors }
+          : item
+      ),
+    [connectorErrors]
+  );
 
   return (
     <AppShell
       variant="admin"
-      nav={navAdmin}
+      nav={nav}
       pathname={pathname}
       showThemeToggle={false}
       showIsaak={true}
