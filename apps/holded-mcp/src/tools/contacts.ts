@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { HoldedClient } from '../holded-client.js';
+import { withControlledErrors } from './errors.js';
 import { readOnlyAnnotations } from './policy.js';
 
 /**
@@ -91,15 +92,17 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
 
   server.tool(
     'get_contact',
-    'Returns the full details of a specific Holded contact by its ID. Read-only.',
+    'Returns the full details of a specific Holded contact by its ID. Read-only. ' +
+      'Si el contactId no existe o está malformado, devuelve `{ "error": "not_found" }` ' +
+      'con un mensaje legible en vez de propagar un error genérico.',
     {
       contactId: z.string().describe('Holded contact ID.'),
     },
     readOnlyAnnotations('get_contact'),
-    async ({ contactId }) => {
+    withControlledErrors('get_contact', 'contact', ({ contactId }) => contactId, async ({ contactId }) => {
       const data = await getClient().getContact(contactId);
       return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    }
+    })
   );
 
   server.tool(

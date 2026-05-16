@@ -9,6 +9,7 @@ import {
   toUnixSecondsString,
 } from '../utils.js';
 import { readOnlyAnnotations, writeAnnotations } from './policy.js';
+import { withControlledErrors } from './errors.js';
 import { dispatchConnectorEventBackground } from '../connector-events.js';
 
 const DOC_TYPES = HOLDED_DOC_TYPES;
@@ -90,31 +91,33 @@ export function registerInvoicingTools(
 
   server.tool(
     'get_document',
-    'Returns the full details of a specific Holded document, including line items, taxes and contact information. Read-only. Dates are enriched with *Formatted fields in Europe/Madrid timezone.',
+    'Returns the full details of a specific Holded document, including line items, taxes and contact information. Read-only. Dates are enriched with *Formatted fields in Europe/Madrid timezone. ' +
+      'Si el documentId no existe o está malformado, devuelve `{ "error": "not_found" }` con un mensaje legible en vez de propagar un error genérico.',
     {
       docType: z.enum(DOC_TYPES).describe('Document type.'),
       documentId: z.string().describe('Holded document ID.'),
     },
     readOnlyAnnotations('get_document'),
-    async ({ docType, documentId }) => {
+    withControlledErrors('get_document', 'document', ({ documentId }) => documentId, async ({ docType, documentId }) => {
       const data = await getClient().getDocument(docType, documentId);
       const enriched =
         data && typeof data === 'object'
           ? enrichDocumentDates(data as Record<string, unknown>)
           : data;
       return { content: [{ type: 'text', text: JSON.stringify(enriched, null, 2) }] };
-    }
+    })
   );
 
   server.tool(
     'get_document_pdf',
-    'Returns the PDF rendering of a specific Holded document, encoded as a base64 string. Read-only.',
+    'Returns the PDF rendering of a specific Holded document, encoded as a base64 string. Read-only. ' +
+      'Si el documentId no existe o está malformado, devuelve `{ "error": "not_found" }` con un mensaje legible en vez de propagar un error genérico.',
     {
       docType: z.enum(DOC_TYPES).describe('Document type.'),
       documentId: z.string().describe('Holded document ID.'),
     },
     readOnlyAnnotations('get_document_pdf'),
-    async ({ docType, documentId }) => {
+    withControlledErrors('get_document_pdf', 'document', ({ documentId }) => documentId, async ({ docType, documentId }) => {
       const buf = await getClient().getDocumentPdf(docType, documentId);
       return {
         content: [
@@ -134,7 +137,7 @@ export function registerInvoicingTools(
           },
         ],
       };
-    }
+    })
   );
 
   if (options.includeWriteTools === false) {
@@ -183,7 +186,24 @@ export function registerInvoicingTools(
       let resolvedContactId = contactId?.trim();
       if (!resolvedContactId) {
         if (!contactName?.trim()) {
-          throw new Error('Either contactId or contactName is required.');
+          // Input validation: ningún identificador de contacto.
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    error: 'contact_required',
+                    message:
+                      'Either contactId or contactName is required. Use list_contacts to find the contact ID, then call this tool again.',
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: false,
+          };
         }
         const name = contactName.trim();
         const matches = (await getClient().listContacts({ name })) as Array<
@@ -196,9 +216,25 @@ export function registerInvoicingTools(
         const chosen = exact ?? items[0];
         const chosenId = chosen?.id ?? chosen?._id;
         if (typeof chosenId !== 'string' || !chosenId.trim()) {
-          throw new Error(
-            `No contact found for "${name}". Use list_contacts to find the correct contact and pass contactId.`
-          );
+          // Devolvemos respuesta controlada (no throw) para que el modelo pueda
+          // razonar sobre el resultado y reintentar con contactId resuelto.
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    error: 'contact_not_found',
+                    contactName: name,
+                    message: `No contact found for "${name}". Use list_contacts to find the correct contact and pass contactId.`,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: false,
+          };
         }
         resolvedContactId = chosenId.trim();
       }
