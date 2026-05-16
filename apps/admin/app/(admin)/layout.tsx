@@ -42,6 +42,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         role: 'admin',
         context: 'backoffice',
         chatApiPath: '/api/admin/isaak/chat',
+        feedbackApiPath: '/api/admin/isaak/feedback',
       }}
       sidebarIcon={
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#011c67] text-sm font-semibold text-white">

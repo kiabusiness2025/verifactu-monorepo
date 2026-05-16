@@ -7,8 +7,10 @@ import {
   normalizeIsaakContext,
   type IsaakTone,
 } from '@verifactu/utils/isaak/persona';
-import { MessageCircle, Send, Sparkles, UserRoundCog, X } from 'lucide-react';
+import { MessageCircle, Send, Sparkles, ThumbsDown, ThumbsUp, UserRoundCog, X } from 'lucide-react';
 import * as React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Button } from '../components/ui/button';
 import { cn } from '../lib/utils';
 import { useIsaakContext } from './useIsaakContext';
@@ -46,10 +48,15 @@ function IsaakPanel({
 }) {
   const moduleKey = String(context.moduleKey ?? 'dashboard');
   const chatApiPath = typeof context.chatApiPath === 'string' ? context.chatApiPath : null;
+  const feedbackApiPath =
+    typeof context.feedbackApiPath === 'string' ? context.feedbackApiPath : null;
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [feedback, setFeedback] = React.useState<Record<string, 'thumbs_up' | 'thumbs_down'>>({});
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  // Track which user message prompted each assistant reply (for feedback context)
+  const lastUserQuestion = React.useRef<string>('');
 
   React.useEffect(() => {
     setMessages([
@@ -72,6 +79,7 @@ function IsaakPanel({
       role: 'user',
       content,
     };
+    lastUserQuestion.current = content;
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
 
@@ -87,7 +95,6 @@ function IsaakPanel({
 
     setLoading(true);
     try {
-      // Build full message history for context (exclude the greeting)
       const history = messages
         .filter((m) => !m.id.startsWith('greet-'))
         .map((m) => ({ role: m.role, content: m.content }));
@@ -120,6 +127,30 @@ function IsaakPanel({
       ]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function sendFeedback(
+    messageId: string,
+    responseText: string,
+    rating: 'thumbs_up' | 'thumbs_down'
+  ) {
+    if (!feedbackApiPath || feedback[messageId]) return;
+    setFeedback((prev) => ({ ...prev, [messageId]: rating }));
+    try {
+      await fetch(feedbackApiPath, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          module_key: moduleKey,
+          question: lastUserQuestion.current,
+          response: responseText,
+          rating,
+        }),
+      });
+    } catch {
+      // Silent — feedback is best-effort
     }
   }
 
@@ -187,16 +218,95 @@ function IsaakPanel({
 
         <div className="mt-3 space-y-2">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                'rounded-lg px-3 py-2 text-xs',
-                message.role === 'user'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'border bg-card text-foreground'
-              )}
-            >
-              {message.content}
+            <div key={message.id}>
+              <div
+                className={cn(
+                  'rounded-lg px-3 py-2 text-xs',
+                  message.role === 'user'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'border bg-card text-foreground'
+                )}
+              >
+                {message.role === 'assistant' ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+                      strong: ({ children }) => (
+                        <strong className="font-semibold">{children}</strong>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="list-disc pl-4 mb-1 space-y-0.5">{children}</ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="list-decimal pl-4 mb-1 space-y-0.5">{children}</ol>
+                      ),
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto my-1">
+                          <table className="w-full text-[10px] border-collapse">{children}</table>
+                        </div>
+                      ),
+                      th: ({ children }) => (
+                        <th className="border border-border/60 bg-muted/50 px-2 py-1 text-left font-semibold">
+                          {children}
+                        </th>
+                      ),
+                      td: ({ children }) => (
+                        <td className="border border-border/60 px-2 py-1">{children}</td>
+                      ),
+                      h2: ({ children }) => <h2 className="font-semibold mt-2 mb-1">{children}</h2>,
+                      h3: ({ children }) => (
+                        <h3 className="font-medium mt-1.5 mb-0.5">{children}</h3>
+                      ),
+                      code: ({ children }) => (
+                        <code className="rounded bg-muted px-1 font-mono text-[10px]">
+                          {children}
+                        </code>
+                      ),
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                ) : (
+                  message.content
+                )}
+              </div>
+              {/* Thumbs up/down — only for real assistant replies (not greeting) */}
+              {message.role === 'assistant' &&
+                !message.id.startsWith('greet-') &&
+                !message.id.startsWith('a-err-') &&
+                feedbackApiPath && (
+                  <div className="flex items-center gap-1 mt-0.5 pl-1">
+                    <button
+                      type="button"
+                      title="Buena respuesta"
+                      onClick={() => void sendFeedback(message.id, message.content, 'thumbs_up')}
+                      disabled={!!feedback[message.id]}
+                      className={cn(
+                        'rounded p-0.5 transition',
+                        feedback[message.id] === 'thumbs_up'
+                          ? 'text-emerald-600'
+                          : 'text-muted-foreground hover:text-emerald-600 disabled:opacity-40'
+                      )}
+                    >
+                      <ThumbsUp className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      title="Mala respuesta"
+                      onClick={() => void sendFeedback(message.id, message.content, 'thumbs_down')}
+                      disabled={!!feedback[message.id]}
+                      className={cn(
+                        'rounded p-0.5 transition',
+                        feedback[message.id] === 'thumbs_down'
+                          ? 'text-rose-500'
+                          : 'text-muted-foreground hover:text-rose-500 disabled:opacity-40'
+                      )}
+                    >
+                      <ThumbsDown className="h-3 w-3" />
+                    </button>
+                  </div>
+                )}
             </div>
           ))}
           {loading && (
@@ -336,10 +446,9 @@ export function IsaakDock({ extraContext }: { extraContext?: Record<string, unkn
 
       <div
         className={cn(
-          'fixed bottom-5 right-5 z-50 w-[420px] h-[70vh] rounded-2xl border bg-background shadow overflow-hidden',
+          'fixed bottom-5 right-5 z-50 w-[420px] h-[70vh] -translate-y-14 rounded-2xl border bg-background shadow overflow-hidden',
           open ? 'block' : 'hidden'
         )}
-        style={{ transform: 'translateY(-56px)' }}
       >
         <div className="absolute top-2 right-2">
           <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Cerrar">

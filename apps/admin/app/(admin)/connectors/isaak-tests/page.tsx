@@ -18,6 +18,13 @@ import { adminPost } from '@/lib/adminApi';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
+type TopRated = {
+  question: string;
+  response: string;
+  rating: string;
+  count: number;
+};
+
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
 type TestCase = {
@@ -156,6 +163,16 @@ export default function IsaakTestsPage() {
   const [runs, setRuns] = useState<Record<string, CaseRun>>({});
   const [globalState, setGlobalState] = useState<'idle' | 'running' | 'done'>('idle');
   const [fixturesLoaded, setFixturesLoaded] = useState(false);
+  const [topRated, setTopRated] = useState<TopRated[]>([]);
+
+  useEffect(() => {
+    void fetch('/api/admin/isaak/feedback', { credentials: 'include' })
+      .then((r) => r.json())
+      .then((d: { top_rated?: TopRated[] }) => {
+        if (d.top_rated) setTopRated(d.top_rated);
+      })
+      .catch(() => null);
+  }, []);
 
   // Cargar fixtures cuando se cambia a ese modo
   useEffect(() => {
@@ -498,6 +515,29 @@ export default function IsaakTestsPage() {
           >
             Ir a modo Live
           </button>
+        </div>
+      )}
+
+      {/* Top-rated responses (G2) */}
+      {topRated.length > 0 && (
+        <div className="space-y-3">
+          <h2 className="text-sm font-semibold text-slate-800">
+            Respuestas mejor valoradas
+            <span className="ml-2 text-xs font-normal text-slate-400">(thumbs up del dock)</span>
+          </h2>
+          {topRated.map((item, i) => (
+            <div key={i} className="rounded-2xl border border-slate-200 bg-white shadow-soft">
+              <div className="flex items-start justify-between gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium text-slate-700">{item.question}</p>
+                  <p className="mt-1 line-clamp-3 text-xs text-slate-500">{item.response}</p>
+                </div>
+                <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  👍 {item.count}
+                </span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
