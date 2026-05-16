@@ -44,6 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         chatApiPath: '/api/admin/isaak/chat',
         feedbackApiPath: '/api/admin/isaak/feedback',
         exportApiPath: '/api/admin/isaak/export',
+        uploadApiPath: '/api/admin/isaak/upload',
       }}
       sidebarIcon={
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#011c67] text-sm font-semibold text-white">

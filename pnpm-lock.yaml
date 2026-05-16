@@ -163,6 +163,9 @@ importers:
       next-auth:
         specifier: ^4.24.12
         version: 4.24.13(next@15.5.18(@babel/core@7.28.6)(@opentelemetry/api@1.9.0)(react-dom@18.2.0(react@18.2.0))(react@18.2.0))(react-dom@18.2.0(react@18.2.0))(react@18.2.0)
+      pdf-parse:
+        specifier: ^1.1.1
+        version: 1.1.4
       pg:
         specifier: ^8.16.3
         version: 8.17.2
@@ -12688,6 +12691,12 @@ packages:
     engines: { node: '>=10.5.0' }
     deprecated: Use your platform's native DOMException instead
 
+  node-ensure@0.0.0:
+    resolution:
+      {
+        integrity: sha512-DRI60hzo2oKN1ma0ckc6nQWlHU69RH6xN0sjQTjMpChPfTYvKZdcQFfdYK2RWbJcKyUizSIy/l8OTGxMAM1QDw==,
+      }
+
   node-fetch-native@1.6.7:
     resolution:
       {
@@ -13237,6 +13246,13 @@ packages:
       {
         integrity: sha512-WUjGcAqP1gQacoQe+OBJsFA7Ld4DyXuUIjZ5cc75cLHvJ7dtNsTugphxIADwspS+AraAUePCKrSVtPLFj/F88w==,
       }
+
+  pdf-parse@1.1.4:
+    resolution:
+      {
+        integrity: sha512-XRIRcLgk6ZnUbsHsYXExMw+krrPE81hJ6FQPLdBNhhBefqIQKXu/WeTgNBGSwPrfU0v+UCEwn7AoAUOsVKHFvQ==,
+      }
+    engines: { node: '>=6.8.1' }
 
   pdfkit@0.18.0:
     resolution:
@@ -25104,6 +25120,8 @@ snapshots:
 
   node-domexception@1.0.0: {}
 
+  node-ensure@0.0.0: {}
+
   node-fetch-native@1.6.7: {}
 
   node-fetch@2.7.0:
@@ -25416,6 +25434,10 @@ snapshots:
   path-type@4.0.0: {}
 
   pathe@2.0.3: {}
+
+  pdf-parse@1.1.4:
+    dependencies:
+      node-ensure: 0.0.0
 
   pdfkit@0.18.0:
     dependencies:

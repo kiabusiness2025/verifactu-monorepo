@@ -9,7 +9,9 @@ import {
 } from '@verifactu/utils/isaak/persona';
 import {
   Download,
+  FileText,
   MessageCircle,
+  Paperclip,
   Send,
   Sparkles,
   ThumbsDown,
@@ -182,10 +184,18 @@ function IsaakPanel({
   const feedbackApiPath =
     typeof context.feedbackApiPath === 'string' ? context.feedbackApiPath : null;
   const exportApiPath = typeof context.exportApiPath === 'string' ? context.exportApiPath : null;
+  const uploadApiPath = typeof context.uploadApiPath === 'string' ? context.uploadApiPath : null;
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [feedback, setFeedback] = React.useState<Record<string, 'thumbs_up' | 'thumbs_down'>>({});
+  const [document, setDocument] = React.useState<{
+    filename: string;
+    text: string;
+    pages: number;
+  } | null>(null);
+  const [uploadState, setUploadState] = React.useState<'idle' | 'uploading' | 'error'>('idle');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
   // Track which user message prompted each assistant reply (for feedback context)
   const lastUserQuestion = React.useRef<string>('');
@@ -237,6 +247,7 @@ function IsaakPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...history, { role: 'user', content }],
+          document: document ? { filename: document.filename, text: document.text } : undefined,
         }),
       });
 
@@ -286,6 +297,52 @@ function IsaakPanel({
     }
   }
 
+  async function uploadFile(file: File) {
+    if (!uploadApiPath || uploadState === 'uploading') return;
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadState('error');
+      return;
+    }
+    setUploadState('uploading');
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await fetch(uploadApiPath, { method: 'POST', credentials: 'include', body: fd });
+      const data = (await res.json()) as {
+        filename?: string;
+        text?: string;
+        pages?: number;
+        error?: string;
+      };
+      if (data.error || !data.text) {
+        setUploadState('error');
+        return;
+      }
+      setDocument({
+        filename: data.filename ?? file.name,
+        text: data.text,
+        pages: data.pages ?? 1,
+      });
+      setUploadState('idle');
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `doc-${Date.now()}`,
+          role: 'assistant',
+          content: `📄 Documento cargado: **${data.filename ?? file.name}** (${data.pages ?? 1} pág.). Puedes hacerme preguntas sobre él.`,
+        },
+      ]);
+    } catch {
+      setUploadState('error');
+    }
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file?.name.toLowerCase().endsWith('.pdf')) void uploadFile(file);
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="px-4 py-3 border-b">
@@ -333,7 +390,11 @@ function IsaakPanel({
         </div>
       ) : null}
 
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div
+        className="flex-1 p-4 overflow-y-auto"
+        onDrop={handleDrop}
+        onDragOver={(e) => e.preventDefault()}
+      >
         <div className="space-y-2">
           {active.suggestions.map((suggestion) => (
             <button
@@ -473,18 +534,65 @@ function IsaakPanel({
       </div>
 
       <form
-        className="border-t p-3"
+        className="border-t p-3 space-y-2"
         onSubmit={(event) => {
           event.preventDefault();
           if (!input.trim() || loading) return;
           void addUserMessage(input.trim());
         }}
       >
+        {/* Document badge */}
+        {document && (
+          <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs text-blue-700">
+            <FileText className="h-3 w-3 shrink-0" />
+            <span className="min-w-0 truncate font-medium">{document.filename}</span>
+            <span className="shrink-0 text-blue-400">{document.pages} pág.</span>
+            <button
+              type="button"
+              onClick={() => setDocument(null)}
+              className="ml-auto shrink-0 rounded hover:text-blue-900"
+              aria-label="Quitar documento"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+        {uploadState === 'error' && (
+          <p className="text-[10px] text-rose-600">Error subiendo el PDF. Máx 10 MB, solo PDF.</p>
+        )}
         <div className="flex gap-2">
+          {/* Hidden file input */}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf,.pdf"
+            aria-label="Adjuntar PDF"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void uploadFile(file);
+              e.target.value = '';
+            }}
+          />
+          {uploadApiPath && (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadState === 'uploading' || loading}
+              title="Adjuntar PDF"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border bg-background text-muted-foreground hover:text-foreground disabled:opacity-40"
+            >
+              {uploadState === 'uploading' ? (
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+              ) : (
+                <Paperclip className="h-4 w-4" />
+              )}
+            </button>
+          )}
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
-            placeholder="Haz una pregunta..."
+            placeholder={document ? `Pregunta sobre ${document.filename}…` : 'Haz una pregunta...'}
             disabled={loading}
             className="h-9 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
           />

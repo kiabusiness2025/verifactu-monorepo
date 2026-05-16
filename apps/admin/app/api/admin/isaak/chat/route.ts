@@ -24,13 +24,21 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 type Message = { role: 'user' | 'assistant'; content: string };
+type DocumentContext = { filename: string; text: string };
+
+function buildSystemPrompt(doc?: DocumentContext): string {
+  if (!doc?.text) return SYSTEM_PROMPT;
+  const docSection = `\n\nDOCUMENTO ADJUNTO — "${doc.filename}":\n${doc.text}\n\nCuando el usuario pregunte por datos del documento, extrae y presenta en tabla Markdown: número de factura/ticket, fecha, proveedor/emisor, concepto, base imponible, IVA (tipo y cuota), total. Si algún campo no aparece en el documento, indícalo como "—".`;
+  return SYSTEM_PROMPT + docSection;
+}
 
 export async function POST(req: NextRequest) {
   try {
     await requireAdmin(req);
 
-    const body = (await req.json()) as { messages?: Message[] };
+    const body = (await req.json()) as { messages?: Message[]; document?: DocumentContext };
     const userMessages: Message[] = Array.isArray(body.messages) ? body.messages : [];
+    const document = body.document?.text ? body.document : undefined;
 
     if (!userMessages.length) {
       return NextResponse.json({ error: 'No messages provided' }, { status: 400 });
@@ -62,7 +70,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: MAX_TOKENS,
-          system: SYSTEM_PROMPT,
+          system: buildSystemPrompt(document),
           tools: TOOLS,
           messages: anthropicMessages,
         }),
