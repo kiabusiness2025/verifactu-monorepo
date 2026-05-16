@@ -1,0 +1,10 @@
+{
+  "id": "verifactu-validation",
+  "label": "Validación Verifactu de factura",
+  "question": "Valida si esta factura cumple Verifactu: número F-0042, fecha 2026-05-16, emisor Verifactu SL con NIF B12345678, servicio de consultoría, base 500€, IVA 21%, cuota 105€, total 605€. El receptor es empresa con NIF A87654321.",
+  "expected_tools": ["validate_verifactu_invoice"],
+  "expected_keywords": ["válid", "campo"],
+  "recorded_at": null,
+  "recorded_response": null,
+  "recorded_tool_results": null
+}

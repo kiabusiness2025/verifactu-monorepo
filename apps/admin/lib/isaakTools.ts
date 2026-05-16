@@ -30,7 +30,11 @@ BLOQUES ESTRUCTURADOS (copia los JSON literalmente en bloques \`\`\`json):
 
 2. Exportación Excel: cuando presentes una lista de tenants o errores (más de 2 filas), añade al final un bloque \`\`\`json con este formato exacto:
 {"type":"excel_export","filename":"nombre-archivo.xlsx","label":"Descargar Excel","headers":["Col1","Col2","Col3"],"rows":[["val1","val2","val3"]]}
-Extrae headers y rows de los datos devueltos por la herramienta.`;
+Extrae headers y rows de los datos devueltos por la herramienta.
+
+3. Asiento contable: cuando uses suggest_accounting_entry, copia el campo "excel_block" del resultado EXACTAMENTE en un bloque \`\`\`json, y presenta las líneas del asiento como tabla Markdown con columnas: Cuenta | Código PGC | Debe (€) | Haber (€).
+
+4. Validación Verifactu: cuando uses validate_verifactu_invoice, informa claramente del resultado: ✅ si es válido, o lista en rojo los campos que faltan.`;
 
 export type ToolInput = Record<string, unknown>;
 
@@ -38,7 +42,9 @@ export type ToolName =
   | 'get_activity_stats'
   | 'list_dormant_tenants'
   | 'get_connector_errors'
-  | 'get_activity_timeline';
+  | 'get_activity_timeline'
+  | 'suggest_accounting_entry'
+  | 'validate_verifactu_invoice';
 
 export const TOOLS = [
   {
@@ -78,6 +84,54 @@ export const TOOLS = [
           type: 'number',
           description: 'Número de días a consultar (por defecto 30, máximo 90)',
         },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'suggest_accounting_entry' as ToolName,
+    description:
+      'Genera el asiento contable (Plan General Contable español) para una factura o ticket de compra/venta. Usa esta herramienta cuando el usuario pida un asiento, apunte contable o registro en el libro diario. Devuelve las líneas debe/haber y un excel_block para descargar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        concepto: { type: 'string', description: 'Descripción del gasto o ingreso' },
+        importe_total: { type: 'number', description: 'Importe total (con IVA)' },
+        base_imponible: { type: 'number', description: 'Base imponible (sin IVA)' },
+        tipo_iva: { type: 'number', description: 'Tipo IVA en % (21, 10, 4 o 0)' },
+        tipo: {
+          type: 'string',
+          enum: ['gasto', 'ingreso'],
+          description: 'Si es un gasto (compra) o ingreso (venta)',
+        },
+        proveedor: { type: 'string', description: 'Nombre del proveedor o cliente' },
+        fecha: { type: 'string', description: 'Fecha en formato YYYY-MM-DD' },
+        cuenta_gasto: {
+          type: 'string',
+          description:
+            'Código de cuenta PGC para el gasto (600 compras, 621 reparaciones, 622 profesionales, 625 publicidad, 628 suministros, 629 otros). Por defecto 600.',
+        },
+      },
+      required: ['importe_total', 'tipo'],
+    },
+  },
+  {
+    name: 'validate_verifactu_invoice' as ToolName,
+    description:
+      'Valida que una factura contiene los campos obligatorios según la normativa Verifactu (España). Usa esta herramienta cuando el usuario quiera comprobar si una factura es válida para emitir.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        nif_emisor: { type: 'string', description: 'NIF/CIF del emisor' },
+        nombre_emisor: { type: 'string', description: 'Nombre o razón social del emisor' },
+        numero_factura: { type: 'string', description: 'Número de factura' },
+        fecha_expedicion: { type: 'string', description: 'Fecha de expedición (YYYY-MM-DD)' },
+        descripcion: { type: 'string', description: 'Descripción de la operación' },
+        base_imponible: { type: 'number', description: 'Base imponible en euros' },
+        tipo_iva: { type: 'number', description: 'Tipo IVA en %' },
+        cuota_iva: { type: 'number', description: 'Cuota IVA en euros' },
+        total: { type: 'number', description: 'Importe total en euros' },
+        nif_receptor: { type: 'string', description: 'NIF del receptor (requerido en B2B)' },
       },
       required: [],
     },
@@ -266,6 +320,93 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
       total_queries: rows.reduce((s, r) => s + r.queries, 0),
       pico_diario: rows.length > 0 ? Math.max(...rows.map((r) => r.queries)) : 0,
       chart_block: chartBlock,
+    });
+  }
+
+  if (name === 'suggest_accounting_entry') {
+    const total = Number(input.importe_total) || 0;
+    const tipoIva = typeof input.tipo_iva === 'number' ? input.tipo_iva : 21;
+    const base =
+      typeof input.base_imponible === 'number'
+        ? input.base_imponible
+        : parseFloat((total / (1 + tipoIva / 100)).toFixed(2));
+    const cuotaIva = parseFloat((total - base).toFixed(2));
+    const tipo = String(input.tipo ?? 'gasto') === 'ingreso' ? 'ingreso' : 'gasto';
+    const concepto = String(input.concepto ?? 'Sin descripción');
+    const proveedor = String(input.proveedor ?? (tipo === 'gasto' ? 'Proveedor' : 'Cliente'));
+    const fecha = String(input.fecha ?? new Date().toISOString().slice(0, 10));
+    const cuentaGasto = String(input.cuenta_gasto ?? '600');
+
+    type AsientoLine = [string, string, string, string, string];
+    let lineas: AsientoLine[];
+
+    if (tipo === 'gasto') {
+      lineas = [[concepto, cuentaGasto, base.toFixed(2), '', concepto]];
+      if (tipoIva > 0) {
+        lineas.push([`H.P. IVA soportado (${tipoIva}%)`, '472', cuotaIva.toFixed(2), '', concepto]);
+      }
+      lineas.push([proveedor, '400', '', total.toFixed(2), concepto]);
+    } else {
+      lineas = [[proveedor, '430', total.toFixed(2), '', concepto]];
+      if (tipoIva > 0) {
+        lineas.push([
+          `H.P. IVA repercutido (${tipoIva}%)`,
+          '477',
+          '',
+          cuotaIva.toFixed(2),
+          concepto,
+        ]);
+      }
+      lineas.push([concepto, '700', '', base.toFixed(2), concepto]);
+    }
+
+    return JSON.stringify({
+      fecha,
+      concepto,
+      total: total.toFixed(2),
+      base: base.toFixed(2),
+      iva: cuotaIva.toFixed(2),
+      lineas: lineas.map(([cuenta, codigo, debe, haber]) => ({ cuenta, codigo, debe, haber })),
+      excel_block: {
+        type: 'excel_export',
+        filename: `asiento-${fecha}.xlsx`,
+        label: 'Descargar asiento Excel',
+        headers: ['Cuenta', 'Código PGC', 'Debe (€)', 'Haber (€)', 'Concepto'],
+        rows: lineas,
+      },
+    });
+  }
+
+  if (name === 'validate_verifactu_invoice') {
+    const requiredFields: { key: string; label: string }[] = [
+      { key: 'nif_emisor', label: 'NIF del emisor' },
+      { key: 'nombre_emisor', label: 'Nombre/razón social del emisor' },
+      { key: 'numero_factura', label: 'Número de factura' },
+      { key: 'fecha_expedicion', label: 'Fecha de expedición' },
+      { key: 'descripcion', label: 'Descripción de la operación' },
+      { key: 'base_imponible', label: 'Base imponible' },
+      { key: 'tipo_iva', label: 'Tipo de IVA' },
+      { key: 'cuota_iva', label: 'Cuota de IVA' },
+      { key: 'total', label: 'Importe total' },
+    ];
+
+    const faltantes = requiredFields
+      .filter((f) => input[f.key] === undefined || input[f.key] === null || input[f.key] === '')
+      .map((f) => f.label);
+
+    const esB2b = !!input.nif_receptor;
+    const valido = faltantes.length === 0;
+
+    return JSON.stringify({
+      valido,
+      campos_faltantes: faltantes,
+      es_b2b: esB2b,
+      mensaje: valido
+        ? '✅ La factura cumple los campos mínimos obligatorios de Verifactu.'
+        : `❌ Faltan ${faltantes.length} campo(s) obligatorio(s) para Verifactu.`,
+      nota: !esB2b
+        ? 'Sin NIF receptor: se tratará como factura B2C (simplificada). En operaciones B2B el NIF receptor es obligatorio.'
+        : undefined,
     });
   }
 

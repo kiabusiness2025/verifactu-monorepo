@@ -1,0 +1,10 @@
+{
+  "id": "accounting-entry",
+  "label": "Asiento contable de factura",
+  "question": "Genera el asiento contable para una factura de servicios profesionales de 1210€ (base 1000€, IVA 21%) del proveedor Asesoría López.",
+  "expected_tools": ["suggest_accounting_entry"],
+  "expected_keywords": ["asiento", "400", "472"],
+  "recorded_at": null,
+  "recorded_response": null,
+  "recorded_tool_results": null
+}
