@@ -31,7 +31,11 @@ export function registerInvoicingTools(
 ) {
   server.tool(
     'list_documents',
-    'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only. Paginated. Each document is enriched with *Formatted fields in Europe/Madrid timezone so the model does not need to parse Unix timestamps.',
+    'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only. Paginated. Each document is enriched with *Formatted fields in Europe/Madrid timezone so the model does not need to parse Unix timestamps. ' +
+      '\n\n' +
+      'IMPORTANT — Holded\'s native default returns ONLY current-year documents (approved status), so documents from previous years are invisible without an explicit date range. ' +
+      'To prevent this audit blind-spot the connector automatically applies a default window of "previous calendar year January 1 → today" (~24 months) when neither starttmp nor endtmp is provided, surfaced in `rangeApplied.defaultsAppliedByConnector`. ' +
+      'To audit OLDER history (e.g. 2024 or earlier) pass explicit `starttmp`/`endtmp` covering that period. To audit a SPECIFIC fiscal year, pass starttmp = Jan 1 of that year, endtmp = Dec 31 of that year.',
     {
       docType: z
         .enum(DOC_TYPES)
@@ -40,10 +44,10 @@ export function registerInvoicingTools(
         ),
       page: z.string().optional().describe('Results page number (default 1).'),
       starttmp: dateInputOptional.describe(
-        'Start date (ISO 8601 or Unix seconds). Optional — omit or null for no lower bound.'
+        'Start date (ISO 8601 or Unix seconds). Optional — if omitted AND endtmp is also omitted, defaults to Jan 1 of the previous calendar year (e.g. 2025-01-01 when called in 2026) to cover ~24 months. Pass an explicit value to audit older periods.'
       ),
       endtmp: dateInputOptional.describe(
-        'End date (ISO 8601 or Unix seconds). Optional — omit or null for no upper bound.'
+        'End date (ISO 8601 or Unix seconds). Optional — if omitted, no upper bound is sent to Holded (which then uses "today" as the implicit upper bound).'
       ),
       contactId: z.string().optional().describe('Optional Holded contact ID filter.'),
       limit: z.coerce
@@ -62,7 +66,26 @@ export function registerInvoicingTools(
       for (const [k, v] of Object.entries(rest)) {
         if (v !== undefined) params[k] = String(v);
       }
-      if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
+
+      // Holded API default behaviour: cuando NO se pasa rango de fechas, el
+      // endpoint /documents devuelve solo el ejercicio en curso y solo
+      // documentos aprobados. La auditoría de soporte (2026-05-16) confirmó
+      // que esto causa "30 facturas visibles" en una cuenta que en realidad
+      // tiene 168 del año anterior. Para evitar el blind spot aplicamos un
+      // default de "1 de enero del año anterior → hoy" (~24 meses), que cubre
+      // ejercicio en curso + ejercicio cerrado anterior — el caso de uso más
+      // común para análisis fiscal/contable.
+      const defaultsApplied = {
+        starttmp: starttmp === undefined && endtmp === undefined,
+        endtmp: false,
+      };
+
+      if (starttmp !== undefined) {
+        params.starttmp = toUnixSecondsString(starttmp);
+      } else if (defaultsApplied.starttmp) {
+        const previousYear = new Date().getUTCFullYear() - 1;
+        params.starttmp = String(Math.floor(Date.UTC(previousYear, 0, 1) / 1000));
+      }
       if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
 
       const raw = await getClient().listDocuments(docType, params);
@@ -79,9 +102,18 @@ export function registerInvoicingTools(
         count: documents.length,
         totalReceived: all.length,
         truncated,
+        rangeApplied: {
+          starttmp: params.starttmp ?? null,
+          endtmp: params.endtmp ?? null,
+          defaultsAppliedByConnector: defaultsApplied,
+        },
         timezoneNote:
           'Dates with *Formatted suffix are YYYY-MM-DD in Europe/Madrid (peninsular Spain). Raw Unix timestamps are kept for reference.',
       };
+      if (defaultsApplied.starttmp) {
+        payload.note =
+          'Holded\'s native default would return only current-year documents. The connector applied a default range of "previous calendar year Jan 1 → today" (~24 months) so older fiscal-year documents are visible. To audit older periods (e.g. 2024 or earlier), pass explicit starttmp/endtmp.';
+      }
       if (truncated) {
         payload.hint = `Showing first ${limit} of ${all.length} documents received from Holded. Use page=2 (or higher) for the next batch, or narrow with starttmp/endtmp/contactId.`;
       }
