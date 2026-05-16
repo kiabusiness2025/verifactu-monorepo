@@ -1,9 +1,37 @@
 # Final Review Readiness Report
 
-Date: 2026-04-29
+Date: 2026-04-29 (initial) · 2026-05-15 (controlled-errors wave + preset realignment)
 App: Holded Connector
 
-## What Was Tested
+## 🟢 2026-05-15 update — runtime/manifest aligned, only ChatGPT manual QA pending
+
+After the second wave of soporte testing (four cases returned `-32000 Internal MCP error` instead of controlled errors) and the discovery that production exposed a wider tool surface than the signed manifest (22 vs 14), the connector is now in a verified-aligned state:
+
+- ✅ Runtime exposes exactly the **14 tools** declared in `tool-hint-justifications.json` (`DEFAULT_PUBLIC_SCOPE_PRESET = openai_review_v2` in [apps/app/lib/oauth/mcp.ts:97](../../apps/app/lib/oauth/mcp.ts)).
+- ✅ Annotations on every runtime tool match the manifest (`readOnlyHint`, `destructiveHint`, `openWorldHint`).
+- ✅ The four soporte-reported regressions return controlled errors:
+  - `holded_get_invoice` / `holded_get_project` / `holded_list_project_tasks` with non-existent or malformed ids → `structuredContent.error = "not_found"`.
+  - `holded_create_invoice_draft` with `confirm: false` → `structuredContent.error = "confirmation_required"`.
+- ✅ 401 (revoked credential) and 403 (module not contracted in the Holded plan) are now separated; a 403 on a single tool no longer marks the whole integration as revoked.
+- ✅ Latency safeguards: `HOLDED_HISTORY_SCAN_BUDGET_MS` (7s default) limits the historical document scan, `holded_list_accounts` paginates by default (25/page) — both prevent the silent "ChatGPT cut the tool call" symptom soporte reported as "blocked by security".
+- ✅ All 10 public URLs return 200 (landing, docs, privacy, terms, dpa, demo, MCP endpoint, OAuth discovery, protected-resource metadata).
+- ✅ OAuth discovery JSON is well-formed with every field OpenAI looks for (issuer, authorization/token/registration endpoints, scopes, response_types, grant_types, S256).
+
+PRs merged for this wave:
+- [#80](https://github.com/kiabusiness2025/verifactu-monorepo/pull/80) — controlled errors + preset revert (deployed via Vercel 2026-05-15 18:57 UTC).
+- [#81](https://github.com/kiabusiness2025/verifactu-monorepo/pull/81) — CI infrastructure (pnpm version, jest ESM, prisma scope, build-admin path filter, Resend dummy env) — prerequisite for #80 to reach `main`.
+
+What's left before clicking Resubmit:
+
+1. **Manual ChatGPT web validation** of POS-01..POS-07B + NEG-01..NEG-06 (no automated substitute — OpenAI tests the actual ChatGPT flow).
+2. **Same manual run on ChatGPT mobile.** Mobile-specific rendering issues were the bulk of the 2026-05-04 rejection.
+3. (Optional) **Rotate the demo Holded API key** before/after the review.
+
+There are no remaining code, infra, or doc gaps identifiable from outside ChatGPT's UI.
+
+---
+
+## 2026-04-29 baseline — What Was Tested
 
 Local mocked contract and MCP/OAuth tests were executed:
 
