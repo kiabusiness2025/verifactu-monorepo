@@ -10,6 +10,10 @@ import { navAdmin } from '../../src/navAdmin';
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname() ?? '/';
   const [connectorErrors, setConnectorErrors] = useState(0);
+  const tenantIdMatch = pathname.match(
+    /\/tenants\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i
+  );
+  const currentTenantId = tenantIdMatch?.[1] ?? null;
 
   useEffect(() => {
     fetch('/api/admin/connectors/health', { credentials: 'include' })
@@ -45,6 +49,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         feedbackApiPath: '/api/admin/isaak/feedback',
         exportApiPath: '/api/admin/isaak/export',
         uploadApiPath: '/api/admin/isaak/upload',
+        ...(currentTenantId ? { tenantId: currentTenantId } : {}),
       }}
       sidebarIcon={
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-[#011c67] text-sm font-semibold text-white">

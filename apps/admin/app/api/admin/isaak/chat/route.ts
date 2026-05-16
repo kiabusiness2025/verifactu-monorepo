@@ -26,19 +26,29 @@ export const dynamic = 'force-dynamic';
 type Message = { role: 'user' | 'assistant'; content: string };
 type DocumentContext = { filename: string; text: string };
 
-function buildSystemPrompt(doc?: DocumentContext): string {
-  if (!doc?.text) return SYSTEM_PROMPT;
-  const docSection = `\n\nDOCUMENTO ADJUNTO — "${doc.filename}":\n${doc.text}\n\nCuando el usuario pregunte por datos del documento, extrae y presenta en tabla Markdown: número de factura/ticket, fecha, proveedor/emisor, concepto, base imponible, IVA (tipo y cuota), total. Si algún campo no aparece en el documento, indícalo como "—".`;
-  return SYSTEM_PROMPT + docSection;
+function buildSystemPrompt(doc?: DocumentContext, tenantId?: string): string {
+  let prompt = SYSTEM_PROMPT;
+  if (tenantId) {
+    prompt += `\n\nCONTEXTO ACTUAL: El administrador está viendo el tenant ID \`${tenantId}\`. Cuando uses la herramienta get_tenant_holded_data, usa siempre este tenant_id a menos que el usuario especifique uno diferente.`;
+  }
+  if (doc?.text) {
+    prompt += `\n\nDOCUMENTO ADJUNTO — "${doc.filename}":\n${doc.text}\n\nCuando el usuario pregunte por datos del documento, extrae y presenta en tabla Markdown: número de factura/ticket, fecha, proveedor/emisor, concepto, base imponible, IVA (tipo y cuota), total. Si algún campo no aparece en el documento, indícalo como "—".`;
+  }
+  return prompt;
 }
 
 export async function POST(req: NextRequest) {
   try {
     await requireAdmin(req);
 
-    const body = (await req.json()) as { messages?: Message[]; document?: DocumentContext };
+    const body = (await req.json()) as {
+      messages?: Message[];
+      document?: DocumentContext;
+      tenantId?: string;
+    };
     const userMessages: Message[] = Array.isArray(body.messages) ? body.messages : [];
     const document = body.document?.text ? body.document : undefined;
+    const tenantId = typeof body.tenantId === 'string' ? body.tenantId : undefined;
 
     if (!userMessages.length) {
       return NextResponse.json({ error: 'No messages provided' }, { status: 400 });
@@ -70,7 +80,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           model: MODEL,
           max_tokens: MAX_TOKENS,
-          system: buildSystemPrompt(document),
+          system: buildSystemPrompt(document, tenantId),
           tools: TOOLS,
           messages: anthropicMessages,
         }),

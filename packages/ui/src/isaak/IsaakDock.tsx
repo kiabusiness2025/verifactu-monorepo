@@ -185,6 +185,7 @@ function IsaakPanel({
     typeof context.feedbackApiPath === 'string' ? context.feedbackApiPath : null;
   const exportApiPath = typeof context.exportApiPath === 'string' ? context.exportApiPath : null;
   const uploadApiPath = typeof context.uploadApiPath === 'string' ? context.uploadApiPath : null;
+  const tenantId = typeof context.tenantId === 'string' ? context.tenantId : undefined;
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -248,6 +249,7 @@ function IsaakPanel({
         body: JSON.stringify({
           messages: [...history, { role: 'user', content }],
           document: document ? { filename: document.filename, text: document.text } : undefined,
+          tenantId,
         }),
       });
 

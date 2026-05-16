@@ -3,7 +3,65 @@
  * Usadas por /api/admin/isaak/chat y /api/admin/isaak/smoke.
  */
 
+import { createDecipheriv, createHash } from 'crypto';
 import { query } from '@/lib/db';
+
+const HOLDED_API_BASE = 'https://api.holded.com';
+
+function decryptHoldedApiKey(enc: string): string {
+  const secret = process.env.OAUTH_DATA_ENCRYPTION_SECRET ?? process.env.OAUTH_JWT_SECRET ?? '';
+  const key = createHash('sha256').update(secret).digest();
+  const [ivPart, tagPart, payloadPart] = enc.split('.');
+  if (!ivPart || !tagPart || !payloadPart) throw new Error('Invalid encrypted key format');
+  const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivPart, 'base64url'));
+  decipher.setAuthTag(Buffer.from(tagPart, 'base64url'));
+  const decrypted = Buffer.concat([
+    decipher.update(Buffer.from(payloadPart, 'base64url')),
+    decipher.final(),
+  ]);
+  return decrypted.toString('utf8');
+}
+
+async function getTenantHoldedApiKey(tenantId: string): Promise<string | null> {
+  const rows = await query<{ holded_api_key_enc: string }>(
+    `SELECT oat.holded_api_key_enc
+     FROM holded_mcp_oauth_access_tokens oat
+     WHERE oat.user_id = (
+       SELECT ec.connected_by_user_id
+       FROM external_connections ec
+       WHERE ec.tenant_id = $1
+         AND ec.provider = 'holded'
+         AND ec.connection_status = 'connected'
+         AND ec.connected_by_user_id IS NOT NULL
+       ORDER BY ec.connected_at DESC NULLS LAST
+       LIMIT 1
+     )
+     AND oat.revoked_at IS NULL
+     AND oat.expires_at > NOW()
+     ORDER BY oat.created_at DESC
+     LIMIT 1`,
+    [tenantId]
+  ).catch(() => [] as { holded_api_key_enc: string }[]);
+  if (!rows.length || !rows[0].holded_api_key_enc) return null;
+  try {
+    return decryptHoldedApiKey(rows[0].holded_api_key_enc);
+  } catch {
+    return null;
+  }
+}
+
+async function callHoldedApi(
+  apiKey: string,
+  path: string,
+  params?: Record<string, string>
+): Promise<unknown> {
+  const qs = params ? '?' + new URLSearchParams(params).toString() : '';
+  const res = await fetch(`${HOLDED_API_BASE}${path}${qs}`, {
+    headers: { key: apiKey, Accept: 'application/json' },
+  });
+  if (!res.ok) throw new Error(`Holded API ${res.status}: ${path}`);
+  return res.json();
+}
 
 export const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 export const ANTHROPIC_VERSION = '2023-06-01';
@@ -34,7 +92,9 @@ Extrae headers y rows de los datos devueltos por la herramienta.
 
 3. Asiento contable: cuando uses suggest_accounting_entry, copia el campo "excel_block" del resultado EXACTAMENTE en un bloque \`\`\`json, y presenta las líneas del asiento como tabla Markdown con columnas: Cuenta | Código PGC | Debe (€) | Haber (€).
 
-4. Validación Verifactu: cuando uses validate_verifactu_invoice, informa claramente del resultado: ✅ si es válido, o lista en rojo los campos que faltan.`;
+4. Validación Verifactu: cuando uses validate_verifactu_invoice, informa claramente del resultado: ✅ si es válido, o lista en rojo los campos que faltan.
+
+5. Datos Holded del tenant: cuando uses get_tenant_holded_data, presenta los datos como tablas Markdown. Si la operación devuelve facturas, muestra las columnas más relevantes (número, fecha, contacto, importe, estado). Si hay errores de API o clave no disponible, informa al administrador.`;
 
 export type ToolInput = Record<string, unknown>;
 
@@ -44,7 +104,8 @@ export type ToolName =
   | 'get_connector_errors'
   | 'get_activity_timeline'
   | 'suggest_accounting_entry'
-  | 'validate_verifactu_invoice';
+  | 'validate_verifactu_invoice'
+  | 'get_tenant_holded_data';
 
 export const TOOLS = [
   {
@@ -134,6 +195,27 @@ export const TOOLS = [
         nif_receptor: { type: 'string', description: 'NIF del receptor (requerido en B2B)' },
       },
       required: [],
+    },
+  },
+  {
+    name: 'get_tenant_holded_data' as ToolName,
+    description:
+      'Consulta datos reales de Holded de un tenant específico usando su API key almacenada. Usa esta herramienta cuando el administrador pregunte por facturas, compras, contactos o el estado contable de un tenant concreto. Requiere que el tenant haya conectado su cuenta Holded vía OAuth (canal ChatGPT o Claude).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: {
+          type: 'string',
+          description: 'UUID del tenant del que se quieren consultar datos',
+        },
+        operacion: {
+          type: 'string',
+          enum: ['resumen', 'facturas_recientes', 'compras_recientes', 'contactos'],
+          description:
+            'Operación a realizar: resumen (facturas + compras + contactos resumidos), facturas_recientes (últimas 25 facturas de venta), compras_recientes (últimas 25 compras/gastos), contactos (lista de contactos)',
+        },
+      },
+      required: ['tenant_id'],
     },
   },
 ];
@@ -408,6 +490,117 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
         ? 'Sin NIF receptor: se tratará como factura B2C (simplificada). En operaciones B2B el NIF receptor es obligatorio.'
         : undefined,
     });
+  }
+
+  if (name === 'get_tenant_holded_data') {
+    const tenantId = String(input.tenant_id ?? '');
+    const operacion = String(input.operacion ?? 'resumen');
+
+    if (!tenantId) {
+      return JSON.stringify({ error: 'tenant_id es obligatorio' });
+    }
+
+    const apiKey = await getTenantHoldedApiKey(tenantId);
+    if (!apiKey) {
+      return JSON.stringify({
+        error:
+          'No hay API key válida para este tenant. Es posible que el tenant no haya conectado su cuenta Holded vía OAuth (canal ChatGPT o Claude), o que el token haya caducado.',
+        tenant_id: tenantId,
+      });
+    }
+
+    try {
+      if (operacion === 'contactos') {
+        const contacts = (await callHoldedApi(apiKey, '/api/invoicing/v1/contacts')) as Array<{
+          id?: string;
+          name?: string;
+          email?: string;
+          type?: number;
+          isPerson?: boolean;
+        }>;
+        const list = Array.isArray(contacts) ? contacts.slice(0, 30) : [];
+        return JSON.stringify({
+          total: list.length,
+          contactos: list.map((c) => ({
+            id: c.id,
+            nombre: c.name,
+            email: c.email,
+            tipo: c.isPerson ? 'persona' : 'empresa',
+          })),
+        });
+      }
+
+      if (operacion === 'facturas_recientes' || operacion === 'compras_recientes') {
+        const docType = operacion === 'facturas_recientes' ? 'invoice' : 'purchase';
+        const docs = (await callHoldedApi(apiKey, `/api/invoicing/v1/documents/${docType}`, {
+          page: '1',
+        })) as Array<{
+          id?: string;
+          docNumber?: string;
+          date?: number;
+          contact?: string;
+          contactName?: string;
+          total?: number;
+          status?: number;
+          paid?: boolean;
+        }>;
+        const list = Array.isArray(docs) ? docs.slice(0, 25) : [];
+
+        const statusLabel = (s?: number, paid?: boolean) => {
+          if (paid) return 'cobrado';
+          if (s === 1) return 'pendiente';
+          if (s === 2) return 'vencido';
+          if (s === 0) return 'borrador';
+          return 'desconocido';
+        };
+
+        return JSON.stringify({
+          tipo: docType,
+          total: list.length,
+          documentos: list.map((d) => ({
+            numero: d.docNumber,
+            fecha: d.date ? new Date(d.date * 1000).toISOString().slice(0, 10) : null,
+            contacto: d.contactName ?? d.contact,
+            total_eur: d.total,
+            estado: statusLabel(d.status, d.paid),
+          })),
+        });
+      }
+
+      // resumen: invoices + purchases + contacts count
+      const [invoices, purchases, contacts] = await Promise.all([
+        callHoldedApi(apiKey, '/api/invoicing/v1/documents/invoice', { page: '1' }).catch(() => []),
+        callHoldedApi(apiKey, '/api/invoicing/v1/documents/purchase', { page: '1' }).catch(
+          () => []
+        ),
+        callHoldedApi(apiKey, '/api/invoicing/v1/contacts').catch(() => []),
+      ]);
+
+      const invList = Array.isArray(invoices) ? invoices : [];
+      const purList = Array.isArray(purchases) ? purchases : [];
+      const conList = Array.isArray(contacts) ? contacts : [];
+
+      type DocRow = { total?: number; paid?: boolean; status?: number };
+      const pendingInv = invList.filter((d: DocRow) => !d.paid && d.status !== 0).length;
+      const totalInv = invList.reduce((s: number, d: DocRow) => s + (d.total ?? 0), 0);
+      const totalPur = purList.reduce((s: number, d: DocRow) => s + (d.total ?? 0), 0);
+
+      return JSON.stringify({
+        tenant_id: tenantId,
+        resumen: {
+          facturas_recientes: invList.length,
+          facturas_pendientes_cobro: pendingInv,
+          total_facturado_eur: parseFloat(totalInv.toFixed(2)),
+          compras_recientes: purList.length,
+          total_compras_eur: parseFloat(totalPur.toFixed(2)),
+          contactos: conList.length,
+        },
+        nota: 'Datos de la primera página (hasta 25 registros por tipo). Usa operacion=facturas_recientes para ver el detalle.',
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return JSON.stringify({ error: `Error consultando Holded API: ${msg}`, tenant_id: tenantId });
+    }
   }
 
   return JSON.stringify({ error: `Herramienta desconocida: ${name}` });
