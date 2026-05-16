@@ -45,8 +45,11 @@ function IsaakPanel({
   setShowTonePicker: (value: boolean) => void;
 }) {
   const moduleKey = String(context.moduleKey ?? 'dashboard');
+  const chatApiPath = typeof context.chatApiPath === 'string' ? context.chatApiPath : null;
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
+  const [loading, setLoading] = React.useState(false);
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setMessages([
@@ -59,19 +62,65 @@ function IsaakPanel({
     setInput('');
   }, [moduleKey, tone, active.greeting]);
 
-  function addUserMessage(content: string) {
+  React.useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, loading]);
+
+  async function addUserMessage(content: string) {
     const userMessage: ChatMessage = {
       id: `u-${Date.now()}`,
       role: 'user',
       content,
     };
-    const answer: ChatMessage = {
-      id: `a-${Date.now()}`,
-      role: 'assistant',
-      content: styleText(tone, active.quickResult),
-    };
-    setMessages((prev) => [...prev, userMessage, answer]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
+
+    if (!chatApiPath) {
+      const answer: ChatMessage = {
+        id: `a-${Date.now()}`,
+        role: 'assistant',
+        content: styleText(tone, active.quickResult),
+      };
+      setMessages((prev) => [...prev, answer]);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Build full message history for context (exclude the greeting)
+      const history = messages
+        .filter((m) => !m.id.startsWith('greet-'))
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      const response = await fetch(chatApiPath, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...history, { role: 'user', content }],
+        }),
+      });
+
+      const data = (await response.json()) as { role?: string; content?: string; error?: string };
+      const answerContent =
+        data.content ?? data.error ?? 'No pude obtener una respuesta en este momento.';
+
+      setMessages((prev) => [
+        ...prev,
+        { id: `a-${Date.now()}`, role: 'assistant', content: answerContent },
+      ]);
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `a-err-${Date.now()}`,
+          role: 'assistant',
+          content: 'Error de conexión. Inténtalo de nuevo.',
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -125,9 +174,11 @@ function IsaakPanel({
         <div className="space-y-2">
           {active.suggestions.map((suggestion) => (
             <button
+              type="button"
               key={suggestion}
-              onClick={() => addUserMessage(suggestion)}
-              className="w-full rounded-lg border bg-card p-2 text-left text-xs hover:bg-muted/40"
+              onClick={() => void addUserMessage(suggestion)}
+              disabled={loading}
+              className="w-full rounded-lg border bg-card p-2 text-left text-xs hover:bg-muted/40 disabled:opacity-50"
             >
               {suggestion}
             </button>
@@ -148,6 +199,12 @@ function IsaakPanel({
               {message.content}
             </div>
           ))}
+          {loading && (
+            <div className="rounded-lg border bg-card px-3 py-2 text-xs text-muted-foreground animate-pulse">
+              Pensando…
+            </div>
+          )}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -155,8 +212,8 @@ function IsaakPanel({
         className="border-t p-3"
         onSubmit={(event) => {
           event.preventDefault();
-          if (!input.trim()) return;
-          addUserMessage(input.trim());
+          if (!input.trim() || loading) return;
+          void addUserMessage(input.trim());
         }}
       >
         <div className="flex gap-2">
@@ -164,9 +221,10 @@ function IsaakPanel({
             value={input}
             onChange={(event) => setInput(event.target.value)}
             placeholder="Haz una pregunta..."
-            className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+            disabled={loading}
+            className="h-9 w-full rounded-md border bg-background px-3 text-sm disabled:opacity-50"
           />
-          <Button type="submit" size="icon" className="h-9 w-9">
+          <Button type="submit" size="icon" className="h-9 w-9" disabled={loading}>
             <Send className="h-4 w-4" />
           </Button>
         </div>
