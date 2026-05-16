@@ -1,7 +1,74 @@
 # Holded Connector Review Test Matrix
 
-**Date:** 2026-04-29 (initial), 2026-05-04 (post-rejection update)
-**Status:** ⚠️ REJECTED on first OpenAI submission. Fixes applied 2026-05-04 — pending re-validation on ChatGPT web AND mobile before resubmission.
+**Date:** 2026-04-29 (initial), 2026-05-04 (post-rejection), 2026-05-15 (controlled-errors wave)
+**Status:** ⏳ READY FOR RESUBMISSION at API+infra level — only **manual ChatGPT web+mobile validation** is missing. Runtime/manifest aligned, all known rejection causes addressed.
+
+## 🟢 2026-05-15 — Controlled-errors wave + preset realignment
+
+After the second round of soporte testing surfaced a follow-up batch of failures that all surfaced to the reviewer as the generic JSON-RPC `Internal MCP error -32000` (R4 hardening redacts crude messages), three changes landed in production:
+
+### Runtime fixes (merged in [#80](https://github.com/kiabusiness2025/verifactu-monorepo/pull/80), deploy 2026-05-15 18:57 UTC)
+
+| Behaviour                                                                                                                  | Before                                                                                                | After                                                                                                                       |
+| -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `holded_get_invoice` / `holded_get_project` / `holded_list_project_tasks` with a non-existent or malformed id              | `-32000 Internal MCP error. Reference: <uuid>`                                                        | `structuredContent.error = "not_found"` + readable message in `content[0].text`                                             |
+| `holded_create_invoice_draft` (and every other write tool) called with `confirm: false`                                    | `-32000 Internal MCP error.`                                                                          | `structuredContent.error = "confirmation_required"` + the existing instructional "Awaiting your confirmation..." text       |
+| Holded API returns 403 on an optional module (e.g. CRM/bookings if the plan does not include it)                           | The integration was marked `revoked` for the whole tenant and the user was told "Reconnect Holded"    | The single tool returns `structuredContent.error = "holded_module_forbidden"`; the rest of the connector keeps working      |
+| `holded_list_accounts` called with no `page`/`limit`                                                                       | Returned the entire chart of accounts (~206 entries) inside `structuredContent` (heavy payload)       | Paginated by default (`page: 1, limit: 25`)                                                                                 |
+| `holded_list_invoices` with `year`/`from`/`to` against a tenant with no matching documents                                 | Could hang the request for up to 12 sequential page scans; ChatGPT cut the tool call                  | Honours `HOLDED_HISTORY_SCAN_BUDGET_MS` (default 7000ms) and returns a partial response with `history.reachedEnd: false`    |
+
+### Preset realignment (also in [#80](https://github.com/kiabusiness2025/verifactu-monorepo/pull/80))
+
+`DEFAULT_PUBLIC_SCOPE_PRESET` reverted from `holded_full_read_v1` (22 tools, 2026-05-11 expansion) back to **`openai_review_v2`** — the preset the manifest is signed against. `tools/list` against `https://holded.verifactu.business/api/mcp/holded` now exposes the exact **14 tools** declared in `tool-hint-justifications.json`. Verified post-deploy:
+
+```
+PASS mcp.initialize — Holded Connector for ChatGPT v0.3.0
+PASS mcp.tools_list.public — 14 tools expuestas sin token
+Runtime: 14 tools | Manifest: 14 tools
+In runtime but not in manifest: (none)
+In manifest but not in runtime: (none)
+Annotation diffs: (none — all annotations match)
+```
+
+### Supporting CI fixes (merged in [#81](https://github.com/kiabusiness2025/verifactu-monorepo/pull/81), 2026-05-15 18:51 UTC)
+
+`pnpm/action-setup` version mismatch, `actions/upload-artifact@v3` deprecation, `apps/api` jest ESM transforms, `apps/holded-mcp` test endpoint count, prisma-generate scope, build-admin path filter, and Resend dummy env. None affect the connector runtime; all required for green CI on resubmission PRs.
+
+### Source-of-truth in production (verified 2026-05-15)
+
+| Surface                                                                              | Status        |
+| ------------------------------------------------------------------------------------ | ------------- |
+| `https://holded.verifactu.business/`                                                 | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt`                               | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/docs`                          | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/privacy`                       | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/terms`                         | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/dpa`                           | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/openai-review-demo`            | 200           |
+| `https://holded.verifactu.business/api/mcp/holded` (GET descriptor + POST JSON-RPC)  | 200           |
+| `https://holded.verifactu.business/.well-known/oauth-authorization-server`           | 200, complete |
+| `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded` | 200        |
+
+OAuth discovery includes `issuer`, `authorization_endpoint`, `token_endpoint`, `registration_endpoint`, `scopes_supported`, `response_types_supported`, `grant_types_supported`, `code_challenge_methods_supported` (S256).
+
+### What remains before resubmission
+
+Only **manual ChatGPT validation**:
+
+- [ ] All 7 positive cases (POS-01..POS-07B below) pass in ChatGPT **web** with the connector authorized to the demo tenant.
+- [ ] Same 7 cases pass in ChatGPT **mobile**.
+- [ ] All 6 negative cases (NEG-01..NEG-06) behave as expected on both surfaces.
+- [ ] Demo Holded API key rotated after final review.
+
+Reproduction script for the four soporte regressions (independent of ChatGPT):
+
+```
+MCP_BEARER_TOKEN=<oauth_or_pat> pnpm holded:chatgpt:smoke
+```
+
+The four cases now report `resultado controlado "not_found"` / `"confirmation_required"` instead of `JSON-RPC error -32000`.
+
+---
 
 ## 🔴 Outcome of the first submission (2026-04-29 → 2026-05-04 rejection)
 
