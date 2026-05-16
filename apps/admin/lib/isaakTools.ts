@@ -8,9 +8,16 @@ import { query } from '@/lib/db';
 
 const HOLDED_API_BASE = 'https://api.holded.com';
 
+// La API key de Holded se cifra en external_connections.api_key_enc con
+// INTEGRATIONS_SECRET_KEY (o SESSION_SECRET) — igual que packages/integrations.
 function decryptHoldedApiKey(enc: string): string {
-  const secret = process.env.OAUTH_DATA_ENCRYPTION_SECRET ?? process.env.OAUTH_JWT_SECRET ?? '';
-  const key = createHash('sha256').update(secret).digest();
+  const raw =
+    process.env.INTEGRATIONS_SECRET_KEY?.trim() ||
+    process.env.INTEGRATION_SECRET_KEY?.trim() ||
+    process.env.SESSION_SECRET?.trim() ||
+    '';
+  if (!raw) throw new Error('Missing INTEGRATIONS_SECRET_KEY / SESSION_SECRET');
+  const key = createHash('sha256').update(raw).digest();
   const [ivPart, tagPart, payloadPart] = enc.split('.');
   if (!ivPart || !tagPart || !payloadPart) throw new Error('Invalid encrypted key format');
   const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivPart, 'base64url'));
@@ -22,29 +29,29 @@ function decryptHoldedApiKey(enc: string): string {
   return decrypted.toString('utf8');
 }
 
+// Cubre todos los canales: dashboard (Isaak/widget), chatgpt, claude.
 async function getTenantHoldedApiKey(tenantId: string): Promise<string | null> {
-  const rows = await query<{ holded_api_key_enc: string }>(
-    `SELECT oat.holded_api_key_enc
-     FROM holded_mcp_oauth_access_tokens oat
-     WHERE oat.user_id = (
-       SELECT ec.connected_by_user_id
-       FROM external_connections ec
-       WHERE ec.tenant_id = $1
-         AND ec.provider = 'holded'
-         AND ec.connection_status = 'connected'
-         AND ec.connected_by_user_id IS NOT NULL
-       ORDER BY ec.connected_at DESC NULLS LAST
-       LIMIT 1
-     )
-     AND oat.revoked_at IS NULL
-     AND oat.expires_at > NOW()
-     ORDER BY oat.created_at DESC
+  const rows = await query<{ api_key_enc: string; channel_key: string }>(
+    `SELECT api_key_enc, channel_key
+     FROM external_connections
+     WHERE tenant_id = $1
+       AND provider = 'holded'
+       AND connection_status = 'connected'
+       AND api_key_enc IS NOT NULL
+     ORDER BY
+       CASE channel_key
+         WHEN 'dashboard' THEN 0
+         WHEN 'chatgpt'   THEN 1
+         WHEN 'claude'    THEN 2
+         ELSE 3
+       END,
+       connected_at DESC NULLS LAST
      LIMIT 1`,
     [tenantId]
-  ).catch(() => [] as { holded_api_key_enc: string }[]);
-  if (!rows.length || !rows[0].holded_api_key_enc) return null;
+  ).catch(() => [] as { api_key_enc: string; channel_key: string }[]);
+  if (!rows.length || !rows[0].api_key_enc) return null;
   try {
-    return decryptHoldedApiKey(rows[0].holded_api_key_enc);
+    return decryptHoldedApiKey(rows[0].api_key_enc);
   } catch {
     return null;
   }
@@ -504,7 +511,7 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
     if (!apiKey) {
       return JSON.stringify({
         error:
-          'No hay API key válida para este tenant. Es posible que el tenant no haya conectado su cuenta Holded vía OAuth (canal ChatGPT o Claude), o que el token haya caducado.',
+          'No hay API key válida para este tenant. El tenant no tiene ninguna conexión Holded activa (ni vía Isaak, ni vía conector ChatGPT, ni vía conector Claude).',
         tenant_id: tenantId,
       });
     }
