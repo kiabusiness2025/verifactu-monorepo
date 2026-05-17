@@ -102,6 +102,38 @@ const DEFAULT_CASES: TestCase[] = [
     expected_tools: ['get_activity_stats', 'get_connector_errors'],
     expected_keywords: ['atención', 'conector'],
   },
+  {
+    id: 'modelo-303',
+    label: 'Modelo 303 estimado (requiere tenant real)',
+    question:
+      'Genera el resumen del Modelo 303 del trimestre actual para el tenant 00000000-0000-0000-0000-000000000001.',
+    expected_tools: ['get_tenant_modelo_303'],
+    expected_keywords: ['303', 'IVA', 'casilla'],
+  },
+  {
+    id: 'fiscal-analysis',
+    label: 'Análisis fiscal trimestral (requiere tenant real)',
+    question:
+      'Analiza la situación fiscal del trimestre actual del tenant 00000000-0000-0000-0000-000000000001. ¿Cuánto IVA tiene a pagar?',
+    expected_tools: ['get_tenant_fiscal_analysis'],
+    expected_keywords: ['IVA', 'trimestre'],
+  },
+  {
+    id: 'unbooked-alerts',
+    label: 'Alertas documentos pendientes (requiere tenant real)',
+    question:
+      'Muéstrame las facturas sin contabilizar y documentos pendientes del tenant 00000000-0000-0000-0000-000000000001.',
+    expected_tools: ['get_tenant_unbooked_alerts'],
+    expected_keywords: ['pendiente', 'factura'],
+  },
+  {
+    id: 'period-comparison',
+    label: 'Comparativa mensual (requiere tenant real)',
+    question:
+      'Compara los ingresos y gastos de este mes vs el mes pasado del tenant 00000000-0000-0000-0000-000000000001.',
+    expected_tools: ['get_tenant_period_comparison'],
+    expected_keywords: ['ingreso', 'mes'],
+  },
 ];
 
 // ─── Helpers de UI ────────────────────────────────────────────────────────────

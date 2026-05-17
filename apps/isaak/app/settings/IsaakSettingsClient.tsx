@@ -14,6 +14,7 @@ import {
   ExternalLink,
   LifeBuoy,
   Loader2,
+  MessageCircle,
   PlugZap,
   RefreshCcw,
   Sparkles,
@@ -1056,16 +1057,36 @@ export default function IsaakSettingsClient({
                         className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-500"
                       />
                     </label>
-                    <label className="grid gap-2 text-sm">
-                      <span className="font-medium text-slate-700">Telefono</span>
+                    <div className="grid gap-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-700">Teléfono móvil</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                          <MessageCircle className="h-2.5 w-2.5" />
+                          WhatsApp
+                        </span>
+                      </div>
                       <input
                         value={profile.phone ?? ''}
                         onChange={(event) =>
                           setProfile((current) => ({ ...current, phone: event.target.value }))
                         }
-                        className="rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-[#2361d8]/35"
+                        placeholder="+34 612 345 678"
+                        className={`rounded-2xl border px-4 py-3 outline-none transition focus:border-[#2361d8]/35 ${
+                          profile.phone && !/^\+\d{7,15}$/.test(profile.phone.replace(/\s/g, ''))
+                            ? 'border-amber-300 bg-amber-50/40'
+                            : 'border-slate-200'
+                        }`}
                       />
-                    </label>
+                      {profile.phone && !/^\+\d{7,15}$/.test(profile.phone.replace(/\s/g, '')) ? (
+                        <p className="text-[11px] text-amber-600">
+                          Incluye el prefijo del país, ej. +34 para España.
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-slate-400">
+                          Isaak te responderá en este número por WhatsApp. Formato: +34 612 345 678
+                        </p>
+                      )}
+                    </div>
                     <label className="grid gap-2 text-sm">
                       <span className="font-medium text-slate-700">Rol actual en la empresa</span>
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-700">

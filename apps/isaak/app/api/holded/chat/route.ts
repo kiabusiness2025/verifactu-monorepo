@@ -1,6 +1,7 @@
 import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { callLLM } from '@verifactu/utils';
+import type { AIProvider } from '@verifactu/utils';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
@@ -18,6 +19,7 @@ import {
   appendConversationMessage,
   ensureHoldedConversation,
   getSimpleMemoryContext,
+  getTenantFewShotExamples,
   storeSimpleMemoryFact,
 } from '@/app/lib/holded-chat';
 import { prisma } from '@/app/lib/prisma';
@@ -234,6 +236,8 @@ function buildLlmInstructions(input: {
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
   workspaceSignalsBlock: string | null;
+  recentFacts?: { category: string; factKey: string; valueJson: unknown }[];
+  fewShotExamples?: { question: string; response: string }[];
 }) {
   const companyName = input.context.labels.companyName || 'tu empresa';
   const preferredName =
@@ -252,6 +256,26 @@ function buildLlmInstructions(input: {
   const goals = input.context.isaak.profile?.mainGoals?.length
     ? input.context.isaak.profile.mainGoals.slice(0, 3).join(', ')
     : 'cuidar el negocio con tranquilidad';
+
+  // L4: sector, régimen fiscal, localización
+  const sector =
+    input.context.company.sectorLabel ||
+    input.context.companyProfile?.cnaeText ||
+    input.context.isaak.profile?.businessSector ||
+    null;
+
+  const taxId = input.context.labels.taxId || input.context.company.taxId || null;
+  const fiscalRegime = taxId
+    ? /^[A-Za-z][0-9]{7}[A-Za-z0-9]$/.test(taxId.trim())
+      ? 'sociedad (S.L./S.A. u otra forma jurídica)'
+      : /^[0-9]{8}[A-Za-z]$/.test(taxId.trim())
+        ? 'persona física (autónomo o particular)'
+        : 'régimen no determinado'
+    : null;
+
+  const location =
+    [input.context.company.city, input.context.company.province].filter(Boolean).join(', ') || null;
+
   const analytics = input.context.holded.analytics;
   const modules = describeSupportedModules(input.context.holded.connection?.supportedModules);
   const probeSummary = input.diagnosticProbe
@@ -277,7 +301,7 @@ function buildLlmInstructions(input: {
     'No digas solo "conexion parcial". Explica exactamente que parte funciona y que parte falta.',
     '',
     `Persona usuaria: ${preferredName}. Rol: ${role}. Estilo preferido: ${communicationStyle}. Nivel esperado: ${knowledgeLevel}. Objetivos: ${goals}.`,
-    `Contexto empresa: ${companyName}.`,
+    `Contexto empresa: ${companyName}.${sector ? ` Sector: ${sector}.` : ''}${fiscalRegime ? ` Régimen fiscal: ${fiscalRegime}.` : ''}${location ? ` Localización: ${location}.` : ''}`,
     `Contexto negocio: ${input.context.summary}`,
     `Muestra disponible: facturas=${input.snapshot.invoices.length}, contactos=${input.snapshot.contacts.length}, cuentas=${input.snapshot.accounts.length}.`,
     `Modulos confirmados: ${modules}.`,
@@ -289,6 +313,9 @@ function buildLlmInstructions(input: {
       : 'Chequeo vivo: no ejecutado.',
     `Detalle del chequeo: ${probeDetails}.`,
     '',
+    fiscalRegime
+      ? `Al hablar de impuestos, adapta la respuesta al régimen de la empresa: ${fiscalRegime}. Por ejemplo, autónomos pagan IRPF trimestral (Mod. 130), sociedades pagan IS. No mezcles obligaciones de uno con las del otro.`
+      : 'Si desconoces el régimen fiscal, pregunta si es autónomo o sociedad antes de dar cifras concretas de impuestos.',
     'Si el usuario te pide un resumen, usa cifras concretas, concluye que significa para el negocio y remata con una recomendacion accionable.',
     'Si el usuario pide diagnostico, nombra al menos facturas, contactos y contabilidad aunque alguno falle.',
     input.workspaceSignalsBlock
@@ -296,8 +323,66 @@ function buildLlmInstructions(input: {
       : 'Estado del workspace: no disponible.',
     'Si faltan datos fiscales o de empresa para orientar mejor, abre una micro-entrevista de una sola pregunta y ofrece siempre las opciones "Prefiero no decirlo" y "No lo sé".',
     'Si responde "No lo sé", explica cómo averiguarlo y cuándo conviene revisar la Sede Electrónica de la AEAT o el certificado electrónico.',
+    // L3: memory facts del tenant
+    ...(input.recentFacts && input.recentFacts.length > 0
+      ? [
+          '',
+          'Lo que recuerdas de conversaciones anteriores con esta persona:',
+          ...input.recentFacts.map((f) => {
+            const val =
+              typeof f.valueJson === 'object' && f.valueJson !== null
+                ? Object.entries(f.valueJson as Record<string, unknown>)
+                    .map(([k, v]) => `${k}=${String(v)}`)
+                    .join(', ')
+                : String(f.valueJson ?? '');
+            return `- [${f.category}/${f.factKey}]: ${val}`;
+          }),
+        ]
+      : []),
+    // L5: few-shot examples validated by this tenant
+    ...(input.fewShotExamples && input.fewShotExamples.length > 0
+      ? [
+          '',
+          'Ejemplos de respuestas que esta empresa ha valorado positivamente (úsalos como referencia de tono y profundidad):',
+          ...input.fewShotExamples.map(
+            (ex, i) =>
+              `Ejemplo ${i + 1}:\nPregunta: ${ex.question.slice(0, 300)}\nRespuesta: ${ex.response.slice(0, 600)}`
+          ),
+        ]
+      : []),
   ].join('\n');
 }
+
+type PlanTier = 'free' | 'starter' | 'pro' | 'business' | 'enterprise';
+
+async function loadTenantPlanCode(tenantId: string): Promise<PlanTier> {
+  try {
+    const sub = await prisma.tenantSubscription.findFirst({
+      where: { tenantId },
+      select: { plan: { select: { code: true } }, status: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    if (sub?.status === 'trial') return 'pro';
+    return (sub?.plan?.code ?? 'free') as PlanTier;
+  } catch {
+    return 'free';
+  }
+}
+
+type HoldedChatModelConfig = { provider: AIProvider; model: string };
+
+function resolveHoldedChatModel(planCode: string): HoldedChatModelConfig {
+  switch (planCode) {
+    case 'pro':
+    case 'business':
+    case 'enterprise':
+      return { provider: 'anthropic', model: 'claude-sonnet-4-6' };
+    default:
+      return { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' };
+  }
+}
+
+type MemoryContext = Awaited<ReturnType<typeof getSimpleMemoryContext>>;
 
 async function buildLlmReply(input: {
   message: string;
@@ -305,18 +390,33 @@ async function buildLlmReply(input: {
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
   workspaceSignalsBlock: string | null;
+  modelConfig?: HoldedChatModelConfig;
+  memoryContext?: MemoryContext | null;
+  fewShotExamples?: { question: string; response: string }[];
 }): Promise<string | null> {
+  // Build conversation history from DB (last 8 turns max to stay within context)
+  const historyMessages: { role: 'user' | 'assistant'; content: string }[] = (
+    input.memoryContext?.recentMessages ?? []
+  )
+    .slice(-8)
+    .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
   try {
     const result = await callLLM({
+      provider: input.modelConfig?.provider,
+      model: input.modelConfig?.model,
       instructions: buildLlmInstructions({
         context: input.context,
         snapshot: input.snapshot,
         diagnosticProbe: input.diagnosticProbe,
         workspaceSignalsBlock: input.workspaceSignalsBlock,
+        recentFacts: input.memoryContext?.recentFacts ?? [],
+        fewShotExamples: input.fewShotExamples ?? [],
       }),
-      messages: [{ role: 'user', content: input.message }],
+      messages: [...historyMessages, { role: 'user', content: input.message }],
       temperature: 0.45,
       maxOutputTokens: 420,
+      enableFallback: true,
     });
     return result.text;
   } catch {
@@ -1027,6 +1127,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    const planCode = await loadTenantPlanCode(session.tenantId);
+    const modelConfig = resolveHoldedChatModel(planCode);
+
+    const [memoryContext, fewShotExamples] = await Promise.all([
+      conversation
+        ? getSimpleMemoryContext(
+            { tenantId: session.tenantId, userId: session.userId },
+            conversation.id
+          ).catch(() => null)
+        : Promise.resolve(null),
+      getTenantFewShotExamples(session.tenantId).catch(() => []),
+    ]);
+
     try {
       const llmReply = await buildLlmReply({
         message,
@@ -1034,6 +1147,9 @@ export async function POST(request: NextRequest) {
         snapshot,
         diagnosticProbe: connectionProbe,
         workspaceSignalsBlock,
+        modelConfig,
+        memoryContext,
+        fewShotExamples,
       }).catch((error) => {
         console.warn('[holded/chat] responses api failed, using deterministic fallback', {
           tenantId: session.tenantId,
@@ -1085,13 +1201,6 @@ export async function POST(request: NextRequest) {
       });
 
       await Promise.all([
-        getSimpleMemoryContext(
-          {
-            tenantId: session.tenantId,
-            userId: session.userId,
-          },
-          conversation.id
-        ),
         storeSimpleMemoryFact({
           tenantId: session.tenantId,
           userId: session.userId,

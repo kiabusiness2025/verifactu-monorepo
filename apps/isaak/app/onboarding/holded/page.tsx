@@ -1,6 +1,7 @@
-import { ArrowRight, CheckCircle2, Link2 } from 'lucide-react';
+import { CheckCircle2, Link2 } from 'lucide-react';
 import Link from 'next/link';
 import { APP_URL, HOLDed_URL, ISAAK_PUBLIC_URL } from '../../lib/isaak-navigation';
+import { ConsentStep } from './ConsentStep';
 
 const returnToChatUrl = `${ISAAK_PUBLIC_URL}/chat?source=holded_onboarding_return`;
 const holdedAuthUrl = `${HOLDed_URL}/auth/holded?source=isaak_onboarding&next=${encodeURIComponent(returnToChatUrl)}`;
@@ -48,22 +49,16 @@ export default function IsaakHoldedOnboardingPage() {
             </ul>
           </div>
 
-          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <a
-              href={holdedAuthUrl}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:bg-[#1f55c0]"
-            >
-              Conectar Holded ahora
-              <ArrowRight className="h-4 w-4" />
-            </a>
+          {/* L2: Consentimiento explícito antes de conectar Holded */}
+          <ConsentStep holdedAuthUrl={holdedAuthUrl} />
 
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             <Link
               href="/chat"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
             >
               Volver al chat de Isaak
             </Link>
-
             <a
               href={APP_URL}
               className="inline-flex items-center justify-center rounded-full border border-[#2361d8] bg-white px-6 py-3 text-sm font-semibold text-[#2361d8] hover:bg-[#2361d8]/10"

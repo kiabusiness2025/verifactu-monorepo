@@ -101,7 +101,15 @@ Extrae headers y rows de los datos devueltos por la herramienta.
 
 4. Validación Verifactu: cuando uses validate_verifactu_invoice, informa claramente del resultado: ✅ si es válido, o lista en rojo los campos que faltan.
 
-5. Datos Holded del tenant: cuando uses get_tenant_holded_data, presenta los datos como tablas Markdown. Si la operación devuelve facturas, muestra las columnas más relevantes (número, fecha, contacto, importe, estado). Si hay errores de API o clave no disponible, informa al administrador.`;
+5. Datos Holded del tenant: cuando uses get_tenant_holded_data, presenta los datos como tablas Markdown. Si la operación devuelve facturas, muestra las columnas más relevantes (número, fecha, contacto, importe, estado). Si hay errores de API o clave no disponible, informa al administrador.
+
+6. Análisis fiscal del tenant: cuando uses get_tenant_fiscal_analysis, presenta los resultados con estas secciones: tabla resumen IVA (Base imponible | IVA | Importe), resultado trimestral (cuota positiva = a ingresar, negativa = a devolver), y retenciones soportadas si las hay. Indica siempre que es una estimación basada en los datos disponibles en Holded.
+
+7. Modelo 303 estimado: cuando uses get_tenant_modelo_303, presenta las casillas del formulario como tabla Markdown (Casilla | Descripción | Importe €), indica claramente que es una estimación y finaliza con el resultado (a ingresar o a devolver). Añade siempre la advertencia de que debe ser validado por el asesor fiscal antes de presentar.
+
+8. Alertas de documentos pendientes: cuando uses get_tenant_unbooked_alerts, presenta primero el nivel de urgencia (🔴 URGENTE / 🟡 ATENCIÓN / 🟢 OK), después la tabla de facturas/compras pendientes con columnas (Número | Fecha | Contacto | Importe | Estado) y finalmente las acciones recomendadas.
+
+8. Comparativa de períodos: cuando uses get_tenant_period_comparison, presenta una tabla con columnas (Concepto | Período actual | Período anterior | Variación €| Variación %) y resalta en negrita las variaciones superiores al 20%.`;
 
 export type ToolInput = Record<string, unknown>;
 
@@ -112,7 +120,11 @@ export type ToolName =
   | 'get_activity_timeline'
   | 'suggest_accounting_entry'
   | 'validate_verifactu_invoice'
-  | 'get_tenant_holded_data';
+  | 'get_tenant_holded_data'
+  | 'get_tenant_fiscal_analysis'
+  | 'get_tenant_unbooked_alerts'
+  | 'get_tenant_period_comparison'
+  | 'get_tenant_modelo_303';
 
 export const TOOLS = [
   {
@@ -202,6 +214,78 @@ export const TOOLS = [
         nif_receptor: { type: 'string', description: 'NIF del receptor (requerido en B2B)' },
       },
       required: [],
+    },
+  },
+  {
+    name: 'get_tenant_modelo_303' as ToolName,
+    description:
+      'Genera un resumen estimado del Modelo 303 (declaración trimestral de IVA, España) para un tenant a partir de sus facturas y compras en Holded. Desglosa IVA repercutido por tipo (21%, 10%, 4%), calcula el IVA soportado deducible y el resultado (a ingresar o a devolver). Usa esta herramienta cuando el administrador pregunte por el modelo 303, la declaración de IVA, cuánto tiene que pagar en el trimestre o el resumen fiscal trimestral.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'UUID del tenant' },
+        year: { type: 'number', description: 'Año fiscal (por defecto el año en curso)' },
+        trimestre: {
+          type: 'number',
+          description:
+            'Trimestre: 1 (ene-mar), 2 (abr-jun), 3 (jul-sep), 4 (oct-dic). Por defecto el trimestre actual.',
+        },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'get_tenant_unbooked_alerts' as ToolName,
+    description:
+      'Detecta documentos pendientes o vencidos de un tenant en Holded: facturas de venta sin cobrar, compras sin pagar y documentos vencidos. Usa esta herramienta cuando el administrador pregunte por facturas sin contabilizar, documentos pendientes, alertas fiscales o situación de cobros/pagos de un tenant.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'UUID del tenant' },
+        days_overdue: {
+          type: 'number',
+          description: 'Días de antigüedad para considerar un documento urgente (por defecto 30)',
+        },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'get_tenant_period_comparison' as ToolName,
+    description:
+      'Compara ingresos, gastos e IVA de un tenant entre el período actual y el anterior. Tipo "mensual" compara este mes vs el mes pasado. Tipo "anual" compara el año en curso (YTD) vs el mismo período del año anterior. Usa esta herramienta cuando el administrador pida comparativas, tendencias, si el negocio va mejor o peor, o evolución de ingresos/gastos.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'UUID del tenant' },
+        tipo: {
+          type: 'string',
+          enum: ['mensual', 'anual'],
+          description: 'mensual: este mes vs mes anterior. anual: YTD actual vs YTD año anterior.',
+        },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'get_tenant_fiscal_analysis' as ToolName,
+    description:
+      'Analiza la situación fiscal trimestral de un tenant: IVA repercutido (ventas), IVA soportado (compras), cuota IVA estimada a pagar o devolver, y retenciones soportadas. Usa esta herramienta cuando el administrador pida el IVA del trimestre, situación fiscal, modelo 303 estimado, o análisis de retenciones de un tenant concreto.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'UUID del tenant' },
+        year: {
+          type: 'number',
+          description: 'Año fiscal (por defecto el año en curso)',
+        },
+        trimestre: {
+          type: 'number',
+          description:
+            'Trimestre: 1 (ene-mar), 2 (abr-jun), 3 (jul-sep), 4 (oct-dic). Por defecto el trimestre actual.',
+        },
+      },
+      required: ['tenant_id'],
     },
   },
   {
@@ -497,6 +581,760 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
         ? 'Sin NIF receptor: se tratará como factura B2C (simplificada). En operaciones B2B el NIF receptor es obligatorio.'
         : undefined,
     });
+  }
+
+  if (name === 'get_tenant_modelo_303') {
+    const tenantId = String(input.tenant_id ?? '');
+    if (!tenantId) return JSON.stringify({ error: 'tenant_id es obligatorio' });
+
+    const now = new Date();
+    const year = typeof input.year === 'number' ? input.year : now.getUTCFullYear();
+    const currentQ = Math.floor(now.getUTCMonth() / 3) + 1;
+    const trimestre =
+      typeof input.trimestre === 'number' && [1, 2, 3, 4].includes(input.trimestre)
+        ? input.trimestre
+        : currentQ;
+
+    const qStart = new Date(Date.UTC(year, (trimestre - 1) * 3, 1));
+    const qEnd = new Date(Date.UTC(year, trimestre * 3, 0, 23, 59, 59));
+    const qStartTs = Math.floor(qStart.getTime() / 1000);
+    const qEndTs = Math.floor(qEnd.getTime() / 1000);
+
+    const apiKey = await getTenantHoldedApiKey(tenantId);
+    if (!apiKey) {
+      return JSON.stringify({
+        error: 'No hay API key válida para este tenant.',
+        tenant_id: tenantId,
+      });
+    }
+
+    type HoldedDoc = {
+      date?: number;
+      total?: number;
+      subtotal?: number;
+      tax?: number;
+      retention?: number;
+    };
+
+    const fetchQuarterDocs = async (docType: string): Promise<HoldedDoc[]> => {
+      const results: HoldedDoc[] = [];
+      for (let page = 1; page <= 4; page++) {
+        const batch = (await callHoldedApi(apiKey!, `/api/invoicing/v1/documents/${docType}`, {
+          page: String(page),
+        }).catch(() => [])) as HoldedDoc[];
+        if (!Array.isArray(batch) || batch.length === 0) break;
+        results.push(
+          ...batch.filter(
+            (d) => typeof d.date === 'number' && d.date >= qStartTs && d.date <= qEndTs
+          )
+        );
+        if (batch.length < 15) break;
+      }
+      return results;
+    };
+
+    // Snap effective rate to nearest standard Spanish IVA bracket
+    const snapToStandardRate = (effectivePct: number): 0 | 4 | 10 | 21 => {
+      if (effectivePct <= 1) return 0;
+      if (effectivePct <= 7) return 4;
+      if (effectivePct <= 15.5) return 10;
+      return 21;
+    };
+
+    const detectRate = (d: HoldedDoc): 0 | 4 | 10 | 21 => {
+      const total = d.total ?? 0;
+      if (total <= 0) return 0;
+      const subtotal = typeof d.subtotal === 'number' && d.subtotal > 0 ? d.subtotal : null;
+      const tax = typeof d.tax === 'number' ? d.tax : null;
+
+      if (subtotal !== null && subtotal > 0) {
+        const effectivePct = ((total - subtotal) / subtotal) * 100;
+        return snapToStandardRate(effectivePct);
+      }
+      if (tax !== null && tax > 0) {
+        const base = total - tax;
+        if (base > 0) return snapToStandardRate((tax / base) * 100);
+      }
+      // No tax info: assume 21% (general)
+      return 21;
+    };
+
+    const baseFromDoc = (d: HoldedDoc): number => {
+      const total = d.total ?? 0;
+      if (typeof d.subtotal === 'number' && d.subtotal > 0) return d.subtotal;
+      const rate = detectRate(d);
+      if (rate === 0) return total;
+      return parseFloat((total / (1 + rate / 100)).toFixed(2));
+    };
+
+    try {
+      const [invoices, purchases] = await Promise.all([
+        fetchQuarterDocs('invoice'),
+        fetchQuarterDocs('purchase'),
+      ]);
+
+      // IVA repercutido: desglose por tipo
+      const repercutido = {
+        base21: 0,
+        cuota21: 0,
+        base10: 0,
+        cuota10: 0,
+        base4: 0,
+        cuota4: 0,
+        base0: 0,
+      };
+      let retenciones = 0;
+
+      for (const d of invoices) {
+        const rate = detectRate(d);
+        const base = baseFromDoc(d);
+        const cuota = parseFloat(((d.total ?? 0) - base).toFixed(2));
+        if (rate === 21) {
+          repercutido.base21 += base;
+          repercutido.cuota21 += cuota;
+        } else if (rate === 10) {
+          repercutido.base10 += base;
+          repercutido.cuota10 += cuota;
+        } else if (rate === 4) {
+          repercutido.base4 += base;
+          repercutido.cuota4 += cuota;
+        } else {
+          repercutido.base0 += base;
+        }
+      }
+
+      // IVA soportado: suma total (compras)
+      let baseSoportado = 0;
+      let cuotaSoportada = 0;
+      for (const d of purchases) {
+        const base = baseFromDoc(d);
+        const cuota = parseFloat(((d.total ?? 0) - base).toFixed(2));
+        baseSoportado += base;
+        cuotaSoportada += cuota;
+        if (typeof d.retention === 'number' && d.retention > 0) retenciones += d.retention;
+      }
+
+      const r = repercutido;
+      const totalRepercutido = parseFloat((r.cuota21 + r.cuota10 + r.cuota4).toFixed(2));
+      const totalSoportado = parseFloat(cuotaSoportada.toFixed(2));
+      const casilla47 = parseFloat((totalRepercutido - totalSoportado).toFixed(2));
+      const resultado = casilla47; // simplified (no compensaciones previas)
+
+      const qLabel = `T${trimestre}/${year}`;
+      const periodoDesc = [
+        '',
+        'enero-marzo',
+        'abril-junio',
+        'julio-septiembre',
+        'octubre-diciembre',
+      ][trimestre];
+
+      // 303 casillas structure
+      type Casilla = { num: string; descripcion: string; base: number | null; cuota: number };
+      const casillas: Casilla[] = [
+        {
+          num: '01',
+          descripcion: 'Base imponible — Tipo general 21%',
+          base: parseFloat(r.base21.toFixed(2)),
+          cuota: parseFloat(r.cuota21.toFixed(2)),
+        },
+        {
+          num: '02',
+          descripcion: 'Cuota devengada — Tipo general 21%',
+          base: null,
+          cuota: parseFloat(r.cuota21.toFixed(2)),
+        },
+        {
+          num: '03',
+          descripcion: 'Base imponible — Tipo reducido 10%',
+          base: parseFloat(r.base10.toFixed(2)),
+          cuota: parseFloat(r.cuota10.toFixed(2)),
+        },
+        {
+          num: '04',
+          descripcion: 'Cuota devengada — Tipo reducido 10%',
+          base: null,
+          cuota: parseFloat(r.cuota10.toFixed(2)),
+        },
+        {
+          num: '05',
+          descripcion: 'Base imponible — Tipo superreducido 4%',
+          base: parseFloat(r.base4.toFixed(2)),
+          cuota: parseFloat(r.cuota4.toFixed(2)),
+        },
+        {
+          num: '06',
+          descripcion: 'Cuota devengada — Tipo superreducido 4%',
+          base: null,
+          cuota: parseFloat(r.cuota4.toFixed(2)),
+        },
+        {
+          num: '07',
+          descripcion: 'Total cuota devengada (IVA repercutido)',
+          base: null,
+          cuota: totalRepercutido,
+        },
+        {
+          num: '28',
+          descripcion: 'Base imponible deducible (compras)',
+          base: parseFloat(baseSoportado.toFixed(2)),
+          cuota: totalSoportado,
+        },
+        {
+          num: '29',
+          descripcion: 'Cuota IVA soportado deducible',
+          base: null,
+          cuota: totalSoportado,
+        },
+        { num: '46', descripcion: 'Total IVA deducible', base: null, cuota: totalSoportado },
+        { num: '47', descripcion: 'Diferencia (casilla 07 − 46)', base: null, cuota: casilla47 },
+        {
+          num: '70',
+          descripcion: resultado >= 0 ? 'Resultado — A INGRESAR' : 'Resultado — A DEVOLVER',
+          base: null,
+          cuota: Math.abs(resultado),
+        },
+      ];
+
+      return JSON.stringify({
+        tenant_id: tenantId,
+        modelo: '303',
+        periodo: qLabel,
+        trimestre,
+        year,
+        periodo_descripcion: periodoDesc,
+        documentos_analizados: { ventas: invoices.length, compras: purchases.length },
+        casillas,
+        resultado: {
+          importe: resultado,
+          estado: resultado >= 0 ? 'a_ingresar' : 'a_devolver',
+          descripcion:
+            resultado >= 0
+              ? `A ingresar en Hacienda: ${resultado.toFixed(2)} €`
+              : `A devolver por Hacienda: ${Math.abs(resultado).toFixed(2)} €`,
+        },
+        retenciones_soportadas:
+          retenciones > 0
+            ? {
+                total: parseFloat(retenciones.toFixed(2)),
+                nota: 'Retenciones detectadas en compras (servicios profesionales). No forman parte del Mod. 303 pero se declaran en Mod. 115/190.',
+              }
+            : null,
+        aviso:
+          'Estimación automática basada en los datos de Holded. Puede haber facturas fuera de la primera página o con tipos de IVA no detectados. Valida con tu asesor antes de presentar.',
+        excel_block: {
+          type: 'excel_export',
+          filename: `modelo-303-${qLabel.toLowerCase().replace('/', '-')}-${tenantId.slice(0, 8)}.xlsx`,
+          label: 'Descargar Modelo 303 estimado (Excel)',
+          headers: ['Casilla', 'Descripción', 'Base imponible (€)', 'Cuota (€)'],
+          rows: casillas.map((c) => [
+            c.num,
+            c.descripcion,
+            c.base !== null ? c.base.toFixed(2) : '—',
+            c.cuota.toFixed(2),
+          ]),
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return JSON.stringify({ error: `Error generando Modelo 303: ${msg}`, tenant_id: tenantId });
+    }
+  }
+
+  if (name === 'get_tenant_unbooked_alerts') {
+    const tenantId = String(input.tenant_id ?? '');
+    if (!tenantId) return JSON.stringify({ error: 'tenant_id es obligatorio' });
+
+    const daysOverdue =
+      typeof input.days_overdue === 'number' ? Math.max(1, input.days_overdue) : 30;
+
+    const apiKey = await getTenantHoldedApiKey(tenantId);
+    if (!apiKey) {
+      return JSON.stringify({
+        error: 'No hay API key válida para este tenant.',
+        tenant_id: tenantId,
+      });
+    }
+
+    type HoldedDoc = {
+      id?: string;
+      docNumber?: string;
+      date?: number;
+      dueDate?: number;
+      total?: number;
+      contactName?: string;
+      paid?: boolean;
+      status?: number;
+    };
+
+    try {
+      const [invoices, purchases] = await Promise.all([
+        callHoldedApi(apiKey, '/api/invoicing/v1/documents/invoice', { page: '1' }).catch(
+          () => []
+        ) as Promise<HoldedDoc[]>,
+        callHoldedApi(apiKey, '/api/invoicing/v1/documents/purchase', { page: '1' }).catch(
+          () => []
+        ) as Promise<HoldedDoc[]>,
+      ]);
+
+      const now = Date.now() / 1000;
+      const cutoffTs = now - daysOverdue * 86400;
+
+      const classifyDoc = (d: HoldedDoc): 'overdue' | 'pending' | null => {
+        if (d.paid) return null;
+        if (d.status === 0) return null; // draft
+        if (d.status === 2) return 'overdue';
+        if (d.status === 1 && typeof d.date === 'number' && d.date < cutoffTs) return 'overdue';
+        if (d.status === 1) return 'pending';
+        return null;
+      };
+
+      type AlertDoc = {
+        numero: string | null;
+        fecha: string | null;
+        contacto: string | null;
+        total_eur: number;
+        estado: string;
+        urgente: boolean;
+      };
+
+      const pendingInvoices: AlertDoc[] = [];
+      const pendingPurchases: AlertDoc[] = [];
+
+      for (const d of Array.isArray(invoices) ? invoices : []) {
+        const cls = classifyDoc(d);
+        if (!cls) continue;
+        pendingInvoices.push({
+          numero: d.docNumber ?? null,
+          fecha: d.date ? new Date(d.date * 1000).toISOString().slice(0, 10) : null,
+          contacto: d.contactName ?? null,
+          total_eur: d.total ?? 0,
+          estado: cls === 'overdue' ? 'vencida' : 'pendiente',
+          urgente: cls === 'overdue',
+        });
+      }
+
+      for (const d of Array.isArray(purchases) ? purchases : []) {
+        const cls = classifyDoc(d);
+        if (!cls) continue;
+        pendingPurchases.push({
+          numero: d.docNumber ?? null,
+          fecha: d.date ? new Date(d.date * 1000).toISOString().slice(0, 10) : null,
+          contacto: d.contactName ?? null,
+          total_eur: d.total ?? 0,
+          estado: cls === 'overdue' ? 'vencida' : 'pendiente',
+          urgente: cls === 'overdue',
+        });
+      }
+
+      const urgentInvoices = pendingInvoices.filter((d) => d.urgente).length;
+      const urgentPurchases = pendingPurchases.filter((d) => d.urgente).length;
+      const totalPending = pendingInvoices.length + pendingPurchases.length;
+
+      let urgencyLevel: 'URGENTE' | 'ATENCIÓN' | 'OK';
+      if (urgentInvoices > 0 || urgentPurchases > 0) urgencyLevel = 'URGENTE';
+      else if (totalPending > 0) urgencyLevel = 'ATENCIÓN';
+      else urgencyLevel = 'OK';
+
+      const totalPendingInvoicesEur = pendingInvoices.reduce((s, d) => s + d.total_eur, 0);
+      const totalPendingPurchasesEur = pendingPurchases.reduce((s, d) => s + d.total_eur, 0);
+
+      return JSON.stringify({
+        tenant_id: tenantId,
+        urgencia: urgencyLevel,
+        resumen: {
+          facturas_pendientes: pendingInvoices.length,
+          facturas_vencidas: urgentInvoices,
+          total_por_cobrar_eur: parseFloat(totalPendingInvoicesEur.toFixed(2)),
+          compras_pendientes: pendingPurchases.length,
+          compras_vencidas: urgentPurchases,
+          total_por_pagar_eur: parseFloat(totalPendingPurchasesEur.toFixed(2)),
+        },
+        facturas_pendientes: pendingInvoices.slice(0, 15),
+        compras_pendientes: pendingPurchases.slice(0, 15),
+        acciones_recomendadas:
+          urgencyLevel === 'OK'
+            ? ['No hay documentos pendientes urgentes.']
+            : [
+                urgentInvoices > 0
+                  ? `Revisar ${urgentInvoices} factura(s) de venta vencida(s) con ${totalPendingInvoicesEur.toFixed(0)} € sin cobrar.`
+                  : null,
+                urgentPurchases > 0
+                  ? `Atender ${urgentPurchases} compra(s) vencida(s) con ${totalPendingPurchasesEur.toFixed(0)} € sin pagar.`
+                  : null,
+                pendingInvoices.length > urgentInvoices
+                  ? `${pendingInvoices.length - urgentInvoices} factura(s) de venta pendiente(s) (aún no vencidas).`
+                  : null,
+              ].filter(Boolean),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return JSON.stringify({ error: `Error consultando Holded: ${msg}`, tenant_id: tenantId });
+    }
+  }
+
+  if (name === 'get_tenant_period_comparison') {
+    const tenantId = String(input.tenant_id ?? '');
+    if (!tenantId) return JSON.stringify({ error: 'tenant_id es obligatorio' });
+
+    const tipo = String(input.tipo ?? 'mensual') === 'anual' ? 'anual' : 'mensual';
+
+    const apiKey = await getTenantHoldedApiKey(tenantId);
+    if (!apiKey) {
+      return JSON.stringify({
+        error: 'No hay API key válida para este tenant.',
+        tenant_id: tenantId,
+      });
+    }
+
+    const now = new Date();
+    let curStart: Date,
+      curEnd: Date,
+      prevStart: Date,
+      prevEnd: Date,
+      curLabel: string,
+      prevLabel: string;
+
+    if (tipo === 'mensual') {
+      const y = now.getUTCFullYear();
+      const m = now.getUTCMonth();
+      curStart = new Date(Date.UTC(y, m, 1));
+      curEnd = now;
+      prevStart = new Date(Date.UTC(y, m - 1, 1));
+      prevEnd = new Date(Date.UTC(y, m, 0, 23, 59, 59));
+      const months = [
+        'ene',
+        'feb',
+        'mar',
+        'abr',
+        'may',
+        'jun',
+        'jul',
+        'ago',
+        'sep',
+        'oct',
+        'nov',
+        'dic',
+      ];
+      curLabel = `${months[m]} ${y}`;
+      prevLabel = `${months[(m + 11) % 12]} ${m === 0 ? y - 1 : y}`;
+    } else {
+      const y = now.getUTCFullYear();
+      const dayOfYear = Math.floor((now.getTime() - Date.UTC(y, 0, 1)) / 86400000);
+      curStart = new Date(Date.UTC(y, 0, 1));
+      curEnd = now;
+      prevStart = new Date(Date.UTC(y - 1, 0, 1));
+      prevEnd = new Date(Date.UTC(y - 1, 0, 1 + dayOfYear, 23, 59, 59));
+      curLabel = `YTD ${y}`;
+      prevLabel = `YTD ${y - 1}`;
+    }
+
+    const toTs = (d: Date) => Math.floor(d.getTime() / 1000);
+    const curStartTs = toTs(curStart);
+    const curEndTs = toTs(curEnd);
+    const prevStartTs = toTs(prevStart);
+    const prevEndTs = toTs(prevEnd);
+
+    type HoldedDoc = { date?: number; total?: number; subtotal?: number; tax?: number };
+
+    const fetchFiltered = async (
+      docType: string,
+      startTs: number,
+      endTs: number
+    ): Promise<HoldedDoc[]> => {
+      const all: HoldedDoc[] = [];
+      for (let page = 1; page <= 3; page++) {
+        const batch = (await callHoldedApi(apiKey!, `/api/invoicing/v1/documents/${docType}`, {
+          page: String(page),
+        }).catch(() => [])) as HoldedDoc[];
+        if (!Array.isArray(batch) || batch.length === 0) break;
+        all.push(
+          ...batch.filter((d) => typeof d.date === 'number' && d.date >= startTs && d.date <= endTs)
+        );
+        if (batch.length < 15) break;
+      }
+      return all;
+    };
+
+    try {
+      const [curInv, curPur, prevInv, prevPur] = await Promise.all([
+        fetchFiltered('invoice', curStartTs, curEndTs),
+        fetchFiltered('purchase', curStartTs, curEndTs),
+        fetchFiltered('invoice', prevStartTs, prevEndTs),
+        fetchFiltered('purchase', prevStartTs, prevEndTs),
+      ]);
+
+      const sumPeriod = (inv: HoldedDoc[], pur: HoldedDoc[]) => {
+        const ingresos = inv.reduce((s, d) => s + (d.total ?? 0), 0);
+        const gastos = pur.reduce((s, d) => s + (d.total ?? 0), 0);
+        const baseIngresos = inv.reduce((s, d) => s + (d.subtotal ?? d.total ?? 0), 0);
+        const basePur = pur.reduce((s, d) => s + (d.subtotal ?? d.total ?? 0), 0);
+        const ivaRepercutido = parseFloat((ingresos - baseIngresos).toFixed(2));
+        const ivaSoportado = parseFloat((gastos - basePur).toFixed(2));
+        return {
+          ingresos: parseFloat(ingresos.toFixed(2)),
+          gastos: parseFloat(gastos.toFixed(2)),
+          margen: parseFloat((ingresos - gastos).toFixed(2)),
+          iva_repercutido: ivaRepercutido,
+          iva_soportado: ivaSoportado,
+          cuota_iva: parseFloat((ivaRepercutido - ivaSoportado).toFixed(2)),
+          docs_ventas: inv.length,
+          docs_compras: pur.length,
+        };
+      };
+
+      const cur = sumPeriod(curInv, curPur);
+      const prev = sumPeriod(prevInv, prevPur);
+
+      const delta = (a: number, b: number) => {
+        const diff = parseFloat((a - b).toFixed(2));
+        const pct = b !== 0 ? parseFloat(((diff / Math.abs(b)) * 100).toFixed(1)) : null;
+        return { diff, pct };
+      };
+
+      return JSON.stringify({
+        tenant_id: tenantId,
+        tipo,
+        periodo_actual: curLabel,
+        periodo_anterior: prevLabel,
+        comparativa: {
+          ingresos: {
+            actual: cur.ingresos,
+            anterior: prev.ingresos,
+            ...delta(cur.ingresos, prev.ingresos),
+          },
+          gastos: { actual: cur.gastos, anterior: prev.gastos, ...delta(cur.gastos, prev.gastos) },
+          margen: { actual: cur.margen, anterior: prev.margen, ...delta(cur.margen, prev.margen) },
+          iva_repercutido: {
+            actual: cur.iva_repercutido,
+            anterior: prev.iva_repercutido,
+            ...delta(cur.iva_repercutido, prev.iva_repercutido),
+          },
+          iva_soportado: {
+            actual: cur.iva_soportado,
+            anterior: prev.iva_soportado,
+            ...delta(cur.iva_soportado, prev.iva_soportado),
+          },
+          cuota_iva: {
+            actual: cur.cuota_iva,
+            anterior: prev.cuota_iva,
+            ...delta(cur.cuota_iva, prev.cuota_iva),
+          },
+        },
+        documentos: {
+          ventas_actual: cur.docs_ventas,
+          ventas_anterior: prev.docs_ventas,
+          compras_actual: cur.docs_compras,
+          compras_anterior: prev.docs_compras,
+        },
+        excel_block: {
+          type: 'excel_export',
+          filename: `comparativa-${tipo}-${tenantId.slice(0, 8)}.xlsx`,
+          label: 'Descargar comparativa Excel',
+          headers: ['Concepto', curLabel, prevLabel, 'Variación €', 'Variación %'],
+          rows: [
+            [
+              'Ingresos (ventas)',
+              cur.ingresos.toFixed(2),
+              prev.ingresos.toFixed(2),
+              delta(cur.ingresos, prev.ingresos).diff.toFixed(2),
+              delta(cur.ingresos, prev.ingresos).pct !== null
+                ? `${delta(cur.ingresos, prev.ingresos).pct}%`
+                : 'N/A',
+            ],
+            [
+              'Gastos (compras)',
+              cur.gastos.toFixed(2),
+              prev.gastos.toFixed(2),
+              delta(cur.gastos, prev.gastos).diff.toFixed(2),
+              delta(cur.gastos, prev.gastos).pct !== null
+                ? `${delta(cur.gastos, prev.gastos).pct}%`
+                : 'N/A',
+            ],
+            [
+              'Margen bruto',
+              cur.margen.toFixed(2),
+              prev.margen.toFixed(2),
+              delta(cur.margen, prev.margen).diff.toFixed(2),
+              delta(cur.margen, prev.margen).pct !== null
+                ? `${delta(cur.margen, prev.margen).pct}%`
+                : 'N/A',
+            ],
+            [
+              'IVA a ingresar/devolver',
+              cur.cuota_iva.toFixed(2),
+              prev.cuota_iva.toFixed(2),
+              delta(cur.cuota_iva, prev.cuota_iva).diff.toFixed(2),
+              delta(cur.cuota_iva, prev.cuota_iva).pct !== null
+                ? `${delta(cur.cuota_iva, prev.cuota_iva).pct}%`
+                : 'N/A',
+            ],
+          ],
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return JSON.stringify({ error: `Error en comparativa: ${msg}`, tenant_id: tenantId });
+    }
+  }
+
+  if (name === 'get_tenant_fiscal_analysis') {
+    const tenantId = String(input.tenant_id ?? '');
+    if (!tenantId) return JSON.stringify({ error: 'tenant_id es obligatorio' });
+
+    const now = new Date();
+    const year = typeof input.year === 'number' ? input.year : now.getUTCFullYear();
+    const currentQ = Math.floor(now.getUTCMonth() / 3) + 1;
+    const trimestre =
+      typeof input.trimestre === 'number' && [1, 2, 3, 4].includes(input.trimestre)
+        ? input.trimestre
+        : currentQ;
+
+    const qStart = new Date(Date.UTC(year, (trimestre - 1) * 3, 1, 0, 0, 0));
+    const qEnd = new Date(Date.UTC(year, trimestre * 3, 0, 23, 59, 59));
+    const qStartTs = Math.floor(qStart.getTime() / 1000);
+    const qEndTs = Math.floor(qEnd.getTime() / 1000);
+
+    const apiKey = await getTenantHoldedApiKey(tenantId);
+    if (!apiKey) {
+      return JSON.stringify({
+        error: 'No hay API key válida para este tenant. Debe tener algún conector Holded activo.',
+        tenant_id: tenantId,
+      });
+    }
+
+    type HoldedDoc = {
+      id?: string;
+      docNumber?: string;
+      date?: number;
+      total?: number;
+      subtotal?: number;
+      tax?: number;
+      retention?: number;
+      contactName?: string;
+      paid?: boolean;
+      status?: number;
+    };
+
+    const fetchAllPages = async (docType: string): Promise<HoldedDoc[]> => {
+      const results: HoldedDoc[] = [];
+      for (let page = 1; page <= 4; page++) {
+        const batch = (await callHoldedApi(apiKey!, `/api/invoicing/v1/documents/${docType}`, {
+          page: String(page),
+        }).catch(() => [])) as HoldedDoc[];
+        if (!Array.isArray(batch) || batch.length === 0) break;
+        results.push(...batch);
+        if (batch.length < 15) break; // last page
+      }
+      return results;
+    };
+
+    try {
+      const [allInvoices, allPurchases] = await Promise.all([
+        fetchAllPages('invoice'),
+        fetchAllPages('purchase'),
+      ]);
+
+      const invoicesQ = allInvoices.filter(
+        (d) => typeof d.date === 'number' && d.date >= qStartTs && d.date <= qEndTs
+      );
+      const purchasesQ = allPurchases.filter(
+        (d) => typeof d.date === 'number' && d.date >= qStartTs && d.date <= qEndTs
+      );
+
+      // Sum IVA: prefer tax field; estimate 21% from total-subtotal when missing
+      const ivaFromDoc = (d: HoldedDoc): { base: number; iva: number } => {
+        const total = d.total ?? 0;
+        if (typeof d.subtotal === 'number' && d.subtotal > 0) {
+          return { base: d.subtotal, iva: parseFloat((total - d.subtotal).toFixed(2)) };
+        }
+        if (typeof d.tax === 'number' && d.tax > 0) {
+          return { base: parseFloat((total - d.tax).toFixed(2)), iva: d.tax };
+        }
+        // Fallback: assume 21%
+        const base = parseFloat((total / 1.21).toFixed(2));
+        return { base, iva: parseFloat((total - base).toFixed(2)) };
+      };
+
+      let baseVentas = 0;
+      let ivaRepercutido = 0;
+      let baseCompras = 0;
+      let ivaSoportado = 0;
+      let retenciones = 0;
+
+      for (const d of invoicesQ) {
+        const { base, iva } = ivaFromDoc(d);
+        baseVentas += base;
+        ivaRepercutido += iva;
+      }
+      for (const d of purchasesQ) {
+        const { base, iva } = ivaFromDoc(d);
+        baseCompras += base;
+        ivaSoportado += iva;
+        if (typeof d.retention === 'number' && d.retention > 0) {
+          retenciones += d.retention;
+        }
+      }
+
+      const cuotaIva = parseFloat((ivaRepercutido - ivaSoportado).toFixed(2));
+      const qLabel = `T${trimestre} ${year}`;
+
+      return JSON.stringify({
+        tenant_id: tenantId,
+        periodo: qLabel,
+        trimestre,
+        year,
+        ventas: {
+          documentos: invoicesQ.length,
+          base_imponible: parseFloat(baseVentas.toFixed(2)),
+          iva_repercutido: parseFloat(ivaRepercutido.toFixed(2)),
+        },
+        compras: {
+          documentos: purchasesQ.length,
+          base_imponible: parseFloat(baseCompras.toFixed(2)),
+          iva_soportado: parseFloat(ivaSoportado.toFixed(2)),
+        },
+        resultado_iva: {
+          cuota: cuotaIva,
+          estado: cuotaIva >= 0 ? 'a_ingresar' : 'a_devolver',
+          descripcion:
+            cuotaIva >= 0
+              ? `Cuota a ingresar en Hacienda: ${cuotaIva.toFixed(2)} €`
+              : `Cuota a devolver por Hacienda: ${Math.abs(cuotaIva).toFixed(2)} €`,
+        },
+        retenciones_soportadas: {
+          total: parseFloat(retenciones.toFixed(2)),
+          nota:
+            retenciones > 0
+              ? 'Retenciones en facturas de compra (servicios profesionales). Deducibles en IRPF/IS.'
+              : 'No se detectaron retenciones en los documentos de compra de este período.',
+        },
+        nota: `Estimación basada en ${invoicesQ.length + purchasesQ.length} documentos de ${qLabel}. Puede haber documentos fuera de la primera página. Consulta con tu asesor para cifras definitivas.`,
+        excel_block: {
+          type: 'excel_export',
+          filename: `fiscal-${qLabel.toLowerCase().replace(' ', '-')}-${tenantId.slice(0, 8)}.xlsx`,
+          label: 'Descargar análisis fiscal Excel',
+          headers: ['Concepto', 'Base imponible (€)', 'IVA (€)', 'Resultado (€)'],
+          rows: [
+            ['IVA repercutido (ventas)', baseVentas.toFixed(2), ivaRepercutido.toFixed(2), ''],
+            ['IVA soportado (compras)', baseCompras.toFixed(2), ivaSoportado.toFixed(2), ''],
+            ['Retenciones soportadas', '', '', retenciones.toFixed(2)],
+            [
+              cuotaIva >= 0 ? 'CUOTA A INGRESAR' : 'CUOTA A DEVOLVER',
+              '',
+              '',
+              Math.abs(cuotaIva).toFixed(2),
+            ],
+          ],
+        },
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      return JSON.stringify({
+        error: `Error en análisis fiscal: ${msg}`,
+        tenant_id: tenantId,
+      });
+    }
   }
 
   if (name === 'get_tenant_holded_data') {

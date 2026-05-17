@@ -14,6 +14,8 @@ import {
   Plus,
   SendHorizonal,
   Sparkles,
+  ThumbsDown,
+  ThumbsUp,
   Volume2,
   VolumeX,
   X,
@@ -331,6 +333,7 @@ export default function IsaakChatSection({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isListening, setIsListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [ratings, setRatings] = useState<Record<string, 'thumbs_up' | 'thumbs_down'>>({});
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
@@ -402,6 +405,32 @@ export default function IsaakChatSection({
       window.speechSynthesis.speak(utterance);
     },
     [speakingId]
+  );
+
+  const sendFeedback = useCallback(
+    async (assistantMsgId: string, rating: 'thumbs_up' | 'thumbs_down', allMessages: Message[]) => {
+      if (ratings[assistantMsgId]) return;
+      setRatings((prev) => ({ ...prev, [assistantMsgId]: rating }));
+
+      const idx = allMessages.findIndex((m) => m.id === assistantMsgId);
+      const assistantMsg = allMessages[idx];
+      const userMsg = idx > 0 ? allMessages[idx - 1] : null;
+      if (!assistantMsg || !userMsg || userMsg.role !== 'user') return;
+
+      void fetch('/api/holded/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: userMsg.content,
+          response: assistantMsg.content,
+          rating,
+          conversationId: conversationId ?? undefined,
+        }),
+      }).catch(() => {
+        // non-blocking
+      });
+    },
+    [ratings, conversationId]
   );
 
   const chips = holdedConnected
@@ -600,6 +629,37 @@ export default function IsaakChatSection({
                   <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3">
                     <IsaakMarkdown text={msg.content} />
                   </div>
+                  {/* Thumbs feedback — only shown for Holded chat */}
+                  {holdedConnected && (
+                    <div className="absolute -bottom-2 left-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => void sendFeedback(msg.id, 'thumbs_up', messages)}
+                        title="Buena respuesta"
+                        disabled={!!ratings[msg.id]}
+                        className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
+                          ratings[msg.id] === 'thumbs_up'
+                            ? 'border-emerald-300 text-emerald-600'
+                            : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'
+                        }`}
+                      >
+                        <ThumbsUp size={10} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void sendFeedback(msg.id, 'thumbs_down', messages)}
+                        title="Mejorable"
+                        disabled={!!ratings[msg.id]}
+                        className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
+                          ratings[msg.id] === 'thumbs_down'
+                            ? 'border-rose-300 text-rose-500'
+                            : 'border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-500'
+                        }`}
+                      >
+                        <ThumbsDown size={10} />
+                      </button>
+                    </div>
+                  )}
                   <button
                     type="button"
                     onClick={() => speakMessage(msg.id, msg.content)}

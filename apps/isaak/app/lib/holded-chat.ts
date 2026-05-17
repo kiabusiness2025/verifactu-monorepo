@@ -56,3 +56,21 @@ export async function storeSimpleMemoryFact(input: {
 export async function getSimpleMemoryContext(scope: SessionScope, conversationId: string) {
   return getTenantMemoryContext(prisma, scope, conversationId);
 }
+
+export async function getTenantFewShotExamples(
+  tenantId: string,
+  limit = 5
+): Promise<{ question: string; response: string }[]> {
+  const rows = await prisma.$queryRawUnsafe<{ question: string; response: string }[]>(
+    `SELECT question, response
+     FROM isaak_feedback
+     WHERE module_key = 'holded_chat'
+       AND rating = 'thumbs_up'
+       AND tenant_id = $1::uuid
+     ORDER BY created_at DESC
+     LIMIT $2`,
+    tenantId,
+    limit
+  );
+  return rows ?? [];
+}

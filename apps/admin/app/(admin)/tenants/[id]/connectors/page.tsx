@@ -13,6 +13,30 @@ import { adminGet, adminPost } from '@/lib/adminApi';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+type IsaakSettings = {
+  holded_enabled: boolean;
+  consent_given: boolean;
+  consent_given_at: string | null;
+  enabled_by: string | null;
+  enabled_at: string | null;
+  notes: string | null;
+};
+
+type IsaakUsage = {
+  conversations: {
+    total: number;
+    firstActivityAt: string | null;
+    lastActivityAt: string | null;
+  };
+  messages: {
+    total: number;
+    last30Days: number;
+    byRole: { user: number; assistant: number };
+  };
+  feedback: { thumbsUp: number; thumbsDown: number };
+  usageEvents: { type: string; count: number }[];
+};
+
 type ConnectorRow = {
   id: string;
   channelKey: 'dashboard' | 'chatgpt' | 'mobile' | 'claude' | string;
@@ -72,16 +96,23 @@ export default function TenantConnectorsPage() {
   const [error, setError] = useState<string | null>(null);
   const [revokeBusy, setRevokeBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [isaakSettings, setIsaakSettings] = useState<IsaakSettings | null>(null);
+  const [isaakBusy, setIsaakBusy] = useState(false);
+  const [isaakUsage, setIsaakUsage] = useState<IsaakUsage | null>(null);
 
   const reload = useCallback(async () => {
     if (!tenantId) return;
     setLoading(true);
     setError(null);
     try {
-      const data = await adminGet<{ items: ConnectorRow[] }>(
-        `/api/admin/tenants/${tenantId}/connectors`
-      );
-      setItems(data.items ?? []);
+      const [connectorsData, settingsData, usageData] = await Promise.all([
+        adminGet<{ items: ConnectorRow[] }>(`/api/admin/tenants/${tenantId}/connectors`),
+        adminGet<IsaakSettings>(`/api/admin/tenants/${tenantId}/isaak-settings`).catch(() => null),
+        adminGet<IsaakUsage>(`/api/admin/tenants/${tenantId}/isaak-usage`).catch(() => null),
+      ]);
+      setItems(connectorsData.items ?? []);
+      if (settingsData) setIsaakSettings(settingsData);
+      if (usageData) setIsaakUsage(usageData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error cargando conectores');
     } finally {
@@ -92,6 +123,24 @@ export default function TenantConnectorsPage() {
   useEffect(() => {
     reload();
   }, [reload]);
+
+  async function handleIsaakToggle(enable: boolean) {
+    if (!tenantId || isaakBusy) return;
+    setIsaakBusy(true);
+    setNotice(null);
+    try {
+      const result = await adminPost<IsaakSettings & { ok: boolean }>(
+        `/api/admin/tenants/${tenantId}/isaak-settings`,
+        { holded_enabled: enable }
+      );
+      setIsaakSettings((prev) => ({ ...(prev ?? ({} as IsaakSettings)), ...result }));
+      setNotice(enable ? 'Isaak Holded activado para este tenant.' : 'Isaak Holded desactivado.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error actualizando configuración Isaak');
+    } finally {
+      setIsaakBusy(false);
+    }
+  }
 
   async function handleRevoke(connectionId: string, channelKey: string) {
     if (!tenantId) return;
@@ -261,8 +310,171 @@ export default function TenantConnectorsPage() {
         )}
       </div>
 
+      {/* ── Isaak — configuración por tenant ───────────────────────── */}
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-soft">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-800">Isaak — Configuración</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Controla si este tenant puede usar Isaak con sus datos reales de Holded.
+            </p>
+          </div>
+          <span
+            className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
+              isaakSettings?.holded_enabled
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-slate-200 bg-slate-50 text-slate-500'
+            }`}
+          >
+            {isaakSettings?.holded_enabled ? 'Activo' : 'Inactivo'}
+          </span>
+        </div>
+
+        <div className="space-y-3 px-5 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-medium text-slate-700">Holded context en Isaak</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                Cuando está activo, Isaak puede leer las facturas, contactos y cuentas del tenant en
+                Holded.
+              </p>
+              {isaakSettings?.enabled_at && (
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Activado el {new Date(isaakSettings.enabled_at).toLocaleDateString('es-ES')}{' '}
+                  {isaakSettings.enabled_by ? `por ${isaakSettings.enabled_by}` : ''}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              disabled={isaakBusy || loading}
+              onClick={() => void handleIsaakToggle(!isaakSettings?.holded_enabled)}
+              className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 focus:outline-none disabled:opacity-50 ${
+                isaakSettings?.holded_enabled ? 'bg-emerald-500' : 'bg-slate-200'
+              }`}
+              role="switch"
+              aria-checked={isaakSettings?.holded_enabled ? 'true' : 'false'}
+              aria-label={
+                isaakSettings?.holded_enabled ? 'Desactivar Isaak Holded' : 'Activar Isaak Holded'
+              }
+            >
+              <span
+                className={`pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow ring-0 transition duration-200 ${
+                  isaakSettings?.holded_enabled ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+            <div>
+              <p className="text-xs font-medium text-slate-700">Consentimiento de datos</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                El tenant ha aceptado que Isaak acceda a su información fiscal y contable.
+              </p>
+            </div>
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${
+                isaakSettings?.consent_given
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                  : 'border-slate-200 bg-slate-50 text-slate-500'
+              }`}
+            >
+              {isaakSettings?.consent_given
+                ? `Dado${isaakSettings.consent_given_at ? ` · ${new Date(isaakSettings.consent_given_at).toLocaleDateString('es-ES')}` : ''}`
+                : 'Pendiente'}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Isaak — métricas de uso (L6) ──────────────────────────── */}
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-soft">
+        <div className="border-b border-slate-100 px-5 py-4">
+          <h2 className="text-sm font-semibold text-slate-800">Isaak — Uso</h2>
+          <p className="mt-0.5 text-xs text-slate-500">
+            Conversaciones, mensajes y feedback de este tenant en Isaak.
+          </p>
+        </div>
+
+        {!isaakUsage ? (
+          <div className="px-5 py-6 text-center text-xs text-slate-400">
+            {loading ? 'Cargando métricas…' : 'Sin datos de uso disponibles.'}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-4">
+            {/* Conversations */}
+            <div className="px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Conversaciones
+              </p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">
+                {isaakUsage.conversations.total}
+              </p>
+              {isaakUsage.conversations.firstActivityAt && (
+                <p className="mt-1 text-[10px] text-slate-400">
+                  Primera:{' '}
+                  {new Date(isaakUsage.conversations.firstActivityAt).toLocaleDateString('es-ES')}
+                </p>
+              )}
+            </div>
+
+            {/* Messages */}
+            <div className="px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Mensajes totales
+              </p>
+              <p className="mt-1 text-2xl font-bold text-slate-900">{isaakUsage.messages.total}</p>
+              <p className="mt-1 text-[10px] text-slate-400">
+                {isaakUsage.messages.last30Days} últimos 30d
+              </p>
+            </div>
+
+            {/* Last activity */}
+            <div className="px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Última actividad
+              </p>
+              <p className="mt-1 text-sm font-semibold text-slate-800">
+                {isaakUsage.conversations.lastActivityAt
+                  ? new Date(isaakUsage.conversations.lastActivityAt).toLocaleDateString('es-ES')
+                  : '—'}
+              </p>
+              <p className="mt-1 text-[10px] text-slate-400">
+                {isaakUsage.messages.byRole.user}u / {isaakUsage.messages.byRole.assistant}a
+              </p>
+            </div>
+
+            {/* Feedback */}
+            <div className="px-5 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                Feedback
+              </p>
+              <div className="mt-1 flex items-baseline gap-3">
+                <span className="text-lg font-bold text-emerald-600">
+                  👍 {isaakUsage.feedback.thumbsUp}
+                </span>
+                <span className="text-lg font-bold text-rose-500">
+                  👎 {isaakUsage.feedback.thumbsDown}
+                </span>
+              </div>
+              {isaakUsage.feedback.thumbsUp + isaakUsage.feedback.thumbsDown > 0 && (
+                <p className="mt-1 text-[10px] text-slate-400">
+                  {Math.round(
+                    (isaakUsage.feedback.thumbsUp /
+                      (isaakUsage.feedback.thumbsUp + isaakUsage.feedback.thumbsDown)) *
+                      100
+                  )}
+                  % positivo
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </section>
+
       <p className="text-xs text-slate-400">
-        Versión inicial F6.1. Métricas globales, búsqueda y audit log llegan en F6.2-F6.4.
+        F6.1 + L6. Métricas globales multi-tenant y audit log llegan en F6.2-F6.4.
       </p>
     </main>
   );
