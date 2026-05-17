@@ -31,6 +31,22 @@ export type WaButton = { id: string; title: string }; // title max 20 chars
 export type WaListRow = { id: string; title: string; description?: string }; // title max 24, desc max 72
 export type WaListSection = { title?: string; rows: WaListRow[] };
 
+// ── Tipos para templates HSM (WA-III) ────────────────────────────────────────
+
+export type WaTemplateTextParam = { type: 'text'; text: string };
+export type WaTemplateDateTimeParam = { type: 'date_time'; date_time: { fallback_value: string } };
+export type WaTemplateParam = WaTemplateTextParam | WaTemplateDateTimeParam;
+
+export type WaTemplateComponent =
+  | { type: 'header'; parameters: WaTemplateParam[] }
+  | { type: 'body'; parameters: WaTemplateParam[] }
+  | {
+      type: 'button';
+      sub_type: 'quick_reply' | 'url';
+      index: number;
+      parameters: WaTemplateParam[];
+    };
+
 export type WaWebhookBody = {
   object: string;
   entry: {
@@ -172,6 +188,41 @@ export async function sendWhatsAppCtaUrl(
   if (!res.ok) {
     const err = await res.text().catch(() => '');
     throw new Error(`[whatsapp] send cta_url failed ${res.status}: ${err}`);
+  }
+}
+
+// ── Envío de templates HSM (WA-III) — requiere aprobación previa de Meta ─────
+
+/**
+ * Envía un template de WhatsApp aprobado por Meta.
+ * Solo funciona fuera de la ventana de 24h con templates en estado APPROVED.
+ */
+export async function sendWhatsAppTemplate(
+  to: string,
+  templateName: string,
+  languageCode: string,
+  components?: WaTemplateComponent[]
+): Promise<void> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to,
+      type: 'template',
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        ...(components?.length ? { components } : {}),
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`[whatsapp] send template "${templateName}" failed ${res.status}: ${err}`);
   }
 }
 

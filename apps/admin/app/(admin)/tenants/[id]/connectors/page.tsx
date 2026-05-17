@@ -37,6 +37,12 @@ type IsaakUsage = {
   usageEvents: { type: string; count: number }[];
 };
 
+type WaActivity = {
+  threads: { total: number; active: number; opted_out: number; phone_numbers: string[] };
+  messages: { total: number; inbound: number; outbound: number; last_30_days: number };
+  last_activity: string | null;
+};
+
 type ConnectorRow = {
   id: string;
   channelKey: 'dashboard' | 'chatgpt' | 'mobile' | 'claude' | string;
@@ -99,20 +105,23 @@ export default function TenantConnectorsPage() {
   const [isaakSettings, setIsaakSettings] = useState<IsaakSettings | null>(null);
   const [isaakBusy, setIsaakBusy] = useState(false);
   const [isaakUsage, setIsaakUsage] = useState<IsaakUsage | null>(null);
+  const [waActivity, setWaActivity] = useState<WaActivity | null>(null);
 
   const reload = useCallback(async () => {
     if (!tenantId) return;
     setLoading(true);
     setError(null);
     try {
-      const [connectorsData, settingsData, usageData] = await Promise.all([
+      const [connectorsData, settingsData, usageData, waData] = await Promise.all([
         adminGet<{ items: ConnectorRow[] }>(`/api/admin/tenants/${tenantId}/connectors`),
         adminGet<IsaakSettings>(`/api/admin/tenants/${tenantId}/isaak-settings`).catch(() => null),
         adminGet<IsaakUsage>(`/api/admin/tenants/${tenantId}/isaak-usage`).catch(() => null),
+        adminGet<WaActivity>(`/api/admin/tenants/${tenantId}/whatsapp-activity`).catch(() => null),
       ]);
       setItems(connectorsData.items ?? []);
       if (settingsData) setIsaakSettings(settingsData);
       if (usageData) setIsaakUsage(usageData);
+      if (waData) setWaActivity(waData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error cargando conectores');
     } finally {
@@ -473,8 +482,75 @@ export default function TenantConnectorsPage() {
         )}
       </section>
 
+      {/* WhatsApp activity — W6 */}
+      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="mb-1 text-sm font-semibold text-slate-700">WhatsApp</h2>
+        <p className="mb-4 text-xs text-slate-500">
+          Actividad del canal WhatsApp de Isaak para este tenant.
+        </p>
+        {!waActivity ? (
+          <p className="text-xs text-slate-400">Sin actividad registrada.</p>
+        ) : (
+          <>
+            <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-[11px] text-slate-500">Threads</p>
+                <p className="mt-1 text-2xl font-bold text-slate-900">{waActivity.threads.total}</p>
+                <p className="text-[10px] text-slate-400">
+                  {waActivity.threads.active} activos · {waActivity.threads.opted_out} opt-out
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-[11px] text-slate-500">Mensajes totales</p>
+                <p className="mt-1 text-2xl font-bold text-slate-900">
+                  {waActivity.messages.total}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  ↓{waActivity.messages.inbound} ↑{waActivity.messages.outbound}
+                </p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-[11px] text-slate-500">Últimos 30d</p>
+                <p className="mt-1 text-2xl font-bold text-slate-900">
+                  {waActivity.messages.last_30_days}
+                </p>
+                <p className="text-[10px] text-slate-400">mensajes</p>
+              </div>
+              <div className="rounded-lg bg-slate-50 p-3">
+                <p className="text-[11px] text-slate-500">Última actividad</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">
+                  {waActivity.last_activity
+                    ? new Date(waActivity.last_activity).toLocaleDateString('es-ES')
+                    : '—'}
+                </p>
+                <p className="text-[10px] text-slate-400">
+                  {waActivity.last_activity
+                    ? new Date(waActivity.last_activity).toLocaleTimeString('es-ES', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })
+                    : ''}
+                </p>
+              </div>
+            </div>
+            {waActivity.threads.phone_numbers.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {waActivity.threads.phone_numbers.map((p) => (
+                  <span
+                    key={p}
+                    className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700"
+                  >
+                    📱 {p}
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </section>
+
       <p className="text-xs text-slate-400">
-        F6.1 + L6. Métricas globales multi-tenant y audit log llegan en F6.2-F6.4.
+        F6.1 + L6 + W6. Métricas globales multi-tenant y audit log llegan en F6.2-F6.4.
       </p>
     </main>
   );

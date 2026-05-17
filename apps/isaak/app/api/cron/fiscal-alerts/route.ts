@@ -3,6 +3,8 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/app/lib/prisma';
 import { getFiscalDeadlines } from '@/app/lib/fiscal-calendar';
 import { createAlert, fanOutAlert } from '@/app/lib/isaak-alert-service';
+import { normalizePhone, sendWhatsAppTemplate } from '@/app/lib/whatsapp';
+import { resolveAlertTemplate } from '@/app/lib/whatsapp-templates';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -96,6 +98,18 @@ export async function GET(req: NextRequest) {
 
           await fanOutAlert({ ...alert, dueDate: alert.dueDate }, recipientEmail, daysLeft);
 
+          // WA-III: enviar template HSM si el tenant tiene número WhatsApp vinculado
+          await sendFiscalAlertWhatsApp({
+            tenantId: tenant.id,
+            firstName: tenant.users[0]?.user?.firstName ?? 'ahí',
+            alertType,
+            modelo: deadline.modelo ?? '',
+            fechaVencimiento: deadline.date.toLocaleDateString('es-ES'),
+            diasRestantes: daysLeft,
+          }).catch((waErr) => {
+            console.warn('[fiscal-alerts] WA template skipped', { tenantId: tenant.id, waErr });
+          });
+
           sent++;
         } catch (err) {
           console.error('[fiscal-alerts] error', { tenantId: tenant.id, alertType, err });
@@ -106,4 +120,51 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, sent, skipped, errors });
+}
+
+// ── WA-III: envío de template HSM por WhatsApp ────────────────────────────────
+
+async function sendFiscalAlertWhatsApp(input: {
+  tenantId: string;
+  firstName: string;
+  alertType: string;
+  modelo: string;
+  fechaVencimiento: string;
+  diasRestantes: number;
+}): Promise<void> {
+  const { tenantId, firstName, alertType, modelo, fechaVencimiento, diasRestantes } = input;
+
+  // Buscar número WhatsApp activo del tenant
+  const thread = await prisma.whatsAppThread.findFirst({
+    where: { tenantId, status: 'open' },
+    select: { phoneNumber: true },
+    orderBy: { lastMessageAt: 'desc' },
+  });
+  if (!thread?.phoneNumber) return;
+
+  const tmpl = resolveAlertTemplate({
+    firstName,
+    alertType,
+    modelo,
+    fechaVencimiento,
+    diasRestantes,
+    trimestre: modelo?.includes('303') ? inferTrimestre(fechaVencimiento) : undefined,
+  });
+  if (!tmpl) return;
+
+  await sendWhatsAppTemplate(
+    normalizePhone(thread.phoneNumber),
+    tmpl.templateName,
+    'es_ES',
+    tmpl.components
+  );
+}
+
+function inferTrimestre(fechaVencimiento: string): string {
+  const date = new Date(fechaVencimiento.split('/').reverse().join('-'));
+  const month = date.getMonth() + 1;
+  if (month <= 4) return '1.º';
+  if (month <= 7) return '2.º';
+  if (month <= 10) return '3.º';
+  return '4.º';
 }
