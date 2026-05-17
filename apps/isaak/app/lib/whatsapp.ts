@@ -18,7 +18,18 @@ export type WaIncomingMessage = {
   timestamp: string;
   type: 'text' | 'audio' | 'image' | 'document' | 'interactive' | string;
   text?: { body: string };
+  interactive?: {
+    type: 'button_reply' | 'list_reply';
+    button_reply?: { id: string; title: string };
+    list_reply?: { id: string; title: string; description?: string };
+  };
 };
+
+// ── Tipos de mensajes interactivos salientes ─────────────────────────────────
+
+export type WaButton = { id: string; title: string }; // title max 20 chars
+export type WaListRow = { id: string; title: string; description?: string }; // title max 24, desc max 72
+export type WaListSection = { title?: string; rows: WaListRow[] };
 
 export type WaWebhookBody = {
   object: string;
@@ -61,6 +72,106 @@ export async function sendWhatsAppText(to: string, body: string): Promise<void> 
   if (!res.ok) {
     const err = await res.text().catch(() => '');
     throw new Error(`[whatsapp] send failed ${res.status}: ${err}`);
+  }
+}
+
+// ── Envío de mensajes interactivos ──────────────────────────────────────────
+
+export async function sendWhatsAppButtons(
+  to: string,
+  body: string,
+  buttons: WaButton[]
+): Promise<void> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to,
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: { text: body },
+        action: {
+          buttons: buttons.map((b) => ({ type: 'reply', reply: { id: b.id, title: b.title } })),
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`[whatsapp] send buttons failed ${res.status}: ${err}`);
+  }
+}
+
+export async function sendWhatsAppList(
+  to: string,
+  body: string,
+  buttonLabel: string,
+  sections: WaListSection[]
+): Promise<void> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to,
+      type: 'interactive',
+      interactive: {
+        type: 'list',
+        body: { text: body },
+        action: {
+          button: buttonLabel,
+          sections: sections.map((s) => ({
+            ...(s.title ? { title: s.title } : {}),
+            rows: s.rows.map((r) => ({
+              id: r.id,
+              title: r.title,
+              ...(r.description ? { description: r.description } : {}),
+            })),
+          })),
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`[whatsapp] send list failed ${res.status}: ${err}`);
+  }
+}
+
+export async function sendWhatsAppCtaUrl(
+  to: string,
+  body: string,
+  displayText: string,
+  url: string
+): Promise<void> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to,
+      type: 'interactive',
+      interactive: {
+        type: 'cta_url',
+        body: { text: body },
+        action: { name: 'cta_url', parameters: { display_text: displayText, url } },
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`[whatsapp] send cta_url failed ${res.status}: ${err}`);
   }
 }
 

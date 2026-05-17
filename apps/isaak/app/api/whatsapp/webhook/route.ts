@@ -1,16 +1,11 @@
 /**
- * W1 — WhatsApp webhook para Isaak
+ * WhatsApp webhook para Isaak — W1 + WA-I (botones) + WA-II (listas)
  *
  * GET  — verificación de token con Meta
- * POST — mensajes entrantes → LLM → respuesta WhatsApp
- *
- * Arquitectura (Opción A):
- *   El tenant registra su número en Ajustes → Perfil.
- *   Si el número entrante no está vinculado, Isaak responde pidiendo
- *   que se registre en isaak.verifactu.business/settings.
+ * POST — mensajes entrantes → lógica interactiva → LLM → respuesta
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 import { callLLM } from '@verifactu/utils';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { prisma } from '@/app/lib/prisma';
@@ -18,6 +13,9 @@ import {
   findTenantIdByPhone,
   normalizePhone,
   saveWhatsAppEvent,
+  sendWhatsAppButtons,
+  sendWhatsAppCtaUrl,
+  sendWhatsAppList,
   sendWhatsAppText,
   stripMarkdown,
   truncateForWhatsApp,
@@ -28,6 +26,36 @@ import {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// ── Mapeo de IDs interactivos → queries Isaak ────────────────────────────────
+
+const INTERACTIVE_QUERIES: Record<string, string> = {
+  menu_resumen: 'Dame el resumen de ventas y gastos de este mes.',
+  menu_facturas: '¿Qué facturas tengo pendientes de cobro?',
+  menu_iva: 'Estima mi IVA del trimestre actual con los datos disponibles.',
+  period_month: 'Necesito los datos de este mes.',
+  period_quarter: 'Necesito los datos del trimestre actual.',
+  period_year: 'Necesito los datos del año completo.',
+  confirm_yes: 'Sí, confirmar la operación.',
+  confirm_no: 'Cancelar. No hacer nada.',
+};
+
+// ── Detección de saludo ──────────────────────────────────────────────────────
+
+const GREETING_RE =
+  /^\s*(hola|buenos días|buenas|hey|hi|hello|ey|good morning|buenos dias|buenas tardes|buenas noches|¡hola|saludos)\s*[!?.,]*\s*$/i;
+
+function isGreeting(text: string): boolean {
+  return GREETING_RE.test(text.trim()) || text.trim().length <= 2;
+}
+
+// Consultas de una sola palabra/tema que necesitan clarificación de período
+const PERIOD_AMBIGUOUS_RE =
+  /^\s*(ventas?|gastos?|facturas?|ingresos?|resultado|beneficio|margen|cobros?|pagos?)\s*[?!.]?\s*$/i;
+
+function needsPeriodClarification(text: string): boolean {
+  return PERIOD_AMBIGUOUS_RE.test(text.trim());
+}
 
 // ── GET — verificación del webhook ───────────────────────────────────────────
 
@@ -40,14 +68,12 @@ export function GET(req: NextRequest) {
   if (mode === 'subscribe' && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
     return new Response(challenge ?? '', { status: 200 });
   }
-
   return new Response('Forbidden', { status: 403 });
 }
 
 // ── POST — mensajes entrantes ────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  // 1. Verificar firma HMAC
   const rawBody = await req.text();
   const signature = req.headers.get('x-hub-signature-256') ?? '';
 
@@ -56,13 +82,11 @@ export async function POST(req: NextRequest) {
     return new Response('Invalid signature', { status: 401 });
   }
 
-  // Meta espera siempre 200 rápido; procesamos en background
   void processWebhookAsync(rawBody);
-
   return new Response('OK', { status: 200 });
 }
 
-// ── Procesamiento asíncrono ────────────────────────────────────────────────────
+// ── Procesamiento asíncrono ──────────────────────────────────────────────────
 
 async function processWebhookAsync(rawBody: string): Promise<void> {
   let payload: WaWebhookBody;
@@ -75,36 +99,47 @@ async function processWebhookAsync(rawBody: string): Promise<void> {
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
       if (change.field !== 'messages') continue;
+      const senderName = change.value.contacts?.[0]?.profile?.name ?? null;
 
       for (const msg of change.value.messages ?? []) {
-        if (msg.type !== 'text' || !msg.text?.body) continue;
-
-        await handleIncomingTextMessage({
-          from: msg.from,
-          messageId: msg.id,
-          text: msg.text.body,
-          senderName: change.value.contacts?.[0]?.profile?.name ?? null,
-        }).catch((err) => {
-          console.error('[whatsapp/webhook] error procesando mensaje', err);
-        });
+        if (msg.type === 'text' && msg.text?.body) {
+          await handleIncomingText({
+            from: msg.from,
+            messageId: msg.id,
+            text: msg.text.body,
+            senderName,
+          }).catch((err) => console.error('[whatsapp/webhook] error en texto', err));
+        } else if (msg.type === 'interactive' && msg.interactive) {
+          const replyId = msg.interactive.button_reply?.id ?? msg.interactive.list_reply?.id ?? '';
+          const replyTitle =
+            msg.interactive.button_reply?.title ?? msg.interactive.list_reply?.title ?? '';
+          if (replyId) {
+            await handleInteractiveReply({
+              from: msg.from,
+              messageId: msg.id,
+              replyId,
+              replyTitle,
+              senderName,
+            }).catch((err) => console.error('[whatsapp/webhook] error en interactivo', err));
+          }
+        }
       }
     }
   }
 }
 
-async function handleIncomingTextMessage(input: {
+// ── Mensaje de texto ─────────────────────────────────────────────────────────
+
+async function handleIncomingText(input: {
   from: string;
   messageId: string;
   text: string;
   senderName: string | null;
 }): Promise<void> {
   const { from, messageId, text, senderName } = input;
-
-  // 2. Buscar tenant por número
   const tenantId = await findTenantIdByPhone(from);
-
-  // 3. Crear/actualizar thread y registrar evento entrante
   const threadId = await upsertWhatsAppThread(from, tenantId);
+
   await saveWhatsAppEvent({
     threadId,
     tenantId,
@@ -113,21 +148,101 @@ async function handleIncomingTextMessage(input: {
     eventType: 'text',
     body: text,
     payload: { from, senderName },
-  }).catch(() => {
-    // non-blocking
-  });
+  }).catch(() => {});
 
-  // 4. Si no hay tenant vinculado → mensaje de vinculación
+  // Número no vinculado → CTA con botón de vinculación (WA-I: cta_url)
   if (!tenantId) {
-    const linkMsg = stripMarkdown(
-      `Hola${senderName ? ` ${senderName.split(' ')[0]}` : ''}! Soy Isaak, tu asistente fiscal.\n\nPara que pueda ayudarte, primero vincula este número a tu cuenta en:\n👉 isaak.verifactu.business/settings\n\nVe a *Ajustes → Perfil* y añade tu número de WhatsApp.`
+    const firstName = senderName?.split(' ')[0] ?? null;
+    const body = `Hola${firstName ? ` ${firstName}` : ''}! Soy Isaak, tu asistente fiscal de Verifactu Business.\n\nPara poder ayudarte necesito vincular este número a tu cuenta.`;
+    await sendWhatsAppCtaUrl(
+      normalizePhone(from),
+      body,
+      'Vincular ahora',
+      'https://isaak.verifactu.business/settings?wl=1'
+    ).catch(() =>
+      sendWhatsAppText(normalizePhone(from), body + '\n\n👉 isaak.verifactu.business/settings')
     );
-    await sendWhatsAppText(normalizePhone(from), linkMsg);
-    await saveOutboundEvent(threadId, tenantId, linkMsg);
+    await saveOutboundEvent(threadId, null, body);
     return;
   }
 
-  // 5. Cargar contexto del tenant
+  // Saludo → menú de bienvenida (WA-II: list)
+  if (isGreeting(text)) {
+    await sendWelcomeMenu(normalizePhone(from), senderName);
+    await saveOutboundEvent(threadId, tenantId, '[menu_bienvenida]');
+    return;
+  }
+
+  // Consulta ambigua de período → botones de aclaración (WA-I: buttons)
+  if (needsPeriodClarification(text)) {
+    const clarBody = `¿De qué período quieres ver los datos de ${text.trim().toLowerCase()}?`;
+    await sendWhatsAppButtons(normalizePhone(from), clarBody, [
+      { id: 'period_month', title: 'Este mes' },
+      { id: 'period_quarter', title: 'Trimestre actual' },
+      { id: 'period_year', title: 'Año completo' },
+    ]);
+    await saveOutboundEvent(threadId, tenantId, clarBody);
+    return;
+  }
+
+  await runIsaakPipeline({ from, threadId, tenantId, text, senderName });
+}
+
+// ── Respuesta interactiva (botón / lista seleccionada) ───────────────────────
+
+async function handleInteractiveReply(input: {
+  from: string;
+  messageId: string;
+  replyId: string;
+  replyTitle: string;
+  senderName: string | null;
+}): Promise<void> {
+  const { from, messageId, replyId, replyTitle, senderName } = input;
+  const tenantId = await findTenantIdByPhone(from);
+  const threadId = await upsertWhatsAppThread(from, tenantId);
+
+  await saveWhatsAppEvent({
+    threadId,
+    tenantId,
+    providerMessageId: messageId,
+    direction: 'inbound',
+    eventType: 'interactive',
+    body: replyId,
+    payload: { replyId, replyTitle },
+  }).catch(() => {});
+
+  // "Hacer una consulta" → pedir que escriban libremente
+  if (replyId === 'menu_libre') {
+    const msg = '¿Cuál es tu consulta? Escríbela directamente y te respondo enseguida.';
+    await sendWhatsAppText(normalizePhone(from), msg);
+    await saveOutboundEvent(threadId, tenantId, msg);
+    return;
+  }
+
+  const mappedQuery = INTERACTIVE_QUERIES[replyId];
+  if (!mappedQuery) {
+    // ID desconocido → tratar el título como texto libre
+    await runIsaakPipeline({ from, threadId, tenantId, text: replyTitle, senderName });
+    return;
+  }
+
+  await runIsaakPipeline({ from, threadId, tenantId, text: mappedQuery, senderName });
+}
+
+// ── Pipeline común: quota + LLM + respuesta ──────────────────────────────────
+
+async function runIsaakPipeline(input: {
+  from: string;
+  threadId: string;
+  tenantId: string | null;
+  text: string;
+  senderName: string | null;
+}): Promise<void> {
+  const { from, threadId, tenantId, text, senderName } = input;
+
+  if (!tenantId) return;
+
+  // Cargar contexto del tenant
   const primaryUserId = await getPrimaryUserId(tenantId);
   let context;
   try {
@@ -144,40 +259,67 @@ async function handleIncomingTextMessage(input: {
     return;
   }
 
-  // 6. Verificar rate limit por plan
+  // Verificar quota
   const { allowed } = await checkWhatsAppQuota(tenantId);
   if (!allowed) {
     const limitMsg =
-      'Has alcanzado el límite diario de mensajes de tu plan. Actualiza tu plan en isaak.verifactu.business/settings para continuar.';
+      'Has alcanzado el límite diario de mensajes de tu plan. Actualiza tu plan en isaak.verifactu.business/pricing para continuar.';
     await sendWhatsAppText(normalizePhone(from), limitMsg);
     await saveOutboundEvent(threadId, tenantId, limitMsg);
     return;
   }
 
-  // 7. Construir system prompt y llamar al LLM
-  const systemPrompt = buildWhatsAppSystemPrompt(context, senderName);
-  const snapshot = context.holded.snapshot;
-
+  // LLM
   const model = await resolveModelForTenant(tenantId);
   const llmResult = await callLLM({
     provider: 'anthropic',
     model,
-    instructions: systemPrompt,
+    instructions: buildWhatsAppSystemPrompt(context, senderName),
     messages: [{ role: 'user', content: text }],
     temperature: 0.45,
     maxOutputTokens: 350,
     enableFallback: true,
   }).catch(() => null);
 
+  const snapshot = context.holded.snapshot;
   const reply = llmResult?.text?.trim()
     ? stripMarkdown(truncateForWhatsApp(llmResult.text.trim()))
     : snapshot
-      ? `Hola! Tengo acceso a tus datos de Holded (${snapshot.invoices.length} facturas, ${snapshot.contacts.length} contactos). ¿En qué puedo ayudarte?`
-      : 'Hola! Soy Isaak, tu asistente fiscal. ¿En qué puedo ayudarte hoy?';
+      ? `Tengo acceso a tus datos de Holded (${snapshot.invoices.length} facturas, ${snapshot.contacts.length} contactos). ¿En qué puedo ayudarte?`
+      : 'Soy Isaak, tu asistente fiscal. ¿En qué puedo ayudarte hoy?';
 
-  // 8. Enviar respuesta
   await sendWhatsAppText(normalizePhone(from), reply);
   await saveOutboundEvent(threadId, tenantId, reply);
+}
+
+// ── Menú de bienvenida (WA-II) ───────────────────────────────────────────────
+
+async function sendWelcomeMenu(to: string, senderName: string | null): Promise<void> {
+  const firstName = senderName?.split(' ')[0] ?? null;
+  const greeting = firstName ? `Hola ${firstName}!` : '¡Hola!';
+  await sendWhatsAppList(
+    to,
+    `${greeting} Soy Isaak, tu asistente fiscal. ¿En qué te ayudo hoy?`,
+    'Ver opciones',
+    [
+      {
+        rows: [
+          {
+            id: 'menu_resumen',
+            title: 'Resumen del mes',
+            description: 'Ventas y gastos del mes actual',
+          },
+          { id: 'menu_facturas', title: 'Facturas pendientes', description: 'Facturas sin cobrar' },
+          { id: 'menu_iva', title: 'IVA trimestral', description: 'Estimación modelo 303' },
+          {
+            id: 'menu_libre',
+            title: 'Hacer una consulta',
+            description: 'Escribe tu propia pregunta',
+          },
+        ],
+      },
+    ]
+  );
 }
 
 // ── Helpers internos ─────────────────────────────────────────────────────────
@@ -235,18 +377,11 @@ async function checkWhatsAppQuota(tenantId: string): Promise<{ allowed: boolean 
       orderBy: { createdAt: 'desc' },
     });
     const planCode = sub?.plan?.code ?? 'free';
-    if (['starter', 'pro', 'business', 'enterprise'].includes(planCode)) {
-      return { allowed: true };
-    }
-    // Free: máximo 10 mensajes WhatsApp por día
+    if (['starter', 'pro', 'business', 'enterprise'].includes(planCode)) return { allowed: true };
     const since = new Date();
     since.setUTCHours(0, 0, 0, 0);
     const count = await prisma.whatsAppEvent.count({
-      where: {
-        tenantId,
-        direction: 'inbound',
-        occurredAt: { gte: since },
-      },
+      where: { tenantId, direction: 'inbound', occurredAt: { gte: since } },
     });
     return { allowed: count < 10 };
   } catch {
@@ -281,7 +416,5 @@ async function saveOutboundEvent(
     direction: 'outbound',
     eventType: 'text',
     body,
-  }).catch(() => {
-    // non-blocking
-  });
+  }).catch(() => {});
 }
