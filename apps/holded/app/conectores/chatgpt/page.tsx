@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ConnectorLandingClient } from '@/app/components/ConnectorLandingClient';
+import { ConnectorStatusBadge } from '@/app/components/ConnectorStatusBadge';
 import { ConnectorMobileBanner } from '@/app/components/ConnectorMobileBanner';
 import { getFaqJsonLd } from '@/app/components/ConnectorFAQData';
 
@@ -168,6 +169,9 @@ export default function ChatGPTConnectorPage() {
       {/* F4.3: banner mobile-only que invita a usar /auth/holded-direct
           (sobrevive al iOS in-app browser de ChatGPT mobile). */}
       <ConnectorMobileBanner provider="chatgpt" />
+      <div className="pt-6">
+        <ConnectorStatusBadge connector="chatgpt" />
+      </div>
       <ConnectorLandingClient connector="chatgpt" />
     </>
   );

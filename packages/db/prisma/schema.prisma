@@ -2259,3 +2259,34 @@ model HoldedMcpPatAuditLog {
   @@index([patId])
   @@map("holded_mcp_pat_audit_logs")
 }
+
+/// Health check periódico de los conectores MCP (ChatGPT, Claude) ejecutado
+/// por Vercel Cron contra superficie pública (sin token). Alimenta el widget
+/// de estado en /conectores/{chatgpt,claude}.
+model ConnectorHealthCheck {
+  id           String   @id @default(cuid())
+  /// "chatgpt" | "claude"
+  connector    String   @db.VarChar(32)
+  /// Tipo de check: "landing" | "oauth_discovery" | "protected_resource"
+  /// | "mcp_initialize" | "tools_list" | "docs_page" | "privacy_page" | "terms_page" | "dpa_page"
+  checkType    String   @map("check_type") @db.VarChar(64)
+  /// URL exacta que se probó (para auditoría)
+  target       String   @db.Text
+  /// "ok" | "degraded" | "fail"
+  status       String   @db.VarChar(16)
+  /// Latencia de la petición en ms
+  latencyMs    Int      @map("latency_ms")
+  /// HTTP status code (null si error de red/timeout)
+  httpStatus   Int?     @map("http_status")
+  /// Código corto de error: "timeout" | "non_2xx" | "invalid_json" | "missing_field" | "tool_count_mismatch" | "rpc_error"
+  errorCode    String?  @map("error_code") @db.VarChar(64)
+  /// Mensaje legible del error (resumido, sin stack)
+  errorMessage String?  @map("error_message") @db.Text
+  /// Metadatos extra: { toolCount, expectedToolCount, oauthIssuer, etc. }
+  metadata     Json?
+  checkedAt    DateTime @default(now()) @map("checked_at") @db.Timestamptz
+
+  @@index([connector, checkType, checkedAt(sort: Desc)])
+  @@index([checkedAt(sort: Desc)])
+  @@map("connector_health_checks")
+}
