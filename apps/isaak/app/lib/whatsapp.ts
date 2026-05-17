@@ -19,9 +19,10 @@ export type WaIncomingMessage = {
   type: 'text' | 'audio' | 'image' | 'document' | 'interactive' | string;
   text?: { body: string };
   interactive?: {
-    type: 'button_reply' | 'list_reply';
+    type: 'button_reply' | 'list_reply' | 'nfm_reply';
     button_reply?: { id: string; title: string };
     list_reply?: { id: string; title: string; description?: string };
+    nfm_reply?: { name: string; response_json: string; body: string };
   };
 };
 
@@ -188,6 +189,55 @@ export async function sendWhatsAppCtaUrl(
   if (!res.ok) {
     const err = await res.text().catch(() => '');
     throw new Error(`[whatsapp] send cta_url failed ${res.status}: ${err}`);
+  }
+}
+
+// ── Envío de WhatsApp Flows (WA-IV) ─────────────────────────────────────────
+
+/**
+ * Envía un mensaje interactivo de tipo "flow" que abre un formulario guiado.
+ * Requiere que el Flow esté publicado en Meta Business Manager.
+ * El flowToken se usa para vincular la respuesta nfm_reply a la sesión (puede ser "unused").
+ */
+export async function sendWhatsAppFlow(
+  to: string,
+  body: string,
+  ctaText: string,
+  flowId: string,
+  screenId: string,
+  flowToken = 'unused'
+): Promise<void> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      recipient_type: 'individual',
+      to,
+      type: 'interactive',
+      interactive: {
+        type: 'flow',
+        body: { text: body },
+        action: {
+          name: 'flow',
+          parameters: {
+            flow_message_version: '3',
+            flow_token: flowToken,
+            flow_id: flowId,
+            mode: 'published',
+            flow_cta: ctaText,
+            flow_action: 'navigate',
+            flow_action_payload: { screen: screenId },
+          },
+        },
+      },
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`[whatsapp] send flow failed ${res.status}: ${err}`);
   }
 }
 

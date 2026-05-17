@@ -1,5 +1,5 @@
 /**
- * WhatsApp webhook para Isaak — W1 + WA-I (botones) + WA-II (listas)
+ * WhatsApp webhook para Isaak — W1 + WA-I (botones) + WA-II (listas) + WA-IV (flows)
  *
  * GET  — verificación de token con Meta
  * POST — mensajes entrantes → lógica interactiva → LLM → respuesta
@@ -15,6 +15,7 @@ import {
   saveWhatsAppEvent,
   sendWhatsAppButtons,
   sendWhatsAppCtaUrl,
+  sendWhatsAppFlow,
   sendWhatsAppList,
   sendWhatsAppText,
   stripMarkdown,
@@ -23,6 +24,7 @@ import {
   verifyWebhookSignature,
   type WaWebhookBody,
 } from '@/app/lib/whatsapp';
+import { buildIsaakQueryFromFlow, type WaFlowResponseData } from '@/app/lib/whatsapp-flows';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -110,17 +112,27 @@ async function processWebhookAsync(rawBody: string): Promise<void> {
             senderName,
           }).catch((err) => console.error('[whatsapp/webhook] error en texto', err));
         } else if (msg.type === 'interactive' && msg.interactive) {
-          const replyId = msg.interactive.button_reply?.id ?? msg.interactive.list_reply?.id ?? '';
-          const replyTitle =
-            msg.interactive.button_reply?.title ?? msg.interactive.list_reply?.title ?? '';
-          if (replyId) {
-            await handleInteractiveReply({
+          if (msg.interactive.type === 'nfm_reply' && msg.interactive.nfm_reply) {
+            await handleFlowReply({
               from: msg.from,
               messageId: msg.id,
-              replyId,
-              replyTitle,
+              responseJson: msg.interactive.nfm_reply.response_json,
               senderName,
-            }).catch((err) => console.error('[whatsapp/webhook] error en interactivo', err));
+            }).catch((err) => console.error('[whatsapp/webhook] error en flow reply', err));
+          } else {
+            const replyId =
+              msg.interactive.button_reply?.id ?? msg.interactive.list_reply?.id ?? '';
+            const replyTitle =
+              msg.interactive.button_reply?.title ?? msg.interactive.list_reply?.title ?? '';
+            if (replyId) {
+              await handleInteractiveReply({
+                from: msg.from,
+                messageId: msg.id,
+                replyId,
+                replyTitle,
+                senderName,
+              }).catch((err) => console.error('[whatsapp/webhook] error en interactivo', err));
+            }
           }
         }
       }
@@ -188,6 +200,47 @@ async function handleIncomingText(input: {
   await runIsaakPipeline({ from, threadId, tenantId, text, senderName });
 }
 
+// ── Respuesta de flow (nfm_reply) ────────────────────────────────────────────
+
+async function handleFlowReply(input: {
+  from: string;
+  messageId: string;
+  responseJson: string;
+  senderName: string | null;
+}): Promise<void> {
+  const { from, messageId, responseJson, senderName } = input;
+  const tenantId = await findTenantIdByPhone(from);
+  const threadId = await upsertWhatsAppThread(from, tenantId);
+
+  await saveWhatsAppEvent({
+    threadId,
+    tenantId,
+    providerMessageId: messageId,
+    direction: 'inbound',
+    eventType: 'flow_reply',
+    body: responseJson,
+    payload: { senderName },
+  }).catch(() => {});
+
+  let data: WaFlowResponseData = {};
+  try {
+    data = JSON.parse(responseJson) as WaFlowResponseData;
+  } catch {
+    // respuesta malformada → ignorar
+    return;
+  }
+
+  const query = buildIsaakQueryFromFlow(data);
+  if (!query) {
+    const msg = '¿Cuál es tu consulta? Escríbela directamente y te respondo enseguida.';
+    await sendWhatsAppText(normalizePhone(from), msg);
+    await saveOutboundEvent(threadId, tenantId, msg);
+    return;
+  }
+
+  await runIsaakPipeline({ from, threadId, tenantId, text: query, senderName });
+}
+
 // ── Respuesta interactiva (botón / lista seleccionada) ───────────────────────
 
 async function handleInteractiveReply(input: {
@@ -211,11 +264,23 @@ async function handleInteractiveReply(input: {
     payload: { replyId, replyTitle },
   }).catch(() => {});
 
-  // "Hacer una consulta" → pedir que escriban libremente
-  if (replyId === 'menu_libre') {
-    const msg = '¿Cuál es tu consulta? Escríbela directamente y te respondo enseguida.';
-    await sendWhatsAppText(normalizePhone(from), msg);
-    await saveOutboundEvent(threadId, tenantId, msg);
+  // "Consulta guiada" → abrir Flow (WA-IV) o degradar a texto libre si no está configurado
+  if (replyId === 'menu_flow') {
+    const flowId = process.env.WHATSAPP_FLOW_ID_CONSULTA;
+    if (flowId && tenantId) {
+      await sendWhatsAppFlow(
+        normalizePhone(from),
+        '¿Sobre qué quieres consultar? Rellena el formulario:',
+        'Abrir formulario',
+        flowId,
+        'CONSULTA'
+      );
+      await saveOutboundEvent(threadId, tenantId, '[flow_consulta]');
+    } else {
+      const msg = '¿Cuál es tu consulta? Escríbela directamente y te respondo enseguida.';
+      await sendWhatsAppText(normalizePhone(from), msg);
+      await saveOutboundEvent(threadId, tenantId, msg);
+    }
     return;
   }
 
@@ -312,9 +377,9 @@ async function sendWelcomeMenu(to: string, senderName: string | null): Promise<v
           { id: 'menu_facturas', title: 'Facturas pendientes', description: 'Facturas sin cobrar' },
           { id: 'menu_iva', title: 'IVA trimestral', description: 'Estimación modelo 303' },
           {
-            id: 'menu_libre',
-            title: 'Hacer una consulta',
-            description: 'Escribe tu propia pregunta',
+            id: 'menu_flow',
+            title: 'Consulta guiada',
+            description: 'Formulario de selección rápida',
           },
         ],
       },
