@@ -307,14 +307,16 @@ async function runIsaakPipeline(input: {
 
   if (!tenantId) return;
 
-  // Cargar contexto del tenant
+  // Cargar contexto del tenant e historial de conversación en paralelo
   const primaryUserId = await getPrimaryUserId(tenantId);
   let context;
   try {
-    context = await loadIsaakBusinessContext(
-      { tenantId, userId: primaryUserId ?? 'whatsapp-webhook' },
-      { includeSnapshot: true }
-    );
+    [context] = await Promise.all([
+      loadIsaakBusinessContext(
+        { tenantId, userId: primaryUserId ?? 'whatsapp-webhook' },
+        { includeSnapshot: true }
+      ),
+    ]);
   } catch (err) {
     console.error('[whatsapp/webhook] error cargando contexto', err);
     await sendWhatsAppText(
@@ -334,15 +336,18 @@ async function runIsaakPipeline(input: {
     return;
   }
 
-  // LLM
-  const model = await resolveModelForTenant(tenantId);
+  // LLM con historial de conversación
+  const [model, history] = await Promise.all([
+    resolveModelForTenant(tenantId),
+    loadConversationHistory(threadId, text),
+  ]);
   const llmResult = await callLLM({
     provider: 'anthropic',
     model,
     instructions: buildWhatsAppSystemPrompt(context, senderName),
-    messages: [{ role: 'user', content: text }],
+    messages: history,
     temperature: 0.45,
-    maxOutputTokens: 350,
+    maxOutputTokens: 400,
     enableFallback: true,
   }).catch(() => null);
 
@@ -387,6 +392,47 @@ async function sendWelcomeMenu(to: string, senderName: string | null): Promise<v
   );
 }
 
+// ── Historial de conversación ─────────────────────────────────────────────────
+
+/**
+ * Carga los últimos N turnos del thread y devuelve un array de AIMessage.
+ * El último elemento siempre es el mensaje actual del usuario con el texto
+ * canónico (puede diferir del body raw guardado en BD para replies interactivos).
+ */
+async function loadConversationHistory(
+  threadId: string,
+  currentText: string,
+  maxTurns = 10
+): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
+  const rows = await prisma.whatsAppEvent.findMany({
+    where: {
+      threadId,
+      direction: { in: ['inbound', 'outbound'] },
+      body: { not: null },
+    },
+    orderBy: { occurredAt: 'desc' },
+    take: maxTurns * 2 + 1,
+    select: { direction: true, body: true },
+  });
+
+  const messages = rows
+    .reverse()
+    .filter((r) => r.body && !r.body.startsWith('['))
+    .map((r) => ({
+      role: (r.direction === 'inbound' ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: r.body!,
+    }));
+
+  // Sustituir/añadir el turno actual con el texto canónico
+  if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
+    messages[messages.length - 1].content = currentText;
+  } else {
+    messages.push({ role: 'user', content: currentText });
+  }
+
+  return messages;
+}
+
 // ── Helpers internos ─────────────────────────────────────────────────────────
 
 function buildWhatsAppSystemPrompt(
@@ -402,6 +448,8 @@ function buildWhatsAppSystemPrompt(
     `Estás respondiendo por WhatsApp a ${name}.`,
     'Responde siempre en español. Sé conciso (máximo 3-4 párrafos cortos). No uses markdown avanzado — usa *negrita* para énfasis y • para listas.',
     'No inventes datos fiscales. Si no tienes datos suficientes, pide que abran isaak.verifactu.business para ver el análisis completo.',
+    'Tienes acceso al historial completo de esta conversación. Úsalo para dar respuestas coherentes y no pedir información que el usuario ya ha proporcionado antes.',
+    'Si el usuario hace referencia a algo mencionado antes ("lo de antes", "eso que dijiste", "la factura que comentaste"), busca el contexto en la conversación antes de pedir aclaraciones.',
   ];
 
   if (snapshot) {
