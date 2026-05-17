@@ -351,9 +351,24 @@ async function runIsaakPipeline(input: {
     enableFallback: true,
   }).catch(() => null);
 
+  const rawText = llmResult?.text?.trim() ?? null;
+
+  // Si el LLM pide aclaración → enviar botones interactivos
+  const clarify = rawText ? parseClarifyResponse(rawText) : null;
+  if (clarify) {
+    const buttons = clarify.options.map((opt, i) => ({
+      id: `clarify_${i}`,
+      title: opt.slice(0, 20),
+    }));
+    await sendWhatsAppButtons(normalizePhone(from), clarify.question, buttons);
+    await saveOutboundEvent(threadId, tenantId, clarify.question);
+    return;
+  }
+
+  // Respuesta normal de texto
   const snapshot = context.holded.snapshot;
-  const reply = llmResult?.text?.trim()
-    ? stripMarkdown(truncateForWhatsApp(llmResult.text.trim()))
+  const reply = rawText
+    ? stripMarkdown(truncateForWhatsApp(rawText))
     : snapshot
       ? `Tengo acceso a tus datos de Holded (${snapshot.invoices.length} facturas, ${snapshot.contacts.length} contactos). ¿En qué puedo ayudarte?`
       : 'Soy Isaak, tu asistente fiscal. ¿En qué puedo ayudarte hoy?';
@@ -390,6 +405,39 @@ async function sendWelcomeMenu(to: string, senderName: string | null): Promise<v
       },
     ]
   );
+}
+
+// ── Clarificación inteligente ─────────────────────────────────────────────────
+
+type ClarifyResponse = { clarify: true; question: string; options: string[] };
+
+/**
+ * Si el LLM devuelve un JSON de aclaración, lo parsea y devuelve la estructura.
+ * El LLM puede envolver el JSON en ```json ``` — se limpia automáticamente.
+ */
+function parseClarifyResponse(text: string): ClarifyResponse | null {
+  const stripped = text
+    .trim()
+    .replace(/^```(?:json)?\n?([\s\S]*?)\n?```$/, '$1')
+    .trim();
+  if (!stripped.startsWith('{')) return null;
+  try {
+    const parsed = JSON.parse(stripped) as Record<string, unknown>;
+    if (
+      parsed.clarify === true &&
+      typeof parsed.question === 'string' &&
+      Array.isArray(parsed.options) &&
+      parsed.options.length > 0
+    ) {
+      const opts = (parsed.options as unknown[])
+        .filter((o): o is string => typeof o === 'string')
+        .slice(0, 3);
+      return { clarify: true, question: parsed.question, options: opts };
+    }
+  } catch {
+    // no es JSON válido
+  }
+  return null;
 }
 
 // ── Historial de conversación ─────────────────────────────────────────────────
@@ -450,6 +498,10 @@ function buildWhatsAppSystemPrompt(
     'No inventes datos fiscales. Si no tienes datos suficientes, pide que abran isaak.verifactu.business para ver el análisis completo.',
     'Tienes acceso al historial completo de esta conversación. Úsalo para dar respuestas coherentes y no pedir información que el usuario ya ha proporcionado antes.',
     'Si el usuario hace referencia a algo mencionado antes ("lo de antes", "eso que dijiste", "la factura que comentaste"), busca el contexto en la conversación antes de pedir aclaraciones.',
+    '',
+    'ACLARACIÓN: Si la pregunta es genuinamente ambigua y necesitas más contexto para responder con datos reales (período de tiempo, tipo concreto de dato, cuenta específica, etc.), responde ÚNICAMENTE con este JSON — sin texto adicional:',
+    '{"clarify":true,"question":"Texto claro de la pregunta","options":["Opción A","Opción B","Opción C"]}',
+    'Reglas: máximo 3 opciones, cada opción máximo 20 caracteres. Prefiere SIEMPRE dar una respuesta directa. Solo usa el JSON cuando la ambigüedad impide dar un dato correcto.',
   ];
 
   if (snapshot) {
