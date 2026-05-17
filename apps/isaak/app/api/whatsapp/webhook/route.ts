@@ -25,6 +25,10 @@ import {
   type WaWebhookBody,
 } from '@/app/lib/whatsapp';
 import { buildIsaakQueryFromFlow, type WaFlowResponseData } from '@/app/lib/whatsapp-flows';
+import {
+  buildFiscalKnowledgeBlock,
+  WA_RESPONSE_FORMAT_INSTRUCTIONS,
+} from '@/app/lib/fiscal-knowledge';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -346,14 +350,14 @@ async function runIsaakPipeline(input: {
     model,
     instructions: buildWhatsAppSystemPrompt(context, senderName),
     messages: history,
-    temperature: 0.45,
-    maxOutputTokens: 400,
+    temperature: 0.3,
+    maxOutputTokens: 600,
     enableFallback: true,
   }).catch(() => null);
 
   const rawText = llmResult?.text?.trim() ?? null;
 
-  // Si el LLM pide aclaración → enviar botones interactivos
+  // Si el LLM pide aclaración → enviar botones interactivos (sin fuente ni seguimiento)
   const clarify = rawText ? parseClarifyResponse(rawText) : null;
   if (clarify) {
     const buttons = clarify.options.map((opt, i) => ({
@@ -365,16 +369,39 @@ async function runIsaakPipeline(input: {
     return;
   }
 
-  // Respuesta normal de texto
+  // Parsear respuesta estructurada (texto + fuente opcional + seguimiento opcional)
   const snapshot = context.holded.snapshot;
-  const reply = rawText
-    ? stripMarkdown(truncateForWhatsApp(rawText))
-    : snapshot
-      ? `Tengo acceso a tus datos de Holded (${snapshot.invoices.length} facturas, ${snapshot.contacts.length} contactos). ¿En qué puedo ayudarte?`
-      : 'Soy Isaak, tu asistente fiscal. ¿En qué puedo ayudarte hoy?';
+  const fallbackText = snapshot
+    ? `Tengo acceso a tus datos de Holded (${snapshot.invoices.length} facturas, ${snapshot.contacts.length} contactos). ¿En qué puedo ayudarte?`
+    : 'Soy Isaak, tu asistente fiscal. ¿En qué puedo ayudarte hoy?';
 
-  await sendWhatsAppText(normalizePhone(from), reply);
-  await saveOutboundEvent(threadId, tenantId, reply);
+  const structured = rawText ? parseStructuredResponse(rawText) : { answerText: fallbackText };
+
+  const replyText = structured.answerText
+    ? stripMarkdown(truncateForWhatsApp(structured.answerText))
+    : fallbackText;
+
+  await sendWhatsAppText(normalizePhone(from), replyText);
+  await saveOutboundEvent(threadId, tenantId, replyText);
+
+  // Fuente oficial → CTA button (mensaje adicional)
+  if (structured.fuente) {
+    await sendWhatsAppCtaUrl(
+      normalizePhone(from),
+      `📎 Fuente oficial: ${structured.fuente.title}`,
+      'Abrir',
+      structured.fuente.url
+    ).catch(() => {});
+  }
+
+  // Preguntas de seguimiento → botones rápidos (mensaje adicional)
+  if (structured.siguientes && structured.siguientes.length > 0) {
+    const buttons = structured.siguientes.map((q, i) => ({
+      id: `followup_${i}`,
+      title: q.slice(0, 20),
+    }));
+    await sendWhatsAppButtons(normalizePhone(from), '¿Quieres saber más?', buttons).catch(() => {});
+  }
 }
 
 // ── Menú de bienvenida (WA-II) ───────────────────────────────────────────────
@@ -440,6 +467,45 @@ function parseClarifyResponse(text: string): ClarifyResponse | null {
   return null;
 }
 
+// ── Respuesta estructurada (fuente oficial + seguimiento) ─────────────────────
+
+type StructuredResponse = {
+  answerText: string;
+  fuente?: { url: string; title: string };
+  siguientes?: string[];
+};
+
+/**
+ * Extrae → FUENTE y → SIGUIENTES del texto del LLM.
+ * Devuelve el texto limpio + los elementos interactivos opcionales.
+ */
+function parseStructuredResponse(raw: string): StructuredResponse {
+  const lines = raw.split('\n');
+  let fuente: StructuredResponse['fuente'];
+  let siguientes: string[] | undefined;
+  const bodyLines: string[] = [];
+
+  for (const line of lines) {
+    const fuenteMatch = line.match(/^→\s*FUENTE:\s*(.+)/);
+    const siguientesMatch = line.match(/^→\s*SIGUIENTES:\s*(.+)/);
+
+    if (fuenteMatch) {
+      const parts = fuenteMatch[1].split('|').map((p) => p.trim());
+      fuente = { url: parts[0], title: parts[1] ?? 'Ver fuente oficial' };
+    } else if (siguientesMatch) {
+      siguientes = siguientesMatch[1]
+        .split('|')
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .slice(0, 3);
+    } else {
+      bodyLines.push(line);
+    }
+  }
+
+  return { answerText: bodyLines.join('\n').trim(), fuente, siguientes };
+}
+
 // ── Historial de conversación ─────────────────────────────────────────────────
 
 /**
@@ -492,16 +558,20 @@ function buildWhatsAppSystemPrompt(
   const snapshot = context.holded.snapshot;
 
   const lines = [
-    `Eres Isaak, el asistente fiscal y contable de ${company}.`,
+    `Eres Isaak, asesor fiscal y contable digital de ${company}.`,
     `Estás respondiendo por WhatsApp a ${name}.`,
-    'Responde siempre en español. Sé conciso (máximo 3-4 párrafos cortos). No uses markdown avanzado — usa *negrita* para énfasis y • para listas.',
-    'No inventes datos fiscales. Si no tienes datos suficientes, pide que abran isaak.verifactu.business para ver el análisis completo.',
-    'Tienes acceso al historial completo de esta conversación. Úsalo para dar respuestas coherentes y no pedir información que el usuario ya ha proporcionado antes.',
-    'Si el usuario hace referencia a algo mencionado antes ("lo de antes", "eso que dijiste", "la factura que comentaste"), busca el contexto en la conversación antes de pedir aclaraciones.',
+    'Actúa como un asesor fiscal experto en España: da respuestas concretas, cita normativa cuando proceda y siempre orienta hacia la acción correcta.',
+    'Responde en español. Sé conciso (máximo 4 párrafos cortos). No uses markdown avanzado — usa *negrita* para énfasis y • para listas.',
+    'Tienes acceso al historial completo de esta conversación. Úsalo para dar respuestas coherentes y no repetir preguntas ya contestadas.',
+    'Si el usuario hace referencia a algo mencionado antes, búscalo en el historial antes de pedir aclaraciones.',
     '',
-    'ACLARACIÓN: Si la pregunta es genuinamente ambigua y necesitas más contexto para responder con datos reales (período de tiempo, tipo concreto de dato, cuenta específica, etc.), responde ÚNICAMENTE con este JSON — sin texto adicional:',
+    buildFiscalKnowledgeBlock(),
+    '',
+    'ACLARACIÓN: Si la pregunta es genuinamente ambigua (período, tipo de dato, cuenta específica), responde ÚNICAMENTE con este JSON — sin texto adicional:',
     '{"clarify":true,"question":"Texto claro de la pregunta","options":["Opción A","Opción B","Opción C"]}',
-    'Reglas: máximo 3 opciones, cada opción máximo 20 caracteres. Prefiere SIEMPRE dar una respuesta directa. Solo usa el JSON cuando la ambigüedad impide dar un dato correcto.',
+    'Máximo 3 opciones, cada una máximo 20 caracteres. Prefiere SIEMPRE respuesta directa.',
+    '',
+    WA_RESPONSE_FORMAT_INSTRUCTIONS,
   ];
 
   if (snapshot) {
