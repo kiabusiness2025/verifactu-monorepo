@@ -7,6 +7,7 @@ import { GoogleTagManager } from '../components/GoogleTagManager';
 import CookieBanner from './components/CookieBanner';
 import DevStatusBanner from './components/DevStatusBanner';
 import IsaakChatClient from './components/IsaakChatClient';
+import WhatsAppButton from './components/WhatsAppButton';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { ToastProvider } from './components/Toast';
 import { AuthProvider } from './context/AuthContext';
@@ -114,6 +115,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {process.env.NODE_ENV !== 'production' && <DevStatusBanner />}
             <CookieBanner />
             {!hideIsaakChat ? <IsaakChatClient /> : null}
+            <WhatsAppButton />
             <PWAInstallPrompt />
             <Analytics />
           </ToastProvider>

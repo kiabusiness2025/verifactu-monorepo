@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { buildAuthUrl, HOLDED_PUBLIC_URL } from '../lib/holded-navigation';
+import WhatsAppButton from './WhatsAppButton';
 import { IsaakWidget } from './IsaakWidget';
 
 type Props = {
@@ -281,6 +282,7 @@ export default function HoldedSiteChrome({ children }: Props) {
         </div>
       </footer>
 
+      <WhatsAppButton />
       <IsaakWidget
         page={
           connectorCtx === 'claude'
