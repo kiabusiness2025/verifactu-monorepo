@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { ConnectorLandingClient } from '@/app/components/ConnectorLandingClient';
+import { ConnectorStatusBadge } from '@/app/components/ConnectorStatusBadge';
 import { ConnectorMobileBanner } from '@/app/components/ConnectorMobileBanner';
 import { getFaqJsonLd } from '@/app/components/ConnectorFAQData';
 
@@ -169,6 +170,9 @@ export default function ClaudeConnectorPage() {
       {/* F4.3: banner mobile-only que invita a usar /auth/holded-direct
           (sobrevive al iOS in-app browser de Claude mobile). */}
       <ConnectorMobileBanner provider="claude" />
+      <div className="pt-6">
+        <ConnectorStatusBadge connector="claude" />
+      </div>
       <ConnectorLandingClient connector="claude" />
     </>
   );
