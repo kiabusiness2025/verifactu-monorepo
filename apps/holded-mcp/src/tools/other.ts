@@ -70,10 +70,15 @@ export function registerProductsTools(server: McpServer, getClient: () => Holded
       productId: z.string().describe('Holded product ID.'),
     },
     readOnlyAnnotations('get_product'),
-    withControlledErrors('get_product', 'product', ({ productId }) => productId, async ({ productId }) => {
-      const data = await getClient().getProduct(productId);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    })
+    withControlledErrors(
+      'get_product',
+      'product',
+      ({ productId }) => productId,
+      async ({ productId }) => {
+        const data = await getClient().getProduct(productId);
+        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      }
+    )
   );
 
   server.tool(
@@ -189,10 +194,15 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
       projectId: z.string().describe('Holded project ID.'),
     },
     readOnlyAnnotations('get_project'),
-    withControlledErrors('get_project', 'project', ({ projectId }) => projectId, async ({ projectId }) => {
-      const data = await getClient().getProject(projectId);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    })
+    withControlledErrors(
+      'get_project',
+      'project',
+      ({ projectId }) => projectId,
+      async ({ projectId }) => {
+        const data = await getClient().getProject(projectId);
+        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      }
+    )
   );
 
   server.tool(
@@ -203,10 +213,15 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
       projectId: z.string().describe('Holded project ID.'),
     },
     readOnlyAnnotations('list_project_tasks'),
-    withControlledErrors('list_project_tasks', 'project', ({ projectId }) => projectId, async ({ projectId }) => {
-      const data = await getClient().listTasks(projectId);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    })
+    withControlledErrors(
+      'list_project_tasks',
+      'project',
+      ({ projectId }) => projectId,
+      async ({ projectId }) => {
+        const data = await getClient().listTasks(projectId);
+        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      }
+    )
   );
 
   server.tool(
@@ -217,10 +232,15 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
       projectId: z.string().describe('Holded project ID.'),
     },
     readOnlyAnnotations('list_time_records'),
-    withControlledErrors('list_time_records', 'project', ({ projectId }) => projectId, async ({ projectId }) => {
-      const data = await getClient().listTimeRecords(projectId);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    })
+    withControlledErrors(
+      'list_time_records',
+      'project',
+      ({ projectId }) => projectId,
+      async ({ projectId }) => {
+        const data = await getClient().listTimeRecords(projectId);
+        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      }
+    )
   );
 }
 
@@ -240,10 +260,10 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
     'get_journal',
     'Returns Holded journal entries (daily ledger) for a date range. Read-only. PAGINATED — always check the `pagination.likelyHasMorePages` flag and fetch all pages before computing aggregates. If you omit starttmp and endtmp, the connector defaults to the current calendar year (Jan 1 to today).',
     {
-      starttmp: dateInputOptional.describe(
+      starttmp: dateInputOptional().describe(
         'Start date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to Jan 1 of the current calendar year.'
       ),
-      endtmp: dateInputOptional.describe(
+      endtmp: dateInputOptional().describe(
         'End date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to today.'
       ),
       page: z
@@ -301,10 +321,10 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
     'get_daily_book',
     'Returns the Holded daily accounting book (daily ledger) for a date range. Read-only. PAGINATED. If you omit starttmp and endtmp, the connector defaults to the current calendar year.',
     {
-      starttmp: dateInputOptional.describe(
+      starttmp: dateInputOptional().describe(
         'Start date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to Jan 1 of the current calendar year.'
       ),
-      endtmp: dateInputOptional.describe(
+      endtmp: dateInputOptional().describe(
         'End date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to today.'
       ),
       page: z
@@ -374,10 +394,15 @@ export function registerTeamTools(server: McpServer, getClient: () => HoldedClie
       employeeId: z.string().describe('Holded employee ID.'),
     },
     readOnlyAnnotations('get_employee'),
-    withControlledErrors('get_employee', 'employee', ({ employeeId }) => employeeId, async ({ employeeId }) => {
-      const data = await getClient().getEmployee(employeeId);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    })
+    withControlledErrors(
+      'get_employee',
+      'employee',
+      ({ employeeId }) => employeeId,
+      async ({ employeeId }) => {
+        const data = await getClient().getEmployee(employeeId);
+        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      }
+    )
   );
 }
 

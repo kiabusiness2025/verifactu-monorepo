@@ -21,11 +21,27 @@ export const dateInput = z
  *
  * Solución: aceptar nullish y normalizar a undefined en el transform, para que el
  * handler reciba siempre `string | number | undefined` aunque el LLM mande null.
+ *
+ * Bug adicional (18-may-2026, soporte audit `list_documents`):
+ *   Esta variante era originalmente una constante exportada compartida entre
+ *   `starttmp` y `endtmp` de varias tools. Con Zod v3, `zod-to-json-schema`
+ *   deduplica schemas que referencian la MISMA instancia y emite un
+ *   `$ref` apuntando al primero — generando, p.ej.:
+ *     `endtmp: { "$ref": "#/properties/starttmp", "description": "End date" }`
+ *   En la mayoría de clientes MCP el `$ref` se respeta sin más, pero la UI de
+ *   ChatGPT (y posiblemente otros) renderiza ambos campos colapsados como un
+ *   solo input — el usuario no puede sobrescribir `endtmp` independientemente.
+ *
+ * Solución: convertir el export en una factory que devuelva una NUEVA instancia
+ * en cada llamada. Cada campo construye su propio sub-schema → cero
+ * deduplicación → ambos quedan inlined con su `description` propia.
  */
-export const dateInputOptional = z
-  .union([z.string(), z.number()])
-  .nullish()
-  .transform((v) => (v == null ? undefined : v));
+export function dateInputOptional() {
+  return z
+    .union([z.string(), z.number()])
+    .nullish()
+    .transform((v) => (v == null ? undefined : v));
+}
 
 /**
  * Acepta una fecha como Unix timestamp (segundos), número en string, o ISO 8601,
@@ -212,6 +228,28 @@ export function defaultDailyLedgerRange(): { starttmp: string; endtmp: string } 
   const yearStart = new Date(now.getFullYear(), 0, 1);
   return {
     starttmp: String(Math.floor(yearStart.getTime() / 1000)),
+    endtmp: String(Math.floor(now.getTime() / 1000)),
+  };
+}
+
+/**
+ * Default range para `/documents` cuando el caller no provee starttmp ni endtmp.
+ *
+ * Bug original (18-may-2026, soporte audit `list_documents`):
+ *   El handler aplicaba `starttmp = 1-ene del año anterior` pero NO seteaba
+ *   `endtmp`, asumiendo "Holded interpreta como hoy". Es falso: la API
+ *   /documents rechaza con 400 si recibe solo uno de los dos timestamps.
+ *
+ * Solución: igual que `/dailyledger`, devolver SIEMPRE ambos. Cubrimos un rango
+ * de ~24 meses ("1 de enero del año anterior" → ahora) para que la auditoría
+ * fiscal vea el ejercicio en curso + el cerrado anterior sin que el modelo
+ * tenga que pasar fechas explícitas.
+ */
+export function defaultDocumentsRange(): { starttmp: string; endtmp: string } {
+  const now = new Date();
+  const previousYear = now.getUTCFullYear() - 1;
+  return {
+    starttmp: String(Math.floor(Date.UTC(previousYear, 0, 1) / 1000)),
     endtmp: String(Math.floor(now.getTime() / 1000)),
   };
 }

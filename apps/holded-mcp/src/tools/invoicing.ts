@@ -4,6 +4,7 @@ import { HoldedClient, HOLDED_DOC_TYPES } from '../holded-client.js';
 import {
   dateInput,
   dateInputOptional,
+  defaultDocumentsRange,
   enrichDocumentDates,
   toUnixSecondsNumber,
   toUnixSecondsString,
@@ -33,7 +34,7 @@ export function registerInvoicingTools(
     'list_documents',
     'Returns Holded documents (invoices, sales receipts, credit notes, sales orders, proformas, waybills, estimates, purchases, purchase orders, purchase refunds) filtered by type, date range and contact. Read-only. Paginated. Each document is enriched with *Formatted fields in Europe/Madrid timezone so the model does not need to parse Unix timestamps. ' +
       '\n\n' +
-      'IMPORTANT — Holded\'s native default returns ONLY current-year documents (approved status), so documents from previous years are invisible without an explicit date range. ' +
+      "IMPORTANT — Holded's native default returns ONLY current-year documents (approved status), so documents from previous years are invisible without an explicit date range. " +
       'To prevent this audit blind-spot the connector automatically applies a default window of "previous calendar year January 1 → today" (~24 months) when neither starttmp nor endtmp is provided, surfaced in `rangeApplied.defaultsAppliedByConnector`. ' +
       'To audit OLDER history (e.g. 2024 or earlier) pass explicit `starttmp`/`endtmp` covering that period. To audit a SPECIFIC fiscal year, pass starttmp = Jan 1 of that year, endtmp = Dec 31 of that year.',
     {
@@ -43,11 +44,11 @@ export function registerInvoicingTools(
           'Document type. One of: invoice, salesreceipt, creditnote, salesorder, proform, waybill, estimate, purchase, purchaseorder, purchaserefund.'
         ),
       page: z.string().optional().describe('Results page number (default 1).'),
-      starttmp: dateInputOptional.describe(
-        'Start date (ISO 8601 or Unix seconds). Optional — if omitted AND endtmp is also omitted, defaults to Jan 1 of the previous calendar year (e.g. 2025-01-01 when called in 2026) to cover ~24 months. Pass an explicit value to audit older periods.'
+      starttmp: dateInputOptional().describe(
+        'Start date (ISO 8601 or Unix seconds). Optional — if omitted AND endtmp is also omitted, the connector applies a default of Jan 1 of the previous calendar year (e.g. 2025-01-01 when called in 2026) to cover ~24 months. Pass an explicit value to audit older periods.'
       ),
-      endtmp: dateInputOptional.describe(
-        'End date (ISO 8601 or Unix seconds). Optional — if omitted, no upper bound is sent to Holded (which then uses "today" as the implicit upper bound).'
+      endtmp: dateInputOptional().describe(
+        'End date (ISO 8601 or Unix seconds). Optional — if omitted AND starttmp is also omitted, the connector defaults to "now". If you pass starttmp explicitly without endtmp, the Holded API requires both, so the connector falls back to "now" for endtmp.'
       ),
       contactId: z.string().optional().describe('Optional Holded contact ID filter.'),
       limit: z.coerce
@@ -75,18 +76,20 @@ export function registerInvoicingTools(
       // default de "1 de enero del año anterior → hoy" (~24 meses), que cubre
       // ejercicio en curso + ejercicio cerrado anterior — el caso de uso más
       // común para análisis fiscal/contable.
+      //
+      // Bug 18-may-2026 (soporte audit `list_documents`): la API /documents
+      // requiere AMBOS timestamps si recibe uno (devuelve 400 si recibe solo
+      // starttmp). El comentario previo "Holded interpreta como hoy" era
+      // erróneo. Cualquier camino que setee `starttmp` debe setear también
+      // `endtmp`, idéntico patrón al de /dailyledger.
+      const defaults = defaultDocumentsRange();
       const defaultsApplied = {
-        starttmp: starttmp === undefined && endtmp === undefined,
-        endtmp: false,
+        starttmp: starttmp === undefined,
+        endtmp: endtmp === undefined,
       };
 
-      if (starttmp !== undefined) {
-        params.starttmp = toUnixSecondsString(starttmp);
-      } else if (defaultsApplied.starttmp) {
-        const previousYear = new Date().getUTCFullYear() - 1;
-        params.starttmp = String(Math.floor(Date.UTC(previousYear, 0, 1) / 1000));
-      }
-      if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
+      params.starttmp = starttmp !== undefined ? toUnixSecondsString(starttmp) : defaults.starttmp;
+      params.endtmp = endtmp !== undefined ? toUnixSecondsString(endtmp) : defaults.endtmp;
 
       const raw = await getClient().listDocuments(docType, params);
       const all = Array.isArray(raw) ? raw : [];
@@ -110,9 +113,15 @@ export function registerInvoicingTools(
         timezoneNote:
           'Dates with *Formatted suffix are YYYY-MM-DD in Europe/Madrid (peninsular Spain). Raw Unix timestamps are kept for reference.',
       };
-      if (defaultsApplied.starttmp) {
+      if (defaultsApplied.starttmp && defaultsApplied.endtmp) {
         payload.note =
           'Holded\'s native default would return only current-year documents. The connector applied a default range of "previous calendar year Jan 1 → today" (~24 months) so older fiscal-year documents are visible. To audit older periods (e.g. 2024 or earlier), pass explicit starttmp/endtmp.';
+      } else if (defaultsApplied.endtmp) {
+        payload.note =
+          'The Holded /documents API requires both starttmp and endtmp when either is sent. You provided starttmp only — the connector defaulted endtmp to "now". Pass an explicit endtmp to control the upper bound.';
+      } else if (defaultsApplied.starttmp) {
+        payload.note =
+          'The Holded /documents API requires both starttmp and endtmp when either is sent. You provided endtmp only — the connector defaulted starttmp to Jan 1 of the previous calendar year. Pass an explicit starttmp to control the lower bound.';
       }
       if (truncated) {
         payload.hint = `Showing first ${limit} of ${all.length} documents received from Holded. Use page=2 (or higher) for the next batch, or narrow with starttmp/endtmp/contactId.`;
@@ -130,14 +139,19 @@ export function registerInvoicingTools(
       documentId: z.string().describe('Holded document ID.'),
     },
     readOnlyAnnotations('get_document'),
-    withControlledErrors('get_document', 'document', ({ documentId }) => documentId, async ({ docType, documentId }) => {
-      const data = await getClient().getDocument(docType, documentId);
-      const enriched =
-        data && typeof data === 'object'
-          ? enrichDocumentDates(data as Record<string, unknown>)
-          : data;
-      return { content: [{ type: 'text', text: JSON.stringify(enriched, null, 2) }] };
-    })
+    withControlledErrors(
+      'get_document',
+      'document',
+      ({ documentId }) => documentId,
+      async ({ docType, documentId }) => {
+        const data = await getClient().getDocument(docType, documentId);
+        const enriched =
+          data && typeof data === 'object'
+            ? enrichDocumentDates(data as Record<string, unknown>)
+            : data;
+        return { content: [{ type: 'text', text: JSON.stringify(enriched, null, 2) }] };
+      }
+    )
   );
 
   server.tool(
@@ -149,27 +163,32 @@ export function registerInvoicingTools(
       documentId: z.string().describe('Holded document ID.'),
     },
     readOnlyAnnotations('get_document_pdf'),
-    withControlledErrors('get_document_pdf', 'document', ({ documentId }) => documentId, async ({ docType, documentId }) => {
-      const buf = await getClient().getDocumentPdf(docType, documentId);
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify(
-              {
-                docType,
-                documentId,
-                contentType: 'application/pdf',
-                base64: buf.toString('base64'),
-                bytes: buf.length,
-              },
-              null,
-              2
-            ),
-          },
-        ],
-      };
-    })
+    withControlledErrors(
+      'get_document_pdf',
+      'document',
+      ({ documentId }) => documentId,
+      async ({ docType, documentId }) => {
+        const buf = await getClient().getDocumentPdf(docType, documentId);
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  docType,
+                  documentId,
+                  contentType: 'application/pdf',
+                  base64: buf.toString('base64'),
+                  bytes: buf.length,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+        };
+      }
+    )
   );
 
   if (options.includeWriteTools === false) {
@@ -191,7 +210,7 @@ export function registerInvoicingTools(
           'Customer or contact name (e.g. "Kappa Digital Zaragoza SL"). The connector resolves it to a contactId via list_contacts. Provide either contactId or contactName.'
         ),
       date: dateInput.describe('Invoice date (ISO 8601 or Unix seconds).'),
-      dueDate: dateInputOptional.describe(
+      dueDate: dateInputOptional().describe(
         'Optional due date (ISO 8601 or Unix seconds). Omit or null for no due date.'
       ),
       notes: z.string().optional().describe('Optional invoice notes.'),
