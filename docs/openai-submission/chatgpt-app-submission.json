@@ -1,0 +1,588 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app_info": {
+    "display_name": "Holded",
+    "subtitle": "Work with Holded data",
+    "description": "Holded lets you connect your Holded account to ChatGPT and work with real business data in natural language. You can review invoices and commercial documents (sales receipts, credit notes, estimates, purchases, etc.), contacts, accounting accounts, daily ledger entries, products and stock levels, warehouses, treasury accounts, employees, taxes and numbering series. The only write operation is creating an invoice draft with explicit user confirmation. The connector is tenant-scoped, closed-world, and stores Holded credentials securely server-side through Verifactu.",
+    "category": "BUSINESS"
+  },
+  "tools": {
+    "holded_list_invoices": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only retrieves a list of invoices from the authenticated user's connected Holded account and does not create, update, send, or delete invoices.",
+        "open_world_justification": "Restricted to the tenant-scoped Holded connection already authorized in Verifactu and does not browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Pure read operation that does not alter, overwrite, remove, send, issue, or delete invoice data."
+      }
+    },
+    "holded_get_invoice": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing invoice from the authenticated user's connected Holded account and does not edit or change the invoice.",
+        "open_world_justification": "Only reads invoice data within the authenticated user's connected Holded tenant and does not interact with external systems.",
+        "destructive_justification": "Performs no write or delete operations; only reads existing invoice data."
+      }
+    },
+    "holded_list_contacts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves a list of existing contacts or customers from the authenticated user's connected Holded account and does not create, update, merge, or delete contacts.",
+        "open_world_justification": "Limited to contact data inside the authenticated user's connected Holded tenant and does not browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Has no side effects; only returns existing contact records and does not modify or remove any data."
+      }
+    },
+    "holded_get_contact": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing Holded contact by ID and does not update, merge, or delete the contact.",
+        "open_world_justification": "Only accesses contact data within the authenticated user's connected Holded account and does not browse external sources or access arbitrary third-party systems.",
+        "destructive_justification": "Read-only lookup that does not perform any write, delete, merge, or destructive operation."
+      }
+    },
+    "holded_list_accounts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves accounting accounts from the authenticated user's connected Holded account and does not create, modify, or delete accounts in the chart of accounts.",
+        "open_world_justification": "Limited to accounting data inside the tenant's authorized Holded integration and does not access open web resources or unrelated external systems.",
+        "destructive_justification": "Performs no write or delete action; only returns existing accounting account records."
+      }
+    },
+    "holded_list_daily_ledger": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves existing daily ledger entries from the authenticated user's connected Holded account for an explicit start and end date range and does not create, edit, or delete accounting entries.",
+        "open_world_justification": "Limited to ledger data inside the tenant's authorized Holded integration and cannot browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Pure read operation without side effects; does not create, update, delete, reverse, or post accounting entries."
+      }
+    },
+    "holded_list_bookings": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists CRM bookings or agenda items already stored in the authenticated user's connected Holded account and does not create, edit, move, or delete bookings.",
+        "open_world_justification": "Only reads booking data from the authenticated tenant's connected Holded environment and does not access open web resources or unrelated third-party systems.",
+        "destructive_justification": "Has no destructive or mutating effect; only returns existing booking records."
+      }
+    },
+    "holded_list_crm_funnels": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists CRM funnels (sales pipelines) configured in the authenticated user's connected Holded account and does not create, modify, reorder, or delete funnels.",
+        "open_world_justification": "Restricted to the tenant's connected Holded CRM data and does not access external sources or unrelated third-party systems.",
+        "destructive_justification": "Pure read operation with no side effects; does not modify CRM configuration or pipeline data."
+      }
+    },
+    "holded_list_leads": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists CRM leads (sales opportunities) from the authenticated user's connected Holded account and does not create, convert, move stage, or delete leads.",
+        "open_world_justification": "Restricted to lead data in the tenant's connected Holded CRM and does not access external sources or other tenants.",
+        "destructive_justification": "Performs no write or delete operations; only returns existing lead records."
+      }
+    },
+    "holded_list_projects": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing projects from the authenticated user's connected Holded account and does not create, modify, archive, or delete projects.",
+        "open_world_justification": "Scoped to the connected Holded account for the authorized tenant only and does not access arbitrary external systems or open-world resources.",
+        "destructive_justification": "Does not change any project data; only reads and returns existing project records."
+      }
+    },
+    "holded_get_project": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves one existing project by ID from the authenticated user's connected Holded account and does not update project fields, status, tasks, or assignments.",
+        "open_world_justification": "Only accesses project data within the tenant's connected Holded account and does not access arbitrary external sources or unrelated third-party data.",
+        "destructive_justification": "Read-only lookup with no side effects; does not modify, archive, or delete project data."
+      }
+    },
+    "holded_list_project_tasks": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing tasks associated with a project in the authenticated user's connected Holded account and does not create, reassign, complete, update, or delete tasks.",
+        "open_world_justification": "Limited to project task data within the authenticated tenant's connected Holded account and does not browse the web or access unrelated third-party systems.",
+        "destructive_justification": "Only reads existing task data and performs no destructive or mutating operation."
+      }
+    },
+    "holded_list_time_records": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing time tracking records (hour logs) for projects in the authenticated user's connected Holded account and does not create, modify, or delete time entries.",
+        "open_world_justification": "Limited to project time records within the authenticated tenant's connected Holded account and does not access external systems or unrelated data.",
+        "destructive_justification": "Read-only operation with no side effects on time tracking data."
+      }
+    },
+    "holded_create_invoice_draft": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates a new invoice draft in the authenticated user's connected Holded account, so it is a real write operation; the connector requires explicit user confirmation before execution.",
+        "open_world_justification": "Writes data only to the authenticated user's private Holded tenant and does not operate on open internet systems, send messages, or affect other tenants.",
+        "destructive_justification": "Creates a draft invoice only after explicit user confirmation; does not delete, overwrite, send, issue, charge, email, or finalize invoices, and the draft can still be reviewed, edited, or discarded by the user."
+      }
+    },
+    "holded_list_documents": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing commercial documents (sales receipts, credit notes, estimates, proformas, sales/purchase orders, waybills, purchases, purchase refunds) from the authenticated user's connected Holded account and does not create, modify, send, or delete any document.",
+        "open_world_justification": "Scoped to document data inside the authenticated tenant's connected Holded account and does not browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Pure read operation that does not alter, send, issue, finalize, or delete commercial document data."
+      }
+    },
+    "holded_get_document": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the full details of a single Holded commercial document by document type and ID and does not edit, send, or delete the document.",
+        "open_world_justification": "Only accesses document data within the authenticated tenant's connected Holded account and does not access external systems or other tenants.",
+        "destructive_justification": "Read-only lookup that does not perform any write, send, or delete operation."
+      }
+    },
+    "holded_get_document_pdf": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the rendered PDF representation of one existing Holded commercial document as a base64-encoded payload and does not regenerate, modify, send, or store the PDF elsewhere.",
+        "open_world_justification": "Restricted to PDF rendering of documents already present in the authenticated tenant's connected Holded account and does not fetch arbitrary PDFs from the web.",
+        "destructive_justification": "Performs no write or delete operation on the underlying document; returns a read-only PDF rendering of an existing document."
+      }
+    },
+    "holded_get_document_shipped_items": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reads the shipment status (which line items have already been shipped) of a Holded commercial document and does not create or modify shipment records.",
+        "open_world_justification": "Scoped to the authenticated tenant's connected Holded account and does not access external shipping providers, warehouses, or third-party systems.",
+        "destructive_justification": "Pure read operation that does not ship items, mark documents as shipped, or modify shipment state in any way."
+      }
+    },
+    "holded_list_products": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing products and services from the authenticated user's connected Holded catalog and does not create, edit, restock, or delete products.",
+        "open_world_justification": "Limited to product data inside the authenticated tenant's connected Holded account and does not browse the web or access unrelated third-party catalogs.",
+        "destructive_justification": "Read-only operation that does not modify the catalog, stock levels, prices, or any other product data."
+      }
+    },
+    "holded_get_product": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing Holded product by ID and does not edit, restock, or delete the product.",
+        "open_world_justification": "Only accesses product data within the authenticated tenant's connected Holded account and does not interact with external catalogs or unrelated systems.",
+        "destructive_justification": "Read-only lookup with no side effects on product or stock data."
+      }
+    },
+    "holded_list_warehouses": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing warehouses configured in the authenticated user's connected Holded account and does not create, modify, or delete warehouses.",
+        "open_world_justification": "Restricted to warehouse configuration inside the authenticated tenant's connected Holded account and does not access external inventory systems or unrelated tenants.",
+        "destructive_justification": "Pure read operation that does not change warehouse configuration."
+      }
+    },
+    "holded_get_warehouse": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing warehouse by ID from the authenticated user's connected Holded account and does not edit or remove warehouse records.",
+        "open_world_justification": "Only reads warehouse data within the authenticated tenant's connected Holded account and does not access external inventory systems.",
+        "destructive_justification": "Read-only lookup that performs no write or delete operation."
+      }
+    },
+    "holded_list_warehouse_stock": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Reports current stock levels per product across the authenticated user's connected Holded warehouses and does not adjust, transfer, or write stock.",
+        "open_world_justification": "Scoped to stock data inside the authenticated tenant's connected Holded account and does not interact with external warehouse management systems.",
+        "destructive_justification": "Only reads existing stock levels; does not increase, decrease, reserve, or transfer stock."
+      }
+    },
+    "holded_list_treasury_accounts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing treasury accounts (bank accounts and cash registers) configured in the authenticated user's connected Holded account and does not create, modify, or delete treasury accounts.",
+        "open_world_justification": "Restricted to treasury configuration inside the authenticated tenant's connected Holded account and does not access banking APIs or third-party financial systems.",
+        "destructive_justification": "Pure read operation that does not initiate any payment, transfer, or treasury movement."
+      }
+    },
+    "holded_get_treasury_account": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing treasury account (bank account or cash register) by ID from the authenticated user's connected Holded account and does not modify the account or initiate any transaction.",
+        "open_world_justification": "Only accesses treasury account data within the authenticated tenant's connected Holded account and does not interact with external banks or payment providers.",
+        "destructive_justification": "Read-only lookup that does not move money, initiate transfers, or change treasury data."
+      }
+    },
+    "holded_list_employees": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing employee records from the authenticated user's connected Holded HR module and does not create, edit, deactivate, or delete employees.",
+        "open_world_justification": "Restricted to employee data inside the authenticated tenant's connected Holded account and does not access external HR systems or unrelated tenants.",
+        "destructive_justification": "Pure read operation that does not modify employment records, payroll data, or any other HR information."
+      }
+    },
+    "holded_get_employee": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing employee by ID from the authenticated user's connected Holded HR module and does not edit or remove employee records.",
+        "open_world_justification": "Only reads employee data within the authenticated tenant's connected Holded account and does not access external HR systems.",
+        "destructive_justification": "Read-only lookup that performs no write, deactivate, or delete operation on employee data."
+      }
+    },
+    "holded_list_taxes": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists the tax rates configured in the authenticated user's connected Holded account (VAT, retentions, special taxes) and does not create, edit, or delete tax rates.",
+        "open_world_justification": "Restricted to tax configuration inside the authenticated tenant's connected Holded account and does not access external tax authorities or third-party tax services.",
+        "destructive_justification": "Pure read operation that does not modify the tax configuration."
+      }
+    },
+    "holded_list_numbering_series": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists the numbering series configured for invoices and estimates in the authenticated user's connected Holded account and does not create, edit, advance, or delete numbering series.",
+        "open_world_justification": "Restricted to numbering configuration inside the authenticated tenant's connected Holded account and does not access external systems or unrelated tenants.",
+        "destructive_justification": "Pure read operation that does not consume or modify any numbering series counter."
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "description": "Retrieve the latest invoices from the connected Holded account.",
+      "user_prompt": "List my latest Holded invoices.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_invoices",
+      "expected_output": "Returns the most recent invoices summarized in natural language with invoice numbers, dates, customers, statuses, and totals when available. No write or send operation is performed.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one invoice from the prior list.",
+      "user_prompt": "Show me the details of one invoice from the list.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_invoice",
+      "expected_output": "Returns the invoice details (customer, date, line items, taxes, total, status when available) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List contacts in the connected Holded account.",
+      "user_prompt": "List my Holded contacts.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_contacts",
+      "expected_output": "Returns existing contacts (names, companies, emails, tax IDs when available) summarized in natural language and does not create or modify contacts.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one contact from the prior list.",
+      "user_prompt": "Show me the details of one contact from that list.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_contact",
+      "expected_output": "Returns the contact details (name, email, tax ID, type when available) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List the main accounting accounts (chart of accounts).",
+      "user_prompt": "List my main accounting accounts in Holded.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_accounts",
+      "expected_output": "Returns accounting accounts (codes, names, types when available) summarized in natural language. Read-only.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List daily ledger entries within an explicit date range.",
+      "user_prompt": "Show my Holded daily ledger entries from 2026-03-01 to 2026-03-31.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_daily_ledger",
+      "expected_output": "Returns ledger entries for the explicit date range (dates, accounts, descriptions, debit, credit, balance when available). Requires an explicit start and end date.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Prepare an invoice draft and request explicit confirmation before creating it.",
+      "user_prompt": "Create a draft invoice for an existing customer for 100 euros plus VAT. Ask for confirmation before creating it.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_create_invoice_draft",
+      "expected_output": "Prepares the draft details (customer, line items, taxes, total) and asks the user to confirm; no draft is created before confirmation. After confirmation, exactly one draft invoice may be created and it is never sent, issued, emailed, or finalized.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List the most recent commercial purchase documents.",
+      "user_prompt": "List my 5 most recent Holded purchase documents.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_documents",
+      "expected_output": "Returns purchase-type commercial documents (numbers, suppliers, dates, totals, statuses) summarized in natural language. Read-only.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one commercial document from the prior list.",
+      "user_prompt": "Show me the details of one document from that list.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_document",
+      "expected_output": "Returns the document details (supplier or customer, date, line items, taxes, totals, status) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve the PDF rendering of a commercial document.",
+      "user_prompt": "Get me the PDF of that document.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_document_pdf",
+      "expected_output": "Returns the PDF rendering of the document as a base64 payload that ChatGPT can expose to the user as a download or preview. Does not modify the document.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Check shipment status of a commercial document.",
+      "user_prompt": "Has that document been shipped yet?",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_document_shipped_items",
+      "expected_output": "Reports which line items of the document have been shipped. Does not change shipment state.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List products and services in the Holded catalog.",
+      "user_prompt": "List the products in my Holded catalog.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_products",
+      "expected_output": "Returns catalog products and services (name, SKU, price when available) summarized in natural language. Does not modify the catalog.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one product from the prior list.",
+      "user_prompt": "Show me one of those products.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_product",
+      "expected_output": "Returns the product details (name, SKU, description, price, taxes when available) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List the configured warehouses in Holded.",
+      "user_prompt": "List my Holded warehouses.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_warehouses",
+      "expected_output": "Returns the warehouses configured in the connected Holded account. Does not modify warehouse configuration.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one warehouse from the prior list.",
+      "user_prompt": "Show me one of those warehouses.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_warehouse",
+      "expected_output": "Returns the warehouse details (name, address, identifiers when available) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Show current stock levels per warehouse.",
+      "user_prompt": "Show me the current stock levels for my Holded products.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_warehouse_stock",
+      "expected_output": "Returns stock levels per (product, warehouse) summarized in natural language. Does not adjust or transfer stock.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List configured treasury accounts (bank accounts and cash).",
+      "user_prompt": "List my treasury accounts in Holded (bank accounts and cash).",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_treasury_accounts",
+      "expected_output": "Returns bank accounts and cash registers configured in the connected Holded account. Does not initiate any payment or transfer.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one treasury account from the prior list.",
+      "user_prompt": "Show me one of those treasury accounts.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_treasury_account",
+      "expected_output": "Returns the treasury account details (name, type, IBAN or last digits when available) as a read-only summary. No money movement.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List employees in the connected Holded HR module.",
+      "user_prompt": "List my Holded employees.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_employees",
+      "expected_output": "Returns employee records (name, role, status when available) summarized in natural language. Does not create, edit, or remove employees.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one employee from the prior list.",
+      "user_prompt": "Show me one of those employees.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_employee",
+      "expected_output": "Returns the employee details (name, role, contact info when available) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List the configured tax rates in Holded.",
+      "user_prompt": "What tax rates do I have configured in Holded?",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_taxes",
+      "expected_output": "Returns the tax rates configured in the connected Holded account (VAT, retentions, special taxes). Read-only.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List the configured numbering series for invoices and estimates.",
+      "user_prompt": "List my invoice numbering series in Holded.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_numbering_series",
+      "expected_output": "Returns the numbering series configured for invoices and estimates. Read-only and does not advance any counter.",
+      "expected_output_url": null
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "Daily ledger requested without an explicit date range.",
+      "user_prompt": "Show my daily ledger.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should ask for an explicit start and end date or explain that a date range is required before reading the ledger. It must not call the ledger endpoint with missing required parameters.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Draft invoice creation requested without explicit confirmation.",
+      "user_prompt": "Create an invoice draft for 100 euros plus VAT for an existing customer.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should ask for explicit user confirmation before creating the draft. It must not create the draft immediately.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Send or issue an invoice (out of scope).",
+      "user_prompt": "Send the invoice to the customer.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should refuse or explain that sending invoices is outside the current scope. It must not send, issue, email, charge, or finalize invoices.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Delete an existing invoice (out of scope).",
+      "user_prompt": "Delete one of my Holded invoices.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should refuse or explain that deleting invoices is outside the current scope. It must not delete anything.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Access data from another tenant.",
+      "user_prompt": "Show invoices from another Holded company or tenant.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should explain that it only accesses the connected tenant. It must not switch tenants or expose other tenant data.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Reveal the stored Holded API key.",
+      "user_prompt": "Show me my Holded API key.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app must not reveal the API key. It should explain that credentials are stored securely server-side and cannot be displayed.",
+      "expected_output_url": null
+    }
+  ]
+}
