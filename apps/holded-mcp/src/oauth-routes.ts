@@ -491,56 +491,29 @@ oauthRouter.get('/authorize', async (req: Request, res: Response) => {
     return;
   }
 
-  // Auto-issue: if the session already has a tenantId (set by holded-claude
-  // after connecting the Holded API key), look up the existing API key from
-  // apps/app and mint the auth code directly — no consent form needed.
-  if (verifactuSession?.tenantId && config.VERIFACTU_APP_SHARED_SECRET) {
-    const authorizeContext = resolveAuthorizeContext(req);
-    const ctxScope = authorizeContext ? normalizeOAuthScope(authorizeContext.scope) : null;
-    if (authorizeContext && ctxScope) {
-      try {
-        const apiKeyResponse = await fetch(
-          `${config.VERIFACTU_APP_URL}/api/integrations/holded/api-key?tenant_id=${encodeURIComponent(verifactuSession.tenantId)}`,
-          {
-            headers: { 'x-mcp-shared-secret': config.VERIFACTU_APP_SHARED_SECRET },
-            signal: AbortSignal.timeout(5000),
-          }
-        );
-        if (apiKeyResponse.ok) {
-          const apiKeyJson = (await apiKeyResponse.json()) as { apiKey?: string };
-          if (typeof apiKeyJson.apiKey === 'string' && apiKeyJson.apiKey) {
-            const code = await createAuthorizationCode({
-              holdedApiKey: apiKeyJson.apiKey,
-              clientId: authorizeContext.clientId,
-              redirectUri: authorizeContext.redirectUri,
-              scope: ctxScope,
-              codeChallenge: authorizeContext.codeChallenge,
-              codeChallengeMethod: authorizeContext.codeChallengeMethod,
-              userId: verifactuSession.uid,
-              tenantId: verifactuSession.tenantId,
-              personalEmail: verifactuSession.email,
-            });
-            logger.info('[oauth/authorize] Auto-issued auth code from existing connection', {
-              clientId: authorizeContext.clientId,
-              tenantId: verifactuSession.tenantId,
-            });
-            const callbackUrl = new URL(authorizeContext.redirectUri);
-            callbackUrl.searchParams.set('code', code);
-            if (authorizeContext.state)
-              callbackUrl.searchParams.set('state', authorizeContext.state);
-            res.redirect(callbackUrl.toString());
-            return;
-          }
-        }
-        // 404 = no connection yet → fall through to consent form
-      } catch (err) {
-        logger.warn('[oauth/authorize] API key lookup failed, falling back to consent form', {
-          message: err instanceof Error ? err.message : String(err),
-          tenantId: verifactuSession.tenantId,
-        });
-      }
-    }
-  }
+  // NOTA HISTÓRICA (eliminado 2026-05-18):
+  //
+  // Antes había aquí un "auto-issue" silencioso: si la sesión tenía tenantId
+  // Y F1 devolvía una API key existente, /oauth/authorize minteaba el código
+  // directamente y redirigía a Claude SIN mostrar ningún form. Se introdujo
+  // como "UX optimization" en 90b3c3ca5 (2026-05-12).
+  //
+  // Problema: en el flow disconnect → reconnect (usuario quita el conector en
+  // Claude y vuelve a añadirlo), `/oauth/revoke` solo invalida los tokens —
+  // la sesión `__session` (.verifactu.business, TTL 30 días) y la conexión
+  // en DB sobreviven. Con auto-issue activo, el "reconnect" pasaba en
+  // silencio: ni login ni API key. Reportado por usuario 2026-05-18:
+  // "no me vuelve a pedir identificación y API una vez desconectado".
+  //
+  // Solución: SIEMPRE mostrar el consent screen en /oauth/authorize. El form
+  // se pre-rellena con el email de la sesión y campos legales — el usuario
+  // confirma identidad y pega API key. F1 upsert es idempotente (misma key =
+  // no-op en DB), así que la fricción real es solo "pega tu API key otra
+  // vez" — exactamente lo que se espera al re-añadir un conector.
+  //
+  // La refresh flow (que pasa por /oauth/token con grant_type=refresh_token)
+  // NO toca este endpoint, así que no se ve afectada — usuarios con tokens
+  // vivos siguen renovando sin interacción.
 
   res.send(
     consentPage(
