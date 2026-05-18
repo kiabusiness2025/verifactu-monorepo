@@ -70,7 +70,9 @@ export default function SupportAssistantClient({
   const [input, setInput] = useState(initialPrompt && !autoSendInitialPrompt ? initialPrompt : '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [errorCta, setErrorCta] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [exchangeCount, setExchangeCount] = useState(0);
   const autoSentRef = useRef(false);
 
   const sendMessage = useCallback(
@@ -101,7 +103,9 @@ export default function SupportAssistantClient({
 
         const data = await res.json().catch(() => null);
         if (!res.ok || !data?.reply) {
-          throw new Error(data?.error || 'No he podido responder ahora mismo.');
+          setError(data?.error || 'No he podido responder ahora mismo.');
+          if (data?.cta) setErrorCta(data.cta as string);
+          return;
         }
 
         setMessages((current) => [
@@ -111,6 +115,7 @@ export default function SupportAssistantClient({
         if (typeof data.conversationId === 'string') {
           setConversationId(data.conversationId);
         }
+        setExchangeCount((n) => n + 1);
       } catch (assistantError) {
         setError(
           assistantError instanceof Error
@@ -181,7 +186,42 @@ export default function SupportAssistantClient({
         ) : null}
       </div>
 
-      {error ? <div className="mt-3 text-sm text-rose-700">{error}</div> : null}
+      {/* Conversion banner — shown after 3 exchanges */}
+      {exchangeCount >= 3 ? (
+        <div className="mt-4 rounded-2xl border border-[#2361d8]/20 bg-[#2361d8]/5 px-4 py-3">
+          <p className="text-sm font-semibold text-[#011c67]">
+            ¿Quieres respuestas con tus datos reales?
+          </p>
+          <p className="mt-0.5 text-xs leading-5 text-slate-600">
+            Isaak conecta con Holded para analizar ventas, gastos, cobros y facturas de tu negocio —
+            sin que tengas Claude.ai ni ChatGPT.
+          </p>
+          <a
+            href="https://isaak.verifactu.business"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1f55c0]"
+          >
+            Probar Isaak 14 días gratis →
+          </a>
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="mt-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3">
+          <p className="text-sm text-rose-700">{error}</p>
+          {errorCta ? (
+            <a
+              href={errorCta}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1f55c0]"
+            >
+              Empezar prueba gratuita de Isaak →
+            </a>
+          ) : null}
+        </div>
+      ) : null}
 
       <form className="mt-4 flex items-end gap-3" onSubmit={handleSubmit}>
         <textarea

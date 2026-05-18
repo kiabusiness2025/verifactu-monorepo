@@ -43,7 +43,11 @@ export async function POST(request: NextRequest) {
     const ip = getIp(request);
     if (checkAnonRate(ip)) {
       return NextResponse.json(
-        { error: 'Demasiadas consultas. Regístrate para continuar sin límites.' },
+        {
+          error:
+            'Has alcanzado el límite de consultas del chat de soporte. Regístrate en Isaak para continuar con datos reales y sin límites.',
+          cta: 'https://isaak.verifactu.business',
+        },
         { status: 429 }
       );
     }
