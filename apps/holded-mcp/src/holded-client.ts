@@ -76,6 +76,16 @@ export class HoldedClient {
             key: this.apiKey,
             'Content-Type': 'application/json',
             Accept: opts.expectBinary ? 'application/pdf, application/json' : 'application/json',
+            // Bug 2026-05-18 (soporte audit): Node.js fetch (undici) envía por
+            // defecto `Accept-Encoding: br, gzip, deflate`. Algunos uplinks de
+            // Holded (especialmente para respuestas grandes como /documents y
+            // /dailyledger) devuelven brotli, y la decompresión transparente de
+            // undici a veces falla en silencio detrás de Railway/Vercel
+            // edge proxies — el cliente recibe bytes truncados o un JSON
+            // vacío en vez de la lista real. El cliente del proxy ChatGPT
+            // (`apps/holded/app/lib/holded-api-client.ts`) ya forzaba identity
+            // por este motivo; lo replicamos aquí. Ver memoria `feedback_proxy_brotli`.
+            'Accept-Encoding': 'identity',
             ...options.headers,
           },
         });
@@ -144,7 +154,22 @@ export class HoldedClient {
 
   async listDocuments(docType: HoldedDocType, params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<unknown[]>(`/api/invoicing/v1/documents/${docType}${qs}`);
+    const data = await this.request<unknown>(`/api/invoicing/v1/documents/${docType}${qs}`);
+    // Defensivo: si Holded devuelve algo distinto de un array (p.ej. objeto
+    // de error blando, null por brotli mal decodificado, o envuelto en
+    // `{ data: [...] }`), lo logueamos con contexto. El handler de la tool
+    // ya hace Array.isArray ? raw : [] así que el modelo no rompe, pero sin
+    // este log el síntoma "0 documentos" era invisible. Ver soporte audit
+    // 2026-05-18.
+    if (!Array.isArray(data)) {
+      logger.warn(
+        `Holded /documents/${docType} returned a non-array response — treating as empty. ` +
+          `Type: ${typeof data}, keys: ${
+            data && typeof data === 'object' ? Object.keys(data).slice(0, 8).join(',') : 'n/a'
+          }, qs: ${qs}`
+      );
+    }
+    return data as unknown[];
   }
 
   async getDocument(docType: HoldedDocType, documentId: string) {
@@ -268,7 +293,16 @@ export class HoldedClient {
    */
   async getDailyLedger(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<unknown[]>(`/api/accounting/v1/dailyledger${qs}`);
+    const data = await this.request<unknown>(`/api/accounting/v1/dailyledger${qs}`);
+    if (!Array.isArray(data)) {
+      logger.warn(
+        `Holded /dailyledger returned a non-array response — treating as empty. ` +
+          `Type: ${typeof data}, keys: ${
+            data && typeof data === 'object' ? Object.keys(data).slice(0, 8).join(',') : 'n/a'
+          }, qs: ${qs}`
+      );
+    }
+    return data as unknown[];
   }
 
   // ── Equipo / Empleados ───────────────────────────────────────────────────
