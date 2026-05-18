@@ -9,6 +9,7 @@ import {
   Bell,
   CalendarDays,
   ChevronLeft,
+  Landmark,
   ChevronRight,
   ChevronUp,
   CreditCard,
@@ -58,6 +59,7 @@ const NAV_SECTIONS = [
   { href: '/equipo', label: 'Equipo', icon: Users2 },
   { href: '/calendario', label: 'Calendario Fiscal', icon: CalendarDays },
   { href: '/fiscal', label: 'Alertas Fiscales', icon: Bell },
+  { href: '/banking', label: 'Open Banking', icon: Landmark },
   { href: '/advisor', label: 'Mis clientes', icon: Building2 },
 ];
 

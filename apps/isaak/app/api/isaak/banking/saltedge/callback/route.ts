@@ -22,11 +22,11 @@ export async function GET(request: NextRequest) {
   const connectionId = searchParams.get('connection_id');
   const error = searchParams.get('error');
 
-  const settingsUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/settings?section=banking`;
+  const settingsUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/banking`;
 
   if (error || !connectionId) {
     return NextResponse.redirect(
-      new URL(`${settingsUrl}&gc_error=${error ?? 'no_connection_id'}`, request.url)
+      new URL(`${settingsUrl}?gc_error=${error ?? 'no_connection_id'}`, request.url)
     );
   }
 
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!seCustomer) {
-      return NextResponse.redirect(new URL(`${settingsUrl}&gc_error=no_customer`, request.url));
+      return NextResponse.redirect(new URL(`${settingsUrl}?gc_error=no_customer`, request.url));
     }
 
     // Obtener datos de la conexión desde Salt Edge
@@ -87,9 +87,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.redirect(new URL(`${settingsUrl}&gc_callback=1`, request.url));
+    return NextResponse.redirect(new URL(`${settingsUrl}?gc_callback=1`, request.url));
   } catch (err: unknown) {
     console.error('[saltedge-callback]', err);
-    return NextResponse.redirect(new URL(`${settingsUrl}&gc_error=sync_failed`, request.url));
+    return NextResponse.redirect(new URL(`${settingsUrl}?gc_error=sync_failed`, request.url));
   }
 }
