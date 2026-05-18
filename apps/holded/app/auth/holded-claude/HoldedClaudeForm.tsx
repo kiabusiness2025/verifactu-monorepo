@@ -75,6 +75,42 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 type AuthPhase = 'choosing' | 'magic_sent' | 'consuming' | 'authed';
 
+/**
+ * Detecta si el usuario está completando el form en contexto del bridge OAuth
+ * de Claude.ai (vs entrada directa al landing). Espejo de `detectChatgptFlow`
+ * en HoldedDirectForm. Útil para:
+ *   - Analytics: distinguir conversion del bridge vs entrada directa.
+ *   - Lógica del fallback: si NO viene del bridge, podemos confiar en el
+ *     fallback `/auth/holded-claude/success`; si SÍ viene del bridge,
+ *     respetamos el `next=` original (la URL de Claude).
+ */
+function detectClaudeFlow(source: string, next: string) {
+  const lowerSource = source.toLowerCase();
+  if (
+    lowerSource.includes('claude') ||
+    lowerSource.includes('holded_claude') ||
+    lowerSource.includes('anthropic')
+  ) {
+    return true;
+  }
+  try {
+    const parsed = new URL(next);
+    if (
+      parsed.hostname.includes('claude.ai') ||
+      parsed.hostname.includes('claude.verifactu.business') ||
+      parsed.hostname.includes('anthropic.com')
+    ) {
+      return true;
+    }
+  } catch {
+    const lowerNext = next.toLowerCase();
+    if (lowerNext.includes('claude') || lowerNext.includes('anthropic')) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function GoogleIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
@@ -100,7 +136,16 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null }) {
   const searchParams = useSearchParams();
-  const next = searchParams.get('next') || `${HOLDED_SITE_URL}/dashboard`;
+  // Antes el fallback era `/dashboard`. Eso disparaba el redirector legacy
+  // `/auth/holded` cuando `/dashboard` no encontraba `tenantId` en la sesión
+  // (race de cookie post-submit, o entrada directa al form sin OAuth bridge).
+  // Ahora el fallback es la página de éxito Claude-temada (amber) que
+  // confirma la conexión y ofrece CTAs para añadir a Claude/ChatGPT.
+  const next =
+    searchParams.get('next') || `${HOLDED_SITE_URL}/auth/holded-claude/success`;
+  const source = searchParams.get('source') || 'holded_claude';
+  const isClaudeFlow = useMemo(() => detectClaudeFlow(source, next), [source, next]);
+  void isClaudeFlow; // reservado para analytics/redirect logic futuras
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {

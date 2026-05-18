@@ -1088,7 +1088,7 @@ model WhatsAppThread {
   status            WhatsAppThreadStatus @default(open)
   mode              String               @default("bot") @map("mode")
   language          String?              @map("language")
-  assignedAgentId   String?              @map("assigned_agent_id") @db.Uuid
+  assignedAgentId   String?              @map("assigned_agent_id")
   consentAt         DateTime?            @map("consent_at") @db.Timestamptz
   lastMessageAt     DateTime?            @map("last_message_at") @db.Timestamptz
   metadataJson      Json?                @map("metadata_json")
