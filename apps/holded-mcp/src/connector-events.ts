@@ -42,7 +42,15 @@ export interface AuthFailuresBurstEvent extends BaseEvent {
   windowMinutes: number;
 }
 
-export type ConnectorEvent = FirstActivityEvent | InvoiceDraftCreatedEvent | AuthFailuresBurstEvent;
+export interface RevokedByUserEvent extends BaseEvent {
+  type: 'revoked_by_user';
+}
+
+export type ConnectorEvent =
+  | FirstActivityEvent
+  | InvoiceDraftCreatedEvent
+  | AuthFailuresBurstEvent
+  | RevokedByUserEvent;
 
 const ENDPOINT_PATH = '/api/integrations/holded/connector-event';
 const TIMEOUT_MS = 5000;

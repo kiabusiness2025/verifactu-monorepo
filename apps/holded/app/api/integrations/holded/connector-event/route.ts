@@ -20,9 +20,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import {
   sendHoldedAuthFailuresBurst,
+  sendHoldedDisconnectedCommunication,
   sendHoldedFirstActivityNotification,
   sendHoldedInvoiceDraftNotification,
 } from '@/app/lib/communications/holded-email-service';
+import { disconnectHoldedConnection } from '@/app/lib/holded-integration';
 
 export const runtime = 'nodejs';
 
@@ -68,7 +70,17 @@ type AuthFailuresPayload = IdentityFields & {
   detectedAt?: string | null;
 };
 
-type ConnectorEventBody = FirstActivityPayload | InvoiceDraftPayload | AuthFailuresPayload;
+type RevokedByUserPayload = IdentityFields & {
+  type: 'revoked_by_user';
+  channel: ConnectorEventChannel;
+  detectedAt?: string | null;
+};
+
+type ConnectorEventBody =
+  | FirstActivityPayload
+  | InvoiceDraftPayload
+  | AuthFailuresPayload
+  | RevokedByUserPayload;
 
 function isValidChannel(value: unknown): value is ConnectorEventChannel {
   return typeof value === 'string' && VALID_CHANNELS.includes(value as ConnectorEventChannel);
@@ -220,6 +232,59 @@ export async function POST(request: NextRequest) {
           detectedAt,
         });
         return NextResponse.json({ ok: true, sent: result.sent });
+      }
+
+      case 'revoked_by_user': {
+        // El usuario revocó el conector desde Claude/ChatGPT. Marcamos la
+        // conexión como disconnected en BD y disparamos los emails de
+        // despedida (paridad con el flow DELETE /api/holded/connect que usa
+        // el dashboard).
+        if (!identity.tenantId) {
+          return NextResponse.json({ ok: false, error: 'missing_tenant_id' }, { status: 400 });
+        }
+        // `mobile` no es un canal soportado por la conexión Holded en BD
+        // (solo dashboard/chatgpt/claude). Si llega un revoke con channel
+        // 'mobile' lo tratamos como dashboard para mantener compatibilidad.
+        const dbChannel: 'dashboard' | 'chatgpt' | 'claude' =
+          body.channel === 'mobile' ? 'dashboard' : body.channel;
+        try {
+          await disconnectHoldedConnection({
+            tenantId: identity.tenantId,
+            userId: body.userId ?? null,
+            channel: dbChannel,
+          });
+        } catch (err) {
+          console.warn('[connector-event] disconnectHoldedConnection failed', {
+            tenantId: identity.tenantId,
+            channel: body.channel,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          // Continuamos con el email aunque el disconnect haya fallado: el
+          // usuario revocó intencionalmente, así que el email es informativo
+          // y vale la pena dispararlo incluso si el estado de BD ya estaba ok.
+        }
+        const fallbackName = identity.userName ?? identity.userEmail.split('@')[0] ?? 'equipo';
+        try {
+          const emailResult = await sendHoldedDisconnectedCommunication({
+            name: fallbackName,
+            userEmail: identity.userEmail,
+            companyName,
+            channel: body.channel,
+          });
+          return NextResponse.json({
+            ok: true,
+            sent: {
+              userEmailId: emailResult.userEmailId,
+              adminEmailId: emailResult.adminEmailId,
+            },
+          });
+        } catch (err) {
+          console.error('[connector-event] revoked_by_user email failed', {
+            channel: body.channel,
+            error: err instanceof Error ? err.message : String(err),
+          });
+          return NextResponse.json({ ok: true, sent: null });
+        }
       }
 
       case 'auth_failures_burst': {

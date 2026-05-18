@@ -6,6 +6,7 @@
  * the connection resolver can distinguish Claude Desktop connections.
  */
 
+import { sendHoldedConnectedCommunication } from '@/app/lib/communications/holded-email-service';
 import { sanitizeHoldedReturnTarget, APP_PUBLIC_URL } from '@/app/lib/holded-navigation';
 import {
   SESSION_COOKIE_NAME,
@@ -169,6 +170,23 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error('[holded-claude] Session sign failed:', err);
     return NextResponse.json({ error: 'SESSION_ERROR' }, { status: 500 });
+  }
+
+  // Email de confirmación (paridad con flow ChatGPT). Best-effort: no
+  // bloqueamos la respuesta si Resend falla. F1 no nos devuelve aún
+  // companyName/modules/isFirstConnection — usamos placeholders mínimos.
+  try {
+    await sendHoldedConnectedCommunication({
+      name: normalizedEmail.split('@')[0] || 'Holded user',
+      userEmail: normalizedEmail,
+      companyName: 'tu cuenta de Holded',
+      supportedModules: [],
+      channel: 'claude',
+      returnUrl: normalizedNext || null,
+      isFirstConnection: false,
+    });
+  } catch (emailErr) {
+    console.warn('[holded-claude] Connected email send failed:', emailErr);
   }
 
   const url = new URL(request.url);

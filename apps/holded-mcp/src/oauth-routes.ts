@@ -14,6 +14,7 @@ import {
   verifyAccessToken,
   verifyPkceCodeVerifier,
 } from './auth.js';
+import { dispatchConnectorEventBackground } from './connector-events.js';
 
 export const oauthRouter: Router = Router();
 
@@ -116,15 +117,68 @@ async function verifyVerifactuSession(req: Request): Promise<VerifactuSessionPay
   }
 }
 
-function buildFirebaseBridgeUrl(req: Request): string {
+function buildFirebaseBridgeUrl(req: Request, options?: { forceRelogin?: boolean }): string {
   // Always redirect to the Claude-specific form (amber UI, Google + OTP).
   // claude.verifactu.business is a Claude-only MCP server — holded-direct
   // (ChatGPT red form) is never the right target here.
+  const currentUrl = new URL(req.originalUrl, config.BASE_URL);
+
+  if (options?.forceRelogin) {
+    // Routing intermedio que limpia la cookie `__session` y luego redirige
+    // a /auth/holded-claude. Una Server Component no puede borrar cookies
+    // durante el render — la Route Handler sí. Se activa cuando el usuario
+    // revocó previamente el conector desde Claude: queremos que vea
+    // claramente qué está autorizando y no que pase el flow "transparente"
+    // con sesión vieja.
+    const forceUrl = new URL('/api/auth/holded-claude/force-relogin', config.HOLDED_PUBLIC_URL);
+    forceUrl.searchParams.set('source', 'holded_claude_post_revoke');
+    forceUrl.searchParams.set('next', currentUrl.toString());
+    return forceUrl.toString();
+  }
+
   const claudeUrl = new URL('/auth/holded-claude', config.HOLDED_PUBLIC_URL);
   claudeUrl.searchParams.set('source', 'holded_claude_entry');
-  const currentUrl = new URL(req.originalUrl, config.BASE_URL);
   claudeUrl.searchParams.set('next', currentUrl.toString());
   return claudeUrl.toString();
+}
+
+/**
+ * Consulta el endpoint server-to-server de apps/holded para saber si el
+ * usuario tiene una conexión Holded activa en el canal Claude. Devuelve
+ * `true` si hay una conexión "connected" en BD; `false` en cualquier otro
+ * caso (incluyendo `disconnected`, `none`, error de red, o config faltante
+ * que indica entorno legacy).
+ *
+ * Esta llamada es bloqueante pero ligera (consulta indexada por userId).
+ * Si falla, asumimos `false` y dejamos que el flow continúe con consent
+ * screen normal — no bloqueamos la conexión por un fallo de la lookup.
+ */
+async function isClaudeConnectionActive(userId: string): Promise<boolean> {
+  if (!config.VERIFACTU_APP_URL) return true; // sin lookup → no force_relogin
+  const url = new URL('/api/integrations/holded/connection-status', config.VERIFACTU_APP_URL);
+  url.searchParams.set('userId', userId);
+  url.searchParams.set('channel', 'claude');
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (config.VERIFACTU_APP_SHARED_SECRET) {
+    headers['x-verifactu-shared-secret'] = config.VERIFACTU_APP_SHARED_SECRET;
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3000);
+  try {
+    const res = await fetch(url.toString(), {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!res.ok) return true;
+    const json = (await res.json()) as { ok?: boolean; active?: boolean };
+    return json.ok ? !!json.active : true;
+  } catch {
+    return true;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 const DEFAULT_ALLOWED_REDIRECT_ORIGINS = ['https://claude.ai', 'https://app.claude.ai'];
 
@@ -489,6 +543,24 @@ oauthRouter.get('/authorize', async (req: Request, res: Response) => {
     });
     res.redirect(302, bridgeUrl);
     return;
+  }
+
+  // Force re-login (2026-05-18): si el usuario tiene sesión válida PERO su
+  // conexión Claude en BD está marcada como disconnected/none, asumimos que
+  // previamente revocó el conector desde Claude. Forzamos un re-login limpio
+  // (Google/magic-link/OTP) para que vea claramente qué está autorizando,
+  // en lugar de pasar el flow con el email pre-rellenado de una sesión vieja.
+  if (verifactuSession?.uid) {
+    const active = await isClaudeConnectionActive(verifactuSession.uid);
+    if (!active) {
+      const bridgeUrl = buildFirebaseBridgeUrl(req, { forceRelogin: true });
+      logger.info('[oauth/authorize] Connection inactive for verified user — force re-login', {
+        uid: verifactuSession.uid,
+        next: bridgeUrl,
+      });
+      res.redirect(302, bridgeUrl);
+      return;
+    }
   }
 
   // NOTA HISTÓRICA (eliminado 2026-05-18):
@@ -872,9 +944,31 @@ oauthRouter.post('/token', async (req: Request, res: Response) => {
 });
 
 oauthRouter.post('/revoke', async (req: Request, res: Response) => {
+  // 2026-05-18: además de revocar el token, disparamos el evento
+  // `revoked_by_user` al endpoint connector-event de apps/holded para:
+  //   1. Marcar la ExternalConnection como disconnected (channel='claude').
+  //   2. Enviar email de despedida a usuario + admin (paridad con dashboard
+  //      DELETE /api/holded/connect).
+  //   3. Garantizar que el próximo /oauth/authorize trate al usuario como
+  //      "sin conexión activa" → force re-login (Step 4).
+  //
+  // Solo disparamos el evento si pudimos identificar al usuario (token
+  // verificable). Si solo nos llega un token opaco que no podemos resolver
+  // a un userId — p.ej. refresh token o token ya expirado — revocamos
+  // silenciosamente sin email.
   const requestedToken = typeof req.body?.token === 'string' ? req.body.token.trim() : '';
   if (requestedToken) {
+    // Intentamos resolver el userId ANTES de revocar para no perder la
+    // identidad (verifyAccessToken devuelve null si el token ya está revocado).
+    const record = await verifyAccessToken(requestedToken).catch(() => null);
     await revokeTokenValue(requestedToken);
+    if (record?.userId) {
+      dispatchConnectorEventBackground({
+        type: 'revoked_by_user',
+        channel: 'claude',
+        userId: record.userId,
+      });
+    }
     res.status(200).send();
     return;
   }
@@ -889,6 +983,13 @@ oauthRouter.post('/revoke', async (req: Request, res: Response) => {
   const record = await verifyAccessToken(token);
   if (record) {
     await revokeToken(record);
+    if (record.userId) {
+      dispatchConnectorEventBackground({
+        type: 'revoked_by_user',
+        channel: 'claude',
+        userId: record.userId,
+      });
+    }
   }
 
   res.status(200).send();

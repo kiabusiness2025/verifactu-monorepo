@@ -141,11 +141,17 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
   // (race de cookie post-submit, o entrada directa al form sin OAuth bridge).
   // Ahora el fallback es la página de éxito Claude-temada (amber) que
   // confirma la conexión y ofrece CTAs para añadir a Claude/ChatGPT.
-  const next =
-    searchParams.get('next') || `${HOLDED_SITE_URL}/auth/holded-claude/success`;
+  const next = searchParams.get('next') || `${HOLDED_SITE_URL}/auth/holded-claude/success`;
   const source = searchParams.get('source') || 'holded_claude';
   const isClaudeFlow = useMemo(() => detectClaudeFlow(source, next), [source, next]);
   void isClaudeFlow; // reservado para analytics/redirect logic futuras
+
+  // post_revoke=1 lo añade /api/auth/holded-claude/force-relogin tras borrar
+  // la cookie __session. Mostramos un banner informativo arriba del form para
+  // que el usuario entienda por qué se le pide volver a identificarse: revocó
+  // el conector desde Claude y ahora lo está re-añadiendo. Sin este mensaje
+  // la re-autenticación parece arbitraria.
+  const isPostRevoke = searchParams.get('post_revoke') === '1';
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -369,6 +375,21 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
     <main className="min-h-screen bg-[radial-gradient(circle_at_top_left,#fffbeb_0%,#f8fafc_44%,#f8fafc_100%)] px-4 py-6 text-slate-900 sm:px-6">
       <div className="mx-auto flex min-h-[calc(100svh-3rem)] max-w-7xl items-center justify-center py-6">
         <section className="flex w-full flex-col items-center justify-center px-4 py-6 sm:px-8 sm:py-8">
+          {isPostRevoke && !isApiKeyStep ? (
+            <div
+              role="status"
+              className={`mb-5 w-full max-w-[28rem] rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-900 shadow-sm transition-all duration-700 ${
+                mounted ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'
+              }`}
+            >
+              <p className="font-semibold">Tu conexión anterior se desconectó.</p>
+              <p className="mt-1 text-xs leading-5 text-amber-800/90">
+                Por seguridad, confirma tu identidad y vuelve a pegar tu API key de Holded para
+                reactivar el conector con Claude.
+              </p>
+            </div>
+          ) : null}
+
           {!isApiKeyStep ? (
             <div
               className={`mb-5 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-500 transition-all duration-700 ${
