@@ -179,6 +179,13 @@ const DOCK_COPY: Record<string, { greeting: string; suggestions: string[]; quick
       quickResult:
         'Define objetivo del día, ejecuta 1 acción crítica y valida impacto antes del cierre.',
     },
+    admin: {
+      greeting:
+        'Puedo darte un diagnóstico fiscal de los tenants y detectar quién necesita atención.',
+      suggestions: ['Tenants con IVA pendiente', 'Conectores con error', 'Análisis fiscal masivo'],
+      quickResult:
+        'Empieza por tenants activos con API key para lanzar análisis 303 y detectar deudas fiscales.',
+    },
   };
 
 const HOLDed_ONBOARDING_COPY = {
@@ -260,17 +267,19 @@ export function getIsaakDockCopy(input?: {
   const moduleKey = input?.moduleKey ? String(input.moduleKey) : 'dashboard';
   const context = normalizeIsaakContext(input?.context);
   const tone = normalizeIsaakTone(input?.tone);
-  const active = DOCK_COPY[moduleKey] ?? DOCK_COPY.dashboard;
 
   if (context === 'admin') {
+    const adminActive = DOCK_COPY[moduleKey] ?? DOCK_COPY['admin'] ?? DOCK_COPY.dashboard;
     return {
-      ...active,
+      ...adminActive,
       greeting:
         tone === 'minimal'
-          ? active.greeting
-          : `En admin priorizo impacto, diagnostico y siguiente accion segura. ${active.greeting}`,
+          ? adminActive.greeting
+          : `En admin priorizo impacto, diagnostico y siguiente accion segura. ${adminActive.greeting}`,
     };
   }
+
+  const active = DOCK_COPY[moduleKey] ?? DOCK_COPY.dashboard;
 
   if (context === 'holded_first') {
     return {

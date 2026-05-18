@@ -109,7 +109,9 @@ Extrae headers y rows de los datos devueltos por la herramienta.
 
 8. Alertas de documentos pendientes: cuando uses get_tenant_unbooked_alerts, presenta primero el nivel de urgencia (🔴 URGENTE / 🟡 ATENCIÓN / 🟢 OK), después la tabla de facturas/compras pendientes con columnas (Número | Fecha | Contacto | Importe | Estado) y finalmente las acciones recomendadas.
 
-8. Comparativa de períodos: cuando uses get_tenant_period_comparison, presenta una tabla con columnas (Concepto | Período actual | Período anterior | Variación €| Variación %) y resalta en negrita las variaciones superiores al 20%.`;
+9. Comparativa de períodos: cuando uses get_tenant_period_comparison, presenta una tabla con columnas (Concepto | Período actual | Período anterior | Variación €| Variación %) y resalta en negrita las variaciones superiores al 20%.
+
+10. Vista general fiscal de tenants: cuando uses get_tenants_fiscal_overview, presenta los resultados como tabla Markdown (Nombre | Canales | API Key | Última actividad | Queries 30d). Resalta en **negrita** los tenants con queries_30d = 0 (dormidos). Si hay tenants con API key disponible, sugiere usar get_tenant_fiscal_analysis para los más relevantes.`;
 
 export type ToolInput = Record<string, unknown>;
 
@@ -124,7 +126,8 @@ export type ToolName =
   | 'get_tenant_fiscal_analysis'
   | 'get_tenant_unbooked_alerts'
   | 'get_tenant_period_comparison'
-  | 'get_tenant_modelo_303';
+  | 'get_tenant_modelo_303'
+  | 'get_tenants_fiscal_overview';
 
 export const TOOLS = [
   {
@@ -307,6 +310,25 @@ export const TOOLS = [
         },
       },
       required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'get_tenants_fiscal_overview' as ToolName,
+    description:
+      'Lista todos los tenants con Holded conectado mostrando sus canales activos, si tienen API key almacenada, fecha de última actividad y queries en los últimos 30 días. Usa esta herramienta cuando el administrador pregunte qué tenants necesitan atención fiscal, cuáles tienen Holded activo con API key, o quiera priorizar un análisis masivo de IVA o Modelo 303.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Máximo de tenants a listar (por defecto 20, máximo 50)',
+        },
+        only_active: {
+          type: 'boolean',
+          description: 'Si true, solo tenants con actividad en los últimos 30 días',
+        },
+      },
+      required: [],
     },
   },
 ];
@@ -1446,6 +1468,90 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
       const msg = err instanceof Error ? err.message : String(err);
       return JSON.stringify({ error: `Error consultando Holded API: ${msg}`, tenant_id: tenantId });
     }
+  }
+
+  if (name === 'get_tenants_fiscal_overview') {
+    const limit = typeof input.limit === 'number' ? Math.max(1, Math.min(50, input.limit)) : 20;
+    const onlyActive = input.only_active === true;
+
+    const rows = await query<{
+      tenant_id: string;
+      tenant_name: string;
+      holded_channels: string;
+      has_api_key: boolean;
+      last_activity: string | null;
+      queries_30d: number;
+    }>(
+      `SELECT
+        ec.tenant_id,
+        COALESCE(tp.legal_name, tp.company_name, ec.tenant_id::text) AS tenant_name,
+        STRING_AGG(DISTINCT ec.channel_key, ', ' ORDER BY ec.channel_key) AS holded_channels,
+        BOOL_OR(ec.api_key_enc IS NOT NULL) AS has_api_key,
+        MAX(al.created_at)::text AS last_activity,
+        COUNT(al.id) FILTER (WHERE al.created_at >= NOW() - INTERVAL '30 days')::int AS queries_30d
+       FROM external_connections ec
+       LEFT JOIN tenant_profiles tp ON tp.tenant_id = ec.tenant_id
+       LEFT JOIN holded_mcp_personal_access_tokens pat ON pat.connection_id = ec.id
+       LEFT JOIN holded_mcp_pat_audit_logs al ON al.pat_id = pat.id AND al.event = 'used'
+       WHERE ec.provider = 'holded' AND ec.connection_status = 'connected'
+       GROUP BY ec.tenant_id, tp.legal_name, tp.company_name
+       ${onlyActive ? "HAVING COUNT(al.id) FILTER (WHERE al.created_at >= NOW() - INTERVAL '30 days') > 0" : ''}
+       ORDER BY MAX(al.created_at) DESC NULLS LAST
+       LIMIT $1`,
+      [limit]
+    ).catch(
+      () =>
+        [] as {
+          tenant_id: string;
+          tenant_name: string;
+          holded_channels: string;
+          has_api_key: boolean;
+          last_activity: string | null;
+          queries_30d: number;
+        }[]
+    );
+
+    const withApiKey = rows.filter((r) => r.has_api_key).length;
+    const dormant = rows.filter((r) => r.queries_30d === 0).length;
+
+    return JSON.stringify({
+      total: rows.length,
+      filtro: onlyActive ? 'activos_30d' : 'todos',
+      con_api_key: withApiKey,
+      dormidos_30d: dormant,
+      tenants: rows.map((r) => ({
+        tenant_id: r.tenant_id,
+        nombre: r.tenant_name,
+        canales_holded: r.holded_channels ?? '—',
+        tiene_api_key: r.has_api_key,
+        ultima_actividad: r.last_activity ?? 'nunca',
+        queries_30d: r.queries_30d,
+      })),
+      excel_block:
+        rows.length > 0
+          ? {
+              type: 'excel_export',
+              filename: `tenants-fiscal-${new Date().toISOString().slice(0, 10)}.xlsx`,
+              label: 'Descargar lista de tenants (Excel)',
+              headers: [
+                'Tenant ID',
+                'Nombre',
+                'Canales',
+                'API Key',
+                'Última actividad',
+                'Queries 30d',
+              ],
+              rows: rows.map((r) => [
+                r.tenant_id,
+                r.tenant_name,
+                r.holded_channels ?? '—',
+                r.has_api_key ? 'Sí' : 'No',
+                r.last_activity ?? 'nunca',
+                String(r.queries_30d),
+              ]),
+            }
+          : undefined,
+    });
   }
 
   return JSON.stringify({ error: `Herramienta desconocida: ${name}` });
