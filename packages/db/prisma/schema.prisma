@@ -535,6 +535,9 @@ model Tenant {
   isDemo    Boolean  @default(false) @map("is_demo")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
+  isaakPublicEnabled Boolean @default(false) @map("isaak_public_enabled")
+  isaakPublicSlug    String? @unique @map("isaak_public_slug")
+
   users                       Membership[]
   userPref                    UserPreference[]
   tenantSubscriptions         TenantSubscription[]

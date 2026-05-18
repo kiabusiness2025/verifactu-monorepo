@@ -125,6 +125,10 @@ export default function TenantOverviewPage() {
   const [customers, setCustomers] = useState<TenantCustomer[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [isaakPublicEnabled, setIsakPublicEnabled] = useState(false);
+  const [isaakPublicSlug, setIsakPublicSlug] = useState<string | null>(null);
+  const [isaakPublicUrl, setIsakPublicUrl] = useState<string | null>(null);
+  const [isaakPublicSaving, setIsakPublicSaving] = useState(false);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
   useEffect(() => {
@@ -132,13 +136,19 @@ export default function TenantOverviewPage() {
     async function load() {
       setLoading(true);
       try {
-        const [tenantData, customersData] = await Promise.all([
+        const [tenantData, customersData, isaakPublicData] = await Promise.all([
           adminGet<{ tenant: TenantData }>(`/api/admin/tenants/${tenantId}`),
           adminGet<{ items: TenantCustomer[] }>(`/api/admin/tenants/${tenantId}/customers`),
+          adminGet<{ enabled: boolean; slug: string | null; publicUrl: string | null }>(
+            `/api/admin/tenants/${tenantId}/isaak-public`
+          ).catch(() => ({ enabled: false, slug: null, publicUrl: null })),
         ]);
         if (mounted) {
           setTenant(tenantData.tenant);
           setCustomers(customersData.items || []);
+          setIsakPublicEnabled(isaakPublicData.enabled);
+          setIsakPublicSlug(isaakPublicData.slug);
+          setIsakPublicUrl(isaakPublicData.publicUrl);
         }
       } catch (err) {
         showError(err instanceof Error ? err.message : 'No se pudo cargar el tenant');
@@ -197,6 +207,37 @@ export default function TenantOverviewPage() {
     win.document.close();
     win.focus();
     win.print();
+  }
+
+  async function toggleIsakPublic() {
+    setIsakPublicSaving(true);
+    try {
+      const next = !isaakPublicEnabled;
+      const res = await adminPost<{
+        ok: boolean;
+        enabled: boolean;
+        slug: string;
+        publicUrl: string;
+      }>(`/api/admin/tenants/${tenantId}/isaak-public`, { enabled: next });
+      setIsakPublicEnabled(res.enabled);
+      setIsakPublicSlug(res.slug);
+      setIsakPublicUrl(res.publicUrl);
+      success(res.enabled ? 'Isaak Público activado' : 'Isaak Público desactivado');
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'No se pudo actualizar');
+    } finally {
+      setIsakPublicSaving(false);
+    }
+  }
+
+  async function copyPublicUrl() {
+    if (!isaakPublicUrl) return;
+    try {
+      await navigator.clipboard.writeText(isaakPublicUrl);
+      success('URL copiada');
+    } catch {
+      showError('No se pudo copiar la URL');
+    }
   }
 
   async function copyCustomerId(id: string) {
@@ -346,6 +387,61 @@ export default function TenantOverviewPage() {
             <div className="text-xs text-slate-500">Último balance</div>
             <div className="text-sm text-slate-900">{tenant.lastBalanceDate || '--'}</div>
           </div>
+        )}
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-soft">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Isaak Público</h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Permite a esta empresa compartir un chat Isaak público con sus clientes, sin login.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={isaakPublicSaving}
+            onClick={() => void toggleIsakPublic()}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50 ${
+              isaakPublicEnabled ? 'bg-emerald-500' : 'bg-slate-200'
+            }`}
+            title={isaakPublicEnabled ? 'Desactivar Isaak Público' : 'Activar Isaak Público'}
+            aria-pressed={isaakPublicEnabled ? 'true' : 'false'}
+          >
+            <span
+              className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
+                isaakPublicEnabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        {isaakPublicEnabled && isaakPublicUrl && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-400" />
+            <a
+              href={isaakPublicUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="min-w-0 flex-1 truncate text-xs text-emerald-700 hover:underline"
+            >
+              {isaakPublicUrl}
+            </a>
+            <button
+              type="button"
+              onClick={() => void copyPublicUrl()}
+              className="shrink-0 rounded-md border border-emerald-200 bg-white px-2 py-1 text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+            >
+              Copiar
+            </button>
+          </div>
+        )}
+
+        {!isaakPublicEnabled && isaakPublicSlug && (
+          <p className="mt-2 text-xs text-slate-400">
+            Slug configurado: <code className="rounded bg-slate-100 px-1">{isaakPublicSlug}</code>{' '}
+            (inactivo)
+          </p>
         )}
       </div>
 
