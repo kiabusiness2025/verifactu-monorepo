@@ -16,6 +16,7 @@ import {
   Send,
   Smile,
   Sparkles,
+  UserCheck,
   User2,
 } from 'lucide-react';
 import type { EmojiClickData } from 'emoji-picker-react';
@@ -43,8 +44,11 @@ type Thread = {
   createdAt: string;
   tenant: { id: string; name: string; nif: string | null } | null;
   assignedAgent: { id: string; name: string | null; email: string } | null;
+  assignedAgentId: string | null;
   events: WaEvent[];
 };
+
+type Agent = { id: string; name: string | null; email: string; role: string };
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -76,6 +80,8 @@ export default function ThreadDetailPage() {
   const [pollKey, setPollKey] = useState(0);
   const [showEmoji, setShowEmoji] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [assigningAgent, setAssigningAgent] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -91,6 +97,12 @@ export default function ThreadDetailPage() {
   useEffect(() => {
     loadThread();
   }, [loadThread, pollKey]);
+
+  useEffect(() => {
+    adminGet<{ agents: Agent[] }>('/api/admin/whatsapp/agents')
+      .then(({ agents }) => setAgents(agents))
+      .catch(console.error);
+  }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -110,6 +122,29 @@ export default function ThreadDetailPage() {
     const newMode = thread.mode === 'bot' ? 'human' : 'bot';
     await adminPatch(`/api/admin/whatsapp/threads/${threadId}`, { mode: newMode });
     setThread((t) => (t ? { ...t, mode: newMode } : t));
+  };
+
+  const assignAgent = async (agentId: string | null) => {
+    setAssigningAgent(true);
+    try {
+      await adminPatch(`/api/admin/whatsapp/threads/${threadId}`, {
+        assignedAgentId: agentId,
+      });
+      const agent = agents.find((a) => a.id === agentId) ?? null;
+      setThread((t) =>
+        t
+          ? {
+              ...t,
+              assignedAgentId: agentId,
+              assignedAgent: agent ? { id: agent.id, name: agent.name, email: agent.email } : null,
+            }
+          : t
+      );
+    } catch {
+      alert('Error al asignar agente');
+    } finally {
+      setAssigningAgent(false);
+    }
   };
 
   const sendMessage = async () => {
@@ -265,6 +300,26 @@ export default function ThreadDetailPage() {
           {isHuman ? <User2 className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
           {isHuman ? 'Modo humano' : 'Modo bot'}
         </button>
+
+        {/* Agent assignment */}
+        <div className="flex items-center gap-1.5">
+          <UserCheck className="h-4 w-4 text-slate-400 shrink-0" />
+          <select
+            title="Asignar agente"
+            value={thread.assignedAgentId ?? ''}
+            onChange={(e) => assignAgent(e.target.value || null)}
+            disabled={assigningAgent}
+            className="text-xs border border-slate-200 rounded-lg px-2 py-1.5 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:opacity-50 max-w-[140px]"
+          >
+            <option value="">Sin asignar</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name ?? a.email}
+              </option>
+            ))}
+          </select>
+          {assigningAgent && <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-400" />}
+        </div>
 
         <button
           type="button"

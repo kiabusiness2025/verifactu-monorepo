@@ -629,37 +629,35 @@ export default function IsaakChatSection({
                   <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3">
                     <IsaakMarkdown text={msg.content} />
                   </div>
-                  {/* Thumbs feedback — only shown for Holded chat */}
-                  {holdedConnected && (
-                    <div className="absolute -bottom-2 left-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
-                      <button
-                        type="button"
-                        onClick={() => void sendFeedback(msg.id, 'thumbs_up', messages)}
-                        title="Buena respuesta"
-                        disabled={!!ratings[msg.id]}
-                        className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
-                          ratings[msg.id] === 'thumbs_up'
-                            ? 'border-emerald-300 text-emerald-600'
-                            : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'
-                        }`}
-                      >
-                        <ThumbsUp size={10} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void sendFeedback(msg.id, 'thumbs_down', messages)}
-                        title="Mejorable"
-                        disabled={!!ratings[msg.id]}
-                        className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
-                          ratings[msg.id] === 'thumbs_down'
-                            ? 'border-rose-300 text-rose-500'
-                            : 'border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-500'
-                        }`}
-                      >
-                        <ThumbsDown size={10} />
-                      </button>
-                    </div>
-                  )}
+                  {/* Thumbs feedback */}
+                  <div className="absolute -bottom-2 left-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
+                    <button
+                      type="button"
+                      onClick={() => void sendFeedback(msg.id, 'thumbs_up', messages)}
+                      title="Buena respuesta"
+                      disabled={!!ratings[msg.id]}
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
+                        ratings[msg.id] === 'thumbs_up'
+                          ? 'border-emerald-300 text-emerald-600'
+                          : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'
+                      }`}
+                    >
+                      <ThumbsUp size={10} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void sendFeedback(msg.id, 'thumbs_down', messages)}
+                      title="Mejorable"
+                      disabled={!!ratings[msg.id]}
+                      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
+                        ratings[msg.id] === 'thumbs_down'
+                          ? 'border-rose-300 text-rose-500'
+                          : 'border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-500'
+                      }`}
+                    >
+                      <ThumbsDown size={10} />
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() => speakMessage(msg.id, msg.content)}

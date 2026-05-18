@@ -3,6 +3,7 @@
 import { Loader2, Send, ShieldCheck, Sparkles } from 'lucide-react';
 import Image from 'next/image';
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import IsaakMarkdown from '@/app/(workspace)/components/IsaakMarkdown';
 
 type Message = {
   id: string;
@@ -225,7 +226,11 @@ export default function IsaakPublicChat() {
                       : 'border border-slate-200 bg-white text-slate-700',
                   ].join(' ')}
                 >
-                  {message.content}
+                  {message.role === 'assistant' ? (
+                    <IsaakMarkdown text={message.content} />
+                  ) : (
+                    message.content
+                  )}
                 </div>
               </div>
             ))}
