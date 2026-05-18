@@ -20,18 +20,18 @@ https://holded.verifactu.business/
 
 ## Long description
 
-Holded lets you connect your Holded account to ChatGPT and work with real business data in natural language. You can review invoices and commercial documents (sales receipts, credit notes, estimates, purchases, etc.), contacts, accounting accounts, daily ledger entries, products and stock levels, warehouses, treasury accounts, employees, taxes and numbering series. The only write operation is creating an invoice draft with explicit user confirmation. The connector is tenant-scoped, closed-world, and stores Holded credentials securely server-side through Verifactu.
+Holded lets you connect your Holded account to ChatGPT and work with real business data in natural language. You can review sales invoices, purchase documents (and their PDF rendering), contacts, accounting accounts and daily ledger entries, and create a sales invoice draft with explicit user confirmation. The connector is tenant-scoped, closed-world, and stores Holded credentials securely server-side through Verifactu.
 
 ## Reviewer notes
 
 This app connects a user's own Holded account to ChatGPT through a secure Verifactu-hosted connection flow.
 
-For this submission, the app exposes 29 tools — 28 read-only and a single write operation (`holded_create_invoice_draft`) that always requires explicit user confirmation. The read surface covers the four functional groups of Holded:
+For this submission, the app exposes 10 tools — 9 read-only and a single write operation (`holded_create_invoice_draft`) that always requires explicit user confirmation. The surface is intentionally narrow and focused on the invoicing + accounting workflows we want to validate first:
 
-- **Invoicing & documents**: list/get invoices, list/get commercial documents (purchases, credit notes, etc.) including their PDF rendering and shipment status.
-- **Contacts & CRM**: list/get contacts, list bookings, list CRM funnels, list leads.
-- **Accounting & treasury**: list accounting accounts, list daily ledger entries (with explicit date range), list/get treasury accounts (bank + cash), list taxes, list numbering series.
-- **Catalog & operations**: list/get products, list warehouses + per-warehouse stock, list/get employees, list/get projects + tasks + time records.
+- **Sales invoicing**: list invoices, get invoice details, create invoice draft (with explicit confirmation).
+- **Purchase + commercial documents**: list commercial documents (purchases, credit notes, estimates, sales receipts, etc.), get document details, get the rendered PDF of a document.
+- **Contacts**: list contacts, get contact details (needed to resolve the customer for an invoice draft).
+- **Accounting**: list accounting accounts (chart of accounts), list daily ledger entries (with an explicit date range).
 
 The connector is tenant-scoped and closed-world. It only accesses data from the Holded account connected by the authenticated user. Holded API credentials are stored server-side through Verifactu and are never exposed to ChatGPT or returned to the client.
 
@@ -41,7 +41,7 @@ Important notes for review:
 - Invoice draft creation requires explicit confirmation before the draft is created.
 - Draft invoice creation does not send, issue, charge, or email an invoice. No other write or destructive operation is exposed.
 - The app should be tested on both ChatGPT web and mobile.
-- The expected public behavior is limited to the 29 tools whose `tool-hint-justifications.json` entries are submitted alongside this form.
+- The expected public behavior is limited to the 10 tools whose annotations and justifications are declared in `chatgpt-app-submission.json` (uploaded alongside this form).
 
 ---
 
@@ -165,138 +165,6 @@ The app should retrieve the PDF rendering of the document as a base64 payload. C
 
 Expected tool:
 holded_get_document_pdf
-
-#### Test case 11 — Check document shipment status
-
-User prompt:
-Has that document been shipped yet?
-
-Expected behavior:
-The app should report the shipment status of the document (which line items have been shipped). It should not change shipment state.
-
-Expected tool:
-holded_get_document_shipped_items
-
-#### Test case 12 — List products
-
-User prompt:
-List the products in my Holded catalog.
-
-Expected behavior:
-The app should retrieve products and services from the connected Holded catalog and summarize them in natural language (name, SKU, price when available). It should not create or modify products.
-
-Expected tool:
-holded_list_products
-
-#### Test case 13 — Get product details
-
-User prompt:
-Show me one of those products.
-
-Expected behavior:
-The app should retrieve details for one existing product and summarize them in natural language. Read-only.
-
-Expected tool:
-holded_get_product
-
-#### Test case 14 — List warehouses
-
-User prompt:
-List my Holded warehouses.
-
-Expected behavior:
-The app should retrieve the warehouses configured in the connected Holded account. It should not create or modify warehouse configuration.
-
-Expected tool:
-holded_list_warehouses
-
-#### Test case 15 — Get warehouse details
-
-User prompt:
-Show me one of those warehouses.
-
-Expected behavior:
-The app should retrieve details for one existing warehouse. Read-only.
-
-Expected tool:
-holded_get_warehouse
-
-#### Test case 16 — Stock per warehouse
-
-User prompt:
-Show me the current stock levels for my Holded products.
-
-Expected behavior:
-The app should report stock levels per (product, warehouse). It should not adjust stock.
-
-Expected tool:
-holded_list_warehouse_stock
-
-#### Test case 17 — List treasury accounts
-
-User prompt:
-List my treasury accounts in Holded (bank accounts and cash).
-
-Expected behavior:
-The app should retrieve bank accounts and cash registers configured in the connected Holded account. It should not initiate any payment or transfer.
-
-Expected tool:
-holded_list_treasury_accounts
-
-#### Test case 18 — Get treasury account details
-
-User prompt:
-Show me one of those treasury accounts.
-
-Expected behavior:
-The app should retrieve details for one existing treasury account. Read-only — no money movement of any kind.
-
-Expected tool:
-holded_get_treasury_account
-
-#### Test case 19 — List employees
-
-User prompt:
-List my Holded employees.
-
-Expected behavior:
-The app should retrieve employee records from the connected Holded HR module and summarize them in natural language. It should not create, edit, or remove employees.
-
-Expected tool:
-holded_list_employees
-
-#### Test case 20 — Get employee details
-
-User prompt:
-Show me one of those employees.
-
-Expected behavior:
-The app should retrieve details for one existing employee. Read-only.
-
-Expected tool:
-holded_get_employee
-
-#### Test case 21 — List tax rates
-
-User prompt:
-What tax rates do I have configured in Holded?
-
-Expected behavior:
-The app should list the tax rates configured in the connected Holded account (VAT, retentions, special taxes). Read-only.
-
-Expected tool:
-holded_list_taxes
-
-#### Test case 22 — List numbering series
-
-User prompt:
-List my invoice numbering series in Holded.
-
-Expected behavior:
-The app should list the numbering series configured for invoices and estimates. Read-only — no counter is advanced.
-
-Expected tool:
-holded_list_numbering_series
 
 ---
 

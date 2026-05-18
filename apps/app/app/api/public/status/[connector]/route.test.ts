@@ -98,7 +98,7 @@ describe('GET /api/public/status/[connector]', () => {
         latencyMs: 200,
         httpStatus: 200,
         errorCode: 'tool_count_mismatch',
-        errorMessage: 'expected 29 tools, got 28',
+        errorMessage: 'expected 10 tools, got 9',
         checkedAt: new Date(),
         target: 'https://holded.verifactu.business/api/mcp/holded',
       },
@@ -123,7 +123,7 @@ describe('GET /api/public/status/[connector]', () => {
       (c: { checkType: string }) => c.checkType === 'tools_list'
     );
     expect(failedCheck.lastErrorCode).toBe('tool_count_mismatch');
-    expect(failedCheck.lastErrorMessage).toContain('expected 29 tools');
+    expect(failedCheck.lastErrorMessage).toContain('expected 10 tools');
   });
 
   it('overall=degraded si al menos un check tiene status degraded y ninguno fail', async () => {

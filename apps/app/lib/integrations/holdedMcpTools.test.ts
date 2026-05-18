@@ -231,15 +231,43 @@ describe('holdedMcpTools', () => {
     );
   });
 
-  it('keeps the public claude_parity preset (current default) aligned 1:1 with tool-hint-justifications.json', () => {
-    // 2026-05-18: DEFAULT_PUBLIC_SCOPE_PRESET pasó a `claude_parity` con la
-    // submission v2 a OpenAI que combina los fixes del PR #88 + paridad
-    // funcional con el conector Claude. El manifest declarado en
-    // `docs/openai-submission/tool-hint-justifications.json` DEBE contener
-    // EXACTAMENTE este mismo conjunto. Si este test falla, o bien:
+  it('keeps the public openai_review_invoicing_v1 preset (current default) aligned 1:1 with chatgpt-app-submission.json', () => {
+    // 2026-05-18 (tarde): DEFAULT_PUBLIC_SCOPE_PRESET pasó a
+    // `openai_review_invoicing_v1` tras decisión de producto de estrechar
+    // a invoicing (venta+compra) + contactos + contabilidad mínimo, para
+    // la submission v2 a OpenAI App Review. El manifest declarado en
+    // `docs/openai-submission/chatgpt-app-submission.json` DEBE contener
+    // EXACTAMENTE este mismo conjunto. Si este test falla:
     //   - actualiza el manifest para añadir/quitar la tool, O
     //   - revierte el cambio del preset.
     // Un mismatch runtime ↔ manifest es causa textbook de rejection en App Review.
+    const toolNames = [
+      ...getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('openai_review_invoicing_v1')),
+    ].sort();
+
+    expect(toolNames).toEqual(
+      [
+        'holded_list_invoices',
+        'holded_get_invoice',
+        'holded_list_documents',
+        'holded_get_document',
+        'holded_get_document_pdf',
+        'holded_list_contacts',
+        'holded_get_contact',
+        'holded_list_accounts',
+        'holded_list_daily_ledger',
+        'holded_create_invoice_draft',
+      ].sort()
+    );
+
+    expect(toolNames).toHaveLength(10);
+  });
+
+  it('keeps the claude_parity preset stable at 29 tools (reserved for submission v3 post-approval)', () => {
+    // claude_parity es el preset que usaremos como submission v3 cuando OpenAI
+    // apruebe la submission v2 (openai_review_invoicing_v1). NO es el default
+    // público actual. Lo mantenemos congelado aquí para no introducir drift
+    // antes de la próxima ampliación.
     const toolNames = [
       ...getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('claude_parity')),
     ].sort();

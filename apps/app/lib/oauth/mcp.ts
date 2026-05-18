@@ -85,7 +85,7 @@ export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
 const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
 // C2 (auditoria OpenAI 2026-05-07): el preset por defecto del flujo publico se
 // alinea con el conjunto de tools declarado en
-// `docs/openai-submission/tool-hint-justifications.json` para que `tools/list`
+// `docs/openai-submission/chatgpt-app-submission.json` para que `tools/list`
 // exponga EXACTAMENTE las mismas tools que el manifest firmado en submission.
 // Anteriormente era `holded_public_campaign_v1` (5 scopes / 7 tools), y si la
 // env var MCP_PUBLIC_SCOPE_PRESET no estaba seteada en produccion, el revisor
@@ -99,15 +99,18 @@ const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
 //     review. Causó rechazo y se revirtió.
 //   - 2026-05-15: REVERTIDO a `openai_review_v2` (14 tools) tras la primera
 //     rejection del review.
-//   - 2026-05-18: AMPLIADO a `claude_parity` (29 tools, todas read-only excepto
-//     create_invoice_draft) coincidiendo con el resubmit que combina los fixes
-//     del PR #88 (brotli/paginación/endtmp/$ref/schema). El manifest
-//     `tool-hint-justifications.json` se actualizó simultáneamente para
-//     mantener alineación 1:1 runtime ↔ manifest. La submission form en el
-//     portal OpenAI DEBE actualizarse antes del deploy o se rechaza por
-//     "Tool annotations match the MCP runtime" — ver
-//     `docs/openai-submission/OPENAI_FORM_COPY_PASTE.md`.
-const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'claude_parity';
+//   - 2026-05-18 (mañana): AMPLIADO a `claude_parity` (29 tools) coincidiendo
+//     con los fixes del PR #88 (brotli/paginación/endtmp/$ref/schema).
+//   - 2026-05-18 (tarde): VUELTO a estrechar a `openai_review_invoicing_v1`
+//     (10 tools: 9 read + 1 write) tras decisión de producto. Solo invoicing
+//     (venta+compra) + contactos para crear factura + contabilidad. Mantener
+//     superficie mínima defendible para la submission v2 a OpenAI. Cuando
+//     OpenAI apruebe, abriremos submission v3 con `claude_parity`.
+//
+// El manifest `chatgpt-app-submission.json` debe estar alineado 1:1 con este
+// preset — corre `node scripts/validate-openai-submission.mjs` antes de
+// subir al portal. Un mismatch runtime vs declared = rejection automática.
+const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_invoicing_v1';
 const AUTHORIZATION_CODE_REDEMPTIONS_TABLE = 'oauth_authorization_code_redemptions';
 
 type MintAuthorizationCodeInput = Omit<AuthorizationCodePayload, 'codeId'>;
@@ -123,6 +126,7 @@ function isHoldedMcpScopePreset(value: string): value is HoldedMcpScopePreset {
     value === 'holded_public_campaign_v1' ||
     value === 'holded_priority1' ||
     value === 'openai_review_v2' ||
+    value === 'openai_review_invoicing_v1' ||
     value === 'holded_full_read_v1' ||
     value === 'claude_parity'
   );

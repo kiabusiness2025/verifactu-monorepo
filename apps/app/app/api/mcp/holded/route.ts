@@ -79,9 +79,9 @@ function getVisibleTools(scopes: string | readonly string[]) {
  * authorization server. Esto cierra el riesgo de exponer delete/send/pay
  * tools si un revisor solicita scopes adicionales en su client registration.
  *
- * 2026-05-18: el default es `claude_parity` (29 tools, todas read-only excepto
- * create_invoice_draft). El manifest tool-hint-justifications.json y la
- * submission form en el portal OpenAI están alineados con este conjunto.
+ * 2026-05-18: el default es `openai_review_invoicing_v1` (10 tools: 9 read +
+ * 1 write). El manifest `chatgpt-app-submission.json` y la submission form en
+ * el portal OpenAI están alineados con este conjunto.
  *
  * - mode === 'oauth' → intersección de access.scope con preset público.
  * - mode === 'shared_secret' → acceso administrativo interno, full surface.

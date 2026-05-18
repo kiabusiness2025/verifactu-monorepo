@@ -1,9 +1,46 @@
 # Holded Connector Review Test Matrix
 
-**Date:** 2026-04-29 (initial), 2026-05-04 (post-rejection), 2026-05-15 (controlled-errors wave), 2026-05-18 (post-rejection-2 + scope expansion + brotli fix)
-**Status:** ⏳ READY FOR RESUBMISSION v2 at API+infra level — surface expanded from 14 to 29 tools (claude-parity preset), brotli silent-decoding bug fixed, all manifest entries regenerated. **Manual ChatGPT web+mobile validation of all 29 tools** still required before resubmit.
+**Date:** 2026-04-29 (initial), 2026-05-04 (post-rejection), 2026-05-15 (controlled-errors wave), 2026-05-18 (post-rejection-2 + brotli fix + scope NARROWING)
+**Status:** ⏳ READY FOR RESUBMISSION v2 — surface NARROWED to 10 tools (`openai_review_invoicing_v1`: invoicing venta+compra + contactos + contabilidad), brotli silent-decoding bug fixed in `apps/app`, manifest `chatgpt-app-submission.json` aligned. **Manual ChatGPT web+mobile validation of the 10 tools** still required before resubmit.
 
-## 🟡 2026-05-18 — Scope expansion to claude_parity + brotli decoding fix
+## 🟢 2026-05-18 (afternoon) — Decision: narrow surface to invoicing + accounting only
+
+After preparing a 29-tool expansion (`claude_parity`) earlier the same day, the product decision was to **narrow the OpenAI submission surface** to the minimum defendible set focused on invoicing (sales + purchases) plus accounting. Rationale:
+
+- Submitting 29 tools at the same time as the brotli fix doubles the variables under review — if anything fails the reviewer would attribute it to the expansion, not the actual fix.
+- Holded categories outside invoicing+accounting (CRM, projects, products, warehouses, treasury, employees, taxes, numbering) add demo-tenant dependencies that haven't been validated end-to-end in ChatGPT mobile.
+- Once OpenAI approves submission v2 (10 tools), we open submission v3 with `claude_parity` (29 tools) as a clean follow-up.
+
+### Current preset (`openai_review_invoicing_v1`, 10 tools)
+
+| #   | Tool                          | Group                                                         |
+| --- | ----------------------------- | ------------------------------------------------------------- |
+| 1   | `holded_list_invoices`        | Sales invoicing                                               |
+| 2   | `holded_get_invoice`          | Sales invoicing                                               |
+| 3   | `holded_list_documents`       | Purchases + commercial docs (via `docType`)                   |
+| 4   | `holded_get_document`         | Purchases + commercial docs                                   |
+| 5   | `holded_get_document_pdf`     | Purchases + commercial docs (PDF rendering)                   |
+| 6   | `holded_list_contacts`        | Contacts (needed for create_invoice_draft contact resolution) |
+| 7   | `holded_get_contact`          | Contacts                                                      |
+| 8   | `holded_list_accounts`        | Accounting (chart of accounts)                                |
+| 9   | `holded_list_daily_ledger`    | Accounting (daily ledger, requires date range)                |
+| 10  | `holded_create_invoice_draft` | Sales invoicing (single write, requires confirmation)         |
+
+Removed from the 29-tool wave (will return in submission v3):
+
+`holded_get_document_shipped_items`, `holded_list_products`, `holded_get_product`, `holded_list_warehouses`, `holded_get_warehouse`, `holded_list_warehouse_stock`, `holded_list_treasury_accounts`, `holded_get_treasury_account`, `holded_list_employees`, `holded_get_employee`, `holded_list_taxes`, `holded_list_numbering_series`, `holded_list_bookings`, `holded_list_crm_funnels`, `holded_list_leads`, `holded_list_projects`, `holded_get_project`, `holded_list_project_tasks`, `holded_list_time_records`.
+
+### Test cases that survive
+
+POS-01..POS-07 + POS-08..POS-10 (the 3 new ones for purchase documents / PDF). 10 positive + 6 negative = 16 cases total. POS-11..POS-22 are stashed in this document for reuse in submission v3.
+
+### What still requires manual validation before submission
+
+The 10 POS + 6 NEG cases need to be re-run on ChatGPT **web** AND **mobile** against the demo tenant. Run `node scripts/validate-openai-submission.mjs` locally first.
+
+---
+
+## 🟡 2026-05-18 (morning, superseded) — Scope expansion to claude_parity + brotli decoding fix
 
 After the second OpenAI rejection (2026-05-18, same generic message as 2026-05-04: _"did not produce correct results"_), root-cause analysis identified two structural issues:
 

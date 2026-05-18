@@ -56,8 +56,8 @@ const sampleResults = [
     latencyMs: 230,
     httpStatus: 200,
     errorCode: 'tool_count_mismatch' as const,
-    errorMessage: 'expected 29 tools, got 28',
-    metadata: { toolCount: 28, expected: 29 },
+    errorMessage: 'expected 10 tools, got 9',
+    metadata: { toolCount: 9, expected: 10 },
   },
 ];
 

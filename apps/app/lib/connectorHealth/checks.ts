@@ -67,11 +67,12 @@ const CLAUDE_PUBLIC_URL =
   process.env.HEALTH_CLAUDE_PUBLIC_URL?.trim() || 'https://claude.verifactu.business';
 const CLAUDE_MCP_URL = process.env.HEALTH_CLAUDE_MCP_URL?.trim() || `${CLAUDE_PUBLIC_URL}/mcp`;
 
-// 2026-05-18: ampliado de 14 a 29 al cambiar DEFAULT_PUBLIC_SCOPE_PRESET
-// a `claude_parity` y regenerar el manifest tool-hint-justifications.json.
-// El número debe coincidir con `tools/list` runtime para que el health-check
-// no marque tool_count_mismatch.
-const CHATGPT_EXPECTED_TOOL_COUNT = Number(process.env.HEALTH_CHATGPT_EXPECTED_TOOL_COUNT || '29');
+// 2026-05-18 (tarde): VUELTO a 10 al cambiar DEFAULT_PUBLIC_SCOPE_PRESET de
+// `claude_parity` (29) a `openai_review_invoicing_v1` (10: 9 read + 1 write).
+// Submission v2 a OpenAI con superficie mínima defendible (invoicing venta+compra
+// + contactos + contabilidad). Cuando OpenAI apruebe ampliaremos a claude_parity
+// como submission v3. El número debe coincidir con `tools/list` runtime.
+const CHATGPT_EXPECTED_TOOL_COUNT = Number(process.env.HEALTH_CHATGPT_EXPECTED_TOOL_COUNT || '10');
 
 function expectOauthDiscovery(body: unknown): string | null {
   if (!body || typeof body !== 'object') return 'response is not an object';
