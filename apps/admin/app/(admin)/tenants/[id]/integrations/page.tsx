@@ -1,4 +1,4 @@
-import PlaceholderPage from "../../../_components/PlaceholderPage";
+import PlaceholderPage from '../../../_components/PlaceholderPage';
 
 export default function TenantIntegrationsPage() {
   return (
@@ -7,9 +7,9 @@ export default function TenantIntegrationsPage() {
       description="Estado de integraciones activas para este tenant."
       legacyHref="/integrations"
       actions={[
-        { label: "Stripe", href: "/integrations/stripe" },
-        { label: "Resend", href: "/integrations/resend" },
-        { label: "Veri*Factu", href: "/integrations/verifactu" },
+        { label: 'Stripe', href: '/integrations/stripe' },
+        { label: 'Resend', href: '/integrations/resend' },
+        { label: 'Veri*Factu', href: '/integrations/verifactu' },
       ]}
     />
   );

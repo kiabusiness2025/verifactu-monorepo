@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { requireAdmin } from "@/lib/adminAuth";
-import { rateLimit } from "@/lib/rateLimit";
-import { searchCompanies } from "@/server/einforma";
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/adminAuth';
+import { rateLimit } from '@/lib/rateLimit';
+import { searchCompanies } from '@/server/einforma';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function normalizeQuery(value: string) {
@@ -17,25 +17,25 @@ function addDays(days: number) {
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const debug = searchParams.get("debug") === "1";
-  const refresh = searchParams.get("refresh") === "1";
-  const deep = searchParams.get("deep") === "1";
+  const debug = searchParams.get('debug') === '1';
+  const refresh = searchParams.get('refresh') === '1';
+  const deep = searchParams.get('deep') === '1';
   try {
     await requireAdmin(req);
 
     const limiter = rateLimit(req, {
       limit: 30,
       windowMs: 60_000,
-      keyPrefix: "einforma-admin-search"
+      keyPrefix: 'einforma-admin-search',
     });
     if (!limiter.ok) {
       return NextResponse.json(
-        { error: "Rate limit exceeded" },
-        { status: 429, headers: { "Retry-After": String(limiter.retryAfter) } }
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': String(limiter.retryAfter) } }
       );
     }
 
-    const q = (searchParams.get("q") ?? "").trim();
+    const q = (searchParams.get('q') ?? '').trim();
 
     if (q.length < 3) {
       return NextResponse.json({ items: [] });
@@ -43,7 +43,7 @@ export async function GET(req: Request) {
 
     const normalizedQuery = normalizeQuery(q);
     const lookup = await prisma.einformaLookup.findUnique({
-      where: { queryType_queryValue: { queryType: "NAME", queryValue: normalizedQuery } },
+      where: { queryType_queryValue: { queryType: 'NAME', queryValue: normalizedQuery } },
       select: { normalized: true, raw: true, expiresAt: true, updatedAt: true },
     });
 
@@ -54,7 +54,7 @@ export async function GET(req: Request) {
       return NextResponse.json({
         items: cachedItems,
         cached: true,
-        cacheSource: "einformaLookup",
+        cacheSource: 'einformaLookup',
         lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
       });
     }
@@ -62,9 +62,9 @@ export async function GET(req: Request) {
     const items = await searchCompanies(q, { bypassCache: refresh || deep, deepSearch: deep });
     const rawJson = JSON.parse(JSON.stringify(items));
     await prisma.einformaLookup.upsert({
-      where: { queryType_queryValue: { queryType: "NAME", queryValue: normalizedQuery } },
+      where: { queryType_queryValue: { queryType: 'NAME', queryValue: normalizedQuery } },
       create: {
-        queryType: "NAME",
+        queryType: 'NAME',
         queryValue: normalizedQuery,
         raw: rawJson,
         normalized: rawJson,
@@ -79,17 +79,17 @@ export async function GET(req: Request) {
 
     return NextResponse.json({ items });
   } catch (error) {
-    console.error("Einforma search error:", error);
+    console.error('Einforma search error:', error);
 
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       debug
-        ? { error: "No se pudo consultar eInforma", debugMessage: message }
-        : { error: "No se pudo consultar eInforma" },
+        ? { error: 'No se pudo consultar eInforma', debugMessage: message }
+        : { error: 'No se pudo consultar eInforma' },
       { status: 500 }
     );
   }

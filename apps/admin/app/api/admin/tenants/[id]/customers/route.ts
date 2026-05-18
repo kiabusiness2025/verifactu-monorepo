@@ -1,9 +1,9 @@
-import { requireAdmin } from "@/lib/adminAuth";
-import { query } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { requireAdmin } from '@/lib/adminAuth';
+import { query } from '@/lib/db';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 async function tableExists(tableName: string) {
   const rows = await query<{ exists: boolean }>(
@@ -34,15 +34,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     await requireAdmin(req);
     const { id: tenantId } = await params;
 
-    const hasCustomers = await tableExists("customers");
+    const hasCustomers = await tableExists('customers');
     if (!hasCustomers) {
       return NextResponse.json({ items: [] });
     }
 
     const [hasNif, hasEmail, hasCreatedAt] = await Promise.all([
-      columnExists("customers", "nif"),
-      columnExists("customers", "email"),
-      columnExists("customers", "created_at"),
+      columnExists('customers', 'nif'),
+      columnExists('customers', 'email'),
+      columnExists('customers', 'created_at'),
     ]);
 
     const rows = await query<{
@@ -55,12 +55,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       `SELECT
          c.id,
          c.name,
-         ${hasNif ? "c.nif" : "NULL::text"} as nif,
-         ${hasEmail ? "c.email" : "NULL::text"} as email,
-         ${hasCreatedAt ? "c.created_at::text" : "NULL::text"} as created_at
+         ${hasNif ? 'c.nif' : 'NULL::text'} as nif,
+         ${hasEmail ? 'c.email' : 'NULL::text'} as email,
+         ${hasCreatedAt ? 'c.created_at::text' : 'NULL::text'} as created_at
        FROM customers c
        WHERE c.tenant_id = $1::uuid
-       ORDER BY ${hasCreatedAt ? "c.created_at DESC" : "c.name ASC"}
+       ORDER BY ${hasCreatedAt ? 'c.created_at DESC' : 'c.name ASC'}
        LIMIT 200`,
       [tenantId]
     );
@@ -68,16 +68,16 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     return NextResponse.json({
       items: rows.map((row) => ({
         id: row.id,
-        name: row.name ?? "",
+        name: row.name ?? '',
         nif: row.nif ?? null,
         email: row.email ?? null,
         createdAt: row.created_at ?? null,
       })),
     });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
-    return NextResponse.json({ error: "Error al obtener clientes del tenant" }, { status: 500 });
+    return NextResponse.json({ error: 'Error al obtener clientes del tenant' }, { status: 500 });
   }
 }

@@ -1,8 +1,8 @@
-import { requireAdmin } from "@/lib/adminAuth";
-import { query } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { requireAdmin } from '@/lib/adminAuth';
+import { query } from '@/lib/db';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -28,9 +28,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
     return NextResponse.json({ ok: true, activeTenantId: tenantId });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
-    return NextResponse.json({ error: "Error al activar empresa" }, { status: 500 });
+    return NextResponse.json({ error: 'Error al activar empresa' }, { status: 500 });
   }
 }

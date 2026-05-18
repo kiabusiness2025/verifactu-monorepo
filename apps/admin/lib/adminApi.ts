@@ -8,14 +8,14 @@
  */
 export async function adminGet<T>(path: string): Promise<T> {
   const res = await fetch(path, {
-    credentials: "include",
+    credentials: 'include',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
   if (!res.ok) {
-    const msg = await res.text().catch(() => "Unknown error");
+    const msg = await res.text().catch(() => 'Unknown error');
     throw new Error(`Admin API error ${res.status}: ${msg}`);
   }
 
@@ -27,16 +27,16 @@ export async function adminGet<T>(path: string): Promise<T> {
  */
 export async function adminPost<T>(path: string, body: any): Promise<T> {
   const res = await fetch(path, {
-    method: "POST",
-    credentials: "include",
+    method: 'POST',
+    credentials: 'include',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
-    const msg = await res.text().catch(() => "Unknown error");
+    const msg = await res.text().catch(() => 'Unknown error');
     throw new Error(`Admin API error ${res.status}: ${msg}`);
   }
 
@@ -48,16 +48,16 @@ export async function adminPost<T>(path: string, body: any): Promise<T> {
  */
 export async function adminPatch<T>(path: string, body: any): Promise<T> {
   const res = await fetch(path, {
-    method: "PATCH",
-    credentials: "include",
+    method: 'PATCH',
+    credentials: 'include',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
-    const msg = await res.text().catch(() => "Unknown error");
+    const msg = await res.text().catch(() => 'Unknown error');
     throw new Error(`Admin API error ${res.status}: ${msg}`);
   }
 
@@ -69,15 +69,15 @@ export async function adminPatch<T>(path: string, body: any): Promise<T> {
  */
 export async function adminDelete<T>(path: string): Promise<T> {
   const res = await fetch(path, {
-    method: "DELETE",
-    credentials: "include",
+    method: 'DELETE',
+    credentials: 'include',
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
     },
   });
 
   if (!res.ok) {
-    const msg = await res.text().catch(() => "Unknown error");
+    const msg = await res.text().catch(() => 'Unknown error');
     throw new Error(`Admin API error ${res.status}: ${msg}`);
   }
 

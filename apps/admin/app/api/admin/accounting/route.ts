@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { query } from "../../../../lib/db";
-import { requireAdmin } from "../../../../lib/adminAuth";
+import { NextResponse } from 'next/server';
+import { query } from '../../../../lib/db';
+import { requireAdmin } from '../../../../lib/adminAuth';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
@@ -10,46 +10,35 @@ export async function GET(req: Request) {
     await requireAdmin(req);
 
     const { searchParams } = new URL(req.url);
-    const period = searchParams.get("period") || "current_month";
-    const customFrom = searchParams.get("from");
-    const customTo = searchParams.get("to");
+    const period = searchParams.get('period') || 'current_month';
+    const customFrom = searchParams.get('from');
+    const customTo = searchParams.get('to');
 
     const now = new Date();
     let startDate: string;
-    let endDate: string = now.toISOString().split("T")[0];
+    let endDate: string = now.toISOString().split('T')[0];
 
     switch (period) {
-      case "current_month":
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-          .toISOString()
-          .split("T")[0];
+      case 'current_month':
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
         break;
-      case "last_quarter":
-      case "last_3_months":
-        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1)
-          .toISOString()
-          .split("T")[0];
+      case 'last_quarter':
+      case 'last_3_months':
+        startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1).toISOString().split('T')[0];
         break;
-      case "current_year":
-        startDate = new Date(now.getFullYear(), 0, 1)
-          .toISOString()
-          .split("T")[0];
+      case 'current_year':
+        startDate = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
         break;
-      case "all_time":
-        startDate = "2020-01-01";
+      case 'all_time':
+        startDate = '2020-01-01';
         break;
-      case "custom":
+      case 'custom':
         startDate =
-          customFrom ||
-          new Date(now.getFullYear(), now.getMonth(), 1)
-            .toISOString()
-            .split("T")[0];
+          customFrom || new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
         endDate = customTo || endDate;
         break;
       default:
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-          .toISOString()
-          .split("T")[0];
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
     }
 
     const [statsData] = await query<{
@@ -146,15 +135,12 @@ export async function GET(req: Request) {
       })),
     });
   } catch (error) {
-    console.error("Error fetching accounting data:", error);
+    console.error('Error fetching accounting data:', error);
 
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    return NextResponse.json(
-      { error: "Failed to fetch accounting data" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch accounting data' }, { status: 500 });
   }
 }

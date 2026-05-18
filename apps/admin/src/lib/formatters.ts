@@ -1,35 +1,35 @@
-const currencyFormatter = new Intl.NumberFormat("es-ES", {
-  style: "currency",
-  currency: "EUR",
+const currencyFormatter = new Intl.NumberFormat('es-ES', {
+  style: 'currency',
+  currency: 'EUR',
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-const percentFormatter = new Intl.NumberFormat("es-ES", {
+const percentFormatter = new Intl.NumberFormat('es-ES', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-const shortDateFormatter = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
+const shortDateFormatter = new Intl.DateTimeFormat('es-ES', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
 });
 
-const dateTimeFormatter = new Intl.DateTimeFormat("es-ES", {
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
+const dateTimeFormatter = new Intl.DateTimeFormat('es-ES', {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
 });
 
-const timeFormatter = new Intl.DateTimeFormat("es-ES", {
-  hour: "2-digit",
-  minute: "2-digit",
+const timeFormatter = new Intl.DateTimeFormat('es-ES', {
+  hour: '2-digit',
+  minute: '2-digit',
 });
 
-const numberFormatter = new Intl.NumberFormat("es-ES");
+const numberFormatter = new Intl.NumberFormat('es-ES');
 
 export function formatCurrency(value: number) {
   return currencyFormatter.format(value);

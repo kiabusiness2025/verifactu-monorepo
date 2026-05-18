@@ -236,7 +236,9 @@ export async function POST(req: Request) {
         );
       }
 
-      const collaboratorRows = Array.isArray(collaborators) ? (collaborators as CollaboratorInput[]) : [];
+      const collaboratorRows = Array.isArray(collaborators)
+        ? (collaborators as CollaboratorInput[])
+        : [];
       const uniqueByEmail = new Map<string, CollaboratorInput>();
       collaboratorRows.forEach((row) => {
         const email = (row?.email ?? '').trim().toLowerCase();

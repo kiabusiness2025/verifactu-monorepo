@@ -33,32 +33,31 @@ export async function POST(request: NextRequest) {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${githubToken}`,
-          'Accept': 'application/vnd.github+json',
+          Authorization: `Bearer ${githubToken}`,
+          Accept: 'application/vnd.github+json',
           'X-GitHub-Api-Version': '2022-11-28',
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           ref: 'main',
           inputs: {
-            error_context: typeof errorContext === 'string' 
-              ? errorContext 
-              : JSON.stringify(errorContext),
-            auto_fix: String(autoFix)
-          }
-        })
+            error_context:
+              typeof errorContext === 'string' ? errorContext : JSON.stringify(errorContext),
+            auto_fix: String(autoFix),
+          },
+        }),
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[ISAAK TRIGGER] GitHub API error:', response.status, errorText);
-      
+
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: `GitHub API error: ${response.statusText}`,
-          details: errorText
+          details: errorText,
         },
         { status: response.status }
       );
@@ -70,15 +69,14 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Auto-fix workflow triggered successfully',
       repository: `${owner}/${repo}`,
-      workflow: 'auto-fix-and-deploy.yml'
+      workflow: 'auto-fix-and-deploy.yml',
     });
-
   } catch (error) {
     console.error('[ISAAK TRIGGER] Error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Unknown error' 
+      {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );

@@ -1,10 +1,10 @@
-import { requireAdmin } from "@/lib/adminAuth";
-import { query } from "@/lib/db";
-import prisma from "@/lib/prisma";
-import { randomUUID } from "crypto";
-import { NextResponse } from "next/server";
+import { requireAdmin } from '@/lib/adminAuth';
+import { query } from '@/lib/db';
+import prisma from '@/lib/prisma';
+import { randomUUID } from 'crypto';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function tableExists(tableName: string) {
@@ -34,11 +34,11 @@ async function columnExists(tableName: string, columnName: string) {
 async function ensureMembership(
   tenantId: string,
   userId: string,
-  desiredRole: "owner" | "member" = "owner"
+  desiredRole: 'owner' | 'member' = 'owner'
 ) {
   const [hasRole, hasStatus] = await Promise.all([
-    columnExists("memberships", "role"),
-    columnExists("memberships", "status"),
+    columnExists('memberships', 'role'),
+    columnExists('memberships', 'status'),
   ]);
 
   const existing = await query<{ id: string }>(
@@ -54,13 +54,13 @@ async function ensureMembership(
       updates.push(`role = $${values.length}`);
     }
     if (hasStatus) {
-      values.push("active");
+      values.push('active');
       updates.push(`status = $${values.length}`);
     }
     if (updates.length > 0) {
       await query(
         `UPDATE memberships
-         SET ${updates.join(", ")}
+         SET ${updates.join(', ')}
          WHERE tenant_id = $1::uuid AND user_id = $2`,
         values
       );
@@ -68,20 +68,20 @@ async function ensureMembership(
     return;
   }
 
-  const fields = ["tenant_id", "user_id"];
+  const fields = ['tenant_id', 'user_id'];
   const values: Array<string> = [tenantId, userId];
   if (hasRole) {
-    fields.push("role");
+    fields.push('role');
     values.push(desiredRole);
   }
   if (hasStatus) {
-    fields.push("status");
-    values.push("active");
+    fields.push('status');
+    values.push('active');
   }
   const placeholders = fields
-    .map((field, i) => (field === "tenant_id" ? `$${i + 1}::uuid` : `$${i + 1}`))
-    .join(", ");
-  await query(`INSERT INTO memberships (${fields.join(", ")}) VALUES (${placeholders})`, values);
+    .map((field, i) => (field === 'tenant_id' ? `$${i + 1}::uuid` : `$${i + 1}`))
+    .join(', ');
+  await query(`INSERT INTO memberships (${fields.join(', ')}) VALUES (${placeholders})`, values);
 }
 
 export async function GET(req: Request) {
@@ -89,15 +89,12 @@ export async function GET(req: Request) {
     await requireAdmin(req);
 
     const { searchParams } = new URL(req.url);
-    const q = (searchParams.get("q") || "").trim().toLowerCase();
-    const status = (searchParams.get("status") || "all").toLowerCase();
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
-    const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
-    const pageSize = Math.min(
-      Math.max(parseInt(searchParams.get("pageSize") || "25", 10), 1),
-      100
-    );
+    const q = (searchParams.get('q') || '').trim().toLowerCase();
+    const status = (searchParams.get('status') || 'all').toLowerCase();
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+    const pageSize = Math.min(Math.max(parseInt(searchParams.get('pageSize') || '25', 10), 1), 100);
     const offset = (page - 1) * pageSize;
 
     const [
@@ -114,22 +111,22 @@ export async function GET(req: Request) {
       hasInvoiceIssueDate,
       hasInvoiceStatus,
     ] = await Promise.all([
-      columnExists("tenants", "is_demo"),
-      columnExists("tenants", "legal_name"),
-      columnExists("tenants", "nif"),
-      columnExists("tenants", "tax_id"),
-      tableExists("tenant_profiles"),
-      tableExists("tenant_subscriptions"),
-      tableExists("subscriptions"),
-      tableExists("invoices"),
-      columnExists("invoices", "amount_gross"),
-      columnExists("invoices", "total"),
-      columnExists("invoices", "issue_date"),
-      columnExists("invoices", "status"),
+      columnExists('tenants', 'is_demo'),
+      columnExists('tenants', 'legal_name'),
+      columnExists('tenants', 'nif'),
+      columnExists('tenants', 'tax_id'),
+      tableExists('tenant_profiles'),
+      tableExists('tenant_subscriptions'),
+      tableExists('subscriptions'),
+      tableExists('invoices'),
+      columnExists('invoices', 'amount_gross'),
+      columnExists('invoices', 'total'),
+      columnExists('invoices', 'issue_date'),
+      columnExists('invoices', 'status'),
     ]);
 
-    const taxIdColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
-    const legalNameExpr = hasTenantLegalName ? "COALESCE(t.legal_name, t.name)" : "t.name";
+    const taxIdColumn = hasTenantNif ? 'nif' : hasTenantTaxId ? 'tax_id' : null;
+    const legalNameExpr = hasTenantLegalName ? 'COALESCE(t.legal_name, t.name)' : 't.name';
     const subJoin = hasTenantSubscriptions
       ? `LEFT JOIN LATERAL (
            SELECT status
@@ -139,41 +136,43 @@ export async function GET(req: Request) {
            LIMIT 1
          ) sub ON true`
       : hasSubscriptions
-      ? `LEFT JOIN LATERAL (
+        ? `LEFT JOIN LATERAL (
            SELECT status
            FROM subscriptions s
            WHERE s.tenant_id = t.id
            ORDER BY s.created_at DESC
            LIMIT 1
          ) sub ON true`
-      : `LEFT JOIN LATERAL (
+        : `LEFT JOIN LATERAL (
            SELECT 'trial'::text as status
          ) sub ON true`;
 
     const invoiceAmountColumn = hasInvoiceAmountGross
-      ? "amount_gross"
+      ? 'amount_gross'
       : hasInvoiceTotal
-      ? "total"
-      : null;
+        ? 'total'
+        : null;
     const canUseInvoiceMetrics = hasInvoices && hasInvoiceIssueDate && !!invoiceAmountColumn;
     const invoiceJoin = canUseInvoiceMetrics
       ? `LEFT JOIN invoices i ON i.tenant_id = t.id
-         ${hasInvoiceStatus ? "AND i.status IN ('sent', 'paid')" : ""}
+         ${hasInvoiceStatus ? "AND i.status IN ('sent', 'paid')" : ''}
          AND i.issue_date >= DATE_TRUNC('month', CURRENT_DATE)
          AND i.issue_date < (DATE_TRUNC('month', CURRENT_DATE) + INTERVAL '1 month')`
-      : "";
+      : '';
     const invoiceCountExpr = canUseInvoiceMetrics
-      ? "COUNT(DISTINCT i.id)::int as invoices_this_month"
-      : "0::int as invoices_this_month";
+      ? 'COUNT(DISTINCT i.id)::int as invoices_this_month'
+      : '0::int as invoices_this_month';
     const invoiceRevenueExpr = canUseInvoiceMetrics
       ? `COALESCE(SUM(i.${invoiceAmountColumn}), 0) as revenue_this_month`
-      : "0::numeric as revenue_this_month";
+      : '0::numeric as revenue_this_month';
 
     const profileJoin = hasTenantProfiles
-      ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id"
-      : "";
-    const profileAddressExpr = hasTenantProfiles ? "tp.address as address" : "NULL::text as address";
-    const profileCnaeExpr = hasTenantProfiles ? "tp.cnae as cnae" : "NULL::text as cnae";
+      ? 'LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id'
+      : '';
+    const profileAddressExpr = hasTenantProfiles
+      ? 'tp.address as address'
+      : 'NULL::text as address';
+    const profileCnaeExpr = hasTenantProfiles ? 'tp.cnae as cnae' : 'NULL::text as cnae';
 
     const where: string[] = [];
     const params: Array<string | number> = [];
@@ -195,7 +194,7 @@ export async function GET(req: Request) {
       if (taxIdColumn) {
         conditions.push(`LOWER(t.${taxIdColumn}) LIKE $${params.length}`);
       }
-      where.push(`(${conditions.join(" OR ")})`);
+      where.push(`(${conditions.join(' OR ')})`);
     }
 
     if (from) {
@@ -207,12 +206,12 @@ export async function GET(req: Request) {
       where.push(`t.created_at <= $${params.length}`);
     }
 
-    if (status !== "all") {
+    if (status !== 'all') {
       params.push(status);
       where.push(`COALESCE(sub.status, 'trial') = $${params.length}`);
     }
 
-    const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
     const countRows = await query<{ total: number }>(
       `SELECT COUNT(*)::int as total
@@ -237,7 +236,7 @@ export async function GET(req: Request) {
       `SELECT 
         t.id,
         ${legalNameExpr} as legal_name,
-        ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as tax_id,
+        ${taxIdColumn ? `t.${taxIdColumn}` : 'NULL::text'} as tax_id,
         ${profileAddressExpr},
         ${profileCnaeExpr},
         t.created_at,
@@ -251,9 +250,9 @@ export async function GET(req: Request) {
        ${invoiceJoin}
        ${subJoin}
        ${whereClause}
-       GROUP BY t.id, ${hasTenantLegalName ? "t.legal_name, " : ""}t.name, ${
-        taxIdColumn ? `t.${taxIdColumn}, ` : ""
-      }${hasTenantProfiles ? "tp.address, tp.cnae, " : ""}t.created_at
+       GROUP BY t.id, ${hasTenantLegalName ? 't.legal_name, ' : ''}t.name, ${
+         taxIdColumn ? `t.${taxIdColumn}, ` : ''
+       }${hasTenantProfiles ? 'tp.address, tp.cnae, ' : ''}t.created_at
        ORDER BY t.created_at DESC
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, pageSize, offset]
@@ -263,14 +262,14 @@ export async function GET(req: Request) {
     const transformedTenants = tenants.map((t) => ({
       id: t.id,
       legalName: t.legal_name,
-      taxId: t.tax_id || "",
+      taxId: t.tax_id || '',
       address: t.address,
       cnae: t.cnae,
       createdAt: t.created_at,
       membersCount: Number(t.members_count || 0),
       invoicesThisMonth: Number(t.invoices_this_month || 0),
       revenueThisMonth: parseFloat(String(t.revenue_this_month || 0)),
-      status: t.status || "trial",
+      status: t.status || 'trial',
     }));
 
     return NextResponse.json({
@@ -280,32 +279,29 @@ export async function GET(req: Request) {
       total: countRows[0]?.total || 0,
     });
   } catch (error) {
-    console.error("Error fetching tenants:", error);
-    
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json(
-        { ok: false, error: "No autorizado" },
-        { status: 403 }
-      );
+    console.error('Error fetching tenants:', error);
+
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ ok: false, error: 'No autorizado' }, { status: 403 });
     }
 
     try {
       const { searchParams } = new URL(req.url);
-      const q = (searchParams.get("q") || "").trim().toLowerCase();
-      const from = searchParams.get("from");
-      const to = searchParams.get("to");
-      const page = Math.max(parseInt(searchParams.get("page") || "1", 10), 1);
+      const q = (searchParams.get('q') || '').trim().toLowerCase();
+      const from = searchParams.get('from');
+      const to = searchParams.get('to');
+      const page = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
       const pageSize = Math.min(
-        Math.max(parseInt(searchParams.get("pageSize") || "25", 10), 1),
+        Math.max(parseInt(searchParams.get('pageSize') || '25', 10), 1),
         100
       );
       const offset = (page - 1) * pageSize;
       const variants: Array<{ legalExpr: string; taxExpr?: string | null }> = [
-        { legalExpr: "COALESCE(t.legal_name, t.name)", taxExpr: "t.nif" },
-        { legalExpr: "COALESCE(t.legal_name, t.name)", taxExpr: "t.tax_id" },
-        { legalExpr: "t.name", taxExpr: "t.nif" },
-        { legalExpr: "t.name", taxExpr: "t.tax_id" },
-        { legalExpr: "t.name", taxExpr: null },
+        { legalExpr: 'COALESCE(t.legal_name, t.name)', taxExpr: 't.nif' },
+        { legalExpr: 'COALESCE(t.legal_name, t.name)', taxExpr: 't.tax_id' },
+        { legalExpr: 't.name', taxExpr: 't.nif' },
+        { legalExpr: 't.name', taxExpr: 't.tax_id' },
+        { legalExpr: 't.name', taxExpr: null },
       ];
 
       for (const variant of variants) {
@@ -323,7 +319,7 @@ export async function GET(req: Request) {
               params.push(`%${q}%`);
               conditions.push(`LOWER(${variant.taxExpr}) LIKE $${params.length}`);
             }
-            where.push(`(${conditions.join(" OR ")})`);
+            where.push(`(${conditions.join(' OR ')})`);
           }
           if (from) {
             params.push(from);
@@ -333,7 +329,7 @@ export async function GET(req: Request) {
             params.push(to);
             where.push(`t.created_at <= $${params.length}`);
           }
-          const whereClause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+          const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
           const countRows = await query<{ total: number }>(
             `SELECT COUNT(*)::int as total FROM tenants t ${whereClause}`,
@@ -348,7 +344,7 @@ export async function GET(req: Request) {
             `SELECT
               t.id,
               ${variant.legalExpr} as legal_name,
-              ${variant.taxExpr ? `${variant.taxExpr}` : "NULL::text"} as tax_id,
+              ${variant.taxExpr ? `${variant.taxExpr}` : 'NULL::text'} as tax_id,
               t.created_at
              FROM tenants t
              ${whereClause}
@@ -361,14 +357,14 @@ export async function GET(req: Request) {
             items: tenants.map((t) => ({
               id: t.id,
               legalName: t.legal_name,
-              taxId: t.tax_id || "",
+              taxId: t.tax_id || '',
               address: null,
               cnae: null,
               createdAt: t.created_at,
               membersCount: 0,
               invoicesThisMonth: 0,
               revenueThisMonth: 0,
-              status: "trial",
+              status: 'trial',
             })),
             page,
             pageSize,
@@ -388,23 +384,20 @@ export async function GET(req: Request) {
         degraded: true,
       });
     } catch (fallbackError) {
-      console.error("Fallback tenants query failed:", fallbackError);
+      console.error('Fallback tenants query failed:', fallbackError);
     }
 
-    return NextResponse.json(
-      { ok: false, error: "Failed to fetch tenants" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: 'Failed to fetch tenants' }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   const { searchParams } = new URL(req.url);
-  const debug = searchParams.get("debug") === "1";
+  const debug = searchParams.get('debug') === '1';
   try {
     // Verificar que el usuario es admin
     const admin = await requireAdmin(req);
-    let adminUserId = String(admin.userId || "").trim();
+    let adminUserId = String(admin.userId || '').trim();
 
     if (!adminUserId) {
       try {
@@ -418,15 +411,15 @@ export async function POST(req: Request) {
           const createdAdmin = await prisma.user.create({
             data: {
               email: admin.email.toLowerCase(),
-              name: admin.email.split("@")[0] || "Admin",
-              role: "ADMIN",
+              name: admin.email.split('@')[0] || 'Admin',
+              role: 'ADMIN',
             },
             select: { id: true },
           });
           adminUserId = createdAdmin.id;
         }
       } catch (adminUserResolveError) {
-        console.error("Error resolving admin user id:", adminUserResolveError);
+        console.error('Error resolving admin user id:', adminUserResolveError);
       }
     }
 
@@ -438,17 +431,19 @@ export async function POST(req: Request) {
     const legalName = String(
       normalized?.legalName || normalized?.name || body?.legalName || ''
     ).trim();
-    const taxId = String(normalized?.nif || body?.taxId || '').trim().toUpperCase();
+    const taxId = String(normalized?.nif || body?.taxId || '')
+      .trim()
+      .toUpperCase();
     const address = isEinforma
       ? String(normalized?.address || profile?.address?.street || '').trim() || null
       : body?.address
-      ? String(body.address).trim()
-      : null;
+        ? String(body.address).trim()
+        : null;
     const cnae = isEinforma
       ? String(profile?.cnae || '').trim() || null
       : body?.cnae
-      ? String(body.cnae).trim()
-      : null;
+        ? String(body.cnae).trim()
+        : null;
 
     const cnaeCode = normalized?.cnaeCode ?? null;
     const cnaeText = normalized?.cnaeText ?? null;
@@ -468,9 +463,7 @@ export async function POST(req: Request) {
     const capitalSocial = Number.isFinite(Number(capitalSocialRaw))
       ? Number(capitalSocialRaw)
       : null;
-    const incorporationDate = profile?.constitutionDate
-      ? new Date(profile.constitutionDate)
-      : null;
+    const incorporationDate = profile?.constitutionDate ? new Date(profile.constitutionDate) : null;
     const postalCode = normalized?.postalCode ?? profile?.address?.zip ?? null;
     const city = normalized?.city ?? profile?.address?.city ?? null;
     const province = normalized?.province ?? profile?.address?.province ?? null;
@@ -486,20 +479,20 @@ export async function POST(req: Request) {
     const adminEditHistory = adminEditHistoryFromPayload ?? adminEditHistoryFromRaw ?? null;
     const einformaTaxIdVerified =
       !!taxId && !!normalized?.nif && String(normalized.nif).toUpperCase() === taxId;
-    const einformaRaw = isEinforma ? profile?.raw ?? profile ?? null : null;
+    const einformaRaw = isEinforma ? (profile?.raw ?? profile ?? null) : null;
     const profileSource = isEinforma ? 'einforma' : 'manual';
 
     // Validación básica
     if (!legalName || !taxId) {
       return NextResponse.json(
-        { ok: false, error: "legalName y taxId son obligatorios" },
+        { ok: false, error: 'legalName y taxId son obligatorios' },
         { status: 400 }
       );
     }
 
-    const hasTenantNif = await columnExists("tenants", "nif");
-    const hasTenantTaxId = await columnExists("tenants", "tax_id");
-    const tenantTaxColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+    const hasTenantNif = await columnExists('tenants', 'nif');
+    const hasTenantTaxId = await columnExists('tenants', 'tax_id');
+    const tenantTaxColumn = hasTenantNif ? 'nif' : hasTenantTaxId ? 'tax_id' : null;
 
     // Verificar que no exista ya un tenant con ese taxId
     const existing = tenantTaxColumn
@@ -511,7 +504,7 @@ export async function POST(req: Request) {
 
     if (existing.length > 0) {
       return NextResponse.json(
-        { ok: false, error: "Ya existe una empresa con ese CIF/NIF" },
+        { ok: false, error: 'Ya existe una empresa con ese CIF/NIF' },
         { status: 409 }
       );
     }
@@ -520,10 +513,10 @@ export async function POST(req: Request) {
     const now = new Date();
 
     // Crear tenant con compatibilidad de esquema
-    const tenantFields = ["id", "name", "created_at"];
+    const tenantFields = ['id', 'name', 'created_at'];
     const tenantValues: unknown[] = [tenantId, legalName, now];
-    if (await columnExists("tenants", "legal_name")) {
-      tenantFields.push("legal_name");
+    if (await columnExists('tenants', 'legal_name')) {
+      tenantFields.push('legal_name');
       tenantValues.push(legalName);
     }
     if (tenantTaxColumn) {
@@ -532,55 +525,58 @@ export async function POST(req: Request) {
     }
     const tenantPlaceholders = tenantFields
       .map((field, i) => {
-        if (field === "id") return `$${i + 1}::uuid`;
-        if (field === "created_at") return `$${i + 1}::timestamptz`;
+        if (field === 'id') return `$${i + 1}::uuid`;
+        if (field === 'created_at') return `$${i + 1}::timestamptz`;
         return `$${i + 1}`;
       })
-      .join(", ");
+      .join(', ');
     await query(
-      `INSERT INTO tenants (${tenantFields.join(", ")})
+      `INSERT INTO tenants (${tenantFields.join(', ')})
        VALUES (${tenantPlaceholders})`,
       tenantValues
     );
 
     if (address || cnae || isEinforma) {
       try {
-        const hasTenantProfiles = await tableExists("tenant_profiles");
+        const hasTenantProfiles = await tableExists('tenant_profiles');
         if (hasTenantProfiles) {
           const profileCandidates: Array<{ column: string; value: unknown }> = [
-            { column: "tenant_id", value: tenantId },
-            { column: "source", value: profileSource },
-            { column: "source_id", value: sourceId },
-            { column: "cnae", value: cnae },
-            { column: "cnae_code", value: cnaeCode },
-            { column: "cnae_text", value: cnaeText },
-            { column: "legal_form", value: legalForm },
-            { column: "status", value: status },
-            { column: "website", value: website },
-            { column: "capital_social", value: capitalSocial },
-            { column: "incorporation_date", value: incorporationDate },
-            { column: "address", value: address },
-            { column: "postal_code", value: postalCode },
-            { column: "city", value: city },
-            { column: "province", value: province },
-            { column: "country", value: country },
-            { column: "representative", value: representative },
-            { column: "email", value: email },
-            { column: "phone", value: phone },
-            { column: "employees", value: employees },
-            { column: "sales", value: sales },
-            { column: "sales_year", value: salesYear },
-            { column: "last_balance_date", value: lastBalanceDate },
-            { column: "einforma_last_sync_at", value: isEinforma ? now : null },
-            { column: "einforma_tax_id_verified", value: isEinforma ? einformaTaxIdVerified : null },
-            { column: "einforma_raw", value: einformaRaw },
-            { column: "admin_edit_history", value: adminEditHistory },
-            { column: "updated_at", value: now },
+            { column: 'tenant_id', value: tenantId },
+            { column: 'source', value: profileSource },
+            { column: 'source_id', value: sourceId },
+            { column: 'cnae', value: cnae },
+            { column: 'cnae_code', value: cnaeCode },
+            { column: 'cnae_text', value: cnaeText },
+            { column: 'legal_form', value: legalForm },
+            { column: 'status', value: status },
+            { column: 'website', value: website },
+            { column: 'capital_social', value: capitalSocial },
+            { column: 'incorporation_date', value: incorporationDate },
+            { column: 'address', value: address },
+            { column: 'postal_code', value: postalCode },
+            { column: 'city', value: city },
+            { column: 'province', value: province },
+            { column: 'country', value: country },
+            { column: 'representative', value: representative },
+            { column: 'email', value: email },
+            { column: 'phone', value: phone },
+            { column: 'employees', value: employees },
+            { column: 'sales', value: sales },
+            { column: 'sales_year', value: salesYear },
+            { column: 'last_balance_date', value: lastBalanceDate },
+            { column: 'einforma_last_sync_at', value: isEinforma ? now : null },
+            {
+              column: 'einforma_tax_id_verified',
+              value: isEinforma ? einformaTaxIdVerified : null,
+            },
+            { column: 'einforma_raw', value: einformaRaw },
+            { column: 'admin_edit_history', value: adminEditHistory },
+            { column: 'updated_at', value: now },
           ];
           const availableColumns: string[] = [];
           const values: unknown[] = [];
           for (const candidate of profileCandidates) {
-            if (await columnExists("tenant_profiles", candidate.column)) {
+            if (await columnExists('tenant_profiles', candidate.column)) {
               availableColumns.push(candidate.column);
               values.push(candidate.value);
             }
@@ -589,23 +585,23 @@ export async function POST(req: Request) {
           if (availableColumns.length > 0) {
             const placeholders = availableColumns
               .map((column, i) => {
-                if (column === "tenant_id") return `$${i + 1}::uuid`;
-                if (column === "updated_at" || column === "einforma_last_sync_at") {
+                if (column === 'tenant_id') return `$${i + 1}::uuid`;
+                if (column === 'updated_at' || column === 'einforma_last_sync_at') {
                   return `$${i + 1}::timestamptz`;
                 }
-                if (column === "incorporation_date" || column === "last_balance_date") {
+                if (column === 'incorporation_date' || column === 'last_balance_date') {
                   return `$${i + 1}::date`;
                 }
                 return `$${i + 1}`;
               })
-              .join(", ");
+              .join(', ');
             const updates = availableColumns
-              .filter((col) => col !== "tenant_id")
+              .filter((col) => col !== 'tenant_id')
               .map((col) => `${col} = EXCLUDED.${col}`)
-              .join(", ");
+              .join(', ');
             if (updates.length > 0) {
               await query(
-                `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+                `INSERT INTO tenant_profiles (${availableColumns.join(', ')})
                  VALUES (${placeholders})
                  ON CONFLICT (tenant_id) DO UPDATE
                  SET ${updates}`,
@@ -613,7 +609,7 @@ export async function POST(req: Request) {
               );
             } else {
               await query(
-                `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+                `INSERT INTO tenant_profiles (${availableColumns.join(', ')})
                  VALUES (${placeholders})
                  ON CONFLICT (tenant_id) DO NOTHING`,
                 values
@@ -622,74 +618,75 @@ export async function POST(req: Request) {
           }
         }
       } catch (profileError) {
-        console.error("Error creating/updating tenant_profile snapshot:", profileError);
+        console.error('Error creating/updating tenant_profile snapshot:', profileError);
       }
     }
 
     // Crear membership owner para el admin (compatibilidad entre esquemas)
     if (!adminUserId) {
-      throw new Error("ADMIN_USER_ID_MISSING");
+      throw new Error('ADMIN_USER_ID_MISSING');
     }
-    await ensureMembership(tenantId, adminUserId, "owner");
+    await ensureMembership(tenantId, adminUserId, 'owner');
 
     try {
       const supportUser = await prisma.user.upsert({
-        where: { email: "support@verifactu.business" },
-        update: { role: "ADMIN", name: "Verifactu Support" },
+        where: { email: 'support@verifactu.business' },
+        update: { role: 'ADMIN', name: 'Verifactu Support' },
         create: {
-          email: "support@verifactu.business",
-          name: "Verifactu Support",
-          role: "ADMIN",
+          email: 'support@verifactu.business',
+          name: 'Verifactu Support',
+          role: 'ADMIN',
         },
       });
-      await ensureMembership(tenantId, supportUser.id, "owner");
+      await ensureMembership(tenantId, supportUser.id, 'owner');
     } catch (supportError) {
       // No bloquear alta de empresa por usuario de soporte
-      console.error("Error assigning support owner membership:", supportError);
+      console.error('Error assigning support owner membership:', supportError);
     }
 
     // Marcar empresa activa para el admin
-    if (await tableExists("user_preferences")) {
+    if (await tableExists('user_preferences')) {
       try {
         const [hasPreferredTenantId, hasUpdatedAt] = await Promise.all([
-          columnExists("user_preferences", "preferred_tenant_id"),
-          columnExists("user_preferences", "updated_at"),
+          columnExists('user_preferences', 'preferred_tenant_id'),
+          columnExists('user_preferences', 'updated_at'),
         ]);
 
-        const fields = ["user_id"];
+        const fields = ['user_id'];
         const values: unknown[] = [adminUserId];
         if (hasPreferredTenantId) {
-          fields.push("preferred_tenant_id");
+          fields.push('preferred_tenant_id');
           values.push(tenantId);
         }
         if (hasUpdatedAt) {
-          fields.push("updated_at");
+          fields.push('updated_at');
           values.push(now);
         }
 
-        const placeholders = fields.map((_, i) => `$${i + 1}`).join(", ");
+        const placeholders = fields.map((_, i) => `$${i + 1}`).join(', ');
         const castedPlaceholders = fields
           .map((field, i) => {
-            if (field === "preferred_tenant_id") return `$${i + 1}::uuid`;
-            if (field === "updated_at") return `$${i + 1}::timestamptz`;
+            if (field === 'preferred_tenant_id') return `$${i + 1}::uuid`;
+            if (field === 'updated_at') return `$${i + 1}::timestamptz`;
             return `$${i + 1}`;
           })
-          .join(", ");
+          .join(', ');
         const updates: string[] = [];
-        if (hasPreferredTenantId) updates.push("preferred_tenant_id = EXCLUDED.preferred_tenant_id");
-        if (hasUpdatedAt) updates.push("updated_at = EXCLUDED.updated_at");
+        if (hasPreferredTenantId)
+          updates.push('preferred_tenant_id = EXCLUDED.preferred_tenant_id');
+        if (hasUpdatedAt) updates.push('updated_at = EXCLUDED.updated_at');
 
         if (updates.length > 0) {
           await query(
-            `INSERT INTO user_preferences (${fields.join(", ")})
+            `INSERT INTO user_preferences (${fields.join(', ')})
              VALUES (${castedPlaceholders})
              ON CONFLICT (user_id) DO UPDATE
-             SET ${updates.join(", ")}`,
+             SET ${updates.join(', ')}`,
             values
           );
         } else {
           await query(
-            `INSERT INTO user_preferences (${fields.join(", ")})
+            `INSERT INTO user_preferences (${fields.join(', ')})
              VALUES (${castedPlaceholders})
              ON CONFLICT (user_id) DO NOTHING`,
             values
@@ -697,7 +694,7 @@ export async function POST(req: Request) {
         }
       } catch (userPrefError) {
         // No bloquear alta de empresa por preferencias de usuario
-        console.error("Error updating user_preferences:", userPrefError);
+        console.error('Error updating user_preferences:', userPrefError);
       }
     }
 
@@ -714,18 +711,16 @@ export async function POST(req: Request) {
       `SELECT 
          t.id, 
          t.name, 
-         ${await columnExists("tenants", "legal_name") ? "t.legal_name" : "t.name as legal_name"}, 
-         ${
-           tenantTaxColumn ? `t.${tenantTaxColumn} as nif` : "NULL::text as nif"
-         }, 
+         ${(await columnExists('tenants', 'legal_name')) ? 't.legal_name' : 't.name as legal_name'}, 
+         ${tenantTaxColumn ? `t.${tenantTaxColumn} as nif` : 'NULL::text as nif'}, 
          t.created_at, 
          ${
-           await tableExists("tenant_profiles")
-             ? "tp.address, tp.cnae"
-             : "NULL::text as address, NULL::text as cnae"
+           (await tableExists('tenant_profiles'))
+             ? 'tp.address, tp.cnae'
+             : 'NULL::text as address, NULL::text as cnae'
          }
        FROM tenants t
-       ${await tableExists("tenant_profiles") ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
+       ${(await tableExists('tenant_profiles')) ? 'LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id' : ''}
        WHERE t.id = $1::uuid`,
       [tenantId]
     );
@@ -741,24 +736,21 @@ export async function POST(req: Request) {
         membersCount: 0,
         invoicesThisMonth: 0,
         revenueThisMonth: 0,
-        status: "trial",
+        status: 'trial',
       },
     });
   } catch (error) {
-    console.error("Error creating tenant:", error);
+    console.error('Error creating tenant:', error);
 
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json(
-        { ok: false, error: "No autorizado" },
-        { status: 403 }
-      );
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ ok: false, error: 'No autorizado' }, { status: 403 });
     }
 
     const message = error instanceof Error ? error.message : String(error);
     return NextResponse.json(
       debug
-        ? { ok: false, error: "Error al crear la empresa", debugMessage: message }
-        : { ok: false, error: "Error al crear la empresa" },
+        ? { ok: false, error: 'Error al crear la empresa', debugMessage: message }
+        : { ok: false, error: 'Error al crear la empresa' },
       { status: 500 }
     );
   }

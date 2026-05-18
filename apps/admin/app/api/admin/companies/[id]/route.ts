@@ -1,14 +1,11 @@
-import { query } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { query } from '@/lib/db';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 // GET - Obtener una empresa específica
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: companyId } = await params;
 
@@ -52,24 +49,18 @@ export async function GET(
     );
 
     if (!company) {
-      return NextResponse.json({ ok: false, error: "Company not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: 'Company not found' }, { status: 404 });
     }
 
     return NextResponse.json({ ok: true, ...company });
   } catch (error) {
-    console.error("Error fetching company:", error);
-    return NextResponse.json(
-      { ok: false, error: "Failed to fetch company" },
-      { status: 500 }
-    );
+    console.error('Error fetching company:', error);
+    return NextResponse.json({ ok: false, error: 'Failed to fetch company' }, { status: 500 });
   }
 }
 
 // PUT - Actualizar empresa
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: companyId } = await params;
     const body = await req.json();
@@ -94,30 +85,21 @@ export async function PUT(
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Error updating company:", error);
-    return NextResponse.json(
-      { ok: false, error: "Failed to update company" },
-      { status: 500 }
-    );
+    console.error('Error updating company:', error);
+    return NextResponse.json({ ok: false, error: 'Failed to update company' }, { status: 500 });
   }
 }
 
 // DELETE - Eliminar empresa
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id: companyId } = await params;
 
-    await query("DELETE FROM tenants WHERE id = $1", [companyId]);
+    await query('DELETE FROM tenants WHERE id = $1', [companyId]);
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error("Error deleting company:", error);
-    return NextResponse.json(
-      { ok: false, error: "Failed to delete company" },
-      { status: 500 }
-    );
+    console.error('Error deleting company:', error);
+    return NextResponse.json({ ok: false, error: 'Failed to delete company' }, { status: 500 });
   }
 }

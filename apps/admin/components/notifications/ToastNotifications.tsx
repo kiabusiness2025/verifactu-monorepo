@@ -3,12 +3,12 @@
  * Accessible notification system with multiple variants and auto-dismiss
  */
 
-"use client";
+'use client';
 
-import { AlertCircle, CheckCircle, Info, X, XCircle } from "lucide-react";
-import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { AlertCircle, CheckCircle, Info, X, XCircle } from 'lucide-react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
-type ToastType = "success" | "error" | "warning" | "info";
+type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface Toast {
   id: string;
@@ -24,7 +24,7 @@ interface Toast {
 
 interface ToastContextValue {
   toasts: Toast[];
-  addToast: (toast: Omit<Toast, "id">) => void;
+  addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
   success: (title: string, message?: string) => void;
   error: (title: string, message?: string) => void;
@@ -37,7 +37,7 @@ const ToastContext = createContext<ToastContextValue | undefined>(undefined);
 export const useToast = () => {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within ToastProvider");
+    throw new Error('useToast must be used within ToastProvider');
   }
   return context;
 };
@@ -50,7 +50,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const addToast = useCallback(
-    (toast: Omit<Toast, "id">) => {
+    (toast: Omit<Toast, 'id'>) => {
       const id = `toast-${Date.now()}-${Math.random()}`;
       const newToast: Toast = { id, ...toast };
 
@@ -66,23 +66,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   );
 
   const success = useCallback(
-    (title: string, message?: string) => addToast({ type: "success", title, message }),
+    (title: string, message?: string) => addToast({ type: 'success', title, message }),
     [addToast]
   );
 
   const error = useCallback(
     (title: string, message?: string) =>
-      addToast({ type: "error", title, message, duration: 7000 }),
+      addToast({ type: 'error', title, message, duration: 7000 }),
     [addToast]
   );
 
   const warning = useCallback(
-    (title: string, message?: string) => addToast({ type: "warning", title, message }),
+    (title: string, message?: string) => addToast({ type: 'warning', title, message }),
     [addToast]
   );
 
   const info = useCallback(
-    (title: string, message?: string) => addToast({ type: "info", title, message }),
+    (title: string, message?: string) => addToast({ type: 'info', title, message }),
     [addToast]
   );
 
@@ -133,27 +133,27 @@ const ToastItem: React.FC<{
   const config = {
     success: {
       icon: <CheckCircle className="h-5 w-5" />,
-      bgClass: "bg-green-50 border-green-200",
-      iconClass: "text-green-600",
-      textClass: "text-green-900",
+      bgClass: 'bg-green-50 border-green-200',
+      iconClass: 'text-green-600',
+      textClass: 'text-green-900',
     },
     error: {
       icon: <XCircle className="h-5 w-5" />,
-      bgClass: "bg-red-50 border-red-200",
-      iconClass: "text-red-600",
-      textClass: "text-red-900",
+      bgClass: 'bg-red-50 border-red-200',
+      iconClass: 'text-red-600',
+      textClass: 'text-red-900',
     },
     warning: {
       icon: <AlertCircle className="h-5 w-5" />,
-      bgClass: "bg-yellow-50 border-yellow-200",
-      iconClass: "text-yellow-600",
-      textClass: "text-yellow-900",
+      bgClass: 'bg-yellow-50 border-yellow-200',
+      iconClass: 'text-yellow-600',
+      textClass: 'text-yellow-900',
     },
     info: {
       icon: <Info className="h-5 w-5" />,
-      bgClass: "bg-blue-50 border-blue-200",
-      iconClass: "text-blue-600",
-      textClass: "text-blue-900",
+      bgClass: 'bg-blue-50 border-blue-200',
+      iconClass: 'text-blue-600',
+      textClass: 'text-blue-900',
     },
   };
 
@@ -162,7 +162,7 @@ const ToastItem: React.FC<{
   return (
     <div
       className={`flex items-start gap-3 rounded-lg border p-4 shadow-lg transition-all duration-300 ${bgClass} ${
-        isExiting ? "translate-x-full opacity-0" : "translate-x-0 opacity-100"
+        isExiting ? 'translate-x-full opacity-0' : 'translate-x-0 opacity-100'
       }`}
       role="alert"
       aria-live="polite"

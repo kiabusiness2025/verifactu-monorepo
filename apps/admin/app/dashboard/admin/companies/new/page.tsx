@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
 export default function NewCompanyRedirectPage() {
-  redirect("/dashboard/admin/companies?create=1");
+  redirect('/dashboard/admin/companies?create=1');
 }

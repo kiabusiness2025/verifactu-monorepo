@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { AccessibleButton } from "@/components/accessibility/AccessibleButton";
-import { TableSkeleton } from "@/components/accessibility/LoadingSkeleton";
-import { useToast } from "@/components/notifications/ToastNotifications";
-import { adminGet, adminPost } from "@/lib/adminApi";
-import { formatShortDate } from "@/src/lib/formatters";
+import { useEffect, useMemo, useState } from 'react';
+import { AccessibleButton } from '@/components/accessibility/AccessibleButton';
+import { TableSkeleton } from '@/components/accessibility/LoadingSkeleton';
+import { useToast } from '@/components/notifications/ToastNotifications';
+import { adminGet, adminPost } from '@/lib/adminApi';
+import { formatShortDate } from '@/src/lib/formatters';
 
 type SupportSessionRow = {
   id: string;
@@ -24,17 +24,17 @@ export default function SupportSessionsPage() {
   const { success, error: showError } = useToast();
   const [items, setItems] = useState<SupportSessionRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState("active");
-  const [search, setSearch] = useState("");
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.verifactu.business";
+  const [status, setStatus] = useState('active');
+  const [search, setSearch] = useState('');
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.verifactu.business';
 
   const filteredItems = useMemo(() => {
     if (!search.trim()) return items;
     const q = search.trim().toLowerCase();
     return items.filter((item) => {
-      const tenantName = item.tenant?.legalName || item.tenant?.name || "";
-      const userEmail = item.user?.email || "";
-      const adminEmail = item.admin?.email || "";
+      const tenantName = item.tenant?.legalName || item.tenant?.name || '';
+      const userEmail = item.user?.email || '';
+      const adminEmail = item.admin?.email || '';
       return (
         tenantName.toLowerCase().includes(q) ||
         userEmail.toLowerCase().includes(q) ||
@@ -49,14 +49,14 @@ export default function SupportSessionsPage() {
       setLoading(true);
       try {
         const query = new URLSearchParams();
-        if (status !== "all") query.set("status", status);
+        if (status !== 'all') query.set('status', status);
         const res = await adminGet<{ items: SupportSessionRow[] }>(
           `/api/admin/support-sessions?${query.toString()}`
         );
         if (mounted) setItems(res.items || []);
       } catch (err) {
         if (mounted) {
-          showError(err instanceof Error ? err.message : "No se pudieron cargar sesiones");
+          showError(err instanceof Error ? err.message : 'No se pudieron cargar sesiones');
         }
       } finally {
         if (mounted) setLoading(false);
@@ -70,26 +70,28 @@ export default function SupportSessionsPage() {
 
   async function endSession(id: string) {
     try {
-      await adminPost("/api/admin/support-sessions/stop", { id });
-      setItems((prev) => prev.map((item) => (item.id === id ? { ...item, endedAt: new Date().toISOString() } : item)));
-      success("Sesión finalizada");
+      await adminPost('/api/admin/support-sessions/stop', { id });
+      setItems((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, endedAt: new Date().toISOString() } : item))
+      );
+      success('Sesión finalizada');
     } catch (err) {
-      showError(err instanceof Error ? err.message : "No se pudo finalizar");
+      showError(err instanceof Error ? err.message : 'No se pudo finalizar');
     }
   }
 
   async function startSupportSession(tenantId: string, userId: string) {
     try {
-      const res = await adminPost<{ handoffToken: string }>("/api/admin/support-sessions/start", {
+      const res = await adminPost<{ handoffToken: string }>('/api/admin/support-sessions/start', {
         tenantId,
         userId,
-        reason: "support",
+        reason: 'support',
       });
       const url = `${appUrl}/support/handoff?token=${encodeURIComponent(res.handoffToken)}`;
-      window.open(url, "_blank", "noopener,noreferrer");
-      success("Sesión de soporte iniciada");
+      window.open(url, '_blank', 'noopener,noreferrer');
+      success('Sesión de soporte iniciada');
     } catch (err) {
-      showError(err instanceof Error ? err.message : "No se pudo iniciar soporte");
+      showError(err instanceof Error ? err.message : 'No se pudo iniciar soporte');
     }
   }
 
@@ -139,14 +141,14 @@ export default function SupportSessionsPage() {
               {filteredItems.map((item) => (
                 <tr key={item.id}>
                   <td className="px-4 py-3 font-medium text-slate-900">
-                    {item.tenant?.legalName || item.tenant?.name || "Tenant"}
+                    {item.tenant?.legalName || item.tenant?.name || 'Tenant'}
                   </td>
                   <td className="px-4 py-3 text-slate-700">{item.user?.email || item.userId}</td>
                   <td className="px-4 py-3 text-slate-700">{item.admin?.email || item.adminId}</td>
-                  <td className="px-4 py-3 text-slate-600">{item.reason || "support"}</td>
+                  <td className="px-4 py-3 text-slate-600">{item.reason || 'support'}</td>
                   <td className="px-4 py-3 text-slate-600">{formatShortDate(item.startedAt)}</td>
                   <td className="px-4 py-3 text-slate-600">
-                    {item.endedAt ? formatShortDate(item.endedAt) : "Activa"}
+                    {item.endedAt ? formatShortDate(item.endedAt) : 'Activa'}
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex flex-wrap justify-end gap-2">

@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/adminAuth";
-import prisma from "@/lib/prisma";
-import { rateLimit } from "@/lib/rateLimit";
-import { getCompanyProfileByNif } from "@/server/einforma";
+import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
+import prisma from '@/lib/prisma';
+import { rateLimit } from '@/lib/rateLimit';
+import { getCompanyProfileByNif } from '@/server/einforma';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 function normalizeTaxId(value: string) {
@@ -61,14 +61,14 @@ function getRawCompanyNode(raw: unknown) {
 
 function getByPath(obj: any, path: string) {
   return path
-    .split(".")
-    .reduce((acc, key) => (acc && typeof acc === "object" ? acc[key] : undefined), obj);
+    .split('.')
+    .reduce((acc, key) => (acc && typeof acc === 'object' ? acc[key] : undefined), obj);
 }
 
 function pickFirst(obj: any, paths: string[]) {
   for (const path of paths) {
     const value = getByPath(obj, path);
-    if (value !== undefined && value !== null && String(value).trim() !== "") {
+    if (value !== undefined && value !== null && String(value).trim() !== '') {
       return value;
     }
   }
@@ -76,7 +76,7 @@ function pickFirst(obj: any, paths: string[]) {
 }
 
 function readMaybeNumber(value: unknown) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
@@ -95,7 +95,7 @@ function hasStrongExpandedSnapshot(profile: {
     profile.website,
     profile.representative,
     profile.incorporationDate,
-  ].filter((value) => value != null && String(value).trim() !== "").length;
+  ].filter((value) => value != null && String(value).trim() !== '').length;
   return expandedCount >= 2 || profile.einformaRaw != null;
 }
 
@@ -106,21 +106,21 @@ export async function GET(req: Request) {
     const limiter = rateLimit(req, {
       limit: 20,
       windowMs: 60_000,
-      keyPrefix: "einforma-admin-profile"
+      keyPrefix: 'einforma-admin-profile',
     });
     if (!limiter.ok) {
       return NextResponse.json(
-        { error: "Rate limit exceeded" },
-        { status: 429, headers: { "Retry-After": String(limiter.retryAfter) } }
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': String(limiter.retryAfter) } }
       );
     }
 
     const { searchParams } = new URL(req.url);
-    const lookupKey = (searchParams.get("nif") ?? "").trim();
-    const refresh = (searchParams.get("refresh") ?? "").trim() === "1";
+    const lookupKey = (searchParams.get('nif') ?? '').trim();
+    const refresh = (searchParams.get('refresh') ?? '').trim() === '1';
 
     if (!lookupKey) {
-      return NextResponse.json({ error: "Falta identificador" }, { status: 400 });
+      return NextResponse.json({ error: 'Falta identificador' }, { status: 400 });
     }
 
     const normalizedNif = normalizeTaxId(lookupKey);
@@ -154,13 +154,12 @@ export async function GET(req: Request) {
       const rawCompany = getRawCompanyNode(tenantProfile.einformaRaw);
       const rawRepresentative =
         pickFirst(rawCompany, [
-          "administradores.0.nombre",
-          "representatives.0.name",
-          "representantes.0.nombre",
-          "administrador",
-          "representante",
-        ]) ??
-        undefined;
+          'administradores.0.nombre',
+          'representatives.0.name',
+          'representantes.0.nombre',
+          'administrador',
+          'representante',
+        ]) ?? undefined;
       const profile = {
         name: tenant.name ?? '',
         legalName: tenant.legalName ?? undefined,
@@ -168,63 +167,60 @@ export async function GET(req: Request) {
         cnae: tenantProfile.cnae ?? undefined,
         legalForm:
           tenantProfile.legalForm ??
-          (pickFirst(rawCompany, ["formaJuridica", "legalForm", "datosGenerales.formaJuridica"]) as
+          (pickFirst(rawCompany, ['formaJuridica', 'legalForm', 'datosGenerales.formaJuridica']) as
             | string
             | undefined),
         status:
           tenantProfile.status ??
-          (pickFirst(rawCompany, ["situacion", "status", "estado", "estadoActual"]) as
+          (pickFirst(rawCompany, ['situacion', 'status', 'estado', 'estadoActual']) as
             | string
             | undefined),
         website:
           tenantProfile.website ??
-          (pickFirst(rawCompany, ["web", "website"]) as string | undefined),
-        email: (pickFirst(rawCompany, ["email", "contacto.email"]) as string | undefined),
-        phone: (pickFirst(rawCompany, ["telefono", "phone", "contacto.telefono"]) as
+          (pickFirst(rawCompany, ['web', 'website']) as string | undefined),
+        email: pickFirst(rawCompany, ['email', 'contacto.email']) as string | undefined,
+        phone: pickFirst(rawCompany, ['telefono', 'phone', 'contacto.telefono']) as
           | string
-          | undefined),
-        employees: readMaybeNumber(pickFirst(rawCompany, ["empleados", "employees"])),
-        sales: readMaybeNumber(pickFirst(rawCompany, ["ventas", "sales"])),
-        salesYear: readMaybeNumber(pickFirst(rawCompany, ["anioVentas", "salesYear"])),
+          | undefined,
+        employees: readMaybeNumber(pickFirst(rawCompany, ['empleados', 'employees'])),
+        sales: readMaybeNumber(pickFirst(rawCompany, ['ventas', 'sales'])),
+        salesYear: readMaybeNumber(pickFirst(rawCompany, ['anioVentas', 'salesYear'])),
         capitalSocial:
           typeof tenantProfile.capitalSocial === 'number'
             ? tenantProfile.capitalSocial
-            : tenantProfile.capitalSocial ??
-              readMaybeNumber(pickFirst(rawCompany, ["capitalSocial", "capital"])) ??
-              undefined,
+            : (tenantProfile.capitalSocial ??
+              readMaybeNumber(pickFirst(rawCompany, ['capitalSocial', 'capital'])) ??
+              undefined),
         constitutionDate: tenantProfile.incorporationDate
           ? tenantProfile.incorporationDate.toISOString().slice(0, 10)
-          : (pickFirst(rawCompany, ["fechaConstitucion", "constitutionDate"]) as
+          : (pickFirst(rawCompany, ['fechaConstitucion', 'constitutionDate']) as
               | string
               | undefined),
-        lastBalanceDate:
-          (pickFirst(rawCompany, ["fechaUltimoBalance", "lastBalanceDate"]) as
-            | string
-            | undefined),
+        lastBalanceDate: pickFirst(rawCompany, ['fechaUltimoBalance', 'lastBalanceDate']) as
+          | string
+          | undefined,
         sourceId: tenantProfile.sourceId ?? undefined,
         representatives: tenantProfile.representative
           ? [{ name: tenantProfile.representative }]
           : rawRepresentative
-          ? [{ name: rawRepresentative }]
-          : undefined,
+            ? [{ name: rawRepresentative }]
+            : undefined,
         address: {
           street:
             tenantProfile.address ??
-            (pickFirst(rawCompany, ["domicilioSocial", "address.street"]) as
-              | string
-              | undefined) ??
+            (pickFirst(rawCompany, ['domicilioSocial', 'address.street']) as string | undefined) ??
             undefined,
           zip:
             tenantProfile.postalCode ??
-            (pickFirst(rawCompany, ["cp", "address.zip"]) as string | undefined) ??
+            (pickFirst(rawCompany, ['cp', 'address.zip']) as string | undefined) ??
             undefined,
           city:
             tenantProfile.city ??
-            (pickFirst(rawCompany, ["localidad", "address.city"]) as string | undefined) ??
+            (pickFirst(rawCompany, ['localidad', 'address.city']) as string | undefined) ??
             undefined,
           province:
             tenantProfile.province ??
-            (pickFirst(rawCompany, ["provincia", "address.province"]) as string | undefined) ??
+            (pickFirst(rawCompany, ['provincia', 'address.province']) as string | undefined) ??
             undefined,
           country: tenantProfile.country ?? 'ES',
         },
@@ -235,10 +231,10 @@ export async function GET(req: Request) {
         await prisma.auditLog.create({
           data: {
             actorUserId: admin.userId,
-            action: "COMPANY_VIEW",
+            action: 'COMPANY_VIEW',
             targetCompanyId: tenant.id,
             metadata: {
-              action: "EINFORMA.PROFILE_FETCH",
+              action: 'EINFORMA.PROFILE_FETCH',
               cached: true,
               refresh,
               taxId: normalizedNif,
@@ -247,7 +243,7 @@ export async function GET(req: Request) {
           },
         });
       } catch (error) {
-        console.error("Error logging audit event:", error);
+        console.error('Error logging audit event:', error);
       }
 
       return NextResponse.json({
@@ -267,14 +263,14 @@ export async function GET(req: Request) {
           sourceId: profile.sourceId ?? profile.nif ?? null,
         },
         cached: true,
-        cacheSource: "tenantProfile",
+        cacheSource: 'tenantProfile',
         lastSyncAt: tenantProfile.einformaLastSyncAt?.toISOString() ?? null,
       });
     }
 
     if (!refresh) {
       const lookup = await prisma.einformaLookup.findUnique({
-        where: { queryType_queryValue: { queryType: "TAX_ID", queryValue: normalizedNif } },
+        where: { queryType_queryValue: { queryType: 'TAX_ID', queryValue: normalizedNif } },
         select: { raw: true, normalized: true, expiresAt: true, updatedAt: true },
       });
 
@@ -283,20 +279,20 @@ export async function GET(req: Request) {
           await prisma.auditLog.create({
             data: {
               actorUserId: admin.userId,
-              action: "COMPANY_VIEW",
+              action: 'COMPANY_VIEW',
               targetCompanyId: tenant?.id,
               metadata: {
-                action: "EINFORMA.PROFILE_FETCH",
+                action: 'EINFORMA.PROFILE_FETCH',
                 cached: true,
                 refresh,
                 taxId: normalizedNif,
                 tenantId: tenant?.id ?? null,
-                cacheSource: "einformaLookup",
+                cacheSource: 'einformaLookup',
               },
             },
           });
         } catch (error) {
-          console.error("Error logging audit event:", error);
+          console.error('Error logging audit event:', error);
         }
 
         return NextResponse.json({
@@ -304,7 +300,7 @@ export async function GET(req: Request) {
           profile: lookup.raw,
           normalized: lookup.normalized,
           cached: true,
-          cacheSource: "einformaLookup",
+          cacheSource: 'einformaLookup',
           lastSyncAt: lookup.updatedAt?.toISOString() ?? null,
         });
       }
@@ -360,8 +356,7 @@ export async function GET(req: Request) {
             province: profile.address?.province || undefined,
             country: profile.address?.country || undefined,
             einformaLastSyncAt: new Date(),
-            einformaTaxIdVerified:
-              !!profile.nif && normalizeTaxId(profile.nif) === normalizedNif,
+            einformaTaxIdVerified: !!profile.nif && normalizeTaxId(profile.nif) === normalizedNif,
             einformaRaw: profile.raw ?? undefined,
           },
           update: {
@@ -392,21 +387,20 @@ export async function GET(req: Request) {
             province: profile.address?.province || undefined,
             country: profile.address?.country || undefined,
             einformaLastSyncAt: new Date(),
-            einformaTaxIdVerified:
-              !!profile.nif && normalizeTaxId(profile.nif) === normalizedNif,
+            einformaTaxIdVerified: !!profile.nif && normalizeTaxId(profile.nif) === normalizedNif,
             einformaRaw: profile.raw ?? undefined,
           },
         });
       } catch (error) {
-        console.error("Error persisting eInforma snapshot:", error);
+        console.error('Error persisting eInforma snapshot:', error);
       }
     }
 
     try {
       await prisma.einformaLookup.upsert({
-        where: { queryType_queryValue: { queryType: "TAX_ID", queryValue: normalizedNif } },
+        where: { queryType_queryValue: { queryType: 'TAX_ID', queryValue: normalizedNif } },
         create: {
-          queryType: "TAX_ID",
+          queryType: 'TAX_ID',
           queryValue: normalizedNif,
           raw: profile.raw ?? profile,
           normalized,
@@ -419,17 +413,17 @@ export async function GET(req: Request) {
         },
       });
     } catch (error) {
-      console.error("Error saving eInforma lookup cache:", error);
+      console.error('Error saving eInforma lookup cache:', error);
     }
 
     try {
       await prisma.auditLog.create({
         data: {
           actorUserId: admin.userId,
-          action: "COMPANY_VIEW",
+          action: 'COMPANY_VIEW',
           targetCompanyId: tenant?.id,
           metadata: {
-            action: "EINFORMA.PROFILE_FETCH",
+            action: 'EINFORMA.PROFILE_FETCH',
             cached: false,
             refresh,
             taxId: normalizedNif,
@@ -438,7 +432,7 @@ export async function GET(req: Request) {
         },
       });
     } catch (error) {
-      console.error("Error logging audit event:", error);
+      console.error('Error logging audit event:', error);
     }
 
     return NextResponse.json({
@@ -446,19 +440,16 @@ export async function GET(req: Request) {
       profile,
       normalized,
       cached: false,
-      cacheSource: "einforma",
+      cacheSource: 'einforma',
       lastSyncAt: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("Einforma profile error:", error);
+    console.error('Einforma profile error:', error);
 
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    return NextResponse.json(
-      { error: "No se pudo consultar eInforma" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'No se pudo consultar eInforma' }, { status: 500 });
   }
 }

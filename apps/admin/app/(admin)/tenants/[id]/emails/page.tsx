@@ -1,4 +1,4 @@
-import PlaceholderPage from "../../../_components/PlaceholderPage";
+import PlaceholderPage from '../../../_components/PlaceholderPage';
 
 export default function TenantEmailsPage() {
   return (

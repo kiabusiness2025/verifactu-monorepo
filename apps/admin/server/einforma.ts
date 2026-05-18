@@ -203,8 +203,7 @@ function normalizeRepresentatives(item: any) {
               if (name) collected.push({ name });
               continue;
             }
-            const name =
-              rep?.nombre ?? rep?.name ?? rep?.administrador ?? rep?.representante ?? '';
+            const name = rep?.nombre ?? rep?.name ?? rep?.administrador ?? rep?.representante ?? '';
             const role = rep?.cargo ?? rep?.role ?? rep?.tipo ?? undefined;
             if (String(name).trim()) collected.push({ name: String(name).trim(), role });
           }
@@ -371,13 +370,15 @@ export async function searchCompanies(
       const data = await einformaRequest<any>('/companies', { companySearch: candidate });
       const items = normalizeSearchResults(data);
       if (Array.isArray(items) && items.length > 0) {
-        const normalized = items.map((item: any): EinformaSearchItem => ({
-          name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
-          nif: sanitizeMaybeTaxId(item?.identificativo ?? item?.nif ?? item?.cif),
-          province: item?.provincia ?? item?.province,
-          city: item?.localidad ?? item?.city,
-          id: item?.id ?? item?.codigo ?? sanitizeMaybeTaxId(item?.identificativo),
-        }));
+        const normalized = items.map(
+          (item: any): EinformaSearchItem => ({
+            name: item?.denominacion ?? item?.name ?? item?.denominacionBusqueda ?? '',
+            nif: sanitizeMaybeTaxId(item?.identificativo ?? item?.nif ?? item?.cif),
+            province: item?.provincia ?? item?.province,
+            city: item?.localidad ?? item?.city,
+            id: item?.id ?? item?.codigo ?? sanitizeMaybeTaxId(item?.identificativo),
+          })
+        );
         for (const row of normalized) {
           const key = `${row.id ?? ''}|${row.nif ?? ''}|${row.name}`.toUpperCase();
           if (!merged.has(key)) merged.set(key, row);
@@ -459,10 +460,10 @@ export async function getCompanyProfileByNif(
       | undefined,
     sourceId: pickFirst(item, ['id', 'codigo']) ?? sanitizeMaybeTaxId(item?.identificativo),
     address: {
-      street: (pickFirst(item, ['domicilioSocial', 'address.street']) as string | undefined),
-      zip: (pickFirst(item, ['cp', 'address.zip']) as string | undefined),
-      city: (pickFirst(item, ['localidad', 'address.city']) as string | undefined),
-      province: (pickFirst(item, ['provincia', 'address.province']) as string | undefined),
+      street: pickFirst(item, ['domicilioSocial', 'address.street']) as string | undefined,
+      zip: pickFirst(item, ['cp', 'address.zip']) as string | undefined,
+      city: pickFirst(item, ['localidad', 'address.city']) as string | undefined,
+      province: pickFirst(item, ['provincia', 'address.province']) as string | undefined,
       country: item?.address?.country ?? 'ES',
     },
     constitutionDate: pickFirst(item, ['fechaConstitucion', 'constitutionDate']) as
