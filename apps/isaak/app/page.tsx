@@ -1,12 +1,8 @@
 import type { Metadata } from 'next';
-import IsaakPublicPhase1Landing from './components/IsaakPublicPhase1Landing';
+import IsaakHomeLanding, { landingMetadata } from './components/IsaakHomeLanding';
 
-export const metadata: Metadata = {
-  title: 'Isaak | Orquestador empresarial inteligente',
-  description:
-    'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
-};
+export const metadata: Metadata = landingMetadata;
 
 export default function IsaakHomePage() {
-  return <IsaakPublicPhase1Landing />;
+  return <IsaakHomeLanding />;
 }

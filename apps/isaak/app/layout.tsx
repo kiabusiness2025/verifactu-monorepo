@@ -24,21 +24,29 @@ export const metadata: Metadata = {
     title: 'Isaak',
   },
   metadataBase: new URL(siteUrl),
-  title: 'Isaak | Orquestador empresarial inteligente',
+  title: 'Isaak — Libera el 80% de tu tiempo de gestión empresarial',
   description:
-    'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
+    'Isaak es la IA protagonista que conecta Holded, bancos, documentos y correo para que el empresario dirija sin gestionar. 99% menos errores. Disponible 24/7.',
   alternates: {
     canonical: '/',
   },
+  keywords: [
+    'IA empresarial',
+    'automatización gestión',
+    'orquestador empresarial',
+    'holded IA',
+    'contabilidad automática',
+    'asesor fiscal inteligente',
+  ],
   icons: {
     icon: [{ url: avatarPath, type: 'image/png' }],
     shortcut: [avatarPath],
     apple: [{ url: avatarPath, type: 'image/png' }],
   },
   openGraph: {
-    title: 'Isaak | Orquestador empresarial inteligente',
+    title: 'Isaak — Libera el 80% de tu tiempo de gestión empresarial',
     description:
-      'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
+      'La IA que conecta Holded, bancos, documentos y correo. 99% menos errores. 24/7. El empresario dirige, no gestiona.',
     url: siteUrl,
     siteName: 'Isaak',
     images: [{ url: avatarPath, width: 512, height: 512, alt: 'Avatar de Isaak' }],
@@ -47,9 +55,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Isaak | Orquestador empresarial inteligente',
+    title: 'Isaak — Libera el 80% de tu tiempo de gestión empresarial',
     description:
-      'Conecta Excel, ERP, facturacion, bancos y documentos para entender y ejecutar tareas empresariales con permisos y trazabilidad.',
+      'La IA protagonista que conecta todo tu ecosistema empresarial. 80% tiempo liberado. 99% menos errores. 24/7.',
     images: [avatarPath],
   },
 };
