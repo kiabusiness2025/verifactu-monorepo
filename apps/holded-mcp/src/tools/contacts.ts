@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { HoldedClient } from '../holded-client.js';
+import { paginateInMemory, parsePageParam } from '../utils.js';
 import { withControlledErrors } from './errors.js';
 import { readOnlyAnnotations } from './policy.js';
 
@@ -30,13 +31,19 @@ export function readCreatedAt(contact: unknown): number {
 export function registerContactsTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_contacts',
-    'Returns Holded contacts (clients, suppliers, debtors and creditors). Read-only. Paginated — use page and limit to control response size. Sorted by creation date with the most recent contacts first by default.',
+    'Returns Holded contacts (clients, suppliers, debtors and creditors). Read-only. ' +
+      'PAGINATION is fully client-side — the connector fetches all contacts of the requested type from Holded in a single call (Holded /contacts does NOT support ?page=N natively) and serves slices of `limit` per `page`. page=N always works deterministically while pagination.hasMore is true. Iterate page=1,2,3,... to drain the full list. Sorted by creation date with the most recent first by default.',
     {
       type: z
         .enum(['client', 'supplier', 'debtor', 'creditor'])
         .optional()
         .describe('Optional Holded contact type filter.'),
-      page: z.string().optional().describe('Results page number (default 1).'),
+      page: z
+        .string()
+        .optional()
+        .describe(
+          'Results page number (1-indexed, default 1). Iterate while pagination.hasMore is true.'
+        ),
       limit: z.coerce
         .number()
         .int()
@@ -44,21 +51,24 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
         .max(100)
         .default(25)
         .describe(
-          'Max items returned in this call (default 25, max 100). Use page=2 for the next batch.'
+          'Page size: max contacts returned in this call (default 25, max 100). Increase to reduce round-trips.'
         ),
       sort: z
         .enum(['recent', 'oldest'])
         .nullish()
         .transform((v) => v ?? 'recent')
         .describe(
-          'Sort order applied client-side after fetching from Holded. "recent" (default) lists newest contacts first by createdAt; "oldest" lists oldest first. Holded does not expose a native sort param, so the connector sorts the page in memory.'
+          'Sort order applied client-side after fetching from Holded. "recent" (default) lists newest contacts first by createdAt; "oldest" lists oldest first. Holded does not expose a native sort param, so the connector sorts in memory before paginating.'
         ),
     },
     readOnlyAnnotations('list_contacts'),
-    async ({ limit, sort, ...rest }) => {
-      const filtered = Object.fromEntries(
-        Object.entries(rest).filter(([, value]) => value !== undefined)
-      ) as Record<string, string>;
+    async ({ limit, sort, page, type }) => {
+      // Bug 18-may-2026 (soporte audit "paginación rota"): NO se forwardea
+      // `page` a Holded — el endpoint /contacts no soporta paginación nativa
+      // y devolvía siempre el mismo subset. Paginamos client-side desde la
+      // respuesta completa. Ver utils.paginateInMemory.
+      const filtered: Record<string, string> = {};
+      if (type !== undefined) filtered.type = String(type);
 
       const raw = await getClient().listContacts(filtered);
       const all = Array.isArray(raw) ? raw : [];
@@ -73,19 +83,17 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
         return sort === 'oldest' ? ca - cb : cb - ca;
       });
 
-      const truncated = sorted.length > limit;
-      const contacts = sorted.slice(0, limit);
+      const pageNum = parsePageParam(page);
+      const { items: contacts, meta: pagination } = paginateInMemory(sorted, pageNum, limit, {
+        itemNoun: 'contacts',
+      });
+
       const payload: Record<string, unknown> = {
         contacts,
         count: contacts.length,
-        totalReceived: sorted.length,
+        pagination,
         sort,
-        truncated,
       };
-      if (truncated) {
-        const direction = sort === 'oldest' ? 'ascending' : 'descending';
-        payload.hint = `Showing first ${limit} of ${sorted.length} contacts received from Holded, sorted by createdAt ${direction}. Use page=2 (or higher) to fetch the next batch from Holded.`;
-      }
       return { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
     }
   );
@@ -99,10 +107,15 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
       contactId: z.string().describe('Holded contact ID.'),
     },
     readOnlyAnnotations('get_contact'),
-    withControlledErrors('get_contact', 'contact', ({ contactId }) => contactId, async ({ contactId }) => {
-      const data = await getClient().getContact(contactId);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
-    })
+    withControlledErrors(
+      'get_contact',
+      'contact',
+      ({ contactId }) => contactId,
+      async ({ contactId }) => {
+        const data = await getClient().getContact(contactId);
+        return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      }
+    )
   );
 
   server.tool(

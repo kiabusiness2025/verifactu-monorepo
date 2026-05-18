@@ -12,7 +12,13 @@ export const HOLDED_MCP_TOOL_SCOPES: Record<string, string[]> = {
   holded_update_document_pipeline: ['mcp.read', 'holded.documents.write'],
   holded_ship_document_all_items: ['mcp.read', 'holded.documents.write'],
   holded_ship_document_by_lines: ['mcp.read', 'holded.documents.write'],
-  holded_get_document_shipped_items: ['mcp.read', 'holded.documents.read'],
+  // 2026-05-18: movido de `holded.documents.read` a `holded.warehouses.read`.
+  // Razón: shipped_items es una operación de logística/almacén, no de
+  // facturación pura. El preset `openai_review_invoicing_v1` (que quiere
+  // exponer solo invoicing+contabilidad) NO incluye warehouses, así que
+  // este reasign deja la tool fuera del scope mínimo y dentro de los
+  // presets más amplios (claude_parity sí tiene warehouses.read).
+  holded_get_document_shipped_items: ['mcp.read', 'holded.warehouses.read'],
   holded_attach_document_file: ['mcp.read', 'holded.documents.write'],
   holded_list_contacts: ['mcp.read', 'holded.contacts.read'],
   holded_get_contact: ['mcp.read', 'holded.contacts.read'],
@@ -145,6 +151,7 @@ export type HoldedMcpScopePreset =
   | 'holded_public_campaign_v1'
   | 'holded_priority1'
   | 'openai_review_v2'
+  | 'openai_review_invoicing_v1'
   | 'holded_full_read_v1'
   | 'claude_parity';
 
@@ -187,6 +194,40 @@ const OPENAI_REVIEW_V2_SCOPE_SET = [
   'holded.crm.read',
   'holded.projects.read',
   'holded.invoices.write',
+] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
+
+/**
+ * openai_review_invoicing_v1 — preset estrecho enfocado SOLO en invoicing +
+ * contabilidad básica, diseñado para la submission v2 a OpenAI App Review
+ * tras la rejection del 2026-05-18.
+ *
+ * Decisión (2026-05-18, post-rejection-2): la ampliación a `claude_parity`
+ * (29 tools) duplicaba la superficie y añadía categorías (CRM, projects,
+ * products, warehouses, treasury, employees, taxes, numbering) que NO eran
+ * estrictamente necesarias para el caso de uso prometido. Volvemos al
+ * mínimo defendible para no dar al reviewer materia para encontrar fallos
+ * intermitentes y luego ampliar como submission v3 post-aprobación.
+ *
+ * Cubre exactamente 10 tools (9 read + 1 write):
+ *   - Invoicing venta: list_invoices, get_invoice
+ *   - Invoicing compra (via /documents): list_documents, get_document,
+ *     get_document_pdf
+ *   - Contactos (necesarios para resolver contactId en create_invoice_draft):
+ *     list_contacts, get_contact
+ *   - Contabilidad: list_accounts, list_daily_ledger
+ *   - Write: create_invoice_draft (única operación que modifica estado,
+ *     siempre requiere confirm=true)
+ *
+ * Para añadir CRM/projects/products/etc. en el futuro, usar
+ * `claude_parity` post-aprobación de OpenAI.
+ */
+const OPENAI_REVIEW_INVOICING_V1_SCOPE_SET = [
+  'mcp.read',
+  'holded.invoices.read',
+  'holded.invoices.write',
+  'holded.documents.read',
+  'holded.contacts.read',
+  'holded.accounts.read',
 ] as const satisfies readonly (typeof HOLDED_MCP_SUPPORTED_SCOPES)[number][];
 
 /**
@@ -296,6 +337,7 @@ export function getHoldedMcpScopePreset(preset: HoldedMcpScopePreset) {
   if (preset === 'readonly') return READONLY_SCOPE_SET;
   if (preset === 'holded_public_campaign_v1') return HOLDED_PUBLIC_CAMPAIGN_V1_SCOPE_SET;
   if (preset === 'openai_review_v2') return OPENAI_REVIEW_V2_SCOPE_SET;
+  if (preset === 'openai_review_invoicing_v1') return OPENAI_REVIEW_INVOICING_V1_SCOPE_SET;
   if (preset === 'holded_full_read_v1') return HOLDED_FULL_READ_V1_SCOPE_SET;
   if (preset === 'holded_phase2_accounting') return HOLDED_PHASE2_ACCOUNTING_SCOPE_SET;
   if (preset === 'holded_priority1') return HOLDED_PRIORITY1_SCOPE_SET;

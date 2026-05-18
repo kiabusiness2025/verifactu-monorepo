@@ -98,6 +98,36 @@ test('every client read calls the documented Holded URL with the API key header'
     assert.equal(call.url, expected[i].url, `call ${i} URL mismatch`);
     assert.equal(call.headers['key'], fakeApiKey);
     assert.equal(call.headers['content-type'], 'application/json');
+    // Regresión 18-may-2026 (soporte audit "0 documentos"): toda llamada al
+    // upstream debe forzar `accept-encoding: identity`. Node fetch (undici)
+    // por defecto envía `br, gzip, deflate` y algunas respuestas grandes de
+    // Holded (documents, dailyledger) acababan llegando con bytes mal
+    // decodificados → array vacío silencioso. El cliente del proxy ChatGPT
+    // ya tenía este fix; lo replicamos aquí.
+    assert.equal(
+      call.headers['accept-encoding'],
+      'identity',
+      `call ${i} (${call.url}) missing Accept-Encoding: identity`
+    );
+  }
+});
+
+test('listDocuments tolerates non-array responses (defensive against brotli/encoding bugs)', async () => {
+  // Si Holded (o un proxy intermedio) devuelve algo distinto de un array — un
+  // objeto envuelto, null, un error blando, etc. — el cliente no debe romper
+  // y el handler de la tool debe poder seguir tratándolo como lista vacía.
+  // El warning se emite en logs (no testeado aquí porque LOG_LEVEL=error).
+  const recorder = withHoldedFetchRecorder({ responseBody: { data: [] } });
+  const client = new HoldedClient(fakeApiKey);
+
+  try {
+    const result = await client.listDocuments('invoice');
+    // El cliente devuelve el response tal cual (cast a unknown[]). El handler
+    // de la tool hace Array.isArray ? raw : [] para no romper al modelo.
+    // Lo importante aquí: no lanza ni cuelga.
+    assert.ok(result !== undefined);
+  } finally {
+    recorder.restore();
   }
 });
 

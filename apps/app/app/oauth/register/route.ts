@@ -61,11 +61,11 @@ export async function GET(request: NextRequest) {
     registration_endpoint: registrationEndpoint,
     registration_supported: true,
     token_endpoint_auth_methods_supported: ['none'],
-    grant_types_supported: ['authorization_code'],
+    grant_types_supported: ['authorization_code', 'refresh_token'],
     response_types_supported: ['code'],
     scope: getDefaultScopes().join(' '),
     documentation:
-      'Submit a POST request with redirect_uris, grant_types, response_types, and token_endpoint_auth_method=none to dynamically register a public OAuth client.',
+      'Submit a POST request with redirect_uris, grant_types (authorization_code and optionally refresh_token), response_types, and token_endpoint_auth_method=none to dynamically register a public OAuth client.',
   });
 }
 
@@ -150,16 +150,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (grantTypes.length > 0 && !grantTypes.every((value) => value === 'authorization_code')) {
+  // OpenAI's ChatGPT app review DCR sends `grant_types: ["authorization_code",
+  // "refresh_token"]` because the MCP client wants long-lived sessions without
+  // re-prompting the user. The token endpoint already supports refresh_token
+  // (see app/oauth/token/route.ts), and the .well-known metadata already
+  // advertises both grant types. The previous check (only authorization_code)
+  // rejected the registration with `400 invalid_client_metadata` and broke
+  // ChatGPT's "Save MCP details" form. Allow both grant types here; anything
+  // else (client_credentials, password, etc.) is still rejected.
+  const ALLOWED_GRANT_TYPES = new Set(['authorization_code', 'refresh_token']);
+  if (grantTypes.length > 0 && !grantTypes.every((value) => ALLOWED_GRANT_TYPES.has(value))) {
     return jsonWithCors(
       request,
       {
         error: 'invalid_client_metadata',
-        error_description: 'Only authorization_code grant type is supported.',
+        error_description: 'Only authorization_code and refresh_token grant types are supported.',
       },
       { status: 400 }
     );
   }
+  // If the client did not request any grant type, fall back to both — RFC 7591
+  // §2 says the server MAY default; we default to the full set the runtime
+  // supports so refresh works out of the box.
+  const acceptedGrantTypes =
+    grantTypes.length > 0 ? grantTypes : ['authorization_code', 'refresh_token'];
 
   if (responseTypes.length > 0 && !responseTypes.every((value) => value === 'code')) {
     return jsonWithCors(
@@ -205,7 +219,7 @@ export async function POST(request: NextRequest) {
       client_name: clientName,
       application_type: applicationType,
       redirect_uris: redirectUris,
-      grant_types: ['authorization_code'],
+      grant_types: acceptedGrantTypes,
       response_types: ['code'],
       token_endpoint_auth_method: 'none',
       scope: requestedScope,

@@ -20,19 +20,18 @@ https://holded.verifactu.business/
 
 ## Long description
 
-Holded lets you connect your Holded account to ChatGPT and work with real business data in natural language. You can review invoices, contacts, accounting accounts, and daily ledger entries, and create invoice drafts with explicit confirmation. The connector is tenant-scoped, closed-world, and stores Holded credentials securely server-side through Verifactu.
+Holded lets you connect your Holded account to ChatGPT and work with real business data in natural language. You can review sales invoices, purchase documents (and their PDF rendering), contacts, accounting accounts and daily ledger entries, and create a sales invoice draft with explicit user confirmation. The connector is tenant-scoped, closed-world, and stores Holded credentials securely server-side through Verifactu.
 
 ## Reviewer notes
 
-This app connects a user’s own Holded account to ChatGPT through a secure Verifactu-hosted connection flow.
+This app connects a user's own Holded account to ChatGPT through a secure Verifactu-hosted connection flow.
 
-For this submission, the app focuses on a narrow and deterministic review scope:
+For this submission, the app exposes 10 tools — 9 read-only and a single write operation (`holded_create_invoice_draft`) that always requires explicit user confirmation. The surface is intentionally narrow and focused on the invoicing + accounting workflows we want to validate first:
 
-- reviewing invoices
-- reviewing contacts
-- reviewing accounting accounts
-- reviewing daily ledger entries
-- creating invoice drafts with explicit user confirmation
+- **Sales invoicing**: list invoices, get invoice details, create invoice draft (with explicit confirmation).
+- **Purchase + commercial documents**: list commercial documents (purchases, credit notes, estimates, sales receipts, etc.), get document details, get the rendered PDF of a document.
+- **Contacts**: list contacts, get contact details (needed to resolve the customer for an invoice draft).
+- **Accounting**: list accounting accounts (chart of accounts), list daily ledger entries (with an explicit date range).
 
 The connector is tenant-scoped and closed-world. It only accesses data from the Holded account connected by the authenticated user. Holded API credentials are stored server-side through Verifactu and are never exposed to ChatGPT or returned to the client.
 
@@ -40,9 +39,9 @@ Important notes for review:
 
 - Daily ledger requests require an explicit date range.
 - Invoice draft creation requires explicit confirmation before the draft is created.
-- Draft invoice creation does not send, issue, charge, or email an invoice.
+- Draft invoice creation does not send, issue, charge, or email an invoice. No other write or destructive operation is exposed.
 - The app should be tested on both ChatGPT web and mobile.
-- The expected public behavior is limited to the tools described in the submitted test cases.
+- The expected public behavior is limited to the 10 tools whose annotations and justifications are declared in `chatgpt-app-submission.json` (uploaded alongside this form).
 
 ---
 
@@ -133,6 +132,39 @@ This test must verify two steps:
 
 1. before confirmation, no draft is created;
 2. after confirmation, one draft invoice may be created.
+
+#### Test case 8 — List purchase documents
+
+User prompt:
+List my 5 most recent Holded purchase documents.
+
+Expected behavior:
+The app should retrieve commercial documents of type "purchase" from the connected Holded account and summarize them in natural language. The response may include document numbers, suppliers, dates, totals, and statuses. It should not create, edit, send, or delete any document.
+
+Expected tool:
+holded_list_documents
+
+#### Test case 9 — Get document details
+
+User prompt:
+Show me the details of one document from that list.
+
+Expected behavior:
+The app should retrieve details for one existing commercial document and summarize them in natural language (supplier/customer, date, line items, taxes, totals, status). It should remain read-only.
+
+Expected tool:
+holded_get_document
+
+#### Test case 10 — Download document PDF
+
+User prompt:
+Get me the PDF of that document.
+
+Expected behavior:
+The app should retrieve the PDF rendering of the document as a base64 payload. ChatGPT should expose the file to the user (preview or download link). The connector should not modify the document.
+
+Expected tool:
+holded_get_document_pdf
 
 ---
 

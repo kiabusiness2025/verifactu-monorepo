@@ -55,7 +55,7 @@ Mostrar: Claude muestra el resumen del borrador a crear, usuario confirma "Sí",
 
 ### Screenshot 4 — Tool catalog
 
-Mostrar: las 24 tools listadas en `/conectores/claude/docs`.
+Mostrar: las 8 tools del catálogo (submission v2) listadas en `/conectores/claude/docs`.
 
 ### Screenshot 5 — Multi-tool use case
 
@@ -63,18 +63,18 @@ Mostrar: Claude combinando `get_contact` + `list_documents` para responder "Cuá
 
 ## Sources reutilizables (ya generados para ChatGPT)
 
-En el folder `outputs/hero_preview/` tenemos screenshots del hero mock animation que pueden adaptarse:
+En el folder `outputs/hero_preview/` tenemos screenshots del hero mock animation que pueden adaptarse. **Solo necesitamos los que cubren las 8 tools de submission v2**; los demás stills se reservan para submission v3:
 
-| File                   | Uso para Claude                                                            |
-| ---------------------- | -------------------------------------------------------------------------- |
-| `b-auth-apikey.png`    | Adaptar consent screen (cambiar branding de ChatGPT verde a Claude orange) |
-| `d-invoices.png`       | Tool call list_documents (mismo concepto, sólo cambiar UI a Claude)        |
-| `e-contact.png`        | Tool call get_contact                                                      |
-| `f-products-stock.png` | Tool call list_products_stock                                              |
-| `g-ledger.png`         | Tool call get_daily_book                                                   |
-| `h-treasury.png`       | Tool call list_treasury_accounts                                           |
-| `i-projects.png`       | Tool call list_projects                                                    |
-| `j-draft-confirm.png`  | Confirmation card para create_invoice_draft                                |
+| File                   | Tool                                   | Submission v2 |
+| ---------------------- | -------------------------------------- | ------------- |
+| `b-auth-apikey.png`    | OAuth consent screen (no es tool)      | ✅ usar       |
+| `d-invoices.png`       | `list_documents`                       | ✅ usar       |
+| `e-contact.png`        | `get_contact`                          | ✅ usar       |
+| `g-ledger.png`         | `get_journal` (era `get_daily_book`)   | ✅ usar       |
+| `j-draft-confirm.png`  | `create_invoice_draft` confirmation    | ✅ usar       |
+| `f-products-stock.png` | `list_products_stock` (no expuesta)    | reservado v3  |
+| `h-treasury.png`       | `list_treasury_accounts` (no expuesta) | reservado v3  |
+| `i-projects.png`       | `list_projects` (no expuesta)          | reservado v3  |
 
 **Acción recomendada:** Re-grabar el hero mock con branding Claude (orange `#d97757` en vez de ChatGPT green) y exportar los stills equivalentes a `outputs/hero_preview_claude/`.
 

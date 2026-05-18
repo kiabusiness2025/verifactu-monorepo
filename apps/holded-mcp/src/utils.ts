@@ -21,11 +21,27 @@ export const dateInput = z
  *
  * Solución: aceptar nullish y normalizar a undefined en el transform, para que el
  * handler reciba siempre `string | number | undefined` aunque el LLM mande null.
+ *
+ * Bug adicional (18-may-2026, soporte audit `list_documents`):
+ *   Esta variante era originalmente una constante exportada compartida entre
+ *   `starttmp` y `endtmp` de varias tools. Con Zod v3, `zod-to-json-schema`
+ *   deduplica schemas que referencian la MISMA instancia y emite un
+ *   `$ref` apuntando al primero — generando, p.ej.:
+ *     `endtmp: { "$ref": "#/properties/starttmp", "description": "End date" }`
+ *   En la mayoría de clientes MCP el `$ref` se respeta sin más, pero la UI de
+ *   ChatGPT (y posiblemente otros) renderiza ambos campos colapsados como un
+ *   solo input — el usuario no puede sobrescribir `endtmp` independientemente.
+ *
+ * Solución: convertir el export en una factory que devuelva una NUEVA instancia
+ * en cada llamada. Cada campo construye su propio sub-schema → cero
+ * deduplicación → ambos quedan inlined con su `description` propia.
  */
-export const dateInputOptional = z
-  .union([z.string(), z.number()])
-  .nullish()
-  .transform((v) => (v == null ? undefined : v));
+export function dateInputOptional() {
+  return z
+    .union([z.string(), z.number()])
+    .nullish()
+    .transform((v) => (v == null ? undefined : v));
+}
 
 /**
  * Acepta una fecha como Unix timestamp (segundos), número en string, o ISO 8601,
@@ -114,6 +130,75 @@ export function buildPaginationMeta(
     hint: likelyHasMorePages
       ? `Holded returned ${itemsInPage} items in page ${page} (matches expected pageSize=${pageSize}, page is full). MORE PAGES LIKELY EXIST. Call again with page=${page + 1} to continue, and merge results client-side. Do NOT report aggregate values (totals, sums, counts) until you have fetched every page or you will return a partial answer.`
       : null,
+  };
+}
+
+/**
+ * Paginación client-side honesta para endpoints `/list_*` donde Holded
+ * devuelve el array completo en una sola llamada (no acepta `?page=N`).
+ *
+ * Bug original (18-may-2026, soporte audit "291 facturas paginando"):
+ *   `list_documents`, `list_contacts` y `list_products` truncaban a `limit`
+ *   en el conector y forwardeaban `?page=N` a Holded — pero esos endpoints
+ *   NO soportan paginación nativa, así que Holded devolvía siempre el mismo
+ *   conjunto (la "primera página"), y page=2 retornaba [] o lo mismo. El
+ *   modelo no podía avanzar: para obtener las 291 facturas tenía que
+ *   inventar workarounds bizantinos (trocear por endtmp decreciente,
+ *   deduplicar por ID en cliente).
+ *
+ * Fix: el conector hace UNA sola llamada a Holded, recibe el array completo,
+ * y aplica `slice((page-1)*limit, page*limit)` localmente. NO forwardea
+ * `page` a Holded. Esto convierte la paginación en una operación cliente
+ * 100% predecible: page=N siempre funciona mientras N*limit < totalItems.
+ *
+ * El trade-off: cada call descarga el dataset completo. Para cuentas con
+ * miles de docs eso es ineficiente, pero es lo único correcto mientras
+ * Holded no exponga paginación real. La alternativa (truncar y mentir al
+ * modelo diciéndole "use page=2") ya demostró ser peor — el modelo entraba
+ * en loops y nunca obtenía datos completos.
+ */
+export interface ClientPagination<T> {
+  items: T[];
+  meta: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+    hasMore: boolean;
+    nextPage: number | null;
+    hint: string | null;
+  };
+}
+
+export function paginateInMemory<T>(
+  all: T[],
+  page: number,
+  pageSize: number,
+  options: { itemNoun?: string } = {}
+): ClientPagination<T> {
+  const totalItems = all.length;
+  const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / pageSize);
+  const safePage = Math.max(1, Math.floor(page));
+  const start = (safePage - 1) * pageSize;
+  const end = start + pageSize;
+  const items = all.slice(start, end);
+  const hasMore = safePage < totalPages;
+  const noun = options.itemNoun ?? 'items';
+  return {
+    items,
+    meta: {
+      page: safePage,
+      pageSize,
+      totalItems,
+      totalPages,
+      hasMore,
+      nextPage: hasMore ? safePage + 1 : null,
+      hint: hasMore
+        ? `Showing ${items.length} of ${totalItems} ${noun} (page ${safePage} of ${totalPages}). Call again with page=${safePage + 1} to get the next batch. Pagination is fully client-side — page=N always works deterministically while N <= totalPages.`
+        : safePage > 1 && items.length === 0
+          ? `No ${noun} on page ${safePage} — totalItems=${totalItems}, totalPages=${totalPages}. You may have paged past the end.`
+          : null,
+    },
   };
 }
 
@@ -212,6 +297,28 @@ export function defaultDailyLedgerRange(): { starttmp: string; endtmp: string } 
   const yearStart = new Date(now.getFullYear(), 0, 1);
   return {
     starttmp: String(Math.floor(yearStart.getTime() / 1000)),
+    endtmp: String(Math.floor(now.getTime() / 1000)),
+  };
+}
+
+/**
+ * Default range para `/documents` cuando el caller no provee starttmp ni endtmp.
+ *
+ * Bug original (18-may-2026, soporte audit `list_documents`):
+ *   El handler aplicaba `starttmp = 1-ene del año anterior` pero NO seteaba
+ *   `endtmp`, asumiendo "Holded interpreta como hoy". Es falso: la API
+ *   /documents rechaza con 400 si recibe solo uno de los dos timestamps.
+ *
+ * Solución: igual que `/dailyledger`, devolver SIEMPRE ambos. Cubrimos un rango
+ * de ~24 meses ("1 de enero del año anterior" → ahora) para que la auditoría
+ * fiscal vea el ejercicio en curso + el cerrado anterior sin que el modelo
+ * tenga que pasar fechas explícitas.
+ */
+export function defaultDocumentsRange(): { starttmp: string; endtmp: string } {
+  const now = new Date();
+  const previousYear = now.getUTCFullYear() - 1;
+  return {
+    starttmp: String(Math.floor(Date.UTC(previousYear, 0, 1) / 1000)),
     endtmp: String(Math.floor(now.getTime() / 1000)),
   };
 }

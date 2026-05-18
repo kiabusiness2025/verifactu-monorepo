@@ -6,14 +6,16 @@
 **Email de escalation Anthropic:** partnerships@anthropic.com
 **Form URL:** https://claude.com/docs/connectors/building/submission (la página linkea al Google Form actual)
 
-## Estado actual
+## Estado actual (post-2026-05-18, submission v2)
 
 - ✅ MCP server desplegado: `https://claude.verifactu.business/mcp`
 - ✅ OAuth 2.1 + PKCE funcional, redirect URIs allowlist (`claude.ai`, `app.claude.ai`)
 - ✅ Consent screen propio con scopes humanos + links legales
-- ✅ 24 tools registradas, todas con `readOnlyHint` o write annotation
+- ✅ **8 tools expuestas** (preset `submission_v1`), todas con `readOnlyHint` o write annotation correcta. Las otras 16 tools del catálogo siguen implementadas pero no se registran (reactivables con `HOLDED_MCP_TOOL_PRESET=full` para submission v3 post-aprobación).
 - ✅ Solo 1 tool de escritura: `create_invoice_draft` (forced `approveDoc=false`)
+- ✅ Alineación funcional 1:1 con el conector ChatGPT (10 tools en ChatGPT vs 8 en Claude, la diferencia es solo de naming: Claude usa `list_documents` polimórfico)
 - ✅ Privacy policy + Terms + DPA publicados
+- ✅ Fixes del PR #88: brotli silent decoding, paginación client-side, default `endtmp`, `$ref` schema dedup
 - ⏳ Pendiente: enviar form de Remote MCP Submission
 
 ## Submission previa
@@ -36,17 +38,15 @@ Posibles causas:
 
 ## Archivos
 
-| File                         | Propósito                                                        |
-| ---------------------------- | ---------------------------------------------------------------- |
-| `submission-form-answers.md` | Respuestas literales para cada campo del form                    |
-| `server-basics.md`           | Name, URL, tagline, descriptions, use cases                      |
-| `tools-manifest.md`          | Lista de 24 tools con annotations + descripciones                |
-| `oauth-flow.md`              | Detalle técnico OAuth 2.1 + PKCE + scopes                        |
-| `legal-links.md`             | URLs públicas de T&C, Privacy, DPA, Soporte, Docs                |
-| `test-account.md`            | Cuenta sandbox + API key de testing + 3 prompts de ejemplo       |
-| `branding-assets.md`         | Logos, favicon, screenshots — links a CDN                        |
-| `compliance-checklist.md`    | Punto por punto el Anthropic Software Directory Policy           |
-| `escalation-email.md`        | Template del email a partnerships@anthropic.com si el form falla |
+| File                         | Propósito                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------- |
+| `submission-form-answers.md` | Respuestas literales para cada campo del form                                      |
+| `tools-manifest.md`          | Lista de las **8 tools expuestas (submission v2)** con annotations + descripciones |
+| `oauth-flow.md`              | Detalle técnico OAuth 2.1 + PKCE + scopes                                          |
+| `test-account.md`            | Cuenta sandbox + API key de testing + 3 prompts de ejemplo                         |
+| `branding-assets.md`         | Logos, favicon, screenshots — links a CDN                                          |
+| `compliance-checklist.md`    | Punto por punto el Anthropic Software Directory Policy                             |
+| `escalation-email.md`        | Template del email a partnerships@anthropic.com si el form falla                   |
 
 ## Causas top de rechazo según docs oficiales (priorizadas)
 

@@ -10,8 +10,13 @@ import {
   READ_ONLY_TOOL_NAMES,
   TOOL_TITLES,
 } from '../src/tools/policy.ts';
+import { SUBMISSION_V1_TOOLS } from '../src/tools/presets.ts';
 
 installTestEnv();
+
+const SUBMISSION_V1_READ_ONLY_TOOLS = SUBMISSION_V1_TOOLS.filter(
+  (name) => name !== 'create_invoice_draft'
+);
 
 function expectedAnnotations(toolName: (typeof PRODUCTION_TOOL_NAMES)[number]) {
   const base =
@@ -21,7 +26,7 @@ function expectedAnnotations(toolName: (typeof PRODUCTION_TOOL_NAMES)[number]) {
   return { ...base, title: TOOL_TITLES[toolName] };
 }
 
-test('registerProductionTools exposes exactly the intended production surface', async () => {
+test('registerProductionTools default (submission_v1) exposes exactly 8 tools', async () => {
   const { registerProductionTools } = await import('../src/tools/index.ts');
 
   const captured: Array<{
@@ -41,14 +46,16 @@ test('registerProductionTools exposes exactly the intended production surface', 
     },
   };
 
-  registerProductionTools(fakeServer as never, (() => ({})) as never);
+  // Default preset (no toolPreset option = submission_v1 from env var or default).
+  registerProductionTools(fakeServer as never, (() => ({})) as never, undefined, {
+    includeWriteTools: true,
+  });
 
-  assert.deepEqual(captured.map((tool) => tool.name).sort(), [...PRODUCTION_TOOL_NAMES].sort());
+  assert.deepEqual(captured.map((tool) => tool.name).sort(), [...SUBMISSION_V1_TOOLS].sort());
 
   for (const tool of captured) {
     const name = tool.name as (typeof PRODUCTION_TOOL_NAMES)[number];
     assert.deepEqual(tool.annotations, expectedAnnotations(name));
-    // Cada tool debe tener título legible.
     assert.equal(typeof tool.annotations?.title, 'string');
     assert.ok(((tool.annotations?.title as string) ?? '').length > 0);
 
@@ -60,7 +67,25 @@ test('registerProductionTools exposes exactly the intended production surface', 
   }
 });
 
-test('MCP tools/list returns the exact intended production tools with safety annotations', async () => {
+test('registerProductionTools with toolPreset=full exposes the entire production catalog (24 tools)', async () => {
+  // Cobertura del catálogo completo. Cuando OpenAI/Anthropic aprueben
+  // submission v2 podremos cambiar el default a `full` para submission v3.
+  // Hasta entonces, `full` solo se usa internamente (PATs, smoke tests).
+  const { registerProductionTools } = await import('../src/tools/index.ts');
+  const captured: string[] = [];
+  const fakeServer = {
+    tool(name: string) {
+      captured.push(name);
+    },
+  };
+  registerProductionTools(fakeServer as never, (() => ({})) as never, undefined, {
+    includeWriteTools: true,
+    toolPreset: 'full',
+  });
+  assert.deepEqual(captured.sort(), [...PRODUCTION_TOOL_NAMES].sort());
+});
+
+test('MCP tools/list returns the 8 submission_v1 tools with safety annotations', async () => {
   const runtime = await startTestServer();
 
   try {
@@ -85,7 +110,7 @@ test('MCP tools/list returns the exact intended production tools with safety ann
     const result = await client.listTools();
     const names = result.tools.map((tool) => tool.name).sort();
 
-    assert.deepEqual(names, [...PRODUCTION_TOOL_NAMES].sort());
+    assert.deepEqual(names, [...SUBMISSION_V1_TOOLS].sort());
 
     // Anthropic review criteria: ninguna tool debe combinar lectura/escritura
     // ni exponer operaciones destructivas o de pago.
@@ -116,7 +141,7 @@ test('MCP tools/list returns the exact intended production tools with safety ann
   }
 });
 
-test('MCP tools/list hides write tools for read-only OAuth scopes', async () => {
+test('MCP tools/list hides write tools for read-only OAuth scopes (within submission_v1)', async () => {
   const runtime = await startTestServer();
 
   try {
@@ -141,7 +166,8 @@ test('MCP tools/list hides write tools for read-only OAuth scopes', async () => 
     const result = await client.listTools();
     const names = result.tools.map((tool) => tool.name).sort();
 
-    assert.deepEqual(names, [...READ_ONLY_TOOL_NAMES].sort());
+    // Read-only scope → solo las 7 read tools del submission_v1, sin create_invoice_draft.
+    assert.deepEqual(names, [...SUBMISSION_V1_READ_ONLY_TOOLS].sort());
     assert.equal(names.includes('create_invoice_draft'), false);
 
     await transport.close();

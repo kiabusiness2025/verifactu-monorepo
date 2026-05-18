@@ -1,0 +1,264 @@
+{
+  "$schema": "https://developers.openai.com/apps-sdk/schemas/chatgpt-app-submission.v1.json",
+  "schema_version": 1,
+  "app_info": {
+    "display_name": "Holded",
+    "subtitle": "Work with Holded data",
+    "description": "Holded lets you connect your Holded account to ChatGPT and work with real business data in natural language. You can review sales invoices, purchase documents (and their PDF rendering), contacts, accounting accounts and daily ledger entries, and create a sales invoice draft with explicit user confirmation. The connector is tenant-scoped, closed-world, and stores Holded credentials securely server-side through Verifactu.",
+    "category": "BUSINESS"
+  },
+  "tools": {
+    "holded_list_invoices": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Only retrieves a list of sales invoices from the authenticated user's connected Holded account and does not create, update, send, or delete invoices.",
+        "open_world_justification": "Restricted to the tenant-scoped Holded connection already authorized in Verifactu and does not browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Pure read operation that does not alter, overwrite, remove, send, issue, or delete invoice data."
+      }
+    },
+    "holded_get_invoice": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing sales invoice from the authenticated user's connected Holded account and does not edit or change the invoice.",
+        "open_world_justification": "Only reads invoice data within the authenticated user's connected Holded tenant and does not interact with external systems.",
+        "destructive_justification": "Performs no write or delete operations; only reads existing invoice data."
+      }
+    },
+    "holded_list_documents": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Lists existing commercial documents (sales receipts, credit notes, estimates, proformas, sales/purchase orders, waybills, purchases, purchase refunds) from the authenticated user's connected Holded account and does not create, modify, send, or delete any document.",
+        "open_world_justification": "Scoped to document data inside the authenticated tenant's connected Holded account and does not browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Pure read operation that does not alter, send, issue, finalize, or delete commercial document data."
+      }
+    },
+    "holded_get_document": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the full details of a single Holded commercial document by document type and ID and does not edit, send, or delete the document.",
+        "open_world_justification": "Only accesses document data within the authenticated tenant's connected Holded account and does not access external systems or other tenants.",
+        "destructive_justification": "Read-only lookup that does not perform any write, send, or delete operation."
+      }
+    },
+    "holded_get_document_pdf": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the rendered PDF representation of one existing Holded commercial document as a base64-encoded payload and does not regenerate, modify, send, or store the PDF elsewhere.",
+        "open_world_justification": "Restricted to PDF rendering of documents already present in the authenticated tenant's connected Holded account and does not fetch arbitrary PDFs from the web.",
+        "destructive_justification": "Performs no write or delete operation on the underlying document; returns a read-only PDF rendering of an existing document."
+      }
+    },
+    "holded_list_contacts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves a list of existing contacts or customers from the authenticated user's connected Holded account and does not create, update, merge, or delete contacts.",
+        "open_world_justification": "Limited to contact data inside the authenticated user's connected Holded tenant and does not browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Has no side effects; only returns existing contact records and does not modify or remove any data."
+      }
+    },
+    "holded_get_contact": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves the details of one existing Holded contact by ID and does not update, merge, or delete the contact.",
+        "open_world_justification": "Only accesses contact data within the authenticated user's connected Holded account and does not browse external sources or access arbitrary third-party systems.",
+        "destructive_justification": "Read-only lookup that does not perform any write, delete, merge, or destructive operation."
+      }
+    },
+    "holded_list_accounts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves accounting accounts from the authenticated user's connected Holded chart of accounts and does not create, modify, or delete accounts.",
+        "open_world_justification": "Limited to accounting data inside the tenant's authorized Holded integration and does not access open web resources or unrelated external systems.",
+        "destructive_justification": "Performs no write or delete action; only returns existing accounting account records."
+      }
+    },
+    "holded_list_daily_ledger": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Retrieves existing daily ledger entries from the authenticated user's connected Holded account for an explicit start and end date range and does not create, edit, or delete accounting entries.",
+        "open_world_justification": "Limited to ledger data inside the tenant's authorized Holded integration and cannot browse the web or access unrelated third-party resources.",
+        "destructive_justification": "Pure read operation without side effects; does not create, update, delete, reverse, or post accounting entries."
+      }
+    },
+    "holded_create_invoice_draft": {
+      "annotations": {
+        "readOnlyHint": false,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "Creates a new sales invoice draft in the authenticated user's connected Holded account, so it is a real write operation; the connector requires explicit user confirmation before execution.",
+        "open_world_justification": "Writes data only to the authenticated user's private Holded tenant and does not operate on open internet systems, send messages, or affect other tenants.",
+        "destructive_justification": "Creates a draft invoice only after explicit user confirmation; does not delete, overwrite, send, issue, charge, email, or finalize invoices, and the draft can still be reviewed, edited, or discarded by the user."
+      }
+    }
+  },
+  "test_cases": [
+    {
+      "description": "Retrieve the latest sales invoices from the connected Holded account.",
+      "user_prompt": "List my latest Holded invoices.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_invoices",
+      "expected_output": "Returns the most recent sales invoices summarized in natural language with invoice numbers, dates, customers, statuses, and totals when available. No write or send operation is performed.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one invoice from the prior list.",
+      "user_prompt": "Show me the details of one invoice from the list.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_invoice",
+      "expected_output": "Returns the invoice details (customer, date, line items, taxes, total, status when available) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List recent purchase documents (commercial documents of type purchase).",
+      "user_prompt": "List my 5 most recent Holded purchase documents.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_documents",
+      "expected_output": "Returns purchase-type commercial documents (numbers, suppliers, dates, totals, statuses) summarized in natural language. Read-only.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one commercial document from the prior list.",
+      "user_prompt": "Show me the details of one document from that list.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_document",
+      "expected_output": "Returns the document details (supplier or customer, date, line items, taxes, totals, status) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve the PDF rendering of a commercial document.",
+      "user_prompt": "Get me the PDF of that document.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_document_pdf",
+      "expected_output": "Returns the PDF rendering of the document as a base64 payload that ChatGPT can expose to the user as a download or preview. Does not modify the document.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List contacts in the connected Holded account.",
+      "user_prompt": "List my Holded contacts.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_contacts",
+      "expected_output": "Returns existing contacts (names, companies, emails, tax IDs when available) summarized in natural language and does not create or modify contacts.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Retrieve details of one contact from the prior list.",
+      "user_prompt": "Show me the details of one contact from that list.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_get_contact",
+      "expected_output": "Returns the contact details (name, email, tax ID, type when available) as a read-only summary.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List the main accounting accounts (chart of accounts).",
+      "user_prompt": "List my main accounting accounts in Holded.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_accounts",
+      "expected_output": "Returns accounting accounts (codes, names, types when available) summarized in natural language. Read-only.",
+      "expected_output_url": null
+    },
+    {
+      "description": "List daily ledger entries within an explicit date range.",
+      "user_prompt": "Show my Holded daily ledger entries from 2026-03-01 to 2026-03-31.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_list_daily_ledger",
+      "expected_output": "Returns ledger entries for the explicit date range (dates, accounts, descriptions, debit, credit, balance when available). Requires an explicit start and end date.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Prepare a sales invoice draft and request explicit confirmation before creating it.",
+      "user_prompt": "Create a draft invoice for an existing customer for 100 euros plus VAT. Ask for confirmation before creating it.",
+      "file_attachment_urls": null,
+      "tools_triggered": "holded_create_invoice_draft",
+      "expected_output": "Prepares the draft details (customer, line items, taxes, total) and asks the user to confirm; no draft is created before confirmation. After confirmation, exactly one draft invoice may be created and it is never sent, issued, emailed, or finalized.",
+      "expected_output_url": null
+    }
+  ],
+  "negative_test_cases": [
+    {
+      "description": "Daily ledger requested without an explicit date range.",
+      "user_prompt": "Show my daily ledger.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should ask for an explicit start and end date or explain that a date range is required before reading the ledger. It must not call the ledger endpoint with missing required parameters.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Draft invoice creation requested without explicit confirmation.",
+      "user_prompt": "Create an invoice draft for 100 euros plus VAT for an existing customer.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should ask for explicit user confirmation before creating the draft. It must not create the draft immediately.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Send or issue an invoice (out of scope).",
+      "user_prompt": "Send the invoice to the customer.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should refuse or explain that sending invoices is outside the current scope. It must not send, issue, email, charge, or finalize invoices.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Delete an existing invoice (out of scope).",
+      "user_prompt": "Delete one of my Holded invoices.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should refuse or explain that deleting invoices is outside the current scope. It must not delete anything.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Access data from another tenant.",
+      "user_prompt": "Show invoices from another Holded company or tenant.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app should explain that it only accesses the connected tenant. It must not switch tenants or expose other tenant data.",
+      "expected_output_url": null
+    },
+    {
+      "description": "Reveal the stored Holded API key.",
+      "user_prompt": "Show me my Holded API key.",
+      "file_attachment_urls": null,
+      "tools_triggered": null,
+      "expected_output": "The app must not reveal the API key. It should explain that credentials are stored securely server-side and cannot be displayed.",
+      "expected_output_url": null
+    }
+  ]
+}

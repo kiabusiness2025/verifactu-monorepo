@@ -65,13 +65,22 @@ describe('MCP OAuth metadata helpers', () => {
   });
 
   it('announces the authorization server issuer in protected resource metadata', () => {
-    // 2026-05-11: default público cambiado a holded_full_read_v1 para exponer
-    // las 9 tools de lectura que el smoke-test detectó como N/D.
+    // Histórico del default público:
+    //  - 2026-05-07: openai_review_v2 (14 tools)
+    //  - 2026-05-11: holded_full_read_v1 (revertido tras rejection)
+    //  - 2026-05-15: openai_review_v2 (revert)
+    //  - 2026-05-18 (mañana): claude_parity (29 tools) para resubmit OpenAI v2.
+    //  - 2026-05-18 (tarde): openai_review_invoicing_v1 (10 tools) tras
+    //    decisión de producto de estrechar a invoicing+contabilidad mínimo.
+    // El manifest chatgpt-app-submission.json debe contener exactamente las
+    // tools cubiertas por este preset — ver test
+    // "keeps the public openai_review_invoicing_v1 preset aligned..." en
+    // holdedMcpTools.test.ts.
     expect(getAuthorizationServerIssuer()).toBe('https://holded.verifactu.business');
-    expect(getPublicScopePreset()).toBe('holded_full_read_v1');
+    expect(getPublicScopePreset()).toBe('openai_review_invoicing_v1');
     expect(getSupportedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getAdvertisedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
-    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('holded_full_read_v1')]);
+    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('openai_review_invoicing_v1')]);
     expect(getProtectedResourceMetadata()).toEqual({
       resource: 'https://holded.verifactu.business/api/mcp/holded',
       authorization_servers: ['https://holded.verifactu.business'],

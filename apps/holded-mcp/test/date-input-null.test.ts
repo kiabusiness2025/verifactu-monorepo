@@ -21,24 +21,32 @@ import { z } from 'zod';
 import { dateInput, dateInputOptional } from '../src/utils.ts';
 
 test('dateInputOptional normaliza null a undefined', () => {
-  assert.equal(dateInputOptional.parse(null), undefined);
+  assert.equal(dateInputOptional().parse(null), undefined);
 });
 
 test('dateInputOptional acepta undefined y devuelve undefined', () => {
-  assert.equal(dateInputOptional.parse(undefined), undefined);
+  assert.equal(dateInputOptional().parse(undefined), undefined);
 });
 
 test('dateInputOptional acepta string ISO 8601 y lo deja pasar tal cual', () => {
-  assert.equal(dateInputOptional.parse('2026-05-12'), '2026-05-12');
+  assert.equal(dateInputOptional().parse('2026-05-12'), '2026-05-12');
 });
 
 test('dateInputOptional acepta number Unix seconds y lo deja pasar tal cual', () => {
-  assert.equal(dateInputOptional.parse(1747008000), 1747008000);
+  assert.equal(dateInputOptional().parse(1747008000), 1747008000);
 });
 
 test('dateInputOptional rechaza booleans y objetos (defensa contra inputs raros)', () => {
-  assert.throws(() => dateInputOptional.parse(true));
-  assert.throws(() => dateInputOptional.parse({ when: 'now' }));
+  assert.throws(() => dateInputOptional().parse(true));
+  assert.throws(() => dateInputOptional().parse({ when: 'now' }));
+});
+
+test('dateInputOptional es factory: cada llamada devuelve una instancia distinta', () => {
+  // Regresión 18-may-2026 (soporte audit `list_documents`): cuando dos campos
+  // (starttmp/endtmp) compartían la MISMA instancia de schema, zod-to-json-schema
+  // emitía `endtmp: { "$ref": "#/properties/starttmp" }`. La factory garantiza
+  // que cada call site reciba una instancia fresca para evitar la deduplicación.
+  assert.notStrictEqual(dateInputOptional(), dateInputOptional());
 });
 
 test('dateInput (required) sigue rechazando null y undefined — protege parámetros obligatorios', () => {
@@ -54,8 +62,8 @@ test('dateInput (required) sigue aceptando string y number', () => {
 test('integración: schema de get_journal con endtmp=null no rompe (regresión task #101)', () => {
   // Mismo schema que registramos en server.tool('get_journal', ...)
   const getJournalSchema = z.object({
-    starttmp: dateInputOptional.describe('Start date'),
-    endtmp: dateInputOptional.describe('End date'),
+    starttmp: dateInputOptional().describe('Start date'),
+    endtmp: dateInputOptional().describe('End date'),
     page: z.string().optional().describe('Page'),
   });
 
@@ -72,8 +80,8 @@ test('integración: schema de get_journal con endtmp=null no rompe (regresión t
 
 test('integración: ambos timestamps null se normalizan a undefined', () => {
   const getJournalSchema = z.object({
-    starttmp: dateInputOptional,
-    endtmp: dateInputOptional,
+    starttmp: dateInputOptional(),
+    endtmp: dateInputOptional(),
   });
 
   const parsed = getJournalSchema.parse({

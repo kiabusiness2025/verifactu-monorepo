@@ -34,6 +34,14 @@ describe('Holded accounting adapter', () => {
           Accept: 'application/json',
           'Content-Type': 'application/json',
           key: 'demo-key',
+          // Regresión 2026-05-18 (OpenAI App Review re-rejection): Node fetch
+          // (undici) envía por defecto `Accept-Encoding: br, gzip, deflate`.
+          // Holded sirve respuestas grandes con brotli y la descompresión
+          // transparente fallaba detrás del edge proxy de Vercel → safeJsonParse
+          // devolvía `[]` o `null` y el reviewer veía "did not produce correct
+          // results" para POS-01/03/05/06. Forzar identity es el mismo patrón
+          // que ya tenían apps/holded y apps/holded-mcp.
+          'Accept-Encoding': 'identity',
         }),
       })
     );
