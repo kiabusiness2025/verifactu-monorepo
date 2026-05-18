@@ -16,15 +16,15 @@ type RateLimitEntry = {
 const store = new Map<string, RateLimitEntry>();
 
 function getClientId(req: Request) {
-  const forwarded = req.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]?.trim() || "unknown";
-  const realIp = req.headers.get("x-real-ip");
+  const forwarded = req.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown';
+  const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp.trim();
-  return "unknown";
+  return 'unknown';
 }
 
 export function rateLimit(req: Request, options: RateLimitOptions): RateLimitResult {
-  const key = `${options.keyPrefix ?? "default"}:${getClientId(req)}`;
+  const key = `${options.keyPrefix ?? 'default'}:${getClientId(req)}`;
   const now = Date.now();
   const windowMs = Math.max(1000, options.windowMs);
   const limit = Math.max(1, options.limit);

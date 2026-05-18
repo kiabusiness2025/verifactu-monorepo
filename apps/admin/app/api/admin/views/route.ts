@@ -39,12 +39,12 @@ function sanitizeViews(input: unknown): SavedView[] {
     const name = String(record.name || '').trim();
     const path = String(record.path || '').trim();
     const description = String(record.description || '').trim();
-    const sectionRaw = String(record.section || '').trim().toLowerCase();
+    const sectionRaw = String(record.section || '')
+      .trim()
+      .toLowerCase();
     const hidden = Boolean(record.hidden);
     const section: SavedView['section'] =
-      sectionRaw === 'operations' ||
-      sectionRaw === 'integrations' ||
-      sectionRaw === 'custom'
+      sectionRaw === 'operations' || sectionRaw === 'integrations' || sectionRaw === 'custom'
         ? (sectionRaw as SavedView['section'])
         : 'core';
 
@@ -89,7 +89,10 @@ export async function GET(request: NextRequest) {
     if (error instanceof Error && error.message.includes('FORBIDDEN')) {
       return NextResponse.json({ ok: false, error: 'No autorizado' }, { status: 403 });
     }
-    return NextResponse.json({ ok: false, error: 'No se pudieron cargar las vistas' }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: 'No se pudieron cargar las vistas' },
+      { status: 500 }
+    );
   }
 }
 
@@ -97,7 +100,10 @@ export async function PATCH(request: NextRequest) {
   try {
     const admin = await requireAdmin(request);
     if (!admin.userId) {
-      return NextResponse.json({ ok: false, error: 'No se pudo resolver usuario admin' }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: 'No se pudo resolver usuario admin' },
+        { status: 400 }
+      );
     }
 
     await ensureTable();
@@ -118,6 +124,9 @@ export async function PATCH(request: NextRequest) {
     if (error instanceof Error && error.message.includes('FORBIDDEN')) {
       return NextResponse.json({ ok: false, error: 'No autorizado' }, { status: 403 });
     }
-    return NextResponse.json({ ok: false, error: 'No se pudieron guardar las vistas' }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: 'No se pudieron guardar las vistas' },
+      { status: 500 }
+    );
   }
 }

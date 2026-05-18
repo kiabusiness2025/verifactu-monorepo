@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
 export default function NewTenantPage() {
-  redirect("/dashboard/admin/companies/new");
+  redirect('/dashboard/admin/companies/new');
 }

@@ -24,17 +24,7 @@ export async function POST(request: NextRequest) {
     await requireAdmin(request);
 
     const body = await request.json();
-    const {
-      to,
-      cc,
-      bcc,
-      replyTo,
-      subject,
-      text,
-      html,
-      tags,
-      attachments,
-    } = body;
+    const { to, cc, bcc, replyTo, subject, text, html, tags, attachments } = body;
 
     if (!to || !Array.isArray(to) || to.length === 0) {
       return NextResponse.json({ error: 'Missing recipients' }, { status: 400 });
@@ -47,8 +37,12 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanedTo = to.map((v: string) => v.trim()).filter(Boolean);
-    const cleanedCc = Array.isArray(cc) ? cc.map((v: string) => v.trim()).filter(Boolean) : undefined;
-    const cleanedBcc = Array.isArray(bcc) ? bcc.map((v: string) => v.trim()).filter(Boolean) : undefined;
+    const cleanedCc = Array.isArray(cc)
+      ? cc.map((v: string) => v.trim()).filter(Boolean)
+      : undefined;
+    const cleanedBcc = Array.isArray(bcc)
+      ? bcc.map((v: string) => v.trim()).filter(Boolean)
+      : undefined;
 
     const sendPayload: any = {
       from: SUPPORT_EMAIL,

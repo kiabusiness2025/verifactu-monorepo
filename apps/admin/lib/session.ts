@@ -1,10 +1,10 @@
 import {
-    readSessionSecret,
-    SESSION_COOKIE_NAME,
-    verifySessionToken,
-    type SessionPayload,
-} from "@verifactu/utils";
-import { cookies } from "next/headers";
+  readSessionSecret,
+  SESSION_COOKIE_NAME,
+  verifySessionToken,
+  type SessionPayload,
+} from '@verifactu/utils';
+import { cookies } from 'next/headers';
 
 export type { SessionPayload };
 
@@ -23,7 +23,7 @@ export async function getSessionPayload(): Promise<SessionPayload | null> {
 export function requireUserId(payload: SessionPayload | null): string {
   const uid = payload?.uid;
   if (!uid) {
-    throw new Error("Unauthenticated: uid missing in session token");
+    throw new Error('Unauthenticated: uid missing in session token');
   }
   return uid;
 }

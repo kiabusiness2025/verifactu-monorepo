@@ -14,7 +14,13 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/auth', '@verifactu/integrations', '@verifactu/db'],
+  transpilePackages: [
+    '@verifactu/ui',
+    '@verifactu/utils',
+    '@verifactu/auth',
+    '@verifactu/integrations',
+    '@verifactu/db',
+  ],
   experimental: {
     serverActions: {
       bodySizeLimit: '2mb',
@@ -24,9 +30,9 @@ const nextConfig = {
     config.resolve.alias = {
       ...(config.resolve.alias || {}),
       '@': __dirname,
-    }
-    return config
+    };
+    return config;
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

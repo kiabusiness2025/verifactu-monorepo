@@ -221,12 +221,11 @@ export function EInformaSearch({
                         <div className="flex items-center gap-1.5 text-xs text-slate-600">
                           <MapPin className="h-3 w-3 flex-shrink-0" />
                           <span className="truncate">
-                            {[company.city, company.province].filter(Boolean).join(", ")}
+                            {[company.city, company.province].filter(Boolean).join(', ')}
                           </span>
                         </div>
                       )}
                     </div>
-
                   </div>
                 </div>
               </button>

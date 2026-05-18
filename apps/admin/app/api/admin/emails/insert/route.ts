@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/adminAuth";
-import { Client } from "pg";
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/adminAuth';
+import { Client } from 'pg';
 
 // Force dynamic rendering (uses cookies for admin auth)
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     const admin = await requireAdmin(request);
 
     if (!admin) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -19,10 +19,7 @@ export async function POST(request: NextRequest) {
 
     // Validaciones básicas
     if (!from_email || !subject || !text_content || !to_email) {
-      return NextResponse.json(
-        { error: "Faltan campos requeridos" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Faltan campos requeridos' }, { status: 400 });
     }
 
     // Conectarse a la BD
@@ -54,13 +51,13 @@ export async function POST(request: NextRequest) {
     const result = await client.query(insertQuery, [
       messageId,
       from_email,
-      from_name || "Usuario de Prueba",
+      from_name || 'Usuario de Prueba',
       to_email,
       subject,
       text_content,
       null, // html_content
-      priority || "normal",
-      "pending",
+      priority || 'normal',
+      'pending',
     ]);
 
     await client.end();
@@ -69,7 +66,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Email de prueba insertado exitosamente",
+      message: 'Email de prueba insertado exitosamente',
       email: {
         id: insertedEmail.id,
         messageId: insertedEmail.message_id,
@@ -80,10 +77,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error inserting test email:", error);
-    return NextResponse.json(
-      { error: "Error al insertar email de prueba" },
-      { status: 500 }
-    );
+    console.error('Error inserting test email:', error);
+    return NextResponse.json({ error: 'Error al insertar email de prueba' }, { status: 500 });
   }
 }

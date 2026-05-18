@@ -1,14 +1,14 @@
-import { prisma } from "@verifactu/db";
+import { prisma } from '@verifactu/db';
 
 function formatDate(value: Date) {
-  return new Intl.DateTimeFormat("es-ES", {
-    dateStyle: "short",
-    timeStyle: "short",
+  return new Intl.DateTimeFormat('es-ES', {
+    dateStyle: 'short',
+    timeStyle: 'short',
   }).format(value);
 }
 
 function extractMessage(details: unknown) {
-  if (details && typeof details === "object" && "message" in details) {
+  if (details && typeof details === 'object' && 'message' in details) {
     const msg = (details as { message?: string }).message;
     if (msg) return msg;
   }
@@ -24,25 +24,24 @@ type PageProps = {
 };
 
 const TYPE_OPTIONS = [
-  "all",
-  "console_error",
-  "runtime_error",
-  "broken_image",
-  "broken_link",
-  "empty_button",
-  "slow_load",
-  "not_found",
+  'all',
+  'console_error',
+  'runtime_error',
+  'broken_image',
+  'broken_link',
+  'empty_button',
+  'slow_load',
+  'not_found',
 ];
 
 export default async function OperationsErrorsPage({ searchParams }: PageProps) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const typeFilterRaw = resolvedSearchParams?.type?.trim();
-  const typeFilter =
-    typeFilterRaw && typeFilterRaw !== "all" ? typeFilterRaw : null;
+  const typeFilter = typeFilterRaw && typeFilterRaw !== 'all' ? typeFilterRaw : null;
 
   const errors = await prisma.errorEvent.findMany({
     where: typeFilter ? { type: typeFilter } : undefined,
-    orderBy: { createdAt: "desc" },
+    orderBy: { createdAt: 'desc' },
     take: 50,
   });
 
@@ -50,20 +49,17 @@ export default async function OperationsErrorsPage({ searchParams }: PageProps) 
     <div className="space-y-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">
-            Errores globales
-          </h1>
+          <h1 className="text-xl font-semibold text-slate-900">Errores globales</h1>
           <p className="mt-1 text-sm text-slate-600">
             Errores reportados desde el monitor de la app (últimos 50).
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
           {TYPE_OPTIONS.map((type) => {
-            const active =
-              (type === "all" && !typeFilter) || typeFilter === type;
+            const active = (type === 'all' && !typeFilter) || typeFilter === type;
             const href =
-              type === "all"
-                ? "/operations/errors"
+              type === 'all'
+                ? '/operations/errors'
                 : `/operations/errors?type=${encodeURIComponent(type)}`;
             return (
               <a
@@ -71,11 +67,11 @@ export default async function OperationsErrorsPage({ searchParams }: PageProps) 
                 href={href}
                 className={`rounded-full border px-3 py-1 text-xs font-semibold ${
                   active
-                    ? "border-slate-900 text-slate-900"
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50"
+                    ? 'border-slate-900 text-slate-900'
+                    : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                {type === "all" ? "Todos" : type}
+                {type === 'all' ? 'Todos' : type}
               </a>
             );
           })}
@@ -109,11 +105,9 @@ export default async function OperationsErrorsPage({ searchParams }: PageProps) 
                       {formatDate(err.createdAt)}
                     </td>
                     <td className="px-4 py-3 text-slate-700">{err.type}</td>
-                    <td className="px-4 py-3 text-slate-700 max-w-[320px] truncate">
-                      {err.url}
-                    </td>
+                    <td className="px-4 py-3 text-slate-700 max-w-[320px] truncate">{err.url}</td>
                     <td className="px-4 py-3 text-slate-600 max-w-[420px]">
-                      <div className="truncate">{detail ?? "-"}</div>
+                      <div className="truncate">{detail ?? '-'}</div>
                       {err.details ? (
                         <details className="mt-2">
                           <summary className="cursor-pointer text-xs text-slate-500 hover:text-slate-700">
@@ -125,7 +119,7 @@ export default async function OperationsErrorsPage({ searchParams }: PageProps) 
                         </details>
                       ) : null}
                     </td>
-                    <td className="px-4 py-3 text-slate-600">{err.source ?? "-"}</td>
+                    <td className="px-4 py-3 text-slate-600">{err.source ?? '-'}</td>
                   </tr>
                 );
               })

@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { redirect } from 'next/navigation';
 
 export default function AdminLogoutPage() {
-  redirect("/api/auth/signout");
+  redirect('/api/auth/signout');
 }

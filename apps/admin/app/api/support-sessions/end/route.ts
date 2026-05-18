@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
 export async function POST() {
-  return NextResponse.json({ status: "ended" });
+  return NextResponse.json({ status: 'ended' });
 }

@@ -1,8 +1,8 @@
-import { requireAdmin } from "@/lib/adminAuth";
-import { one, query } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { requireAdmin } from '@/lib/adminAuth';
+import { one, query } from '@/lib/db';
+import { NextResponse } from 'next/server';
 
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 async function tableExists(tableName: string) {
@@ -33,18 +33,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   try {
     const { id: tenantId } = await params;
     await requireAdmin(_req);
-    const hasTenantLegalName = await columnExists("tenants", "legal_name");
-    const hasTenantNif = await columnExists("tenants", "nif");
-    const hasTenantTaxId = await columnExists("tenants", "tax_id");
-    const hasTenantCreatedAt = await columnExists("tenants", "created_at");
-    const hasTenantCreatedAtCamel = !hasTenantCreatedAt && (await columnExists("tenants", "createdAt"));
-    const taxIdColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+    const hasTenantLegalName = await columnExists('tenants', 'legal_name');
+    const hasTenantNif = await columnExists('tenants', 'nif');
+    const hasTenantTaxId = await columnExists('tenants', 'tax_id');
+    const hasTenantCreatedAt = await columnExists('tenants', 'created_at');
+    const hasTenantCreatedAtCamel =
+      !hasTenantCreatedAt && (await columnExists('tenants', 'createdAt'));
+    const taxIdColumn = hasTenantNif ? 'nif' : hasTenantTaxId ? 'tax_id' : null;
     const tenantCreatedExpr = hasTenantCreatedAt
-      ? "t.created_at::text"
+      ? 't.created_at::text'
       : hasTenantCreatedAtCamel
-      ? 't."createdAt"::text'
-      : "NULL::text";
-    const hasTenantProfiles = await tableExists("tenant_profiles");
+        ? 't."createdAt"::text'
+        : 'NULL::text';
+    const hasTenantProfiles = await tableExists('tenant_profiles');
     const [
       hasProfileAddress,
       hasProfileCnae,
@@ -66,24 +67,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       hasProfileLastBalanceDate,
     ] = hasTenantProfiles
       ? await Promise.all([
-          columnExists("tenant_profiles", "address"),
-          columnExists("tenant_profiles", "cnae"),
-          columnExists("tenant_profiles", "postal_code"),
-          columnExists("tenant_profiles", "city"),
-          columnExists("tenant_profiles", "province"),
-          columnExists("tenant_profiles", "country"),
-          columnExists("tenant_profiles", "legal_form"),
-          columnExists("tenant_profiles", "status"),
-          columnExists("tenant_profiles", "website"),
-          columnExists("tenant_profiles", "capital_social"),
-          columnExists("tenant_profiles", "incorporation_date"),
-          columnExists("tenant_profiles", "representative"),
-          columnExists("tenant_profiles", "email"),
-          columnExists("tenant_profiles", "phone"),
-          columnExists("tenant_profiles", "employees"),
-          columnExists("tenant_profiles", "sales"),
-          columnExists("tenant_profiles", "sales_year"),
-          columnExists("tenant_profiles", "last_balance_date"),
+          columnExists('tenant_profiles', 'address'),
+          columnExists('tenant_profiles', 'cnae'),
+          columnExists('tenant_profiles', 'postal_code'),
+          columnExists('tenant_profiles', 'city'),
+          columnExists('tenant_profiles', 'province'),
+          columnExists('tenant_profiles', 'country'),
+          columnExists('tenant_profiles', 'legal_form'),
+          columnExists('tenant_profiles', 'status'),
+          columnExists('tenant_profiles', 'website'),
+          columnExists('tenant_profiles', 'capital_social'),
+          columnExists('tenant_profiles', 'incorporation_date'),
+          columnExists('tenant_profiles', 'representative'),
+          columnExists('tenant_profiles', 'email'),
+          columnExists('tenant_profiles', 'phone'),
+          columnExists('tenant_profiles', 'employees'),
+          columnExists('tenant_profiles', 'sales'),
+          columnExists('tenant_profiles', 'sales_year'),
+          columnExists('tenant_profiles', 'last_balance_date'),
         ])
       : [
           false,
@@ -132,60 +133,54 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     }>(
       `SELECT
          t.id,
-         ${hasTenantLegalName ? "t.legal_name" : "t.name"} as legal_name,
-         ${taxIdColumn ? `t.${taxIdColumn}` : "NULL::text"} as nif,
+         ${hasTenantLegalName ? 't.legal_name' : 't.name'} as legal_name,
+         ${taxIdColumn ? `t.${taxIdColumn}` : 'NULL::text'} as nif,
          ${tenantCreatedExpr} as created_at,
-         ${hasTenantProfiles && hasProfileAddress ? "tp.address" : "NULL::text"} as address,
-         ${hasTenantProfiles && hasProfileCnae ? "tp.cnae" : "NULL::text"} as cnae,
-         ${hasTenantProfiles && hasProfilePostalCode ? "tp.postal_code" : "NULL::text"} as postal_code,
-         ${hasTenantProfiles && hasProfileCity ? "tp.city" : "NULL::text"} as city,
-         ${hasTenantProfiles && hasProfileProvince ? "tp.province" : "NULL::text"} as province,
-         ${hasTenantProfiles && hasProfileCountry ? "tp.country" : "NULL::text"} as country,
-         ${hasTenantProfiles && hasProfileLegalForm ? "tp.legal_form" : "NULL::text"} as legal_form,
-         ${hasTenantProfiles && hasProfileStatus ? "tp.status" : "NULL::text"} as profile_status,
-         ${hasTenantProfiles && hasProfileWebsite ? "tp.website" : "NULL::text"} as website,
+         ${hasTenantProfiles && hasProfileAddress ? 'tp.address' : 'NULL::text'} as address,
+         ${hasTenantProfiles && hasProfileCnae ? 'tp.cnae' : 'NULL::text'} as cnae,
+         ${hasTenantProfiles && hasProfilePostalCode ? 'tp.postal_code' : 'NULL::text'} as postal_code,
+         ${hasTenantProfiles && hasProfileCity ? 'tp.city' : 'NULL::text'} as city,
+         ${hasTenantProfiles && hasProfileProvince ? 'tp.province' : 'NULL::text'} as province,
+         ${hasTenantProfiles && hasProfileCountry ? 'tp.country' : 'NULL::text'} as country,
+         ${hasTenantProfiles && hasProfileLegalForm ? 'tp.legal_form' : 'NULL::text'} as legal_form,
+         ${hasTenantProfiles && hasProfileStatus ? 'tp.status' : 'NULL::text'} as profile_status,
+         ${hasTenantProfiles && hasProfileWebsite ? 'tp.website' : 'NULL::text'} as website,
          ${
-           hasTenantProfiles && hasProfileCapitalSocial
-             ? "tp.capital_social::text"
-             : "NULL::text"
+           hasTenantProfiles && hasProfileCapitalSocial ? 'tp.capital_social::text' : 'NULL::text'
          } as capital_social,
          ${
            hasTenantProfiles && hasProfileIncorporationDate
-             ? "tp.incorporation_date::text"
-             : "NULL::text"
+             ? 'tp.incorporation_date::text'
+             : 'NULL::text'
          } as incorporation_date,
          ${
-           hasTenantProfiles && hasProfileRepresentative
-             ? "tp.representative"
-             : "NULL::text"
+           hasTenantProfiles && hasProfileRepresentative ? 'tp.representative' : 'NULL::text'
          } as representative,
-         ${hasTenantProfiles && hasProfileEmail ? "tp.email" : "NULL::text"} as email,
-         ${hasTenantProfiles && hasProfilePhone ? "tp.phone" : "NULL::text"} as phone,
-         ${
-           hasTenantProfiles && hasProfileEmployees ? "tp.employees" : "NULL::int"
-         } as employees,
-         ${hasTenantProfiles && hasProfileSales ? "tp.sales::text" : "NULL::text"} as sales,
-         ${hasTenantProfiles && hasProfileSalesYear ? "tp.sales_year" : "NULL::int"} as sales_year,
+         ${hasTenantProfiles && hasProfileEmail ? 'tp.email' : 'NULL::text'} as email,
+         ${hasTenantProfiles && hasProfilePhone ? 'tp.phone' : 'NULL::text'} as phone,
+         ${hasTenantProfiles && hasProfileEmployees ? 'tp.employees' : 'NULL::int'} as employees,
+         ${hasTenantProfiles && hasProfileSales ? 'tp.sales::text' : 'NULL::text'} as sales,
+         ${hasTenantProfiles && hasProfileSalesYear ? 'tp.sales_year' : 'NULL::int'} as sales_year,
          ${
            hasTenantProfiles && hasProfileLastBalanceDate
-             ? "tp.last_balance_date::text"
-             : "NULL::text"
+             ? 'tp.last_balance_date::text'
+             : 'NULL::text'
          } as last_balance_date
        FROM tenants t
-       ${hasTenantProfiles ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
+       ${hasTenantProfiles ? 'LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id' : ''}
        WHERE t.id = $1`,
       [tenantId]
     );
 
     if (!tenant) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     return NextResponse.json({
       tenant: {
         id: tenant.id,
-        legalName: tenant.legal_name ?? "",
-        taxId: tenant.nif ?? "",
+        legalName: tenant.legal_name ?? '',
+        taxId: tenant.nif ?? '',
         address: tenant.address ?? null,
         cnae: tenant.cnae ?? null,
         postalCode: tenant.postal_code ?? null,
@@ -208,12 +203,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       },
     });
   } catch (error) {
-    console.error("[admin][tenants/:id] detail query failed", error);
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    console.error('[admin][tenants/:id] detail query failed', error);
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
     return NextResponse.json(
-      { error: "Error al obtener empresa", details: "TENANT_DETAIL_QUERY_FAILED" },
+      { error: 'Error al obtener empresa', details: 'TENANT_DETAIL_QUERY_FAILED' },
       { status: 500 }
     );
   }
@@ -230,21 +225,21 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const isEinforma = !!normalized;
 
     const legalName = String(
-      normalized?.legalName || normalized?.name || body?.legalName || ""
+      normalized?.legalName || normalized?.name || body?.legalName || ''
     ).trim();
-    const taxId = String(normalized?.nif || body?.taxId || "")
+    const taxId = String(normalized?.nif || body?.taxId || '')
       .trim()
       .toUpperCase();
     const address = isEinforma
       ? String(normalized?.address || profile?.address?.street || '').trim() || null
       : body?.address
-      ? String(body.address).trim()
-      : null;
+        ? String(body.address).trim()
+        : null;
     const cnae = isEinforma
       ? String(profile?.cnae || '').trim() || null
       : body?.cnae
-      ? String(body.cnae).trim()
-      : null;
+        ? String(body.cnae).trim()
+        : null;
 
     const cnaeCode = normalized?.cnaeCode ?? null;
     const cnaeText = normalized?.cnaeText ?? null;
@@ -263,9 +258,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const capitalSocial = Number.isFinite(Number(capitalSocialRaw))
       ? Number(capitalSocialRaw)
       : null;
-    const incorporationDate = profile?.constitutionDate
-      ? new Date(profile.constitutionDate)
-      : null;
+    const incorporationDate = profile?.constitutionDate ? new Date(profile.constitutionDate) : null;
     const postalCode = normalized?.postalCode ?? profile?.address?.zip ?? null;
     const city = normalized?.city ?? profile?.address?.city ?? null;
     const province = normalized?.province ?? profile?.address?.province ?? null;
@@ -282,22 +275,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const adminEditHistory = adminEditHistoryFromPayload ?? adminEditHistoryFromRaw ?? null;
     const einformaTaxIdVerified =
       !!taxId && !!normalized?.nif && String(normalized.nif).toUpperCase() === taxId;
-    const einformaRaw = isEinforma ? profile?.raw ?? profile ?? null : null;
+    const einformaRaw = isEinforma ? (profile?.raw ?? profile ?? null) : null;
     const profileSource = isEinforma ? 'einforma' : 'manual';
 
     if (!legalName || !taxId) {
-      return NextResponse.json(
-        { error: "legalName y taxId son obligatorios" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'legalName y taxId son obligatorios' }, { status: 400 });
     }
 
-    const hasTenantLegalName = await columnExists("tenants", "legal_name");
-    const hasTenantNif = await columnExists("tenants", "nif");
-    const hasTenantTaxId = await columnExists("tenants", "tax_id");
-    const tenantTaxColumn = hasTenantNif ? "nif" : hasTenantTaxId ? "tax_id" : null;
+    const hasTenantLegalName = await columnExists('tenants', 'legal_name');
+    const hasTenantNif = await columnExists('tenants', 'nif');
+    const hasTenantTaxId = await columnExists('tenants', 'tax_id');
+    const tenantTaxColumn = hasTenantNif ? 'nif' : hasTenantTaxId ? 'tax_id' : null;
 
-    const updateSet = ["name = $1"];
+    const updateSet = ['name = $1'];
     const updateValues: unknown[] = [legalName];
     if (hasTenantLegalName) {
       updateSet.push(`legal_name = $${updateValues.length + 1}`);
@@ -310,62 +300,62 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     updateValues.push(tenantId);
     await query(
       `UPDATE tenants
-       SET ${updateSet.join(", ")}
+       SET ${updateSet.join(', ')}
        WHERE id = $${updateValues.length}`,
       updateValues
     );
 
     const now = new Date().toISOString();
-    const hasTenantProfiles = await tableExists("tenant_profiles");
+    const hasTenantProfiles = await tableExists('tenant_profiles');
     if (hasTenantProfiles) {
       const profileCandidates: Array<{ column: string; value: unknown }> = [
-        { column: "tenant_id", value: tenantId },
-        { column: "source", value: profileSource },
-        { column: "source_id", value: sourceId },
-        { column: "cnae", value: cnae },
-        { column: "cnae_code", value: cnaeCode },
-        { column: "cnae_text", value: cnaeText },
-        { column: "legal_form", value: legalForm },
-        { column: "status", value: status },
-        { column: "website", value: website },
-        { column: "capital_social", value: capitalSocial },
-        { column: "incorporation_date", value: incorporationDate },
-        { column: "address", value: address },
-        { column: "postal_code", value: postalCode },
-        { column: "city", value: city },
-        { column: "province", value: province },
-        { column: "country", value: country },
-        { column: "representative", value: representative },
-        { column: "email", value: email },
-        { column: "phone", value: phone },
-        { column: "employees", value: employees },
-        { column: "sales", value: sales },
-        { column: "sales_year", value: salesYear },
-        { column: "last_balance_date", value: lastBalanceDate },
-        { column: "einforma_last_sync_at", value: isEinforma ? now : null },
-        { column: "einforma_tax_id_verified", value: isEinforma ? einformaTaxIdVerified : null },
-        { column: "einforma_raw", value: einformaRaw },
-        { column: "admin_edit_history", value: adminEditHistory },
-        { column: "updated_at", value: now },
+        { column: 'tenant_id', value: tenantId },
+        { column: 'source', value: profileSource },
+        { column: 'source_id', value: sourceId },
+        { column: 'cnae', value: cnae },
+        { column: 'cnae_code', value: cnaeCode },
+        { column: 'cnae_text', value: cnaeText },
+        { column: 'legal_form', value: legalForm },
+        { column: 'status', value: status },
+        { column: 'website', value: website },
+        { column: 'capital_social', value: capitalSocial },
+        { column: 'incorporation_date', value: incorporationDate },
+        { column: 'address', value: address },
+        { column: 'postal_code', value: postalCode },
+        { column: 'city', value: city },
+        { column: 'province', value: province },
+        { column: 'country', value: country },
+        { column: 'representative', value: representative },
+        { column: 'email', value: email },
+        { column: 'phone', value: phone },
+        { column: 'employees', value: employees },
+        { column: 'sales', value: sales },
+        { column: 'sales_year', value: salesYear },
+        { column: 'last_balance_date', value: lastBalanceDate },
+        { column: 'einforma_last_sync_at', value: isEinforma ? now : null },
+        { column: 'einforma_tax_id_verified', value: isEinforma ? einformaTaxIdVerified : null },
+        { column: 'einforma_raw', value: einformaRaw },
+        { column: 'admin_edit_history', value: adminEditHistory },
+        { column: 'updated_at', value: now },
       ];
       const availableColumns: string[] = [];
       const values: unknown[] = [];
       for (const candidate of profileCandidates) {
-        if (await columnExists("tenant_profiles", candidate.column)) {
+        if (await columnExists('tenant_profiles', candidate.column)) {
           availableColumns.push(candidate.column);
           values.push(candidate.value);
         }
       }
 
       if (availableColumns.length > 0) {
-        const placeholders = availableColumns.map((_, i) => `$${i + 1}`).join(", ");
+        const placeholders = availableColumns.map((_, i) => `$${i + 1}`).join(', ');
         const updates = availableColumns
-          .filter((col) => col !== "tenant_id")
+          .filter((col) => col !== 'tenant_id')
           .map((col) => `${col} = EXCLUDED.${col}`)
-          .join(", ");
+          .join(', ');
         if (updates.length > 0) {
           await query(
-            `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+            `INSERT INTO tenant_profiles (${availableColumns.join(', ')})
              VALUES (${placeholders})
              ON CONFLICT (tenant_id) DO UPDATE
              SET ${updates}`,
@@ -373,7 +363,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           );
         } else {
           await query(
-            `INSERT INTO tenant_profiles (${availableColumns.join(", ")})
+            `INSERT INTO tenant_profiles (${availableColumns.join(', ')})
              VALUES (${placeholders})
              ON CONFLICT (tenant_id) DO NOTHING`,
             values
@@ -392,39 +382,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }>(
       `SELECT
          t.id,
-         ${hasTenantLegalName ? "t.legal_name" : "t.name"} as legal_name,
-         ${tenantTaxColumn ? `t.${tenantTaxColumn}` : "NULL::text"} as nif,
+         ${hasTenantLegalName ? 't.legal_name' : 't.name'} as legal_name,
+         ${tenantTaxColumn ? `t.${tenantTaxColumn}` : 'NULL::text'} as nif,
          t.created_at,
-         ${hasTenantProfiles ? "tp.address" : "NULL::text"} as address,
-         ${hasTenantProfiles ? "tp.cnae" : "NULL::text"} as cnae
+         ${hasTenantProfiles ? 'tp.address' : 'NULL::text'} as address,
+         ${hasTenantProfiles ? 'tp.cnae' : 'NULL::text'} as cnae
        FROM tenants t
-       ${hasTenantProfiles ? "LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id" : ""}
+       ${hasTenantProfiles ? 'LEFT JOIN tenant_profiles tp ON tp.tenant_id = t.id' : ''}
        WHERE t.id = $1`,
       [tenantId]
     );
 
     if (!tenant) {
-      return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
     }
 
     return NextResponse.json({
       tenant: {
         id: tenant.id,
-        legalName: tenant.legal_name ?? "",
-        taxId: tenant.nif ?? "",
+        legalName: tenant.legal_name ?? '',
+        taxId: tenant.nif ?? '',
         address: tenant.address ?? null,
         cnae: tenant.cnae ?? null,
         createdAt: tenant.created_at,
         membersCount: 0,
         invoicesThisMonth: 0,
         revenueThisMonth: 0,
-        status: "active",
+        status: 'active',
       },
     });
   } catch (error) {
-    if (error instanceof Error && error.message.includes("FORBIDDEN")) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 });
+    if (error instanceof Error && error.message.includes('FORBIDDEN')) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
-    return NextResponse.json({ error: "Error al actualizar empresa" }, { status: 500 });
+    return NextResponse.json({ error: 'Error al actualizar empresa' }, { status: 500 });
   }
 }

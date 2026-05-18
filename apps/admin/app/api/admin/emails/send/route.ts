@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 
 /**
  * POST - Enviar respuesta desde soporte@verifactu.business
- * 
+ *
  * Body:
  * {
  *   "originalEmailId": "uuid",  // Email al que responder
@@ -46,10 +46,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (originalEmails.length === 0) {
-      return NextResponse.json(
-        { error: 'Original email not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Original email not found' }, { status: 404 });
     }
 
     const originalEmail = originalEmails[0];
@@ -67,16 +64,16 @@ export async function POST(request: NextRequest) {
       html: html || message,
       headers: {
         'In-Reply-To': originalEmail.id,
-        'References': originalEmail.id,
-      }
+        References: originalEmail.id,
+      },
     });
 
     if (sendResult.error) {
       console.error('[API] Error sending response email:', sendResult.error);
       return NextResponse.json(
-        { 
-          error: 'Failed to send email', 
-          details: sendResult.error?.message || 'Unknown error'
+        {
+          error: 'Failed to send email',
+          details: sendResult.error?.message || 'Unknown error',
         },
         { status: 500 }
       );
@@ -87,10 +84,7 @@ export async function POST(request: NextRequest) {
 
     if (!messageId) {
       console.error('[API] No message ID returned from Resend');
-      return NextResponse.json(
-        { error: 'No message ID returned from API' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'No message ID returned from API' }, { status: 500 });
     }
 
     // Actualizar estado del email a "respondido"
@@ -113,14 +107,7 @@ export async function POST(request: NextRequest) {
        (admin_email_id, response_email_id, sent_at, from_email, to_email, subject, content)
        VALUES ($1, $2, NOW(), $3, $4, $5, $6)
        ON CONFLICT DO NOTHING`,
-      [
-        originalEmailId,
-        messageId,
-        SUPPORT_EMAIL,
-        recipientEmail,
-        finalSubject,
-        message
-      ]
+      [originalEmailId, messageId, SUPPORT_EMAIL, recipientEmail, finalSubject, message]
     );
 
     return NextResponse.json({
@@ -130,10 +117,9 @@ export async function POST(request: NextRequest) {
       recipient: recipientEmail,
       subject: finalSubject,
     });
-
   } catch (error) {
     console.error('[API] Error in send email endpoint:', error);
-    
+
     // Diferenciar entre error de autenticación y otros errores
     if (error instanceof Error && error.message.includes('FORBIDDEN')) {
       return NextResponse.json(
@@ -143,9 +129,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { 
-        error: 'Failed to send email', 
-        details: error instanceof Error ? error.message : 'Unknown error'
+      {
+        error: 'Failed to send email',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -163,10 +149,7 @@ export async function GET(request: NextRequest) {
     const emailId = searchParams.get('emailId');
 
     if (!emailId) {
-      return NextResponse.json(
-        { error: 'Missing emailId parameter' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Missing emailId parameter' }, { status: 400 });
     }
 
     const responses = await query(
@@ -181,12 +164,8 @@ export async function GET(request: NextRequest) {
       responses,
       count: responses.length,
     });
-
   } catch (error) {
     console.error('[API] Error fetching responses:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch responses' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch responses' }, { status: 500 });
   }
 }

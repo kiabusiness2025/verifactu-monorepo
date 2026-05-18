@@ -123,9 +123,7 @@ export async function POST(req: NextRequest) {
         // al spread condicional `...(html ? { html } : {})`, así que el tipo
         // del batch tiene html opcional. Resend.batch.send acepta items con
         // html OR text en runtime; el tipo declarado pide html requerido.
-        const result = await resend.batch.send(
-          batch as Parameters<typeof resend.batch.send>[0]
-        );
+        const result = await resend.batch.send(batch as Parameters<typeof resend.batch.send>[0]);
         if ((result as { error?: unknown }).error) {
           failed += chunk.length;
           console.error('[marketing/send] batch error', (result as { error?: unknown }).error);
