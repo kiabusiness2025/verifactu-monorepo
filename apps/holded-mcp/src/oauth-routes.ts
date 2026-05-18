@@ -529,82 +529,150 @@ oauthRouter.get('/authorize', async (req: Request, res: Response) => {
     return;
   }
 
-  // T#50 Opción 2: si no hay sesión .verifactu.business verificada por Firebase,
-  // redirigir al flow /auth/holded-claude ANTES de mostrar el consent screen.
-  // Si SESSION_SECRET no está seteado en env, fallback al consent screen plano
-  // (modo legacy) para que el flow siga funcionando aunque el bridge no esté
-  // activado.
+  // ──────────────────────────────────────────────────────────────────────
+  // 2026-05-18 (II): /oauth/authorize SIEMPRE bridgea a /auth/holded-claude.
+  //
+  // Histórico: la rama "session válida + connection active" antes renderizaba
+  // un consent screen HTML coral propio (consentPage). El usuario reportó
+  // esa pantalla como "legacy" — esperaba ver siempre el form amber Claude
+  // de holded.verifactu.business, consistente con la landing del conector.
+  //
+  // Nuevo flow:
+  //   1. Claude → GET /oauth/authorize → bridge a /auth/holded-claude
+  //   2. Usuario completa el form (amber, Google/OTP + API key)
+  //   3. /api/auth/holded-claude (wrapper apps/holded) hace upsert F1 +
+  //      sella un handoff JWT con OAUTH context + apiKey + userId/tenantId
+  //   4. Browser → /oauth/finalize-from-form?handoff=... (este server)
+  //   5. /oauth/finalize-from-form verifica el JWT, mintea code, redirige
+  //      a redirect_uri?code=...&state=...
+  //
+  // Esto elimina el consent screen HTML para flows Claude. El handoff JWT
+  // tiene TTL 60s y se firma con VERIFACTU_APP_SHARED_SECRET (compartido
+  // con apps/holded). Sin sesión válida o con conexión disconnected, el
+  // bridge añade force_relogin=1 (ver buildFirebaseBridgeUrl).
   const verifactuSession = await verifyVerifactuSession(req);
-  if (!verifactuSession && config.SESSION_SECRET) {
-    const bridgeUrl = buildFirebaseBridgeUrl(req);
-    logger.info('[oauth/authorize] No verifactu session — bridging to holded-claude auth', {
-      clientId: String(client_id),
-      next: bridgeUrl,
-    });
-    res.redirect(302, bridgeUrl);
-    return;
-  }
 
-  // Force re-login (2026-05-18): si el usuario tiene sesión válida PERO su
-  // conexión Claude en BD está marcada como disconnected/none, asumimos que
-  // previamente revocó el conector desde Claude. Forzamos un re-login limpio
-  // (Google/magic-link/OTP) para que vea claramente qué está autorizando,
-  // en lugar de pasar el flow con el email pre-rellenado de una sesión vieja.
+  let forceRelogin = false;
   if (verifactuSession?.uid) {
     const active = await isClaudeConnectionActive(verifactuSession.uid);
     if (!active) {
-      const bridgeUrl = buildFirebaseBridgeUrl(req, { forceRelogin: true });
-      logger.info('[oauth/authorize] Connection inactive for verified user — force re-login', {
-        uid: verifactuSession.uid,
-        next: bridgeUrl,
-      });
-      res.redirect(302, bridgeUrl);
-      return;
+      forceRelogin = true;
     }
   }
 
-  // NOTA HISTÓRICA (eliminado 2026-05-18):
-  //
-  // Antes había aquí un "auto-issue" silencioso: si la sesión tenía tenantId
-  // Y F1 devolvía una API key existente, /oauth/authorize minteaba el código
-  // directamente y redirigía a Claude SIN mostrar ningún form. Se introdujo
-  // como "UX optimization" en 90b3c3ca5 (2026-05-12).
-  //
-  // Problema: en el flow disconnect → reconnect (usuario quita el conector en
-  // Claude y vuelve a añadirlo), `/oauth/revoke` solo invalida los tokens —
-  // la sesión `__session` (.verifactu.business, TTL 30 días) y la conexión
-  // en DB sobreviven. Con auto-issue activo, el "reconnect" pasaba en
-  // silencio: ni login ni API key. Reportado por usuario 2026-05-18:
-  // "no me vuelve a pedir identificación y API una vez desconectado".
-  //
-  // Solución: SIEMPRE mostrar el consent screen en /oauth/authorize. El form
-  // se pre-rellena con el email de la sesión y campos legales — el usuario
-  // confirma identidad y pega API key. F1 upsert es idempotente (misma key =
-  // no-op en DB), así que la fricción real es solo "pega tu API key otra
-  // vez" — exactamente lo que se espera al re-añadir un conector.
-  //
-  // La refresh flow (que pasa por /oauth/token con grant_type=refresh_token)
-  // NO toca este endpoint, así que no se ve afectada — usuarios con tokens
-  // vivos siguen renovando sin interacción.
+  const bridgeUrl = buildFirebaseBridgeUrl(req, { forceRelogin });
+  logger.info('[oauth/authorize] Bridging to holded-claude form', {
+    clientId: String(client_id),
+    hasSession: !!verifactuSession,
+    forceRelogin,
+    next: bridgeUrl,
+  });
+  res.redirect(302, bridgeUrl);
+});
 
-  res.send(
-    consentPage(
-      String(client_id),
-      String(redirect_uri),
-      String(state ?? ''),
-      false,
-      normalizedScope,
-      typeof code_challenge === 'string' ? code_challenge : null,
-      code_challenge_method === 'S256' ? 'S256' : null,
-      verifactuSession
-        ? {
-            personalEmail: verifactuSession.email,
-            personalName: verifactuSession.name ?? null,
-            verifiedUid: verifactuSession.uid,
-          }
-        : null
-    )
-  );
+// ──────────────────────────────────────────────────────────────────────────
+// GET /oauth/finalize-from-form
+// ──────────────────────────────────────────────────────────────────────────
+// Endpoint que reemplaza al consent screen HTML. Lo invoca el wrapper
+// /api/auth/holded-claude (apps/holded) tras completar el upsert F1.
+//
+// Recibe un handoff JWT (query `handoff`) firmado con VERIFACTU_APP_SHARED_SECRET
+// (audience 'holded-oauth-handoff', TTL 60s) que contiene:
+//   - OAuth context: clientId, redirectUri, state, scope, codeChallenge,
+//     codeChallengeMethod
+//   - User context post-F1: userId, tenantId, personalEmail
+//   - Credencial: holdedApiKey (sin cifrar dentro del JWT firmado, mismo
+//     nivel de exposición que el form submission original)
+//
+// Valida el handoff, mintea el authorization code y 302 a redirect_uri.
+oauthRouter.get('/finalize-from-form', async (req: Request, res: Response) => {
+  res.set('Cache-Control', 'no-store');
+
+  const handoff = typeof req.query?.handoff === 'string' ? req.query.handoff.trim() : '';
+  if (!handoff) {
+    res.status(400).send('handoff token requerido.');
+    return;
+  }
+
+  if (!config.VERIFACTU_APP_SHARED_SECRET) {
+    logger.error('[oauth/finalize-from-form] VERIFACTU_APP_SHARED_SECRET not configured');
+    res.status(500).send('Servidor mal configurado.');
+    return;
+  }
+
+  let payload: Record<string, unknown>;
+  try {
+    const verified = await jwtVerify(
+      handoff,
+      new TextEncoder().encode(config.VERIFACTU_APP_SHARED_SECRET),
+      {
+        audience: 'holded-oauth-handoff',
+        issuer: 'holded-claude-wrapper',
+      }
+    );
+    payload = verified.payload as Record<string, unknown>;
+  } catch (err) {
+    logger.warn('[oauth/finalize-from-form] handoff verification failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
+    res.status(400).send('handoff inválido o expirado.');
+    return;
+  }
+
+  const clientId = typeof payload.client_id === 'string' ? payload.client_id : '';
+  const redirectUri = typeof payload.redirect_uri === 'string' ? payload.redirect_uri : '';
+  const state = typeof payload.state === 'string' ? payload.state : '';
+  const scope =
+    typeof payload.scope === 'string' && payload.scope.trim() ? payload.scope : DEFAULT_OAUTH_SCOPE;
+  const codeChallenge = typeof payload.code_challenge === 'string' ? payload.code_challenge : null;
+  const codeChallengeMethod = payload.code_challenge_method === 'S256' ? ('S256' as const) : null;
+  const userId = typeof payload.uid === 'string' ? payload.uid : null;
+  const tenantId = typeof payload.tid === 'string' ? payload.tid : null;
+  const personalEmail = typeof payload.em === 'string' ? payload.em : null;
+  const holdedApiKey = typeof payload.hak === 'string' ? payload.hak : '';
+
+  if (!clientId || !redirectUri || !holdedApiKey) {
+    res.status(400).send('handoff incompleto.');
+    return;
+  }
+
+  if (!isAllowedRedirectUri(redirectUri)) {
+    res.status(400).send('redirect_uri no autorizado.');
+    return;
+  }
+
+  const normalizedScope = normalizeOAuthScope(scope);
+  if (!normalizedScope) {
+    res.status(400).send('scope no autorizado.');
+    return;
+  }
+
+  if (codeChallenge && !isValidPkceCodeChallenge(codeChallenge)) {
+    res.status(400).send('code_challenge invalido');
+    return;
+  }
+
+  const code = await createAuthorizationCode({
+    holdedApiKey,
+    clientId,
+    redirectUri,
+    scope: normalizedScope,
+    codeChallenge,
+    codeChallengeMethod,
+    userId,
+    tenantId,
+    personalEmail,
+  });
+
+  logger.info(`[oauth/finalize-from-form] code generado para ${clientId}`, {
+    uid: userId ?? 'legacy',
+    tid: tenantId ?? null,
+  });
+
+  const callbackUrl = new URL(redirectUri);
+  callbackUrl.searchParams.set('code', code);
+  if (state) callbackUrl.searchParams.set('state', state);
+  res.redirect(302, callbackUrl.toString());
 });
 
 oauthRouter.post('/authorize', async (req: Request, res: Response) => {

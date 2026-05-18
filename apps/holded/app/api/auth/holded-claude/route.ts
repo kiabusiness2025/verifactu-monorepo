@@ -15,6 +15,7 @@ import {
   signSessionToken,
   verifySessionToken,
 } from '@/app/lib/session';
+import { SignJWT } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -201,14 +202,76 @@ export async function POST(request: NextRequest) {
     maxAgeSeconds: SESSION_MAX_AGE_SECONDS,
   });
 
+  // ──────────────────────────────────────────────────────────────────────
+  // 2026-05-18 (II): si el `next` apunta al /oauth/authorize de holded-mcp,
+  // saltamos el viejo consent screen HTML y redirigimos directamente al
+  // nuevo endpoint /oauth/finalize-from-form con un handoff JWT firmado.
+  //
+  // El handoff JWT (HS256, audience 'holded-oauth-handoff', TTL 60s)
+  // contiene todo el contexto necesario para mintear el authorization
+  // code sin volver a pasar por el consent screen:
+  //   - OAuth: client_id, redirect_uri, state, scope, code_challenge,
+  //     code_challenge_method
+  //   - User: uid (User.id), tid (tenantId), em (personalEmail)
+  //   - Credencial: hak (holdedApiKey raw — mismo nivel de exposición que
+  //     el form submit original)
+  //
+  // Se firma con VERIFACTU_APP_SHARED_SECRET (compartido server-to-server
+  // con apps/holded-mcp). Si por config no hay shared secret, caemos al
+  // redirect original al /oauth/authorize (modo legacy con consent screen).
   let redirectUrl = sanitizeHoldedReturnTarget(normalizedNext || undefined, '/dashboard');
   try {
     const parsedRedirect = new URL(redirectUrl);
     if (parsedRedirect.pathname === '/oauth/authorize') {
-      parsedRedirect.searchParams.set('connection_confirmed', '1');
-      parsedRedirect.searchParams.set('connected_provider_account_id', upsertJson.connectionId);
-      parsedRedirect.searchParams.set('tenant_id', tenantId);
-      redirectUrl = parsedRedirect.toString();
+      const sharedSecret = process.env.VERIFACTU_APP_SHARED_SECRET?.trim();
+      if (sharedSecret && sharedSecret.length >= 16) {
+        const sp = parsedRedirect.searchParams;
+        const handoffPayload = {
+          client_id: sp.get('client_id') ?? '',
+          redirect_uri: sp.get('redirect_uri') ?? '',
+          state: sp.get('state') ?? '',
+          scope: sp.get('scope') ?? 'holded:read holded:write',
+          code_challenge: sp.get('code_challenge') ?? '',
+          code_challenge_method: sp.get('code_challenge_method') === 'S256' ? 'S256' : '',
+          uid: userId,
+          tid: tenantId,
+          em: normalizedEmail,
+          hak: normalizedApiKey,
+        };
+
+        try {
+          const handoffJwt = await new SignJWT(handoffPayload)
+            .setProtectedHeader({ alg: 'HS256' })
+            .setIssuer('holded-claude-wrapper')
+            .setAudience('holded-oauth-handoff')
+            .setIssuedAt()
+            .setExpirationTime('60s')
+            .sign(new TextEncoder().encode(sharedSecret));
+
+          // El origin del finalize endpoint es el mismo del /oauth/authorize
+          // recibido en `next` (claude.verifactu.business). Reutilizamos el
+          // origin parseado para no hardcodear el dominio aquí.
+          const finalizeUrl = new URL('/oauth/finalize-from-form', parsedRedirect.origin);
+          finalizeUrl.searchParams.set('handoff', handoffJwt);
+          redirectUrl = finalizeUrl.toString();
+        } catch (signErr) {
+          console.warn(
+            '[holded-claude] handoff JWT sign failed, falling back to consent screen redirect',
+            signErr
+          );
+          parsedRedirect.searchParams.set('connection_confirmed', '1');
+          parsedRedirect.searchParams.set('connected_provider_account_id', upsertJson.connectionId);
+          parsedRedirect.searchParams.set('tenant_id', tenantId);
+          redirectUrl = parsedRedirect.toString();
+        }
+      } else {
+        // Sin shared secret no podemos firmar el handoff — fallback al
+        // comportamiento anterior (legacy consent screen).
+        parsedRedirect.searchParams.set('connection_confirmed', '1');
+        parsedRedirect.searchParams.set('connected_provider_account_id', upsertJson.connectionId);
+        parsedRedirect.searchParams.set('tenant_id', tenantId);
+        redirectUrl = parsedRedirect.toString();
+      }
     }
   } catch {
     // Relative path — no OAuth flags needed
