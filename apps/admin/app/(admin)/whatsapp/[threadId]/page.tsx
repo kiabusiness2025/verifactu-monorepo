@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { adminGet, adminPatch, adminPost } from '@/lib/adminApi';
 import {
   ArrowLeft,
@@ -11,9 +12,13 @@ import {
   Loader2,
   RefreshCw,
   Send,
+  Smile,
   Sparkles,
   User2,
 } from 'lucide-react';
+import type { EmojiClickData } from 'emoji-picker-react';
+
+const EmojiPicker = dynamic(() => import('emoji-picker-react'), { ssr: false });
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -67,6 +72,7 @@ export default function ThreadDetailPage() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [pollKey, setPollKey] = useState(0);
+  const [showEmoji, setShowEmoji] = useState(false);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -141,6 +147,11 @@ export default function ThreadDetailPage() {
       e.preventDefault();
       sendMessage();
     }
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setMessage((m) => m + emojiData.emoji);
+    setShowEmoji(false);
   };
 
   if (loading) {
@@ -311,28 +322,47 @@ export default function ThreadDetailPage() {
             El bot está activo — activa el modo humano para responder manualmente.
           </div>
         ) : (
-          <div className="flex items-end gap-3">
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Escribe un mensaje... (Enter para enviar, Shift+Enter para nueva línea)"
-              rows={2}
-              className="flex-1 resize-none border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 placeholder:text-slate-400"
-            />
-            <button
-              type="button"
-              title="Enviar mensaje"
-              onClick={sendMessage}
-              disabled={sending || !message.trim()}
-              className="flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
-            >
-              {sending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </button>
+          <div className="relative">
+            {showEmoji && (
+              <div className="absolute bottom-14 right-0 z-50">
+                <EmojiPicker onEmojiClick={onEmojiClick} height={380} width={320} />
+              </div>
+            )}
+            <div className="flex items-end gap-3">
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Escribe un mensaje... (Enter para enviar, Shift+Enter para nueva línea)"
+                rows={2}
+                className="flex-1 resize-none border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 placeholder:text-slate-400"
+              />
+              <button
+                type="button"
+                title="Emoji"
+                onClick={() => setShowEmoji((v) => !v)}
+                className={`flex items-center justify-center h-10 w-10 rounded-xl border transition-colors shrink-0 ${
+                  showEmoji
+                    ? 'bg-amber-50 border-amber-300 text-amber-600'
+                    : 'border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50'
+                }`}
+              >
+                <Smile className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                title="Enviar mensaje"
+                onClick={sendMessage}
+                disabled={sending || !message.trim()}
+                className="flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+              >
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>

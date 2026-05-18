@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { adminGet } from '@/lib/adminApi';
-import { MessageSquare, Bot, User2, RefreshCw } from 'lucide-react';
+import { MessageSquare, Bot, User2, RefreshCw, Tag } from 'lucide-react';
 
 type Stats = {
   threads: { total: number; open: number; human: number };
@@ -71,14 +71,23 @@ export default function WhatsAppPage() {
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-slate-900">WhatsApp</h1>
-        <button
-          type="button"
-          onClick={() => setRefreshKey((k) => k + 1)}
-          className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
-        >
-          <RefreshCw className="h-4 w-4" />
-          Actualizar
-        </button>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/whatsapp/templates"
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <Tag className="h-4 w-4" />
+            Plantillas
+          </Link>
+          <button
+            type="button"
+            onClick={() => setRefreshKey((k) => k + 1)}
+            className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Actualizar
+          </button>
+        </div>
       </div>
 
       {/* Stats */}

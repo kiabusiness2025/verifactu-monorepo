@@ -31,9 +31,35 @@ import {
   ISAAK_URLS,
   WA_RESPONSE_FORMAT_INSTRUCTIONS,
 } from '@/app/lib/fiscal-knowledge';
+import { franc } from 'franc-min';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// ── Detección de idioma ───────────────────────────────────────────────────────
+
+const FRANC_TO_BCP47: Record<string, string> = {
+  spa: 'es',
+  eng: 'en',
+  cat: 'ca',
+  fra: 'fr',
+  por: 'pt',
+  deu: 'de',
+  ita: 'it',
+  nld: 'nl',
+};
+
+async function detectAndSaveLanguage(threadId: string, text: string): Promise<void> {
+  if (text.length < 20) return; // too short to be reliable
+  const iso3 = franc(text, { minLength: 10 });
+  if (!iso3 || iso3 === 'und') return;
+  const lang = FRANC_TO_BCP47[iso3];
+  if (!lang) return;
+  await prisma.whatsAppThread.update({
+    where: { id: threadId },
+    data: { language: lang },
+  });
+}
 
 // ── Mapeo de IDs interactivos → queries Isaak ────────────────────────────────
 
@@ -69,6 +95,64 @@ const PERIOD_AMBIGUOUS_RE =
 
 function needsPeriodClarification(text: string): boolean {
   return PERIOD_AMBIGUOUS_RE.test(text.trim());
+}
+
+// ── Detección de intent: suscripción ─────────────────────────────────────────
+
+const SUBSCRIPTION_INTENT_RE =
+  /\b(suscripci[oó]n|suscrib|contratar?|precio|precios|planes?|tarifa|premium|pago|pagar|cuanto cuesta|quanto vale|cuesta isaak|precio isaak)\b/i;
+
+function isSubscriptionIntent(text: string): boolean {
+  return SUBSCRIPTION_INTENT_RE.test(text);
+}
+
+async function sendSubscriptionGuide(to: string): Promise<void> {
+  const msg =
+    `*Planes Isaak* 🚀\n\n` +
+    `• *Gratuito* — asesor fiscal IA sin conexión a datos\n` +
+    `• *Pro* — conecta Holded, alertas de plazos, IVA estimado\n` +
+    `• *Business* — todo Pro + cashflow, exportaciones y soporte prioritario\n\n` +
+    `Empieza gratis, sin tarjeta de crédito.`;
+  await sendWhatsAppCtaUrl(to, msg, 'Ver planes y precios', ISAAK_URLS.pricing);
+}
+
+// ── Detección de intent: conectores ──────────────────────────────────────────
+
+const CONNECTOR_INTENT_RE =
+  /\b(holded|conectar?|conector|integraci[oó]n|claude desktop|chatgpt|gpt|mcp|conectores?)\b/i;
+
+function isConnectorIntent(text: string): boolean {
+  return CONNECTOR_INTENT_RE.test(text);
+}
+
+async function sendConnectorGuide(to: string): Promise<void> {
+  await sendWhatsAppList(
+    to,
+    'Conecta Holded con tu IA favorita y accede a tus datos directamente desde el chat:',
+    'Ver conectores',
+    [
+      {
+        title: 'Conectores disponibles',
+        rows: [
+          {
+            id: 'guide_connector_claude',
+            title: 'Conector Claude Desktop',
+            description: 'Usa Claude Desktop con tus datos de Holded via MCP',
+          },
+          {
+            id: 'guide_connector_chatgpt',
+            title: 'Conector ChatGPT',
+            description: 'Usa ChatGPT con tus datos de Holded via plugin',
+          },
+          {
+            id: 'guide_isaak',
+            title: 'Isaak (app completa)',
+            description: 'Alertas, IVA estimado, cashflow y más',
+          },
+        ],
+      },
+    ]
+  );
 }
 
 // ── GET — verificación del webhook ───────────────────────────────────────────
@@ -164,15 +248,18 @@ async function handleIncomingText(input: {
   const tenantId = await findTenantIdByPhone(from);
   const threadId = await upsertWhatsAppThread(from, tenantId);
 
-  await saveWhatsAppEvent({
-    threadId,
-    tenantId,
-    providerMessageId: messageId,
-    direction: 'inbound',
-    eventType: 'text',
-    body: text,
-    payload: { from, senderName },
-  }).catch(() => {});
+  await Promise.all([
+    saveWhatsAppEvent({
+      threadId,
+      tenantId,
+      providerMessageId: messageId,
+      direction: 'inbound',
+      eventType: 'text',
+      body: text,
+      payload: { from, senderName },
+    }).catch(() => {}),
+    detectAndSaveLanguage(threadId, text),
+  ]);
 
   // Saludo → menú de bienvenida (WA-II: list) — para TODOS, con o sin cuenta
   if (isGreeting(text)) {
@@ -191,6 +278,20 @@ async function handleIncomingText(input: {
       { id: 'period_year', title: 'Año completo' },
     ]);
     await saveOutboundEvent(threadId, tenantId, clarBody);
+    return;
+  }
+
+  // Intent: suscripción → guía de planes sin LLM
+  if (isSubscriptionIntent(text)) {
+    await sendSubscriptionGuide(normalizePhone(from));
+    await saveOutboundEvent(threadId, tenantId, '[guide_subscription]');
+    return;
+  }
+
+  // Intent: conectores → guía de conectores sin LLM
+  if (isConnectorIntent(text)) {
+    await sendConnectorGuide(normalizePhone(from));
+    await saveOutboundEvent(threadId, tenantId, '[guide_connector]');
     return;
   }
 
@@ -281,6 +382,37 @@ async function handleInteractiveReply(input: {
       ISAAK_URLS.pricing
     ).catch(() => {});
     await saveOutboundEvent(threadId, tenantId, '[cta_planes]');
+    return;
+  }
+
+  // Guía de conector Claude Desktop
+  if (replyId === 'guide_connector_claude') {
+    await sendWhatsAppCtaUrl(
+      normalizePhone(from),
+      '*Conector Claude Desktop + Holded* 🤖\n\nConecta Claude Desktop con tu cuenta de Holded mediante MCP (Model Context Protocol). Accede a facturas, clientes, gastos y más directamente desde el chat de Claude.',
+      'Instalar conector Claude',
+      ISAAK_URLS.connectorClaude
+    ).catch(() => {});
+    await saveOutboundEvent(threadId, tenantId, '[cta_connector_claude]');
+    return;
+  }
+
+  // Guía de conector ChatGPT
+  if (replyId === 'guide_connector_chatgpt') {
+    await sendWhatsAppCtaUrl(
+      normalizePhone(from),
+      '*Conector ChatGPT + Holded* 🤖\n\nConecta ChatGPT con tu cuenta de Holded. Consulta tus datos financieros, facturas y clientes directamente desde ChatGPT.',
+      'Instalar conector ChatGPT',
+      ISAAK_URLS.connectorChatGPT
+    ).catch(() => {});
+    await saveOutboundEvent(threadId, tenantId, '[cta_connector_chatgpt]');
+    return;
+  }
+
+  // Guía Isaak app
+  if (replyId === 'guide_isaak') {
+    await sendSubscriptionGuide(normalizePhone(from));
+    await saveOutboundEvent(threadId, tenantId, '[cta_isaak_from_guide]');
     return;
   }
 
