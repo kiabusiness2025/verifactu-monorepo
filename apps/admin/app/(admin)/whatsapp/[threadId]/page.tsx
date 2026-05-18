@@ -9,7 +9,9 @@ import {
   ArrowLeft,
   Bot,
   ChevronRight,
+  FileText,
   Loader2,
+  Paperclip,
   RefreshCw,
   Send,
   Smile,
@@ -73,6 +75,8 @@ export default function ThreadDetailPage() {
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [pollKey, setPollKey] = useState(0);
   const [showEmoji, setShowEmoji] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -152,6 +156,34 @@ export default function ThreadDetailPage() {
   const onEmojiClick = (emojiData: EmojiClickData) => {
     setMessage((m) => m + emojiData.emoji);
     setShowEmoji(false);
+  };
+
+  const onFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !thread || thread.mode !== 'human') return;
+    setUploadingFile(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`/api/admin/whatsapp/threads/${threadId}/send-media`, {
+        method: 'POST',
+        body: form,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ error: 'Error desconocido' }));
+        alert(`Error al enviar archivo: ${err.error}`);
+        return;
+      }
+      const { event } = (await res.json()) as { event: WaEvent };
+      setThread((t) =>
+        t ? { ...t, events: [...t.events, event], lastMessageAt: event.occurredAt } : t
+      );
+    } catch {
+      alert('Error al enviar el archivo');
+    } finally {
+      setUploadingFile(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   if (loading) {
@@ -261,12 +293,12 @@ export default function ThreadDetailPage() {
                       : 'bg-white text-slate-800 border border-slate-200 rounded-bl-sm shadow-sm'
                   }`}
                 >
-                  <p className="whitespace-pre-wrap leading-relaxed">{ev.body}</p>
+                  <MessageBubbleContent ev={ev} />
                   <div
                     className={`text-xs mt-1 ${ev.direction === 'outbound' ? 'text-emerald-200' : 'text-slate-400'}`}
                   >
                     {formatTime(ev.occurredAt)}
-                    {ev.eventType === 'human_message' && (
+                    {(ev.eventType === 'human_message' || ev.eventType.startsWith('human_')) && (
                       <span className="ml-1.5 opacity-75">· admin</span>
                     )}
                   </div>
@@ -328,7 +360,7 @@ export default function ThreadDetailPage() {
                 <EmojiPicker onEmojiClick={onEmojiClick} height={380} width={320} />
               </div>
             )}
-            <div className="flex items-end gap-3">
+            <div className="flex items-end gap-2">
               <textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -337,6 +369,7 @@ export default function ThreadDetailPage() {
                 rows={2}
                 className="flex-1 resize-none border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800 placeholder:text-slate-400"
               />
+              {/* Emoji */}
               <button
                 type="button"
                 title="Emoji"
@@ -349,6 +382,29 @@ export default function ThreadDetailPage() {
               >
                 <Smile className="h-5 w-5" />
               </button>
+              {/* File attachment */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                title="Adjuntar archivo"
+                className="hidden"
+                accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.mp3,.ogg,.mp4"
+                onChange={onFileChange}
+              />
+              <button
+                type="button"
+                title="Adjuntar archivo"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingFile}
+                className="flex items-center justify-center h-10 w-10 rounded-xl border border-slate-200 text-slate-400 hover:text-slate-700 hover:bg-slate-50 transition-colors shrink-0 disabled:opacity-50"
+              >
+                {uploadingFile ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Paperclip className="h-5 w-5" />
+                )}
+              </button>
+              {/* Send */}
               <button
                 type="button"
                 title="Enviar mensaje"
@@ -364,6 +420,72 @@ export default function ThreadDetailPage() {
               </button>
             </div>
           </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ── Media bubble renderer ──────────────────────────────────────────────────────
+
+const MEDIA_EVENT_TYPES = new Set(['image', 'document', 'audio', 'video', 'sticker']);
+
+type EventPayload = {
+  mediaId?: string;
+  mimeType?: string;
+  filename?: string;
+  caption?: string;
+};
+
+function MessageBubbleContent({ ev }: { ev: WaEvent }) {
+  const isMedia =
+    MEDIA_EVENT_TYPES.has(ev.eventType) ||
+    ev.eventType.startsWith('human_image') ||
+    ev.eventType.startsWith('human_document') ||
+    ev.eventType.startsWith('human_audio') ||
+    ev.eventType.startsWith('human_video');
+
+  if (!isMedia) {
+    return <p className="whitespace-pre-wrap leading-relaxed">{ev.body}</p>;
+  }
+
+  const payload = (ev as WaEvent & { payload?: EventPayload }).payload as EventPayload | undefined;
+  const mediaId = payload?.mediaId;
+  const filename = payload?.filename;
+  const caption = payload?.caption;
+  const mimeType = payload?.mimeType ?? '';
+  const isImage =
+    mimeType.startsWith('image/') || ev.eventType === 'image' || ev.eventType === 'human_image';
+
+  if (isImage && mediaId) {
+    return (
+      <div className="space-y-1">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={`/api/admin/whatsapp/media/${mediaId}`}
+          alt={caption ?? 'imagen'}
+          className="rounded-xl max-w-full max-h-60 object-cover"
+        />
+        {caption && <p className="text-xs opacity-80">{caption}</p>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2.5">
+      <FileText className="h-8 w-8 shrink-0 opacity-70" />
+      <div className="min-w-0">
+        <p className="text-sm font-medium truncate">{filename ?? ev.eventType}</p>
+        {caption && <p className="text-xs opacity-75 truncate">{caption}</p>}
+        {mediaId && (
+          <a
+            href={`/api/admin/whatsapp/media/${mediaId}`}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs underline opacity-75 hover:opacity-100"
+          >
+            Descargar
+          </a>
         )}
       </div>
     </div>

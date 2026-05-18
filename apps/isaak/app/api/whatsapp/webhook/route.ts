@@ -207,6 +207,32 @@ async function processWebhookAsync(rawBody: string): Promise<void> {
             text: msg.text.body,
             senderName,
           }).catch((err) => console.error('[whatsapp/webhook] error en texto', err));
+        } else if (
+          (msg.type === 'image' ||
+            msg.type === 'document' ||
+            msg.type === 'audio' ||
+            msg.type === 'video' ||
+            msg.type === 'sticker') &&
+          (msg.image ?? msg.document ?? msg.audio ?? msg.video ?? msg.sticker)
+        ) {
+          await handleIncomingMedia({
+            from: msg.from,
+            messageId: msg.id,
+            type: msg.type as 'image' | 'document' | 'audio' | 'video' | 'sticker',
+            mediaId: (msg.image?.id ??
+              msg.document?.id ??
+              msg.audio?.id ??
+              msg.video?.id ??
+              msg.sticker?.id)!,
+            mimeType: (msg.image?.mime_type ??
+              msg.document?.mime_type ??
+              msg.audio?.mime_type ??
+              msg.video?.mime_type ??
+              msg.sticker?.mime_type)!,
+            caption: msg.image?.caption ?? msg.document?.caption ?? msg.video?.caption,
+            filename: msg.document?.filename,
+            senderName,
+          }).catch((err) => console.error('[whatsapp/webhook] error en media', err));
         } else if (msg.type === 'interactive' && msg.interactive) {
           if (msg.interactive.type === 'nfm_reply' && msg.interactive.nfm_reply) {
             await handleFlowReply({
@@ -337,6 +363,65 @@ async function handleFlowReply(input: {
   }
 
   await runIsaakPipeline({ from, threadId, tenantId, text: query, senderName });
+}
+
+// ── Mensaje de media entrante ────────────────────────────────────────────────
+
+const MEDIA_LABELS: Record<string, string> = {
+  image: '🖼 Imagen',
+  document: '📄 Documento',
+  audio: '🎤 Audio',
+  video: '🎬 Vídeo',
+  sticker: '🎭 Sticker',
+};
+
+async function handleIncomingMedia(input: {
+  from: string;
+  messageId: string;
+  type: 'image' | 'document' | 'audio' | 'video' | 'sticker';
+  mediaId: string;
+  mimeType: string;
+  caption?: string;
+  filename?: string;
+  senderName: string | null;
+}): Promise<void> {
+  const { from, messageId, type, mediaId, mimeType, caption, filename, senderName } = input;
+  const tenantId = await findTenantIdByPhone(from);
+  const threadId = await upsertWhatsAppThread(from, tenantId);
+
+  const bodyLabel = `[${MEDIA_LABELS[type] ?? type}${caption ? ': ' + caption : ''}]`;
+
+  await saveWhatsAppEvent({
+    threadId,
+    tenantId,
+    providerMessageId: messageId,
+    direction: 'inbound',
+    eventType: type,
+    body: bodyLabel,
+    payload: { from, senderName, mediaId, mimeType, filename, caption },
+  }).catch(() => {});
+
+  // Check if thread is in human mode — bot doesn't respond for human-managed threads
+  const thread = await prisma.whatsAppThread.findUnique({
+    where: { id: threadId },
+    select: { mode: true },
+  });
+  if (thread?.mode === 'human') return;
+
+  // Acknowledge with a friendly message + optionally ask follow-up
+  const ack =
+    type === 'document'
+      ? `He recibido tu documento *${filename ?? 'adjunto'}*. ¿Qué necesitas hacer con él?`
+      : type === 'audio'
+        ? 'He recibido tu mensaje de voz. Por el momento solo proceso texto — escribe tu consulta y te ayudo.'
+        : type === 'sticker'
+          ? '👍'
+          : caption
+            ? `He recibido tu ${MEDIA_LABELS[type]}. ${caption}. ¿En qué te puedo ayudar?`
+            : `He recibido tu ${MEDIA_LABELS[type]}. ¿En qué te puedo ayudar?`;
+
+  await sendWhatsAppText(normalizePhone(from), ack);
+  await saveOutboundEvent(threadId, tenantId, ack);
 }
 
 // ── Respuesta interactiva (botón / lista seleccionada) ───────────────────────

@@ -16,8 +16,13 @@ export type WaIncomingMessage = {
   from: string; // número E.164 sin "+"
   id: string;
   timestamp: string;
-  type: 'text' | 'audio' | 'image' | 'document' | 'interactive' | string;
+  type: 'text' | 'audio' | 'image' | 'document' | 'video' | 'sticker' | 'interactive' | string;
   text?: { body: string };
+  image?: { id: string; mime_type: string; sha256: string; caption?: string };
+  document?: { id: string; mime_type: string; sha256: string; filename?: string; caption?: string };
+  audio?: { id: string; mime_type: string; sha256: string; voice?: boolean };
+  video?: { id: string; mime_type: string; sha256: string; caption?: string };
+  sticker?: { id: string; mime_type: string; sha256: string; animated?: boolean };
   interactive?: {
     type: 'button_reply' | 'list_reply' | 'nfm_reply';
     button_reply?: { id: string; title: string };
@@ -394,6 +399,73 @@ export function verifyWebhookSignature(rawBody: string, signature: string): bool
 export function truncateForWhatsApp(text: string, maxLen = 4000): string {
   if (text.length <= maxLen) return text;
   return text.slice(0, maxLen - 3) + '…';
+}
+
+/** Sube un archivo a los servidores de Meta y devuelve el media_id */
+export async function uploadWhatsAppMedia(file: Blob, mimeType: string): Promise<string> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+
+  const form = new FormData();
+  form.append('messaging_product', 'whatsapp');
+  form.append('type', mimeType);
+  form.append('file', file, 'attachment');
+
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/media`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`[whatsapp] media upload failed ${res.status}: ${err}`);
+  }
+  const data = (await res.json()) as { id: string };
+  return data.id;
+}
+
+export type WaMediaType = 'image' | 'document' | 'audio' | 'video';
+
+/** Envía un mensaje de media usando un media_id ya subido */
+export async function sendWhatsAppMedia(
+  to: string,
+  mediaId: string,
+  mediaType: WaMediaType,
+  caption?: string,
+  filename?: string
+): Promise<void> {
+  const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+
+  const mediaPayload: Record<string, unknown> = { id: mediaId };
+  if (caption) mediaPayload.caption = caption;
+  if (filename && mediaType === 'document') mediaPayload.filename = filename;
+
+  const res = await fetch(`${WA_BASE}/${phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to,
+      type: mediaType,
+      [mediaType]: mediaPayload,
+    }),
+  });
+  if (!res.ok) {
+    const err = await res.text().catch(() => '');
+    throw new Error(`[whatsapp] send media failed ${res.status}: ${err}`);
+  }
+}
+
+/** Obtiene la URL de descarga de un media_id de Meta */
+export async function getWhatsAppMediaUrl(mediaId: string): Promise<string> {
+  const token = process.env.WHATSAPP_ACCESS_TOKEN!;
+  const res = await fetch(`${WA_BASE}/${mediaId}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error(`[whatsapp] media url fetch failed ${res.status}`);
+  const data = (await res.json()) as { url: string };
+  return data.url;
 }
 
 /** Elimina markdown que WhatsApp no renderiza (**, ##, etc.) */
