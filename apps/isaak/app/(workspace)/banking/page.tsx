@@ -7,10 +7,12 @@ import {
   ArrowUpRight,
   Building2,
   CheckCircle2,
+  GitMerge,
   Landmark,
   Loader2,
   RefreshCw,
   Unlink,
+  X,
 } from 'lucide-react';
 
 type Account = {
@@ -37,6 +39,28 @@ type Transaction = {
   payer: string | null;
 };
 
+type ReconcileStats = {
+  total: number;
+  reconciled: number;
+  pending: number;
+};
+
+type ReconcileSuggestion = {
+  tx: {
+    id: string;
+    amount: number;
+    madeOn: string;
+    description: string | null;
+    payee: string | null;
+    category: string | null;
+  };
+  candidates: {
+    expenseId: string;
+    score: number;
+    evidenceReasons: string[];
+  }[];
+};
+
 function fmtMoney(amount: number, currency = 'EUR') {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(amount);
 }
@@ -57,6 +81,13 @@ export default function BankingPage() {
   const [syncing, setSyncing] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'movements' | 'reconcile'>('movements');
+
+  // Reconciliation state
+  const [reconcileStats, setReconcileStats] = useState<ReconcileStats | null>(null);
+  const [suggestions, setSuggestions] = useState<ReconcileSuggestion[]>([]);
+  const [reconciling, setReconciling] = useState(false);
+  const [confirmingTx, setConfirmingTx] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -83,6 +114,18 @@ export default function BankingPage() {
     }
   }, []);
 
+  const loadReconcile = useCallback(async () => {
+    const res = await fetch('/api/isaak/banking/reconcile');
+    if (res.ok) {
+      const data = (await res.json()) as {
+        stats: ReconcileStats;
+        suggestions: ReconcileSuggestion[];
+      };
+      setReconcileStats(data.stats ?? null);
+      setSuggestions(data.suggestions ?? []);
+    }
+  }, []);
+
   useEffect(() => {
     void load();
   }, [load]);
@@ -90,8 +133,9 @@ export default function BankingPage() {
   useEffect(() => {
     if (accounts.length > 0) {
       void loadTransactions(selectedAccount ?? undefined);
+      void loadReconcile();
     }
-  }, [accounts, selectedAccount, loadTransactions]);
+  }, [accounts, selectedAccount, loadTransactions, loadReconcile]);
 
   async function handleConnect() {
     setConnecting(true);
@@ -119,10 +163,54 @@ export default function BankingPage() {
       await fetch('/api/isaak/banking/saltedge/transactions', { method: 'POST' });
       await load();
       await loadTransactions(selectedAccount ?? undefined);
+      await loadReconcile();
     } catch {
       setError('Error al sincronizar.');
     } finally {
       setSyncing(false);
+    }
+  }
+
+  async function handleRunReconcile() {
+    setReconciling(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/isaak/banking/reconcile', { method: 'POST' });
+      if (res.ok) {
+        await loadReconcile();
+      }
+    } catch {
+      setError('Error al ejecutar la conciliación.');
+    } finally {
+      setReconciling(false);
+    }
+  }
+
+  async function handleConfirm(txId: string, expenseId: string) {
+    setConfirmingTx(txId);
+    try {
+      await fetch('/api/isaak/banking/reconcile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'confirm', txId, expenseId }),
+      });
+      await loadReconcile();
+    } finally {
+      setConfirmingTx(null);
+    }
+  }
+
+  async function handleDismiss(txId: string) {
+    setConfirmingTx(txId);
+    try {
+      await fetch('/api/isaak/banking/reconcile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss', txId }),
+      });
+      await loadReconcile();
+    } finally {
+      setConfirmingTx(null);
     }
   }
 
@@ -202,9 +290,9 @@ export default function BankingPage() {
           </div>
         ) : (
           <>
-            {/* ── Balance summary ── */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="col-span-1 overflow-hidden rounded-xl border border-[#2361d8]/15 bg-[#2361d8]/5 px-4 py-3 sm:col-span-2">
+            {/* ── Balance + stats summary ── */}
+            <div className="grid gap-3 sm:grid-cols-4">
+              <div className="col-span-2 overflow-hidden rounded-xl border border-[#2361d8]/15 bg-[#2361d8]/5 px-4 py-3">
                 <p className="text-[11px] font-medium text-[#2361d8]/70">Saldo total</p>
                 <p className="mt-0.5 text-[22px] font-bold text-[#011c67]">
                   {fmtMoney(totalBalance)}
@@ -213,6 +301,12 @@ export default function BankingPage() {
               <div className="overflow-hidden rounded-xl border border-slate-200 bg-white px-4 py-3">
                 <p className="text-[11px] font-medium text-slate-500">Cuentas</p>
                 <p className="mt-0.5 text-[22px] font-bold text-slate-800">{accounts.length}</p>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-amber-100 bg-amber-50 px-4 py-3">
+                <p className="text-[11px] font-medium text-amber-600">Sin conciliar</p>
+                <p className="mt-0.5 text-[22px] font-bold text-amber-800">
+                  {reconcileStats?.pending ?? '—'}
+                </p>
               </div>
             </div>
 
@@ -264,72 +358,262 @@ export default function BankingPage() {
               </ul>
             </div>
 
-            {/* ── Transactions ── */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="border-b border-slate-100 px-5 py-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-slate-700">
-                    Movimientos{selectedAccount ? ' — cuenta seleccionada' : ''}
+            {/* ── Tab bar ── */}
+            <div className="flex gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <button
+                type="button"
+                onClick={() => setActiveTab('movements')}
+                className={`flex-1 rounded-lg py-1.5 text-[12px] font-medium transition ${
+                  activeTab === 'movements'
+                    ? 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Movimientos
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('reconcile')}
+                className={`flex-1 rounded-lg py-1.5 text-[12px] font-medium transition ${
+                  activeTab === 'reconcile'
+                    ? 'bg-white text-slate-800 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                Conciliación
+                {(reconcileStats?.pending ?? 0) > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-semibold text-white">
+                    {reconcileStats!.pending}
                   </span>
-                  {selectedAccount && (
-                    <button
-                      type="button"
-                      onClick={() => setSelectedAccount(null)}
-                      className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600"
-                    >
-                      <Unlink size={10} />
-                      Ver todas
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {transactions.length === 0 ? (
-                <div className="px-5 py-8 text-center text-[13px] text-slate-400">
-                  No hay movimientos. Sincroniza para cargar los últimos 90 días.
-                </div>
-              ) : (
-                <ul className="divide-y divide-slate-50">
-                  {transactions.map((tx) => {
-                    const isIncome = tx.amount > 0;
-                    return (
-                      <li key={tx.id} className="flex items-center gap-4 px-5 py-3">
-                        <div
-                          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                            isIncome ? 'bg-emerald-50' : 'bg-rose-50'
-                          }`}
-                        >
-                          {isIncome ? (
-                            <ArrowDownLeft size={14} className="text-emerald-600" />
-                          ) : (
-                            <ArrowUpRight size={14} className="text-rose-500" />
-                          )}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[13px] font-medium text-slate-800">
-                            {tx.description ?? tx.payee ?? tx.payer ?? 'Sin descripción'}
-                          </p>
-                          <p className="mt-0.5 text-[11px] text-slate-400">
-                            {fmtDate(tx.madeOn)}
-                            {tx.category ? ` · ${tx.category}` : ''}
-                          </p>
-                        </div>
-                        <span
-                          className={`shrink-0 text-[13px] font-semibold ${
-                            isIncome ? 'text-emerald-600' : 'text-slate-700'
-                          }`}
-                        >
-                          {isIncome ? '+' : ''}
-                          {fmtMoney(tx.amount, tx.currency)}
-                        </span>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
+                )}
+              </button>
             </div>
 
-            {/* ── Reconnect ── */}
+            {/* ── Transactions tab ── */}
+            {activeTab === 'movements' && (
+              <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="border-b border-slate-100 px-5 py-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-semibold text-slate-700">
+                      Movimientos{selectedAccount ? ' — cuenta seleccionada' : ''}
+                    </span>
+                    {selectedAccount && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedAccount(null)}
+                        className="flex items-center gap-1 text-[11px] text-slate-400 hover:text-slate-600"
+                      >
+                        <Unlink size={10} />
+                        Ver todas
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {transactions.length === 0 ? (
+                  <div className="px-5 py-8 text-center text-[13px] text-slate-400">
+                    No hay movimientos. Sincroniza para cargar los últimos 90 días.
+                  </div>
+                ) : (
+                  <ul className="divide-y divide-slate-50">
+                    {transactions.map((tx) => {
+                      const isIncome = tx.amount > 0;
+                      return (
+                        <li key={tx.id} className="flex items-center gap-4 px-5 py-3">
+                          <div
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                              isIncome ? 'bg-emerald-50' : 'bg-rose-50'
+                            }`}
+                          >
+                            {isIncome ? (
+                              <ArrowDownLeft size={14} className="text-emerald-600" />
+                            ) : (
+                              <ArrowUpRight size={14} className="text-rose-500" />
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-[13px] font-medium text-slate-800">
+                              {tx.description ?? tx.payee ?? tx.payer ?? 'Sin descripción'}
+                            </p>
+                            <p className="mt-0.5 text-[11px] text-slate-400">
+                              {fmtDate(tx.madeOn)}
+                              {tx.category ? ` · ${tx.category}` : ''}
+                            </p>
+                          </div>
+                          <span
+                            className={`shrink-0 text-[13px] font-semibold ${
+                              isIncome ? 'text-emerald-600' : 'text-slate-700'
+                            }`}
+                          >
+                            {isIncome ? '+' : ''}
+                            {fmtMoney(tx.amount, tx.currency)}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            )}
+
+            {/* ── Reconciliation tab ── */}
+            {activeTab === 'reconcile' && (
+              <div className="space-y-3">
+                {/* Stats + run button */}
+                <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-sm">
+                  <div className="flex gap-6">
+                    <div>
+                      <p className="text-[11px] text-slate-400">Total gastos</p>
+                      <p className="text-[18px] font-bold text-slate-800">
+                        {reconcileStats?.total ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-slate-400">Conciliados</p>
+                      <p className="text-[18px] font-bold text-emerald-600">
+                        {reconcileStats?.reconciled ?? '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-slate-400">Pendientes</p>
+                      <p className="text-[18px] font-bold text-amber-600">
+                        {reconcileStats?.pending ?? '—'}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleRunReconcile()}
+                    disabled={reconciling}
+                    className="flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#1f55c0] disabled:opacity-60"
+                  >
+                    {reconciling ? (
+                      <Loader2 size={12} className="animate-spin" />
+                    ) : (
+                      <GitMerge size={12} />
+                    )}
+                    {reconciling ? 'Ejecutando…' : 'Reconciliar'}
+                  </button>
+                </div>
+
+                {/* Suggestions */}
+                {suggestions.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-white py-10 text-center shadow-sm">
+                    <CheckCircle2 size={28} className="text-emerald-400" />
+                    <p className="text-[13px] font-medium text-slate-600">
+                      Sin movimientos pendientes de conciliar
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      Sincroniza y ejecuta la conciliación para procesar nuevos movimientos
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                    <div className="border-b border-slate-100 px-5 py-3">
+                      <span className="text-[12px] font-semibold text-slate-700">
+                        Sugerencias de conciliación
+                      </span>
+                    </div>
+                    <ul className="divide-y divide-slate-50">
+                      {suggestions.map(({ tx, candidates }) => (
+                        <li key={tx.id} className="px-5 py-4">
+                          {/* Transaction row */}
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-50">
+                              <ArrowUpRight size={14} className="text-rose-500" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-2">
+                                <p className="truncate text-[13px] font-medium text-slate-800">
+                                  {tx.description ?? tx.payee ?? 'Sin descripción'}
+                                </p>
+                                <span className="shrink-0 text-[13px] font-semibold text-slate-700">
+                                  {fmtMoney(Math.abs(tx.amount))}
+                                </span>
+                              </div>
+                              <p className="mt-0.5 text-[11px] text-slate-400">
+                                {fmtDate(tx.madeOn)}
+                                {tx.category ? ` · ${tx.category}` : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Candidates */}
+                          {candidates.length > 0 ? (
+                            <div className="mt-3 space-y-2 pl-11">
+                              {candidates.map((c) => (
+                                <div
+                                  key={c.expenseId}
+                                  className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
+                                >
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                      <span
+                                        className={`inline-flex h-5 min-w-[36px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                                          c.score >= 85
+                                            ? 'bg-emerald-100 text-emerald-700'
+                                            : c.score >= 60
+                                              ? 'bg-amber-100 text-amber-700'
+                                              : 'bg-slate-200 text-slate-600'
+                                        }`}
+                                      >
+                                        {c.score}%
+                                      </span>
+                                      <p className="truncate text-[11px] text-slate-600">
+                                        {c.evidenceReasons.join(' · ')}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    disabled={confirmingTx === tx.id}
+                                    onClick={() => void handleConfirm(tx.id, c.expenseId)}
+                                    className="flex items-center gap-1 rounded-md bg-[#2361d8] px-2.5 py-1 text-[11px] font-semibold text-white transition hover:bg-[#1f55c0] disabled:opacity-50"
+                                  >
+                                    {confirmingTx === tx.id ? (
+                                      <Loader2 size={10} className="animate-spin" />
+                                    ) : (
+                                      <CheckCircle2 size={10} />
+                                    )}
+                                    Confirmar
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                disabled={confirmingTx === tx.id}
+                                onClick={() => void handleDismiss(tx.id)}
+                                className="flex items-center gap-1 text-[11px] text-slate-400 transition hover:text-slate-600 disabled:opacity-50"
+                              >
+                                <X size={10} />
+                                Descartar
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="mt-2 flex items-center justify-between pl-11">
+                              <p className="text-[11px] text-slate-400">
+                                Sin candidatos encontrados
+                              </p>
+                              <button
+                                type="button"
+                                disabled={confirmingTx === tx.id}
+                                onClick={() => void handleDismiss(tx.id)}
+                                className="flex items-center gap-1 text-[11px] text-slate-400 transition hover:text-slate-600 disabled:opacity-50"
+                              >
+                                <X size={10} />
+                                Descartar
+                              </button>
+                            </div>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Add another bank ── */}
             <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
               <div>
                 <p className="text-[12px] font-medium text-slate-700">

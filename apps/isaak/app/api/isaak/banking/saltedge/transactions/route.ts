@@ -10,6 +10,7 @@
  */
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
+import { reconcileTenant } from '@/app/lib/bank-reconciliation';
 import { listTransactions } from '@verifactu/integrations/saltedge';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -119,6 +120,9 @@ export async function POST(request: NextRequest) {
       nextId = nxt;
     } while (nextId);
   }
+
+  // Auto-reconcile after sync (fire-and-forget, no errors block the response)
+  void reconcileTenant(session.tenantId).catch((err) => console.error('[reconcile-auto]', err));
 
   return NextResponse.json({ synced: totalSynced });
 }
