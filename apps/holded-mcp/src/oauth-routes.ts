@@ -469,8 +469,16 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
 
   logger.info(`Cliente registrado: ${client_name ?? 'unknown'} (${clientId})`);
 
+  // 2026-05-18 (IV): añadimos client_name + client_uri al DCR response
+  // para que Claude Desktop tenga un handle claro de la marca. Algunos
+  // clientes MCP usan estos campos como fallback para resolver el icono
+  // (Claude fetcheaba antes la favicon del client_uri si logo_uri fallaba,
+  // y por defecto caía a la favicon de la PARENT domain — que era el
+  // logo "V" Verifactu en lugar del diamante Holded).
   res.status(201).json({
     client_id: clientId,
+    client_name: client_name ?? 'Holded',
+    client_uri: 'https://holded.verifactu.business/conectores/claude',
     client_secret: clientSecret,
     client_id_issued_at: Math.floor(Date.now() / 1000),
     client_secret_expires_at: 0,
@@ -478,7 +486,11 @@ oauthRouter.post('/register', async (req: Request, res: Response) => {
     grant_types: ['authorization_code'],
     response_types: ['code'],
     token_endpoint_auth_method: 'client_secret_post',
-    logo_uri: `${config.BASE_URL}/holded-diamond-logo.png?v=holded-diamond-2026-05-12`,
+    logo_uri: `${config.BASE_URL}/holded-diamond-logo.png?v=holded-diamond-2026-05-18`,
+    // Algunos clientes leen también policy_uri / tos_uri para mostrar
+    // links en la tarjeta del conector.
+    policy_uri: 'https://holded.verifactu.business/conectores/claude/privacy',
+    tos_uri: 'https://holded.verifactu.business/conectores/claude/terms',
   });
 });
 
