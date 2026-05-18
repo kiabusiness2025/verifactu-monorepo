@@ -29,6 +29,13 @@ import { installTestEnv, startTestServer, withHoldedFetchRecorder } from './help
 
 installTestEnv();
 
+// Estos tests cubren la mecánica de paginación client-side en
+// list_documents/list_contacts/list_products. list_products NO está expuesto
+// en el preset default `submission_v1` (8 tools), pero la mecánica que prueba
+// es la misma para los tres handlers. Forzamos `full` para tener acceso a
+// list_products vía MCP en estos tests E2E.
+process.env.HOLDED_MCP_TOOL_PRESET = 'full';
+
 function makeInvoices(n: number) {
   // Documentos ordenados por fecha descendente (más reciente primero), como
   // Holded los devuelve. Cada doc tiene un id estable para verificar slicing.

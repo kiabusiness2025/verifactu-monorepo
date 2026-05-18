@@ -1,42 +1,35 @@
 # Tools Manifest — Holded MCP for Claude
 
-**Total tools:** 24 (23 read-only + 1 write con confirmación humana)
+**Total tools expuestas (submission v2):** 8 (7 read-only + 1 write con confirmación humana)
+
+**Histórico:**
+
+- Inicialmente: 24 tools (catálogo completo en `apps/holded-mcp/src/tools/`)
+- **2026-05-18 (tarde):** estrechado a **8 tools** mediante el preset `submission_v1` (env var `HOLDED_MCP_TOOL_PRESET`), alineado con el set mínimo del conector ChatGPT. Las 16 tools "extra" siguen en el código pero no se registran en `tools/list`. Cuando Anthropic apruebe la submission v2 se reactivará el catálogo completo (`HOLDED_MCP_TOOL_PRESET=full`) como submission v3.
 
 **Anthropic Connectors Directory rule:** "Every tool must include either `readOnlyHint: true` or `destructiveHint: true`" — 30% de rechazos del directorio son por falta de annotations.
 
-**Resultado:** todas las 24 tools tienen annotations correctas (ver `apps/holded-mcp/src/tools/policy.ts`).
+**Resultado:** todas las 8 tools expuestas tienen annotations correctas (ver `apps/holded-mcp/src/tools/policy.ts`).
 
 ---
 
-## Read-only tools (23)
+## Read-only tools (7)
 
 Todas con `readOnlyHint: true`, `destructiveHint: false`, `idempotentHint: true`, `openWorldHint: false`.
 
-| Tool                     | Descripción humana                                                | Scope       |
-| ------------------------ | ----------------------------------------------------------------- | ----------- |
-| `list_documents`         | Listar facturas, presupuestos y documentos de Holded              | holded:read |
-| `get_document`           | Obtener detalle de un documento por ID o número                   | holded:read |
-| `get_document_pdf`       | Descargar PDF de un documento como base64                         | holded:read |
-| `list_contacts`          | Listar contactos (clientes, proveedores, deudores) con paginación | holded:read |
-| `get_contact`            | Obtener detalle de un contacto por ID                             | holded:read |
-| `list_crm_funnels`       | Listar funnels (pipelines de venta) del CRM                       | holded:read |
-| `list_leads`             | Listar leads del CRM                                              | holded:read |
-| `list_products`          | Listar productos del catálogo                                     | holded:read |
-| `get_product`            | Obtener detalle de un producto por ID                             | holded:read |
-| `list_products_stock`    | Listar productos con su stock disponible                          | holded:read |
-| `list_warehouses`        | Listar almacenes                                                  | holded:read |
-| `list_taxes`             | Listar tipos de impuesto configurados                             | holded:read |
-| `list_numbering_series`  | Listar series de numeración                                       | holded:read |
-| `list_projects`          | Listar proyectos activos                                          | holded:read |
-| `get_project`            | Obtener detalle de un proyecto por ID                             | holded:read |
-| `list_project_tasks`     | Listar tareas de un proyecto                                      | holded:read |
-| `list_time_records`      | Listar registros de tiempo (timesheet)                            | holded:read |
-| `get_chart_of_accounts`  | Plan contable (Chart of Accounts)                                 | holded:read |
-| `get_journal`            | Diario contable (Journal)                                         | holded:read |
-| `get_daily_book`         | Libro diario (Daily Book)                                         | holded:read |
-| `list_employees`         | Listar empleados                                                  | holded:read |
-| `get_employee`           | Obtener detalle de un empleado                                    | holded:read |
-| `list_treasury_accounts` | Listar cuentas de tesorería (bancos, caja)                        | holded:read |
+| Tool                    | Descripción humana                                                                          | Scope       |
+| ----------------------- | ------------------------------------------------------------------------------------------- | ----------- |
+| `list_documents`        | Listar facturas de venta, facturas de compra y otros documentos comerciales (por `docType`) | holded:read |
+| `get_document`          | Obtener detalle de un documento por tipo + ID                                               | holded:read |
+| `get_document_pdf`      | Descargar PDF de un documento como base64                                                   | holded:read |
+| `list_contacts`         | Listar contactos (clientes, proveedores, deudores) con paginación                           | holded:read |
+| `get_contact`           | Obtener detalle de un contacto por ID                                                       | holded:read |
+| `get_chart_of_accounts` | Plan contable (Chart of Accounts)                                                           | holded:read |
+| `get_journal`           | Libro diario contable, requiere rango de fechas explícito                                   | holded:read |
+
+**Tools del catálogo completo NO expuestas en submission v2** (reactivables vía `HOLDED_MCP_TOOL_PRESET=full` para submission v3):
+
+`get_daily_book` (duplicado conceptual de `get_journal`), `list_crm_funnels`, `list_leads`, `list_products`, `get_product`, `list_products_stock`, `list_warehouses`, `list_taxes`, `list_numbering_series`, `list_projects`, `get_project`, `list_project_tasks`, `list_time_records`, `list_employees`, `get_employee`, `list_treasury_accounts`.
 
 ---
 
@@ -87,4 +80,4 @@ curl https://claude.verifactu.business/mcp \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```
 
-Devuelve los 24 tools con sus annotations completas.
+Devuelve las 8 tools del preset `submission_v1` con sus annotations completas. Para verificar el catálogo completo (24 tools) seteando temporalmente la env var: `HOLDED_MCP_TOOL_PRESET=full pnpm dev` en local.
