@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdminSession } from '@/lib/admin-auth';
+import { requireAdminContext } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireAdminSession(req);
-  if (!auth.ok) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    await requireAdminContext(request);
+  } catch {
+    return NextResponse.json({ ok: false, error: 'No autorizado' }, { status: 401 });
+  }
 
   const { id: tenantId } = await params;
 
