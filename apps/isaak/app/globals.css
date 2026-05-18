@@ -98,3 +98,82 @@ button:focus-visible {
     transform: translateY(-3px);
   }
 }
+
+/* ── Landing page animations ────────────────────────────────────────────── */
+
+@keyframes isaakGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 0 40px rgba(59, 130, 246, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 70px rgba(59, 130, 246, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+}
+
+@keyframes isaakOrb {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(28px, -38px) scale(1.07);
+  }
+  66% {
+    transform: translate(-18px, 24px) scale(0.95);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes isaakOrb2 {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-22px, 30px) scale(0.93);
+  }
+  66% {
+    transform: translate(18px, -20px) scale(1.06);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes isaakSlideMsg {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes isaakBarReveal {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0% 0 0);
+  }
+}
+
+.isaak-glow {
+  animation: isaakGlow 5s ease-in-out infinite;
+}
+.isaak-orb {
+  animation: isaakOrb 12s ease-in-out infinite;
+}
+.isaak-orb-2 {
+  animation: isaakOrb2 16s ease-in-out infinite;
+}
+.isaak-slide-msg {
+  animation: isaakSlideMsg 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}

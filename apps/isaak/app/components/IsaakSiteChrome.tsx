@@ -12,12 +12,11 @@ type Props = {
 };
 
 const NAV_LINKS = [
-  { href: '/', label: 'Producto' },
-  { href: '/modos/excel', label: 'Modo Excel' },
+  { href: '/', label: 'Inicio' },
+  { href: '/#demo', label: 'Demo' },
   { href: '/conectores', label: 'Conectores' },
-  { href: '/developers', label: 'Developers' },
   { href: '/asesorias', label: 'Asesorías' },
-  { href: '/#permisos', label: 'Seguridad' },
+  { href: '/pricing', label: 'Precios' },
 ];
 
 export default function IsaakSiteChrome({ children }: Props) {
@@ -163,35 +162,32 @@ export default function IsaakSiteChrome({ children }: Props) {
 
           <div className="flex flex-wrap gap-4 text-xs font-semibold sm:text-sm">
             <Link href="/" className="hover:text-slate-900">
-              Producto
+              Inicio
             </Link>
-            <Link href="/modos/excel" className="hover:text-slate-900">
-              Modo Excel
+            <Link href="/#demo" className="hover:text-slate-900">
+              Demo
             </Link>
             <Link href="/conectores" className="hover:text-slate-900">
               Conectores
             </Link>
-            <Link href="/developers" className="hover:text-slate-900">
-              Developers
-            </Link>
             <Link href="/asesorias" className="hover:text-slate-900">
-              Asesorias
+              Asesorías
             </Link>
-            <Link href="/#permisos" className="hover:text-slate-900">
-              Seguridad
+            <Link href="/pricing" className="hover:text-slate-900">
+              Precios
+            </Link>
+            <Link href="/fiscal" className="hover:text-slate-900">
+              Alertas fiscales
             </Link>
             <Link href="/privacy" className="hover:text-slate-900">
               Privacidad
             </Link>
             <Link href="/terms" className="hover:text-slate-900">
-              Terminos
+              Términos
             </Link>
             <Link href="/support" className="hover:text-slate-900">
               Soporte
             </Link>
-            <a href="https://holded.verifactu.business/conectores" className="hover:text-slate-900">
-              Holded
-            </a>
           </div>
         </div>
       </footer>
