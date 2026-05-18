@@ -15,7 +15,6 @@ import {
   signSessionToken,
   verifySessionToken,
 } from '@/app/lib/session';
-import { SignJWT } from 'jose';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -203,74 +202,77 @@ export async function POST(request: NextRequest) {
   });
 
   // ──────────────────────────────────────────────────────────────────────
-  // 2026-05-18 (II): si el `next` apunta al /oauth/authorize de holded-mcp,
-  // saltamos el viejo consent screen HTML y redirigimos directamente al
-  // nuevo endpoint /oauth/finalize-from-form con un handoff JWT firmado.
+  // 2026-05-18 (III): si el `next` apunta al /oauth/authorize de holded-mcp,
+  // hacemos un POST server-to-server al mismo endpoint forwardeando la
+  // cookie __session recién firmada. Eso simula exactamente lo que hacía
+  // el consent screen HTML al hacer click en "Authorize", pero sin que el
+  // usuario vea esa pantalla coral.
   //
-  // El handoff JWT (HS256, audience 'holded-oauth-handoff', TTL 60s)
-  // contiene todo el contexto necesario para mintear el authorization
-  // code sin volver a pasar por el consent screen:
-  //   - OAuth: client_id, redirect_uri, state, scope, code_challenge,
-  //     code_challenge_method
-  //   - User: uid (User.id), tid (tenantId), em (personalEmail)
-  //   - Credencial: hak (holdedApiKey raw — mismo nivel de exposición que
-  //     el form submit original)
+  // El handler POST /oauth/authorize del MCP:
+  //   1. Lee la cookie __session (la pasamos en la Cookie header) → tiene
+  //      sesión verificada con email del usuario.
+  //   2. Ejecuta F1 upsert (idempotente, ya hicimos uno arriba — coste
+  //      despreciable).
+  //   3. Genera el authorization code.
+  //   4. Devuelve 302 con Location apuntando a redirect_uri?code=...&state=...
   //
-  // Se firma con VERIFACTU_APP_SHARED_SECRET (compartido server-to-server
-  // con apps/holded-mcp). Si por config no hay shared secret, caemos al
-  // redirect original al /oauth/authorize (modo legacy con consent screen).
+  // Con `redirect: 'manual'` extraemos la Location header y se la
+  // devolvemos al form, que hace window.location.replace(...) → el usuario
+  // llega directo a Claude.
+  //
+  // Esta aproximación NO requiere ningún env var compartido nuevo —
+  // utiliza la cookie firmada con SESSION_SECRET (que ya está sincronizada
+  // entre apps/holded y apps/holded-mcp para que el bridge funcione).
   let redirectUrl = sanitizeHoldedReturnTarget(normalizedNext || undefined, '/dashboard');
   try {
     const parsedRedirect = new URL(redirectUrl);
     if (parsedRedirect.pathname === '/oauth/authorize') {
-      const sharedSecret = process.env.VERIFACTU_APP_SHARED_SECRET?.trim();
-      if (sharedSecret && sharedSecret.length >= 16) {
-        const sp = parsedRedirect.searchParams;
-        const handoffPayload = {
-          client_id: sp.get('client_id') ?? '',
-          redirect_uri: sp.get('redirect_uri') ?? '',
-          state: sp.get('state') ?? '',
-          scope: sp.get('scope') ?? 'holded:read holded:write',
-          code_challenge: sp.get('code_challenge') ?? '',
-          code_challenge_method: sp.get('code_challenge_method') === 'S256' ? 'S256' : '',
-          uid: userId,
-          tid: tenantId,
-          em: normalizedEmail,
-          hak: normalizedApiKey,
-        };
+      const sp = parsedRedirect.searchParams;
+      const postBody = new URLSearchParams({
+        personal_email: normalizedEmail,
+        holded_api_key: normalizedApiKey,
+        accepted_terms: 'on',
+        accepted_privacy: 'on',
+        client_id: sp.get('client_id') ?? '',
+        redirect_uri: sp.get('redirect_uri') ?? '',
+        state: sp.get('state') ?? '',
+        scope: sp.get('scope') ?? 'holded:read holded:write',
+        code_challenge: sp.get('code_challenge') ?? '',
+        code_challenge_method: sp.get('code_challenge_method') ?? '',
+      });
 
-        try {
-          const handoffJwt = await new SignJWT(handoffPayload)
-            .setProtectedHeader({ alg: 'HS256' })
-            .setIssuer('holded-claude-wrapper')
-            .setAudience('holded-oauth-handoff')
-            .setIssuedAt()
-            .setExpirationTime('60s')
-            .sign(new TextEncoder().encode(sharedSecret));
+      try {
+        const authorizeResponse = await fetch(parsedRedirect.toString(), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            Cookie: `${SESSION_COOKIE_NAME}=${token}`,
+            ...(request.headers.get('x-request-id')
+              ? { 'x-request-id': request.headers.get('x-request-id') as string }
+              : {}),
+          },
+          body: postBody.toString(),
+          redirect: 'manual',
+          cache: 'no-store',
+        });
 
-          // El origin del finalize endpoint es el mismo del /oauth/authorize
-          // recibido en `next` (claude.verifactu.business). Reutilizamos el
-          // origin parseado para no hardcodear el dominio aquí.
-          const finalizeUrl = new URL('/oauth/finalize-from-form', parsedRedirect.origin);
-          finalizeUrl.searchParams.set('handoff', handoffJwt);
-          redirectUrl = finalizeUrl.toString();
-        } catch (signErr) {
-          console.warn(
-            '[holded-claude] handoff JWT sign failed, falling back to consent screen redirect',
-            signErr
-          );
-          parsedRedirect.searchParams.set('connection_confirmed', '1');
-          parsedRedirect.searchParams.set('connected_provider_account_id', upsertJson.connectionId);
-          parsedRedirect.searchParams.set('tenant_id', tenantId);
-          redirectUrl = parsedRedirect.toString();
+        const location = authorizeResponse.headers.get('location');
+        if (location && /^https?:\/\//i.test(location)) {
+          redirectUrl = location;
+        } else {
+          // No location → algo fue mal en /oauth/authorize. Logueamos
+          // status + body (truncado) y caemos al fallback de éxito local
+          // (success page) para que el usuario al menos vea confirmación.
+          const bodyText = await authorizeResponse.text().catch(() => '');
+          console.error('[holded-claude] /oauth/authorize POST returned no Location header', {
+            status: authorizeResponse.status,
+            bodyPreview: bodyText.slice(0, 300),
+          });
+          redirectUrl = `${APP_PUBLIC_URL}/auth/holded-claude/success`;
         }
-      } else {
-        // Sin shared secret no podemos firmar el handoff — fallback al
-        // comportamiento anterior (legacy consent screen).
-        parsedRedirect.searchParams.set('connection_confirmed', '1');
-        parsedRedirect.searchParams.set('connected_provider_account_id', upsertJson.connectionId);
-        parsedRedirect.searchParams.set('tenant_id', tenantId);
-        redirectUrl = parsedRedirect.toString();
+      } catch (postErr) {
+        console.error('[holded-claude] /oauth/authorize POST failed:', postErr);
+        redirectUrl = `${APP_PUBLIC_URL}/auth/holded-claude/success`;
       }
     }
   } catch {
