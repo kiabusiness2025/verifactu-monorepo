@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { adminGet, adminPost } from '@/lib/adminApi';
-import { Plus, Tag, Trash2 } from 'lucide-react';
+import { adminGet, adminPost, adminPatch, adminDelete } from '@/lib/adminApi';
+import { Eye, EyeOff, Loader2, Plus, Tag, Trash2 } from 'lucide-react';
 
 type Template = {
   id: string;
@@ -30,6 +30,8 @@ export default function TemplatesPage() {
   const [form, setForm] = useState({ name: '', category: 'general', language: 'es', body: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -65,6 +67,33 @@ export default function TemplatesPage() {
       setError('Error al guardar la plantilla');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    setDeletingId(id);
+    try {
+      await adminDelete<{ ok: boolean }>('/api/admin/whatsapp/templates/' + id);
+      setTemplates((prev) => prev.filter((t) => t.id !== id));
+    } catch {
+      // silently ignore — template stays in list
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleToggleActive = async (template: Template) => {
+    setTogglingId(template.id);
+    try {
+      const { template: updated } = await adminPatch<{ template: Template }>(
+        '/api/admin/whatsapp/templates/' + template.id,
+        { isActive: !template.isActive }
+      );
+      setTemplates((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    } catch {
+      // silently ignore — state unchanged
+    } finally {
+      setTogglingId(null);
     }
   };
 
@@ -212,9 +241,39 @@ export default function TemplatesPage() {
                     >
                       <div className="flex items-start justify-between gap-2">
                         <span className="font-mono text-xs text-slate-500 truncate">{t.name}</span>
-                        <span className="text-xs text-slate-400 shrink-0 uppercase">
-                          {t.language}
-                        </span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-xs text-slate-400 uppercase mr-1">
+                            {t.language}
+                          </span>
+                          <button
+                            type="button"
+                            title={t.isActive ? 'Desactivar plantilla' : 'Activar plantilla'}
+                            disabled={togglingId === t.id || deletingId === t.id}
+                            onClick={() => handleToggleActive(t)}
+                            className="p-1 rounded text-slate-400 hover:text-slate-700 disabled:opacity-40 transition-colors"
+                          >
+                            {togglingId === t.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : t.isActive ? (
+                              <Eye className="h-4 w-4" />
+                            ) : (
+                              <EyeOff className="h-4 w-4" />
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            title="Eliminar plantilla"
+                            disabled={deletingId === t.id || togglingId === t.id}
+                            onClick={() => handleDelete(t.id)}
+                            className="p-1 rounded text-slate-400 hover:text-red-600 disabled:opacity-40 transition-colors"
+                          >
+                            {deletingId === t.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                       <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap line-clamp-4">
                         {t.body}
