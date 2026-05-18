@@ -134,6 +134,75 @@ export function buildPaginationMeta(
 }
 
 /**
+ * Paginación client-side honesta para endpoints `/list_*` donde Holded
+ * devuelve el array completo en una sola llamada (no acepta `?page=N`).
+ *
+ * Bug original (18-may-2026, soporte audit "291 facturas paginando"):
+ *   `list_documents`, `list_contacts` y `list_products` truncaban a `limit`
+ *   en el conector y forwardeaban `?page=N` a Holded — pero esos endpoints
+ *   NO soportan paginación nativa, así que Holded devolvía siempre el mismo
+ *   conjunto (la "primera página"), y page=2 retornaba [] o lo mismo. El
+ *   modelo no podía avanzar: para obtener las 291 facturas tenía que
+ *   inventar workarounds bizantinos (trocear por endtmp decreciente,
+ *   deduplicar por ID en cliente).
+ *
+ * Fix: el conector hace UNA sola llamada a Holded, recibe el array completo,
+ * y aplica `slice((page-1)*limit, page*limit)` localmente. NO forwardea
+ * `page` a Holded. Esto convierte la paginación en una operación cliente
+ * 100% predecible: page=N siempre funciona mientras N*limit < totalItems.
+ *
+ * El trade-off: cada call descarga el dataset completo. Para cuentas con
+ * miles de docs eso es ineficiente, pero es lo único correcto mientras
+ * Holded no exponga paginación real. La alternativa (truncar y mentir al
+ * modelo diciéndole "use page=2") ya demostró ser peor — el modelo entraba
+ * en loops y nunca obtenía datos completos.
+ */
+export interface ClientPagination<T> {
+  items: T[];
+  meta: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+    hasMore: boolean;
+    nextPage: number | null;
+    hint: string | null;
+  };
+}
+
+export function paginateInMemory<T>(
+  all: T[],
+  page: number,
+  pageSize: number,
+  options: { itemNoun?: string } = {}
+): ClientPagination<T> {
+  const totalItems = all.length;
+  const totalPages = totalItems === 0 ? 0 : Math.ceil(totalItems / pageSize);
+  const safePage = Math.max(1, Math.floor(page));
+  const start = (safePage - 1) * pageSize;
+  const end = start + pageSize;
+  const items = all.slice(start, end);
+  const hasMore = safePage < totalPages;
+  const noun = options.itemNoun ?? 'items';
+  return {
+    items,
+    meta: {
+      page: safePage,
+      pageSize,
+      totalItems,
+      totalPages,
+      hasMore,
+      nextPage: hasMore ? safePage + 1 : null,
+      hint: hasMore
+        ? `Showing ${items.length} of ${totalItems} ${noun} (page ${safePage} of ${totalPages}). Call again with page=${safePage + 1} to get the next batch. Pagination is fully client-side — page=N always works deterministically while N <= totalPages.`
+        : safePage > 1 && items.length === 0
+          ? `No ${noun} on page ${safePage} — totalItems=${totalItems}, totalPages=${totalPages}. You may have paged past the end.`
+          : null,
+    },
+  };
+}
+
+/**
  * Helper para parsear el parametro `page` que llega como string desde el LLM.
  * Devuelve 1 si no parsea o es invalido.
  */

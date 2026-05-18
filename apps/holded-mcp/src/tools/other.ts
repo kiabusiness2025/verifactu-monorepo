@@ -5,6 +5,7 @@ import {
   buildPaginationMeta,
   dateInputOptional,
   defaultDailyLedgerRange,
+  paginateInMemory,
   parsePageParam,
   toUnixSecondsString,
 } from '../utils.js';
@@ -27,9 +28,15 @@ function isHoldedNotConfigured(err: unknown): boolean {
 export function registerProductsTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'list_products',
-    'Returns the list of Holded products and services in the catalog. Read-only. Paginated.',
+    'Returns the list of Holded products and services in the catalog. Read-only. ' +
+      'PAGINATION is fully client-side — the connector fetches the entire catalog from Holded in a single call (Holded /products does NOT support ?page=N natively) and serves slices of `limit` per `page`. page=N always works deterministically while pagination.hasMore is true.',
     {
-      page: z.string().optional().describe('Results page number (default 1).'),
+      page: z
+        .string()
+        .optional()
+        .describe(
+          'Results page number (1-indexed, default 1). Iterate while pagination.hasMore is true.'
+        ),
       limit: z.coerce
         .number()
         .int()
@@ -37,27 +44,25 @@ export function registerProductsTools(server: McpServer, getClient: () => Holded
         .max(100)
         .default(25)
         .describe(
-          'Max products returned in this call (default 25, max 100). Use page=2 for the next batch.'
+          'Page size: max products returned in this call (default 25, max 100). Increase to reduce round-trips.'
         ),
     },
     readOnlyAnnotations('list_products'),
-    async ({ limit, ...rest }) => {
-      const filtered = Object.fromEntries(
-        Object.entries(rest).filter(([, value]) => value !== undefined)
-      ) as Record<string, string>;
-      const raw = await getClient().listProducts(filtered);
+    async ({ limit, page }) => {
+      // Bug 18-may-2026 (soporte audit "paginación rota"): NO se forwardea
+      // `page` a Holded — el endpoint /products no soporta paginación nativa.
+      // Paginamos client-side. Ver utils.paginateInMemory.
+      const raw = await getClient().listProducts();
       const all = Array.isArray(raw) ? raw : [];
-      const truncated = all.length > limit;
-      const products = all.slice(0, limit);
+      const pageNum = parsePageParam(page);
+      const { items: products, meta: pagination } = paginateInMemory(all, pageNum, limit, {
+        itemNoun: 'products',
+      });
       const payload: Record<string, unknown> = {
         products,
         count: products.length,
-        totalReceived: all.length,
-        truncated,
+        pagination,
       };
-      if (truncated) {
-        payload.hint = `Showing first ${limit} of ${all.length} products received from Holded. Use page=2 (or higher) for the next batch.`;
-      }
       return { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
     }
   );
