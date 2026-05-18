@@ -95,6 +95,31 @@ function QuotaHitBanner({ quotaHit }: { quotaHit: QuotaHitState }) {
   );
 }
 
+function UpgradeBanner({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="flex items-center gap-2 rounded-xl border border-[#bfdbfe] bg-[#eff6ff] py-2 px-4 text-[#1e40af]">
+      <Zap size={13} className="shrink-0 text-[#2361d8]" />
+      <span className="flex-1 text-[12px]">
+        Plan gratuito · <strong>10 mensajes/día</strong>. Amplía con Pro para uso ilimitado.
+      </span>
+      <Link
+        href="/pricing"
+        className="shrink-0 text-[12px] font-semibold underline text-[#2361d8] whitespace-nowrap"
+      >
+        Ver planes →
+      </Link>
+      <button
+        type="button"
+        onClick={onDismiss}
+        aria-label="Cerrar"
+        className="ml-1 shrink-0 text-[#60a5fa] hover:text-[#1e40af] transition"
+      >
+        <X size={13} />
+      </button>
+    </div>
+  );
+}
+
 const QUICK_CHIPS: Record<string, string[]> = {
   resumen: [
     '¿Cuánto he facturado este mes?',
@@ -353,12 +378,14 @@ export default function IsaakChatSection({
   welcomeSubtitle,
   userName,
   holdedConnected = false,
+  isFreePlan = false,
 }: {
   context?: string;
   welcomeTitle?: string;
   welcomeSubtitle?: string;
   userName?: string | null;
   holdedConnected?: boolean;
+  isFreePlan?: boolean;
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -371,6 +398,7 @@ export default function IsaakChatSection({
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, 'thumbs_up' | 'thumbs_down'>>({});
   const [quotaHit, setQuotaHit] = useState<QuotaHitState | null>(null);
+  const [upgradeBannerDismissed, setUpgradeBannerDismissed] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
@@ -620,6 +648,11 @@ export default function IsaakChatSection({
                 inputRef={inputRef}
                 placeholder="Pregúntame sobre tu negocio..."
               />
+              {isFreePlan && !upgradeBannerDismissed && (
+                <div className="mt-2">
+                  <UpgradeBanner onDismiss={() => setUpgradeBannerDismissed(true)} />
+                </div>
+              )}
             </>
           )}
 
@@ -753,6 +786,11 @@ export default function IsaakChatSection({
           <QuotaHitBanner quotaHit={quotaHit} />
         ) : (
           <>
+            {isFreePlan && !upgradeBannerDismissed && (
+              <div className="mb-2">
+                <UpgradeBanner onDismiss={() => setUpgradeBannerDismissed(true)} />
+              </div>
+            )}
             {error && (
               <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
                 {error}

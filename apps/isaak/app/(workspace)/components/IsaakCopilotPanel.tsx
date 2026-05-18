@@ -96,7 +96,12 @@ export default function IsaakCopilotPanel() {
 
       {/* Chat */}
       <div className="flex-1 overflow-hidden">
-        <IsaakChatSection context={context} welcomeTitle={title} welcomeSubtitle={subtitle} />
+        <IsaakChatSection
+          context={context}
+          welcomeTitle={title}
+          welcomeSubtitle={subtitle}
+          isFreePlan={false}
+        />
       </div>
     </div>
   );

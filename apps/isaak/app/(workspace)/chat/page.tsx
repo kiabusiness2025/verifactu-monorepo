@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import IsaakChatSection from '../components/IsaakChatSection';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
+import { loadIsaakWorkspaceSignals } from '@/app/lib/isaak-workspace-signals';
 
 export const metadata: Metadata = { title: 'Chat — Isaak' };
 
@@ -11,6 +12,11 @@ export default async function ChatPage() {
     ? await getHoldedConnection(session.tenantId).catch(() => null)
     : null;
   const holdedConnected = !!(holdedConn as { apiKey?: string } | null)?.apiKey;
+
+  const signals = session?.tenantId
+    ? await loadIsaakWorkspaceSignals({ tenantId: session.tenantId }).catch(() => null)
+    : null;
+  const isFreePlan = !signals || signals.billing.code === 'free';
 
   return (
     <div className="flex h-full flex-col">
@@ -23,6 +29,7 @@ export default async function ChatPage() {
           context="default"
           userName={session?.name ?? null}
           holdedConnected={holdedConnected}
+          isFreePlan={isFreePlan}
           welcomeSubtitle="Pregúntame por ventas, gastos, cobros, proyectos o cualquier duda sobre tu negocio."
         />
       </div>
