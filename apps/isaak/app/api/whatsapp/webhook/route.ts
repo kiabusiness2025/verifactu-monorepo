@@ -27,6 +27,8 @@ import {
 import { buildIsaakQueryFromFlow, type WaFlowResponseData } from '@/app/lib/whatsapp-flows';
 import {
   buildFiscalKnowledgeBlock,
+  buildGeneralAdvisorInstructions,
+  ISAAK_URLS,
   WA_RESPONSE_FORMAT_INSTRUCTIONS,
 } from '@/app/lib/fiscal-knowledge';
 
@@ -36,9 +38,15 @@ export const dynamic = 'force-dynamic';
 // ── Mapeo de IDs interactivos → queries Isaak ────────────────────────────────
 
 const INTERACTIVE_QUERIES: Record<string, string> = {
+  // Menú para usuarios con suscripción activa (datos Holded)
   menu_resumen: 'Dame el resumen de ventas y gastos de este mes.',
   menu_facturas: '¿Qué facturas tengo pendientes de cobro?',
   menu_iva: 'Estima mi IVA del trimestre actual con los datos disponibles.',
+  // Menú general (todos los usuarios)
+  menu_fiscal: 'Tengo una consulta sobre fiscalidad o impuestos en España.',
+  menu_plazos: '¿Cuáles son los próximos plazos tributarios del calendario fiscal español?',
+  menu_tipo: '¿En qué se diferencia tributar como autónomo frente a tener una sociedad?',
+  // Aclaración de período
   period_month: 'Necesito los datos de este mes.',
   period_quarter: 'Necesito los datos del trimestre actual.',
   period_year: 'Necesito los datos del año completo.',
@@ -166,25 +174,10 @@ async function handleIncomingText(input: {
     payload: { from, senderName },
   }).catch(() => {});
 
-  // Número no vinculado → CTA con botón de vinculación (WA-I: cta_url)
-  if (!tenantId) {
-    const firstName = senderName?.split(' ')[0] ?? null;
-    const body = `Hola${firstName ? ` ${firstName}` : ''}! Soy Isaak, tu asistente fiscal de Verifactu Business.\n\nPara poder ayudarte necesito vincular este número a tu cuenta.`;
-    await sendWhatsAppCtaUrl(
-      normalizePhone(from),
-      body,
-      'Vincular ahora',
-      'https://isaak.verifactu.business/settings?wl=1'
-    ).catch(() =>
-      sendWhatsAppText(normalizePhone(from), body + '\n\n👉 isaak.verifactu.business/settings')
-    );
-    await saveOutboundEvent(threadId, null, body);
-    return;
-  }
-
-  // Saludo → menú de bienvenida (WA-II: list)
+  // Saludo → menú de bienvenida (WA-II: list) — para TODOS, con o sin cuenta
   if (isGreeting(text)) {
-    await sendWelcomeMenu(normalizePhone(from), senderName);
+    const dataAccess = await hasDataAccess(tenantId);
+    await sendWelcomeMenu(normalizePhone(from), senderName, dataAccess);
     await saveOutboundEvent(threadId, tenantId, '[menu_bienvenida]');
     return;
   }
@@ -268,6 +261,29 @@ async function handleInteractiveReply(input: {
     payload: { replyId, replyTitle },
   }).catch(() => {});
 
+  // CTA directo: crear cuenta o ver planes (no pasa por LLM)
+  if (replyId === 'menu_conectar') {
+    await sendWhatsAppCtaUrl(
+      normalizePhone(from),
+      'Crea tu cuenta gratuita en Isaak y conecta Holded. Accede a IVA estimado, alertas de plazos y análisis de tu negocio.',
+      'Crear cuenta gratis',
+      ISAAK_URLS.register
+    ).catch(() => {});
+    await saveOutboundEvent(threadId, tenantId, '[cta_registro]');
+    return;
+  }
+
+  if (replyId === 'menu_planes') {
+    await sendWhatsAppCtaUrl(
+      normalizePhone(from),
+      'Consulta los planes de Isaak: desde el plan gratuito hasta Business con todas las funcionalidades.',
+      'Ver planes',
+      ISAAK_URLS.pricing
+    ).catch(() => {});
+    await saveOutboundEvent(threadId, tenantId, '[cta_planes]');
+    return;
+  }
+
   // "Consulta guiada" → abrir Flow (WA-IV) o degradar a texto libre si no está configurado
   if (replyId === 'menu_flow') {
     const flowId = process.env.WHATSAPP_FLOW_ID_CONSULTA;
@@ -298,7 +314,7 @@ async function handleInteractiveReply(input: {
   await runIsaakPipeline({ from, threadId, tenantId, text: mappedQuery, senderName });
 }
 
-// ── Pipeline común: quota + LLM + respuesta ──────────────────────────────────
+// ── Pipeline — modo general (gratuito) o enriquecido (suscripción activa) ────
 
 async function runIsaakPipeline(input: {
   from: string;
@@ -309,46 +325,44 @@ async function runIsaakPipeline(input: {
 }): Promise<void> {
   const { from, threadId, tenantId, text, senderName } = input;
 
-  if (!tenantId) return;
+  // REV-2: modo según suscripción activa
+  const dataAccess = await hasDataAccess(tenantId);
+  let systemPrompt: string;
 
-  // Cargar contexto del tenant e historial de conversación en paralelo
-  const primaryUserId = await getPrimaryUserId(tenantId);
-  let context;
-  try {
-    [context] = await Promise.all([
-      loadIsaakBusinessContext(
+  if (dataAccess && tenantId) {
+    // REV-5: cuota solo en modo enriquecido
+    const { allowed } = await checkWhatsAppQuota(tenantId);
+    if (!allowed) {
+      const limitMsg =
+        'Has alcanzado el límite diario de mensajes de tu plan. Actualiza tu plan en isaak.verifactu.business/pricing para continuar.';
+      await sendWhatsAppText(normalizePhone(from), limitMsg);
+      await saveOutboundEvent(threadId, tenantId, limitMsg);
+      return;
+    }
+    const primaryUserId = await getPrimaryUserId(tenantId);
+    try {
+      const context = await loadIsaakBusinessContext(
         { tenantId, userId: primaryUserId ?? 'whatsapp-webhook' },
         { includeSnapshot: true }
-      ),
-    ]);
-  } catch (err) {
-    console.error('[whatsapp/webhook] error cargando contexto', err);
-    await sendWhatsAppText(
-      normalizePhone(from),
-      'Lo siento, ha ocurrido un error técnico. Inténtalo de nuevo en unos minutos.'
-    );
-    return;
+      );
+      systemPrompt = buildEnrichedAdvisorPrompt(context, senderName);
+    } catch {
+      systemPrompt = buildGeneralAdvisorPrompt(senderName);
+    }
+  } else {
+    // REV-1: modo general gratuito para todos
+    systemPrompt = buildGeneralAdvisorPrompt(senderName);
   }
 
-  // Verificar quota
-  const { allowed } = await checkWhatsAppQuota(tenantId);
-  if (!allowed) {
-    const limitMsg =
-      'Has alcanzado el límite diario de mensajes de tu plan. Actualiza tu plan en isaak.verifactu.business/pricing para continuar.';
-    await sendWhatsAppText(normalizePhone(from), limitMsg);
-    await saveOutboundEvent(threadId, tenantId, limitMsg);
-    return;
-  }
-
-  // LLM con historial de conversación
   const [model, history] = await Promise.all([
     resolveModelForTenant(tenantId),
     loadConversationHistory(threadId, text),
   ]);
+
   const llmResult = await callLLM({
     provider: 'anthropic',
     model,
-    instructions: buildWhatsAppSystemPrompt(context, senderName),
+    instructions: systemPrompt,
     messages: history,
     temperature: 0.3,
     maxOutputTokens: 600,
@@ -357,7 +371,7 @@ async function runIsaakPipeline(input: {
 
   const rawText = llmResult?.text?.trim() ?? null;
 
-  // Si el LLM pide aclaración → enviar botones interactivos (sin fuente ni seguimiento)
+  // Aclaración inteligente
   const clarify = rawText ? parseClarifyResponse(rawText) : null;
   if (clarify) {
     const buttons = clarify.options.map((opt, i) => ({
@@ -369,14 +383,9 @@ async function runIsaakPipeline(input: {
     return;
   }
 
-  // Parsear respuesta estructurada (texto + fuente opcional + seguimiento opcional)
-  const snapshot = context.holded.snapshot;
-  const fallbackText = snapshot
-    ? `Tengo acceso a tus datos de Holded (${snapshot.invoices.length} facturas, ${snapshot.contacts.length} contactos). ¿En qué puedo ayudarte?`
-    : 'Soy Isaak, tu asistente fiscal. ¿En qué puedo ayudarte hoy?';
-
+  // Parsear respuesta estructurada
+  const fallbackText = 'Soy Isaak, tu asesor fiscal gratuito. ¿En qué puedo ayudarte hoy?';
   const structured = rawText ? parseStructuredResponse(rawText) : { answerText: fallbackText };
-
   const replyText = structured.answerText
     ? stripMarkdown(truncateForWhatsApp(structured.answerText))
     : fallbackText;
@@ -384,7 +393,7 @@ async function runIsaakPipeline(input: {
   await sendWhatsAppText(normalizePhone(from), replyText);
   await saveOutboundEvent(threadId, tenantId, replyText);
 
-  // Fuente oficial → CTA button (mensaje adicional)
+  // Fuente oficial → CTA button
   if (structured.fuente) {
     await sendWhatsAppCtaUrl(
       normalizePhone(from),
@@ -394,7 +403,27 @@ async function runIsaakPipeline(input: {
     ).catch(() => {});
   }
 
-  // Preguntas de seguimiento → botones rápidos (mensaje adicional)
+  // REV-3: upsell del LLM o programático (solo usuarios sin cuenta)
+  if (structured.upsell) {
+    await sendWhatsAppCtaUrl(
+      normalizePhone(from),
+      '🎯 Accede a más funcionalidades con Isaak',
+      structured.upsell.buttonText.slice(0, 20),
+      structured.upsell.url
+    ).catch(() => {});
+  } else if (!dataAccess) {
+    const upsell = await resolveProgrammaticUpsell(threadId);
+    if (upsell) {
+      await sendWhatsAppCtaUrl(
+        normalizePhone(from),
+        upsell.body,
+        upsell.buttonText,
+        upsell.url
+      ).catch(() => {});
+    }
+  }
+
+  // Preguntas de seguimiento → botones rápidos
   if (structured.siguientes && structured.siguientes.length > 0) {
     const buttons = structured.siguientes.map((q, i) => ({
       id: `followup_${i}`,
@@ -404,34 +433,79 @@ async function runIsaakPipeline(input: {
   }
 }
 
-// ── Menú de bienvenida (WA-II) ───────────────────────────────────────────────
+// ── Menú de bienvenida (WA-II) — REV-4 ───────────────────────────────────────
 
-async function sendWelcomeMenu(to: string, senderName: string | null): Promise<void> {
+async function sendWelcomeMenu(
+  to: string,
+  senderName: string | null,
+  dataAccess: boolean
+): Promise<void> {
   const firstName = senderName?.split(' ')[0] ?? null;
   const greeting = firstName ? `Hola ${firstName}!` : '¡Hola!';
-  await sendWhatsAppList(
-    to,
-    `${greeting} Soy Isaak, tu asistente fiscal. ¿En qué te ayudo hoy?`,
-    'Ver opciones',
-    [
-      {
-        rows: [
-          {
-            id: 'menu_resumen',
-            title: 'Resumen del mes',
-            description: 'Ventas y gastos del mes actual',
-          },
-          { id: 'menu_facturas', title: 'Facturas pendientes', description: 'Facturas sin cobrar' },
-          { id: 'menu_iva', title: 'IVA trimestral', description: 'Estimación modelo 303' },
-          {
-            id: 'menu_flow',
-            title: 'Consulta guiada',
-            description: 'Formulario de selección rápida',
-          },
-        ],
-      },
-    ]
-  );
+
+  if (dataAccess) {
+    // Usuarios con suscripción activa → menú con datos reales + asesoría
+    await sendWhatsAppList(
+      to,
+      `${greeting} Soy Isaak, tu asesor fiscal. ¿En qué te ayudo hoy?`,
+      'Ver opciones',
+      [
+        {
+          rows: [
+            {
+              id: 'menu_resumen',
+              title: 'Mi resumen del mes',
+              description: 'Ventas y gastos actuales',
+            },
+            {
+              id: 'menu_facturas',
+              title: 'Mis facturas',
+              description: 'Facturas pendientes de cobro',
+            },
+            { id: 'menu_iva', title: 'Mi IVA trimestral', description: 'Estimación modelo 303' },
+            {
+              id: 'menu_fiscal',
+              title: 'Consulta fiscal',
+              description: 'Impuestos y obligaciones',
+            },
+          ],
+        },
+      ]
+    );
+  } else {
+    // Usuarios sin cuenta → menú de asesoría gratuita + conversión
+    await sendWhatsAppList(
+      to,
+      `${greeting} Soy Isaak, tu asesor fiscal gratuito de Verifactu Business. Puedo ayudarte con impuestos, plazos y obligaciones fiscales.`,
+      'Ver opciones',
+      [
+        {
+          rows: [
+            {
+              id: 'menu_fiscal',
+              title: 'Consulta fiscal',
+              description: 'Impuestos y obligaciones',
+            },
+            {
+              id: 'menu_plazos',
+              title: 'Plazos tributarios',
+              description: 'Calendario fiscal 2025',
+            },
+            {
+              id: 'menu_tipo',
+              title: 'Autónomo o empresa',
+              description: 'Diferencias y regímenes',
+            },
+            {
+              id: 'menu_conectar',
+              title: 'Conectar Holded',
+              description: 'Vincula tus datos contables',
+            },
+          ],
+        },
+      ]
+    );
+  }
 }
 
 // ── Clarificación inteligente ─────────────────────────────────────────────────
@@ -472,26 +546,32 @@ function parseClarifyResponse(text: string): ClarifyResponse | null {
 type StructuredResponse = {
   answerText: string;
   fuente?: { url: string; title: string };
+  upsell?: { url: string; buttonText: string };
   siguientes?: string[];
 };
 
 /**
- * Extrae → FUENTE y → SIGUIENTES del texto del LLM.
+ * Extrae → FUENTE, → UPSELL y → SIGUIENTES del texto del LLM.
  * Devuelve el texto limpio + los elementos interactivos opcionales.
  */
 function parseStructuredResponse(raw: string): StructuredResponse {
   const lines = raw.split('\n');
   let fuente: StructuredResponse['fuente'];
+  let upsell: StructuredResponse['upsell'];
   let siguientes: string[] | undefined;
   const bodyLines: string[] = [];
 
   for (const line of lines) {
-    const fuenteMatch = line.match(/^→\s*FUENTE:\s*(.+)/);
-    const siguientesMatch = line.match(/^→\s*SIGUIENTES:\s*(.+)/);
+    const fuenteMatch = line.match(/^[→>]\s*FUENTE:\s*(.+)/);
+    const upsellMatch = line.match(/^[→>]\s*UPSELL:\s*(.+)/);
+    const siguientesMatch = line.match(/^[→>]\s*SIGUIENTES:\s*(.+)/);
 
     if (fuenteMatch) {
       const parts = fuenteMatch[1].split('|').map((p) => p.trim());
       fuente = { url: parts[0], title: parts[1] ?? 'Ver fuente oficial' };
+    } else if (upsellMatch) {
+      const parts = upsellMatch[1].split('|').map((p) => p.trim());
+      upsell = { url: parts[0], buttonText: parts[1] ?? 'Saber más' };
     } else if (siguientesMatch) {
       siguientes = siguientesMatch[1]
         .split('|')
@@ -503,7 +583,7 @@ function parseStructuredResponse(raw: string): StructuredResponse {
     }
   }
 
-  return { answerText: bodyLines.join('\n').trim(), fuente, siguientes };
+  return { answerText: bodyLines.join('\n').trim(), fuente, upsell, siguientes };
 }
 
 // ── Historial de conversación ─────────────────────────────────────────────────
@@ -549,7 +629,31 @@ async function loadConversationHistory(
 
 // ── Helpers internos ─────────────────────────────────────────────────────────
 
-function buildWhatsAppSystemPrompt(
+/** REV-2: Modo A — asesor general gratuito sin datos Holded */
+function buildGeneralAdvisorPrompt(senderName: string | null): string {
+  const name = senderName?.split(' ')[0] ?? 'amigo';
+  return [
+    `Eres Isaak, asesor fiscal gratuito de Verifactu Business.`,
+    `Estás respondiendo por WhatsApp a ${name}.`,
+    'Asesoras gratuitamente sobre fiscalidad española, modelos tributarios, plazos y obligaciones.',
+    'NO tienes acceso a datos contables del usuario. Si preguntan por sus cifras reales (su IVA, sus facturas, sus ventas), explica el concepto y propón el upsell para que puedan obtenerlo.',
+    'Responde en español. Sé conciso (máximo 4 párrafos cortos). No uses markdown avanzado — usa *negrita* para énfasis y • para listas.',
+    'Tienes acceso al historial de esta conversación. Úsalo para dar respuestas coherentes.',
+    '',
+    buildFiscalKnowledgeBlock(),
+    '',
+    buildGeneralAdvisorInstructions(),
+    '',
+    'ACLARACIÓN: Si la pregunta es genuinamente ambigua, responde ÚNICAMENTE con este JSON — sin texto adicional:',
+    '{"clarify":true,"question":"Texto claro de la pregunta","options":["Opción A","Opción B","Opción C"]}',
+    'Máximo 3 opciones, cada una máximo 20 caracteres. Prefiere SIEMPRE respuesta directa.',
+    '',
+    WA_RESPONSE_FORMAT_INSTRUCTIONS,
+  ].join('\n');
+}
+
+/** REV-2: Modo B — asesor enriquecido con datos reales de Holded */
+function buildEnrichedAdvisorPrompt(
   context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>,
   senderName: string | null
 ): string {
@@ -560,9 +664,9 @@ function buildWhatsAppSystemPrompt(
   const lines = [
     `Eres Isaak, asesor fiscal y contable digital de ${company}.`,
     `Estás respondiendo por WhatsApp a ${name}.`,
-    'Actúa como un asesor fiscal experto en España: da respuestas concretas, cita normativa cuando proceda y siempre orienta hacia la acción correcta.',
+    'Actúa como un asesor fiscal experto en España: da respuestas concretas con los datos reales del usuario y orienta hacia la acción correcta.',
     'Responde en español. Sé conciso (máximo 4 párrafos cortos). No uses markdown avanzado — usa *negrita* para énfasis y • para listas.',
-    'Tienes acceso al historial completo de esta conversación. Úsalo para dar respuestas coherentes y no repetir preguntas ya contestadas.',
+    'Tienes acceso al historial completo de esta conversación. Úsalo para dar respuestas coherentes.',
     'Si el usuario hace referencia a algo mencionado antes, búscalo en el historial antes de pedir aclaraciones.',
     '',
     buildFiscalKnowledgeBlock(),
@@ -595,6 +699,39 @@ function buildWhatsAppSystemPrompt(
   return lines.join('\n');
 }
 
+/** REV-1: ¿El tenant tiene suscripción activa para acceder a datos Holded? */
+async function hasDataAccess(tenantId: string | null): Promise<boolean> {
+  if (!tenantId) return false;
+  try {
+    const sub = await prisma.tenantSubscription.findFirst({
+      where: { tenantId, status: { in: ['trial', 'active'] } },
+      select: { id: true },
+    });
+    return !!sub;
+  } catch {
+    return false;
+  }
+}
+
+/** REV-3: Upsell programático para usuarios sin cuenta — al 3.er mensaje y cada 5 después */
+async function resolveProgrammaticUpsell(
+  threadId: string
+): Promise<{ body: string; buttonText: string; url: string } | null> {
+  try {
+    const count = await prisma.whatsAppEvent.count({
+      where: { threadId, direction: 'inbound' },
+    });
+    if (count !== 3 && (count < 3 || (count - 3) % 5 !== 0)) return null;
+    return {
+      body: '🎯 ¿Sabías que Isaak puede calcular tu IVA, analizar tus facturas y avisarte de los plazos fiscales automáticamente, conectado con Holded?',
+      buttonText: 'Crear cuenta gratis',
+      url: ISAAK_URLS.register,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function getPrimaryUserId(tenantId: string): Promise<string | null> {
   const m = await prisma.membership.findFirst({
     where: { tenantId, role: { in: ['OWNER', 'ADMIN'] } },
@@ -624,7 +761,8 @@ async function checkWhatsAppQuota(tenantId: string): Promise<{ allowed: boolean 
   }
 }
 
-async function resolveModelForTenant(tenantId: string): Promise<string> {
+async function resolveModelForTenant(tenantId: string | null): Promise<string> {
+  if (!tenantId) return 'claude-haiku-4-5-20251001';
   try {
     const sub = await prisma.tenantSubscription.findFirst({
       where: { tenantId },

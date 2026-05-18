@@ -178,17 +178,46 @@ TIPOS DE IVA (vigentes hasta nueva modificación):
 `.trim();
 }
 
+// ── URLs de producto Isaak ─────────────────────────────────────────────────────
+
+export const ISAAK_URLS = {
+  register: 'https://isaak.verifactu.business',
+  pricing: 'https://isaak.verifactu.business/pricing',
+  settings: 'https://isaak.verifactu.business/settings?wl=1',
+  connectorClaude: 'https://holded.verifactu.business/conectores/claude',
+  connectorChatGPT: 'https://holded.verifactu.business/conectores/chatgpt',
+} as const;
+
 // ── Instrucciones de formato para WhatsApp ────────────────────────────────────
 
 export const WA_RESPONSE_FORMAT_INSTRUCTIONS = `
 FORMATO DE RESPUESTA EN WHATSAPP:
-Al final de tu respuesta, si procede incluir una fuente oficial, añade exactamente:
-→ FUENTE: [URL de la fuente más relevante] | [título corto]
+Al final de tu respuesta, si procede, añade SOLO las líneas que apliquen:
 
-Si hay 1–3 preguntas de seguimiento lógicas que el usuario probablemente querrá hacer, añade:
+→ FUENTE: [URL oficial] | [título corto]
+  (solo si citas normativa o trámite oficial)
+
+→ UPSELL: [URL de Isaak o conector] | [texto botón máx 20 chars]
+  (solo si el usuario pregunta por sus datos concretos, menciona Holded, o se beneficiaría claramente de una cuenta)
+  URLs disponibles: ${ISAAK_URLS.register} | ${ISAAK_URLS.pricing} | ${ISAAK_URLS.connectorClaude} | ${ISAAK_URLS.connectorChatGPT}
+
 → SIGUIENTES: Pregunta 1 | Pregunta 2 | Pregunta 3
-(cada pregunta máximo 20 caracteres para botones; usa lenguaje directo)
+  (1–3 preguntas de seguimiento lógicas, máx 20 chars cada una)
 
-Si no es necesaria fuente ni seguimiento, omite estas líneas completamente.
-El texto de la respuesta NO debe incluir las líneas → FUENTE ni → SIGUIENTES.
+Omite completamente las líneas que no apliquen. El texto de respuesta NO incluye estas líneas.
 `.trim();
+
+// ── Instrucciones adicionales para el modo asesor general (sin datos Holded) ──
+
+export function buildGeneralAdvisorInstructions(): string {
+  return `
+ROL: Eres un asesor fiscal gratuito. NO tienes acceso a los datos contables del usuario.
+Si preguntan por sus cifras reales (su IVA, sus facturas, sus ventas), explica el concepto
+y añade → UPSELL apuntando a Isaak o al conector adecuado para que puedan obtenerlo.
+
+CONECTORES DISPONIBLES (para usuarios que quieren conectar Holded con IA):
+• Conector Claude (Claude Desktop): ${ISAAK_URLS.connectorClaude}
+• Conector ChatGPT: ${ISAAK_URLS.connectorChatGPT}
+• Isaak (app web completa con alertas, IVA estimado, cashflow): ${ISAAK_URLS.register}
+`.trim();
+}
