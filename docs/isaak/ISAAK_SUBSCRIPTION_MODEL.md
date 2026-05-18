@@ -1,43 +1,37 @@
 # ISAAK — Modelo de Suscripción y Negocio
 
-> Última actualización: 2026-04-28
+> Última actualización: 2026-05-18
 
 ---
 
 ## Planes
 
-|                                   | **Trial**  | **Starter**    | **Pro**         | **Business**     |
-| --------------------------------- | ---------- | -------------- | --------------- | ---------------- |
-| **Precio mensual**                | Gratis     | **€29/mes**    | **€69/mes**     | **€149/mes**     |
-| **Precio anual**                  | —          | €23/mes (−20%) | €55/mes (−20%)  | €119/mes (−20%)  |
-| **Duración**                      | 30 días    | —              | —               | —                |
-|                                   |            |                |                 |                  |
-| **Chat + ERP (Holded)**           | ✅         | ✅             | ✅              | ✅               |
-| **Dashboard KPIs**                | ✅         | ✅             | ✅              | ✅               |
-| **Alertas automáticas**           | ✅         | ✅             | ✅              | ✅               |
-| **Digest semanal email**          | ✅         | ✅             | ✅              | ✅               |
-| **Consultas IA**                  | 100 total  | 300/mes        | Ilimitado       | Ilimitado        |
-| **OCR imágenes en chat**          | 5 total    | 20/mes         | Ilimitado       | Ilimitado        |
-| **Motor IA**                      | Claude     | Claude         | Claude + GPT-4o | Elegible (todos) |
-| **Historial conversaciones**      | 30 días    | 90 días        | 1 año           | Ilimitado        |
-|                                   |            |                |                 |                  |
-| **Google / MS Calendar**          | ❌         | ❌             | ✅              | ✅               |
-| **Lectura de email (facturas)**   | ❌         | ❌             | ✅              | ✅               |
-| **Inbox facturas (email propio)** | ❌         | ❌             | ✅              | ✅               |
-| **Contabilización automática**    | ❌         | ❌             | ✅              | ✅               |
-| **Notificaciones push**           | ❌         | ❌             | ✅              | ✅               |
-| **Voz (entrada + salida)**        | ❌         | ❌             | ✅              | ✅               |
-|                                   |            |                |                 |                  |
-| **Documentos mercantiles**        | ❌         | ❌             | ❌              | ✅               |
-| **Modelos fiscales (borradores)** | ❌         | ❌             | ❌              | ✅               |
-| **Open Banking / Banco**          | ❌         | ❌             | ❌              | ✅               |
-| **Conciliación automática**       | ❌         | ❌             | ❌              | ✅               |
-| **Multi-ERP**                     | ❌         | ❌             | ❌              | ✅               |
-| **API de integración**            | ❌         | ❌             | ❌              | ✅               |
-|                                   |            |                |                 |                  |
-| **Usuarios**                      | 1          | 1              | 3               | 10               |
-| **Soporte**                       | Isaak chat | Email          | Prioritario     | Dedicado         |
-| **SLA**                           | —          | —              | —               | 99.5% uptime     |
+|                                     | **Free**     | **Starter**    | **Pro**        | **Business**           |
+| ----------------------------------- | ------------ | -------------- | -------------- | ---------------------- |
+| **Precio mensual**                  | **€0**       | **€19/mes**    | **€49/mes**    | **€149/mes**           |
+| **Precio anual**                    | —            | €15/mes (−20%) | €39/mes (−20%) | €119/mes (−20%)        |
+| **IA incluida**                     | ✅           | ✅             | ✅             | ✅                     |
+|                                     |              |                |                |                        |
+| **Chat fiscal y contable**          | ✅           | ✅             | ✅             | ✅                     |
+| **Consultas IA**                    | 10/día       | 200/mes        | Ilimitado      | Ilimitado              |
+| **Motor IA**                        | Claude Haiku | Claude Haiku   | Claude Sonnet  | Claude Sonnet + GPT-4o |
+| **Historial conversaciones**        | —            | 90 días        | 1 año          | Ilimitado              |
+|                                     |              |                |                |                        |
+| **Holded conectado (ERP)**          | ❌           | ✅             | ✅             | ✅                     |
+| **Dashboard KPIs**                  | ❌           | ✅             | ✅             | ✅                     |
+| **OCR imágenes en chat**            | ❌           | ❌             | ✅             | ✅                     |
+| **Google Calendar / Gmail / Drive** | ❌           | ❌             | ✅             | ✅                     |
+| **Voz (entrada + salida)**          | ❌           | ❌             | ✅             | ✅                     |
+| **Notificaciones push**             | ❌           | ❌             | ✅             | ✅                     |
+| **Alertas fiscales proactivas**     | ❌           | ❌             | ✅             | ✅                     |
+|                                     |              |                |                |                        |
+| **Modelos AEAT (303, 130, 390)**    | ❌           | ❌             | ❌             | ✅                     |
+| **Open Banking / Banco**            | ❌           | ❌             | ❌             | ✅                     |
+| **Multi-ERP**                       | ❌           | ❌             | ❌             | ✅                     |
+|                                     |              |                |                |                        |
+| **Usuarios**                        | 1            | 1              | 1              | hasta 10               |
+| **Soporte**                         | Chat público | Email          | Prioritario    | Dedicado               |
+| **SLA**                             | —            | —              | —              | 99.9% uptime           |
 
 ---
 
@@ -66,26 +60,22 @@
 ## Lógica de trial → conversión
 
 ```
-Día 0:    Alta → 30 días trial completo (acceso plan Pro)
+Día 0:    Alta → 14 días trial completo (acceso plan Pro)
            Email: "Bienvenido a Isaak — así funciona"
            Onboarding guiado en la app
 
 Día 7:    Email: "¿Qué tal la primera semana?" + caso de uso destacado
            In-app: tip proactivo de Isaak ("Tienes 3 facturas vencidas…")
 
-Día 20:   Email: "Te quedan 10 días de prueba"
+Día 11:   Email: "Te quedan 3 días de prueba"
            In-app: banner sutil con planes
 
-Día 27:   Email: "Te quedan 3 días" + descuento 25% primer mes
-           In-app: modal de conversión con planes
+Día 14:   Downgrade automático a plan Free (10 mensajes/día, sin Holded):
+           - In-app: banner "Plan gratuito · 10 msg/día → Ver planes"
+           - Los datos de la cuenta se conservan
+           - Historial bloqueado en lectura
 
-Día 30:   Downgrade automático a plan Gratuito limitado:
-           - 5 consultas/mes
-           - Solo dashboard (sin chat activo)
-           - Banner persistente de conversión
-           - Los datos se conservan 90 días más antes de purga
-
-Día 120:  Si no ha convertido → email de "últimas noticias" + oferta final
+Día 60:   Si no ha convertido → email de "últimas noticias" + oferta final
 ```
 
 ---
@@ -93,30 +83,30 @@ Día 120:  Si no ha convertido → email de "últimas noticias" + oferta final
 ## Costes estimados por usuario (Fase 1)
 
 ```
-Plan Starter (300 consultas/mes):
-  Claude Sonnet 4.6 promedio:  ~€0.008/consulta (con tools Holded)
-  300 consultas × €0.008     = €2.40/mes en IA
+Plan Starter (200 consultas/mes, Claude Haiku):
+  Claude Haiku 4.5 promedio:   ~€0.001/consulta
+  200 consultas × €0.001     = €0.20/mes en IA
   Infraestructura (prorrateada) = ~€1.50/mes
-  Total coste                  = ~€3.90/mes
-  Precio                       = €29/mes
-  Margen bruto                 ≈ 87%
+  Total coste                  = ~€1.70/mes
+  Precio                       = €19/mes
+  Margen bruto                 ≈ 91%
 
 Plan Pro (ilimitado, promedio 600 consultas/mes estimado):
-  IA: 600 × €0.008            = €4.80/mes
-  + OCR: 40 docs × €0.01      = €0.40/mes
-  Infraestructura              = ~€3/mes
-  Total coste                  = ~€8.20/mes
-  Precio                       = €69/mes
-  Margen bruto                 ≈ 88%
+  Claude Sonnet: 600 × €0.008  = €4.80/mes
+  + OCR: 40 docs × €0.01       = €0.40/mes
+  Infraestructura               = ~€3/mes
+  Total coste                   = ~€8.20/mes
+  Precio                        = €49/mes
+  Margen bruto                  ≈ 83%
 
 Plan Business (ilimitado, promedio 1.200 consultas/mes):
-  IA: 1.200 × €0.009          = €10.80/mes (mix Claude+GPT4o)
-  + OCR + Banking              = €5/mes
-  + Nordigen fee               = €3/mes
-  Infraestructura              = ~€6/mes
-  Total coste                  = ~€24.80/mes
-  Precio                       = €149/mes
-  Margen bruto                 ≈ 83%
+  IA: 1.200 × €0.009           = €10.80/mes (mix Claude+GPT4o)
+  + OCR + Banking               = €5/mes
+  + Salt Edge fee               = €3/mes
+  Infraestructura               = ~€6/mes
+  Total coste                   = ~€24.80/mes
+  Precio                        = €149/mes
+  Margen bruto                  ≈ 83%
 ```
 
 ---
@@ -129,12 +119,12 @@ Plan Business (ilimitado, promedio 1.200 consultas/mes):
 // Stripe Product IDs (crear en dashboard o con CLI)
 const STRIPE_PRODUCTS = {
   starter: {
-    monthly: 'price_starter_monthly', // €29
-    annual: 'price_starter_annual', // €276 (= €23 × 12)
+    monthly: 'price_starter_monthly', // €19
+    annual: 'price_starter_annual', // €180 (= €15 × 12)
   },
   pro: {
-    monthly: 'price_pro_monthly', // €69
-    annual: 'price_pro_annual', // €660 (= €55 × 12)
+    monthly: 'price_pro_monthly', // €49
+    annual: 'price_pro_annual', // €468 (= €39 × 12)
   },
   business: {
     monthly: 'price_business_monthly', // €149
@@ -142,13 +132,14 @@ const STRIPE_PRODUCTS = {
   },
 };
 
-// Límites por plan → usados en lógica de rate limiting
-const PLAN_LIMITS: Record<IsaakPlan, { queries: number; ocr: number }> = {
-  TRIAL: { queries: 100, ocr: 5 },
-  STARTER: { queries: 300, ocr: 20 },
-  PRO: { queries: -1, ocr: -1 }, // -1 = unlimited
-  BUSINESS: { queries: -1, ocr: -1 },
-  ENTERPRISE: { queries: -1, ocr: -1 },
+// Límites por plan → usados en lógica de quota (dailyQueryLimit en TenantSubscription)
+// -1 = ilimitado; Free por defecto = 10/día (campo dailyQueryLimit default=10 en schema)
+const PLAN_LIMITS: Record<IsaakPlan, { dailyQueries: number }> = {
+  FREE: { dailyQueries: 10 }, // DB default
+  STARTER: { dailyQueries: -1 }, // 200/mes gestionado a nivel billing
+  PRO: { dailyQueries: -1 },
+  BUSINESS: { dailyQueries: -1 },
+  ENTERPRISE: { dailyQueries: -1 },
 };
 ```
 
