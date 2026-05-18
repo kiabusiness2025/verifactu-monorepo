@@ -189,11 +189,12 @@ export async function GET(request: NextRequest) {
   const codeChallengeMethodRaw = url.searchParams.get('code_challenge_method')?.trim() || '';
   const requestedScope = url.searchParams.get('scope');
   // B1 hardening (auditoría 2026-05-11): el authorization code se mintará SIEMPRE
-  // con scopes clampados al preset público (MCP_PUBLIC_SCOPE_PRESET, default
-  // openai_review_v2). Si un cliente OAuth solicita scopes adicionales — sea por
-  // error o por intentar ampliar superficie — los ignoramos en silencio en lugar
-  // de devolver invalid_scope, para que la integración no se rompa pero la lista
-  // de tools quede limitada a la submission firmada con OpenAI.
+  // con scopes clampados al preset público (MCP_PUBLIC_SCOPE_PRESET, cuyo default
+  // efectivo es `claude_parity` desde 2026-05-18). Si un cliente OAuth solicita
+  // scopes adicionales — sea por error o por intentar ampliar superficie — los
+  // ignoramos en silencio en lugar de devolver invalid_scope, para que la
+  // integración no se rompa pero la lista de tools quede limitada a la submission
+  // firmada con OpenAI.
   const publicPresetScopeSet = new Set<string>(getHoldedMcpScopePreset(getPublicScopePreset()));
   const requestedScopeList = (requestedScope?.trim() ?? '')
     .split(/[\s,]+/)

@@ -65,13 +65,19 @@ describe('MCP OAuth metadata helpers', () => {
   });
 
   it('announces the authorization server issuer in protected resource metadata', () => {
-    // 2026-05-11: default público cambiado a holded_full_read_v1 para exponer
-    // las 9 tools de lectura que el smoke-test detectó como N/D.
+    // Histórico del default público:
+    //  - 2026-05-07: openai_review_v2 (14 tools)
+    //  - 2026-05-11: holded_full_read_v1 (revertido tras rejection)
+    //  - 2026-05-15: openai_review_v2 (revert)
+    //  - 2026-05-18: claude_parity (29 tools) para resubmit OpenAI v2.
+    // El manifest tool-hint-justifications.json debe contener exactamente
+    // las tools cubiertas por este preset — ver test
+    // "keeps the public claude_parity preset aligned..." en holdedMcpTools.test.ts.
     expect(getAuthorizationServerIssuer()).toBe('https://holded.verifactu.business');
-    expect(getPublicScopePreset()).toBe('holded_full_read_v1');
+    expect(getPublicScopePreset()).toBe('claude_parity');
     expect(getSupportedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
     expect(getAdvertisedScopes()).toEqual([...HOLDED_MCP_SUPPORTED_SCOPES]);
-    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('holded_full_read_v1')]);
+    expect(getDefaultScopes()).toEqual([...getHoldedMcpScopePreset('claude_parity')]);
     expect(getProtectedResourceMetadata()).toEqual({
       resource: 'https://holded.verifactu.business/api/mcp/holded',
       authorization_servers: ['https://holded.verifactu.business'],

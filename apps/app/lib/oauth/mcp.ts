@@ -84,23 +84,30 @@ export const MCP_TOOL_SCOPES = HOLDED_MCP_TOOL_SCOPES;
 
 const SUPPORTED_SCOPES = [...HOLDED_MCP_SUPPORTED_SCOPES];
 // C2 (auditoria OpenAI 2026-05-07): el preset por defecto del flujo publico se
-// alinea con `openai_review_v2` para que `tools/list` exponga exactamente los
-// 14 tools declarados en docs/openai-submission/tool-hint-justifications.json.
+// alinea con el conjunto de tools declarado en
+// `docs/openai-submission/tool-hint-justifications.json` para que `tools/list`
+// exponga EXACTAMENTE las mismas tools que el manifest firmado en submission.
 // Anteriormente era `holded_public_campaign_v1` (5 scopes / 7 tools), y si la
 // env var MCP_PUBLIC_SCOPE_PRESET no estaba seteada en produccion, el revisor
 // de OpenAI veia un set de tools distinto al que firmamos en la submission —
 // causa textbook de rechazo.
 //
-// 2026-05-11: default expandido a holded_full_read_v1 (22 tools) bajo la
-// asunción de que OpenAI permite ampliar el catálogo durante el review.
-//
-// 2026-05-15: REVERTIDO a `openai_review_v2`. La auditoría post-rechazo
-// recomienda volver a la superficie mínima firmada (14 tools en el manifest)
-// para resubmission. Un mismatch entre `tools/list` runtime y el manifest
-// `tool-hint-justifications.json` declarado en submission es una causa
-// frecuente de rechazo "Tool annotations match the MCP runtime" en App Review.
-// Una vez aprobada la app, abriremos submission v2 con el preset ampliado.
-const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'openai_review_v2';
+// Histórico:
+//   - 2026-05-07: aligned con `openai_review_v2` (14 tools).
+//   - 2026-05-11: default expandido a `holded_full_read_v1` (22 tools) bajo la
+//     asunción incorrecta de que OpenAI permite ampliar el catálogo durante el
+//     review. Causó rechazo y se revirtió.
+//   - 2026-05-15: REVERTIDO a `openai_review_v2` (14 tools) tras la primera
+//     rejection del review.
+//   - 2026-05-18: AMPLIADO a `claude_parity` (29 tools, todas read-only excepto
+//     create_invoice_draft) coincidiendo con el resubmit que combina los fixes
+//     del PR #88 (brotli/paginación/endtmp/$ref/schema). El manifest
+//     `tool-hint-justifications.json` se actualizó simultáneamente para
+//     mantener alineación 1:1 runtime ↔ manifest. La submission form en el
+//     portal OpenAI DEBE actualizarse antes del deploy o se rechaza por
+//     "Tool annotations match the MCP runtime" — ver
+//     `docs/openai-submission/OPENAI_FORM_COPY_PASTE.md`.
+const DEFAULT_PUBLIC_SCOPE_PRESET: HoldedMcpScopePreset = 'claude_parity';
 const AUTHORIZATION_CODE_REDEMPTIONS_TABLE = 'oauth_authorization_code_redemptions';
 
 type MintAuthorizationCodeInput = Omit<AuthorizationCodePayload, 'codeId'>;
@@ -565,9 +572,11 @@ export function getPublicScopePreset(): HoldedMcpScopePreset {
 
   // R6 hardening (auditoría 2026-05-11): fail-closed en producción.
   // El flujo OAuth público SOLO puede correr con el preset declarado en la
-  // submission firmada con OpenAI (`openai_review_v2`). Si un operador setea
-  // por error la env var a otro valor (full, claude_parity, etc.) ampliaría
-  // silenciosamente la superficie de tools expuesta al revisor.
+  // submission firmada con OpenAI (`DEFAULT_PUBLIC_SCOPE_PRESET`, actualmente
+  // `claude_parity`). Si un operador setea por error la env var a otro valor
+  // (full, holded_full_read_v1, openai_review_v2, etc.) ampliaría o reduciría
+  // silenciosamente la superficie de tools expuesta al revisor — cualquier
+  // mismatch runtime vs manifest declarado es causa textbook de rejection.
   //
   // En producción, cualquier valor distinto al default es un error de config:
   // se ignora y emitimos un warning para que se note en los logs.

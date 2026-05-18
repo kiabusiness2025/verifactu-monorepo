@@ -1,7 +1,67 @@
 # Holded Connector Review Test Matrix
 
-**Date:** 2026-04-29 (initial), 2026-05-04 (post-rejection), 2026-05-15 (controlled-errors wave)
-**Status:** ⏳ READY FOR RESUBMISSION at API+infra level — only **manual ChatGPT web+mobile validation** is missing. Runtime/manifest aligned, all known rejection causes addressed.
+**Date:** 2026-04-29 (initial), 2026-05-04 (post-rejection), 2026-05-15 (controlled-errors wave), 2026-05-18 (post-rejection-2 + scope expansion + brotli fix)
+**Status:** ⏳ READY FOR RESUBMISSION v2 at API+infra level — surface expanded from 14 to 29 tools (claude-parity preset), brotli silent-decoding bug fixed, all manifest entries regenerated. **Manual ChatGPT web+mobile validation of all 29 tools** still required before resubmit.
+
+## 🟡 2026-05-18 — Scope expansion to claude_parity + brotli decoding fix
+
+After the second OpenAI rejection (2026-05-18, same generic message as 2026-05-04: _"did not produce correct results"_), root-cause analysis identified two structural issues:
+
+1. **Brotli silent decoding failure**: the upstream HTTP client in `apps/app/lib/integrations/accounting.ts` did not force `Accept-Encoding: identity`. Node fetch (undici) sends `br, gzip, deflate` by default; large Holded responses (`/documents`, `/contacts`, `/accounts`, `/dailyledger`) sometimes arrive with broken decompression behind Vercel's edge proxy → `safeJsonParse` returns `[]` or `null` → the reviewer sees "empty account" when the demo tenant actually has data. Intermittent by nature (datasets used in local QA are too small to hit it). **Fixed** in commit [08eb029](../../commit/08eb029a).
+
+2. **14-tool surface was too narrow to demonstrate value**: review prompts that required `holded_list_documents` (commercial documents other than invoices), `holded_list_products`, `holded_list_warehouses`, etc. all surfaced as "tool not available" — the reviewer interpreted that as broken behaviour.
+
+**Decision (2026-05-18):** expand `DEFAULT_PUBLIC_SCOPE_PRESET` from `openai_review_v2` (14 tools) to `claude_parity` (29 tools, all read-only except `holded_create_invoice_draft`). The manifest `tool-hint-justifications.json` was regenerated to match 1:1.
+
+### Surface delta — 15 new read-only tools added
+
+| Tool                                | Holded API surface             |
+| ----------------------------------- | ------------------------------ |
+| `holded_list_documents`             | All commercial document types  |
+| `holded_get_document`               | One commercial document by id  |
+| `holded_get_document_pdf`           | PDF rendering (base64)         |
+| `holded_get_document_shipped_items` | Shipment status of a document  |
+| `holded_list_products`              | Catalog products + services    |
+| `holded_get_product`                | One product by id              |
+| `holded_list_warehouses`            | Warehouse configuration        |
+| `holded_get_warehouse`              | One warehouse by id            |
+| `holded_list_warehouse_stock`       | Stock levels per warehouse     |
+| `holded_list_treasury_accounts`     | Bank accounts + cash registers |
+| `holded_get_treasury_account`       | One treasury account by id     |
+| `holded_list_employees`             | HR employees                   |
+| `holded_get_employee`               | One employee by id             |
+| `holded_list_taxes`                 | Tax configuration              |
+| `holded_list_numbering_series`      | Invoice/estimate numbering     |
+
+The single write tool (`holded_create_invoice_draft`) is unchanged — the "broad read, minimal write" promise of the submission is preserved.
+
+### What still requires manual validation before submission
+
+The 14 original POS/NEG cases (POS-01..POS-07B, NEG-01..NEG-07) — see below — still need to be re-run on ChatGPT web AND mobile against the demo tenant. PLUS the 15 new tools need at least one happy-path prompt each. **Without this manual QA, do not resubmit.** OpenAI's reviewers test the actual ChatGPT UX, not the API harness.
+
+### Suggested prompts for the 15 new tools (POS-08..POS-22)
+
+| ID     | Prompt                                                           | Expected tool                       | Notes                                                                                    |
+| ------ | ---------------------------------------------------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| POS-08 | List my 5 most recent Holded purchase documents.                 | `holded_list_documents`             | Use `docType: "purchase"`. Verifies new commercial document surface.                     |
+| POS-09 | Show me the details of document `<id from POS-08>`.              | `holded_get_document`               | Chained — uses an id returned by POS-08.                                                 |
+| POS-10 | Download the PDF of that document.                               | `holded_get_document_pdf`           | Verifies base64 PDF passthrough. ChatGPT should expose a "Download" affordance.          |
+| POS-11 | Has document `<id>` been shipped yet?                            | `holded_get_document_shipped_items` | Read-only shipment status lookup.                                                        |
+| POS-12 | List my Holded products and tell me how many we have in catalog. | `holded_list_products`              | Tests pagination metadata + count summarization.                                         |
+| POS-13 | Show me the details of product `<id from POS-12>`.               | `holded_get_product`                | Chained.                                                                                 |
+| POS-14 | List my Holded warehouses.                                       | `holded_list_warehouses`            | Account may have only one warehouse — that is a valid non-empty result.                  |
+| POS-15 | Show me warehouse `<id from POS-14>`.                            | `holded_get_warehouse`              | Chained.                                                                                 |
+| POS-16 | List the current stock for the products in my Holded account.    | `holded_list_warehouse_stock`       | Returns one row per (product, warehouse). Reviewer should see numeric stock per product. |
+| POS-17 | List my Holded treasury accounts (bank accounts and cash).       | `holded_list_treasury_accounts`     | Demo tenant has at least 2 treasury accounts.                                            |
+| POS-18 | Show me treasury account `<id from POS-17>`.                     | `holded_get_treasury_account`       | Chained.                                                                                 |
+| POS-19 | List my Holded employees.                                        | `holded_list_employees`             | Demo tenant has 1 employee.                                                              |
+| POS-20 | Show me employee `<id from POS-19>`.                             | `holded_get_employee`               | Chained.                                                                                 |
+| POS-21 | What VAT tax rates do I have configured in Holded?               | `holded_list_taxes`                 | Should return the standard ES tax rates (21%, 10%, 4%, 0%).                              |
+| POS-22 | List my invoice numbering series.                                | `holded_list_numbering_series`      | Returns invoice + estimate series. Demo tenant has at least the default "F" series.      |
+
+Each new POS case needs the same "Pass status" + "Safe for OpenAI submission" workflow as the 14 originals before promoting it to the form.
+
+---
 
 ## 🟢 2026-05-15 — Controlled-errors wave + preset realignment
 
@@ -9,13 +69,13 @@ After the second round of soporte testing surfaced a follow-up batch of failures
 
 ### Runtime fixes (merged in [#80](https://github.com/kiabusiness2025/verifactu-monorepo/pull/80), deploy 2026-05-15 18:57 UTC)
 
-| Behaviour                                                                                                                  | Before                                                                                                | After                                                                                                                       |
-| -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| `holded_get_invoice` / `holded_get_project` / `holded_list_project_tasks` with a non-existent or malformed id              | `-32000 Internal MCP error. Reference: <uuid>`                                                        | `structuredContent.error = "not_found"` + readable message in `content[0].text`                                             |
-| `holded_create_invoice_draft` (and every other write tool) called with `confirm: false`                                    | `-32000 Internal MCP error.`                                                                          | `structuredContent.error = "confirmation_required"` + the existing instructional "Awaiting your confirmation..." text       |
-| Holded API returns 403 on an optional module (e.g. CRM/bookings if the plan does not include it)                           | The integration was marked `revoked` for the whole tenant and the user was told "Reconnect Holded"    | The single tool returns `structuredContent.error = "holded_module_forbidden"`; the rest of the connector keeps working      |
-| `holded_list_accounts` called with no `page`/`limit`                                                                       | Returned the entire chart of accounts (~206 entries) inside `structuredContent` (heavy payload)       | Paginated by default (`page: 1, limit: 25`)                                                                                 |
-| `holded_list_invoices` with `year`/`from`/`to` against a tenant with no matching documents                                 | Could hang the request for up to 12 sequential page scans; ChatGPT cut the tool call                  | Honours `HOLDED_HISTORY_SCAN_BUDGET_MS` (default 7000ms) and returns a partial response with `history.reachedEnd: false`    |
+| Behaviour                                                                                                     | Before                                                                                             | After                                                                                                                    |
+| ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `holded_get_invoice` / `holded_get_project` / `holded_list_project_tasks` with a non-existent or malformed id | `-32000 Internal MCP error. Reference: <uuid>`                                                     | `structuredContent.error = "not_found"` + readable message in `content[0].text`                                          |
+| `holded_create_invoice_draft` (and every other write tool) called with `confirm: false`                       | `-32000 Internal MCP error.`                                                                       | `structuredContent.error = "confirmation_required"` + the existing instructional "Awaiting your confirmation..." text    |
+| Holded API returns 403 on an optional module (e.g. CRM/bookings if the plan does not include it)              | The integration was marked `revoked` for the whole tenant and the user was told "Reconnect Holded" | The single tool returns `structuredContent.error = "holded_module_forbidden"`; the rest of the connector keeps working   |
+| `holded_list_accounts` called with no `page`/`limit`                                                          | Returned the entire chart of accounts (~206 entries) inside `structuredContent` (heavy payload)    | Paginated by default (`page: 1, limit: 25`)                                                                              |
+| `holded_list_invoices` with `year`/`from`/`to` against a tenant with no matching documents                    | Could hang the request for up to 12 sequential page scans; ChatGPT cut the tool call               | Honours `HOLDED_HISTORY_SCAN_BUDGET_MS` (default 7000ms) and returns a partial response with `history.reachedEnd: false` |
 
 ### Preset realignment (also in [#80](https://github.com/kiabusiness2025/verifactu-monorepo/pull/80))
 
@@ -36,18 +96,18 @@ Annotation diffs: (none — all annotations match)
 
 ### Source-of-truth in production (verified 2026-05-15)
 
-| Surface                                                                              | Status        |
-| ------------------------------------------------------------------------------------ | ------------- |
-| `https://holded.verifactu.business/`                                                 | 200           |
-| `https://holded.verifactu.business/conectores/chatgpt`                               | 200           |
-| `https://holded.verifactu.business/conectores/chatgpt/docs`                          | 200           |
-| `https://holded.verifactu.business/conectores/chatgpt/privacy`                       | 200           |
-| `https://holded.verifactu.business/conectores/chatgpt/terms`                         | 200           |
-| `https://holded.verifactu.business/conectores/chatgpt/dpa`                           | 200           |
-| `https://holded.verifactu.business/conectores/chatgpt/openai-review-demo`            | 200           |
-| `https://holded.verifactu.business/api/mcp/holded` (GET descriptor + POST JSON-RPC)  | 200           |
-| `https://holded.verifactu.business/.well-known/oauth-authorization-server`           | 200, complete |
-| `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded` | 200        |
+| Surface                                                                                 | Status        |
+| --------------------------------------------------------------------------------------- | ------------- |
+| `https://holded.verifactu.business/`                                                    | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt`                                  | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/docs`                             | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/privacy`                          | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/terms`                            | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/dpa`                              | 200           |
+| `https://holded.verifactu.business/conectores/chatgpt/openai-review-demo`               | 200           |
+| `https://holded.verifactu.business/api/mcp/holded` (GET descriptor + POST JSON-RPC)     | 200           |
+| `https://holded.verifactu.business/.well-known/oauth-authorization-server`              | 200, complete |
+| `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded` | 200           |
 
 OAuth discovery includes `issuer`, `authorization_endpoint`, `token_endpoint`, `registration_endpoint`, `scopes_supported`, `response_types_supported`, `grant_types_supported`, `code_challenge_methods_supported` (S256).
 

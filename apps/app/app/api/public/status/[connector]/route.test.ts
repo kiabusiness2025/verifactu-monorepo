@@ -11,8 +11,16 @@ jest.mock('@/lib/prisma', () => ({
 
 jest.mock('@/lib/connectorHealth/checks', () => ({
   getCheckDefinitions: jest.fn(() => [
-    { connector: 'chatgpt', checkType: 'landing', target: 'https://holded.verifactu.business/conectores/chatgpt' },
-    { connector: 'chatgpt', checkType: 'tools_list', target: 'https://holded.verifactu.business/api/mcp/holded' },
+    {
+      connector: 'chatgpt',
+      checkType: 'landing',
+      target: 'https://holded.verifactu.business/conectores/chatgpt',
+    },
+    {
+      connector: 'chatgpt',
+      checkType: 'tools_list',
+      target: 'https://holded.verifactu.business/api/mcp/holded',
+    },
     { connector: 'claude', checkType: 'landing', target: 'https://claude.verifactu.business/' },
   ]),
 }));
@@ -90,7 +98,7 @@ describe('GET /api/public/status/[connector]', () => {
         latencyMs: 200,
         httpStatus: 200,
         errorCode: 'tool_count_mismatch',
-        errorMessage: 'expected 14 tools, got 13',
+        errorMessage: 'expected 29 tools, got 28',
         checkedAt: new Date(),
         target: 'https://holded.verifactu.business/api/mcp/holded',
       },
@@ -111,9 +119,11 @@ describe('GET /api/public/status/[connector]', () => {
 
     expect(body.overall).toBe('down');
     expect(body.checksFail).toBe(1);
-    const failedCheck = body.checks.find((c: { checkType: string }) => c.checkType === 'tools_list');
+    const failedCheck = body.checks.find(
+      (c: { checkType: string }) => c.checkType === 'tools_list'
+    );
     expect(failedCheck.lastErrorCode).toBe('tool_count_mismatch');
-    expect(failedCheck.lastErrorMessage).toContain('expected 14 tools');
+    expect(failedCheck.lastErrorMessage).toContain('expected 29 tools');
   });
 
   it('overall=degraded si al menos un check tiene status degraded y ninguno fail', async () => {

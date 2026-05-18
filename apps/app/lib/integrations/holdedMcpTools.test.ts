@@ -202,7 +202,11 @@ describe('holdedMcpTools', () => {
     expect(toolNames).not.toContain('holded_clock_in_employee');
   });
 
-  it('keeps the public OpenAI review preset aligned with the deployed connector catalog', () => {
+  it('keeps the legacy openai_review_v2 preset stable at 14 tools (submission v1 reference)', () => {
+    // openai_review_v2 fue el default público entre 2026-05-07 y 2026-05-18.
+    // Lo mantenemos sin tocar para que cualquier PAT o cliente histórico que
+    // siga pidiendo este preset explícitamente vea el mismo conjunto. El
+    // default público actual es `claude_parity` — ver test abajo.
     const toolNames = [
       ...getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('openai_review_v2')),
     ].sort();
@@ -225,6 +229,56 @@ describe('holdedMcpTools', () => {
         'holded_list_time_records',
       ].sort()
     );
+  });
+
+  it('keeps the public claude_parity preset (current default) aligned 1:1 with tool-hint-justifications.json', () => {
+    // 2026-05-18: DEFAULT_PUBLIC_SCOPE_PRESET pasó a `claude_parity` con la
+    // submission v2 a OpenAI que combina los fixes del PR #88 + paridad
+    // funcional con el conector Claude. El manifest declarado en
+    // `docs/openai-submission/tool-hint-justifications.json` DEBE contener
+    // EXACTAMENTE este mismo conjunto. Si este test falla, o bien:
+    //   - actualiza el manifest para añadir/quitar la tool, O
+    //   - revierte el cambio del preset.
+    // Un mismatch runtime ↔ manifest es causa textbook de rejection en App Review.
+    const toolNames = [
+      ...getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('claude_parity')),
+    ].sort();
+
+    expect(toolNames).toEqual(
+      [
+        'holded_create_invoice_draft',
+        'holded_get_contact',
+        'holded_get_document',
+        'holded_get_document_pdf',
+        'holded_get_document_shipped_items',
+        'holded_get_employee',
+        'holded_get_invoice',
+        'holded_get_product',
+        'holded_get_project',
+        'holded_get_treasury_account',
+        'holded_get_warehouse',
+        'holded_list_accounts',
+        'holded_list_bookings',
+        'holded_list_contacts',
+        'holded_list_crm_funnels',
+        'holded_list_daily_ledger',
+        'holded_list_documents',
+        'holded_list_employees',
+        'holded_list_invoices',
+        'holded_list_leads',
+        'holded_list_numbering_series',
+        'holded_list_products',
+        'holded_list_project_tasks',
+        'holded_list_projects',
+        'holded_list_taxes',
+        'holded_list_time_records',
+        'holded_list_treasury_accounts',
+        'holded_list_warehouse_stock',
+        'holded_list_warehouses',
+      ].sort()
+    );
+
+    expect(toolNames).toHaveLength(29);
   });
 
   it('normalizes draft invoice payloads before sending them to Holded', async () => {

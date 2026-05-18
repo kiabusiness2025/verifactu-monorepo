@@ -169,6 +169,186 @@
         "open_world_justification": "Although this tool writes data, it is still scoped to the authenticated user's connected Holded tenant. It does not operate on arbitrary open-world resources, browse the web, or affect other tenants.",
         "destructive_justification": "This tool only creates a draft invoice after explicit user confirmation. It does not delete, overwrite, send, issue, charge, email, finalize, or irreversibly destroy invoices or other existing records. The draft can still be reviewed, edited, or discarded by the user."
       }
+    },
+    "holded_list_documents": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists existing commercial documents (sales receipts, credit notes, estimates, proformas, sales/purchase orders, waybills, purchases, purchase refunds) from the authenticated user's connected Holded account, filtered by document type and date range. It does not create, modify, send, or delete any document.",
+        "open_world_justification": "This tool is scoped to document data inside the authenticated tenant's connected Holded account. It does not browse the web or access unrelated third-party resources.",
+        "destructive_justification": "This tool is a pure read operation. It does not alter, send, issue, finalize, or delete commercial document data."
+      }
+    },
+    "holded_get_document": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool retrieves the full details of a single Holded commercial document by document type and ID. It does not edit, send, or delete the document.",
+        "open_world_justification": "This tool only accesses document data within the authenticated tenant's connected Holded account. It does not access external systems or other tenants.",
+        "destructive_justification": "This tool is a read-only lookup. It does not perform any write, send, or delete operation."
+      }
+    },
+    "holded_get_document_pdf": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool retrieves the rendered PDF representation of one existing Holded commercial document, returned as a base64-encoded payload. It does not regenerate, modify, send, or store the PDF elsewhere — it only reads the current rendering.",
+        "open_world_justification": "This tool is restricted to PDF rendering of documents already present in the authenticated tenant's connected Holded account. It does not fetch arbitrary PDFs from the web or access unrelated third-party resources.",
+        "destructive_justification": "This tool performs no write or delete operation on the underlying document. It returns a read-only PDF rendering of an existing document."
+      }
+    },
+    "holded_get_document_shipped_items": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool reads the shipment status (which line items have already been shipped) of a Holded commercial document. It does not create or modify shipment records.",
+        "open_world_justification": "This tool is scoped to the authenticated tenant's connected Holded account. It does not access external shipping providers, warehouses, or third-party systems.",
+        "destructive_justification": "This tool is a pure read operation. It does not ship items, mark documents as shipped, or modify shipment state in any way."
+      }
+    },
+    "holded_list_products": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists existing products and services from the authenticated user's connected Holded catalog. It does not create, edit, restock, or delete products.",
+        "open_world_justification": "This tool is limited to product data inside the authenticated tenant's connected Holded account. It does not browse the web or access unrelated third-party catalogs.",
+        "destructive_justification": "This tool is a read-only operation. It does not modify the catalog, stock levels, prices, or any other product data."
+      }
+    },
+    "holded_get_product": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool retrieves the details of one existing Holded product by ID. It does not edit, restock, or delete the product.",
+        "open_world_justification": "This tool only accesses product data within the authenticated tenant's connected Holded account. It does not interact with external catalogs or unrelated systems.",
+        "destructive_justification": "This tool is a read-only lookup with no side effects on product or stock data."
+      }
+    },
+    "holded_list_warehouses": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists existing warehouses configured in the authenticated user's connected Holded account. It does not create, modify, or delete warehouses.",
+        "open_world_justification": "This tool is restricted to warehouse configuration inside the authenticated tenant's connected Holded account. It does not access external inventory systems or unrelated tenants.",
+        "destructive_justification": "This tool is a pure read operation. It does not change warehouse configuration."
+      }
+    },
+    "holded_get_warehouse": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool retrieves the details of one existing warehouse by ID from the authenticated user's connected Holded account. It does not edit or remove warehouse records.",
+        "open_world_justification": "This tool only reads warehouse data within the authenticated tenant's connected Holded account. It does not access external inventory systems.",
+        "destructive_justification": "This tool is a read-only lookup. It performs no write or delete operation."
+      }
+    },
+    "holded_list_warehouse_stock": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool reports current stock levels per product across the authenticated user's connected Holded warehouses. It does not adjust, transfer, or write stock.",
+        "open_world_justification": "This tool is scoped to stock data inside the authenticated tenant's connected Holded account. It does not interact with external warehouse management systems.",
+        "destructive_justification": "This tool only reads existing stock levels. It does not increase, decrease, reserve, or transfer stock."
+      }
+    },
+    "holded_list_treasury_accounts": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists existing treasury accounts (bank accounts and cash registers) configured in the authenticated user's connected Holded account. It does not create, modify, or delete treasury accounts.",
+        "open_world_justification": "This tool is restricted to treasury configuration inside the authenticated tenant's connected Holded account. It does not access banking APIs or third-party financial systems.",
+        "destructive_justification": "This tool is a pure read operation. It does not initiate any payment, transfer, or treasury movement."
+      }
+    },
+    "holded_get_treasury_account": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool retrieves the details of one existing treasury account (bank account or cash register) by ID from the authenticated user's connected Holded account. It does not modify the account or initiate any transaction.",
+        "open_world_justification": "This tool only accesses treasury account data within the authenticated tenant's connected Holded account. It does not interact with external banks or payment providers.",
+        "destructive_justification": "This tool is a read-only lookup. It does not move money, initiate transfers, or change treasury data."
+      }
+    },
+    "holded_list_employees": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists existing employee records from the authenticated user's connected Holded HR module. It does not create, edit, deactivate, or delete employees.",
+        "open_world_justification": "This tool is restricted to employee data inside the authenticated tenant's connected Holded account. It does not access external HR systems or unrelated tenants.",
+        "destructive_justification": "This tool is a pure read operation. It does not modify employment records, payroll data, or any other HR information."
+      }
+    },
+    "holded_get_employee": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool retrieves the details of one existing employee by ID from the authenticated user's connected Holded HR module. It does not edit or remove employee records.",
+        "open_world_justification": "This tool only reads employee data within the authenticated tenant's connected Holded account. It does not access external HR systems.",
+        "destructive_justification": "This tool is a read-only lookup. It performs no write, deactivate, or delete operation on employee data."
+      }
+    },
+    "holded_list_taxes": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists the tax rates configured in the authenticated user's connected Holded account (VAT, retentions, special taxes). It does not create, edit, or delete tax rates.",
+        "open_world_justification": "This tool is restricted to tax configuration inside the authenticated tenant's connected Holded account. It does not access external tax authorities or third-party tax services.",
+        "destructive_justification": "This tool is a pure read operation. It does not modify the tax configuration."
+      }
+    },
+    "holded_list_numbering_series": {
+      "annotations": {
+        "readOnlyHint": true,
+        "openWorldHint": false,
+        "destructiveHint": false
+      },
+      "justifications": {
+        "read_only_justification": "This tool lists the numbering series configured for invoices and estimates in the authenticated user's connected Holded account. It does not create, edit, advance, or delete numbering series.",
+        "open_world_justification": "This tool is restricted to numbering configuration inside the authenticated tenant's connected Holded account. It does not access external systems or unrelated tenants.",
+        "destructive_justification": "This tool is a pure read operation. It does not consume or modify any numbering series counter."
+      }
     }
   }
 }

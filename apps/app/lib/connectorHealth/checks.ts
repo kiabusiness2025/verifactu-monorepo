@@ -38,7 +38,11 @@ type ProbeMode =
       kind: 'json_rpc_post';
       body: Record<string, unknown>;
       expectStatus?: number;
-      validate: (body: unknown) => { error: CheckErrorCode | null; message: string | null; metadata?: Record<string, unknown> | null };
+      validate: (body: unknown) => {
+        error: CheckErrorCode | null;
+        message: string | null;
+        metadata?: Record<string, unknown> | null;
+      };
     };
 
 interface CheckDefinition {
@@ -61,12 +65,13 @@ const CHATGPT_MCP_URL =
   process.env.HEALTH_CHATGPT_MCP_URL?.trim() || `${HOLDED_PUBLIC_URL}/api/mcp/holded`;
 const CLAUDE_PUBLIC_URL =
   process.env.HEALTH_CLAUDE_PUBLIC_URL?.trim() || 'https://claude.verifactu.business';
-const CLAUDE_MCP_URL =
-  process.env.HEALTH_CLAUDE_MCP_URL?.trim() || `${CLAUDE_PUBLIC_URL}/mcp`;
+const CLAUDE_MCP_URL = process.env.HEALTH_CLAUDE_MCP_URL?.trim() || `${CLAUDE_PUBLIC_URL}/mcp`;
 
-const CHATGPT_EXPECTED_TOOL_COUNT = Number(
-  process.env.HEALTH_CHATGPT_EXPECTED_TOOL_COUNT || '14'
-);
+// 2026-05-18: ampliado de 14 a 29 al cambiar DEFAULT_PUBLIC_SCOPE_PRESET
+// a `claude_parity` y regenerar el manifest tool-hint-justifications.json.
+// El número debe coincidir con `tools/list` runtime para que el health-check
+// no marque tool_count_mismatch.
+const CHATGPT_EXPECTED_TOOL_COUNT = Number(process.env.HEALTH_CHATGPT_EXPECTED_TOOL_COUNT || '29');
 
 function expectOauthDiscovery(body: unknown): string | null {
   if (!body || typeof body !== 'object') return 'response is not an object';
@@ -95,11 +100,36 @@ function expectClaudeHealth(body: unknown): string | null {
 function checks(): CheckDefinition[] {
   return [
     // ─── ChatGPT MCP ──────────────────────────────────────────────────────────
-    { connector: 'chatgpt', checkType: 'landing', target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt`, probe: { kind: 'get' } },
-    { connector: 'chatgpt', checkType: 'docs', target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/docs`, probe: { kind: 'get' } },
-    { connector: 'chatgpt', checkType: 'privacy', target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/privacy`, probe: { kind: 'get' } },
-    { connector: 'chatgpt', checkType: 'terms', target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/terms`, probe: { kind: 'get' } },
-    { connector: 'chatgpt', checkType: 'dpa', target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/dpa`, probe: { kind: 'get' } },
+    {
+      connector: 'chatgpt',
+      checkType: 'landing',
+      target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt`,
+      probe: { kind: 'get' },
+    },
+    {
+      connector: 'chatgpt',
+      checkType: 'docs',
+      target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/docs`,
+      probe: { kind: 'get' },
+    },
+    {
+      connector: 'chatgpt',
+      checkType: 'privacy',
+      target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/privacy`,
+      probe: { kind: 'get' },
+    },
+    {
+      connector: 'chatgpt',
+      checkType: 'terms',
+      target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/terms`,
+      probe: { kind: 'get' },
+    },
+    {
+      connector: 'chatgpt',
+      checkType: 'dpa',
+      target: `${HOLDED_PUBLIC_URL}/conectores/chatgpt/dpa`,
+      probe: { kind: 'get' },
+    },
     {
       connector: 'chatgpt',
       checkType: 'oauth_discovery',
@@ -123,7 +153,11 @@ function checks(): CheckDefinition[] {
           const o = body as { result?: { serverInfo?: { name?: string } } };
           const name = o?.result?.serverInfo?.name;
           if (typeof name !== 'string' || !name)
-            return { error: 'missing_field', message: 'result.serverInfo.name missing', metadata: null };
+            return {
+              error: 'missing_field',
+              message: 'result.serverInfo.name missing',
+              metadata: null,
+            };
           return { error: null, message: null, metadata: { serverName: name } };
         },
       },
@@ -139,7 +173,11 @@ function checks(): CheckDefinition[] {
           const o = body as { result?: { tools?: unknown[] } };
           const tools = o?.result?.tools;
           if (!Array.isArray(tools))
-            return { error: 'missing_field', message: 'result.tools is not an array', metadata: null };
+            return {
+              error: 'missing_field',
+              message: 'result.tools is not an array',
+              metadata: null,
+            };
           if (tools.length !== CHATGPT_EXPECTED_TOOL_COUNT)
             return {
               error: 'tool_count_mismatch',
@@ -152,17 +190,42 @@ function checks(): CheckDefinition[] {
     },
 
     // ─── Claude MCP ────────────────────────────────────────────────────────────
-    { connector: 'claude', checkType: 'landing', target: `${CLAUDE_PUBLIC_URL}/`, probe: { kind: 'get' } },
+    {
+      connector: 'claude',
+      checkType: 'landing',
+      target: `${CLAUDE_PUBLIC_URL}/`,
+      probe: { kind: 'get' },
+    },
     {
       connector: 'claude',
       checkType: 'health',
       target: `${CLAUDE_PUBLIC_URL}/health`,
       probe: { kind: 'json_get', validate: expectClaudeHealth },
     },
-    { connector: 'claude', checkType: 'docs', target: `${HOLDED_PUBLIC_URL}/conectores/claude/docs`, probe: { kind: 'get' } },
-    { connector: 'claude', checkType: 'privacy', target: `${HOLDED_PUBLIC_URL}/conectores/claude/privacy`, probe: { kind: 'get' } },
-    { connector: 'claude', checkType: 'terms', target: `${HOLDED_PUBLIC_URL}/conectores/claude/terms`, probe: { kind: 'get' } },
-    { connector: 'claude', checkType: 'dpa', target: `${HOLDED_PUBLIC_URL}/conectores/claude/dpa`, probe: { kind: 'get' } },
+    {
+      connector: 'claude',
+      checkType: 'docs',
+      target: `${HOLDED_PUBLIC_URL}/conectores/claude/docs`,
+      probe: { kind: 'get' },
+    },
+    {
+      connector: 'claude',
+      checkType: 'privacy',
+      target: `${HOLDED_PUBLIC_URL}/conectores/claude/privacy`,
+      probe: { kind: 'get' },
+    },
+    {
+      connector: 'claude',
+      checkType: 'terms',
+      target: `${HOLDED_PUBLIC_URL}/conectores/claude/terms`,
+      probe: { kind: 'get' },
+    },
+    {
+      connector: 'claude',
+      checkType: 'dpa',
+      target: `${HOLDED_PUBLIC_URL}/conectores/claude/dpa`,
+      probe: { kind: 'get' },
+    },
     {
       connector: 'claude',
       checkType: 'oauth_discovery',
@@ -225,7 +288,9 @@ async function runProbe(def: CheckDefinition): Promise<HealthCheckResult> {
 
     const latencyMs = Date.now() - startedAt;
     const expectStatus =
-      def.probe.kind === 'json_rpc_post' ? def.probe.expectStatus ?? 200 : def.probe.expectStatus ?? 200;
+      def.probe.kind === 'json_rpc_post'
+        ? (def.probe.expectStatus ?? 200)
+        : (def.probe.expectStatus ?? 200);
 
     if (response.status !== expectStatus) {
       return {
@@ -247,7 +312,10 @@ async function runProbe(def: CheckDefinition): Promise<HealthCheckResult> {
         httpStatus: response.status,
         errorCode: null,
         errorMessage: null,
-        metadata: latencyMs > degradedAboveMs ? { reason: 'slow_response', thresholdMs: degradedAboveMs } : null,
+        metadata:
+          latencyMs > degradedAboveMs
+            ? { reason: 'slow_response', thresholdMs: degradedAboveMs }
+            : null,
       };
     }
 
@@ -287,7 +355,10 @@ async function runProbe(def: CheckDefinition): Promise<HealthCheckResult> {
         httpStatus: response.status,
         errorCode: null,
         errorMessage: null,
-        metadata: latencyMs > degradedAboveMs ? { reason: 'slow_response', thresholdMs: degradedAboveMs } : null,
+        metadata:
+          latencyMs > degradedAboveMs
+            ? { reason: 'slow_response', thresholdMs: degradedAboveMs }
+            : null,
       };
     }
 

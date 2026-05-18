@@ -73,11 +73,15 @@ function getVisibleTools(scopes: string | readonly string[]) {
 
 /**
  * B1 hardening (auditoría 2026-05-11): el flujo OAuth público SIEMPRE queda
- * clampado al preset `openai_review_v2` declarado en la submission a OpenAI,
- * independientemente de qué scopes haya solicitado el cliente o concedido
- * históricamente el authorization server. Esto cierra el riesgo de exponer
- * delete/send/pay tools si un revisor solicita scopes adicionales en su
- * client registration.
+ * clampado al preset declarado en la submission a OpenAI
+ * (`DEFAULT_PUBLIC_SCOPE_PRESET` en lib/oauth/mcp.ts), independientemente de
+ * qué scopes haya solicitado el cliente o concedido históricamente el
+ * authorization server. Esto cierra el riesgo de exponer delete/send/pay
+ * tools si un revisor solicita scopes adicionales en su client registration.
+ *
+ * 2026-05-18: el default es `claude_parity` (29 tools, todas read-only excepto
+ * create_invoice_draft). El manifest tool-hint-justifications.json y la
+ * submission form en el portal OpenAI están alineados con este conjunto.
  *
  * - mode === 'oauth' → intersección de access.scope con preset público.
  * - mode === 'shared_secret' → acceso administrativo interno, full surface.

@@ -161,9 +161,10 @@ export default async function OAuthConsentPage({
   }
 
   // Defense in depth: la lista que mostramos es siempre la intersección de los
-  // scopes solicitados con el preset público activo (openai_review_v2). Aunque
-  // /oauth/authorize ya hace el clamp, lo replicamos aquí para que NUNCA se
-  // muestre al usuario un permiso que el servidor no vaya a conceder realmente.
+  // scopes solicitados con el preset público activo (`claude_parity` desde
+  // 2026-05-18). Aunque /oauth/authorize ya hace el clamp, lo replicamos aquí
+  // para que NUNCA se muestre al usuario un permiso que el servidor no vaya a
+  // conceder realmente.
   const publicPresetScopes = getHoldedMcpScopePreset(getPublicScopePreset());
   const requestedScopeList = requestedScope
     .split(/[\s,]+/)
