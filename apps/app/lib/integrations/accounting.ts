@@ -134,6 +134,17 @@ function buildHoldedHeaders(apiKey: string, accept = 'application/json') {
     Accept: accept,
     'Content-Type': 'application/json',
     key: apiKey,
+    // Bug 2026-05-18 (soporte audit + OpenAI App Review re-rejection): Node
+    // fetch (undici) envía por defecto `Accept-Encoding: br, gzip, deflate`.
+    // Las respuestas grandes de Holded (`/documents`, `/contacts`, `/accounts`,
+    // `/dailyledger`) llegan comprimidas con brotli y la descompresión
+    // transparente falla en silencio detrás del edge proxy de Vercel → res.text()
+    // devuelve bytes truncados y safeJsonParse() devuelve `[]` o `null` como si
+    // la cuenta estuviera vacía. El reviewer de OpenAI veía "did not produce
+    // correct results" para POS-01/03/05/06. Forzar identity replica el patrón
+    // ya usado en apps/holded/app/lib/holded-api-client.ts y apps/holded-mcp.
+    // Ver memoria interna `feedback_proxy_brotli`.
+    'Accept-Encoding': 'identity',
   };
 }
 
@@ -264,6 +275,9 @@ async function holdedMultipartRequest(
       headers: {
         Accept: options.accept ?? 'application/json',
         key: options.apiKey,
+        // Mismo fix brotli que buildHoldedHeaders — multipart no usa
+        // Content-Type explícito (lo setea fetch) pero sí Accept-Encoding.
+        'Accept-Encoding': 'identity',
       },
       body: options.formData,
       signal: controller.signal,
