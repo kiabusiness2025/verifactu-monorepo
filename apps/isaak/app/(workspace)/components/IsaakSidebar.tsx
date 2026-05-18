@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
+  Bell,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -56,6 +57,7 @@ const NAV_SECTIONS = [
   { href: '/contactos', label: 'Contactos', icon: Users },
   { href: '/equipo', label: 'Equipo', icon: Users2 },
   { href: '/calendario', label: 'Calendario Fiscal', icon: CalendarDays },
+  { href: '/fiscal', label: 'Alertas Fiscales', icon: Bell },
   { href: '/advisor', label: 'Mis clientes', icon: Building2 },
 ];
 
