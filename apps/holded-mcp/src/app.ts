@@ -224,9 +224,26 @@ export function createApp() {
     const record = req.holdedRecord!;
     const holdedClient = new HoldedClient(record.holdedApiKey);
 
+    // serverInfo enriquecido — la spec MCP 2025-11 permite `icons`,
+    // `websiteUrl`, `description` y `title` en el initialize response.
+    // Claude Desktop los lee y los usa para renderizar la tarjeta del
+    // conector (icono real en lugar del escudo "Verificando conexión"
+    // genérico). Los iconos se sirven desde nuestro propio dominio para
+    // evitar la dependencia del cache de favicon de Google.
     const mcpServer = new McpServer({
       name: 'holded-mcp',
+      title: 'Holded',
       version: '1.0.0',
+      description:
+        'Gestiona tu Holded directamente desde Claude: facturas, contactos, productos y reportes.',
+      websiteUrl: 'https://holded.verifactu.business/conectores/claude',
+      icons: [
+        {
+          src: `${config.BASE_URL}/holded-diamond-logo.png?v=holded-diamond-2026-05-12`,
+          mimeType: 'image/png',
+          sizes: ['64x64', '128x128', '256x256'],
+        },
+      ],
     });
 
     const getClient = () => holdedClient;
