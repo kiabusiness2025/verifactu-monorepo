@@ -19,7 +19,9 @@ import {
   Volume2,
   VolumeX,
   X,
+  Zap,
 } from 'lucide-react';
+import Link from 'next/link';
 import IsaakMarkdown from './IsaakMarkdown';
 
 // ── Speech API minimal types ──────────────────────────────────────────────────
@@ -58,6 +60,40 @@ function getSpeechRecognition(): ISpeechRecognitionCtor | null {
 }
 
 type Message = { id: string; role: 'user' | 'assistant'; content: string };
+type QuotaHitState = { message: string; resetsAt: string | null; ctaUrl: string };
+
+function QuotaHitBanner({ quotaHit }: { quotaHit: QuotaHitState }) {
+  const hoursLeft = quotaHit.resetsAt
+    ? Math.max(1, Math.ceil((new Date(quotaHit.resetsAt).getTime() - Date.now()) / 3_600_000))
+    : null;
+  const isPricing = quotaHit.ctaUrl === '/pricing';
+
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-4">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100">
+          <Zap size={13} className="text-amber-600" />
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-semibold text-amber-900">Límite diario alcanzado</p>
+          <p className="mt-0.5 text-[12px] text-amber-800 leading-relaxed">{quotaHit.message}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Link
+              href={quotaHit.ctaUrl}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#2361d8] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#1d55c2]"
+            >
+              <Zap size={12} />
+              {isPricing ? 'Ver planes →' : 'Crear cuenta gratis →'}
+            </Link>
+            {hoursLeft !== null && (
+              <span className="text-[11px] text-amber-600">Vuelve en {hoursLeft}h</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const QUICK_CHIPS: Record<string, string[]> = {
   resumen: [
@@ -334,6 +370,7 @@ export default function IsaakChatSection({
   const [isListening, setIsListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, 'thumbs_up' | 'thumbs_down'>>({});
+  const [quotaHit, setQuotaHit] = useState<QuotaHitState | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
@@ -462,8 +499,19 @@ export default function IsaakChatSection({
         reply?: string;
         response?: string;
         error?: string;
+        message?: string;
+        resetsAt?: string;
+        ctaUrl?: string;
         conversation?: { id: string; title: string };
       } | null;
+      if (res.status === 429 && data?.error === 'daily_limit_reached') {
+        setQuotaHit({
+          message: data.message ?? 'Has alcanzado el límite diario.',
+          resetsAt: data.resetsAt ?? null,
+          ctaUrl: data.ctaUrl ?? '/pricing',
+        });
+        return;
+      }
       const assistantReply = data?.reply ?? data?.response;
       const nextConversationId = data?.conversation?.id;
       if (!res.ok || !assistantReply) throw new Error(data?.error ?? 'Sin respuesta');
@@ -547,27 +595,33 @@ export default function IsaakChatSection({
             </p>
           </div>
 
-          {error && (
-            <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
-              {error}
-            </div>
+          {quotaHit ? (
+            <QuotaHitBanner quotaHit={quotaHit} />
+          ) : (
+            <>
+              {error && (
+                <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
+                  {error}
+                </div>
+              )}
+              <ChatInput
+                input={input}
+                loading={loading}
+                onChange={setInput}
+                onSubmit={() =>
+                  selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
+                }
+                onKeyDown={handleKeyDown}
+                onFileSelect={setSelectedFile}
+                selectedFile={selectedFile}
+                onClearFile={() => setSelectedFile(null)}
+                onMicClick={toggleMic}
+                isListening={isListening}
+                inputRef={inputRef}
+                placeholder="Pregúntame sobre tu negocio..."
+              />
+            </>
           )}
-          <ChatInput
-            input={input}
-            loading={loading}
-            onChange={setInput}
-            onSubmit={() =>
-              selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
-            }
-            onKeyDown={handleKeyDown}
-            onFileSelect={setSelectedFile}
-            selectedFile={selectedFile}
-            onClearFile={() => setSelectedFile(null)}
-            onMicClick={toggleMic}
-            isListening={isListening}
-            inputRef={inputRef}
-            placeholder="Pregúntame sobre tu negocio..."
-          />
 
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             {chips.map((chip) => (
@@ -695,28 +749,36 @@ export default function IsaakChatSection({
       </div>
 
       <div className="border-t border-slate-100 px-5 py-3">
-        {error && (
-          <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
-            {error}
-          </div>
+        {quotaHit ? (
+          <QuotaHitBanner quotaHit={quotaHit} />
+        ) : (
+          <>
+            {error && (
+              <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
+                {error}
+              </div>
+            )}
+            <ChatInput
+              input={input}
+              loading={loading}
+              onChange={setInput}
+              onSubmit={() =>
+                selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
+              }
+              onKeyDown={handleKeyDown}
+              onFileSelect={setSelectedFile}
+              selectedFile={selectedFile}
+              onClearFile={() => setSelectedFile(null)}
+              onMicClick={toggleMic}
+              isListening={isListening}
+              inputRef={inputRef}
+            />
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+              <IntegrationBar holdedConnected={holdedConnected} />
+              <EscalationButton messages={messages} />
+            </div>
+          </>
         )}
-        <ChatInput
-          input={input}
-          loading={loading}
-          onChange={setInput}
-          onSubmit={() => (selectedFile ? void uploadFile(selectedFile) : void sendMessage(input))}
-          onKeyDown={handleKeyDown}
-          onFileSelect={setSelectedFile}
-          selectedFile={selectedFile}
-          onClearFile={() => setSelectedFile(null)}
-          onMicClick={toggleMic}
-          isListening={isListening}
-          inputRef={inputRef}
-        />
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-          <IntegrationBar holdedConnected={holdedConnected} />
-          <EscalationButton messages={messages} />
-        </div>
         <p className="mt-2 text-center text-[11px] text-slate-400">
           Isaak puede cometer errores. Verifica información financiera importante.
         </p>

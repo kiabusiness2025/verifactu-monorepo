@@ -1,7 +1,8 @@
 'use client';
 
-import { Loader2, Send, ShieldCheck, Sparkles } from 'lucide-react';
+import { Loader2, Send, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import IsaakMarkdown from '@/app/(workspace)/components/IsaakMarkdown';
 
@@ -62,10 +63,47 @@ const INITIAL_MESSAGES: Message[] = [
   },
 ];
 
+type QuotaHitState = { message: string; resetsAt: string | null };
+
+function PublicQuotaBanner({ quotaHit }: { quotaHit: QuotaHitState }) {
+  const hoursLeft = quotaHit.resetsAt
+    ? Math.max(1, Math.ceil((new Date(quotaHit.resetsAt).getTime() - Date.now()) / 3_600_000))
+    : null;
+
+  return (
+    <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50 px-4 py-4">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-100">
+          <Zap size={13} className="text-amber-600" />
+        </span>
+        <div className="flex-1">
+          <p className="text-[13px] font-semibold text-amber-900">
+            Límite del chat público alcanzado
+          </p>
+          <p className="mt-0.5 text-[12px] text-amber-800 leading-relaxed">{quotaHit.message}</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <Link
+              href="/auth"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-[#2361d8] px-4 py-2 text-[13px] font-semibold text-white shadow-sm transition hover:bg-[#1d55c2]"
+            >
+              <Zap size={12} />
+              Crear cuenta gratis →
+            </Link>
+            {hoursLeft !== null && (
+              <span className="text-[11px] text-amber-600">o vuelve en {hoursLeft}h</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function IsaakPublicChat() {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [quotaHit, setQuotaHit] = useState<QuotaHitState | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -93,6 +131,14 @@ export default function IsaakPublicChat() {
       });
 
       const payload = await response.json().catch(() => ({}));
+
+      if (response.status === 429 && payload?.error === 'daily_limit_reached') {
+        setQuotaHit({
+          message: payload.message ?? 'Has alcanzado el límite del chat público por hoy.',
+          resetsAt: payload.resetsAt ?? null,
+        });
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(payload?.error || 'No hemos podido responder ahora mismo.');
@@ -247,51 +293,57 @@ export default function IsaakPublicChat() {
             <div ref={messagesEndRef} />
           </div>
 
-          <form onSubmit={handleSubmit} className="border-t border-slate-200 bg-white p-4">
-            <div className="mb-3 flex flex-wrap gap-2">
-              {QUICK_REPLIES.map((reply) =>
-                reply.href ? (
-                  <a
-                    key={reply.id}
-                    href={reply.href}
-                    className="inline-flex items-center rounded-full border border-[#2361d8]/35 bg-[#eef4ff] px-3 py-1.5 text-xs font-semibold text-[#1f55c0] transition hover:bg-[#e3edff]"
-                  >
-                    {reply.label}
-                  </a>
-                ) : (
-                  <button
-                    key={reply.id}
-                    type="button"
-                    onClick={() => handleQuickReply(reply.prompt || '')}
-                    disabled={isLoading}
-                    className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#2361d8]/40 hover:bg-[#f5f9ff] hover:text-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-60"
-                  >
-                    {reply.label}
-                  </button>
-                )
-              )}
-            </div>
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-2">
-              <div className="flex gap-2">
-                <textarea
-                  value={input}
-                  onChange={(event) => setInput(event.target.value)}
-                  disabled={isLoading}
-                  rows={3}
-                  placeholder="Escribe tu pregunta y te contesto con claridad."
-                  className="min-h-[88px] flex-1 resize-none rounded-[1rem] border-0 bg-transparent px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
-                />
-                <button
-                  type="submit"
-                  disabled={!input.trim() || isLoading}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center self-end rounded-full bg-[#2361d8] text-white transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:bg-slate-300"
-                  aria-label="Enviar mensaje a Isaak"
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </form>
+          <div className="border-t border-slate-200 bg-white p-4">
+            {quotaHit ? (
+              <PublicQuotaBanner quotaHit={quotaHit} />
+            ) : (
+              <form onSubmit={handleSubmit}>
+                <div className="mb-3 flex flex-wrap gap-2">
+                  {QUICK_REPLIES.map((reply) =>
+                    reply.href ? (
+                      <a
+                        key={reply.id}
+                        href={reply.href}
+                        className="inline-flex items-center rounded-full border border-[#2361d8]/35 bg-[#eef4ff] px-3 py-1.5 text-xs font-semibold text-[#1f55c0] transition hover:bg-[#e3edff]"
+                      >
+                        {reply.label}
+                      </a>
+                    ) : (
+                      <button
+                        key={reply.id}
+                        type="button"
+                        onClick={() => handleQuickReply(reply.prompt || '')}
+                        disabled={isLoading}
+                        className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#2361d8]/40 hover:bg-[#f5f9ff] hover:text-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {reply.label}
+                      </button>
+                    )
+                  )}
+                </div>
+                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-2">
+                  <div className="flex gap-2">
+                    <textarea
+                      value={input}
+                      onChange={(event) => setInput(event.target.value)}
+                      disabled={isLoading}
+                      rows={3}
+                      placeholder="Escribe tu pregunta y te contesto con claridad."
+                      className="min-h-[88px] flex-1 resize-none rounded-[1rem] border-0 bg-transparent px-3 py-2 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none disabled:opacity-60"
+                    />
+                    <button
+                      type="submit"
+                      disabled={!input.trim() || isLoading}
+                      className="inline-flex h-11 w-11 shrink-0 items-center justify-center self-end rounded-full bg-[#2361d8] text-white transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:bg-slate-300"
+                      aria-label="Enviar mensaje a Isaak"
+                    >
+                      <Send className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
+          </div>
         </div>
       </article>
     </section>
