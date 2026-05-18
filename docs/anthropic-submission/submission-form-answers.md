@@ -74,7 +74,9 @@
 
 ## Tools list
 
-Ver `tools-manifest.md` para la lista completa con annotations. Resumen: **24 tools** = 23 read-only + 1 write con confirmación humana explícita.
+Ver `tools-manifest.md` para la lista completa con annotations. **Resumen: 8 tools expuestas (submission v2) = 7 read-only + 1 write con confirmación humana explícita.**
+
+Cobertura funcional alineada con el conector ChatGPT (mismo dominio: facturación venta+compra + contactos + contabilidad). El catálogo completo de 24 tools queda implementado pero no expuesto en producción (reactivable con `HOLDED_MCP_TOOL_PRESET=full` para submission v3 post-aprobación).
 
 ---
 

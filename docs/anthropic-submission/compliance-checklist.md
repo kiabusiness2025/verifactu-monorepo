@@ -14,7 +14,7 @@ Verificación punto a punto del [Anthropic Software Directory Policy](https://su
 
 ## ✅ Helpful & Harmless
 
-- [x] **Tool descriptions claras y honestas:** las 24 tools tienen descripción en inglés explicando qué hacen
+- [x] **Tool descriptions claras y honestas:** las 8 tools expuestas (submission v2 `submission_v1` preset) tienen descripción en inglés explicando qué hacen. Las otras 16 del catálogo siguen implementadas pero no registradas en `tools/list` (reactivables vía `HOLDED_MCP_TOOL_PRESET=full` para submission v3)
 - [x] **No tools destructivas expuestas:** ni delete, ni send, ni pay están en el set público de Claude (solo `create_invoice_draft` que crea borrador con `approveDoc=false` forzado)
 - [x] **Human confirmation para writes:** la única tool de escritura tiene wording explícito sobre confirmación humana
 - [x] **No PII innecesaria:** el connector solo accede a los datos del usuario autenticado, no de terceros

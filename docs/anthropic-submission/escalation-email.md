@@ -27,7 +27,7 @@ Soy [tu nombre] de **Verifactu Business** y os escribo para reenviar la submissi
 
 He revisado el [Anthropic Software Directory Policy](https://support.claude.com/en/articles/13145358-anthropic-software-directory-policy) y el [Submission Guide](https://claude.com/docs/connectors/building/submission). Todos los puntos están cubiertos:
 
-- ✅ **Tool annotations:** 24 tools, todas con `readOnlyHint` o `destructiveHint` (causa #1 de rechazos, ya cerrada)
+- ✅ **Tool annotations:** 8 tools expuestas (preset `submission_v1`), todas con `readOnlyHint` o `destructiveHint` correcto (causa #1 de rechazos, ya cerrada). Las otras 16 del catálogo siguen implementadas pero no se registran en `tools/list` (reactivables vía env var para submission v3 post-aprobación).
 - ✅ **Privacy Policy:** https://holded.verifactu.business/conectores/claude/privacy
 - ✅ **Terms of Service:** https://holded.verifactu.business/conectores/claude/terms
 - ✅ **DPA:** https://holded.verifactu.business/conectores/claude/dpa
@@ -39,11 +39,13 @@ He revisado el [Anthropic Software Directory Policy](https://support.claude.com/
 - ✅ **GDPR Article 28** — DPA firmable
 - ✅ **Endpoint ownership** — todo bajo `verifactu.business` (registro a nombre de Verifactu Business S.L.)
 
-## Tool surface
+## Tool surface (submission v2)
 
-- **24 tools en total:**
-  - 23 read-only (listar/leer facturas, contactos, productos, proyectos, CRM, contabilidad, tesorería, etc.)
+- **8 tools expuestas en producción:**
+  - 7 read-only: `list_documents` (cubre facturas de venta + compra + otros docs comerciales vía `docType`), `get_document`, `get_document_pdf`, `list_contacts`, `get_contact`, `get_chart_of_accounts`, `get_journal` (libro diario contable con rango de fechas obligatorio).
   - 1 write: `create_invoice_draft` con `approveDoc=false` forzado a nivel servidor — la factura siempre queda como borrador editable en Holded, nunca se emite/envía/cobra/transmite a AEAT sin acción explícita del usuario en la UI nativa de Holded.
+
+Alineado funcionalmente 1:1 con el conector ChatGPT-Holded (que expone 10 tools por usar `list_invoices`/`list_documents` separadas en vez del `list_documents` polimórfico de Claude).
 
 ## Cuenta de testing
 
@@ -63,7 +65,7 @@ Envié el Google Form el [fecha aproximada] desde el email `soporte@verifactu.bu
 Tengo preparado un paquete `docs/anthropic-submission/` en nuestro repo con:
 
 - `submission-form-answers.md` — respuestas literales del form
-- `tools-manifest.md` — las 24 tools con annotations
+- `tools-manifest.md` — las 8 tools expuestas con annotations (+ tabla de las 16 reservadas para v3)
 - `oauth-flow.md` — detalle técnico OAuth
 - `compliance-checklist.md` — punto por punto del policy
 - `test-account.md` — credenciales sandbox + 3 prompts
