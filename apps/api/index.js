@@ -124,6 +124,13 @@ function isAdminUser(user) {
 app.use('/api', async (req, res, next) => {
   if (req.path === '/healthz') return next();
 
+  // Internal service-to-service auth (Isaak → api.verifactu.business)
+  const internalSecret = process.env.INTERNAL_API_SECRET;
+  if (internalSecret && req.headers['x-internal-secret'] === internalSecret) {
+    req.user = { uid: 'internal', isAdmin: false };
+    return next();
+  }
+
   const user = await getUserFromSession(req);
   // In test mode, bypass auth for specific routes
   const isTestMode = process.env.NODE_ENV === 'test';
@@ -318,14 +325,39 @@ app.post('/api/verifactu/register-invoice', async (req, res) => {
     // 3. Registrar en AEAT
     const result = await registerInvoice(enrichedInvoice);
 
-    // 4. Devolver resultado con QR y hash incluidos
+    // 4. Extraer estado real del response SOAP de la AEAT
+    const respuesta =
+      result?.[0]?.RespuestaRegFactuSistemaFacturacion ??
+      result?.RespuestaRegFactuSistemaFacturacion ??
+      {};
+    const linea = Array.isArray(respuesta.RespuestaLinea)
+      ? respuesta.RespuestaLinea[0]
+      : respuesta.RespuestaLinea;
+    const estadoAeat = linea?.EstadoRegistro ?? null;
+    const csvAeat = linea?.CSV ?? linea?.Csv ?? null;
+    const errorCodigo = linea?.CodigoErrorRegistro ?? null;
+    const errorDesc = linea?.DescripcionErrorRegistro ?? null;
+
+    const verifactuStatus =
+      estadoAeat === 'Correcto'
+        ? 'accepted'
+        : estadoAeat === 'AceptadoConErrores'
+          ? 'accepted_with_errors'
+          : estadoAeat === 'Incorrecto'
+            ? 'rejected'
+            : 'validated'; // fallback si AEAT no devuelve estado (no debería ocurrir)
+
+    // 5. Devolver resultado con QR, hash y estado real
     res.json({
-      ok: true,
+      ok: verifactuStatus !== 'rejected',
       data: {
-        ...result,
         verifactu_qr: verifactuData.verifactu_qr,
         verifactu_hash: verifactuData.verifactu_hash,
-        verifactu_status: 'validated',
+        verifactu_status: verifactuStatus,
+        verifactu_csv: csvAeat,
+        aeat_estado: estadoAeat,
+        aeat_error_codigo: errorCodigo,
+        aeat_error_desc: errorDesc,
       },
     });
   } catch (error) {

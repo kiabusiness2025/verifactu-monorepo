@@ -681,6 +681,7 @@ async function issueIsaakInvoice(
   ok: boolean;
   verifactuStatus?: string;
   verifactuHash?: string | null;
+  verifactuCsv?: string | null;
   error?: string;
 }> {
   const invoice = await prisma.invoice.findFirst({
@@ -762,9 +763,13 @@ async function issueIsaakInvoice(
     } as never,
   });
 
+  const internalHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+  const internalSecret = process.env.INTERNAL_API_SECRET;
+  if (internalSecret) internalHeaders['x-internal-secret'] = internalSecret;
+
   const res = await fetch(`${verifactuBase}/api/verifactu/register-invoice`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: internalHeaders,
     body: JSON.stringify(payload),
     cache: 'no-store',
   });
@@ -792,19 +797,22 @@ async function issueIsaakInvoice(
   const verifactuStatus =
     (typeof data?.verifactu_status === 'string' && data.verifactu_status) || 'validated';
   const verifactuHash = typeof data?.verifactu_hash === 'string' ? data.verifactu_hash : null;
+  const verifactuCsv = typeof data?.verifactu_csv === 'string' ? data.verifactu_csv : null;
+  const aeatError = typeof data?.aeat_error_desc === 'string' ? data.aeat_error_desc : null;
 
   await prisma.invoice.update({
     where: { id: invoice.id },
     data: {
-      status: 'issued',
+      status: verifactuStatus === 'rejected' ? 'draft' : 'issued',
       verifactuStatus,
       verifactuHash,
       verifactuQr: typeof data?.verifactu_qr === 'string' ? data.verifactu_qr : null,
-      verifactuLastError: null,
+      verifactuSubmissionId: verifactuCsv,
+      verifactuLastError: aeatError?.slice(0, 1000) ?? null,
     } as never,
   });
 
-  return { ok: true, verifactuStatus, verifactuHash };
+  return { ok: true, verifactuStatus, verifactuHash, verifactuCsv };
 }
 
 // ────────────────────────────────────────────────────────────────

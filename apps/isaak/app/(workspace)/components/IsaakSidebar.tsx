@@ -23,6 +23,7 @@ import {
   Plus,
   PlugZap,
   Receipt,
+  Settings,
   Sparkles,
   TrendingUp,
   UserCircle2,
@@ -63,6 +64,7 @@ const NAV_SECTIONS = [
   { href: '/banking', label: 'Open Banking', icon: Landmark },
   { href: '/mail', label: 'Gmail Facturas', icon: Mail },
   { href: '/advisor', label: 'Mis clientes', icon: Building2 },
+  { href: '/settings', label: 'Ajustes', icon: Settings },
 ];
 
 const PROFILE_MENU = [

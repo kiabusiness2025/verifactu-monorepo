@@ -33,7 +33,9 @@ const PLANS: Plan[] = [
     features: [
       '10 mensajes al día',
       'Chat fiscal y contable en español',
-      'Respuestas sobre IVA, IRPF, Verifactu y trámites AEAT',
+      'Facturas VeriFactu con registro real en AEAT — incluido gratis',
+      'Plantillas de factura personalizables (logo + colores)',
+      'Respuestas sobre IVA, IRPF y trámites AEAT',
       'IA incluida — sin suscripción adicional',
     ],
     ctaLabel: 'Empezar gratis',
