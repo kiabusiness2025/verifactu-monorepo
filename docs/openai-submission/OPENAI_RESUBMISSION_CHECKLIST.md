@@ -34,28 +34,59 @@ If you upload the JSON before merging/deploying PR #88, the importer compares ag
 
 ## Page 1 — App listing
 
-- [x] App name: Holded
-- [x] Subtitle: Work with Holded data (21/30 chars)
-- [x] Category: Business
-- [x] Developer: verifactu.business
-- [x] Website URL: https://holded.verifactu.business/ (200 OK)
-- [x] Support URL or email: soporte@verifactu.business
-- [x] Privacy URL: https://holded.verifactu.business/conectores/chatgpt/privacy (200 OK)
-- [x] Terms URL: https://holded.verifactu.business/conectores/chatgpt/terms (200 OK)
-- [x] DPA URL: https://holded.verifactu.business/conectores/chatgpt/dpa (200 OK)
-- [x] Demo recording URL: https://holded.verifactu.business/conectores/chatgpt/openai-review-demo (200 OK)
-- [x] Commerce / purchases not enabled (connector does not offer checkout)
+> **Copy-paste literal:** ver [`PORTAL_FORM_ANSWERS.md`](PORTAL_FORM_ANSWERS.md) sección "App listing (Page 1)". Cada campo del portal tiene el bloque exacto a pegar — no improvisar.
+>
+> **URLs validadas 2026-05-19** con `curl -o /dev/null -w "%{http_code}"` → todas devuelven 200 OK.
+
+- [x] App name: `Holded`
+- [x] Subtitle: `Work with Holded data` (21/30 chars)
+- [x] Description: 1 párrafo de ~570 chars en `PORTAL_FORM_ANSWERS.md` — cubre venta, compra, PDF, contactos, contabilidad, draft con confirmación + tenant-scoped + closed-world
+- [x] Category: `Business`
+- [x] Developer: `verifactu.business`
+- [x] Website URL: `https://holded.verifactu.business/conectores/chatgpt` (200 OK) — landing específica del conector ChatGPT, no el root del dominio
+- [x] Customer Support URL: `https://holded.verifactu.business/conectores/chatgpt/soporte` (200 OK) — email fallback `soporte@verifactu.business`
+- [x] Privacy Policy URL: `https://holded.verifactu.business/conectores/chatgpt/privacy` (200 OK)
+- [x] Terms of Service URL: `https://holded.verifactu.business/conectores/chatgpt/terms` (200 OK)
+- [x] DPA URL (si el portal lo pide aparte): `https://holded.verifactu.business/conectores/chatgpt/dpa` (200 OK)
+- [x] Demo Recording URL: `https://holded.verifactu.business/conectores/chatgpt/openai-review-demo` (200 OK)
+- [x] App Commerce & Purchasing: **No** — texto exacto en `PORTAL_FORM_ANSWERS.md` (el conector no vende, no procesa pagos, solo lee datos y crea borradores)
 
 ## Page 2 — MCP server
 
-- [x] MCP server URL: https://holded.verifactu.business/api/mcp/holded (200 GET descriptor, 200 POST JSON-RPC)
-- [x] Authentication: OAuth 2.0 (not NONE)
-- [x] Token endpoint auth method: none (PKCE-only public clients)
+> **Copy-paste literal:** ver [`PORTAL_FORM_ANSWERS.md`](PORTAL_FORM_ANSWERS.md) sección "MCP Server (Page 2)" + "Tool justifications". Las 30 justificaciones (10 tools × 3 hints) ya están redactadas en inglés.
+
+- [x] MCP server URL: `https://holded.verifactu.business/api/mcp/holded` (200 GET descriptor, 200 POST JSON-RPC) — ⚠️ **no usar `app.verifactu.business/...` aunque funcione**, debe coincidir con el `resource` declarado en `oauth-protected-resource` metadata
+- [x] Authentication: **OAuth 2.0** (Authorization Code + PKCE S256, public client sin secret)
+- [x] Token endpoint auth method: `none` (PKCE-only public clients)
+- [x] Discovery metadata: `https://holded.verifactu.business/.well-known/oauth-authorization-server` (200 OK) — el portal la lee automáticamente para autoconfigurar el OAuth
+- [x] Protected resource metadata: `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded` (200 OK)
+- [x] Advanced settings: **dejar por defecto** — nuestra discovery cubre todos los endpoints
 - [x] Domain `holded.verifactu.business` is verified in Vercel and serves valid TLS
 - [ ] **PORTAL UPLOAD (pending):** `chatgpt-app-submission.json` uploaded (10 tools, schema v1) — importer must report `Imported 10. Skipped 0. Missing 0. Mismatched 0.`
 - [ ] **PORTAL UPLOAD (pending):** Tool annotations match the MCP runtime — verified by diffing `tools/list` against the manifest (0 diffs, 10/10)
 - [x] `holded_create_invoice_draft` is `readOnlyHint: false`, `destructiveHint: false` (creates a draft only)
 - [x] `holded_list_daily_ledger` description and schema make the explicit date range required (`startDate`/`endDate` or `startTimestamp`/`endTimestamp`)
+
+### Page 2.5 — Tool justifications (30 campos = 10 tools × Read Only / Open World / Destructive)
+
+> El portal pide una justificación corta para **cada** valor declarado de Read Only / Open World / Destructive en **cada** tool. Total: 30 textboxes.
+>
+> **Texto exacto a pegar:** ver [`PORTAL_FORM_ANSWERS.md`](PORTAL_FORM_ANSWERS.md) sección "Tool justifications (10 tools × 3 hints = 30 respuestas)". Cada tool tiene 3 bloques de texto en inglés.
+
+Tools en el orden del manifest (todas con `Open World: False`, `Destructive: False`):
+
+- [ ] `holded_list_invoices` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_invoice` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_documents` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_document` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_document_pdf` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_contacts` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_contact` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_accounts` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_daily_ledger` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_create_invoice_draft` — Read Only: **False** ⚠️ (única tool de escritura, `confirm: true` obligatorio, `approveDoc=false` forzado) (3 justificaciones)
+
+**Sobre el aviso "Recommended: Add an outputSchema":** opcional, no bloquea aprobación. Lo dejamos para submission v3 post-aprobación para no introducir variables nuevas en esta review.
 
 ## Positive review tests (10 cases — POS-01..POS-10)
 

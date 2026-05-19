@@ -2,11 +2,107 @@
 
 Documento operativo de copy-paste para el formulario de OpenAI App Review. Cada bloque está listo para pegar en el campo correspondiente del portal sin cambios. Mantén el orden tal cual aparece en el portal.
 
-> **Última actualización: 2026-05-19.** Validado contra el `tools/list` live del MCP que devuelve exactamente las 10 tools de este documento.
+> **Última actualización: 2026-05-19.** Todas las URLs validadas con `curl -o /dev/null -w "%{http_code}"` (200 OK). El `tools/list` live del MCP devuelve exactamente las 10 tools de este documento.
 
 ---
 
-## MCP Server URL
+## App listing (Page 1)
+
+### App Name
+
+> This is the name users will see in ChatGPT and in the Apps Directory.
+
+```
+Holded
+```
+
+### Subtitle (≤30 chars)
+
+> Describe what your app does in a short, plain-language phrase focused on function and user value. Avoid marketing language.
+
+```
+Work with Holded data
+```
+
+(21/30 chars — dentro del límite, sin lenguaje de marketing.)
+
+### Description
+
+> Write a clear, engaging description that highlights what your app does and why people will love it. Focus on concrete user value and avoid exaggerative, misleading claims. This will appear publicly on your app's directory page.
+
+```
+Holded lets you connect your Holded account to ChatGPT and work with real business data in natural language. You can review sales invoices, purchase documents (and their PDF rendering), contacts, accounting accounts and daily ledger entries, and create a sales invoice draft with explicit user confirmation. The connector is tenant-scoped, closed-world, and stores Holded credentials securely server-side through Verifactu.
+```
+
+### Category
+
+```
+Business
+```
+
+(Enum interno del schema: `BUSINESS`. En el portal seleccionar "Business".)
+
+### Developer
+
+```
+verifactu.business
+```
+
+### Website URL
+
+```
+https://holded.verifactu.business/conectores/chatgpt
+```
+
+✅ 200 OK (verificado 2026-05-19). Landing específica del conector ChatGPT × Holded — más relevante que el dominio raíz para que el reviewer entienda directamente qué app está revisando.
+
+### Customer Support URL or Email Address
+
+```
+https://holded.verifactu.business/conectores/chatgpt/soporte
+```
+
+✅ 200 OK. Página de soporte específica del conector con Isaak chat + form. Email fallback (que ya consta en el footer de la landing y en las páginas legales): `soporte@verifactu.business`.
+
+### Privacy Policy URL
+
+```
+https://holded.verifactu.business/conectores/chatgpt/privacy
+```
+
+✅ 200 OK. Privacy policy específica del conector ChatGPT.
+
+### Terms of Service URL
+
+```
+https://holded.verifactu.business/conectores/chatgpt/terms
+```
+
+✅ 200 OK. Terms específicos del conector ChatGPT.
+
+### Demo Recording URL
+
+> Record a video demonstrating your app's functionality using Developer Mode. Include all main use cases and tools across all platforms (web, iOS, Android).
+
+```
+https://holded.verifactu.business/conectores/chatgpt/openai-review-demo
+```
+
+✅ 200 OK. Página con el video `/video/holded-chatgpt-demo.mp4` integrado + tarjeta explicativa con los 10 prompts de review para que el reviewer pueda reproducir el flujo en vivo. La URL legacy `/demo-recording` también queda viva y sirve el mismo contenido.
+
+### App Commerce & Purchasing
+
+> Tell us if your app involves sales and verify that no digital goods (e.g., subscriptions, in-app purchases, digital content) are offered. We can only support physical good sales at this time.
+
+```
+No — the connector does not sell goods or process purchases. It only reads business data from the user's connected Holded tenant and can create one sales invoice draft inside Holded (after explicit user confirmation). No subscriptions, in-app purchases, digital content, checkout, or payment flow is exposed to ChatGPT.
+```
+
+---
+
+## MCP Server (Page 2)
+
+### MCP Server URL
 
 ```
 https://holded.verifactu.business/api/mcp/holded
