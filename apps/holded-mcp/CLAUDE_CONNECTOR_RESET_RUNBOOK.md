@@ -135,18 +135,46 @@ Prueba funcional mínima sugerida:
 
 ## 10. Cómo interpretar un icono inesperado (V de Verifactu, escudo azul, etc.)
 
-**Actualización 2026-05-19 — root cause confirmado para el caso "V de Verifactu":**
+**Actualización 2026-05-19 — DOS root causes confirmados, distintos:**
 
-Si Claude.ai muestra una "V" (letra) en lugar del rombo Holded, el problema NO es fallback de UI de Claude — es que `apps/holded-mcp/public/favicon.ico` quedó congelado desde la primera versión del servidor (cuando se brandeaba como Verifactu) y nunca se regeneró desde `holded-diamond-logo.png`. Las rutas `/favicon.png`, `/icon.png`, `/apple-touch-icon.png` etc. sí sirven el diamante (porque van por `sendDiamondPng` que apunta directo al PNG), pero `/favicon.ico` va por `sendDiamondIco` que sirve el `.ico` legacy.
+### Caso A — "V" navy con letra blanca (icono en chips de tool-call)
 
-**Fix permanente:** ejecutar `node apps/holded-mcp/scripts/regen-favicon.mjs` para regenerar el ICO multi-resolución (16/32/48/64 px, PNG-encoded RGBA) desde `holded-diamond-logo.png`. Commitear el binario actualizado, bumpear `ICON_VERSION` en `apps/holded-mcp/src/app.ts`, deploy.
+`apps/holded-mcp/public/favicon.ico` quedó congelado desde la primera versión del servidor (cuando se brandeaba como Verifactu Business v2 con el logo V). Las rutas `/favicon.png`, `/icon.png`, `/apple-touch-icon.png` etc. sí sirven el diamante (van por `sendDiamondPng`), pero `/favicon.ico` iba por `sendDiamondIco` que servía el `.ico` legacy.
 
-**Verificación post-deploy:**
+**Fix:** `node apps/holded-mcp/scripts/regen-favicon.mjs` + commit + deploy → resuelto en PR #99.
 
 ```bash
 curl -sS https://claude.verifactu.business/favicon.ico | md5sum
-# debe coincidir con el md5 del fichero del repo (NO con 2e7fd8c21b1aa5c17991d0053c11dab6, que era el legacy)
+# debe ser d23f99aeb2d1ea5369b6222eba8cd8e7 (NO 2e7fd8c21b1aa5c17991d0053c11dab6 que era el legacy V)
 ```
+
+### Caso B — Escudo azul con check (icono de la app en la pantalla "Aún no estás conectado")
+
+Era el icono Verifactu Business v1 (`apps/app/public/icono_verifactu.business.png`, 500×500 RGBA, MD5 `6417d69d`). **Eliminado del repo el 2025-12-20** en commit `2ea8e783e` ("replace binary icons with svg"). 5+ meses 404 en todas nuestras URLs.
+
+**Pero Claude.ai lo sigue mostrando.** Conclusión: **Anthropic / Claude.ai tiene el binary cacheado server-side** desde antes de la eliminación, cuando era accesible en `app.verifactu.business/icono_verifactu.business.png` (u otra URL pública). No vuelven a request la URL — sirven su copia cacheada.
+
+**Implicaciones:**
+
+- `theme_color` y `background_color` del `manifest.json` (purgados 2026-05-19 de Verifactu navy/blue a Holded coral) NO arreglan el escudo cacheado.
+- Nada que hagamos en `claude.verifactu.business` lo arregla, porque Anthropic no re-scrapea conectores custom no aprobados en el directorio.
+
+**Las únicas dos soluciones reales:**
+
+1. **Conseguir aprobación en el Anthropic Connectors Directory** — con `logo_uri` explícito en la submission v2 form, el icono se sustituye al aprobar.
+2. **Migrar a un subdominio nuevo** `claude-holded.verifactu.business` que Anthropic indexa fresh, sin cache previo. Requiere actualizar 7 docs en `docs/anthropic-submission/` + memoria + DNS + Vercel domain alias.
+
+**Red de seguridad implementada 2026-05-19:**
+
+- `apps/holded-mcp/src/app.ts` ahora sirve el rombo Holded también en la URL legacy `/icono_verifactu.business.png`. Si Anthropic alguna vez re-scrapea (no garantizado), recibe el brand actual.
+
+### Bytes de referencia para confirmar root cause
+
+| Icono observado       | Origen                                                                | MD5 del binary                      | Cómo se arregla                            |
+| --------------------- | --------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------ |
+| V navy + texto blanco | `apps/holded-mcp/public/favicon.ico` (legacy)                         | `2e7fd8c2` → `d23f99ae`             | Regenerar favicon.ico (PR #99)             |
+| Escudo azul con check | `apps/app/public/icono_verifactu.business.png` (eliminado 2025-12-20) | `6417d69d` (cacheado por Anthropic) | Subdominio nuevo o aprobación de directory |
+| Rombo coral Holded    | `apps/holded-mcp/public/holded-diamond-logo.png` (canonical)          | `d4a3694f`                          | ✅ Estado deseado                          |
 
 ---
 
