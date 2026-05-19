@@ -1,19 +1,21 @@
 # OpenAI Resubmission Checklist — Holded (submission v2)
 
-Last updated: **2026-05-18 (tarde)** after the wave of fixes in PR #88 (brotli + paginación + endtmp + $ref + scope narrowing to 10 tools).
+Last updated: **2026-05-19** — runtime + manifest aligned (10 tools, `openai_review_invoicing_v1` preset). Landings refreshed with `ConnectorRequirementsCard` (license clauses + Claude pre-login note + external vendor links). Hub (`/conectores`) ready for public/social-share with OG/Twitter metadata + new "Requisitos previos" block. Only ChatGPT web+mobile manual QA pending before resubmit.
 
 ## ⚠️ Deploy gate — CRITICAL order of operations
 
 The portal compares the JSON we upload with `tools/list` returned by the live runtime at `https://holded.verifactu.business/api/mcp/holded`. If they don't match, the importer reports `Imported X. Skipped Y. Missing Z.` and the reviewer sees that as a mismatch.
 
-**Required order:**
+**Required order (status as of 2026-05-19):**
 
-1. ✅ **Merge PR #88 to `main`** so the runtime switches to preset `openai_review_invoicing_v1` (10 tools).
-2. ✅ **Wait for Vercel deploy to go live** and verify with `curl https://holded.verifactu.business/api/mcp/holded -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'` → must return `10`.
-3. ✅ **Run** `node scripts/validate-openai-submission.mjs` locally (must say "Validation passed. tools: 10").
-4. ✅ **Upload `docs/openai-submission/chatgpt-app-submission.json`** to the App Review portal. Expected import result: **Imported 10. Skipped 0. Missing 0. Mismatched 0.**
-5. ✅ **Run the 16 manual tests** below in ChatGPT web AND mobile (this is the actual blocker, not the JSON).
-6. ✅ **Submit** with the message suggested at the bottom.
+1. ✅ **PR #88 merged to `main`** — runtime exposes preset `openai_review_invoicing_v1` (10 tools).
+2. ✅ **PR #93 merged** — per-connector OG images + sender names ChatGPT/Claude × Holded.
+3. ✅ **PR #94 merged** — UX cluster E/F: confetti on successful connect, post-conexión toast, dashboard `ChannelBadge`, `ConnectorRequirementsCard`, hub público-ready.
+4. ✅ **Vercel deploy live** — `curl https://holded.verifactu.business/api/mcp/holded -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'` returns `10`.
+5. ✅ **`node scripts/validate-openai-submission.mjs`** passes locally (10 tools).
+6. ⏳ **Upload `docs/openai-submission/chatgpt-app-submission.json`** to the App Review portal (expected: `Imported 10. Skipped 0. Missing 0. Mismatched 0.`).
+7. ⏳ **Run the 16 manual tests** below in ChatGPT web AND mobile (this is the actual blocker, not the JSON).
+8. ⏳ **Submit** with the message suggested at the bottom.
 
 ### Understanding the importer warnings if you upload BEFORE the deploy
 
@@ -32,28 +34,59 @@ If you upload the JSON before merging/deploying PR #88, the importer compares ag
 
 ## Page 1 — App listing
 
-- [x] App name: Holded
-- [x] Subtitle: Work with Holded data (21/30 chars)
-- [x] Category: Business
-- [x] Developer: verifactu.business
-- [x] Website URL: https://holded.verifactu.business/ (200 OK)
-- [x] Support URL or email: soporte@verifactu.business
-- [x] Privacy URL: https://holded.verifactu.business/conectores/chatgpt/privacy (200 OK)
-- [x] Terms URL: https://holded.verifactu.business/conectores/chatgpt/terms (200 OK)
-- [x] DPA URL: https://holded.verifactu.business/conectores/chatgpt/dpa (200 OK)
-- [x] Demo recording URL: https://holded.verifactu.business/conectores/chatgpt/openai-review-demo (200 OK)
-- [x] Commerce / purchases not enabled (connector does not offer checkout)
+> **Copy-paste literal:** ver [`PORTAL_FORM_ANSWERS.md`](PORTAL_FORM_ANSWERS.md) sección "App listing (Page 1)". Cada campo del portal tiene el bloque exacto a pegar — no improvisar.
+>
+> **URLs validadas 2026-05-19** con `curl -o /dev/null -w "%{http_code}"` → todas devuelven 200 OK.
+
+- [x] App name: `Holded`
+- [x] Subtitle: `Work with Holded data` (21/30 chars)
+- [x] Description: 1 párrafo de ~570 chars en `PORTAL_FORM_ANSWERS.md` — cubre venta, compra, PDF, contactos, contabilidad, draft con confirmación + tenant-scoped + closed-world
+- [x] Category: `Business`
+- [x] Developer: `verifactu.business`
+- [x] Website URL: `https://holded.verifactu.business/conectores/chatgpt` (200 OK) — landing específica del conector ChatGPT, no el root del dominio
+- [x] Customer Support URL: `https://holded.verifactu.business/conectores/chatgpt/soporte` (200 OK) — email fallback `soporte@verifactu.business`
+- [x] Privacy Policy URL: `https://holded.verifactu.business/conectores/chatgpt/privacy` (200 OK)
+- [x] Terms of Service URL: `https://holded.verifactu.business/conectores/chatgpt/terms` (200 OK)
+- [x] DPA URL (si el portal lo pide aparte): `https://holded.verifactu.business/conectores/chatgpt/dpa` (200 OK)
+- [x] Demo Recording URL: `https://holded.verifactu.business/conectores/chatgpt/openai-review-demo` (200 OK)
+- [x] App Commerce & Purchasing: **No** — texto exacto en `PORTAL_FORM_ANSWERS.md` (el conector no vende, no procesa pagos, solo lee datos y crea borradores)
 
 ## Page 2 — MCP server
 
-- [x] MCP server URL: https://holded.verifactu.business/api/mcp/holded (200 GET descriptor, 200 POST JSON-RPC)
-- [x] Authentication: OAuth 2.0 (not NONE)
-- [x] Token endpoint auth method: none (PKCE-only public clients)
+> **Copy-paste literal:** ver [`PORTAL_FORM_ANSWERS.md`](PORTAL_FORM_ANSWERS.md) sección "MCP Server (Page 2)" + "Tool justifications". Las 30 justificaciones (10 tools × 3 hints) ya están redactadas en inglés.
+
+- [x] MCP server URL: `https://holded.verifactu.business/api/mcp/holded` (200 GET descriptor, 200 POST JSON-RPC) — ⚠️ **no usar `app.verifactu.business/...` aunque funcione**, debe coincidir con el `resource` declarado en `oauth-protected-resource` metadata
+- [x] Authentication: **OAuth 2.0** (Authorization Code + PKCE S256, public client sin secret)
+- [x] Token endpoint auth method: `none` (PKCE-only public clients)
+- [x] Discovery metadata: `https://holded.verifactu.business/.well-known/oauth-authorization-server` (200 OK) — el portal la lee automáticamente para autoconfigurar el OAuth
+- [x] Protected resource metadata: `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded` (200 OK)
+- [x] Advanced settings: **dejar por defecto** — nuestra discovery cubre todos los endpoints
 - [x] Domain `holded.verifactu.business` is verified in Vercel and serves valid TLS
-- [ ] **POST-DEPLOY:** `chatgpt-app-submission.json` uploaded (10 tools, schema v1) — importer reports `Imported 10. Skipped 0. Missing 0. Mismatched 0.`
-- [ ] **POST-DEPLOY:** Tool annotations match the MCP runtime — verified by diffing `tools/list` against the manifest (0 diffs, 10/10)
+- [ ] **PORTAL UPLOAD (pending):** `chatgpt-app-submission.json` uploaded (10 tools, schema v1) — importer must report `Imported 10. Skipped 0. Missing 0. Mismatched 0.`
+- [ ] **PORTAL UPLOAD (pending):** Tool annotations match the MCP runtime — verified by diffing `tools/list` against the manifest (0 diffs, 10/10)
 - [x] `holded_create_invoice_draft` is `readOnlyHint: false`, `destructiveHint: false` (creates a draft only)
 - [x] `holded_list_daily_ledger` description and schema make the explicit date range required (`startDate`/`endDate` or `startTimestamp`/`endTimestamp`)
+
+### Page 2.5 — Tool justifications (30 campos = 10 tools × Read Only / Open World / Destructive)
+
+> El portal pide una justificación corta para **cada** valor declarado de Read Only / Open World / Destructive en **cada** tool. Total: 30 textboxes.
+>
+> **Texto exacto a pegar:** ver [`PORTAL_FORM_ANSWERS.md`](PORTAL_FORM_ANSWERS.md) sección "Tool justifications (10 tools × 3 hints = 30 respuestas)". Cada tool tiene 3 bloques de texto en inglés.
+
+Tools en el orden del manifest (todas con `Open World: False`, `Destructive: False`):
+
+- [ ] `holded_list_invoices` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_invoice` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_documents` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_document` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_document_pdf` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_contacts` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_get_contact` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_accounts` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_list_daily_ledger` — Read Only: **True** (3 justificaciones)
+- [ ] `holded_create_invoice_draft` — Read Only: **False** ⚠️ (única tool de escritura, `confirm: true` obligatorio, `approveDoc=false` forzado) (3 justificaciones)
+
+**Sobre el aviso "Recommended: Add an outputSchema":** opcional, no bloquea aprobación. Lo dejamos para submission v3 post-aprobación para no introducir variables nuevas en esta review.
 
 ## Positive review tests (10 cases — POS-01..POS-10)
 
@@ -122,3 +155,5 @@ For each of the 32 runs (16 cases × 2 platforms), capture:
 - **2026-05-15 (PR #80):** controlled errors (`not_found`, `confirmation_required`, `holded_module_forbidden`), `holded_list_accounts` paginated by default, `HOLDED_HISTORY_SCAN_BUDGET_MS` budget for historical scan.
 - **2026-05-18 morning (PR #88, commits 37c6714..1145bc4):** brotli fix (`Accept-Encoding: identity`) in Claude + ChatGPT clients, paginación client-side, endtmp default, `$ref` schema dedup fix, scope expansion to `claude_parity` (29 tools).
 - **2026-05-18 afternoon (PR #88, commits 823ff9d..5252ac4):** generated `chatgpt-app-submission.json` unified manifest, narrowed scope back to `openai_review_invoicing_v1` (10 tools for ChatGPT) + `submission_v1` (8 tools for Claude). Aligned both connectors to the minimum defendible surface.
+- **2026-05-18 (PR #93):** per-connector OG images (`/og/chatgpt.png`, `/og/claude.png`) + sender names "ChatGPT × Holded" / "Claude × Holded" en emails.
+- **2026-05-19 (PR #94):** UX cluster E/F — confetti on successful connect (vanilla canvas, `prefers-reduced-motion` aware), post-conexión toast, dashboard `ChannelBadge` (verde ChatGPT / ámbar Claude / neutro dashboard), `ConnectorRequirementsCard` (license clauses + Claude pre-login note + external vendor links), hub `/conectores` ready for public/social-share (OG/Twitter metadata, "Requisitos previos" block).

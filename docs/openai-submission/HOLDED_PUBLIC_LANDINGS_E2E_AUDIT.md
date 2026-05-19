@@ -1,5 +1,7 @@
 # Holded Public Landings E2E Audit
 
+> ⚠️ **HISTÓRICO — 2026-04-30.** Audit con status `NOT_READY_FOR_OPENAI_RESUBMISSION` que identificó P0/P1 sobre el demo recording, copy del landing ChatGPT, support form, secret hardcoded y validación local. **La mayor parte de los hallazgos están resueltos en producción** (PRs #80, #88, #93, #94 + landings refactor con `ConnectorRequirementsCard`). Se conserva como traza histórica para futuras revisiones. Para el estado actual de páginas públicas usar [`OPENAI_RESUBMISSION_CHECKLIST.md`](OPENAI_RESUBMISSION_CHECKLIST.md) y el código de [`apps/holded/app/conectores/`](../../apps/holded/app/conectores/).
+
 Date: 2026-04-30
 
 Scope audited:

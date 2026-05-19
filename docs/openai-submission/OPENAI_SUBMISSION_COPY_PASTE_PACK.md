@@ -1,5 +1,7 @@
 # OpenAI Submission Copy-Paste Pack
 
+> ⚠️ **HISTÓRICO — 2026-04-29.** Este documento quedó superado por [`OPENAI_FORM_COPY_PASTE.md`](OPENAI_FORM_COPY_PASTE.md) (la fuente actual para los campos del form, alineada con las 10 tools del preset `openai_review_invoicing_v1`). Aquí faltan POS-08..POS-10 (los 3 tools de documentos comerciales + PDF que se añadieron en submission v2). Se conserva como referencia histórica de la primera ola de submission.
+
 Date: 2026-04-29
 Status: API-level validated, pending ChatGPT web/mobile validation.
 
