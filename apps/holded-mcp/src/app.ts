@@ -138,6 +138,19 @@ export function createApp() {
   app.get('/apple-touch-icon.png', (_req, res) => sendDiamondPng(res));
   app.get('/holded-diamond-logo.png', (_req, res) => sendDiamondPng(res));
 
+  // Legacy alias — la app se brandeaba como "Verifactu Business" antes de
+  // 2025-12-20 (commit 2ea8e783e). El icono entonces era un escudo azul
+  // con check, servido (entre otros) desde app.verifactu.business/icono_verifactu.business.png
+  // Anthropic/Claude scrapearon este icono en su momento y lo siguen
+  // mostrando como avatar del conector pese a que el fichero lleva
+  // 5+ meses 404 en todas nuestras URLs. Esta ruta sirve el rombo Holded
+  // bajo el path legacy: si Anthropic alguna vez re-scrapea, recibe el
+  // brand actual. No es solución principal (Anthropic puede no re-scrapear
+  // jamás para conectores no aprobados en el directorio); la solución
+  // garantizada es un subdominio nuevo claude-holded.verifactu.business
+  // que Anthropic indexa fresh. Esta ruta es red de seguridad de bajo coste.
+  app.get('/icono_verifactu.business.png', (_req, res) => sendDiamondPng(res));
+
   app.get('/icon.svg', (_req, res) => {
     res.set({
       'Cache-Control': 'public, max-age=3600, must-revalidate',
