@@ -598,6 +598,7 @@ model Tenant {
   bankReconciliationConfig    BankReconciliationConfig?
   invoiceTemplates            InvoiceTemplate[]
   tenantCertificates          TenantCertificate[]
+  advisorClients              AdvisorClient[]
 
   @@map("tenants")
 }
@@ -2368,4 +2369,24 @@ model ConnectorHealthCheck {
   @@index([connector, checkType, checkedAt(sort: Desc)])
   @@index([checkedAt(sort: Desc)])
   @@map("connector_health_checks")
+}
+
+model AdvisorClient {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  advisorTenantId String   @map("advisor_tenant_id") @db.Uuid
+  advisorTenant   Tenant   @relation(fields: [advisorTenantId], references: [id], onDelete: Cascade)
+
+  alias           String
+  companyName     String?  @map("company_name")
+  nif             String?
+  holdedApiKeyEnc String?  @map("holded_api_key_enc") @db.Text
+  holdedKeyMasked String?  @map("holded_key_masked")
+  notes           String?  @db.Text
+  isActive        Boolean  @default(true) @map("is_active")
+
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([advisorTenantId, isActive])
+  @@map("advisor_clients")
 }

@@ -4,6 +4,7 @@ import { callLLM } from '@verifactu/utils';
 import type { AIProvider } from '@verifactu/utils';
 import { recordUsageEvent } from '@verifactu/integrations';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import { getActiveAdvisorClientId } from '@/app/lib/advisor-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import {
   formatWorkspaceSignalsForPrompt,
@@ -12,7 +13,11 @@ import {
 import { buildYearAnalyticsSummary } from '@/app/lib/holded-analytics';
 import {
   buildHoldedProbeSummary,
+  decryptHoldedSecret,
+  fetchHoldedSnapshot,
+  maskSecret,
   probeHoldedConnection,
+  type HoldedConnectionRecord,
   type HoldedProbeModuleDiagnostic,
 } from '@/app/lib/holded-integration';
 import {
@@ -255,6 +260,7 @@ function buildLlmInstructions(input: {
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
   workspaceSignalsBlock: string | null;
   aeatBlock?: string | null;
+  advisorBanner?: string | null;
   recentFacts?: { category: string; factKey: string; valueJson: unknown }[];
   fewShotExamples?: { question: string; response: string }[];
 }) {
@@ -307,6 +313,7 @@ function buildLlmInstructions(input: {
     : 'no ejecutado';
 
   return [
+    ...(input.advisorBanner ? [input.advisorBanner, ''] : []),
     'Eres Isaak, el copiloto fiscal y contable de confianza para pequenos negocios en Espana.',
     'Tu prioridad es bajar la ansiedad de la persona usuaria y convertir datos en decisiones claras.',
     'Responde en espanol natural, calmado, optimista, muy amable y nada robotico.',
@@ -411,6 +418,7 @@ async function buildLlmReply(input: {
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
   workspaceSignalsBlock: string | null;
   aeatBlock?: string | null;
+  advisorBanner?: string | null;
   modelConfig?: HoldedChatModelConfig;
   memoryContext?: MemoryContext | null;
   fewShotExamples?: { question: string; response: string }[];
@@ -432,6 +440,7 @@ async function buildLlmReply(input: {
         diagnosticProbe: input.diagnosticProbe,
         workspaceSignalsBlock: input.workspaceSignalsBlock,
         aeatBlock: input.aeatBlock,
+        advisorBanner: input.advisorBanner,
         recentFacts: input.memoryContext?.recentFacts ?? [],
         fewShotExamples: input.fewShotExamples ?? [],
       }),
@@ -858,6 +867,43 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  // Advisor mode: check if working on behalf of a client
+  const advisorClientId = await getActiveAdvisorClientId().catch(() => null);
+  let advisorHoldedApiKey: string | null = null;
+  let advisorBanner: string | null = null;
+
+  if (advisorClientId) {
+    const advisorClient = await prisma.advisorClient
+      .findUnique({
+        where: { id: advisorClientId },
+        select: {
+          id: true,
+          alias: true,
+          companyName: true,
+          nif: true,
+          holdedApiKeyEnc: true,
+          isActive: true,
+          advisorTenantId: true,
+        },
+      })
+      .catch(() => null);
+
+    if (
+      advisorClient?.isActive &&
+      advisorClient.advisorTenantId === session.tenantId &&
+      advisorClient.holdedApiKeyEnc
+    ) {
+      try {
+        advisorHoldedApiKey = decryptHoldedSecret(advisorClient.holdedApiKeyEnc);
+        const clientLabel = advisorClient.companyName || advisorClient.alias;
+        const nifPart = advisorClient.nif ? ` (NIF: ${advisorClient.nif})` : '';
+        advisorBanner = `MODO ASESORÍA ACTIVO: Estás asistiendo al asesor sobre los datos de su cliente "${clientLabel}"${nifPart}. Los datos de Holded que ves pertenecen a este cliente, no al asesor. Mantén el contexto del cliente en todo momento.`;
+      } catch {
+        advisorHoldedApiKey = null;
+      }
+    }
+  }
+
   let context;
   try {
     context = await loadIsaakBusinessContext(
@@ -867,7 +913,7 @@ export async function POST(request: NextRequest) {
         name: session.name,
         email: session.email,
       },
-      { includeSnapshot: true }
+      { includeSnapshot: !advisorHoldedApiKey }
     );
   } catch (error) {
     console.error('[holded/chat] context load failed', {
@@ -888,11 +934,42 @@ export async function POST(request: NextRequest) {
     .then((signals) => formatWorkspaceSignalsForPrompt(signals))
     .catch(() => null);
 
-  if (!context.holded.connection?.apiKey) {
+  const effectiveHoldedApiKey = advisorHoldedApiKey ?? context.holded.connection?.apiKey ?? null;
+
+  if (!effectiveHoldedApiKey) {
     return NextResponse.json(
       { error: 'Antes de usar el chat necesitas conectar tu API key de Holded.' },
       { status: 400 }
     );
+  }
+
+  // In advisor mode, inject the client's API key into the context so all Holded
+  // tool calls use the client's credentials rather than the advisor's own.
+  if (advisorHoldedApiKey) {
+    if (context.holded.connection) {
+      (context.holded.connection as HoldedConnectionRecord).apiKey = advisorHoldedApiKey;
+    } else {
+      context.holded = {
+        ...context.holded,
+        hasLiveConnection: true,
+        connection: {
+          provider: 'holded',
+          channel: 'dashboard',
+          status: 'connected',
+          connectedAt: null,
+          lastValidatedAt: null,
+          lastSyncAt: null,
+          providerAccountId: null,
+          keyMasked: maskSecret(advisorHoldedApiKey),
+          supportedModules: [],
+          validationSummary: null,
+          tenantName: null,
+          legalName: null,
+          taxId: null,
+          apiKey: advisorHoldedApiKey,
+        },
+      };
+    }
   }
 
   const body = await request.json().catch(() => ({}));
@@ -947,7 +1024,15 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const snapshot = context.holded.snapshot;
+  let snapshot = context.holded.snapshot;
+
+  // In advisor mode we skipped the snapshot; fetch it now with the client's key.
+  if (!snapshot && advisorHoldedApiKey) {
+    snapshot = await fetchHoldedSnapshot(advisorHoldedApiKey).catch(() => null);
+    if (snapshot) {
+      context.holded = { ...context.holded, snapshot };
+    }
+  }
 
   if (!snapshot) {
     console.error('[holded/chat] snapshot is null', {
@@ -1147,7 +1232,10 @@ export async function POST(request: NextRequest) {
   if (!invoiceHandled) {
     if (isConnectionDiagnosticRequest(message)) {
       try {
-        connectionProbe = await probeHoldedConnection(context.holded.connection.apiKey);
+        const probeKey = effectiveHoldedApiKey;
+        if (probeKey) {
+          connectionProbe = await probeHoldedConnection(probeKey);
+        }
       } catch (error) {
         console.warn('[holded/chat] live probe failed', {
           tenantId: session.tenantId,
@@ -1205,6 +1293,7 @@ export async function POST(request: NextRequest) {
         diagnosticProbe: connectionProbe,
         workspaceSignalsBlock,
         aeatBlock,
+        advisorBanner,
         modelConfig,
         memoryContext,
         fewShotExamples,
