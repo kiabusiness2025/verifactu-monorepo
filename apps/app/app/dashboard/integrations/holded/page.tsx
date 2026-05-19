@@ -20,6 +20,7 @@ import {
   type HoldedUiBanner,
 } from '@verifactu/integrations/holded/uiState';
 import { StatusBadge } from '@verifactu/ui';
+import { ChannelBadge } from '@/components/holded/ChannelBadge';
 import { ArrowLeft, RefreshCcw, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -1184,6 +1185,21 @@ export default function HoldedConnectorPage() {
             <StatusBadge
               label={connectionBadge.label}
               variant={badgeVariantToUiVariant(connectionBadge.variant)}
+            />
+            {/* Channel pill (ChatGPT verde / Claude amber / Panel interno gris).
+                Visible solo cuando hay una conexión activa con channelKey
+                identificado — antes esta info estaba enterrada en la
+                respuesta JSON sin pista visual al usuario. Cluster E auditoría
+                2026-05-19. */}
+            <ChannelBadge
+              channelKey={
+                (integration?.connection?.originChannel as
+                  | 'chatgpt'
+                  | 'claude'
+                  | 'dashboard'
+                  | 'legacy'
+                  | null) ?? null
+              }
             />
             <StatusBadge
               label={fiscalProfileBadge}

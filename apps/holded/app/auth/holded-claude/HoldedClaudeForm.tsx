@@ -198,6 +198,7 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [step2Loading, setStep2Loading] = useState(false);
   const [step2Error, setStep2Error] = useState<string | null>(null);
+  const [step2Success, setStep2Success] = useState(false);
   const [apiKeyReadOnly, setApiKeyReadOnly] = useState(true);
   const [apiKeyTouched, setApiKeyTouched] = useState(false);
   const [switchingAccount, setSwitchingAccount] = useState(false);
@@ -362,7 +363,14 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
         return;
       }
 
-      window.location.replace(data.redirectUrl ?? next);
+      // Mostrar confirmación visual antes del redirect — el usuario sale del
+      // dominio holded.verifactu.business y necesita feedback claro de que la
+      // conexión se ha hecho. ~1.2 s es suficiente para registrar el éxito sin
+      // hacer la espera molesta. El email de bienvenida llega en paralelo.
+      setStep2Success(true);
+      setTimeout(() => {
+        window.location.replace(data.redirectUrl ?? next);
+      }, 1200);
     } catch {
       setStep2Error(ERROR_MESSAGES.NETWORK_ERROR);
       setStep2Loading(false);
@@ -702,6 +710,22 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
                       className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-800"
                     >
                       {step2Error}
+                    </div>
+                  ) : null}
+
+                  {step2Success ? (
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      className="mt-4 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/80 px-4 py-3 text-sm leading-6 text-emerald-900 shadow-sm"
+                    >
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
+                      <div>
+                        <p className="font-semibold">Conector activado.</p>
+                        <p className="text-xs leading-5 text-emerald-800/90">
+                          Volviendo a Claude para terminar la autorización…
+                        </p>
+                      </div>
                     </div>
                   ) : null}
 
