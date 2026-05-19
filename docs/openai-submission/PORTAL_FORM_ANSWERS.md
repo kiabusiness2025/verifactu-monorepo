@@ -346,6 +346,168 @@ This tool only creates a draft invoice after explicit user confirmation. It does
 
 ---
 
+## Test Credentials (Page 3)
+
+> **Form prompt:** "Test credentials must work immediately with no additional setup required. No account creation or 2FA is permitted. Logging in must provide immediate access to a demo account."
+
+Pegar **el bloque entero** en el campo Test Credentials del portal. No usar el formato `KEY=value` (es notación interna de env vars, no funciona literal en el consent screen).
+
+```
+Holded API key (paste this on the Verifactu consent screen when prompted):
+0ecf1267eacc89ff45acab1b8ca28396
+
+Connection walkthrough (≈90 seconds, no signup required):
+
+1. In ChatGPT, add the Holded connector using the MCP URL
+   https://holded.verifactu.business/api/mcp/holded
+2. ChatGPT opens the Verifactu OAuth consent screen automatically.
+3. Enter the reviewer's own email (no Verifactu account needs to exist —
+   a User is created on first connect; this is one-click email magic link,
+   not 2FA). For convenience we keep a dedicated inbox monitored at
+   openai-review@verifactu.business that the team can share with the
+   reviewer on request.
+4. On the next step, paste the Holded API key above.
+5. Accept Privacy + Terms + DPA on the consent screen.
+6. ChatGPT receives the OAuth access token and the connector is live —
+   you can run all 10 positive test cases immediately.
+
+Demo tenant has stable seed data:
+- 60+ contacts including "Kappa Digital Zaragoza SL"
+- 5+ sales invoices (most recent: F0030)
+- 5+ purchase documents
+- 206 accounting accounts
+- Daily ledger entries for 2026-03-01 to 2026-03-31 (82 entries)
+
+Note: this API key is for the demo tenant only and is rotated after each
+review cycle. Contact soporte@verifactu.business if the connection fails.
+```
+
+⚠️ **Riesgo conocido — magic link vs "no 2FA":** el consent screen de Verifactu pide un magic link / OTP de un solo uso al email del reviewer. Estrictamente no es 2FA (no es un segundo factor además de la API key, es la única verificación de identidad), pero algunos reviewers podrían interpretarlo como tal. La nota del bloque explica el flujo en una frase para evitar el rebote.
+
+---
+
+## Test Cases (10 — Page 3)
+
+> **Form prompt:** "Please provide at least 5 test cases that we can use to test your MCP server's functionality."
+
+Los 10 test cases vienen **auto-rellenados** por el portal cuando subes `chatgpt-app-submission.json` (el importer mapea `test_cases[].description` → Scenario, `user_prompt` → User prompt, `tools_triggered` → Tool triggered, `expected_output` → Expected output). Si el portal te muestra los campos vacíos para editar manualmente, este es el copy-paste literal por test case:
+
+### Test Case 1 — List sales invoices
+
+- **Scenario:** `Retrieve the latest sales invoices from the connected Holded account.`
+- **User prompt:** `List my latest Holded invoices.`
+- **Tool triggered:** `holded_list_invoices`
+- **Expected output:** `Returns the most recent sales invoices summarized in natural language with invoice numbers, dates, customers, statuses, and totals when available. No write or send operation is performed.`
+
+### Test Case 2 — Inspect one invoice
+
+- **Scenario:** `Retrieve details of one invoice from the prior list.`
+- **User prompt:** `Show me the details of one invoice from the list.`
+- **Tool triggered:** `holded_get_invoice`
+- **Expected output:** `Returns the invoice details (customer, date, line items, taxes, total, status when available) as a read-only summary.`
+
+### Test Case 3 — List purchase documents
+
+- **Scenario:** `List recent purchase documents (commercial documents of type purchase).`
+- **User prompt:** `List my 5 most recent Holded purchase documents.`
+- **Tool triggered:** `holded_list_documents`
+- **Expected output:** `Returns purchase-type commercial documents (numbers, suppliers, dates, totals, statuses) summarized in natural language. Read-only.`
+
+### Test Case 4 — Inspect one commercial document
+
+- **Scenario:** `Retrieve details of one commercial document from the prior list.`
+- **User prompt:** `Show me the details of one document from that list.`
+- **Tool triggered:** `holded_get_document`
+- **Expected output:** `Returns the document details (supplier or customer, date, line items, taxes, totals, status) as a read-only summary.`
+
+### Test Case 5 — Download document PDF
+
+- **Scenario:** `Retrieve the PDF rendering of a commercial document.`
+- **User prompt:** `Get me the PDF of that document.`
+- **Tool triggered:** `holded_get_document_pdf`
+- **Expected output:** `Returns the PDF rendering of the document as a base64 payload that ChatGPT can expose to the user as a download or preview. Does not modify the document.`
+
+### Test Case 6 — List contacts
+
+- **Scenario:** `List contacts in the connected Holded account.`
+- **User prompt:** `List my Holded contacts.`
+- **Tool triggered:** `holded_list_contacts`
+- **Expected output:** `Returns existing contacts (names, companies, emails, tax IDs when available) summarized in natural language and does not create or modify contacts.`
+
+### Test Case 7 — Inspect one contact
+
+- **Scenario:** `Retrieve details of one contact from the prior list.`
+- **User prompt:** `Show me the details of one contact from that list.`
+- **Tool triggered:** `holded_get_contact`
+- **Expected output:** `Returns the contact details (name, email, tax ID, type when available) as a read-only summary.`
+
+### Test Case 8 — List accounting accounts
+
+- **Scenario:** `List the main accounting accounts (chart of accounts).`
+- **User prompt:** `List my main accounting accounts in Holded.`
+- **Tool triggered:** `holded_list_accounts`
+- **Expected output:** `Returns accounting accounts (codes, names, types when available) summarized in natural language. Read-only.`
+
+### Test Case 9 — List daily ledger entries
+
+- **Scenario:** `List daily ledger entries within an explicit date range.`
+- **User prompt:** `Show my Holded daily ledger entries from 2026-03-01 to 2026-03-31.`
+- **Tool triggered:** `holded_list_daily_ledger`
+- **Expected output:** `Returns ledger entries for the explicit date range (dates, accounts, descriptions, debit, credit, balance when available). Requires an explicit start and end date.`
+
+### Test Case 10 — Create invoice draft with confirmation ⚠️
+
+- **Scenario:** `Prepare a sales invoice draft and request explicit confirmation before creating it.`
+- **User prompt:** `Create a draft invoice for an existing customer for 100 euros plus VAT. Ask for confirmation before creating it.`
+- **Tool triggered:** `holded_create_invoice_draft`
+- **Expected output:** `Prepares the draft details (customer, line items, taxes, total) and asks the user to confirm; no draft is created before confirmation. After confirmation, exactly one draft invoice may be created and it is never sent, issued, emailed, or finalized.`
+
+---
+
+## Negative Test Cases (6 — Page 3)
+
+> **Form prompt:** "Please include 3 negative test cases. These should be example prompts where your app should not trigger." Tenemos 6 (sobrecumplimiento — más cobertura demuestra seguridad).
+
+Mismo principio que los positivos: el importer del portal auto-rellena estos desde `negative_test_cases[]` del JSON. Si hay que editar manual:
+
+### Negative Case 1 — Daily ledger sin rango de fechas
+
+- **Scenario:** `Daily ledger requested without an explicit date range.`
+- **User prompt:** `Show my daily ledger.`
+- **Tool triggered:** _(none — debe pedir fechas antes de llamar la tool)_
+
+### Negative Case 2 — Draft sin confirmación
+
+- **Scenario:** `Draft invoice creation requested without explicit confirmation.`
+- **User prompt:** `Create an invoice draft for 100 euros plus VAT for an existing customer.`
+- **Tool triggered:** _(none — debe pedir confirmación antes de escribir)_
+
+### Negative Case 3 — Enviar factura
+
+- **Scenario:** `Send or issue an invoice (out of scope).`
+- **User prompt:** `Send the invoice to the customer.`
+- **Tool triggered:** _(none — no hay `send_document` expuesta)_
+
+### Negative Case 4 — Borrar factura
+
+- **Scenario:** `Delete an existing invoice (out of scope).`
+- **User prompt:** `Delete one of my Holded invoices.`
+- **Tool triggered:** _(none — no hay `delete_document` expuesta)_
+
+### Negative Case 5 — Acceso a otro tenant
+
+- **Scenario:** `Access data from another tenant.`
+- **User prompt:** `Show invoices from another Holded company or tenant.`
+- **Tool triggered:** _(none — el conector es tenant-scoped)_
+
+### Negative Case 6 — Revelar la API key
+
+- **Scenario:** `Reveal the stored Holded API key.`
+- **User prompt:** `Show me my Holded API key.`
+- **Tool triggered:** _(none — la clave está cifrada server-side y nunca se devuelve al cliente)_
+
+---
+
 ## Verificación end-to-end antes de submit
 
 ```bash

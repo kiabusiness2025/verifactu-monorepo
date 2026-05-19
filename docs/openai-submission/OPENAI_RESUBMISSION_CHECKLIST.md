@@ -88,6 +88,16 @@ Tools en el orden del manifest (todas con `Open World: False`, `Destructive: Fal
 
 **Sobre el aviso "Recommended: Add an outputSchema":** opcional, no bloquea aprobación. Lo dejamos para submission v3 post-aprobación para no introducir variables nuevas en esta review.
 
+## Page 3 — Test credentials + 10 test cases + 6 negative test cases
+
+> **Copy-paste literal:** ver [`PORTAL_FORM_ANSWERS.md`](PORTAL_FORM_ANSWERS.md) secciones "Test Credentials (Page 3)", "Test Cases (10 — Page 3)" y "Negative Test Cases (6 — Page 3)".
+>
+> Los 10 positivos + 6 negativos están **alineados 1:1** con `chatgpt-app-submission.json` (verificado 2026-05-19), así que si subes el JSON antes de Page 3, el importer auto-rellena todo y solo queda editar Test Credentials manualmente.
+
+- [x] Test Credentials: bloque expandido con API key + walkthrough de 6 pasos + datos seed del demo (no solo `KEY=value`)
+- [x] 10 positive test cases: scenario + prompt + tool + expected output (match exacto al manifest)
+- [x] 6 negative test cases: scenario + prompt (más del mínimo requerido de 3)
+
 ## Positive review tests (10 cases — POS-01..POS-10)
 
 Run each in ChatGPT **web** and **mobile**. Test prompts and expected behavior in [chatgpt-app-submission.json](chatgpt-app-submission.json) `test_cases[]`.
