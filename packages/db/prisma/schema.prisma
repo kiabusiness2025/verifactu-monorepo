@@ -596,6 +596,8 @@ model Tenant {
   seTransactions              SeTransaction[]
   seTransactionMatchAudits    SeTransactionMatchAudit[]
   bankReconciliationConfig    BankReconciliationConfig?
+  invoiceTemplates            InvoiceTemplate[]
+  tenantCertificates          TenantCertificate[]
 
   @@map("tenants")
 }
@@ -1248,6 +1250,57 @@ model Quote {
   @@index([tenantId, status])
   @@index([customerId])
   @@map("quotes")
+}
+
+// ==================== INVOICE TEMPLATES ====================
+
+model InvoiceTemplate {
+  id             String   @id @default(cuid())
+  tenantId       String   @map("tenant_id") @db.Uuid
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name           String
+  isDefault      Boolean  @default(false) @map("is_default")
+  // 'predefined' | 'custom' | 'ai_generated'
+  sourceType     String   @default("custom") @map("source_type")
+  // Predefined slug: 'classic' | 'modern' | 'minimal' | 'professional' | 'fiscal' | null
+  predefinedSlug String?  @map("predefined_slug")
+  primaryColor   String?  @map("primary_color")
+  secondaryColor String?  @map("secondary_color")
+  accentColor    String?  @map("accent_color")
+  fontFamily     String?  @map("font_family")
+  logoUrl        String?  @map("logo_url")
+  // Extra layout settings as JSON (margins, footer text, etc.)
+  layoutConfig   Json?    @map("layout_config")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([tenantId])
+  @@map("invoice_templates")
+}
+
+// ==================== DIGITAL CERTIFICATES ====================
+
+model TenantCertificate {
+  id           String   @id @default(cuid())
+  tenantId     String   @map("tenant_id") @db.Uuid
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  // 'persona_fisica' | 'entidad'
+  certType     String   @map("cert_type")
+  nif          String
+  commonName   String   @map("common_name")
+  // 'FNMT', 'CAMERFIRMA', 'ANCERT', etc.
+  issuer       String?
+  validFrom    DateTime @map("valid_from")
+  validTo      DateTime @map("valid_to")
+  // AES-256-GCM encrypted P12 bytes
+  encryptedP12 Bytes    @map("encrypted_p12")
+  iv           String
+  authTag      String   @map("auth_tag")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([tenantId])
+  @@map("tenant_certificates")
 }
 
 model Payment {

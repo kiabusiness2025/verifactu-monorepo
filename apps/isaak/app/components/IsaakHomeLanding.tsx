@@ -102,8 +102,8 @@ const CONNECTORS: Connector[] = [
     name: 'Verifactu · AEAT',
     tag: 'Obligaciones fiscales',
     icon: <ShieldCheck className="h-5 w-5 text-[#2361d8]" />,
-    desc: 'Alertas proactivas de IVA, IRPF, modelos 303/130/390 y Verifactu. Nunca más una fecha ignorada.',
-    example: '¿Cuándo vence mi próxima obligación fiscal?',
+    desc: 'El único plan gratis del mercado que incluye emisión de facturas con registro AEAT real. Sin software adicional, sin cuotas extra.',
+    example: 'Emite una factura a nombre de cliente X por 1.200 € + IVA',
   },
 ];
 
@@ -139,7 +139,7 @@ const PRICE_TEASER = [
     id: 'free',
     name: 'Free',
     price: '0 €',
-    tagline: 'Chat fiscal · Alertas AEAT · 10 mensajes/día',
+    tagline: 'Chat fiscal · Facturas VeriFactu AEAT · 10 msg/día',
     cta: 'Empezar gratis',
     href: '/auth',
     highlight: false,

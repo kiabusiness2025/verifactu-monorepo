@@ -42,6 +42,10 @@ export async function POST(req: Request) {
       null,
     companyEmail: session.email ?? null,
     disconnectedAtIso: new Date().toISOString(),
+    // El disconnect desde el panel Isaak siempre es channel='dashboard'.
+    // Si en el futuro otros canales (claude/chatgpt) llaman a este endpoint,
+    // pasarán su propio channel para que el email refleje el branding correcto.
+    channel: 'dashboard',
   }).catch((error) => {
     console.error('[isaak settings] holded disconnect notifications failed', error);
   });

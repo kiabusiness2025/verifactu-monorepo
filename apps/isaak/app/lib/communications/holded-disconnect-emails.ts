@@ -1,12 +1,37 @@
 import { Resend } from 'resend';
 
+/**
+ * Channels donde un usuario puede tener Holded conectado. Cada uno tiene su
+ * branding y reconnect URL distintos — el email de desconexión adapta el
+ * título y el CTA en consecuencia. Para el panel interno de Isaak usar
+ * 'dashboard'; para los conectores externos a Anthropic/OpenAI usar
+ * 'claude'/'chatgpt'. Si no se especifica, default genérico ("Holded").
+ */
+type DisconnectChannel = 'dashboard' | 'chatgpt' | 'claude';
+
 type DisconnectNotificationInput = {
   userEmail: string | null;
   userName: string | null;
   companyName: string | null;
   companyEmail?: string | null;
   disconnectedAtIso: string;
+  channel?: DisconnectChannel;
 };
+
+function resolveChannelCopy(channel: DisconnectChannel | undefined) {
+  switch (channel) {
+    case 'chatgpt':
+      return {
+        brand: 'Holded + ChatGPT',
+        subject: 'Holded se ha desconectado del conector ChatGPT',
+      };
+    case 'claude':
+      return { brand: 'Holded + Claude', subject: 'Holded se ha desconectado del conector Claude' };
+    case 'dashboard':
+    default:
+      return { brand: 'Holded', subject: 'Holded se ha desconectado del conector' };
+  }
+}
 
 function cleanEnv(value: string | undefined) {
   return value?.replace(/[\r\n]/g, '').trim();
@@ -85,14 +110,15 @@ function buildUserEmail(input: DisconnectNotificationInput) {
   const company = input.companyName || 'tu empresa';
   const disconnectedAt = formatDate(input.disconnectedAtIso);
   const reconnectUrl = holdedReconnectUrl();
+  const { brand, subject } = resolveChannelCopy(input.channel);
 
   return {
-    subject: 'Holded se ha desconectado del conector',
+    subject,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.55;color:#0f172a;max-width:640px;margin:0 auto;padding:24px;background:#fff7f7;">
         <div style="background:#ffffff;border:1px solid #fecaca;border-radius:24px;padding:28px;box-shadow:0 18px 40px rgba(15,23,42,0.06);">
           <div style="display:inline-block;padding:6px 12px;border-radius:999px;background:#fef2f2;color:#b91c1c;font-size:12px;font-weight:700;letter-spacing:0.04em;">Aviso de seguridad</div>
-          <h1 style="font-size:28px;line-height:1.15;margin:16px 0 12px;">Holded + ChatGPT requieren reconexion</h1>
+          <h1 style="font-size:28px;line-height:1.15;margin:16px 0 12px;">${escapeHtml(brand)} requieren reconexion</h1>
           <p style="margin:0 0 14px;">${escapeHtml(greeting(input.userName))}</p>
           <p style="margin:0 0 14px;">Hemos detectado que la conexion de Holded para <strong>${escapeHtml(company)}</strong> se ha desconectado el <strong>${escapeHtml(disconnectedAt)}</strong>.</p>
           <p style="margin:0 0 14px;">Mientras siga desconectado, el conector perdera acceso a los datos reales de tu empresa en Holded y algunas respuestas o acciones quedaran limitadas.</p>
