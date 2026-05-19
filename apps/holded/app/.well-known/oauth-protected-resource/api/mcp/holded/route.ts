@@ -15,15 +15,20 @@ import { HOLDED_APP_URL } from '@/app/lib/holded-navigation';
 export const runtime = 'nodejs';
 
 const MCP_RESOURCE_PATH = '/api/mcp/holded';
+// Scopes alineados con el preset `openai_review_invoicing_v1` en apps/app
+// (OPENAI_REVIEW_INVOICING_V1_SCOPE_SET). Estos 6 scopes cubren las 10 tools
+// expuestas en submission v2 a OpenAI (invoicing venta+compra + contactos +
+// contabilidad). Si cambia el preset público, actualizar aquí también.
+// Histórico 2026-05-18: antes incluía `accounts.write`, `crm.read`,
+// `projects.read` (preset openai_review_v2 viejo, 14 tools); ahora estrechado
+// al set actual de 6 scopes.
 const SUPPORTED_SCOPES = [
   'mcp.read',
   'holded.invoices.read',
   'holded.invoices.write',
+  'holded.documents.read',
   'holded.contacts.read',
   'holded.accounts.read',
-  'holded.accounts.write',
-  'holded.crm.read',
-  'holded.projects.read',
 ];
 
 function getMetadata() {

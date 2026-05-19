@@ -55,7 +55,7 @@ export default function IsaakSiteChrome({ children }: Props) {
             <div className="leading-tight">
               <div className="text-base font-semibold text-[#011c67]">Isaak</div>
               <div className="hidden text-xs font-medium text-slate-600 sm:block">
-                Orquestador empresarial
+                Tu IA de gestión
               </div>
             </div>
           </Link>
@@ -176,8 +176,8 @@ export default function IsaakSiteChrome({ children }: Props) {
             <Link href="/pricing" className="hover:text-slate-900">
               Precios
             </Link>
-            <Link href="/fiscal" className="hover:text-slate-900">
-              Alertas fiscales
+            <Link href="/pricing" className="hover:text-slate-900">
+              Precios
             </Link>
             <Link href="/privacy" className="hover:text-slate-900">
               Privacidad

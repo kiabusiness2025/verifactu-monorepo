@@ -45,6 +45,11 @@ const SCOPE_DESCRIPTIONS: Record<string, { label: string; description: string }>
     description:
       'Crear borradores (DRAFT) de factura — nunca emitir, enviar o cobrar — con tu confirmación explícita en cada uso.',
   },
+  'holded.documents.read': {
+    label: 'Leer tus documentos comerciales',
+    description:
+      'Listar y consultar facturas de compra, presupuestos, albaranes, abonos y otros documentos. Incluye descargar el PDF para revisión. Solo lectura, sin enviar ni modificar.',
+  },
   'holded.contacts.read': {
     label: 'Leer tus contactos',
     description:
@@ -161,10 +166,10 @@ export default async function OAuthConsentPage({
   }
 
   // Defense in depth: la lista que mostramos es siempre la intersección de los
-  // scopes solicitados con el preset público activo (`claude_parity` desde
-  // 2026-05-18). Aunque /oauth/authorize ya hace el clamp, lo replicamos aquí
-  // para que NUNCA se muestre al usuario un permiso que el servidor no vaya a
-  // conceder realmente.
+  // scopes solicitados con el preset público activo (`openai_review_invoicing_v1`
+  // desde 2026-05-18 tarde, 6 scopes para 10 tools). Aunque /oauth/authorize ya
+  // hace el clamp, lo replicamos aquí para que NUNCA se muestre al usuario un
+  // permiso que el servidor no vaya a conceder realmente.
   const publicPresetScopes = getHoldedMcpScopePreset(getPublicScopePreset());
   const requestedScopeList = requestedScope
     .split(/[\s,]+/)

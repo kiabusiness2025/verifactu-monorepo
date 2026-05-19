@@ -8,7 +8,11 @@ import { Resend } from 'resend';
 import { query } from '@/lib/db';
 import { getPreferredFirstName } from '@/lib/personName';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _resend: Resend | null = null;
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'support@verifactu.business';
 
@@ -59,7 +63,7 @@ export async function sendWelcomeEmail(
   const greetingName = getPreferredFirstName({ fullName: userName, email });
 
   try {
-    const resp = await resend.emails.send({
+    const resp = await getResend().emails.send({
       from: 'Soporte Verifactu <soporte@verifactu.business>',
       to: [email],
       subject: '¡Bienvenido a Verifactu!',
@@ -106,7 +110,7 @@ export async function sendWelcomeAdminNotification(
   const tenantDisplayName = buildTenantDisplayName(context || {});
 
   try {
-    const resp = await resend.emails.send({
+    const resp = await getResend().emails.send({
       from: 'Soporte Verifactu <soporte@verifactu.business>',
       to: [ADMIN_NOTIFICATION_EMAIL],
       subject: 'Nuevo usuario en Verifactu',
@@ -171,7 +175,7 @@ export async function sendAutoReplyEmail(toEmail: string, senderName: string) {
   'use step';
 
   try {
-    const resp = await resend.emails.send({
+    const resp = await getResend().emails.send({
       from: 'Soporte Verifactu <soporte@verifactu.business>',
       to: [toEmail],
       subject: 'Re: Tu mensaje fue recibido',
@@ -203,7 +207,7 @@ export async function sendFollowUpEmail(email: string, subject: string, message:
   'use step';
 
   try {
-    const resp = await resend.emails.send({
+    const resp = await getResend().emails.send({
       from: 'Soporte Verifactu <soporte@verifactu.business>',
       to: [email],
       subject: subject,
