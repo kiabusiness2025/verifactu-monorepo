@@ -2,7 +2,7 @@
 
 ## Logo principal
 
-**URL público:** `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-03`
+**URL público:** `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-18`
 
 **Características:**
 
@@ -105,7 +105,7 @@ En el folder `outputs/hero_preview/` tenemos screenshots del hero mock animation
 
 Para el form de Anthropic:
 
-- **Logo URL:** pegar `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-03`
+- **Logo URL:** pegar `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-18`
 - **Logo SVG:** subir el archivo si lo conseguimos
 - **Screenshots:** subir 3-5 imágenes PNG/JPG, ≤2MB cada una, 1920×1080 o 1280×800
 

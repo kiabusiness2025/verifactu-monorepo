@@ -14,7 +14,7 @@
 `Habla con tu Holded desde Claude: facturas, contactos, contabilidad y borradores.`
 
 **Description (250-500 chars):**
-`Holded es el sistema de gestión empresarial todo-en-uno usado por más de 100.000 PYMEs en España y Europa para facturación, contabilidad, CRM, proyectos e inventario. Este conector permite a Claude leer datos de Holded en lenguaje natural — facturas, contactos, contabilidad, proyectos — y crear borradores de factura con tu confirmación explícita. Los borradores nunca se emiten, envían ni cobran automáticamente: tú revisas y apruebas en la UI de Holded antes de cualquier efecto legal.`
+`Holded es el sistema de gestión empresarial todo-en-uno usado por más de 100.000 PYMEs en España y Europa para facturación, contabilidad, CRM, proyectos e inventario. Este conector permite a Claude leer datos de Holded en lenguaje natural — facturas de venta y compra, contactos, plan contable, libro diario, PDFs de documentos — y crear borradores de factura con tu confirmación explícita. Los borradores nunca se emiten, envían ni cobran automáticamente: tú revisas y apruebas en la UI de Holded antes de cualquier efecto legal.`
 
 **Categoría primaria:** `Productivity > Accounting & Finance`
 
@@ -22,11 +22,11 @@
 
 **Use cases (3-5):**
 
-1. "Cuánto facturé en marzo? Quién son mis top 3 clientes?"
-2. "Trae el detalle del cliente Acme S.L. — CIF, email, pendiente de cobro"
-3. "Crea un borrador de factura para Beta Studios por 1.500 € + IVA"
-4. "Resumen del diario contable de febrero — ingresos, gastos, IVA"
-5. "Estado de mis proyectos activos y horas registradas"
+1. "Cuánto facturé en marzo? Quién son mis top 3 clientes?" → `list_documents(docType='invoice')`
+2. "Trae el detalle del cliente Acme S.L. — CIF, email, pendiente de cobro" → `list_contacts` + `get_contact`
+3. "Crea un borrador de factura para Beta Studios por 1.500 € + IVA" → `create_invoice_draft` (con confirmación explícita)
+4. "Resumen del diario contable de febrero — ingresos, gastos, IVA" → `get_journal` (con rango de fechas obligatorio)
+5. "Lista mis facturas de compra de Q1 y dame el PDF de la última" → `list_documents(docType='purchase')` + `get_document_pdf`
 
 ---
 
@@ -36,9 +36,21 @@
 
 **Transport protocol:** `Streamable HTTP (MCP spec 2025-03-26)`
 
-**Read capabilities:** Yes — 23 read tools (facturas, contactos, productos, proyectos, CRM, contabilidad, tesorería, etc.)
+**Read capabilities:** Yes — 7 read tools (facturas de venta+compra, contactos, plan contable, libro diario, PDF de documentos)
 
 **Write capabilities:** Yes — 1 write tool (`create_invoice_draft`) que crea borradores con `approveDoc=false` forzado a nivel servidor. Sin operaciones destructivas (delete/send/pay) expuestas.
+
+**Tool count enforcement:** El servidor MCP aplica un preset `submission_v1` (env var `HOLDED_MCP_TOOL_PRESET=submission_v1`, default en prod) que limita `tools/list` a exactamente 8 tools. Verificable end-to-end con:
+
+```
+curl -X POST https://claude.verifactu.business/mcp \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+Devuelve exactamente: `list_documents`, `get_document`, `get_document_pdf`, `list_contacts`, `get_contact`, `get_chart_of_accounts`, `get_journal`, `create_invoice_draft`.
 
 **Connection requirements:**
 
@@ -92,7 +104,7 @@ Cubre: cómo conectar, lista de tools, scopes, troubleshooting, contacto soporte
 
 - **Logo (SVG):** Ver `branding-assets.md` (rombo Holded, 512×512)
 - **Favicon:** `https://claude.verifactu.business/favicon.ico`
-- **Logo URL:** `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-03`
+- **Logo URL:** `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-18` (PNG 512×512, sirve desde el MCP server con `Cache-Control: public, max-age=86400, immutable` para que Anthropic Connectors Directory lo cachee y Google `s2/favicons` muestre el diamond real)
 - **Promotional screenshots:** Ver `branding-assets.md` (3 screenshots del connector funcionando en Claude)
 
 ---
