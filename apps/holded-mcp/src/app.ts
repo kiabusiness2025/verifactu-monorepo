@@ -19,8 +19,16 @@ const __dirname = path.dirname(__filename);
 const publicDir = path.join(__dirname, '..', 'public');
 
 // Deep-link to Claude's "add custom connector" dialog with our MCP URL pre-filled.
-const CLAUDE_CONNECT_DEEPLINK =
-  'https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Holded&connectorUrl=https%3A%2F%2Fclaude.verifactu.business%2Fmcp';
+// Built dynamically from config.BASE_URL so swapping subdomains is one env var change.
+function buildClaudeConnectDeeplink(baseUrl: string, connectorName = 'Holded for Claude'): string {
+  const mcpUrl = `${baseUrl.replace(/\/$/, '')}/mcp`;
+  const params = new URLSearchParams({
+    modal: 'add-custom-connector',
+    connectorName,
+    connectorUrl: mcpUrl,
+  });
+  return `https://claude.ai/customize/connectors?${params.toString()}`;
+}
 
 // Read the shared __session JWT from the request cookies.
 // Returns tenantId if the user has an existing Verifactu connection, null otherwise.
@@ -170,7 +178,7 @@ export function createApp() {
   app.get('/launch', async (req, res) => {
     const session = await readLaunchSession(req);
     if (session?.tenantId) {
-      res.redirect(302, CLAUDE_CONNECT_DEEPLINK);
+      res.redirect(302, buildClaudeConnectDeeplink(config.BASE_URL));
       return;
     }
     const bridgeUrl = new URL('/auth/holded-claude', config.HOLDED_PUBLIC_URL);

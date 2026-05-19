@@ -25,7 +25,7 @@
 3. Genera API key de Holded de la cuenta sandbox
 4. Envía email cifrado (o canal Anthropic interno) con:
    - Email/password de Claude para la prueba
-   - URL del consent screen: `https://claude.verifactu.business/oauth/authorize`
+   - URL del consent screen: `https://claude-holded.verifactu.business/oauth/authorize`
    - O directamente la API key de Holded para acelerar el setup
 
 ---
@@ -136,7 +136,7 @@ El reviewer puede intentar:
 # Cuenta sandbox para el reviewer de Anthropic
 Holded user: review-anthropic@verifactu.business
 Holded API key: [se enviará por canal seguro]
-Claude consent flow start: https://claude.verifactu.business/oauth/authorize?
+Claude consent flow start: https://claude-holded.verifactu.business/oauth/authorize?
   client_id=test-client&redirect_uri=https://claude.ai/...&...
 ```
 

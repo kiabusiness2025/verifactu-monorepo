@@ -1,6 +1,8 @@
 const SUPPORT_EMAIL = 'soporte@verifactu.business';
 const HOLDED_BASE = 'https://holded.verifactu.business/conectores/claude';
-const CONNECT_URL = 'https://claude.verifactu.business/launch';
+// CONNECT_URL is derived from baseUrl at render time (renderLandingPage receives it).
+// This makes subdomain swaps (e.g. claude.verifactu.business → claude-holded.verifactu.business)
+// a one-env-var change in Vercel instead of a code edit.
 
 function escapeHtml(value: string) {
   return value
@@ -87,8 +89,8 @@ const TRUST_POINTS = [
   'No envía, emite, cobra, finaliza, elimina ni sobrescribe facturas o registros existentes.',
 ];
 
-export function renderLandingPage(_baseUrl: string) {
-  const connectHref = escapeHtml(CONNECT_URL);
+export function renderLandingPage(baseUrl: string) {
+  const connectHref = escapeHtml(`${baseUrl.replace(/\/$/, '')}/launch`);
   const holdedBase = escapeHtml(HOLDED_BASE);
 
   const capsHtml = CAPABILITIES.map(
