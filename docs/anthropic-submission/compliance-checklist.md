@@ -4,7 +4,7 @@ Verificación punto a punto del [Anthropic Software Directory Policy](https://su
 
 ## ✅ Safety & Security
 
-- [x] **Endpoint ownership:** `claude.verifactu.business`, `holded.verifactu.business`, `app.verifactu.business` son propiedad de Verifactu Business (registrados en el mismo dominio raíz `verifactu.business`)
+- [x] **Endpoint ownership:** `claude-holded.verifactu.business`, `holded.verifactu.business`, `app.verifactu.business` son propiedad de Verifactu Business (registrados en el mismo dominio raíz `verifactu.business`)
 - [x] **HTTPS everywhere:** TLS 1.2+ en todos los endpoints
 - [x] **OAuth correcto:** OAuth 2.1 + PKCE S256, redirect URI allowlist estricto (`claude.ai`, `app.claude.ai`)
 - [x] **No credenciales en URLs:** API keys nunca viajan en query strings ni en logs
@@ -73,8 +73,8 @@ export const CREATE_INVOICE_DRAFT_ANNOTATIONS: ToolAnnotations = {
 
 ## ✅ Branding & Identity
 
-- [x] **Logo SVG cuadrado:** `https://claude.verifactu.business/holded-diamond-logo.png` (512×512)
-- [x] **Favicon:** `https://claude.verifactu.business/favicon.ico`
+- [x] **Logo SVG cuadrado:** `https://claude-holded.verifactu.business/holded-diamond-logo.png` (512×512)
+- [x] **Favicon:** `https://claude-holded.verifactu.business/favicon.ico`
 - [x] **Branding consistente:** mismo logo + colores en consent screen, landing, docs
 - [x] **No claims falsos:** no nos atribuimos endorsement de Anthropic en marketing
 
@@ -103,10 +103,10 @@ export const CREATE_INVOICE_DRAFT_ANNOTATIONS: ToolAnnotations = {
 
 ```bash
 # 1. Verificar tool annotations
-curl -s https://claude.verifactu.business/.well-known/oauth-protected-resource | jq
+curl -s https://claude-holded.verifactu.business/.well-known/oauth-protected-resource | jq
 
 # 2. Verificar OAuth discovery
-curl -s https://claude.verifactu.business/.well-known/oauth-authorization-server | jq
+curl -s https://claude-holded.verifactu.business/.well-known/oauth-authorization-server | jq
 
 # 3. Verificar páginas legales públicas (no auth required)
 for url in \

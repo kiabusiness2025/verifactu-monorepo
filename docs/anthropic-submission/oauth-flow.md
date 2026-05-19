@@ -3,10 +3,10 @@
 ## Resumen técnico
 
 - **Spec:** OAuth 2.1 con PKCE (RFC 7636) S256 mandatorio
-- **Authorization Server:** `https://claude.verifactu.business`
-- **Resource Server:** `https://claude.verifactu.business/mcp`
-- **Discovery:** `https://claude.verifactu.business/.well-known/oauth-authorization-server`
-- **Protected resource metadata:** `https://claude.verifactu.business/.well-known/oauth-protected-resource`
+- **Authorization Server:** `https://claude-holded.verifactu.business`
+- **Resource Server:** `https://claude-holded.verifactu.business/mcp`
+- **Discovery:** `https://claude-holded.verifactu.business/.well-known/oauth-authorization-server`
+- **Protected resource metadata:** `https://claude-holded.verifactu.business/.well-known/oauth-protected-resource`
 
 ## Endpoints
 

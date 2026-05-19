@@ -1,14 +1,16 @@
 # Anthropic Remote MCP Submission — Respuestas literales del form
 
-> Esto es lo que hay que pegar campo por campo. El form de Anthropic está en https://claude.com/docs/connectors/building/submission (linkea al Google Form).
+> **Última actualización: 2026-05-19 — submission v2 desde nuevo subdominio.** Esto es lo que hay que pegar campo por campo. El form de Anthropic está en https://claude.com/docs/connectors/building/submission (linkea al Google Form).
+>
+> **Cambios respecto a v1:** server name `Holded` → `Holded for Claude`, MCP URL `claude.verifactu.business` → `claude-holded.verifactu.business`. Razón: reset para purgar branding legacy cacheado por Anthropic.
 
 ---
 
 ## Server basics
 
-**Server name:** `Holded`
+**Server name:** `Holded for Claude`
 
-**Server URL (MCP endpoint):** `https://claude.verifactu.business/mcp`
+**Server URL (MCP endpoint):** `https://claude-holded.verifactu.business/mcp`
 
 **Tagline (≤80 chars):**
 `Habla con tu Holded desde Claude: facturas, contactos, contabilidad y borradores.`
@@ -43,7 +45,7 @@
 **Tool count enforcement:** El servidor MCP aplica un preset `submission_v1` (env var `HOLDED_MCP_TOOL_PRESET=submission_v1`, default en prod) que limita `tools/list` a exactamente 8 tools. Verificable end-to-end con:
 
 ```
-curl -X POST https://claude.verifactu.business/mcp \
+curl -X POST https://claude-holded.verifactu.business/mcp \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -H "Accept: application/json, text/event-stream" \
@@ -58,11 +60,11 @@ Devuelve exactamente: `list_documents`, `get_document`, `get_document_pdf`, `lis
 - Necesita generar una API key de Holded desde el panel de Holded (Configuración > Desarrolladores > API)
 - El consent screen explica los scopes y pide aceptación T&C/Privacy/DPA
 
-**Authorization endpoint:** `https://claude.verifactu.business/oauth/authorize`
-**Token endpoint:** `https://claude.verifactu.business/oauth/token`
-**Registration endpoint:** `https://claude.verifactu.business/oauth/register`
-**Discovery metadata:** `https://claude.verifactu.business/.well-known/oauth-authorization-server`
-**Protected resource metadata:** `https://claude.verifactu.business/.well-known/oauth-protected-resource`
+**Authorization endpoint:** `https://claude-holded.verifactu.business/oauth/authorize`
+**Token endpoint:** `https://claude-holded.verifactu.business/oauth/token`
+**Registration endpoint:** `https://claude-holded.verifactu.business/oauth/register`
+**Discovery metadata:** `https://claude-holded.verifactu.business/.well-known/oauth-authorization-server`
+**Protected resource metadata:** `https://claude-holded.verifactu.business/.well-known/oauth-protected-resource`
 
 **Scopes exposed:** `holded:read` (lectura), `holded:write` (crear borradores)
 
@@ -103,8 +105,8 @@ Cubre: cómo conectar, lista de tools, scopes, troubleshooting, contacto soporte
 ## Branding materials
 
 - **Logo (SVG):** Ver `branding-assets.md` (rombo Holded, 512×512)
-- **Favicon:** `https://claude.verifactu.business/favicon.ico`
-- **Logo URL:** `https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-18` (PNG 512×512, sirve desde el MCP server con `Cache-Control: public, max-age=86400, immutable` para que Anthropic Connectors Directory lo cachee y Google `s2/favicons` muestre el diamond real)
+- **Favicon:** `https://claude-holded.verifactu.business/favicon.ico`
+- **Logo URL:** `https://claude-holded.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-18` (PNG 512×512, sirve desde el MCP server con `Cache-Control: public, max-age=86400, immutable` para que Anthropic Connectors Directory lo cachee y Google `s2/favicons` muestre el diamond real)
 - **Promotional screenshots:** Ver `branding-assets.md` (3 screenshots del connector funcionando en Claude)
 
 ---
@@ -114,7 +116,7 @@ Cubre: cómo conectar, lista de tools, scopes, troubleshooting, contacto soporte
 Solo dominios de propiedad nuestra:
 
 - `https://holded.verifactu.business`
-- `https://claude.verifactu.business`
+- `https://claude-holded.verifactu.business`
 - `https://app.verifactu.business`
 
 ---

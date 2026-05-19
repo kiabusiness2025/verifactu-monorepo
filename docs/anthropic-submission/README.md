@@ -1,33 +1,39 @@
 # Anthropic Connectors Directory — Submission Package
 
-**Connector:** Holded × Claude
+**Connector:** Holded for Claude
+**App name (Anthropic form):** `Holded for Claude`
 **Submitter:** Verifactu Business
 **Email de contacto:** soporte@verifactu.business
 **Email de escalation Anthropic:** partnerships@anthropic.com
 **Form URL:** https://claude.com/docs/connectors/building/submission (la página linkea al Google Form actual)
 
-## Estado actual (post-2026-05-18, submission v2)
+## ⚠️ Submission v2 desde nuevo subdominio (2026-05-19)
 
-- ✅ MCP server desplegado: `https://claude.verifactu.business/mcp`
+Esta es una **nueva entrada** en el Anthropic Connectors Directory, con un subdominio nuevo (`claude-holded.verifactu.business`) y un nombre de app nuevo (`Holded for Claude`). **No es un update de la submission v1 — es una entry paralela.**
+
+Razón del reset (documentada en detalle en [`apps/holded-mcp/CLAUDE_CONNECTOR_RESET_RUNBOOK.md`](../../apps/holded-mcp/CLAUDE_CONNECTOR_RESET_RUNBOOK.md) sección 10):
+
+Anthropic / Claude.ai cachearon server-side dos iconos legacy de cuando el servicio se brandeaba como Verifactu Business (la "V" y el "escudo azul con check"). Los archivos llevan 5+ meses devueltos como 404 en nuestro origen, pero Claude.ai no re-scrapea conectores custom no aprobados en el directorio — sirve la copia cacheada. Migrar a un subdominio nuevo es la única forma garantizada de que Anthropic indexe el branding correcto sin cache previo.
+
+## Estado actual (2026-05-19, submission v2 lista para enviar)
+
+- ✅ MCP server desplegado en subdominio nuevo: `https://claude-holded.verifactu.business/mcp` (mismo build que el legacy `claude.verifactu.business`, alias en Vercel)
+- ✅ Subdominio legacy `claude.verifactu.business` sigue funcionando en paralelo (no se rompen conexiones existentes — si las hay)
 - ✅ OAuth 2.1 + PKCE funcional, redirect URIs allowlist (`claude.ai`, `app.claude.ai`)
 - ✅ Consent screen propio con scopes humanos + links legales
 - ✅ **8 tools expuestas** (preset `submission_v1`), todas con `readOnlyHint` o write annotation correcta. Las otras 16 tools del catálogo siguen implementadas pero no se registran (reactivables con `HOLDED_MCP_TOOL_PRESET=full` para submission v3 post-aprobación).
 - ✅ Solo 1 tool de escritura: `create_invoice_draft` (forced `approveDoc=false`)
 - ✅ Alineación funcional 1:1 con el conector ChatGPT (10 tools en ChatGPT vs 8 en Claude, la diferencia es solo de naming: Claude usa `list_documents` polimórfico)
-- ✅ Privacy policy + Terms + DPA publicados
+- ✅ Privacy policy + Terms + DPA publicados — DPA actualizado con sub-procesadores reales (Vercel + Railway + Neon Frankfurt EU)
 - ✅ Fixes del PR #88: brotli silent decoding, paginación client-side, default `endtmp`, `$ref` schema dedup
-- ⏳ Pendiente: enviar form de Remote MCP Submission
+- ✅ Branding correcto en el nuevo dominio: `favicon.ico` ya regenerado (MD5 `d23f99ae`, rombo Holded multi-res), `manifest.json` purgado de colores Verifactu (`theme_color: "#FF5460"`, `background_color: "#ffffff"`)
+- ⏳ Pendiente: enviar form de Remote MCP Submission con la URL nueva y app name nuevo
 
-## Submission previa
+## Submission v1 (histórica, no actuar sobre ella)
 
-El usuario ya envió **una vez** el Google Form de submission, pero **no recibió email de confirmación**.
+Submission v1 fue enviada con app name `Holded` y MCP URL `https://claude.verifactu.business/mcp`. No recibimos email de confirmación. Posibles causas: form rellenado parcialmente, confirmación a spam, form movido a otra surface, o Anthropic no envía confirmación automática para submissions parciales.
 
-Posibles causas:
-
-1. Form rellenado parcialmente o con campo obligatorio incorrecto (los reviewers no responden si la submission no pasa los checks automáticos iniciales)
-2. Confirmación a spam
-3. Form movido a otra surface (la doc oficial dice que se está moviendo a Claude.ai native)
-4. Anthropic no envía confirmación automática para submissions parciales
+**No la reactivar.** La submission v2 (`Holded for Claude` desde `claude-holded.verifactu.business`) es la canónica de aquí en adelante. Si Anthropic responde sobre v1, indicar amablemente que la solicitud activa es v2 y enlazar al form nuevo.
 
 ## Plan de acción
 

@@ -221,3 +221,60 @@ start "https://claude.verifactu.business/oauth/authorize?response_type=code&clie
 2. Si no cambia, validar primero URLs públicas y OAuth page.
 3. Solo si esas validaciones fallan, borrar y recrear el conector.
 4. Si todo valida y solo sigue el icono azul dentro de Claude, cerrar el incidente como limitación/fallback de Claude UI.
+
+## 14. Migración a subdominio nuevo (2026-05-19) — `claude-holded.verifactu.business`
+
+**Contexto:** PRs #99 y #100 fixearon todo lo que controlamos en nuestro origen (`favicon.ico` regenerado, `manifest.json` purgado de colores Verifactu, alias legacy `/icono_verifactu.business.png` sirviendo el rombo). Pero la sección 10 confirmó que Anthropic cachea server-side los iconos legacy y no re-scrapea conectores custom no aprobados. Único reset garantizado: subdominio nuevo donde Anthropic indexe fresh.
+
+### Decisiones tomadas
+
+| Variable                                    | Valor                                                 |
+| ------------------------------------------- | ----------------------------------------------------- |
+| Subdominio nuevo                            | `claude-holded.verifactu.business`                    |
+| App name (Anthropic form)                   | `Holded for Claude`                                   |
+| Endpoint legacy `claude.verifactu.business` | Mantener vivo en paralelo (alias Vercel, mismo build) |
+
+### Cambios en el código (PR de migración)
+
+1. `apps/holded-mcp/src/app.ts` — `CLAUDE_CONNECT_DEEPLINK` parametrizado vía función `buildClaudeConnectDeeplink(baseUrl, connectorName)` que toma `config.BASE_URL` en lugar del string hardcoded `claude.verifactu.business`. Cambiar el subdominio es ahora un env var change.
+2. `apps/holded-mcp/src/public-pages.ts` — `CONNECT_URL` ya no es constante de módulo: `renderLandingPage(baseUrl)` lo construye en cada render desde `baseUrl.replace(/\/$/, '') + '/launch'`.
+3. Docs en `docs/anthropic-submission/*.md` actualizados al subdominio nuevo y app name `Holded for Claude`.
+
+### Pasos operativos (Vercel + Anthropic Google Form)
+
+Asumiendo que el PR de migración está mergeado a `main`:
+
+1. **Vercel — añadir subdominio:** Settings → Domains → Add → `claude-holded.verifactu.business`. Configurar el CNAME que pide Vercel a `cname.vercel-dns.com` en el DNS provider. Esperar SSL (~1-2 min).
+2. **Vercel — cambiar env var:** Project Settings → Environment Variables → `BASE_URL`. Cambiar de `https://claude.verifactu.business` a `https://claude-holded.verifactu.business`. Aplicar a Production. Redeploy.
+3. **Verificación post-deploy:**
+   ```bash
+   curl -sS https://claude-holded.verifactu.business/.well-known/oauth-authorization-server | jq .issuer
+   # Esperado: "https://claude-holded.verifactu.business"
+   curl -sS https://claude-holded.verifactu.business/favicon.ico | md5sum
+   # Esperado: d23f99aeb2d1ea5369b6222eba8cd8e7 (rombo Holded)
+   curl -sS -X POST https://claude-holded.verifactu.business/mcp \
+     -H "Content-Type: application/json" \
+     -H "Accept: application/json, text/event-stream" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+   # Esperado: 401 Unauthorized (correcto — necesita Bearer)
+   ```
+4. **Anthropic Google Form — submission v2:** rellenar el form en https://claude.com/docs/connectors/building/submission con los valores de `docs/anthropic-submission/submission-form-answers.md`. Server name = `Holded for Claude`, MCP URL = `https://claude-holded.verifactu.business/mcp`.
+5. **Esperar review manual** (~2 semanas según docs oficiales).
+6. **Si Anthropic aprueba con icono correcto:** desconectar el conector viejo en Claude.ai y añadir el nuevo `Holded for Claude` desde el directorio.
+
+### Qué hacer con el dominio legacy `claude.verifactu.business`
+
+Mantener vivo en paralelo. Sirve el mismo build via alias en Vercel. Tras la aprobación de la submission v2, en una ventana controlada se puede:
+
+- Opción A: dejarlo activo indefinidamente (zero break risk, mínimo coste).
+- Opción B: configurar 301 redirect a `claude-holded.verifactu.business` a nivel Vercel (rompe MCP POSTs porque la mayoría de clientes no siguen redirects 301 con POST — preferir Opción A).
+- Opción C: respond 410 Gone con mensaje "conector renombrado, reconecte desde el directorio Anthropic" (sólo si confirmamos cero usuarios activos).
+
+Recomendación: Opción A hasta que pase tiempo suficiente para confirmar que nadie usa el legacy.
+
+### Si el problema NO se resuelve con el subdominio nuevo
+
+Si tras la submission v2 + aprobación, el directorio Anthropic sigue mostrando branding incorrecto, las hipótesis son:
+
+1. Anthropic está cacheando por `submitter email` u otro identificador, no por dominio. (Improbable, pero verificable cambiando el email de submission.)
+2. El form de submission no respeta el `logo_uri` proporcionado y Anthropic sigue scraping `/favicon.ico` del dominio. En ese caso confirmar visualmente que el subdominio nuevo sirve el rombo y abrir ticket a `partnerships@anthropic.com`.
