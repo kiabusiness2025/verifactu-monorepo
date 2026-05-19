@@ -251,7 +251,13 @@ Deployment: Vercel, Firebase
 
 ---
 
-Ultima actualizacion: Abril 2026
+Ultima actualizacion: Mayo 2026
+
+### Submissions de conectores AI
+
+- [openai-submission/](openai-submission/README.md) — Paquete listo para upload al **OpenAI App Review portal** (Holded × ChatGPT, 10 tools preset `openai_review_invoicing_v1`). Incluye manifest `chatgpt-app-submission.json`, copy-paste para el form (`PORTAL_FORM_ANSWERS.md`, `OPENAI_FORM_COPY_PASTE.md`), checklist de pre-submit y matriz de tests POS/NEG.
+- [anthropic-submission/](anthropic-submission/README.md) — Paquete para el **Anthropic Connectors Directory** (Holded × Claude, 8 tools preset `submission_v1`). Incluye respuestas literales del Google Form, tools manifest, OAuth flow, compliance checklist y email de escalation.
+- [holded-connectors-action-plan.md](holded-connectors-action-plan.md) — Plan de acción 2026-05-10 (P0–P3 cerradas en producción a 2026-05-19).
 
 ### Integraciones clave y conectores IA
 

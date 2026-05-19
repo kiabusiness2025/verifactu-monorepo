@@ -1,5 +1,7 @@
 # OpenAI App Submission — Holded
 
+> **Última actualización: 2026-05-19.** Submission v2 lista para upload al portal — runtime expone exactamente 10 tools (`openai_review_invoicing_v1` preset), manifest alineado, landings con `ConnectorRequirementsCard` y hub público-ready. Solo falta QA manual en ChatGPT web+mobile.
+
 Esta carpeta contiene los artefactos que se suben al **OpenAI App Review portal** para la submission de la app "Holded".
 
 ## Archivo canónico: `chatgpt-app-submission.json`
@@ -69,8 +71,17 @@ Antes del 2026-05-18 el portal aceptaba solo `tool-hint-justifications.json` (su
 
 ## Otros documentos en esta carpeta
 
-- `OPENAI_FORM_COPY_PASTE.md` — texto plano de los campos del form (description, reviewer notes, test cases) por si hay que rellenar campos individuales en el portal.
+**Vigentes (usar para esta submission):**
+
+- `PORTAL_FORM_ANSWERS.md` — respuestas literales (copy-paste) para los 30 campos del portal (10 tools × 3 hints) + MCP URL + Authentication.
+- `OPENAI_FORM_COPY_PASTE.md` — texto plano del resto de campos del form (description, reviewer notes, test cases) por si hay que rellenar campos individuales en el portal.
+- `OPENAI_RESUBMISSION_CHECKLIST.md` — checklist de pre-submit + estado actual (deploy gate, PR history).
+- `WEB_MOBILE_REVIEW_CHECKLIST.md` — checklist específico de QA manual en ChatGPT web + mobile (32 runs = 16 tests × 2 platforms).
 - `HOLDED_REVIEW_TEST_MATRIX.md` — matriz de tests POS/NEG con estado de validación, suggested prompts, y notas de cada submission wave.
-- `OPENAI_RESUBMISSION_CHECKLIST.md` — checklist de pre-submit.
-- `WEB_MOBILE_REVIEW_CHECKLIST.md` — checklist específico de QA manual en ChatGPT web + mobile.
-- `FINAL_REVIEW_READINESS_REPORT.md`, `HOLDED_REVIEW_TEST_AUDIT.md`, `HOLDED_PUBLIC_LANDINGS_E2E_AUDIT.md`, `OPENAI_SUBMISSION_COPY_PASTE_PACK.md` — reports históricos de readiness.
+
+**Históricos (mantenidos para trazabilidad, NO usar como referencia operativa actual):**
+
+- `FINAL_REVIEW_READINESS_REPORT.md` — readiness report de 2026-04-29 / 2026-05-15 (pre-narrowing a 10 tools).
+- `HOLDED_REVIEW_TEST_AUDIT.md` — audit de 2026-04-29 (mencionaba preset `holded_priority1`, ya superado).
+- `HOLDED_PUBLIC_LANDINGS_E2E_AUDIT.md` — audit E2E de landings de 2026-04-30 (la mayor parte de hallazgos P0/P1 ya están corregidos en producción).
+- `OPENAI_SUBMISSION_COPY_PASTE_PACK.md` — copy-paste pack de 2026-04-29 (superado por `OPENAI_FORM_COPY_PASTE.md`).

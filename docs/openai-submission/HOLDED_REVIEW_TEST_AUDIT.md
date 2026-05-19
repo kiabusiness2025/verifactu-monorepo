@@ -1,5 +1,7 @@
 # Holded Connector OpenAI Review Test Audit
 
+> ⚠️ **HISTÓRICO — 2026-04-29.** Este audit habla del preset `holded_priority1` como default del código, lo cual ya no es cierto: el default actual en [`apps/app/lib/oauth/mcp.ts`](../../apps/app/lib/oauth/mcp.ts) es `openai_review_invoicing_v1` (10 tools). También se refiere al app como "Holded Connector"; el display name en el portal es "Holded". Los hallazgos de este audit están todos cerrados — se conserva como traza histórica. **Para el estado actual usar [`OPENAI_RESUBMISSION_CHECKLIST.md`](OPENAI_RESUBMISSION_CHECKLIST.md) y [`HOLDED_REVIEW_TEST_MATRIX.md`](HOLDED_REVIEW_TEST_MATRIX.md).**
+
 Date: 2026-04-29
 App: Holded Connector
 Purpose: prepare a narrow, deterministic re-submission pack for OpenAI App Review.
