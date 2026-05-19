@@ -6,7 +6,7 @@ import { getFaqJsonLd } from '@/app/components/ConnectorFAQData';
 
 const SITE_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 const PAGE_URL = `${SITE_URL}/conectores/claude`;
-const OG_IMAGE = `${SITE_URL}/brand/holded/holded-diamond-logo.png`;
+const OG_IMAGE = `${SITE_URL}/api/og/claude`;
 
 export const metadata: Metadata = {
   title: 'Pregunta a Holded desde Claude | Verifactu Business',
