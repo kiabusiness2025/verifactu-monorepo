@@ -29,7 +29,19 @@ const MCP_RESOURCE_PATH = '/api/mcp/holded';
 function getDefaultScopes() {
   const fromEnv = process.env.MCP_DEFAULT_SCOPES?.trim();
   if (fromEnv) return fromEnv.split(' ').filter(Boolean);
-  return ['mcp.read', 'holded.invoices.read'];
+  // Default scopes alineados con `openai_review_invoicing_v1` preset en
+  // apps/app (`OPENAI_REVIEW_INVOICING_V1_SCOPE_SET`). Estos 6 scopes
+  // cubren las 10 tools expuestas en submission v2 a OpenAI: invoicing
+  // (venta + compra) + contactos + contabilidad. Si cambia el preset
+  // público en apps/app, hay que actualizar este array.
+  return [
+    'mcp.read',
+    'holded.invoices.read',
+    'holded.invoices.write',
+    'holded.documents.read',
+    'holded.contacts.read',
+    'holded.accounts.read',
+  ];
 }
 
 // Full scope list — must match HOLDED_MCP_SUPPORTED_SCOPES in apps/app
@@ -86,11 +98,17 @@ function buildMetadata() {
     authorization_endpoint: `${HOLDED_APP_URL}/oauth/authorize`,
     token_endpoint: `${HOLDED_APP_URL}/oauth/token`,
     registration_endpoint: `${HOLDED_APP_URL}/oauth/register`,
+    // RFC 7009 token revocation endpoint, proxied to apps/app.
+    revocation_endpoint: `${HOLDED_APP_URL}/oauth/revoke`,
     // userinfo lives only on app domain (not proxied — called directly)
     userinfo_endpoint: `${APP_PUBLIC_URL}/oauth/userinfo`,
     scopes_supported: getAdvertisedScopes(),
     response_types_supported: ['code'],
-    grant_types_supported: ['authorization_code'],
+    // ChatGPT app review DCR sends grant_types=[authorization_code, refresh_token].
+    // The token endpoint in apps/app already supports both since 2026-05-12
+    // (commit 8af1973fc); this metadata must advertise them so OAuth clients
+    // know they can use refresh_token without re-registering. Fixed 2026-05-18.
+    grant_types_supported: ['authorization_code', 'refresh_token'],
     code_challenge_methods_supported: ['S256'],
     token_endpoint_auth_methods_supported: ['none'],
     service_documentation: `${HOLDED_APP_URL}/.well-known/oauth-authorization-server`,
