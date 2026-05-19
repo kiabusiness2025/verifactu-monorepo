@@ -1,4 +1,4 @@
-import { ArrowRight, Check, Sparkles, Zap } from 'lucide-react';
+import { ArrowRight, Check, ExternalLink, Sparkles, Zap } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -91,8 +91,8 @@ const PLANS: Plan[] = [
       'Todo lo de Pro',
       'Hasta 10 usuarios por workspace',
       'Open Banking — movimientos bancarios en tiempo real',
-      'Modelos AEAT preconfigurados (303, 130, 390)',
-      'Multi-ERP (Sage, A3 próximamente)',
+      'Modelos AEAT preconfigurados (303, 130, 390) — próximamente',
+      'Multi-ERP: Sage, A3 — próximamente',
       'Historial ilimitado',
       'Soporte prioritario · SLA 99,9%',
       'IA incluida — Claude Sonnet + GPT-4o opcional',
@@ -242,6 +242,95 @@ export default function IsaakPricingPage() {
               Isaak usa Claude (Anthropic) y GPT-4o (OpenAI) según el plan. Tú no necesitas cuenta
               en ninguno de los dos. Todo está integrado y gestionado por nosotros.
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* AEAT Integration */}
+      <section className="border-b border-slate-200 bg-slate-50/40 py-16 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4">
+          <div className="text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#2361d8]">
+              Integración con la Administración
+            </p>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+              Conectado a la AEAT y a Verifactu
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600">
+              Isaak integra los principales servicios de la AEAT para que puedas consultar,
+              presentar y gestionar sin perder el contexto de tu negocio.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            {/* Sede Electrónica */}
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-base font-semibold text-[#011c67]">Sede Electrónica AEAT</h3>
+                <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  Disponible
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Consulta notificaciones pendientes, presenta modelos y declaraciones tributarias
+                directamente en el portal oficial.
+              </p>
+              <a
+                href="https://sede.agenciatributaria.gob.es/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2361d8] hover:text-[#1f55c0]"
+              >
+                Ir a la Sede Electrónica
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+
+            {/* VeriFactu */}
+            <div className="rounded-[1.5rem] border border-[#2361d8]/30 bg-white p-6 shadow-sm ring-1 ring-[#2361d8]/10">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-base font-semibold text-[#011c67]">VeriFactu</h3>
+                <span className="shrink-0 rounded-full bg-[#2361d8]/10 px-2 py-0.5 text-[10px] font-semibold text-[#2361d8]">
+                  Integrado en Isaak
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Emite facturas con registro automático en la AEAT. Isaak genera el PDF con hash de
+                encadenamiento y código QR de verificación incluidos.
+              </p>
+              <a
+                href="https://sede.agenciatributaria.gob.es/Sede/verifactu.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2361d8] hover:text-[#1f55c0]"
+              >
+                Información VeriFactu (AEAT)
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+
+            {/* SII */}
+            <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="text-base font-semibold text-[#011c67]">SII</h3>
+                <span className="shrink-0 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                  Próximamente
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                Suministro Inmediato de Información. Envío en tiempo real de facturas al SII de la
+                AEAT — para empresas obligadas y grupos que anticipan el cumplimiento.
+              </p>
+              <a
+                href="https://www.agenciatributaria.es/AEAT.internet/Inicio/La_Agencia_Tributaria/Campanas/_Campanas_/SII__Suministro_Inmediato_de_Informacion_/SII__Suministro_Inmediato_de_Informacion_.shtml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-slate-500 hover:text-slate-700"
+              >
+                Información SII (AEAT)
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
           </div>
         </div>
       </section>

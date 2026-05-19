@@ -9,6 +9,7 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
+  ExternalLink,
   Loader2,
   Mail,
   Smartphone,
@@ -147,6 +148,56 @@ export default function FiscalAlertsPage() {
             </div>
           </div>
         )}
+
+        {/* AEAT Quick Access */}
+        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-100 px-5 py-3">
+            <span className="text-[12px] font-semibold text-slate-700">Acceso directo AEAT</span>
+          </div>
+          <div className="divide-y divide-slate-50">
+            <a
+              href="https://sede.agenciatributaria.gob.es/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-5 py-3 hover:bg-slate-50"
+            >
+              <div>
+                <p className="text-[13px] font-medium text-slate-800">Sede Electrónica AEAT</p>
+                <p className="text-[11px] text-slate-400">
+                  Notificaciones, modelos y declaraciones
+                </p>
+              </div>
+              <ExternalLink size={13} className="shrink-0 text-slate-400" />
+            </a>
+            <a
+              href="https://sede.agenciatributaria.gob.es/Sede/verifactu.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-5 py-3 hover:bg-slate-50"
+            >
+              <div>
+                <p className="text-[13px] font-medium text-slate-800">VeriFactu (AEAT)</p>
+                <p className="text-[11px] text-slate-400">
+                  Portal oficial de facturación verificada
+                </p>
+              </div>
+              <ExternalLink size={13} className="shrink-0 text-slate-400" />
+            </a>
+            <div className="flex items-center justify-between px-5 py-3 opacity-60">
+              <div>
+                <p className="text-[13px] font-medium text-slate-800">
+                  SII — Suministro Inmediato de Información
+                  <span className="ml-2 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-600">
+                    Próximamente en Isaak
+                  </span>
+                </p>
+                <p className="text-[11px] text-slate-400">
+                  Envío en tiempo real de facturas a la AEAT
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Upcoming deadlines */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
