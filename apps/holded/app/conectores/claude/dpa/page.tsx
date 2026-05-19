@@ -27,16 +27,25 @@ const subprocessors = [
     guarantee: 'SCC / DPA del proveedor cuando aplique',
   },
   {
-    name: 'Proveedor de base de datos',
-    purpose: 'Persistencia de usuarios, tenants, conexiones, tokens y trazas operativas.',
-    country: 'UE / EE.UU.',
-    guarantee: 'SCC / DPA del proveedor',
+    name: 'Neon (Neon, Inc.)',
+    purpose:
+      'PostgreSQL gestionado para persistencia de usuarios, tenants, conexiones, tokens cifrados y trazas operativas. La API key de Holded se almacena cifrada con AES-256-GCM (la clave maestra vive solo en variables de entorno del servidor, nunca en BD).',
+    country: 'UE (Frankfurt)',
+    guarantee: 'SCC + DPA Neon firmado',
   },
   {
-    name: 'Proveedor de hosting',
-    purpose: 'Alojamiento de la aplicacion, endpoints OAuth y servidor MCP.',
+    name: 'Vercel Inc.',
+    purpose:
+      'Alojamiento del frontend (apps/holded, apps/app) y endpoints OAuth proxy. Region edge UE preferida.',
     country: 'UE / EE.UU.',
-    guarantee: 'SCC / DPA del proveedor',
+    guarantee: 'SCC + DPA Vercel firmado',
+  },
+  {
+    name: 'Railway (Railway Corp.)',
+    purpose:
+      'Alojamiento del servidor MCP standalone (apps/holded-mcp) accesible en claude.verifactu.business.',
+    country: 'EE.UU.',
+    guarantee: 'SCC / DPA del proveedor cuando aplique',
   },
   {
     name: 'Resend Inc.',
@@ -124,10 +133,10 @@ export default function ClaudeDpaPage() {
           <div>
             <p className="font-semibold text-slate-800">Email de contacto</p>
             <a
-              href="mailto:info@verifactu.business"
+              href="mailto:soporte@verifactu.business"
               className="font-medium text-amber-700 underline underline-offset-4"
             >
-              info@verifactu.business
+              soporte@verifactu.business
             </a>
           </div>
           <div>
@@ -211,10 +220,10 @@ export default function ClaudeDpaPage() {
           Para ejercer derechos de acceso, rectificacion, supresion, oposicion, limitacion o
           portabilidad, escribe a{' '}
           <a
-            href="mailto:info@verifactu.business"
+            href="mailto:soporte@verifactu.business"
             className="font-semibold text-amber-700 underline underline-offset-4"
           >
-            info@verifactu.business
+            soporte@verifactu.business
           </a>
           . Tambien puedes contactar con{' '}
           <Link
