@@ -3,11 +3,47 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
+const SITE_URL = process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
+const HUB_URL = `${SITE_URL}/conectores`;
+const OG_IMAGE = `${SITE_URL}/brand/holded/holded-diamond-logo.png`;
+
 export const metadata: Metadata = {
   title: 'Holded con IA | Conectores ChatGPT y Claude',
   description:
-    'Elige cómo conectar Holded con ChatGPT o Claude. Consulta facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural.',
+    'Conecta Holded con ChatGPT o Claude y consulta facturas, contactos, contabilidad y proyectos en lenguaje natural. Borradores solo con confirmación. Integración independiente, gratuita en lanzamiento.',
+  keywords: [
+    'Holded IA',
+    'Holded ChatGPT',
+    'Holded Claude',
+    'conector Holded',
+    'IA contabilidad',
+    'IA facturación',
+    'asistente Holded',
+    'Verifactu Business',
+  ],
   alternates: { canonical: '/conectores' },
+  openGraph: {
+    title: 'Holded con IA — Conectores ChatGPT y Claude',
+    description:
+      'Pregunta a tu Holded en lenguaje natural desde ChatGPT o Claude. Solo lectura por defecto, borradores con confirmación, credenciales protegidas.',
+    url: HUB_URL,
+    siteName: 'Holded by Verifactu Business',
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: 'Holded con IA' }],
+    locale: 'es_ES',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Holded con IA — Conectores ChatGPT y Claude',
+    description:
+      'Conecta Holded a ChatGPT o Claude en minutos. Facturas, contactos, contabilidad y proyectos en lenguaje natural.',
+    images: [OG_IMAGE],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, 'max-snippet': -1, 'max-image-preview': 'large' },
+  },
 };
 
 const connectors = [
@@ -204,6 +240,110 @@ export default function HoldedConnectorsHubPage() {
               <Link href="/contacto" className="font-medium text-[#ff5460] hover:underline">
                 Pregúntanos →
               </Link>
+            </p>
+          </div>
+
+          {/* Requisitos previos — bloque público pensado también para gente
+              que descubre el conector por redes sociales y no conoce las 3
+              plataformas. Tres tarjetas (Holded, ChatGPT, Claude) con
+              enlaces externos para informarse antes de pulsar "Conectar". */}
+          <div className="mt-8 rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm">
+            <h2 className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              Requisitos previos
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-700">
+              Esta integración conecta <strong>3 servicios distintos</strong> que mantienen sus
+              propios planes y términos. Verifactu Business desarrolla y mantiene el conector, pero
+              cada usuario contrata su suscripción directamente con el proveedor correspondiente.
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <a
+                href="https://www.holded.com/es"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/brand/holded/holded-diamond-logo.png"
+                    alt="Holded"
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 object-contain"
+                  />
+                  <span className="text-sm font-bold text-slate-900 group-hover:text-[#ff5460]">
+                    Holded
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-600">
+                  Software de gestión empresarial todo-en-uno: facturación, contabilidad, CRM,
+                  proyectos. Necesitas cuenta activa con permiso para generar API key.
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 group-hover:text-[#ff5460]">
+                  holded.com
+                  <ExternalLink className="h-3 w-3" />
+                </span>
+              </a>
+              <a
+                href="https://chatgpt.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/brand/chatgpt-logo.png"
+                    alt="ChatGPT"
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 object-contain"
+                  />
+                  <span className="text-sm font-bold text-slate-900 group-hover:text-[#10a37f]">
+                    ChatGPT
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-600">
+                  Asistente de OpenAI. Conectores disponibles en planes Plus, Pro, Business,
+                  Enterprise y Edu — no en el plan gratuito.
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 group-hover:text-[#10a37f]">
+                  chatgpt.com
+                  <ExternalLink className="h-3 w-3" />
+                </span>
+              </a>
+              <a
+                href="https://claude.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group rounded-2xl border border-slate-200 bg-white p-4 transition hover:shadow-md"
+              >
+                <div className="flex items-center gap-2">
+                  <Image
+                    src="/brand/claude-logo.svg"
+                    alt="Claude"
+                    width={20}
+                    height={20}
+                    className="h-5 w-5 object-contain"
+                  />
+                  <span className="text-sm font-bold text-slate-900 group-hover:text-[#D4570C]">
+                    Claude
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-5 text-slate-600">
+                  Asistente de Anthropic. Conectores remotos disponibles en planes Pro, Team y
+                  Enterprise — no en el plan gratuito. Login activo en claude.ai requerido antes de
+                  conectar.
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-slate-500 group-hover:text-[#D4570C]">
+                  claude.ai
+                  <ExternalLink className="h-3 w-3" />
+                </span>
+              </a>
+            </div>
+            <p className="mt-4 text-xs leading-5 text-slate-500">
+              Si no tienes ninguna suscripción activa (Holded + ChatGPT/Claude), el conector
+              técnicamente no puede funcionar. Verifactu no puede activar funciones de terceros por
+              ti.
             </p>
           </div>
 

@@ -28,6 +28,7 @@ import Link from 'next/link';
 import type { ComponentType } from 'react';
 import { ConnectorComparison } from '@/app/components/ConnectorComparison';
 import { ConnectorFAQ } from '@/app/components/ConnectorFAQ';
+import { ConnectorRequirementsCard } from '@/app/components/ConnectorRequirementsCard';
 
 type ConnectorId = 'claude' | 'chatgpt';
 
@@ -639,6 +640,13 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           </div>
         </div>
       </section>
+
+      {/* Requisitos y limitaciones — cláusulas ajenas al conector (licencias
+          ChatGPT/Claude, autenticación previa en claude.ai) + enlaces
+          externos a Holded/ChatGPT/Claude para usuarios que no conocen las
+          plataformas. Posicionada antes del FAQ para que las objeciones
+          comerciales se resuelvan ANTES de hacer scroll por las preguntas. */}
+      <ConnectorRequirementsCard connector={connector} />
 
       {/* FAQ — preguntas frecuentes con JSON-LD FAQPage inyectado en page.tsx.
           Posicionada justo antes de Soporte porque resuelve objeciones que
