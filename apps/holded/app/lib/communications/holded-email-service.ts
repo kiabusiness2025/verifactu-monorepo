@@ -76,8 +76,12 @@ function readEmailList(...values: Array<string | undefined | null>) {
   );
 }
 
-function resolveLeadSender() {
-  const holdedFallback = 'Holded <no-reply@holded.verifactu.business>';
+function resolveLeadSender(channel?: string) {
+  const addr = 'no-reply@holded.verifactu.business';
+  if (channel === 'chatgpt') return `ChatGPT x Holded <${addr}>`;
+  if (channel === 'claude') return `Claude x Holded <${addr}>`;
+
+  const holdedFallback = `Holded <${addr}>`;
   const configured =
     cleanEnv(process.env.RESEND_FROM_HOLDED) || cleanEnv(process.env.RESEND_FROM) || holdedFallback;
 
@@ -88,10 +92,10 @@ function resolveLeadSender() {
   return configured;
 }
 
-function createResendTransport() {
+function createResendTransport(channel?: string) {
   return {
     resend: new Resend(readRequiredEnv('RESEND_API_KEY')),
-    from: resolveLeadSender(),
+    from: resolveLeadSender(channel),
     replyTo: readOptionalEnv('RESEND_REPLY_TO', 'soporte@verifactu.business'),
   };
 }
@@ -164,7 +168,7 @@ export async function sendHoldedLeadCommunication(input: LeadPayload) {
 }
 
 export async function sendHoldedConnectedCommunication(input: ConnectedPayload) {
-  const { resend, from, replyTo } = createResendTransport();
+  const { resend, from, replyTo } = createResendTransport(input.channel);
   const configuredAdminRecipients = readEmailList(
     process.env.HOLDED_ADMIN_NOTIFICATION_EMAILS,
     process.env.HOLDED_ADMIN_EMAILS,
@@ -319,7 +323,7 @@ export async function sendHoldedDisconnectedCommunication(input: {
   companyName: string;
   channel: 'dashboard' | 'chatgpt' | 'claude' | 'mobile';
 }) {
-  const { resend, from, replyTo } = createResendTransport();
+  const { resend, from, replyTo } = createResendTransport(input.channel);
 
   const holdedSiteUrl =
     cleanEnv(process.env.NEXT_PUBLIC_HOLDED_SITE_URL) || 'https://holded.verifactu.business';
@@ -526,7 +530,7 @@ export async function sendHoldedFirstActivityNotification(input: {
   toolUsed: string | null;
   detectedAt?: Date;
 }) {
-  const { resend, from, replyTo } = createResendTransport();
+  const { resend, from, replyTo } = createResendTransport(input.channel);
   const adminRecipients = readAdminEmailList();
   if (adminRecipients.length === 0) {
     return { sent: false, reason: 'no_admin_recipients' as const };
@@ -564,7 +568,7 @@ export async function sendHoldedInvoiceDraftNotification(input: {
   currency: string | null;
   detectedAt?: Date;
 }) {
-  const { resend, from, replyTo } = createResendTransport();
+  const { resend, from, replyTo } = createResendTransport(input.channel);
   const adminRecipients = readAdminEmailList();
   if (adminRecipients.length === 0) {
     return { sent: false, reason: 'no_admin_recipients' as const };
@@ -604,7 +608,7 @@ export async function sendHoldedAuthFailuresBurst(input: {
   windowMinutes: number;
   detectedAt?: Date;
 }) {
-  const { resend, from, replyTo } = createResendTransport();
+  const { resend, from, replyTo } = createResendTransport(input.channel);
   const adminRecipients = readAdminEmailList();
   const supportEmail = readOptionalEnv('SUPPORT_NOTIFICATION_EMAIL', 'soporte@verifactu.business');
   const reconnectUrl = `${readOptionalEnv('NEXT_PUBLIC_HOLDED_SITE_URL', 'https://holded.verifactu.business')}/auth/holded-direct?source=auth_failures_burst`;
