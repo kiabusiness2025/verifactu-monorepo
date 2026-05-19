@@ -153,8 +153,8 @@ IsaakSiteChrome subtitle + footer fix · pricing AEAT section (Sede Electrónica
 | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | `prisma migrate deploy` en producción | Tablas `invoice_templates` + `tenant_certificates` (migración `20260519120000`) + `advisor_clients` (migración `20260519200000`) — se aplica automáticamente en Vercel build | 🟡 Verificar |
 | Validar WSDLs AEAT                    | Probar `BuzElecWS` y `ConsultaInformacion` con un cert real. Si los paths son incorrectos, añadir `AEAT_NOTIF_WS_URL` y `AEAT_CENSUS_WS_URL` a Vercel                        | 🟡 Post-cert |
-| VAPID push notifications              | Verificar que `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` están en Vercel. Sin esto, push no funciona en PWA                    | 🟡 Verificar |
-| `FALLBACK_PROVIDER=openai`            | Añadir a Vercel env vars de apps/isaak para activar GPT-4o como fallback automático (plan Business). Valor: `openai`                                                         | 🟡 Pendiente |
+| VAPID push notifications              | ✅ Verificado 2026-05-19: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_SUBJECT` están en Vercel desde hace 14d                            | ✅ OK        |
+| GPT-4o fallback automático            | ✅ Verificado 2026-05-19: fallback es automático en `packages/utils/ai/config.ts` (defaultFallback: anthropic→openai). `ISAAK_NEW_OPENAI_API_KEY` ya en Vercel               | ✅ OK        |
 | OpenAI Manual QA                      | 16 tests × 2 plataformas (POS-01..10 + NEG-01..6 en web y mobile). Ver `docs/openai-submission/WEB_MOBILE_REVIEW_CHECKLIST.md`                                               | 🟡 QA manual |
 
 ---
@@ -218,8 +218,8 @@ INTERNAL_API_SECRET=<secret>
 
 # Multi-LLM fallback (añadido 2026-05-19)
 # Activa GPT-4o como fallback automático cuando falla el modelo primario (plan Business)
-FALLBACK_PROVIDER=openai
-OPENAI_API_KEY=...
+# GPT-4o fallback — automático vía config.ts defaultFallback(); key ya en Vercel como ISAAK_NEW_OPENAI_API_KEY
+# ISAAK_AI_FALLBACK_PROVIDER=openai  ← solo necesario si se quiere forzar explícitamente
 
 # AEAT Sede Electrónica (opcionales — defaults apuntan a producción AEAT)
 AEAT_NOTIF_WS_URL=https://www1.agenciatributaria.gob.es/wlpl/BUZA-CONT/ws/BuzElecWS

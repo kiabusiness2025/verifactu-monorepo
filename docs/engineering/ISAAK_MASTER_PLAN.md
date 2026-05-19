@@ -100,8 +100,8 @@ Página: `apps/isaak/app/p/[slug]/page.tsx` — sin auth, 404 si inactivo.
 | Tarea                                 | Prioridad    | Detalle                                                                                                                              |
 | ------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
 | `prisma migrate deploy` en producción | 🟡 Verificar | Tablas `invoice_templates` + `tenant_certificates` + `advisor_clients`. Se aplica automáticamente en Vercel build desde commit #97   |
-| VAPID push notifications              | 🟡 Verificar | Confirmar en Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`                        |
-| `FALLBACK_PROVIDER=openai`            | 🟡 Pendiente | Añadir a Vercel env vars de apps/isaak. Activa GPT-4o fallback automático (plan Business). También requiere `OPENAI_API_KEY`         |
+| VAPID push notifications              | ✅ OK        | Verificado 2026-05-19: las 4 vars VAPID están en Vercel production desde hace 14 días                                                |
+| GPT-4o fallback                       | ✅ OK        | Automático en `packages/utils/ai/config.ts` (defaultFallback anthropic→openai). `ISAAK_NEW_OPENAI_API_KEY` ya en Vercel              |
 | Validar WSDLs AEAT                    | 🟡 Post-cert | Probar `BuzElecWS` + `ConsultaInformacion` con cert real. Actualizar `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL` si paths incorrectos |
 | OpenAI Manual QA                      | 🟡 QA manual | 16 tests × 2 plataformas. Ver `docs/openai-submission/WEB_MOBILE_REVIEW_CHECKLIST.md`                                                |
 
