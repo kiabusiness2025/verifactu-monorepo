@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { getFiscalDeadlines } from '@/app/lib/fiscal-calendar';
@@ -9,7 +10,10 @@ export const maxDuration = 60;
 function authorizeCron(req: NextRequest) {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return false;
-  return req.headers.get('authorization') === `Bearer ${secret}`;
+  const token = req.headers.get('authorization') ?? '';
+  const expected = `Bearer ${secret}`;
+  if (token.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
 }
 
 export async function GET(req: NextRequest) {

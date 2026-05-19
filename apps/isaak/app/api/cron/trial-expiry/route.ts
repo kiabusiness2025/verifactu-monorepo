@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@verifactu/integrations';
 import { prisma } from '@/app/lib/prisma';
@@ -9,7 +10,9 @@ function authorizeCron(req: NextRequest) {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return false;
   const header = req.headers.get('authorization') ?? '';
-  return header === `Bearer ${secret}`;
+  const expected = `Bearer ${secret}`;
+  if (header.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(header), Buffer.from(expected));
 }
 
 function windowFor(days: number, now: Date): { from: Date; to: Date } {

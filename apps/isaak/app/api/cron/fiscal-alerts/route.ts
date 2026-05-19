@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/app/lib/prisma';
@@ -12,7 +13,10 @@ export const maxDuration = 60;
 function authorizeCron(req: NextRequest) {
   const secret = process.env.CRON_SECRET?.trim();
   if (!secret) return false;
-  return req.headers.get('authorization') === `Bearer ${secret}`;
+  const token = req.headers.get('authorization') ?? '';
+  const expected = `Bearer ${secret}`;
+  if (token.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
 }
 
 const ALERT_WINDOWS = [15, 7, 3, 1];
