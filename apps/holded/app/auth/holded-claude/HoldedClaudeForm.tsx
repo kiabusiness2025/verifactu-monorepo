@@ -30,6 +30,12 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
+import { useConnectorConfetti } from '../lib/useConnectorConfetti';
+
+// Paleta amber alineada con el branding Claude (la landing /conectores/claude
+// usa el rango #fffbeb..#d97757) — el confetti la usa al activar el conector.
+const CLAUDE_CONFETTI_PALETTE = ['#f59e0b', '#fbbf24', '#fcd34d', '#d97706', '#b45309', '#92400e'];
+
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 
@@ -199,6 +205,12 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
   const [step2Loading, setStep2Loading] = useState(false);
   const [step2Error, setStep2Error] = useState<string | null>(null);
   const [step2Success, setStep2Success] = useState(false);
+
+  // Celebración micro-interaction al activar el conector. Holded usa
+  // confetti al crear empresa — replicamos ese momento "fiesta" cuando
+  // el OAuth + API key se han guardado. Respeta prefers-reduced-motion.
+  const { play: playConfetti } = useConnectorConfetti();
+
   const [apiKeyReadOnly, setApiKeyReadOnly] = useState(true);
   const [apiKeyTouched, setApiKeyTouched] = useState(false);
   const [switchingAccount, setSwitchingAccount] = useState(false);
@@ -368,6 +380,7 @@ export function HoldedClaudeForm({ sessionEmail }: { sessionEmail: string | null
       // conexión se ha hecho. ~1.2 s es suficiente para registrar el éxito sin
       // hacer la espera molesta. El email de bienvenida llega en paralelo.
       setStep2Success(true);
+      playConfetti({ colors: CLAUDE_CONFETTI_PALETTE, durationMs: 1100 });
       setTimeout(() => {
         window.location.replace(data.redirectUrl ?? next);
       }, 1200);

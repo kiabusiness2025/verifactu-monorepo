@@ -47,6 +47,13 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 
+import { useConnectorConfetti } from '../lib/useConnectorConfetti';
+
+// Paleta inspirada en el branding OpenAI/ChatGPT (verde) + accent coral que
+// usa la landing /conectores/chatgpt — el confetti la usa al activar el
+// conector.
+const CHATGPT_CONFETTI_PALETTE = ['#10b981', '#34d399', '#6ee7b7', '#ff5460', '#fb7185', '#fecaca'];
+
 const HOLDED_SITE_URL =
   process.env.NEXT_PUBLIC_HOLDED_SITE_URL || 'https://holded.verifactu.business';
 
@@ -221,6 +228,11 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
   const [step2Loading, setStep2Loading] = useState(false);
   const [step2Error, setStep2Error] = useState<string | null>(null);
   const [step2Success, setStep2Success] = useState(false);
+
+  // Celebración micro-interaction al activar el conector ChatGPT. Holded usa
+  // confetti al crear empresa — replicamos ese momento "fiesta" cuando el
+  // OAuth + API key se han guardado. Respeta prefers-reduced-motion.
+  const { play: playConfetti } = useConnectorConfetti();
   const [switchingAccount, setSwitchingAccount] = useState(false);
   const [apiKeyReadOnly, setApiKeyReadOnly] = useState(true);
   const [apiKeyTouched, setApiKeyTouched] = useState(false);
@@ -408,6 +420,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
       // claro. ~1.2 s es suficiente para registrar el éxito sin molestar.
       // El email de bienvenida llega en paralelo.
       setStep2Success(true);
+      playConfetti({ colors: CHATGPT_CONFETTI_PALETTE, durationMs: 1100 });
       setTimeout(() => {
         window.location.replace(data.redirectUrl ?? next);
       }, 1200);
