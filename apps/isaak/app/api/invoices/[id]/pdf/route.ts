@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
+import { uploadInvoiceToDrive } from '@/app/lib/google-drive';
 
 export const runtime = 'nodejs';
 
@@ -226,6 +227,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 });
   }
 
+  const safeNum = invoice.number.replace(/[^a-zA-Z0-9-_]/g, '_');
+
   const pdf = await buildInvoicePdf({
     id: invoice.id,
     number: invoice.number,
@@ -243,11 +246,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     tenant: invoice.tenant,
   });
 
+  // Fire-and-forget: backup invoice PDF to Google Drive if connected
+  if (session.userId) {
+    void uploadInvoiceToDrive(
+      session.tenantId,
+      session.userId,
+      `factura-${safeNum}.pdf`,
+      pdf
+    ).catch(() => null);
+  }
+
   return new NextResponse(pdf.buffer as ArrayBuffer, {
     status: 200,
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="factura-${invoice.number}.pdf"`,
+      'Content-Disposition': `inline; filename="factura-${safeNum}.pdf"`,
       'Cache-Control': 'no-cache',
     },
   });

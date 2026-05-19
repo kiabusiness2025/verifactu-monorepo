@@ -48,11 +48,12 @@ async function findOrCreateFolder(accessToken: string): Promise<string | null> {
   return created.id ?? null;
 }
 
-export async function uploadInvoiceToDrive(
+export async function uploadFileToDrive(
   tenantId: string,
   userId: string,
   fileName: string,
-  pdfBuffer: Buffer
+  fileBuffer: Buffer,
+  mimeType: string = 'application/pdf'
 ): Promise<string | null> {
   const accessToken = await getAccessToken(tenantId, userId);
   if (!accessToken) return null;
@@ -76,9 +77,9 @@ export async function uploadInvoiceToDrive(
     '',
     metadata,
     `--${boundary}`,
-    'Content-Type: application/pdf',
+    `Content-Type: ${mimeType}`,
     '',
-    pdfBuffer.toString('binary'),
+    fileBuffer.toString('binary'),
     `--${boundary}--`,
   ].join('\r\n');
 
@@ -97,4 +98,13 @@ export async function uploadInvoiceToDrive(
   if (!uploadRes.ok) return null;
   const uploaded = (await uploadRes.json()) as { id?: string; webViewLink?: string };
   return uploaded.webViewLink ?? uploaded.id ?? null;
+}
+
+export async function uploadInvoiceToDrive(
+  tenantId: string,
+  userId: string,
+  fileName: string,
+  pdfBuffer: Buffer
+): Promise<string | null> {
+  return uploadFileToDrive(tenantId, userId, fileName, pdfBuffer, 'application/pdf');
 }

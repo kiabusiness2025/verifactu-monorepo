@@ -10,6 +10,7 @@ import {
   CalendarDays,
   ChevronLeft,
   Landmark,
+  Mail,
   ChevronRight,
   ChevronUp,
   CreditCard,
@@ -60,6 +61,7 @@ const NAV_SECTIONS = [
   { href: '/calendario', label: 'Calendario Fiscal', icon: CalendarDays },
   { href: '/fiscal', label: 'Alertas Fiscales', icon: Bell },
   { href: '/banking', label: 'Open Banking', icon: Landmark },
+  { href: '/mail', label: 'Gmail Facturas', icon: Mail },
   { href: '/advisor', label: 'Mis clientes', icon: Building2 },
 ];
 

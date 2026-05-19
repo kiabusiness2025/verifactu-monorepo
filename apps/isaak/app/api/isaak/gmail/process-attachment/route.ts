@@ -1,34 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
+import { refreshGoogleTokenIfNeeded } from '@/app/lib/gmail-scan-service';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { appendConversationMessage, ensureHoldedConversation } from '@/app/lib/holded-chat';
 import { uploadFileToDrive } from '@/app/lib/google-drive';
 
 export const runtime = 'nodejs';
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'] as const;
-type AllowedMime = (typeof ALLOWED_TYPES)[number];
+const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1';
+const ALLOWED_MIMES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/tiff',
+]);
 
-export type ExtractedExpense = {
-  supplierName: string;
-  supplierNif?: string;
-  issueDate: string;
-  invoiceNumber?: string;
-  description: string;
-  amountNet: number;
-  vatRate: number;
-  amountTax: number;
-  amountTotal: number;
-  currency: string;
+type GmailPart = {
+  partId: string;
+  mimeType: string;
+  filename?: string;
+  body?: { attachmentId?: string; size?: number; data?: string };
+  parts?: GmailPart[];
 };
+
+function findAttachmentPart(parts: GmailPart[]): GmailPart | null {
+  for (const part of parts) {
+    if (part.body?.attachmentId && part.filename && ALLOWED_MIMES.has(part.mimeType)) {
+      return part;
+    }
+    if (part.parts) {
+      const found = findAttachmentPart(part.parts);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 async function extractExpenseFromFile(
   fileBase64: string,
-  mimeType: AllowedMime,
+  mimeType: string,
   apiKey: string,
   model: string
-): Promise<ExtractedExpense | null> {
+) {
   const today = new Date().toISOString().slice(0, 10);
   const isPdf = mimeType === 'application/pdf';
 
@@ -59,10 +73,7 @@ async function extractExpenseFromFile(
           role: 'user',
           content: [
             fileBlock,
-            {
-              type: 'text',
-              text: 'Extrae los datos de gasto/factura de este documento. Si algún campo no es legible, haz tu mejor estimación según el contexto.',
-            },
+            { type: 'text', text: 'Extrae los datos de gasto/factura de este documento.' },
           ],
         },
       ],
@@ -73,38 +84,16 @@ async function extractExpenseFromFile(
           input_schema: {
             type: 'object',
             properties: {
-              supplierName: { type: 'string', description: 'Nombre del proveedor o vendedor' },
-              supplierNif: {
-                type: 'string',
-                description: 'NIF, CIF o número de IVA del proveedor',
-              },
-              issueDate: {
-                type: 'string',
-                description: `Fecha del documento en YYYY-MM-DD. Por defecto hoy: ${today}`,
-              },
-              invoiceNumber: {
-                type: 'string',
-                description: 'Número de factura o referencia del documento',
-              },
-              description: {
-                type: 'string',
-                description: 'Descripción principal de los bienes o servicios comprados',
-              },
-              amountNet: {
-                type: 'number',
-                description: 'Importe neto sin IVA en EUR',
-              },
-              vatRate: {
-                type: 'number',
-                description:
-                  'Tipo de IVA como decimal: 0.21 para 21%, 0.10 para 10%, 0.04 para 4%, 0 para exento',
-              },
-              amountTax: { type: 'number', description: 'Importe total de IVA en EUR' },
-              amountTotal: {
-                type: 'number',
-                description: 'Importe total incluyendo IVA en EUR',
-              },
-              currency: { type: 'string', description: 'Código de moneda (EUR, USD, etc.)' },
+              supplierName: { type: 'string' },
+              supplierNif: { type: 'string' },
+              issueDate: { type: 'string', description: `YYYY-MM-DD, por defecto ${today}` },
+              invoiceNumber: { type: 'string' },
+              description: { type: 'string' },
+              amountNet: { type: 'number' },
+              vatRate: { type: 'number' },
+              amountTax: { type: 'number' },
+              amountTotal: { type: 'number' },
+              currency: { type: 'string' },
             },
             required: ['supplierName', 'description', 'amountTotal'],
           },
@@ -115,16 +104,15 @@ async function extractExpenseFromFile(
   });
 
   if (!res.ok) return null;
-
   const data = (await res.json()) as { content?: Array<{ type: string; input?: unknown }> };
   const toolUse = data.content?.find((b) => b.type === 'tool_use');
   if (!toolUse?.input) return null;
 
-  const input = toolUse.input as Partial<ExtractedExpense>;
+  const input = toolUse.input as Record<string, unknown>;
   if (!input.supplierName || !input.description || typeof input.amountTotal !== 'number')
     return null;
 
-  const amountTotal = input.amountTotal;
+  const amountTotal = input.amountTotal as number;
   const vatRate = typeof input.vatRate === 'number' ? input.vatRate : 0.21;
   const amountNet =
     typeof input.amountNet === 'number'
@@ -158,27 +146,67 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Sesión requerida.' }, { status: 401 });
   }
 
-  const formData = await request.formData().catch(() => null);
-  if (!formData) {
-    return NextResponse.json({ error: 'Datos de formulario inválidos.' }, { status: 400 });
+  const body = (await request.json().catch(() => null)) as {
+    messageId?: string;
+    conversationId?: string;
+  } | null;
+  if (!body?.messageId) {
+    return NextResponse.json({ error: 'messageId requerido.' }, { status: 400 });
   }
 
-  const file = formData.get('file') as File | null;
-  const conversationId = (formData.get('conversationId') as string | null) ?? null;
-
-  if (!file) {
-    return NextResponse.json({ error: 'No se ha enviado ningún archivo.' }, { status: 400 });
+  const accessToken = await refreshGoogleTokenIfNeeded(session.tenantId, session.userId);
+  if (!accessToken) {
+    return NextResponse.json({ error: 'Google no conectado o token expirado.' }, { status: 400 });
   }
 
-  if (file.size > MAX_FILE_SIZE) {
-    return NextResponse.json({ error: 'El archivo supera el límite de 5 MB.' }, { status: 413 });
+  // Fetch full message to get attachment part IDs
+  const msgRes = await fetch(`${GMAIL_API}/users/me/messages/${body.messageId}?format=full`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!msgRes.ok) {
+    return NextResponse.json({ error: 'No se pudo obtener el email de Gmail.' }, { status: 502 });
   }
 
-  if (!(ALLOWED_TYPES as readonly string[]).includes(file.type)) {
+  const msg = (await msgRes.json()) as {
+    id: string;
+    payload?: {
+      parts?: GmailPart[];
+      mimeType?: string;
+      filename?: string;
+      body?: { attachmentId?: string };
+    };
+  };
+  const parts = msg.payload?.parts ?? [];
+
+  // Find first processable attachment
+  const attachmentPart = findAttachmentPart(parts);
+  if (!attachmentPart?.body?.attachmentId) {
     return NextResponse.json(
-      { error: 'Formato no soportado. Envía PDF, JPG, PNG o WebP.' },
-      { status: 415 }
+      { error: 'No se encontró un adjunto PDF o imagen en este email.' },
+      { status: 422 }
     );
+  }
+
+  // Download attachment bytes
+  const attRes = await fetch(
+    `${GMAIL_API}/users/me/messages/${body.messageId}/attachments/${attachmentPart.body.attachmentId}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } }
+  );
+  if (!attRes.ok) {
+    return NextResponse.json({ error: 'Error al descargar el adjunto.' }, { status: 502 });
+  }
+
+  const attData = (await attRes.json()) as { data?: string };
+  if (!attData.data) {
+    return NextResponse.json({ error: 'El adjunto está vacío.' }, { status: 422 });
+  }
+
+  // Gmail returns URL-safe base64; convert to standard base64
+  const base64Standard = attData.data.replace(/-/g, '+').replace(/_/g, '/');
+  const fileBuffer = Buffer.from(base64Standard, 'base64');
+
+  if (fileBuffer.length > 5 * 1024 * 1024) {
+    return NextResponse.json({ error: 'El adjunto supera el límite de 5 MB.' }, { status: 413 });
   }
 
   const apiKey = process.env.ISAAK_ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
@@ -186,8 +214,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Configuración de IA no disponible.' }, { status: 503 });
   }
 
-  const model =
-    process.env.ISAAK_AI_MODEL_CLAUDE_DEFAULT ?? process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5';
+  const model = process.env.ISAAK_AI_MODEL_CLAUDE_DEFAULT ?? 'claude-sonnet-4-6';
 
   const ctx = await loadIsaakBusinessContext(
     {
@@ -201,40 +228,46 @@ export async function POST(request: NextRequest) {
 
   if (!ctx?.holded.connection?.apiKey) {
     return NextResponse.json(
-      { error: 'Conecta tu cuenta de Holded antes de subir documentos.' },
+      { error: 'Conecta tu cuenta de Holded antes de procesar documentos.' },
       { status: 400 }
     );
   }
 
-  const arrayBuffer = await file.arrayBuffer();
-  const fileBase64 = Buffer.from(arrayBuffer).toString('base64');
-
   const extracted = await extractExpenseFromFile(
-    fileBase64,
-    file.type as AllowedMime,
+    base64Standard,
+    attachmentPart.mimeType,
     apiKey,
     model
   ).catch(() => null);
 
   if (!extracted) {
-    const reply =
-      'No he podido leer los datos del documento. Asegúrate de que sea una factura o ticket legible (PDF o imagen clara).';
-    return NextResponse.json({ ok: false, reply });
+    return NextResponse.json({
+      ok: false,
+      reply:
+        'No he podido leer los datos del adjunto. Asegúrate de que sea una factura o ticket legible.',
+    });
   }
+
+  // Fire-and-forget: backup to Drive
+  const fileName = attachmentPart.filename ?? `factura-gmail-${Date.now()}.pdf`;
+  void uploadFileToDrive(
+    session.tenantId,
+    session.userId,
+    fileName,
+    fileBuffer,
+    attachmentPart.mimeType
+  ).catch(() => null);
 
   let conversation = null;
   try {
     conversation = await ensureHoldedConversation(
       { tenantId: session.tenantId, userId: session.userId },
-      {
-        conversationId: conversationId || null,
-        titleSeed: `Gasto: ${extracted.supplierName}`,
-      }
+      { conversationId: body.conversationId ?? null, titleSeed: `Gasto: ${extracted.supplierName}` }
     );
     await appendConversationMessage({
       conversationId: conversation.id,
       role: 'user',
-      content: `[Documento subido: ${file.name}]`,
+      content: `[Email Gmail: ${fileName}]`,
     });
   } catch {
     /* non-fatal */
@@ -244,7 +277,7 @@ export async function POST(request: NextRequest) {
     n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
   const reply = [
-    `He leído el documento y he encontrado los siguientes datos de gasto 📄`,
+    `He leído el adjunto del email y he encontrado los siguientes datos de gasto 📧`,
     '',
     `- **Proveedor:** ${extracted.supplierName}${extracted.supplierNif ? ` (${extracted.supplierNif})` : ''}`,
     extracted.invoiceNumber ? `- **Nº factura:** ${extracted.invoiceNumber}` : '',
@@ -267,7 +300,7 @@ export async function POST(request: NextRequest) {
         role: 'assistant',
         content: reply,
         metadata: {
-          source: 'isaak_expense_upload',
+          source: 'isaak_gmail_expense',
           pendingExpense: extracted,
           holdedApiKey: ctx.holded.connection.apiKey,
         },
@@ -276,15 +309,6 @@ export async function POST(request: NextRequest) {
       /* non-fatal */
     }
   }
-
-  // Fire-and-forget: backup original document to Google Drive if connected
-  void uploadFileToDrive(
-    session.tenantId,
-    session.userId,
-    file.name,
-    Buffer.from(arrayBuffer),
-    file.type
-  ).catch(() => null);
 
   return NextResponse.json({
     ok: true,
