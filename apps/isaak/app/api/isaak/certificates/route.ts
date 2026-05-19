@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
 import { encryptCert } from '@/app/lib/certificate-crypto';
-import { readP12 } from '@/app/lib/p12-reader';
+import { extractPemFromP12, readP12 } from '@/app/lib/p12-reader';
 
 export const runtime = 'nodejs';
 
@@ -74,8 +74,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Encrypt P12 before storing
-  const { encrypted, iv, authTag } = encryptCert(p12Buffer);
+  // Extract PEM (cert + private key) so we can later use mTLS without the original password
+  let pemPair: { certPem: string; keyPem: string };
+  try {
+    pemPair = extractPemFromP12(p12Buffer, password);
+  } catch {
+    return NextResponse.json(
+      { error: 'No se pudo extraer la clave privada del certificado.' },
+      { status: 422 }
+    );
+  }
+  const pemJson = JSON.stringify({ cert: pemPair.certPem, key: pemPair.keyPem });
+  const { encrypted, iv, authTag } = encryptCert(Buffer.from(pemJson, 'utf8'));
 
   // Remove any existing cert with same NIF (only one per NIF per tenant)
   await prisma.tenantCertificate.deleteMany({

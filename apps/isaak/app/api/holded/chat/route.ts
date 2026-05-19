@@ -23,8 +23,26 @@ import {
   storeSimpleMemoryFact,
 } from '@/app/lib/holded-chat';
 import { prisma } from '@/app/lib/prisma';
+import { getAeatNotifications, loadTenantCertPem } from '@/app/lib/aeat-sede';
 
 export const runtime = 'nodejs';
+
+function isAeatQuery(message: string) {
+  const t = message.toLowerCase();
+  return (
+    t.includes('aeat') ||
+    t.includes('sede electronica') ||
+    t.includes('sede electrónica') ||
+    t.includes('notificacion') ||
+    t.includes('notificación') ||
+    t.includes('hacienda') ||
+    t.includes('certificado digital') ||
+    t.includes('datos censales') ||
+    t.includes('buzon') ||
+    t.includes('buzón') ||
+    t.includes('agencia tributaria')
+  );
+}
 
 function isConnectionDiagnosticRequest(message: string) {
   const text = message.toLowerCase();
@@ -236,6 +254,7 @@ function buildLlmInstructions(input: {
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
   workspaceSignalsBlock: string | null;
+  aeatBlock?: string | null;
   recentFacts?: { category: string; factKey: string; valueJson: unknown }[];
   fewShotExamples?: { question: string; response: string }[];
 }) {
@@ -321,6 +340,7 @@ function buildLlmInstructions(input: {
     input.workspaceSignalsBlock
       ? `Estado del workspace:\n${input.workspaceSignalsBlock}`
       : 'Estado del workspace: no disponible.',
+    ...(input.aeatBlock ? [`\nDatos AEAT en tiempo real:\n${input.aeatBlock}`] : []),
     'Si faltan datos fiscales o de empresa para orientar mejor, abre una micro-entrevista de una sola pregunta y ofrece siempre las opciones "Prefiero no decirlo" y "No lo sé".',
     'Si responde "No lo sé", explica cómo averiguarlo y cuándo conviene revisar la Sede Electrónica de la AEAT o el certificado electrónico.',
     // L3: memory facts del tenant
@@ -390,6 +410,7 @@ async function buildLlmReply(input: {
   snapshot: NonNullable<Awaited<ReturnType<typeof loadIsaakBusinessContext>>['holded']['snapshot']>;
   diagnosticProbe: Awaited<ReturnType<typeof probeHoldedConnection>> | null;
   workspaceSignalsBlock: string | null;
+  aeatBlock?: string | null;
   modelConfig?: HoldedChatModelConfig;
   memoryContext?: MemoryContext | null;
   fewShotExamples?: { question: string; response: string }[];
@@ -410,6 +431,7 @@ async function buildLlmReply(input: {
         snapshot: input.snapshot,
         diagnosticProbe: input.diagnosticProbe,
         workspaceSignalsBlock: input.workspaceSignalsBlock,
+        aeatBlock: input.aeatBlock,
         recentFacts: input.memoryContext?.recentFacts ?? [],
         fewShotExamples: input.fewShotExamples ?? [],
       }),
@@ -1138,6 +1160,33 @@ export async function POST(request: NextRequest) {
     const planCode = await loadTenantPlanCode(session.tenantId);
     const modelConfig = resolveHoldedChatModel(planCode);
 
+    // VF-4: Load AEAT context when user asks about AEAT-related topics
+    let aeatBlock: string | null = null;
+    if (isAeatQuery(message)) {
+      const [certRow, notifResult] = await Promise.all([
+        loadTenantCertPem(session.tenantId).catch(() => null),
+        getAeatNotifications(session.tenantId).catch(() => ({
+          ok: false,
+          notifications: [] as { estado: string; title: string; tipo: string; fecha: string }[],
+          error: 'timeout',
+        })),
+      ]);
+      const certLine = certRow
+        ? `Certificado configurado: ${certRow.commonName} (NIF ${certRow.nif})`
+        : 'Sin certificado digital configurado. Recordar al usuario que puede subirlo en Ajustes.';
+      let notifLine = '';
+      if (notifResult.ok && notifResult.notifications.length > 0) {
+        const pending = notifResult.notifications.filter((n) => n.estado === 'pendiente');
+        notifLine =
+          pending.length > 0
+            ? `Notificaciones AEAT pendientes (${pending.length}): ${pending.map((n) => n.title).join('; ')}`
+            : 'No hay notificaciones AEAT pendientes.';
+      } else if (!notifResult.ok && notifResult.error !== 'no_cert') {
+        notifLine = 'No se han podido cargar las notificaciones AEAT en este momento.';
+      }
+      aeatBlock = [certLine, notifLine].filter(Boolean).join('\n');
+    }
+
     const [memoryContext, fewShotExamples] = await Promise.all([
       conversation
         ? getSimpleMemoryContext(
@@ -1155,6 +1204,7 @@ export async function POST(request: NextRequest) {
         snapshot,
         diagnosticProbe: connectionProbe,
         workspaceSignalsBlock,
+        aeatBlock,
         modelConfig,
         memoryContext,
         fewShotExamples,

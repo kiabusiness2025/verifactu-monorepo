@@ -38,6 +38,36 @@ function isCertEntity(subject: forge.pki.CertificateField[]): boolean {
   );
 }
 
+export type CertPem = { certPem: string; keyPem: string };
+
+export function extractPemFromP12(p12Buffer: Buffer, password: string): CertPem {
+  const p12Der = forge.util.createBuffer(p12Buffer.toString('binary'));
+  const p12Asn1 = forge.asn1.fromDer(p12Der);
+  const p12 = forge.pkcs12.pkcs12FromAsn1(p12Asn1, password);
+
+  // Extract certificate
+  const certBags = p12.getBags({ bagType: forge.pki.oids.certBag });
+  const cert = certBags[forge.pki.oids.certBag]?.[0]?.cert;
+  if (!cert) throw new Error('Certificado no encontrado en el P12');
+  const certPem = forge.pki.certificateToPem(cert);
+
+  // Extract private key (shrouded or plain)
+  let privateKey: forge.pki.rsa.PrivateKey | null = null;
+  const shroudedBags = p12.getBags({ bagType: forge.pki.oids.pkcs8ShroudedKeyBag });
+  const shrouded = shroudedBags[forge.pki.oids.pkcs8ShroudedKeyBag]?.[0];
+  if (shrouded?.key) {
+    privateKey = shrouded.key as forge.pki.rsa.PrivateKey;
+  } else {
+    const keyBags = p12.getBags({ bagType: forge.pki.oids.keyBag });
+    const plain = keyBags[forge.pki.oids.keyBag]?.[0];
+    if (plain?.key) privateKey = plain.key as forge.pki.rsa.PrivateKey;
+  }
+  if (!privateKey) throw new Error('Clave privada no encontrada en el P12');
+  const keyPem = forge.pki.privateKeyToPem(privateKey);
+
+  return { certPem, keyPem };
+}
+
 export function readP12(p12Buffer: Buffer, password: string): CertInfo {
   const p12Der = forge.util.createBuffer(p12Buffer.toString('binary'));
   const p12Asn1 = forge.asn1.fromDer(p12Der);

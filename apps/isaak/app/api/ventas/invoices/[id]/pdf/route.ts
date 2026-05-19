@@ -46,7 +46,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     return NextResponse.json({ ok: false, error: 'ID de factura no válido' }, { status: 400 });
   }
 
-  const [invoice, tenantProfile] = await Promise.all([
+  const [invoice, tenantProfile, defaultTemplate] = await Promise.all([
     prisma.invoice.findFirst({
       where: { id, tenantId: session.tenantId },
       select: {
@@ -84,13 +84,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         adminEditHistory: true,
       },
     }),
+    prisma.invoiceTemplate.findFirst({
+      where: { tenantId: session.tenantId, isDefault: true },
+      select: { primaryColor: true, secondaryColor: true, accentColor: true, logoUrl: true },
+    }),
   ]);
 
   if (!invoice) {
     return NextResponse.json({ ok: false, error: 'Factura no encontrada' }, { status: 404 });
   }
 
-  const branding = readBranding(tenantProfile?.adminEditHistory);
+  // Tenant's saved template takes precedence over admin-set branding
+  const templateBranding = defaultTemplate
+    ? {
+        primaryColor: defaultTemplate.primaryColor ?? undefined,
+        secondaryColor: defaultTemplate.secondaryColor ?? undefined,
+        logoUrl: defaultTemplate.logoUrl ?? undefined,
+      }
+    : null;
+  const adminBranding = readBranding(tenantProfile?.adminEditHistory);
+  const branding = templateBranding
+    ? {
+        ...adminBranding,
+        ...Object.fromEntries(Object.entries(templateBranding).filter(([, v]) => v != null)),
+      }
+    : adminBranding;
 
   const issuerName =
     tenantProfile?.legalName || tenantProfile?.tradeName || invoice.tenant.name || '';
