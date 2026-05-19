@@ -129,24 +129,44 @@ IsaakSiteChrome subtitle + footer fix · pricing AEAT section (Sede Electrónica
 
 ---
 
+### ✅ P3-1 Modo Asesoría (2026-05-19, commit 00d65830)
+
+- `AdvisorClient` Prisma model — alias, NIF, Holded API key cifrada AES-256-GCM, is_active, notas
+- CRUD API en `/api/isaak/advisor/clients` (GET/POST/PATCH/DELETE)
+- Cookie-based session `isaak_advisor_client` (httpOnly, 7d) — switch vía POST `.../[id]/switch`
+- `AdvisorDashboardClient.tsx` — listado con ClientCard, formulario inline, botón "Chat con este cliente"
+- `AdvisorModeBanner.tsx` — banner ámbar en chat, botón Salir que limpia la cookie
+- Chat route: inyecta key del cliente, carga snapshot con esa key, prepend `advisorBanner` al system prompt
+- Migración `20260519200000_advisor_clients` en producción vía `prisma migrate deploy` en Vercel build
+
+### ✅ Legal policies + landing pricing (2026-05-19, commit 2e9dd6f3)
+
+- **Landing**: plan Starter (19 €) añadido al grid — ahora 4 columnas (Free / Starter / Pro / Business)
+- **Privacy** (`/privacy`): fecha 19-may-2026, 5 secciones nuevas (WhatsApp/Meta, Salt Edge, AEAT P12, Modo Asesoría, Google Workspace), subencargados ampliados con Salt Edge y Meta
+- **Terms** (`/terms`): fecha 19-may-2026, secciones por integración (WhatsApp/Meta, Open Banking, AEAT P12, Modo Asesoría, VeriFactu emisión), sección uso aceptable, enlace WhatsApp Business Terms
+
+---
+
 ## ⚠️ Pendientes de infraestructura (antes del próximo sprint)
 
-| Tarea                                 | Detalle                                                                                                                                               | Prioridad    |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| `prisma migrate deploy` en producción | Tablas `invoice_templates` + `tenant_certificates` (migración `20260519120000`) — **sin esto VF-T/VF-2 no funcionan en prod**                         | 🔴 Urgente   |
-| Validar WSDLs AEAT                    | Probar `BuzElecWS` y `ConsultaInformacion` con un cert real. Si los paths son incorrectos, añadir `AEAT_NOTIF_WS_URL` y `AEAT_CENSUS_WS_URL` a Vercel | 🟡 Post-cert |
-| OpenAI Manual QA                      | 16 tests × 2 plataformas (POS-01..10 + NEG-01..6 en web y mobile). Ver `docs/openai-submission/WEB_MOBILE_REVIEW_CHECKLIST.md`                        | 🟡 QA manual |
+| Tarea                                 | Detalle                                                                                                                                                                      | Prioridad    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| `prisma migrate deploy` en producción | Tablas `invoice_templates` + `tenant_certificates` (migración `20260519120000`) + `advisor_clients` (migración `20260519200000`) — se aplica automáticamente en Vercel build | 🟡 Verificar |
+| Validar WSDLs AEAT                    | Probar `BuzElecWS` y `ConsultaInformacion` con un cert real. Si los paths son incorrectos, añadir `AEAT_NOTIF_WS_URL` y `AEAT_CENSUS_WS_URL` a Vercel                        | 🟡 Post-cert |
+| VAPID push notifications              | Verificar que `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` están en Vercel. Sin esto, push no funciona en PWA                    | 🟡 Verificar |
+| `FALLBACK_PROVIDER=openai`            | Añadir a Vercel env vars de apps/isaak para activar GPT-4o como fallback automático (plan Business). Valor: `openai`                                                         | 🟡 Pendiente |
+| OpenAI Manual QA                      | 16 tests × 2 plataformas (POS-01..10 + NEG-01..6 en web y mobile). Ver `docs/openai-submission/WEB_MOBILE_REVIEW_CHECKLIST.md`                                               | 🟡 QA manual |
 
 ---
 
 ## Backlog P3 — Asesorías y B2B (mes 3+)
 
-| ID   | Tarea                                                                                                                                                               | Esfuerzo estimado |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| P3-1 | **Modo Asesoría**: workspace multi-cliente — una cuenta Isaak gestiona N empresas cliente. Workspace switcher, historial separado por empresa, vista resumen asesor | L (2–3 sprints)   |
-| P3-2 | **White-label**: Isaak con marca propia por tenant (logo, nombre, colores, dominio custom). Precondición: `InvoiceTemplate` + branding ya implementados             | M (1 sprint)      |
-| P3-3 | **Modelos AEAT Business**: borradores 303, 130, 390 pre-rellenados con datos Holded. UI wizard paso a paso                                                          | L (2 sprints)     |
-| P3-4 | **Conector Sage / A3**: segundo ERP. Arquitectura: `ERP_TYPE` por tenant, capa de abstracción `erp-client.ts`                                                       | XL (3+ sprints)   |
+| ID   | Tarea                                                                                                                                                   | Esfuerzo estimado |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| P3-1 | ~~**Modo Asesoría**~~ ✅ Completado 2026-05-19                                                                                                          | —                 |
+| P3-2 | **White-label**: Isaak con marca propia por tenant (logo, nombre, colores, dominio custom). Precondición: `InvoiceTemplate` + branding ya implementados | M (1 sprint)      |
+| P3-3 | **Modelos AEAT Business**: borradores 303, 130, 390 pre-rellenados con datos Holded. UI wizard paso a paso                                              | L (2 sprints)     |
+| P3-4 | **Conector Sage / A3**: segundo ERP. Arquitectura: `ERP_TYPE` por tenant, capa de abstracción `erp-client.ts`                                           | XL (3+ sprints)   |
 
 ---
 
@@ -195,6 +215,11 @@ CERT_MASTER_KEY=<hex 64 chars>
 
 # Auth server-to-server Isaak → API (añadido 2026-05-19)
 INTERNAL_API_SECRET=<secret>
+
+# Multi-LLM fallback (añadido 2026-05-19)
+# Activa GPT-4o como fallback automático cuando falla el modelo primario (plan Business)
+FALLBACK_PROVIDER=openai
+OPENAI_API_KEY=...
 
 # AEAT Sede Electrónica (opcionales — defaults apuntan a producción AEAT)
 AEAT_NOTIF_WS_URL=https://www1.agenciatributaria.gob.es/wlpl/BUZA-CONT/ws/BuzElecWS

@@ -99,27 +99,31 @@ Página: `apps/isaak/app/p/[slug]/page.tsx` — sin auth, 404 si inactivo.
 
 | Tarea                                 | Prioridad    | Detalle                                                                                                                              |
 | ------------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `prisma migrate deploy` en producción | 🔴 Urgente   | Tablas `invoice_templates` + `tenant_certificates`. Ejecutar desde Vercel build o manual en Railway                                  |
+| `prisma migrate deploy` en producción | 🟡 Verificar | Tablas `invoice_templates` + `tenant_certificates` + `advisor_clients`. Se aplica automáticamente en Vercel build desde commit #97   |
+| VAPID push notifications              | 🟡 Verificar | Confirmar en Vercel: `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`                        |
+| `FALLBACK_PROVIDER=openai`            | 🟡 Pendiente | Añadir a Vercel env vars de apps/isaak. Activa GPT-4o fallback automático (plan Business). También requiere `OPENAI_API_KEY`         |
 | Validar WSDLs AEAT                    | 🟡 Post-cert | Probar `BuzElecWS` + `ConsultaInformacion` con cert real. Actualizar `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL` si paths incorrectos |
 | OpenAI Manual QA                      | 🟡 QA manual | 16 tests × 2 plataformas. Ver `docs/openai-submission/WEB_MOBILE_REVIEW_CHECKLIST.md`                                                |
 
 ---
 
+## ✅ P3-1: Modo Asesoría — completado 2026-05-19 (commit 00d65830)
+
+**Implementación real (difiere del plan original):**
+
+- `AdvisorClient` Prisma model: `id, advisorTenantId, alias, companyName, nif, holdedApiKeyEnc, holdedKeyMasked, notes, isActive`
+- API key del cliente cifrada con `encryptHoldedSecret()` (AES-256-GCM, misma clave que Holded connections)
+- Sesión activa via cookie httpOnly `isaak_advisor_client` (7 días) — no requiere campo en la cuenta del asesor
+- Switch endpoint: `POST /api/isaak/advisor/clients/[id]/switch` + `POST .../clear/switch`
+- Chat route: detecta cookie → carga `AdvisorClient` → inyecta key del cliente en `context.holded.connection` (shim si el asesor no tiene conexión propia) → carga snapshot con key del cliente → prepend `advisorBanner` al system prompt
+- UI: `AdvisorDashboardClient.tsx` con CRUD inline + `AdvisorModeBanner.tsx` en chat (banner ámbar, botón Salir)
+- Migración `20260519200000_advisor_clients` — se aplica automáticamente en deploy
+
+---
+
 ## Backlog P3 — siguientes sprints
 
-### P3-1: Modo Asesoría (multi-cliente)
-
-**Objetivo:** Una cuenta Isaak gestiona N empresas cliente.
-
-**Cambios técnicos:**
-
-- Nuevo modelo Prisma: `AdvisorClient { id, advisorTenantId, clientTenantId, alias }`
-- Workspace switcher en sidebar: dropdown con clientes
-- API: `/api/isaak/advisor/clients` (CRUD) + `/api/isaak/advisor/switch`
-- Chat: `tenantId` efectivo = cliente seleccionado, historial separado por cliente
-- Billing: el asesor paga, el cliente no necesita cuenta Isaak
-
-**Esfuerzo estimado:** L (2–3 sprints)
+### ~~P3-1: Modo Asesoría~~ — ✅ Completado 2026-05-19
 
 ### P3-2: White-label
 
