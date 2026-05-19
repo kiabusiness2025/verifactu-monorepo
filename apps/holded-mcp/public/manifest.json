@@ -1,14 +1,14 @@
 {
   "name": "Holded MCP",
-  "short_name": "Holded MCP",
+  "short_name": "Holded",
   "description": "Connect Claude to your Holded account",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#081936",
-  "theme_color": "#2361d8",
+  "background_color": "#ffffff",
+  "theme_color": "#FF5460",
   "icons": [
     {
-      "src": "/holded-diamond-logo.png?v=holded-diamond-2026-05-18",
+      "src": "/holded-diamond-logo.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any maskable"

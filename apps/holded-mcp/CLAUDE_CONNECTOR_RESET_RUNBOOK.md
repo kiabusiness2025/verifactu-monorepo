@@ -133,9 +133,24 @@ Prueba funcional mínima sugerida:
 - pedir a Claude algo como:
   - `¿Puedes acceder a Holded? ¿Qué ves?`
 
-## 10. Cómo interpretar el icono azul si sigue apareciendo
+## 10. Cómo interpretar un icono inesperado (V de Verifactu, escudo azul, etc.)
 
-**Importante:** Si Claude.ai muestra un icono inesperado, comprueba primero si coincide con el _antiguo_ icono azul personalizado de la primera versión de este conector (un escudo azul custom, no el escudo genérico de Claude). Si coincide, trátalo como metadatos en caché — no como fallback genérico. Para limpiarlo:
+**Actualización 2026-05-19 — root cause confirmado para el caso "V de Verifactu":**
+
+Si Claude.ai muestra una "V" (letra) en lugar del rombo Holded, el problema NO es fallback de UI de Claude — es que `apps/holded-mcp/public/favicon.ico` quedó congelado desde la primera versión del servidor (cuando se brandeaba como Verifactu) y nunca se regeneró desde `holded-diamond-logo.png`. Las rutas `/favicon.png`, `/icon.png`, `/apple-touch-icon.png` etc. sí sirven el diamante (porque van por `sendDiamondPng` que apunta directo al PNG), pero `/favicon.ico` va por `sendDiamondIco` que sirve el `.ico` legacy.
+
+**Fix permanente:** ejecutar `node apps/holded-mcp/scripts/regen-favicon.mjs` para regenerar el ICO multi-resolución (16/32/48/64 px, PNG-encoded RGBA) desde `holded-diamond-logo.png`. Commitear el binario actualizado, bumpear `ICON_VERSION` en `apps/holded-mcp/src/app.ts`, deploy.
+
+**Verificación post-deploy:**
+
+```bash
+curl -sS https://claude.verifactu.business/favicon.ico | md5sum
+# debe coincidir con el md5 del fichero del repo (NO con 2e7fd8c21b1aa5c17991d0053c11dab6, que era el legacy)
+```
+
+---
+
+**Importante (caso histórico "escudo azul"):** Si Claude.ai muestra un icono inesperado distinto al rombo Holded, comprueba primero si coincide con el _antiguo_ icono azul personalizado de la primera versión de este conector (un escudo azul custom, no el escudo genérico de Claude). Si coincide, trátalo como metadatos en caché — no como fallback genérico. Para limpiarlo:
 
 1. Desinstala el conector desde Claude.ai → Settings → Connectors.
 2. Si usas Claude Team/Enterprise, elimínalo también en Organization Settings → Connectors.

@@ -99,7 +99,7 @@ export function createApp() {
   // X-Icon-Version fuerza a Claude.ai y a proxies intermedios a tratar la
   // respuesta como nueva aunque tengan una copia en caché. El valor incluye
   // la fecha de la última regeneración del asset para facilitar la depuración.
-  const ICON_VERSION = 'holded-diamond-2026-05-18';
+  const ICON_VERSION = 'holded-diamond-2026-05-19';
 
   // ⚠️ Anthropic Connectors Directory fetchea el logo desde
   // https://www.google.com/s2/favicons?domain=claude.verifactu.business&sz=64
