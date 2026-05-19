@@ -12,6 +12,12 @@ Comparten backend y plataforma, pero deben mantenerse separados en marca, URLs p
 
 ## Estructura
 
+### Submissions de conectores AI
+
+- **OpenAI App Review (ChatGPT × Holded):** `docs/openai-submission/` — manifest canónico `chatgpt-app-submission.json` (10 tools, `openai_review_invoicing_v1`), `PORTAL_FORM_ANSWERS.md` + `OPENAI_FORM_COPY_PASTE.md` (copy-paste del form), `OPENAI_RESUBMISSION_CHECKLIST.md`, `WEB_MOBILE_REVIEW_CHECKLIST.md`, `HOLDED_REVIEW_TEST_MATRIX.md`.
+- **Anthropic Connectors Directory (Claude × Holded):** `docs/anthropic-submission/` — `submission-form-answers.md`, `tools-manifest.md` (8 tools, `submission_v1`), `oauth-flow.md`, `compliance-checklist.md`, `test-account.md`, `branding-assets.md`, `escalation-email.md`.
+- **Plan de acción global:** `docs/holded-connectors-action-plan.md` (P0–P3 cerradas a 2026-05-19).
+
 ### Producto — `docs/product/`
 
 - Features implementadas, planes, presupuestos, gastos, facturas, integraciones

@@ -1,6 +1,6 @@
 # Anthropic Remote MCP Submission — Respuestas literales del form
 
-> Esto es lo que hay que pegar campo por campo. El form de Anthropic está en https://claude.com/docs/connectors/building/submission (linkea al Google Form).
+> **Última actualización: 2026-05-19.** Esto es lo que hay que pegar campo por campo. El form de Anthropic está en https://claude.com/docs/connectors/building/submission (linkea al Google Form).
 
 ---
 
@@ -70,11 +70,11 @@ Devuelve exactamente: `list_documents`, `get_document`, `get_document_pdf`, `lis
 
 ## Data & compliance
 
-**Data hosting region:** EU (Vercel Frankfurt + Render Frankfurt)
+**Data hosting region:** EU (Vercel Frankfurt + Railway Frankfurt + Neon Frankfurt)
 **Encryption in transit:** TLS 1.2+
-**Encryption at rest:** AES-256 (CockroachDB encrypted columns)
+**Encryption at rest:** AES-256-GCM (Neon PostgreSQL EU)
 **Data retention:** Holded API keys cifradas con AES-256-GCM. Audit logs 90 días. Sesiones OAuth 30 días con rotación.
-**Sub-procesadores:** Vercel (frontend hosting), Render (MCP server hosting), Holded (data source, NO procesa para Anthropic), CockroachDB (database).
+**Sub-procesadores:** Vercel (frontend hosting, Frankfurt EU), Railway (MCP server hosting `apps/holded-mcp`, Frankfurt EU), Neon (PostgreSQL hosting, Frankfurt EU, AES-256-GCM), Holded (data source, NO procesa para Anthropic).
 **GDPR Article 28:** Sí — DPA pública firmable.
 **Data deletion:** Usuario puede revocar acceso desde su panel `/admin` o por email. Eliminación efectiva en ≤30 días.
 

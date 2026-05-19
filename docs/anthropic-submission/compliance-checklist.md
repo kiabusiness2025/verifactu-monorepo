@@ -1,6 +1,6 @@
 # Anthropic Software Directory Policy — Checklist
 
-Verificación punto a punto del [Anthropic Software Directory Policy](https://support.claude.com/en/articles/13145358-anthropic-software-directory-policy).
+> **Última actualización: 2026-05-19.** Verificación punto a punto del [Anthropic Software Directory Policy](https://support.claude.com/en/articles/13145358-anthropic-software-directory-policy).
 
 ## ✅ Safety & Security
 
@@ -40,7 +40,7 @@ export const CREATE_INVOICE_DRAFT_ANNOTATIONS: ToolAnnotations = {
 };
 ```
 
-- [x] **Cada tool tiene `readOnlyHint` o `destructiveHint`:** 23 readOnlyHint + 1 con ambos explícitos
+- [x] **Cada tool tiene `readOnlyHint` o `destructiveHint`:** 7 `readOnlyHint: true` + 1 (`create_invoice_draft`) con `readOnlyHint: false` + `destructiveHint: false` explícito (crea borrador, nunca emite/envía). Las 16 tools del catálogo completo (reservadas para submission v3) también tienen annotations correctas.
 - [x] **`openWorldHint: false`** en todas: no hay acceso a web externa, solo a la cuenta del usuario
 - [x] **`title` en cada tool:** sí, descripción human-readable en inglés
 
@@ -50,7 +50,7 @@ export const CREATE_INVOICE_DRAFT_ANNOTATIONS: ToolAnnotations = {
 - [x] **Terms of Service URL público:** `https://holded.verifactu.business/conectores/claude/terms`
 - [x] **DPA URL público:** `https://holded.verifactu.business/conectores/claude/dpa`
 - [x] **Privacy policy completa:** explica qué datos se recogen, cómo se procesan, sub-procesadores, derechos GDPR, contacto DPO
-- [x] **GDPR Article 28 compliance:** DPA firmable con sub-procesadores listados (Vercel, Render, CockroachDB, Holded)
+- [x] **GDPR Article 28 compliance:** DPA firmable con sub-procesadores listados (Vercel, Railway, Neon Frankfurt EU con AES-256-GCM, Holded). DPA actualizado 2026-05-18 con detalles específicos por sub-procesador.
 - [x] **Data retention:** definida (30 días para tokens, 90 días audit logs)
 - [x] **Right to delete:** revocación inmediata desde panel admin
 

@@ -6,7 +6,7 @@
 **Email de escalation Anthropic:** partnerships@anthropic.com
 **Form URL:** https://claude.com/docs/connectors/building/submission (la página linkea al Google Form actual)
 
-## Estado actual (post-2026-05-18, submission v2)
+## Estado actual (2026-05-19, submission v2 lista para enviar)
 
 - ✅ MCP server desplegado: `https://claude.verifactu.business/mcp`
 - ✅ OAuth 2.1 + PKCE funcional, redirect URIs allowlist (`claude.ai`, `app.claude.ai`)
@@ -14,8 +14,10 @@
 - ✅ **8 tools expuestas** (preset `submission_v1`), todas con `readOnlyHint` o write annotation correcta. Las otras 16 tools del catálogo siguen implementadas pero no se registran (reactivables con `HOLDED_MCP_TOOL_PRESET=full` para submission v3 post-aprobación).
 - ✅ Solo 1 tool de escritura: `create_invoice_draft` (forced `approveDoc=false`)
 - ✅ Alineación funcional 1:1 con el conector ChatGPT (10 tools en ChatGPT vs 8 en Claude, la diferencia es solo de naming: Claude usa `list_documents` polimórfico)
-- ✅ Privacy policy + Terms + DPA publicados
+- ✅ Privacy policy + Terms + DPA publicados — DPA actualizado con sub-procesadores reales (Neon Frankfurt EU + Vercel + Railway)
 - ✅ Fixes del PR #88: brotli silent decoding, paginación client-side, default `endtmp`, `$ref` schema dedup
+- ✅ Landing Claude refresca: `ConnectorRequirementsCard` con cláusula de licencia Claude Pro/Team/Enterprise, aviso explícito "Inicia sesión en claude.ai antes de pulsar Añadir a Claude", y enlaces externos a Claude.ai/Holded (PR #94).
+- ✅ Hub `/conectores` ready for public/social-share (OG/Twitter metadata + "Requisitos previos" block — PR #94).
 - ⏳ Pendiente: enviar form de Remote MCP Submission
 
 ## Submission previa

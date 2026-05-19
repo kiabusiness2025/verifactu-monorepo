@@ -1,7 +1,18 @@
 # Final Review Readiness Report
 
-Date: 2026-04-29 (initial) · 2026-05-15 (controlled-errors wave + preset realignment)
-App: Holded Connector
+Date: 2026-04-29 (initial) · 2026-05-15 (controlled-errors wave + preset realignment) · **2026-05-19 (last update — submission v2 narrowing + UX cluster)**
+App: Holded (display name)
+
+> ## 🟢 2026-05-19 update — submission v2 listo para upload
+>
+> Estado actual antes de cualquier reading de este histórico:
+>
+> - Runtime expone **10 tools** (preset `openai_review_invoicing_v1`, ver [apps/app/lib/oauth/mcp.ts](../../apps/app/lib/oauth/mcp.ts)). Las 14 tools del wave 2026-05-15 se reagruparon en 10 tras añadir `holded_list_documents`/`holded_get_document`/`holded_get_document_pdf` y eliminar `bookings`/`crm_funnels`/`leads`/`projects`/`project_tasks`/`time_records` (PR #88).
+> - Manifest canónico: [`chatgpt-app-submission.json`](chatgpt-app-submission.json) (10 tools, schema v1, validado por `node scripts/validate-openai-submission.mjs`).
+> - PRs cerrados desde 2026-05-15: #80 (controlled errors), #81 (CI), #88 (brotli+paginación+endtmp+$ref+preset narrowing), #93 (OG + sender names), #94 (UX cluster E/F: confetti + toast + ChannelBadge + ConnectorRequirementsCard + hub público-ready).
+> - Status: **READY_AFTER_MANUAL_CHATGPT_QA** — solo falta correr 16 tests × web+mobile.
+>
+> El resto del documento (waves de 2026-04-29 y 2026-05-15) se conserva como histórico.
 
 ## 🟢 2026-05-15 update — runtime/manifest aligned, only ChatGPT manual QA pending
 
@@ -18,6 +29,7 @@ After the second wave of soporte testing (four cases returned `-32000 Internal M
 - ✅ OAuth discovery JSON is well-formed with every field OpenAI looks for (issuer, authorization/token/registration endpoints, scopes, response_types, grant_types, S256).
 
 PRs merged for this wave:
+
 - [#80](https://github.com/kiabusiness2025/verifactu-monorepo/pull/80) — controlled errors + preset revert (deployed via Vercel 2026-05-15 18:57 UTC).
 - [#81](https://github.com/kiabusiness2025/verifactu-monorepo/pull/81) — CI infrastructure (pnpm version, jest ESM, prisma scope, build-admin path filter, Resend dummy env) — prerequisite for #80 to reach `main`.
 

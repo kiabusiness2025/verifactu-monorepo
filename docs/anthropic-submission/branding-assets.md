@@ -115,3 +115,5 @@ Para el form de Anthropic:
 - [ ] Re-grabar hero mock con branding Claude (re-uso del script `record_parts.js`)
 - [ ] Exportar 3-5 screenshots PNG a `outputs/hero_preview_claude/`
 - [ ] Subir a CDN público si se requieren URLs (Vercel + apps/holded/public/demo-anthropic/)
+
+**Workaround OK para submission v2:** El form de Anthropic acepta usar el PNG 512×512 actual (`https://claude.verifactu.business/holded-diamond-logo.png?v=holded-diamond-2026-05-18`) + reutilizar 3 stills del hero mock ChatGPT — no bloquea la submission. El re-grabado en branding Claude se puede hacer en paralelo a la review manual.

@@ -1,5 +1,7 @@
 # Tools Manifest — Holded MCP for Claude
 
+> **Última actualización: 2026-05-19.**
+
 **Total tools expuestas (submission v2):** 8 (7 read-only + 1 write con confirmación humana)
 
 **Histórico:**
