@@ -22,7 +22,7 @@ export default function IsaakPrivacyPage() {
               Esta política explica qué datos usa Isaak, para qué los usa y cómo puedes ejercer tus
               derechos cuando interactúas con el producto o con su chat público.
             </p>
-            <p className="text-sm text-slate-500">Última actualización: 24 de marzo de 2026.</p>
+            <p className="text-sm text-slate-500">Última actualización: 19 de mayo de 2026.</p>
           </div>
           <div className="rounded-2xl border border-[#2361d8]/15 bg-white p-5 text-sm text-slate-600 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
@@ -64,7 +64,8 @@ export default function IsaakPrivacyPage() {
               <li>Datos de cuenta, contacto y empresa cuando activas el producto.</li>
               <li>Mensajes e interacciones necesarias para dar continuidad al servicio.</li>
               <li>
-                Contexto autorizado de negocio e integraciones compatibles cuando las conectas.
+                Contexto autorizado de negocio e integraciones compatibles cuando las conectas
+                (Holded, Google Workspace, banca, WhatsApp).
               </li>
               <li>Datos técnicos mínimos de uso para seguridad, soporte y diagnóstico.</li>
             </ul>
@@ -94,6 +95,80 @@ export default function IsaakPrivacyPage() {
           </div>
         </div>
 
+        {/* ── Integraciones específicas ── */}
+        <div className="mt-10 space-y-4">
+          <h2 className="text-xl font-bold text-[#011c67]">
+            Integraciones y tratamientos específicos
+          </h2>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="font-semibold text-slate-800">WhatsApp / Meta</div>
+            <p className="mt-2 text-sm text-slate-600">
+              Si activas el canal de WhatsApp, Isaak recibe y almacena los mensajes enviados a
+              través de la API de WhatsApp Business (Meta). Los mensajes se conservan para dar
+              continuidad al historial conversacional. Los datos de teléfono y mensajes no se
+              comparten con terceros salvo los necesarios para el propio servicio. Las plantillas de
+              mensajes (HSM) y los formularios interactivos (WhatsApp Flows) se procesan bajo las
+              condiciones de uso de la plataforma Meta for Developers. El usuario puede solicitar la
+              eliminación de su historial de mensajes en cualquier momento desde soporte.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="font-semibold text-slate-800">Open Banking — Salt Edge</div>
+            <p className="mt-2 text-sm text-slate-600">
+              La integración bancaria utiliza Salt Edge como proveedor de agregación PSD2. Cuando
+              conectas una cuenta bancaria, Salt Edge accede a los movimientos bajo tu
+              consentimiento explícito mediante un flujo OAuth regulado. Isaak almacena los
+              movimientos en tu espacio de trabajo para habilitar la conciliación automática con
+              facturas de Holded. No almacenamos credenciales bancarias: el acceso se gestiona
+              mediante tokens de sesión renovables. Puedes revocar el acceso a tu banco en cualquier
+              momento desde Ajustes → Open Banking.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="font-semibold text-slate-800">Certificado digital AEAT (P12/PFX)</div>
+            <p className="mt-2 text-sm text-slate-600">
+              Si subes tu certificado digital para la comunicación con la Sede Electrónica de la
+              AEAT, la clave privada y el certificado se cifran en el servidor con AES-256-GCM antes
+              de almacenarse. La clave maestra de cifrado se gestiona como secreto de entorno (nunca
+              en base de datos). El certificado se usa exclusivamente para consultas y
+              comunicaciones con la AEAT autorizadas por ti: buzón de notificaciones, datos censales
+              y registro VeriFactu. No se comparte con terceros. Puedes eliminar el certificado en
+              cualquier momento desde Ajustes → Certificado.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="font-semibold text-slate-800">
+              Modo Asesoría (gestión multi-cliente)
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Los asesores o gestorías que usan el Modo Asesoría almacenan en su cuenta de Isaak las
+              API Keys de Holded de sus clientes, cifradas con AES-256-GCM. Estas credenciales se
+              usan exclusivamente para acceder a los datos del cliente en nombre del asesor, con el
+              mismo nivel de seguridad que la propia integración de Holded. El asesor es responsable
+              de contar con la autorización de sus clientes para gestionar sus datos. Isaak actúa
+              como encargado del tratamiento en este flujo.
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="font-semibold text-slate-800">
+              Google Workspace (Calendar, Gmail, Drive)
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Si conectas tu cuenta de Google, Isaak solicita acceso a Calendar, Gmail y Drive
+              mediante OAuth 2.0 con scopes mínimos necesarios. Se almacenan tokens de acceso y
+              refresco de forma cifrada. Isaak accede a tu correo para detectar facturas adjuntas y
+              procesarlas mediante OCR, a Calendar para gestionar alertas fiscales, y a Drive para
+              hacer backup de facturas generadas. Puedes revocar el acceso desde la cuenta de Google
+              en cualquier momento.
+            </p>
+          </div>
+        </div>
+
         <div className="mt-10 rounded-2xl border border-[#2361d8]/15 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
             <ExternalLink className="h-4 w-4" />
@@ -104,22 +179,34 @@ export default function IsaakPrivacyPage() {
             Solo se comparte la información necesaria para prestar el servicio con garantías de
             seguridad razonables.
           </p>
-          <div className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 text-sm text-slate-600 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="font-semibold text-slate-700">Hosting e IA</div>
-              <p className="mt-1 text-xs">Vercel y OpenAI.</p>
+              <div className="font-semibold text-slate-700">Hosting</div>
+              <p className="mt-1 text-xs">Vercel (infraestructura y edge functions).</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="font-semibold text-slate-700">Email y soporte</div>
-              <p className="mt-1 text-xs">Resend y canales de soporte de verifactu.business.</p>
+              <div className="font-semibold text-slate-700">Modelos de IA</div>
+              <p className="mt-1 text-xs">
+                Anthropic (Claude) y OpenAI (GPT-4o). Solo se envía el contexto mínimo necesario.
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="font-semibold text-slate-700">Email y notificaciones</div>
+              <p className="mt-1 text-xs">Resend para emails transaccionales.</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-semibold text-slate-700">Pagos</div>
               <p className="mt-1 text-xs">Stripe para cobros y facturación.</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <div className="font-semibold text-slate-700">Seguridad</div>
-              <p className="mt-1 text-xs">Cifrado en tránsito y controles de acceso por rol.</p>
+              <div className="font-semibold text-slate-700">Open Banking</div>
+              <p className="mt-1 text-xs">Salt Edge (agregación PSD2 regulada).</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <div className="font-semibold text-slate-700">Mensajería</div>
+              <p className="mt-1 text-xs">
+                Meta (WhatsApp Business API) para el canal de chat móvil.
+              </p>
             </div>
           </div>
         </div>

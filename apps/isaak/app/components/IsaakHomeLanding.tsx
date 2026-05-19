@@ -145,10 +145,19 @@ const PRICE_TEASER = [
     highlight: false,
   },
   {
+    id: 'starter',
+    name: 'Starter',
+    price: '19 €',
+    tagline: 'Holded conectado · 200 consultas/mes · Claude Haiku',
+    cta: 'Empezar ahora',
+    href: '/signup?plan=starter',
+    highlight: false,
+  },
+  {
     id: 'pro',
     name: 'Pro',
     price: '49 €',
-    tagline: 'Ilimitado · Holded · OCR · Google · WhatsApp · Voz',
+    tagline: 'Ilimitado · OCR · Google · WhatsApp · Voz · Claude Sonnet',
     cta: 'Trial 14 días sin tarjeta',
     href: '/signup?plan=pro',
     highlight: true,
@@ -157,7 +166,7 @@ const PRICE_TEASER = [
     id: 'business',
     name: 'Business',
     price: '149 €',
-    tagline: 'Open Banking · Modelos AEAT · Multi-usuario',
+    tagline: 'Open Banking · Modelos AEAT · Multi-usuario · Banking',
     cta: 'Hablar con ventas',
     href: '/support',
     highlight: false,
@@ -568,7 +577,7 @@ export default function IsaakHomeLanding() {
               gratuito.
             </p>
           </div>
-          <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-3">
+          <div className="mx-auto mt-12 grid max-w-5xl gap-5 sm:grid-cols-2 md:grid-cols-4">
             {PRICE_TEASER.map((plan) => (
               <article
                 key={plan.id}
