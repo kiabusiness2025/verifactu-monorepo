@@ -37,7 +37,7 @@ He revisado el [Anthropic Software Directory Policy](https://support.claude.com/
 - ✅ **Standard testing account + 3 working example prompts** preparados
 - ✅ **Sub-procesadores documentados** (Vercel, Railway, Neon (Frankfurt EU, AES-256-GCM), Holded)
 - ✅ **GDPR Article 28** — DPA firmable
-- ✅ **Endpoint ownership** — todo bajo `verifactu.business` (registro a nombre de Verifactu Business S.L.)
+- ✅ **Endpoint ownership** — todo bajo `verifactu.business` (registrado a nombre de Expert Estudios Profesionales, SLU (Holded Solution Partner: https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales))
 
 ## Tool surface (submission v2)
 
