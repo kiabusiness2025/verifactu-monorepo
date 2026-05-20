@@ -36,16 +36,9 @@ const subprocessors = [
   {
     name: 'Vercel Inc.',
     purpose:
-      'Alojamiento del frontend (apps/holded, apps/app) y endpoints OAuth proxy. Region edge UE preferida.',
+      'Alojamiento de todas las aplicaciones (apps/holded, apps/app y servidor MCP standalone apps/holded-mcp accesible en holded-claude.verifactu.business). Region edge UE preferida.',
     country: 'UE / EE.UU.',
     guarantee: 'SCC + DPA Vercel firmado',
-  },
-  {
-    name: 'Railway (Railway Corp.)',
-    purpose:
-      'Alojamiento del servidor MCP standalone (apps/holded-mcp) accesible en holded-claude.verifactu.business.',
-    country: 'EE.UU.',
-    guarantee: 'SCC / DPA del proveedor cuando aplique',
   },
   {
     name: 'Resend Inc.',

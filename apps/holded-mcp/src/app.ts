@@ -68,7 +68,7 @@ function tokenHasScope(scope: string | null | undefined, required: 'holded:read'
 export function createApp() {
   const app = express();
 
-  // Trust proxy (Railway, Vercel, etc. set X-Forwarded-For)
+  // Trust proxy (Vercel, etc. set X-Forwarded-For)
   app.set('trust proxy', 1);
 
   app.use(

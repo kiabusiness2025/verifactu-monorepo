@@ -292,7 +292,7 @@ Yo (Claude) puedo grabar via la extensión Chrome cuando la cuenta demo esté li
 5. `gif_creator(action="export", tabId=X, download=true, options={ showClickIndicators: true, showActionLabels: true, showProgressBar: true, showWatermark: false })` — descargar GIF
 6. Repetir para cada uno de los 24
 
-**Tiempo estimado**: 24 × ~3 min = ~75 min de grabación si la cuenta demo está perfectamente preparada y las respuestas de Claude son rápidas (sin cold start de Railway).
+**Tiempo estimado**: 24 × ~3 min = ~75 min de grabación si la cuenta demo está perfectamente preparada y las respuestas de Claude son rápidas (sin cold start de Vercel).
 
 ---
 

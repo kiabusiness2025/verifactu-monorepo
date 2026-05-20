@@ -36,7 +36,7 @@ netstat -ano | Select-String ":6274|:6277" | ForEach-Object {
 
 ## Conector Claude (`apps/holded-mcp`)
 
-Servidor en Railway en `https://claude.verifactu.business`. Usa OAuth 2.0 con DCR.
+Servidor en Vercel en `https://holded-claude.verifactu.business`. Usa OAuth 2.0 con DCR.
 
 ### Pasos de conexión
 
@@ -403,7 +403,7 @@ Añadir header de autorización:
 El puerto 6277 está ocupado. Matar procesos con el comando PowerShell de arriba y relanzar el Inspector.
 
 **"OAuth Authorization Error: Failed to fetch"**
-Verificar que Railway ha desplegado la versión con `client_secret` en el DCR response (commit `d9768bac` o posterior). Comprobar en el log de Railway.
+Verificar que Vercel ha desplegado la versión con `client_secret` en el DCR response (commit `d9768bac` o posterior). Comprobar en el log de Vercel.
 
 **"Invalid enum value" en `list_documents`**
 `docType` es obligatorio. Valores válidos: `invoice`, `salesreceipt`, `creditnote`, `salesorder`, `proform`, `waybill`, `estimate`, `purchase`, `purchaseorder`, `purchaserefund`.

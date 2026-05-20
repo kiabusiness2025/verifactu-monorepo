@@ -24,7 +24,7 @@ Anthropic / Claude.ai cachearon server-side dos iconos legacy de cuando el servi
 - ✅ **8 tools expuestas** (preset `submission_v1`), todas con `readOnlyHint` o write annotation correcta. Las otras 16 tools del catálogo siguen implementadas pero no se registran (reactivables con `HOLDED_MCP_TOOL_PRESET=full` para submission v3 post-aprobación).
 - ✅ Solo 1 tool de escritura: `create_invoice_draft` (forced `approveDoc=false`)
 - ✅ Alineación funcional 1:1 con el conector ChatGPT (10 tools en ChatGPT vs 8 en Claude, la diferencia es solo de naming: Claude usa `list_documents` polimórfico)
-- ✅ Privacy policy + Terms + DPA publicados — DPA actualizado con sub-procesadores reales (Vercel + Railway + Neon Frankfurt EU)
+- ✅ Privacy policy + Terms + DPA publicados — DPA actualizado con sub-procesadores reales (Vercel Frankfurt EU + Neon Frankfurt EU)
 - ✅ Fixes del PR #88: brotli silent decoding, paginación client-side, default `endtmp`, `$ref` schema dedup
 - ✅ Branding correcto en el nuevo dominio: `favicon.ico` ya regenerado (MD5 `d23f99ae`, rombo Holded multi-res), `manifest.json` purgado de colores Verifactu (`theme_color: "#FF5460"`, `background_color: "#ffffff"`)
 - ⏳ Pendiente: enviar form de Remote MCP Submission con la URL nueva y app name nuevo

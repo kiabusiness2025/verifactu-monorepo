@@ -11,7 +11,7 @@ Queremos que el conector use el branding correcto de Holded en todo lo que sí c
 - OAuth page
 - landing page
 - favicon y rutas de icono habituales
-- assets públicos servidos por Railway
+- assets públicos servidos por Vercel
 
 Activos canónicos:
 
@@ -72,10 +72,10 @@ Comprobar hashes o contenido:
 3. `apps/holded-mcp/public/claude.svg` debe coincidir con:
    - `brand/claude_logo_3ec57d87f2.svg`
 
-## 5. Despliegue en Railway
+## 5. Despliegue en Vercel
 
 1. Confirmar que `main` contiene los commits de branding y limpieza.
-2. Lanzar redeploy del servicio `holded-mcp` en Railway si no despliega solo.
+2. Vercel despliega automáticamente al push de `main`. Si no, forzar redeploy desde el dashboard del proyecto `holded-mcp`.
 3. Esperar a que el deploy termine.
 
 ## 6. Verificación pública después del deploy

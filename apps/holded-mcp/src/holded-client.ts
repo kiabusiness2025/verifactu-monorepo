@@ -80,7 +80,7 @@ export class HoldedClient {
             // defecto `Accept-Encoding: br, gzip, deflate`. Algunos uplinks de
             // Holded (especialmente para respuestas grandes como /documents y
             // /dailyledger) devuelven brotli, y la decompresión transparente de
-            // undici a veces falla en silencio detrás de Railway/Vercel
+            // undici a veces falla en silencio detrás de Vercel
             // edge proxies — el cliente recibe bytes truncados o un JSON
             // vacío en vez de la lista real. El cliente del proxy ChatGPT
             // (`apps/holded/app/lib/holded-api-client.ts`) ya forzaba identity

@@ -141,7 +141,7 @@ curl https://app-verifactu.vercel.app/api/tenants
 ## Próximos Pasos Después del Despliegue
 
 1. **Configurar DATABASE_URL** en Vercel
-   - Crear base de datos en Vercel Postgres / Supabase / Railway
+   - Crear base de datos en Vercel Postgres / Supabase / Neon
    - Añadir variable de entorno
 
 2. **Ejecutar Migración**

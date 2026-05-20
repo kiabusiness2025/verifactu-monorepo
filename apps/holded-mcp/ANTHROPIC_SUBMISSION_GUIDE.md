@@ -24,19 +24,19 @@ En orden:
    npm test
    ```
    Cualquier fallo bloquea la submission. Especialmente verificar que `test/create-invoice-draft.test.ts` pasa — es el que protege la promesa "draft only".
-3. Desplegar a Railway. Confirmar:
+3. Desplegar a Vercel. Confirmar:
    - `https://claude.verifactu.business/health` → 200 con `{status:"ok"}`
    - `https://claude.verifactu.business/.well-known/oauth-authorization-server` responde en **<5 s** (importante, lo dice la doc de testing).
    - `https://claude.verifactu.business/.well-known/oauth-protected-resource` idem.
    - `https://claude.verifactu.business/favicon.png` devuelve `Content-Type: image/png` con el rombo (no la "V").
 
-### 1.2. Allowlist de red en Railway / WAF / CDN
+### 1.2. Allowlist de red en Vercel / WAF / CDN
 
 La doc de testing es explícita: si tu CDN o WAF bloquea Anthropic, los tools fallan con 403 antes de llegar a Express y el servidor nunca lo ve.
 
 > _"Allowlist Anthropic's egress range (`160.79.104.0/21`) in your WAF or CDN configuration."_
 
-Acción: en Railway no hay WAF por defecto, así que normalmente no aplica. Pero si tienes Cloudflare delante de `claude.verifactu.business` o reglas custom de Helmet/rate-limit, **comprobar que no bloquean por IP origen ni por User-Agent**. Tu `apiRateLimit` de express-rate-limit puede ser un problema si Anthropic genera ráfagas durante review — considera elevar `RATE_LIMIT_MAX_REQUESTS` para `/mcp` durante la ventana de revisión.
+Acción: en Vercel no hay WAF por defecto, así que normalmente no aplica. Pero si tienes Cloudflare delante de `claude.verifactu.business` o reglas custom de Helmet/rate-limit, **comprobar que no bloquean por IP origen ni por User-Agent**. Tu `apiRateLimit` de express-rate-limit puede ser un problema si Anthropic genera ráfagas durante review — considera elevar `RATE_LIMIT_MAX_REQUESTS` para `/mcp` durante la ventana de revisión.
 
 ### 1.3. Probar end-to-end como custom connector tú mismo
 
@@ -261,7 +261,7 @@ Cosas que un reviewer puede marcar y cómo argumentar:
 ## Apéndice — Checklist 1 minuto antes de pulsar Submit
 
 - [ ] `npm test` verde local
-- [ ] Despliegue Railway al día
+- [ ] Despliegue Vercel al día
 - [ ] `/health` 200
 - [ ] `/.well-known/oauth-authorization-server` y `/.well-known/oauth-protected-resource` < 5 s
 - [ ] `/docs`, `/privacy`, `/dpa` HTML válido
