@@ -268,16 +268,171 @@ _(leave blank — none. This server exposes tools only, no MCP prompts.)_
 
 ---
 
+## Page 6 — Launch & Branding
+
+### Timeline - Server GA Date
+
+```
+(leave blank — server already in GA since April 2026, no future date applies)
+```
+
+If the form forces a date, enter `2026-04-01` (initial production launch month).
+
+### Confirm testing is complete & your server works as intended in:
+
+- ☑ **Claude.ai (web)** — tested live during this sprint
+- ☐ Claude Desktop — not tested by us
+- ☐ Claude Code — not tested by us (note: per form copy, not required)
+- ☐ Cowork — not tested (not required)
+
+> Mark only Claude.ai (web). Adding Desktop without testing risks rejection if the reviewer probes it. Other surfaces can be added in a post-approval iteration.
+
+### Server Logo SVG (upload option)
+
+**Upload this file from the repo:**
+
+```
+apps/holded-mcp/public/holded-square.svg
+```
+
+1:1 aspect ratio (square viewBox), vector SVG with transparent background, Holded coral diamond (`#FF5454`), ~1.6 KB. Anthropic's submission guide accepts SVG upload as the preferred branding asset.
+
+### Server Logo URL
+
+```
+https://holded-claude.verifactu.business/holded-diamond-logo.png
+```
+
+(MD5 `d4a3694f`, PNG of the Holded coral diamond, served from the new subdomain with `Cache-Control: public, max-age=86400, immutable` + `X-Icon-Version: holded-diamond-2026-05-19` header.)
+
+### ☐ "I have verified that the favicon is correct"
+
+**DO NOT CHECK** at the time of submission (verified live 2026-05-20):
+
+| Test                                                                               | Result                                   |
+| ---------------------------------------------------------------------------------- | ---------------------------------------- |
+| `https://www.google.com/s2/favicons?domain=holded-claude.verifactu.business&sz=64` | HTTP 404 → 16×16 generic PNG fallback    |
+| `https://www.google.com/s2/favicons?domain=holded.verifactu.business&sz=64`        | HTTP 200 → 64×64 PNG with Holded diamond |
+
+Google has not yet indexed the new subdomain. Marking this would be false. The SVG upload above is the authoritative branding source — Anthropic's form provides it as a path precisely for cases like ours.
+
+**Parallel actions to encourage Google indexing** (optional, post-submission):
+
+1. Submit `https://holded-claude.verifactu.business/` to Google Search Console.
+2. The MCP server now serves `/sitemap.xml` and `/robots.txt` (PR commit `217472bf3`) so Google can discover content.
+3. Anthropic's manual review can override the favicon path if the SVG upload is present.
+
+### Promotional Images of MCP Server (3-5 PNG)
+
+**Status: pending capture.** The branding-assets.md doc references mock screenshots that don't exist in the repo. The operator should capture screenshots from a live Claude.ai session post-PR #102 reconnect.
+
+Recommended captures (PNG, ≥1000px wide, cropped to Claude response only, no browser chrome):
+
+| #       | Prompt in Claude.ai                                                                                    | Captures                                                                                                            |
+| ------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| 1       | `List my latest Holded sales invoices.`                                                                | Tool call `list_documents` + invoice list with numbers/customers/totals                                             |
+| 2       | `Show me Kappa Digital Zaragoza SL with CIF, email and pending invoices.`                              | Tool chain `list_contacts` → `get_contact` → consolidated response                                                  |
+| 3       | `Create a draft invoice for Kappa Digital Zaragoza SL for €100 + 21% VAT. Ask for confirmation first.` | **Confirmation step** — Claude shows the draft summary and waits for "yes". This is the safety-flagship screenshot. |
+| 4 (opt) | `Show my Holded journal entries from 2026-03-01 to 2026-03-31.`                                        | `get_journal` with ledger entries table                                                                             |
+| 5 (opt) | `Give me the PDF of invoice F0030.`                                                                    | `get_document_pdf` + PDF download affordance                                                                        |
+
+If no time to capture before submission: this section is **not blocking** — leave blank. Anthropic can approve without screenshots; the directory listing is less attractive but functional.
+
+### Link to Promotional Materials
+
+```
+(leave blank if uploading PNGs directly above)
+```
+
+Alternative: Google Drive folder link with the 3-5 screenshots + paired prompts. Set "anyone with the link can view" so Anthropic can fetch.
+
+---
+
+## Page 7 — Submission Requirements Checklist (final gate)
+
+> All items in Policy Compliance / Technical / Documentation / Testing must be confirmed before submission.
+
+### Policy Compliance — 5 items
+
+- [ ] **I have reviewed and agree to the Software Directory Policy** — operator action; read https://support.claude.com/en/articles/13145358 before marking.
+- [x] **My server does NOT enable cross-service automation** — connector only calls Holded API; no workflows across multiple services.
+- [x] **My server does NOT transfer money, cryptocurrency, or execute financial transactions** — `create_invoice_draft` creates a DRAFT document; no money movement, no payment processing, no charge. Forced `approveDoc=false` ensures the document has no legal effect until the user manually approves it in Holded UI.
+- [x] **My MCP server is live, published, and ready to accept production traffic** — `holded-claude.verifactu.business/mcp` in Vercel production since 2026-05-20 (alias of existing build). HTTPS, returns 401 without Bearer, full OAuth flow operational.
+- [ ] **I work for the company that owns or controls the API endpoint(s) that my server connects to** — ⚠️ **JUDGMENT CALL.** Verifactu Business owns and controls the MCP endpoint, OAuth server, and surrounding infrastructure (yes). However, the upstream Holded API itself is owned by Holded (Spain), not us. Recommendation: leave unchecked and explain in Additional Information (see below). If Anthropic requires first-party only, escalate to `partnerships@anthropic.com` for clarification.
+
+### Technical Requirements — 6 items
+
+- [x] **OAuth 2.0 fully implemented for ALL tools requiring authentication** — OAuth 2.1 with PKCE S256, DCR (RFC 7591), refresh tokens (RFC 6749), revocation (RFC 7009). All tools require Bearer.
+- [x] **All tools include proper safety annotations (readOnlyHint, destructiveHint)** — defined centrally in `apps/holded-mcp/src/tools/policy.ts`. 8 tools, all annotated.
+- [x] **Server is accessible via HTTPS (not HTTP)** — Vercel with valid SSL cert, TLS 1.2+ enforced.
+- [x] **CORS is properly configured for browser-based authentication** — `apps/holded-mcp/src/middleware/cors.ts` allows Claude.ai origins (claude.ai, app.claude.ai) for the OAuth callback flow.
+- [x] **Claude.ai and Claude Code IP addresses are allowlisted (if applicable)** — "if applicable" not applicable: we do not IP-restrict. Public HTTPS endpoint for any caller.
+- [ ] **I have tested this works with Claude.ai on the latest build** — operator must validate post-PR #102 by reconnecting and running the 5 verification prompts (Page 4).
+
+### Documentation Requirements — 4 items
+
+- [x] **Complete server documentation is published and publicly accessible** — `https://holded.verifactu.business/conectores/claude/docs` (200 OK).
+- [x] **Documentation includes setup instructions, tool descriptions, and troubleshooting guide** — verified 2026-05-20: docs page contains Configuración, Cómo conectar, Preguntas frecuentes, and error/troubleshooting sections.
+- [x] **Company privacy policy is published and accessible** — `https://holded.verifactu.business/conectores/claude/privacy` (200 OK).
+- [x] **Terms of service are published and accessible** — `https://holded.verifactu.business/conectores/claude/terms` (200 OK).
+
+### Testing Requirements — 3 items
+
+- [x] **Test account with sample data is ready** — Demo Holded tenant + API key `0ecf1267eacc89ff45acab1b8ca28396` + seed data documented on Page 4 (60+ contacts, F0030 invoice, 206 chart accounts, 82 ledger entries for 2026-03).
+- [x] **Test credentials are valid for at least 30 days** — Holded API keys are long-lived; commitment: no rotation during the review window (~2 weeks + buffer).
+- [ ] **All server tools are functional and tested in the surfaces in which they'll be available** — limited to Claude.ai (web) per Page 3 selection. Operator must run the 6 verification prompts post-reconnect to confirm.
+
+### Additional Information (final free-text)
+
+```
+Submission context — Verifactu Business → Holded for Claude (May 2026)
+
+1. Independent integration provider. Verifactu Business S.L. (Spain) is an
+   integration partner for Holded customers, not a Holded subsidiary or
+   employee. We use Holded's published public API per their developer
+   terms; each end-user provides their own per-tenant API key generated
+   from their Holded admin panel (Configuración → Desarrolladores → API).
+   If Anthropic's Policy Compliance item "I work for the company that
+   owns... the API endpoint" requires first-party authorization, please
+   advise — we are happy to coordinate formal sign-off with Holded.
+
+2. Branding caching from prior version. This connector previously shipped
+   under the legacy Verifactu Business brand from claude.verifactu.business
+   (V/shield icons). All legacy assets are removed from our origin and the
+   submission ships from a fresh subdomain holded-claude.verifactu.business
+   with the canonical Holded coral diamond logo. Note: Google's s2/favicons
+   does not yet index this new subdomain (HTTP 404 at the time of
+   submission) — please use the SVG we upload directly rather than fetching
+   from Google's favicon service. We've added /sitemap.xml and /robots.txt
+   to encourage indexing.
+
+3. Tool surface intentionally narrow. We expose 8 of the 24 catalog tools
+   in submission v1 (preset HOLDED_MCP_TOOL_PRESET=submission_v1): 7
+   read-only invoicing/contacts/accounting + 1 write (create_invoice_draft)
+   with mandatory user confirmation and forced approveDoc=false at the wire
+   level — drafts are never auto-issued. Remaining 16 tools (CRM, projects,
+   products, treasury, etc.) are implemented but gated; we plan to expose
+   them in a post-approval submission v2 after this initial review.
+
+4. Cross-platform parity. We submitted the same integration to OpenAI's
+   ChatGPT App Directory (10-tool variant) — pending review. Submitting
+   to Anthropic now to reach Spanish/EU SMB businesses using Claude.
+
+Contact: soporte@verifactu.business
+```
+
+---
+
 ## Logo upload (recommended: SVG)
 
-Anthropic's submission guide says: _"server logo (URL or SVG upload)"_. **Upload the SVG directly** — this forces a fresh asset with zero cache crossover from prior submissions.
+Anthropic's submission guide says: _"server logo (URL or SVG upload)"_. **Upload the SVG directly** — this forces a fresh asset with zero cache crossover from prior submissions, and bypasses the Google s2/favicons gap (Google has not yet indexed the new subdomain).
 
-- **File to upload:** `apps/holded-mcp/public/holded-square.svg` (Holded diamond on transparent background, 512×512 viewBox).
+- **File to upload:** `apps/holded-mcp/public/holded-square.svg` (Holded diamond on transparent background, 1:1 viewBox).
 - **If the form only accepts a URL:** `https://holded-claude.verifactu.business/holded-diamond-logo.png` (MD5 `d4a3694f`, served from the new subdomain with no prior interaction with Anthropic's cache).
 
 ---
 
-## Pre-submission checklist
+## Pre-submission checklist (operator-facing)
 
 - [x] OAuth funcional con PKCE S256
 - [x] Redirect URIs allowlist (claude.ai + app.claude.ai)
@@ -289,7 +444,10 @@ Anthropic's submission guide says: _"server logo (URL or SVG upload)"_. **Upload
 - [x] No está en beta — producción desde abril 2026
 - [x] Subdomain nuevo `holded-claude.verifactu.business` operativo y BASE_URL aplicado
 - [x] OAuth bridge bug fixed (PR #102 commit `047dd166` — sanitize allowlist incluye nuevo subdominio)
-- [x] Standard testing account preparada (sección "Page 4" arriba)
+- [x] `/sitemap.xml` y `/robots.txt` servidos (encourage Google indexing)
+- [x] Standard testing account preparada (sección "Page 4")
 - [x] 3+ working example prompts (5 cubiertos)
 - [x] Logo SVG cuadrado listo para subir
-- [ ] **Hacer la submission** ← acción pendiente del operador
+- [ ] **Reconectar `Holded for Claude` en Claude.ai post-merge** y validar las 6 verification prompts
+- [ ] **Capturar 3-5 PNG screenshots** del connector funcionando (opcional pero recomendado)
+- [ ] **Hacer la submission del Google Form** ← acción pendiente del operador
