@@ -987,9 +987,9 @@ export default function IntegrationsClient() {
       const res = await fetch('/api/settings/connections');
       const data = (await res.json().catch(() => null)) as {
         ok?: boolean;
-        data?: HoldedStatus;
+        data?: { holded?: HoldedStatus };
       } | null;
-      if (res.ok && data?.ok && data.data) setHoldedStatus(data.data);
+      if (res.ok && data?.ok && data.data?.holded) setHoldedStatus(data.data.holded);
     } finally {
       setLoadingHolded(false);
     }
