@@ -43,7 +43,7 @@ const subprocessors = [
   {
     name: 'Railway (Railway Corp.)',
     purpose:
-      'Alojamiento del servidor MCP standalone (apps/holded-mcp) accesible en claude.verifactu.business.',
+      'Alojamiento del servidor MCP standalone (apps/holded-mcp) accesible en holded-claude.verifactu.business.',
     country: 'EE.UU.',
     guarantee: 'SCC / DPA del proveedor cuando aplique',
   },
@@ -105,7 +105,7 @@ export default function ClaudeDpaPage() {
             conecta Holded con Claude mediante el servidor MCP operado por Verifactu Business.
           </>
         }
-        lastUpdated="Ultima actualizacion: 11 de mayo de 2026."
+        lastUpdated="Ultima actualizacion: 20 de mayo de 2026."
         asideCard={
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
@@ -124,7 +124,24 @@ export default function ClaudeDpaPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
             <p className="font-semibold text-slate-800">Entidad</p>
-            <p>Expert Estudios Profesionales</p>
+            <p>Expert Estudios Profesionales, SLU</p>
+          </div>
+          <div>
+            <p className="font-semibold text-slate-800">Marca comercial</p>
+            <p>Verifactu Business</p>
+          </div>
+          <div>
+            <p className="font-semibold text-slate-800">Partnership</p>
+            <p>
+              <a
+                href="https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-amber-700 underline underline-offset-4"
+              >
+                Holded Solution Partner certificado
+              </a>
+            </p>
           </div>
           <div>
             <p className="font-semibold text-slate-800">Dominio</p>

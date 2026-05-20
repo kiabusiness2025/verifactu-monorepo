@@ -77,16 +77,25 @@ export default function ClaudePrivacyPage() {
             servidor MCP operado por Verifactu Business.
           </>
         }
-        lastUpdated="Ultima actualizacion: 11 de mayo de 2026."
+        lastUpdated="Ultima actualizacion: 20 de mayo de 2026."
         asideCard={
           <>
             <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
               <Lock className="h-4 w-4 text-emerald-600" />
-              Principio clave
+              Responsable del tratamiento
             </div>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              Verifactu Business opera el conector. Claude es el canal desde el que el usuario pide
-              acciones o consultas. Holded es el origen de los datos conectados por el usuario.
+              <strong>Expert Estudios Profesionales, SLU</strong> (marca comercial: Verifactu
+              Business), con sede en España.{' '}
+              <a
+                href="https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-amber-700 underline underline-offset-4"
+              >
+                Holded Solution Partner certificado
+              </a>
+              . Claude es el canal conversacional; Holded es el origen de los datos.
             </p>
           </>
         }
@@ -189,8 +198,18 @@ export default function ClaudePrivacyPage() {
           Marcas y no afiliacion
         </div>
         <p className="mt-3">
-          Verifactu Business no esta afiliado, patrocinado ni respaldado por Anthropic ni por
-          Holded. Anthropic, Claude y Holded son marcas de sus respectivos titulares.
+          Expert Estudios Profesionales, SLU opera este conector bajo la marca Verifactu Business.
+          Somos{' '}
+          <a
+            href="https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-amber-700 underline underline-offset-4"
+          >
+            Holded Solution Partner certificado
+          </a>{' '}
+          e integradores independientes — no somos empleados de Anthropic ni de Holded. Anthropic,
+          Claude y Holded son marcas de sus respectivos titulares.
         </p>
       </article>
 
