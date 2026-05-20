@@ -207,6 +207,36 @@ export function createApp() {
   app.get('/support', (_req, res) => res.redirect(301, `${holdedBase}/soporte`));
   app.get('/soporte', (_req, res) => res.redirect(301, `${holdedBase}/soporte`));
 
+  app.get('/sitemap.xml', (_req, res) => {
+    const base = config.BASE_URL.replace(/\/$/, '');
+    const lastmod = new Date().toISOString().split('T')[0];
+    res.set('Content-Type', 'application/xml; charset=utf-8');
+    res.send(
+      `<?xml version="1.0" encoding="UTF-8"?>\n` +
+        `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+        `  <url>\n` +
+        `    <loc>${base}/</loc>\n` +
+        `    <lastmod>${lastmod}</lastmod>\n` +
+        `    <changefreq>monthly</changefreq>\n` +
+        `    <priority>1.0</priority>\n` +
+        `  </url>\n` +
+        `</urlset>`
+    );
+  });
+
+  app.get('/robots.txt', (_req, res) => {
+    const base = config.BASE_URL.replace(/\/$/, '');
+    res.set('Content-Type', 'text/plain; charset=utf-8');
+    res.send(
+      `User-agent: *\n` +
+        `Allow: /\n` +
+        `Disallow: /oauth/\n` +
+        `Disallow: /mcp\n` +
+        `Disallow: /health\n` +
+        `Sitemap: ${base}/sitemap.xml\n`
+    );
+  });
+
   app.use('/oauth', oauthRouter);
 
   app.get('/health', (_req, res) => {
