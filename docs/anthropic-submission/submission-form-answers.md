@@ -385,47 +385,44 @@ Alternative: Google Drive folder link with the 3-5 screenshots + paired prompts.
 ### Additional Information (final free-text)
 
 ```
-Submission context — Expert Estudios Profesionales, SLU (brand: Verifactu Business)
-                     → Holded for Claude (May 2026)
+Submission context — Expert Estudios Profesionales, SLU (brand: Verifactu Business) → "Holded for Claude" connector (May 2026)
 
-1. Authorized Holded Solution Partner. Expert Estudios Profesionales, SLU
-   (Spain) is an officially certified Holded Solution Partner — see the
-   public listing in Holded's own partners directory:
+1. Authorized Holded Solution Partner — formal upstream authorization.
+
+Expert Estudios Profesionales, SLU (Spanish entity) is an officially certified Holded Solution Partner. Public listing in Holded's own partners directory:
+
    https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales
-   The partnership is formal: we have signed Holded's collaboration
-   agreement and completed Holded's official certification program, which
-   authorizes us to integrate with, implement, and resell Holded services
-   for end customers. Each end-user provides their own per-tenant API key
-   generated from their Holded admin panel (Configuración →
-   Desarrolladores → API). We do not have access to other tenants' data.
 
-2. Branding caching from prior version. This connector previously shipped
-   under the legacy Verifactu Business brand from claude.verifactu.business
-   (V/shield icons that the team had uploaded years ago when the product
-   was first launched as Verifactu Business). All legacy assets are removed
-   from our origin and the submission ships from a fresh subdomain
-   holded-claude.verifactu.business with the canonical Holded coral diamond
-   logo. Note: Google's s2/favicons does not yet index this new subdomain
-   (HTTP 404 at the time of submission) — please use the SVG we upload
-   directly rather than fetching from Google's favicon service. We've added
-   /sitemap.xml and /robots.txt to encourage indexing.
+The partnership is formal, not a public-API arrangement: we have signed Holded's collaboration agreement and completed Holded's official certification program, which authorizes us to integrate with, implement, and resell Holded services for end customers. This covers both the MCP server we publish at holded-claude.verifactu.business (which we own and operate) and the upstream Holded API the server calls on behalf of authenticated users. Each end-user provides their own per-tenant API key generated from their own Holded admin panel (Configuración → Desarrolladores → API); we never access other tenants' data.
 
-3. Tool surface intentionally narrow. We expose 8 of the 24 catalog tools
-   in submission v1 (preset HOLDED_MCP_TOOL_PRESET=submission_v1): 7
-   read-only invoicing/contacts/accounting + 1 write (create_invoice_draft)
-   with mandatory user confirmation and forced approveDoc=false at the wire
-   level — drafts are never auto-issued. Remaining 16 tools (CRM, projects,
-   products, treasury, etc.) are implemented but gated; we plan to expose
-   them in a post-approval submission v2 after this initial review.
+2. Branding caching from prior product brand — why a fresh subdomain.
 
-4. Cross-platform parity. We submitted the same integration to OpenAI's
-   ChatGPT App Directory (10-tool variant) — pending review. Submitting
-   to Anthropic now to reach Spanish/EU SMB businesses using Claude.
+This connector previously shipped under the legacy "Verifactu Business" product brand from claude.verifactu.business (icons used: a navy "V" mark and a blue shield with checkmark — both uploaded by our team years ago when the product was first launched as Verifactu Business). All legacy assets have been removed from our origin since December 2025 (commit 2ea8e783e). However, Claude.ai's UI continued to display those legacy icons on the connector chip and pre-connect surface, indicating that Anthropic's infrastructure cached the assets server-side before deletion and does not re-scrape custom (non-Directory) connectors.
+
+To deliver clean branding for this submission, we migrated the connector to a new subdomain — holded-claude.verifactu.business — that has zero prior interaction with Anthropic's cache. All public assets (favicon.ico, manifest.json theme colors, OAuth metadata logo_uri, DCR response logo_uri) now serve the canonical Holded coral diamond. We have also added /sitemap.xml and /robots.txt to encourage indexing.
+
+One operational note: Google's s2/favicons service does not yet index the new subdomain (HTTP 404 as of 2026-05-20). Please use the SVG we upload directly in this form rather than fetching from Google's favicon service. The legacy claude.verifactu.business subdomain is preserved as a parallel alias in Vercel during the transition to avoid breaking any existing connections.
+
+3. Tool surface intentionally narrow for first review.
+
+The MCP server exposes 8 tools (preset HOLDED_MCP_TOOL_PRESET=submission_v1):
+
+   • 7 read-only: list_documents, get_document, get_document_pdf, list_contacts, get_contact, get_chart_of_accounts, get_journal
+   • 1 write: create_invoice_draft — requires explicit user confirmation (confirm: true parameter) AND forces approveDoc=false at the wire level when calling Holded. Drafts are never auto-issued, sent, charged, emailed, finalized, or transmitted to tax authorities (AEAT / Verifactu). The user must review and approve the draft in the Holded UI before any legal effect.
+
+The remaining 16 tools from our internal catalog (CRM/leads, projects/tasks/time records, products/stock, treasury accounts, employees, taxes, numbering series, additional document types) are implemented but gated behind the preset and not registered in tools/list. We plan to expose them in a post-approval submission v2 once this initial review is approved.
+
+4. Cross-platform parity.
+
+We submitted the same integration to OpenAI's ChatGPT App Directory (10-tool variant — same functional coverage, list_invoices and list_documents split for ChatGPT vs Claude's polymorphic list_documents). Pending OpenAI review. Submitting to Anthropic now to reach Spanish/EU SMB businesses already using Claude.
+
+5. Operator information.
 
 Legal entity: Expert Estudios Profesionales, SLU (Spain)
 Brand: Verifactu Business
 Holded partner directory: https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales
-Contact: soporte@verifactu.business
+Support: soporte@verifactu.business
+Escalation (in case the form route is unavailable): partnerships@anthropic.com referencing this submission.
 ```
 
 ---
