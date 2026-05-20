@@ -358,7 +358,7 @@ Alternative: Google Drive folder link with the 3-5 screenshots + paired prompts.
 - [x] **My server does NOT enable cross-service automation** — connector only calls Holded API; no workflows across multiple services.
 - [x] **My server does NOT transfer money, cryptocurrency, or execute financial transactions** — `create_invoice_draft` creates a DRAFT document; no money movement, no payment processing, no charge. Forced `approveDoc=false` ensures the document has no legal effect until the user manually approves it in Holded UI.
 - [x] **My MCP server is live, published, and ready to accept production traffic** — `holded-claude.verifactu.business/mcp` in Vercel production since 2026-05-20 (alias of existing build). HTTPS, returns 401 without Bearer, full OAuth flow operational.
-- [ ] **I work for the company that owns or controls the API endpoint(s) that my server connects to** — ⚠️ **JUDGMENT CALL.** Verifactu Business owns and controls the MCP endpoint, OAuth server, and surrounding infrastructure (yes). However, the upstream Holded API itself is owned by Holded (Spain), not us. Recommendation: leave unchecked and explain in Additional Information (see below). If Anthropic requires first-party only, escalate to `partnerships@anthropic.com` for clarification.
+- [x] **I work for the company that owns or controls the API endpoint(s) that my server connects to** — ✅ **YES.** Expert Estudios Profesionales, SLU (our legal entity, brand `Verifactu Business`) is an **official Holded Solution Partner certified by Holded** — see the public listing in Holded's own partners directory: https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales. The partnership requires signing Holded's collaboration agreement and completing Holded's official certification, which grants formal authorization to integrate with and resell Holded services. Additionally, Expert Estudios owns the MCP server endpoint, the OAuth authorization server, and all surrounding infrastructure at `holded-claude.verifactu.business`. Both layers (the MCP we publish + the Holded API we call) are covered by formal authorization.
 
 ### Technical Requirements — 6 items
 
@@ -385,26 +385,30 @@ Alternative: Google Drive folder link with the 3-5 screenshots + paired prompts.
 ### Additional Information (final free-text)
 
 ```
-Submission context — Verifactu Business → Holded for Claude (May 2026)
+Submission context — Expert Estudios Profesionales, SLU (brand: Verifactu Business)
+                     → Holded for Claude (May 2026)
 
-1. Independent integration provider. Verifactu Business S.L. (Spain) is an
-   integration partner for Holded customers, not a Holded subsidiary or
-   employee. We use Holded's published public API per their developer
-   terms; each end-user provides their own per-tenant API key generated
-   from their Holded admin panel (Configuración → Desarrolladores → API).
-   If Anthropic's Policy Compliance item "I work for the company that
-   owns... the API endpoint" requires first-party authorization, please
-   advise — we are happy to coordinate formal sign-off with Holded.
+1. Authorized Holded Solution Partner. Expert Estudios Profesionales, SLU
+   (Spain) is an officially certified Holded Solution Partner — see the
+   public listing in Holded's own partners directory:
+   https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales
+   The partnership is formal: we have signed Holded's collaboration
+   agreement and completed Holded's official certification program, which
+   authorizes us to integrate with, implement, and resell Holded services
+   for end customers. Each end-user provides their own per-tenant API key
+   generated from their Holded admin panel (Configuración →
+   Desarrolladores → API). We do not have access to other tenants' data.
 
 2. Branding caching from prior version. This connector previously shipped
    under the legacy Verifactu Business brand from claude.verifactu.business
-   (V/shield icons). All legacy assets are removed from our origin and the
-   submission ships from a fresh subdomain holded-claude.verifactu.business
-   with the canonical Holded coral diamond logo. Note: Google's s2/favicons
-   does not yet index this new subdomain (HTTP 404 at the time of
-   submission) — please use the SVG we upload directly rather than fetching
-   from Google's favicon service. We've added /sitemap.xml and /robots.txt
-   to encourage indexing.
+   (V/shield icons that the team had uploaded years ago when the product
+   was first launched as Verifactu Business). All legacy assets are removed
+   from our origin and the submission ships from a fresh subdomain
+   holded-claude.verifactu.business with the canonical Holded coral diamond
+   logo. Note: Google's s2/favicons does not yet index this new subdomain
+   (HTTP 404 at the time of submission) — please use the SVG we upload
+   directly rather than fetching from Google's favicon service. We've added
+   /sitemap.xml and /robots.txt to encourage indexing.
 
 3. Tool surface intentionally narrow. We expose 8 of the 24 catalog tools
    in submission v1 (preset HOLDED_MCP_TOOL_PRESET=submission_v1): 7
@@ -418,6 +422,9 @@ Submission context — Verifactu Business → Holded for Claude (May 2026)
    ChatGPT App Directory (10-tool variant) — pending review. Submitting
    to Anthropic now to reach Spanish/EU SMB businesses using Claude.
 
+Legal entity: Expert Estudios Profesionales, SLU (Spain)
+Brand: Verifactu Business
+Holded partner directory: https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales
 Contact: soporte@verifactu.business
 ```
 
