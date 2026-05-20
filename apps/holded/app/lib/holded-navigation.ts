@@ -25,15 +25,29 @@ export const ADMIN_PUBLIC_URL = getOrigin(
 
 // T#50 Opción 2: el conector Claude × Holded redirige al usuario de vuelta
 // a su consent screen tras completar /auth/holded-direct (Firebase auth).
-// Permitimos `claude.verifactu.business` como origen de retorno válido para
-// que `sanitizeHoldedReturnTarget()` no caiga al fallback al volver desde
-// el bridge.
+// Permitimos los subdominios del MCP de Claude como origen de retorno válido
+// para que `sanitizeHoldedReturnTarget()` no caiga al fallback al volver desde
+// el bridge. Incluimos AMBOS subdominios durante la transición 2026-05-20:
+//   - holded-claude.verifactu.business: canonical (brand-first, post PR #102)
+//   - claude.verifactu.business: legacy alias en Vercel, mantener vivo hasta
+//     que confirmemos que ningún usuario sigue conectado contra él.
+// Sin el nuevo subdominio en el allowlist, sanitizeHoldedReturnTarget rechaza
+// el `next=https://holded-claude.verifactu.business/oauth/authorize?...` que
+// arma el bridge en /oauth/authorize del MCP, y el flow cae a /dashboard
+// (síntoma: confetti + landing en /dashboard?source=holded_dashboard).
 export const CLAUDE_MCP_PUBLIC_URL = getOrigin(
   process.env.NEXT_PUBLIC_CLAUDE_MCP_URL,
-  'https://claude.verifactu.business'
+  'https://holded-claude.verifactu.business'
 );
 
-const ALLOWED_RETURN_ORIGINS = new Set([HOLDED_PUBLIC_URL, APP_PUBLIC_URL, CLAUDE_MCP_PUBLIC_URL]);
+export const CLAUDE_MCP_LEGACY_URL = 'https://claude.verifactu.business';
+
+const ALLOWED_RETURN_ORIGINS = new Set([
+  HOLDED_PUBLIC_URL,
+  APP_PUBLIC_URL,
+  CLAUDE_MCP_PUBLIC_URL,
+  CLAUDE_MCP_LEGACY_URL,
+]);
 
 export const buildLeadCaptureUrl = (source?: string) => {
   const base = `${HOLDED_PUBLIC_URL}/`;
