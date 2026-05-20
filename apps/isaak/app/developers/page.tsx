@@ -41,7 +41,7 @@ const CONNECTORS = [
     id: 'claude',
     emoji: '🟣',
     label: 'Conector Holded → Claude',
-    subtitle: 'apps/holded-mcp · Railway · OAuth 2.0 DCR',
+    subtitle: 'apps/holded-mcp · Vercel · OAuth 2.0 DCR',
     transport: 'Streamable HTTP',
     url: 'https://claude.verifactu.business/mcp',
     auth: 'OAuth 2.0 — el Inspector abre automáticamente la pantalla de autorización.',
