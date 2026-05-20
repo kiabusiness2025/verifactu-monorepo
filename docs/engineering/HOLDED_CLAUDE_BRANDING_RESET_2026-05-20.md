@@ -162,7 +162,7 @@ All other URL references (`oauth-routes.ts`, OAuth metadata responses, etc.) wer
 
 `~/.claude/projects/.../memory/project_mcp_topology.md` updated 2026-05-19 with:
 
-- Correct hosting (Vercel, not Railway — the earlier memory had an inherited typo)
+- Correct hosting on Vercel (earlier memory had an inherited hosting-platform typo)
 - The migration date and reasoning
 - v1 vs v2 split with explicit "do not act on v1" guidance
 

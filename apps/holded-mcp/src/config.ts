@@ -4,7 +4,7 @@ import { z } from 'zod';
 try {
   process.loadEnvFile?.();
 } catch {
-  // Railway y los contenedores suelen inyectar variables directamente.
+  // Vercel y otros runtimes suelen inyectar variables directamente.
 }
 
 const envSchema = z.object({

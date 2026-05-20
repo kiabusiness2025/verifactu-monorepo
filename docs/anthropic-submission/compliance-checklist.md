@@ -50,7 +50,7 @@ export const CREATE_INVOICE_DRAFT_ANNOTATIONS: ToolAnnotations = {
 - [x] **Terms of Service URL público:** `https://holded.verifactu.business/conectores/claude/terms`
 - [x] **DPA URL público:** `https://holded.verifactu.business/conectores/claude/dpa`
 - [x] **Privacy policy completa:** explica qué datos se recogen, cómo se procesan, sub-procesadores, derechos GDPR, contacto DPO
-- [x] **GDPR Article 28 compliance:** DPA firmable con sub-procesadores listados (Vercel, Railway, Neon (Frankfurt EU, AES-256-GCM), Holded)
+- [x] **GDPR Article 28 compliance:** DPA firmable con sub-procesadores listados (Vercel (Frankfurt EU), Neon (Frankfurt EU, AES-256-GCM), Holded)
 - [x] **Data retention:** definida (30 días para tokens, 90 días audit logs)
 - [x] **Right to delete:** revocación inmediata desde panel admin
 

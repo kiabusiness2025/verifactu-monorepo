@@ -96,15 +96,15 @@ P0-1 forzar `approveDoc=false` · P0-2 alinear `DOC_TYPES` con Holded · P0-3 CR
 
 | Aspecto                                  | Estado                                                                                     | Recomendación                                                                                   |
 | ---------------------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| Cold start Railway                       | ⚠️ Conocido — primera petición tras idle ~5-10s                                            | Considerar `min_instances=1` ($5/mes extra) si quieres lanzamiento público mañana               |
+| Cold start Vercel                        | ⚠️ Conocido — primera petición tras idle ~5-10s                                            | Considerar `min_instances=1` ($5/mes extra) si quieres lanzamiento público mañana               |
 | Rate limiting                            | ✅ `apiRateLimit` con `RATE_LIMIT_WINDOW_MS` y `RATE_LIMIT_MAX_REQUESTS` env-configurables | Bajar `RATE_LIMIT_MAX_REQUESTS` a 60/min/IP por defecto si esperas tráfico anónimo (anti-abuso) |
 | Retry/backoff hacia Holded               | ✅ exponencial con jitter, 2 reintentos sobre 429/5xx/red                                  | Ningún cambio                                                                                   |
 | Soft-error detection (HTTP 200 status:0) | ✅ activo en producción                                                                    | Ver hallazgo H2 abajo                                                                           |
-| Token storage                            | ✅ Postgres con cifrado AES-256-GCM de la API key, fallback stateless JWT si no hay DB     | Verificar que `OAUTH_DATA_ENCRYPTION_SECRET` está set en Railway env                            |
+| Token storage                            | ✅ Postgres con cifrado AES-256-GCM de la API key, fallback stateless JWT si no hay DB     | Verificar que `OAUTH_DATA_ENCRYPTION_SECRET` está set en Vercel env                             |
 | Logs                                     | ✅ Winston JSON en producción, debug filtra API key                                        | Conectar a un agregador (Sentry, Logtail) para alertas                                          |
-| Backups DB                               | ⚠️ Depende del plan Railway                                                                | Si plan Pro: snapshots diarios automáticos; si Hobby: hacerlo manual                            |
+| Backups DB                               | ⚠️ Depende del plan Neon (PostgreSQL)                                                      | Si plan Pro: snapshots diarios automáticos; si Hobby: hacerlo manual                            |
 | Monitoring uptime                        | ⚠️ No configurado                                                                          | Recomendado: UptimeRobot o BetterStack a `/health` cada 5 min                                   |
-| WAF/CDN                                  | N/A                                                                                        | Railway directo, sin Cloudflare delante. Anthropic egress (`160.79.104.0/21`) llega sin bloqueo |
+| WAF/CDN                                  | N/A                                                                                        | Vercel edge, sin Cloudflare delante. Anthropic egress (`160.79.104.0/21`) llega sin bloqueo     |
 
 ---
 
@@ -124,7 +124,7 @@ P0-1 forzar `approveDoc=false` · P0-2 alinear `DOC_TYPES` con Holded · P0-3 CR
 | Refresh tokens con rotación + `invalid_grant`              | ✅   | `rotateRefreshToken` + RFC 6749 compliant errors                                                                          |
 | `.well-known/oauth-authorization-server`                   | ✅   | Sirve metadata canónica                                                                                                   |
 | `.well-known/oauth-protected-resource`                     | ✅   | Sirve `bearer_methods_supported: ['header']`                                                                              |
-| HTTPS                                                      | ✅   | Railway forzado                                                                                                           |
+| HTTPS                                                      | ✅   | Vercel forzado                                                                                                            |
 | CORS para Claude origins                                   | ✅   | `claude.ai`, `app.claude.ai` whitelisted                                                                                  |
 | Origin header no demasiado estricto                        | ✅   | server-to-server pasa sin Origin                                                                                          |
 | Functional quality (errores accionables)                   | 🟡   | Ver hallazgos H1 (paginación) y H2 (stock 400)                                                                            |
@@ -219,9 +219,9 @@ Recomendación adicional: mencionar en la cuenta demo que los datos son sintéti
 - [ ] Aplicar fix H2 (15 min) — manejo amable de "not found" en `list_products_stock` y `list_numbering_series`
 - [ ] Aplicar fix H1 (30 min) — `limit` con default 25 en `list_contacts`, `list_documents`, `list_products`
 - [ ] Verificar que la cuenta demo Nova Gestión tiene SOLO datos sintéticos (no PII real). Anotarlo en el campo Test Account del formulario Anthropic.
-- [ ] Revisar que `OAUTH_DATA_ENCRYPTION_SECRET` está set en Railway (sin él el cifrado AES-256-GCM cae a usar `OAUTH_JWT_SECRET` de fallback — funciona pero no es óptimo)
+- [ ] Revisar que `OAUTH_DATA_ENCRYPTION_SECRET` está set en Vercel (sin él el cifrado AES-256-GCM cae a usar `OAUTH_JWT_SECRET` de fallback — funciona pero no es óptimo)
 - [ ] Configurar UptimeRobot/BetterStack pingueando `/health` cada 5 min
-- [ ] Activar `min_instances=1` en Railway si quieres eliminar cold start (€5/mes adicionales)
+- [ ] Activar `min_instances=1` en Vercel si quieres eliminar cold start (€5/mes adicionales)
 
 ### SHOULD (primera semana post-lanzamiento)
 
@@ -261,7 +261,7 @@ Mi entorno tiene `claude.verifactu.business` y `holded.verifactu.business` fuera
 ## Plan de monitoreo primeras 24h post-lanzamiento
 
 1. **UptimeRobot a `/health`** — 5min, alerta a `soporte@verifactu.business` si dos checks consecutivos fallan
-2. **Watch Railway dashboard** — métricas: requests/min, p99 latencia, errores 5xx
+2. **Watch Vercel dashboard** — métricas: requests/min, p99 latencia, errores 5xx
 3. **Watch Postgres connection count** — si sube cerca del límite, escalar instance
 4. **Watch Holded API rate limits** — si Holded empieza a devolver 429, ajustar `MAX_RETRIES` o cachear catalogos
 5. **Watch tool call distribution** — qué tools usa la gente, qué tools no usa nadie

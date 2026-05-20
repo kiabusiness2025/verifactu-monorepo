@@ -35,7 +35,7 @@ He revisado el [Anthropic Software Directory Policy](https://support.claude.com/
 - ✅ **OAuth 2.1 + PKCE S256** con redirect URI allowlist (claude.ai, app.claude.ai)
 - ✅ **HTTPS TLS 1.2+** en todos los endpoints
 - ✅ **Standard testing account + 3 working example prompts** preparados
-- ✅ **Sub-procesadores documentados** (Vercel, Railway, Neon (Frankfurt EU, AES-256-GCM), Holded)
+- ✅ **Sub-procesadores documentados** (Vercel (Frankfurt EU), Neon (Frankfurt EU, AES-256-GCM), Holded)
 - ✅ **GDPR Article 28** — DPA firmable
 - ✅ **Endpoint ownership** — todo bajo `verifactu.business` (registrado a nombre de Expert Estudios Profesionales, SLU (Holded Solution Partner: https://www.holded.com/es/directorio-solution-partners/expert-estudios-profesionales))
 

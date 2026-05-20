@@ -67,10 +67,10 @@ pnpm db:migrate
 pnpm db:seed
 ```
 
-**Railway** (También tiene free tier):
+**Vercel (production stack)**:
 
 ```bash
-# Similar process en railway.app
+# Similar process en vercel.com
 ```
 
 ### Próximos Comandos (Una vez tengas DB)

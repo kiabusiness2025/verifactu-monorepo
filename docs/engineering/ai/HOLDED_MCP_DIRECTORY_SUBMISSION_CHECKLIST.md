@@ -34,8 +34,8 @@ MCP endpoint:
 - [x] MCP endpoint requires bearer auth
 - [x] CORS preflight is handled for Claude browser auth flows
 - [x] Favicon and public docs are served over HTTPS
-- [ ] Production `DATABASE_URL` configured in Railway
-- [ ] Production `OAUTH_DATA_ENCRYPTION_SECRET` configured in Railway
+- [ ] Production `DATABASE_URL` configured in Vercel
+- [ ] Production `OAUTH_DATA_ENCRYPTION_SECRET` configured in Vercel
 
 ## Documentation Requirements Checklist
 
@@ -70,7 +70,7 @@ Public pages:
 - [x] OAuth metadata returns canonical HTTPS URLs
 - [x] CORS preflight works for Claude origins
 - [x] No payment or destructive tools are exposed
-- [ ] Production smoke test after final Railway deploy
+- [ ] Production smoke test after final Vercel deploy
 - [ ] Verify Google favicon cache shows Holded logo after recrawl
 
 ## Exact Exposed Tools

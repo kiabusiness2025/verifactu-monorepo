@@ -231,10 +231,10 @@ Cuando un usuario contrata Isaak Pro/Starter desde isaak.verifactu.business, su 
 
 Asumiendo límite 200 calls/mes/usuario:
 
-| Free users activos | Calls totales/mes | Coste Railway estimado                                                        |
+| Free users activos | Calls totales/mes | Coste Vercel estimado                                                         |
 | ------------------ | ----------------- | ----------------------------------------------------------------------------- |
 | 100                | 20 K              | €5-10 (incluido en plan Hobby)                                                |
-| 1 000              | 200 K             | €30-60 (Plan Pro Railway)                                                     |
+| 1 000              | 200 K             | €30-60 (Vercel Pro)                                                           |
 | 10 000             | 2 M               | €150-300 (Plan Pro + Postgres dedicado)                                       |
 | 50 000             | 10 M              | €500-1 000 (necesitas review de arquitectura — caching agresivo de catálogos) |
 
@@ -250,7 +250,7 @@ Asumiendo límite 200 calls/mes/usuario:
 | Holded ve el conector como competencia                                | Imposible si lo enmarcas como "complemento gratuito que prepara al usuario para Isaak, que es ERP-extensión". Tu contrato Solution Partner te respalda.                                 |
 | Usuario abusa con múltiples cuentas Holded para resetear cuota        | Quota por `holded_account_id` (extraído del primer `list_*` call), no solo por `user_id`. Una API key Holded = una cuota.                                                               |
 | Soporte gratis sobrepasa coste                                        | Soporte Tier 0 es solo email comunidad; auto-respondedor con link a docs+FAQ. Si el ticket es complejo, mensaje "para soporte priorizado, prueba Isaak Pro".                            |
-| Cold start Railway ahuyenta usuarios                                  | `min_instances=1` cuesta ~€5/mes y elimina el problema. Recuperable con 1 sola conversión Isaak Starter.                                                                                |
+| Cold start Vercel ahuyenta usuarios                                   | `min_instances=1` cuesta ~€5/mes y elimina el problema. Recuperable con 1 sola conversión Isaak Starter.                                                                                |
 
 ---
 

@@ -1,9 +1,9 @@
 /**
  * GET /api/integrations/holded/api-key?tenant_id=...
  *
- * Server-to-server endpoint (holded-mcp Railway → apps/app Vercel).
+ * Server-to-server endpoint (holded-mcp Vercel → apps/app Vercel).
  * Returns the decrypted Holded API key for a given tenant so that the
- * Railway OAuth server can auto-issue an authorization code without
+ * MCP OAuth server can auto-issue an authorization code without
  * showing the legacy consent form again.
  *
  * Auth: x-mcp-shared-secret header must match VERIFACTU_APP_SHARED_SECRET.

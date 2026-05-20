@@ -46,15 +46,7 @@ Tienes varias opciones:
 # 4. Copia el "Connection string" (formato postgres://...)
 ```
 
-#### **Opción C: Railway** (Gratis con límites)
-
-```bash
-# 1. Ve a https://railway.app
-# 2. New Project > Provision PostgreSQL
-# 3. Copia la DATABASE_URL desde las variables
-```
-
-#### **Opción D: Neon** (Serverless Postgres)
+#### **Opción C: Neon** (Serverless Postgres)
 
 ```bash
 # 1. Ve a https://neon.tech
@@ -247,6 +239,5 @@ vercel env ls
 
 - **Vercel Postgres:** https://vercel.com/docs/storage/vercel-postgres
 - **Supabase:** https://supabase.com/docs
-- **Railway:** https://docs.railway.app/databases/postgresql
 - **Neon:** https://neon.tech/docs/introduction
 - **pg (node-postgres):** https://node-postgres.com/

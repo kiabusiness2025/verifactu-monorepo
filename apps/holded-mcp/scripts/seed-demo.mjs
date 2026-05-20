@@ -394,7 +394,7 @@ async function main() {
         { name: 'Sprint 2 — Módulo de clientes',        desc: 'CRUD clientes, búsqueda, histórico de pedidos',          dueDate: ts(2026, 3, 31) },
         { name: 'Sprint 3 — Módulo de pedidos',         desc: 'Creación pedidos, estados, integración Holded invoicing', dueDate: ts(2026, 4, 30) },
         { name: 'Sprint 4 — Dashboard y reporting',     desc: 'KPIs en tiempo real, exportación PDF/Excel',             dueDate: ts(2026, 5, 31) },
-        { name: 'QA, testing de carga y deploy',        desc: 'Pruebas de carga, corrección bugs, despliegue Railway',  dueDate: ts(2026, 6, 30) },
+        { name: 'QA, testing de carga y deploy',        desc: 'Pruebas de carga, corrección bugs, despliegue Vercel',  dueDate: ts(2026, 6, 30) },
       ],
     },
     {
