@@ -29,6 +29,7 @@ import {
 import { prisma } from '@/app/lib/prisma';
 import { getAeatNotifications, loadTenantCertPem } from '@/app/lib/aeat-sede';
 import { createIsaakInvoiceDraft, issueIsaakInvoice } from '@/app/lib/invoice-service';
+import { HOLDED_CHAT_TOOLS, executeHoldedTool, type HoldedToolName } from '@/app/lib/holded-tools';
 
 export const runtime = 'nodejs';
 
@@ -668,6 +669,92 @@ async function callAnthropicForInvoiceData(
   };
 }
 
+// ── LLM with Holded tool loop ────────────────────────────────────
+
+type AnthropicMessage = { role: 'user' | 'assistant'; content: string | AnthropicContent[] };
+type AnthropicContent =
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+  | { type: 'tool_result'; tool_use_id: string; content: string };
+
+async function buildLlmReplyWithTools(input: {
+  message: string;
+  systemPrompt: string;
+  historyMessages: { role: 'user' | 'assistant'; content: string }[];
+  holdedApiKey: string;
+  apiKey: string;
+  model: string;
+}): Promise<string | null> {
+  const MAX_ITERATIONS = 6;
+
+  const messages: AnthropicMessage[] = [
+    ...input.historyMessages,
+    { role: 'user', content: input.message },
+  ];
+
+  for (let iter = 0; iter < MAX_ITERATIONS; iter++) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': input.apiKey,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: input.model,
+        max_tokens: 1024,
+        system: input.systemPrompt,
+        messages,
+        tools: HOLDED_CHAT_TOOLS,
+        tool_choice: { type: 'auto' },
+      }),
+    });
+
+    if (!res.ok) return null;
+
+    const data = (await res.json().catch(() => null)) as {
+      stop_reason?: string;
+      content?: AnthropicContent[];
+    } | null;
+    if (!data?.content?.length) return null;
+
+    // If no tool_use → final text response
+    const toolUseBlocks = data.content.filter((b) => b.type === 'tool_use') as Extract<
+      AnthropicContent,
+      { type: 'tool_use' }
+    >[];
+    if (toolUseBlocks.length === 0 || data.stop_reason === 'end_turn') {
+      const textBlock = data.content.find((b) => b.type === 'text') as
+        | Extract<AnthropicContent, { type: 'text' }>
+        | undefined;
+      return textBlock?.text ?? null;
+    }
+
+    // Append assistant response with tool_use blocks
+    messages.push({ role: 'assistant', content: data.content });
+
+    // Execute each tool call and collect results
+    const toolResults: AnthropicContent[] = await Promise.all(
+      toolUseBlocks.map(async (block) => {
+        const result = await executeHoldedTool(
+          input.holdedApiKey,
+          block.name as HoldedToolName,
+          block.input
+        );
+        return {
+          type: 'tool_result' as const,
+          tool_use_id: block.id,
+          content: JSON.stringify(result),
+        };
+      })
+    );
+
+    messages.push({ role: 'user', content: toolResults });
+  }
+
+  return null;
+}
+
 // ────────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest) {
@@ -1108,25 +1195,50 @@ export async function POST(request: NextRequest) {
     ]);
 
     try {
-      const llmReply = await buildLlmReply({
-        message,
+      const anthropicApiKey =
+        process.env.ISAAK_ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? '';
+      const systemPrompt = buildLlmInstructions({
         context,
         snapshot,
         diagnosticProbe: connectionProbe,
         workspaceSignalsBlock,
         aeatBlock,
         advisorBanner,
-        modelConfig,
-        memoryContext,
-        fewShotExamples,
-      }).catch((error) => {
-        console.warn('[holded/chat] responses api failed, using deterministic fallback', {
-          tenantId: session.tenantId,
-          userId: session.userId,
-          error: error instanceof Error ? error.message : String(error),
-        });
-        return null;
+        recentFacts: memoryContext?.recentFacts ?? [],
+        fewShotExamples: fewShotExamples ?? [],
       });
+      const historyMessages = (memoryContext?.recentMessages ?? [])
+        .slice(-8)
+        .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+
+      // Use tool loop (tools access real-time Holded data on demand)
+      const llmReply = anthropicApiKey
+        ? await buildLlmReplyWithTools({
+            message,
+            systemPrompt,
+            historyMessages,
+            holdedApiKey: effectiveHoldedApiKey,
+            apiKey: anthropicApiKey,
+            model: modelConfig?.model ?? 'claude-haiku-4-5-20251001',
+          }).catch((error) => {
+            console.warn('[holded/chat] tool loop failed, falling back', {
+              tenantId: session.tenantId,
+              error: error instanceof Error ? error.message : String(error),
+            });
+            return null;
+          })
+        : await buildLlmReply({
+            message,
+            context,
+            snapshot,
+            diagnosticProbe: connectionProbe,
+            workspaceSignalsBlock,
+            aeatBlock,
+            advisorBanner,
+            modelConfig,
+            memoryContext,
+            fewShotExamples,
+          }).catch(() => null);
 
       reply =
         typeof llmReply === 'string' && llmReply.trim()

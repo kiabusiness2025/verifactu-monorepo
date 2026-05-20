@@ -5,6 +5,7 @@ import {
   probeHoldedConnection,
   saveHoldedConnection,
 } from '@/app/lib/holded-integration';
+import { sendHoldedConnectNotifications } from '@/app/lib/communications/holded-connect-emails';
 
 export const runtime = 'nodejs';
 
@@ -71,6 +72,15 @@ export async function POST(request: NextRequest) {
       userId: session.userId,
       probe,
     });
+
+    // Fire-and-forget welcome emails (user + admin)
+    sendHoldedConnectNotifications({
+      userEmail: session.email ?? null,
+      userName: session.name ?? null,
+      companyName: saved.tenantName ?? null,
+      connectedAt: new Date().toISOString(),
+      supportedModules: saved.supportedModules ?? [],
+    }).catch((err) => console.warn('[holded/connect] welcome email failed', err));
 
     return NextResponse.json({
       ok: true,
