@@ -32,7 +32,7 @@ const HOLDED_SITE_URL =
 
 const CLAUDE_MCP_URL =
   process.env.NEXT_PUBLIC_CLAUDE_MCP_URL?.replace(/\/$/, '') ||
-  'https://claude.verifactu.business/mcp';
+  'https://holded-claude.verifactu.business/mcp';
 
 const CHATGPT_MCP_URL = `${HOLDED_SITE_URL}/api/mcp/holded`;
 

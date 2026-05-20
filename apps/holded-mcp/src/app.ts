@@ -155,7 +155,7 @@ export function createApp() {
   // bajo el path legacy: si Anthropic alguna vez re-scrapea, recibe el
   // brand actual. No es solución principal (Anthropic puede no re-scrapear
   // jamás para conectores no aprobados en el directorio); la solución
-  // garantizada es un subdominio nuevo claude-holded.verifactu.business
+  // garantizada es un subdominio nuevo holded-claude.verifactu.business
   // que Anthropic indexa fresh. Esta ruta es red de seguridad de bajo coste.
   app.get('/icono_verifactu.business.png', (_req, res) => sendDiamondPng(res));
 

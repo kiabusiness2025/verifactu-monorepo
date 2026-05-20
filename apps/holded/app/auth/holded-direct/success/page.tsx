@@ -25,7 +25,7 @@ const HOLDED_SITE_URL =
 // /.well-known/oauth-authorization-server y /.well-known/oauth-protected-resource.
 const CLAUDE_MCP_URL =
   process.env.NEXT_PUBLIC_CLAUDE_MCP_URL?.replace(/\/$/, '') ||
-  'https://claude.verifactu.business/mcp';
+  'https://holded-claude.verifactu.business/mcp';
 
 // URL canónica del MCP de ChatGPT (proxy /api/mcp/holded en apps/holded → apps/app).
 const CHATGPT_MCP_URL = `${HOLDED_SITE_URL}/api/mcp/holded`;

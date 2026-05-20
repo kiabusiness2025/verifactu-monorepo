@@ -17,7 +17,7 @@ Soy [tu nombre] de **Verifactu Business** y os escribo para reenviar la submissi
 ## Resumen del connector
 
 - **Nombre:** Holded
-- **MCP endpoint:** https://claude-holded.verifactu.business/mcp
+- **MCP endpoint:** https://holded-claude.verifactu.business/mcp
 - **Tagline:** "Habla con tu Holded desde Claude: facturas, contactos, contabilidad y borradores."
 - **Categoría:** Productivity → Accounting & Finance, Business Tools, CRM
 - **Estado:** En producción desde abril 2026, no es beta

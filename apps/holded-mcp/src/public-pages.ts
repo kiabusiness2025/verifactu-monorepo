@@ -1,7 +1,7 @@
 const SUPPORT_EMAIL = 'soporte@verifactu.business';
 const HOLDED_BASE = 'https://holded.verifactu.business/conectores/claude';
 // CONNECT_URL is derived from baseUrl at render time (renderLandingPage receives it).
-// This makes subdomain swaps (e.g. claude.verifactu.business → claude-holded.verifactu.business)
+// This makes subdomain swaps (e.g. claude.verifactu.business → holded-claude.verifactu.business)
 // a one-env-var change in Vercel instead of a code edit.
 
 function escapeHtml(value: string) {
