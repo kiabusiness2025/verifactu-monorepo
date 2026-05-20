@@ -75,7 +75,7 @@ Annotations definidas centralmente en:
 **Verificable end-to-end:**
 
 ```bash
-curl https://claude-holded.verifactu.business/mcp \
+curl https://holded-claude.verifactu.business/mcp \
   -H "Authorization: Bearer <token>" \
   -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
 ```

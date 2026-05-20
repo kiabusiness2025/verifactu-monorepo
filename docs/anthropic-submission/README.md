@@ -9,7 +9,7 @@
 
 ## ⚠️ Submission v2 desde nuevo subdominio (2026-05-19)
 
-Esta es una **nueva entrada** en el Anthropic Connectors Directory, con un subdominio nuevo (`claude-holded.verifactu.business`) y un nombre de app nuevo (`Holded for Claude`). **No es un update de la submission v1 — es una entry paralela.**
+Esta es una **nueva entrada** en el Anthropic Connectors Directory, con un subdominio nuevo (`holded-claude.verifactu.business`) y un nombre de app nuevo (`Holded for Claude`). **No es un update de la submission v1 — es una entry paralela.**
 
 Razón del reset (documentada en detalle en [`apps/holded-mcp/CLAUDE_CONNECTOR_RESET_RUNBOOK.md`](../../apps/holded-mcp/CLAUDE_CONNECTOR_RESET_RUNBOOK.md) sección 10):
 
@@ -17,7 +17,7 @@ Anthropic / Claude.ai cachearon server-side dos iconos legacy de cuando el servi
 
 ## Estado actual (2026-05-19, submission v2 lista para enviar)
 
-- ✅ MCP server desplegado en subdominio nuevo: `https://claude-holded.verifactu.business/mcp` (mismo build que el legacy `claude.verifactu.business`, alias en Vercel)
+- ✅ MCP server desplegado en subdominio nuevo: `https://holded-claude.verifactu.business/mcp` (mismo build que el legacy `claude.verifactu.business`, alias en Vercel)
 - ✅ Subdominio legacy `claude.verifactu.business` sigue funcionando en paralelo (no se rompen conexiones existentes — si las hay)
 - ✅ OAuth 2.1 + PKCE funcional, redirect URIs allowlist (`claude.ai`, `app.claude.ai`)
 - ✅ Consent screen propio con scopes humanos + links legales
@@ -33,7 +33,7 @@ Anthropic / Claude.ai cachearon server-side dos iconos legacy de cuando el servi
 
 Submission v1 fue enviada con app name `Holded` y MCP URL `https://claude.verifactu.business/mcp`. No recibimos email de confirmación. Posibles causas: form rellenado parcialmente, confirmación a spam, form movido a otra surface, o Anthropic no envía confirmación automática para submissions parciales.
 
-**No la reactivar.** La submission v2 (`Holded for Claude` desde `claude-holded.verifactu.business`) es la canónica de aquí en adelante. Si Anthropic responde sobre v1, indicar amablemente que la solicitud activa es v2 y enlazar al form nuevo.
+**No la reactivar.** La submission v2 (`Holded for Claude` desde `holded-claude.verifactu.business`) es la canónica de aquí en adelante. Si Anthropic responde sobre v1, indicar amablemente que la solicitud activa es v2 y enlazar al form nuevo.
 
 ## Plan de acción
 
