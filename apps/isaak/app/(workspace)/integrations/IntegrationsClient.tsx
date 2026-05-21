@@ -16,6 +16,7 @@ import {
   EyeOff,
   Globe,
   Key,
+  Landmark,
   Loader2,
   Mail,
   PlugZap,
@@ -47,6 +48,30 @@ type GoogleStatus = {
   googleConfigured: boolean;
   hasGmailScope?: boolean;
   hasDriveScope?: boolean;
+};
+
+type MicrosoftStatus = {
+  connected: boolean;
+  email: string | null;
+  displayName: string | null;
+  connectedAt: string | null;
+  hasCalendarScope: boolean;
+  hasMailScope: boolean;
+  hasSendScope: boolean;
+  hasOneDriveScope: boolean;
+  microsoftConfigured: boolean;
+};
+
+type ChiftStatus = {
+  connected: boolean;
+  status: string;
+  connectionId: string | null;
+  companyName: string | null;
+  companyVat: string | null;
+  currency: string | null;
+  connectedAt: string | null;
+  lastError: string | null;
+  chiftConfigured: boolean;
 };
 
 type GmailInvoiceCandidate = {
@@ -99,6 +124,27 @@ const CATALOG_ITEMS = [
     name: 'Google Drive',
     desc: 'Archiva facturas PDF en la nube',
     logo: '📁',
+    status: 'active',
+  },
+  {
+    id: 'microsoft',
+    name: 'Microsoft 365',
+    desc: 'Outlook Calendar, Mail y OneDrive',
+    logo: '🪟',
+    status: 'active',
+  },
+  {
+    id: 'banking',
+    name: 'Banca (Salt Edge)',
+    desc: 'Cuentas bancarias y conciliación automática',
+    logo: '🏦',
+    status: 'active',
+  },
+  {
+    id: 'chift',
+    name: 'ERP via Chift',
+    desc: 'Sage, Xero, QuickBooks, Odoo y +40 ERPs',
+    logo: '🔌',
     status: 'active',
   },
   {
@@ -809,6 +855,128 @@ function ApiKeysPanel() {
   );
 }
 
+// ── Microsoft 365 Card ────────────────────────────────────────────────────────
+
+function MicrosoftCard({ status }: { status: MicrosoftStatus }) {
+  const scopeLabels: string[] = [];
+  if (status.hasCalendarScope) scopeLabels.push('Calendario');
+  if (status.hasMailScope) scopeLabels.push('Correo');
+  if (status.hasOneDriveScope) scopeLabels.push('OneDrive');
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-lg">
+            🪟
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold text-slate-900">Microsoft 365</span>
+              <StatusDot
+                active={status.connected}
+                label={status.connected ? 'Activo' : 'Sin conectar'}
+              />
+            </div>
+            <div className="text-[12px] text-slate-500">Outlook Calendar, Mail y OneDrive</div>
+          </div>
+        </div>
+        <Link
+          href="/microsoft"
+          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          Gestionar
+        </Link>
+      </div>
+      {status.connected && (
+        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-2.5 text-[12px] text-slate-600">
+          {status.email && (
+            <>
+              Cuenta: <span className="font-medium">{status.email}</span>
+              {scopeLabels.length > 0 && <> · Permisos: {scopeLabels.join(', ')}</>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Banking Card ───────────────────────────────────────────────────────────────
+
+function BankingCard() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+            <Landmark size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold text-slate-900">Banca (Salt Edge)</span>
+            </div>
+            <div className="text-[12px] text-slate-500">
+              Cuentas bancarias, movimientos y conciliación
+            </div>
+          </div>
+        </div>
+        <Link
+          href="/banking"
+          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          Gestionar
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// ── Chift ERP Card ─────────────────────────────────────────────────────────────
+
+function ChiftCard({ status }: { status: ChiftStatus }) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50">
+            <PlugZap size={18} className="text-indigo-600" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold text-slate-900">ERP (Chift)</span>
+              <StatusDot
+                active={status.connected}
+                label={status.connected ? 'Activo' : 'Sin conectar'}
+              />
+            </div>
+            <div className="text-[12px] text-slate-500">
+              Sage, Xero, QuickBooks, Odoo y +40 ERPs
+            </div>
+          </div>
+        </div>
+        <Link
+          href="/chift"
+          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
+        >
+          Gestionar
+        </Link>
+      </div>
+      {status.connected && (
+        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-2.5 text-[12px] text-slate-600">
+          {status.companyName && (
+            <>
+              Empresa: <span className="font-medium">{status.companyName}</span>
+              {status.companyVat && <> · NIF: {status.companyVat}</>}
+              {status.connectedAt && <> · {fmtDate(status.connectedAt)}</>}
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── MCP Panel ──────────────────────────────────────────────────────────────────
 
 function McpPanel() {
@@ -975,8 +1143,11 @@ export default function IntegrationsClient() {
   const [tab, setTab] = useState<Tab>('connectors');
   const [holdedStatus, setHoldedStatus] = useState<HoldedStatus | null>(null);
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(null);
+  const [microsoftStatus, setMicrosoftStatus] = useState<MicrosoftStatus | null>(null);
+  const [chiftStatus, setChiftStatus] = useState<ChiftStatus | null>(null);
   const [loadingHolded, setLoadingHolded] = useState(false);
   const [loadingGoogle, setLoadingGoogle] = useState(false);
+  const [loadingOthers, setLoadingOthers] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -1006,15 +1177,35 @@ export default function IntegrationsClient() {
     }
   }, []);
 
+  const loadOthers = useCallback(async () => {
+    setLoadingOthers(true);
+    try {
+      const [msRes, chiftRes] = await Promise.all([
+        fetch('/api/isaak/microsoft/status'),
+        fetch('/api/isaak/chift/status'),
+      ]);
+      if (msRes.ok)
+        setMicrosoftStatus((await msRes.json().catch(() => null)) as MicrosoftStatus | null);
+      if (chiftRes.ok)
+        setChiftStatus((await chiftRes.json().catch(() => null)) as ChiftStatus | null);
+    } finally {
+      setLoadingOthers(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadHolded();
     void loadGoogle();
-    // Handle Google OAuth callback notice
+    void loadOthers();
+    // Handle OAuth callback notices
     const params = new URLSearchParams(window.location.search);
     const g = params.get('google');
     if (g === 'connected') setNotice('Google Calendar conectado correctamente.');
     if (g === 'error') setError('No se pudo conectar Google Calendar. Inténtalo de nuevo.');
-  }, [loadHolded, loadGoogle]);
+    const chift = params.get('chift');
+    if (chift === 'connected') setNotice('ERP conectado via Chift.');
+    if (chift === 'error') setError('No se pudo conectar el ERP. Inténtalo de nuevo.');
+  }, [loadHolded, loadGoogle, loadOthers]);
 
   async function syncGoogle() {
     setSyncing(true);
@@ -1133,7 +1324,7 @@ export default function IntegrationsClient() {
               subtitle="Fuentes de datos conectadas a Isaak"
             />
 
-            {loadingHolded || loadingGoogle ? (
+            {loadingHolded || loadingGoogle || loadingOthers ? (
               <div className="flex items-center gap-2 py-8 text-[13px] text-slate-400">
                 <Loader2 size={16} className="animate-spin" />
                 Cargando conectores...
@@ -1163,6 +1354,9 @@ export default function IntegrationsClient() {
                     googleConfigured={googleStatus.googleConfigured}
                   />
                 )}
+                {microsoftStatus && <MicrosoftCard status={microsoftStatus} />}
+                <BankingCard />
+                {chiftStatus && <ChiftCard status={chiftStatus} />}
               </div>
             )}
 

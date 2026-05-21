@@ -12,7 +12,6 @@ import { Resend } from 'resend';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'Verifactu Business <soporte@verifactu.business>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.verifactu.business';
 
@@ -20,6 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const { id: tenantId } = await params;
     await requireAdmin(req);
+    const resend = new Resend(process.env.RESEND_API_KEY);
     const body = await req.json().catch(() => ({}));
     const customMessage = typeof body.message === 'string' ? body.message.trim() : '';
 

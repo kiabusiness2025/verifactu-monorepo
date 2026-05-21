@@ -6,7 +6,6 @@ import { query } from '@/lib/db';
 // Force dynamic rendering (uses cookies for admin auth)
 export const dynamic = 'force-dynamic';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const SUPPORT_EMAIL = 'Verifactu Business <soporte@verifactu.business>';
 
 interface AttachmentInput {
@@ -22,6 +21,7 @@ interface TagInput {
 export async function POST(request: NextRequest) {
   try {
     await requireAdmin(request);
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const body = await request.json();
     const { to, cc, bcc, replyTo, subject, text, html, tags, attachments } = body;
