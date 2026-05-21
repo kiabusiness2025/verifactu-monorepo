@@ -107,7 +107,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     dpaHref: '/conectores/claude/dpa',
     privacyHref: '/conectores/claude/privacy',
     termsHref: '/conectores/claude/terms',
-    connectHref: 'https://claude.verifactu.business/launch',
+    connectHref: 'https://holded-claude.verifactu.business/launch',
   },
   chatgpt: {
     id: 'chatgpt',
@@ -298,7 +298,7 @@ const QUICK_CONNECT_STEPS: Record<
       n: '02',
       Icon: Zap,
       title: 'Acepta el aviso y haz clic en "Añadir"',
-      text: 'Claude muestra un aviso de seguridad estándar indicando que el conector fue sugerido por un enlace externo — es el comportamiento esperado. Verifica que el nombre sea "Holded" y la URL "claude.verifactu.business/mcp", luego pulsa "Añadir".',
+      text: 'Claude muestra un aviso de seguridad estándar indicando que el conector fue sugerido por un enlace externo — es el comportamiento esperado. Verifica que el nombre sea "Holded" y la URL "holded-claude.verifactu.business/mcp", luego pulsa "Añadir".',
     },
     {
       n: '03',
@@ -356,8 +356,8 @@ function ConnectorQuickConnect({ cfg, theme }: { cfg: ConnectorConfig; theme: Th
             </h2>
             {cfg.id === 'claude' && (
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                El conector usa el flujo de conector personalizado de Claude mientras finaliza la
-                revisión en el directorio oficial de Anthropic. Ya está operativo.
+                Ya está operativo. Se añade con el flujo de conector personalizado de Claude; en
+                paralelo, está en revisión para aparecer en el directorio oficial de Anthropic.
               </p>
             )}
           </div>

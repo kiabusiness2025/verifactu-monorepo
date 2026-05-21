@@ -17,6 +17,7 @@
  * como prop y el form arranca directamente en el paso de API key.
  */
 
+import { HoldedApiKeyHelp } from '@/app/components/HoldedApiKeyHelp';
 import {
   consumeMagicLink,
   detectMagicLinkInUrl,
@@ -102,7 +103,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   INVALID_API_KEY:
     'La API key no es válida o no tiene los permisos necesarios. Comprueba que sea correcta en Holded.',
   INVALID_API_KEY_FORMAT:
-    'La API key debe tener 32 caracteres hexadecimales (0-9, a-f). Verifica que la has copiado completa desde Holded → Configuración → Integraciones → API.',
+    'La API key debe tener 32 caracteres: solo números (0-9) y letras (a-f). Verifica que la has copiado completa desde Holded → Configuración → Integraciones → API.',
   PROBE_ERROR: 'No se pudo conectar con Holded. Inténtalo de nuevo en unos segundos.',
   DB_ERROR: 'Error interno. Por favor, contacta con soporte.',
   SESSION_ERROR: 'Error al iniciar sesión. Por favor, inténtalo de nuevo.',
@@ -839,7 +840,7 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                             }
                           }}
                           onBlur={() => setApiKeyTouched(true)}
-                          placeholder="32 caracteres hexadecimales (0-9, a-f)"
+                          placeholder="32 caracteres: solo números (0-9) y letras (a-f)"
                           aria-invalid={showApiKeyFormatError || undefined}
                           aria-describedby={
                             showApiKeyFormatError ? 'apikey-format-error' : undefined
@@ -866,11 +867,13 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                           className="mt-1 px-1 text-xs leading-5 text-rose-700"
                         >
                           Formato inválido. La API key de Holded son{' '}
-                          <strong>32 caracteres hexadecimales</strong> (solo dígitos 0–9 y letras
-                          a–f). Cópiala completa desde Holded → Configuración → Integraciones → API.
+                          <strong>32 caracteres</strong> (solo números 0–9 y letras a–f).
+                          Cópiala completa desde Holded → Configuración → Integraciones → API.
                         </p>
                       ) : null}
                     </div>
+
+                    <HoldedApiKeyHelp accent="emerald" />
 
                     {/* T&C — un solo check combinado, microcopy compacto */}
                     <label className="flex cursor-pointer items-start gap-2.5 px-1">

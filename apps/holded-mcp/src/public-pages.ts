@@ -469,8 +469,8 @@ export function renderLandingPage(baseUrl: string) {
           Añade Holded a Claude en menos de dos minutos.
         </h2>
         <p style="font-size:.875rem;line-height:1.6;color:var(--text-muted);max-width:30rem;margin-top:.5rem;">
-          El conector usa el flujo de conector personalizado de Claude mientras finaliza la
-          revisión en el directorio oficial de Anthropic. Ya está operativo.
+          Ya está operativo. Se añade con el flujo de conector personalizado de Claude; en
+          paralelo, está en revisión para aparecer en el directorio oficial de Anthropic.
         </p>
       </div>
       <a href="${connectHref}" target="_blank" rel="noopener noreferrer" class="btn-p">
