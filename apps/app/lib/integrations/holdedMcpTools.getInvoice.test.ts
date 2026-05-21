@@ -136,15 +136,18 @@ describe('holded_get_invoice (B5 smart lookup)', () => {
     expect(secondYear).toBe(firstYear - 1);
   });
 
-  it('lanza error con guía si nada matchea', async () => {
+  it('devuelve una respuesta controlada not_found si nada matchea', async () => {
     mockedAdapter.listInvoices.mockResolvedValueOnce([]);
     mockedAdapter.listInvoicesHistory
       .mockResolvedValueOnce({ items: [] })
       .mockResolvedValueOnce({ items: [] });
 
-    await expect(
-      callHoldedMcpTool(API_KEY, 'holded_get_invoice', { invoiceId: 'F9999' })
-    ).rejects.toThrow(/No invoice found with id or document number "F9999"/);
+    // El smart lookup ya no lanza: devuelve un error controlado `not_found`
+    // (mismo patrón que get_document) para que el modelo lo gestione.
+    const result = await callHoldedMcpTool(API_KEY, 'holded_get_invoice', {
+      invoiceId: 'F9999',
+    });
+    expect(result).toMatchObject({ error: 'not_found', id: 'F9999', entity: 'invoice' });
 
     expect(mockedAdapter.getInvoice).not.toHaveBeenCalled();
   });

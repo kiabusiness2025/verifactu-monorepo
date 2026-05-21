@@ -15,6 +15,10 @@ const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
+    // react-markdown y remark-gfm son ESM puro con un árbol de dependencias
+    // que Jest no transforma — los stubbeamos (ningún test valida markdown).
+    '^react-markdown$': '<rootDir>/__mocks__/react-markdown.tsx',
+    '^remark-gfm$': '<rootDir>/__mocks__/remark-gfm.js',
   },
 }
 

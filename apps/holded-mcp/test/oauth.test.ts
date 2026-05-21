@@ -128,21 +128,26 @@ test('OAuth authorize rejects redirect_uri outside the Claude allowlist', async 
   }
 });
 
-test('OAuth consent page escapes hidden input values', async () => {
+test('OAuth authorize bridges to the holded-claude form without leaking unescaped state', async () => {
   const runtime = await startTestServer();
 
   try {
+    // Desde 2026-05-18 GET /oauth/authorize ya no renderiza un consent screen
+    // propio: siempre redirige (302) al form amber de holded-claude. El `state`
+    // malicioso debe viajar URL-encoded dentro de `next`, nunca crudo.
     const state = `"><script>alert(1)</script>`;
     const response = await fetch(
       `${runtime.baseUrl}/oauth/authorize?response_type=code&client_id=test&redirect_uri=${encodeURIComponent(
         'https://claude.ai/api/mcp/auth_callback'
-      )}&state=${encodeURIComponent(state)}`
+      )}&state=${encodeURIComponent(state)}`,
+      { redirect: 'manual' }
     );
 
-    assert.equal(response.status, 200);
-    const html = await response.text();
-    assert.doesNotMatch(html, /"><script>alert\(1\)<\/script>/);
-    assert.match(html, /&quot;&gt;&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+    assert.equal(response.status, 302);
+    const location = response.headers.get('location') ?? '';
+    assert.match(location, /\/auth\/holded-claude/);
+    assert.doesNotMatch(location, /<script>/i);
+    assert.doesNotMatch(location, /"><script>alert\(1\)<\/script>/);
   } finally {
     await runtime.close();
   }
