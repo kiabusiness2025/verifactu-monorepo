@@ -35,11 +35,11 @@ const availableCapabilities = [
     ],
   },
   {
-    title: 'Proyectos y trabajo en curso',
+    title: 'Documentos y PDFs',
     points: [
-      'Listar proyectos para ver carga y contexto operativo.',
-      'Abrir un proyecto concreto y revisar sus tareas.',
-      'Detectar bloqueos o prioridades para la semana.',
+      'Consultar el detalle completo de un documento: lineas, importes e IVA.',
+      'Descargar el PDF de una factura, presupuesto o albaran existente.',
+      'Recuperar el documento que necesitas adjuntar a un email o gestion.',
     ],
   },
 ];
@@ -48,15 +48,15 @@ const workingPrompts = [
   'Que facturas deberia revisar hoy para proteger caja?',
   'Ensename los contactos con mas riesgo de cobro.',
   'Explicame el diario de esta semana en lenguaje claro.',
-  'Resumeme en 5 lineas los proyectos con mas riesgo.',
+  'Dame el PDF de mi ultima factura emitida.',
   'Prepara un borrador de factura para este cliente por este importe.',
 ];
 
 const currentLimits = [
   'El conector no inventa datos: trabaja con lo que realmente existe en tu entorno.',
   'La escritura publica actual se limita a preparar borradores de factura y siempre pide confirmacion.',
-  'La lectura de IVA, gastos y parte de tesoreria depende del contexto contable ya registrado en Holded.',
-  'La consulta de tesoreria esta disponible para revisar cuentas y saldos. El matching o conciliacion automatica de movimientos bancarios no esta validado.',
+  'La lectura contable se limita al plan de cuentas y al libro diario ya registrados en Holded.',
+  'Productos y stock, proyectos, CRM y tesoreria todavia no forman parte del conector publico: estan en el roadmap.',
 ];
 
 export default function HoldedCapabilitiesPage() {

@@ -10,7 +10,7 @@ const OG_IMAGE = `${SITE_URL}/brand/holded/holded-diamond-logo.png`;
 export const metadata: Metadata = {
   title: 'Holded con IA | Conectores ChatGPT y Claude',
   description:
-    'Conecta Holded con ChatGPT o Claude y consulta facturas, contactos, contabilidad y proyectos en lenguaje natural. Borradores solo con confirmación. Integración independiente, gratuita en lanzamiento.',
+    'Conecta Holded con ChatGPT o Claude y consulta facturas, contactos y contabilidad en lenguaje natural. Borradores solo con confirmación. Integración independiente, gratuita en lanzamiento.',
   keywords: [
     'Holded IA',
     'Holded ChatGPT',
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Holded con IA — Conectores ChatGPT y Claude',
     description:
-      'Conecta Holded a ChatGPT o Claude en minutos. Facturas, contactos, contabilidad y proyectos en lenguaje natural.',
+      'Conecta Holded a ChatGPT o Claude en minutos. Facturas, contactos y contabilidad en lenguaje natural.',
     images: [OG_IMAGE],
   },
   robots: {
@@ -67,7 +67,7 @@ const connectors = [
   {
     id: 'chatgpt',
     title: 'Holded para ChatGPT',
-    body: 'Consulta facturas, contactos, contabilidad, CRM y proyectos desde ChatGPT. Solo lectura por defecto y borradores con confirmación.',
+    body: 'Consulta facturas, contactos y contabilidad desde ChatGPT. Solo lectura por defecto y borradores con confirmación.',
     href: '/conectores/chatgpt',
     logoSrc: '/brand/chatgpt-logo.png',
     badge: 'En lanzamiento',
@@ -85,7 +85,7 @@ const connectors = [
 
 const features = [
   'Facturas, contactos y contabilidad',
-  'CRM, proyectos, productos y stock',
+  'PDF de documentos y libro diario',
   'Solo lectura por defecto',
   'Borradores con confirmación',
 ];
@@ -112,8 +112,8 @@ export default function HoldedConnectorsHubPage() {
             Conecta Holded con la IA que ya usas.
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            Elige ChatGPT o Claude para preguntar por facturas, clientes, contabilidad y proyectos
-            sin navegar menús ni exportar hojas de cálculo.
+            Elige ChatGPT o Claude para preguntar por facturas, clientes y contabilidad sin
+            navegar menús ni exportar hojas de cálculo.
           </p>
           <p className="mt-3 text-sm text-slate-400">
             Integración independiente de Verifactu Business — no somos Holded, OpenAI ni Anthropic.

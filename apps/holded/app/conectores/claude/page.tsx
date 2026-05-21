@@ -11,7 +11,7 @@ const OG_IMAGE = `${SITE_URL}/api/og/claude`;
 export const metadata: Metadata = {
   title: 'Pregunta a Holded desde Claude | Verifactu Business',
   description:
-    'Conecta Holded con Claude para consultar facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural. Borradores de factura solo con confirmación.',
+    'Conecta Holded con Claude para consultar facturas, contactos y contabilidad en lenguaje natural. Borradores de factura solo con confirmación.',
   keywords: [
     'conector Holded',
     'Claude Holded',
@@ -101,12 +101,8 @@ const jsonLd = {
         'Listado y detalle de facturas',
         'Listado y detalle de contactos',
         'Plan de cuentas y diario contable',
-        'Borrador de factura con confirmacion explicita',
-        'Productos y stock',
-        'Proyectos y tareas',
-        'CRM: leads y embudos',
         'PDFs de documentos existentes',
-        'Equipo, tesoreria, IVA, almacenes, series',
+        'Borrador de factura con confirmacion explicita',
       ],
       requiresSubscription: 'No',
       isAccessibleForFree: true,
