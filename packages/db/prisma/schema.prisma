@@ -2434,3 +2434,17 @@ model AdvisorClient {
   @@index([advisorTenantId, isActive])
   @@map("advisor_clients")
 }
+
+model MarketingCampaign {
+  id         String   @id @default(cuid())
+  segment    String
+  subject    String
+  sentBy     String   @map("sent_by")
+  sentCount  Int      @default(0) @map("sent_count")
+  failCount  Int      @default(0) @map("fail_count")
+  totalCount Int      @default(0) @map("total_count")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([createdAt(sort: Desc)])
+  @@map("marketing_campaigns")
+}

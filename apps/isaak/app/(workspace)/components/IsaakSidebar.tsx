@@ -66,6 +66,7 @@ const NAV_SECTIONS = [
   { href: '/banking', label: 'Open Banking', icon: Landmark },
   { href: '/mail', label: 'Gmail Facturas', icon: Mail },
   { href: '/microsoft', label: 'Microsoft 365', icon: Cloud },
+  { href: '/chift', label: 'ERP (Chift)', icon: PlugZap },
   { href: '/advisor', label: 'Mis clientes', icon: Building2 },
   { href: '/settings', label: 'Ajustes', icon: Settings },
 ];

@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-21
+**Última actualización**: 2026-05-21 (sesión 2)
 **Visión**: Isaak como agente fiscal y contable autónomo que conecta con datos reales del ERP, ejecuta acciones con confirmación, aprende de cada empresa y asesora en lenguaje llano.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
@@ -21,7 +21,7 @@
 | Stripe billing (checkout/portal/cancel/cron) | ✅     | S5 completo                                                      |
 | OCR + upload gastos                          | ✅     | S6: `upload-expense`, Claude Vision, confirmación                |
 | Voz STT + TTS                                | ✅     | S7: Web Speech API                                               |
-| Google Calendar + Gmail + Drive              | ✅     | S8-A/B/C/D + integración completa (2026-05-19)                   |
+| Google Calendar + Gmail + Drive              | ✅     | S8-A/B/C/D + G-2 LLM tools (2026-05-21)                          |
 | Alertas fiscales cron                        | ✅     | S8-B: D-15/7/3/1, hub `/fiscal`, panel acceso AEAT               |
 | Push notifications                           | ✅     | S10-B: VAPID, Service Worker                                     |
 | PWA                                          | ✅     | S10-A: manifest, 8 iconos                                        |
@@ -131,158 +131,102 @@ Página: `apps/isaak/app/p/[slug]/page.tsx` — sin auth, 404 si inactivo.
 | P3-4-A Hotelgest  | Stub pendiente docs API del cliente                             | —          | ⏳     |
 | P3-4-A Sage 200c  | Stub — requiere credenciales `developer.sage.com`               | —          | ⏳     |
 | P3-4-B a3innuva   | Stub — requiere credenciales `a3developers.wolterskluwer.es`    | —          | ⏳     |
+| G-2               | Google LLM tools (8 tools) + Microsoft Graph (9 tools)          | `session2` | ✅     |
+| Fase M            | Microsoft 365 — Outlook, Calendar, OneDrive, chat tools         | `session2` | ✅     |
+| P3-4-C Chift      | ChiftErpClient + 4 rutas API + workspace page + landing         | `session2` | 🔄     |
+| Admin D4          | MarketingCampaign model + historial campañas en admin           | `session2` | ✅     |
+| Cron 405 fix      | Connector-health cron respondía 405 → añadido GET handler       | `session2` | ✅     |
 
 ---
 
-## Backlog — Siguientes sprints (orden de prioridad)
+## ✅ Completado en sesión 2 (2026-05-21)
 
-### G-2: Google Integrations — LLM Tools + Completar gaps (PRÓXIMO)
+### G-2: Google LLM Tools ✅
 
-**Objetivo:** Convertir a Isaak en operador activo de la suite Google del empresario. Actualmente Google Calendar/Gmail/Drive son herramientas manuales — el LLM no puede usarlas. G-2 las expone como herramientas del asistente.
-
-**Gap crítico actual:**
-
-- El chat `/api/holded/chat` no tiene ninguna herramienta Google → el usuario debe ir manualmente a `/calendar`, `/mail`
-- Calendar: falta listar eventos y editar/borrar
-- Drive: falta listar archivos subidos
-- Gmail: falta etiquetar/archivar mensajes procesados
-
-**Cambios técnicos:**
-
-```
-apps/isaak/app/api/holded/chat/route.ts
-  → Añadir herramientas: google_calendar_list, google_calendar_create,
-    google_calendar_update, google_drive_list, google_drive_upload,
-    gmail_scan, gmail_process_attachment
-
-apps/isaak/app/lib/google-calendar.ts
-  → Añadir listEvents(), updateEvent(), deleteEvent()
-
-apps/isaak/app/lib/google-drive.ts
-  → Añadir listFiles(), deleteFile()
-
-apps/isaak/app/lib/gmail-scan-service.ts
-  → Añadir archiveMessage(), addLabel() (scope upgrade: gmail.modify)
-```
-
-**Nuevo scope Gmail:** `gmail.modify` (en lugar de `gmail.readonly`) para archivar + etiquetar.  
-Re-autorización necesaria para usuarios ya conectados (prompt de re-auth automático si scope insuficiente).
-
-**Esfuerzo:** M (1 sprint)
+8 herramientas LLM para Google: `google_check_connection`, `google_calendar_list_events`, `google_calendar_create_event`, `google_calendar_update_event`, `google_calendar_delete_event`, `google_gmail_scan_invoices`, `google_gmail_archive`, `google_drive_list_files`.  
+Scope Gmail actualizado a `gmail.modify`. Wiring en `/api/holded/chat/route.ts`.
 
 ---
 
-### M: Microsoft Graph — OneDrive + Outlook Calendar + Outlook Mail
+### M: Microsoft Graph ✅
 
-**Objetivo:** Mismo nivel de integración que Google pero para el ecosistema Microsoft 365, dominante en empresas medianas-grandes en España.
+9 herramientas LLM para Microsoft 365 + OAuth completo + workspace page.
 
-**Viabilidad confirmada (2026-05-21):**
+**Implementado:**
 
-- App Azure AD multi-tenant = gratis. Sin coste por tenant conectado.
-- El usuario trae su licencia M365 — Verifactu solo necesita la app registration.
-- Scopes delegados: `Files.ReadWrite`, `Calendars.ReadWrite`, `Mail.ReadWrite`, `Mail.Send`, `User.Read`
-- OAuth idéntico al de Google — mismo patrón de token storage.
-
-**Cambios técnicos:**
-
-```
-packages/db/prisma/schema.prisma
-  → Nuevo modelo IsaakMicrosoftToken (tenantId, userId, accessToken,
-    refreshToken, expiresAt, email, scopes)
-  → Migración: 20260521_isaak_microsoft_token
-
-apps/isaak/app/lib/
-  → microsoft-oauth.ts     — OAuth flow, token refresh, scopes
-  → microsoft-calendar.ts  — listEvents, createEvent, updateEvent, deleteEvent
-  → microsoft-drive.ts     — listFiles, uploadFile, createFolder
-  → microsoft-mail.ts      — scanInbox, processAttachment, sendMail, archiveMail
-
-apps/isaak/app/api/isaak/microsoft/
-  → auth/route.ts          — redirect OAuth Azure AD
-  → callback/route.ts      — exchange code, store token
-  → status/route.ts        — estado conexión
-  → disconnect/route.ts    — revocar token
-  → sync/route.ts          — sync deadlines fiscales a Outlook Calendar
-
-apps/isaak/app/(workspace)/
-  → microsoft/page.tsx     — settings hub Microsoft (estado, scopes, sync)
-
-apps/isaak/app/api/holded/chat/route.ts
-  → Añadir herramientas microsoft_* (idénticas a google_* pero Microsoft Graph)
-```
-
-**Variables de entorno nuevas:**
-
-```
-MICROSOFT_CLIENT_ID       — Azure AD app (client) ID
-MICROSOFT_CLIENT_SECRET   — Azure AD client secret
-MICROSOFT_TENANT_ID       — 'common' para multi-tenant
-MICROSOFT_REDIRECT_URI    — https://isaak.verifactu.business/api/isaak/microsoft/callback
-```
-
-**Esfuerzo:** L (1.5 sprints)
+- `packages/db/prisma/schema.prisma` → `IsaakMicrosoftToken` + migración `20260521200000`
+- `microsoft-oauth.ts` / `microsoft-calendar.ts` / `microsoft-drive.ts` / `microsoft-mail.ts` / `microsoft-tools.ts`
+- API routes: `/api/isaak/microsoft/{auth,callback,status,disconnect,sync}`
+- `(workspace)/microsoft/page.tsx`
+- Variables en Vercel: `MICROSOFT_CLIENT_ID`, `MICROSOFT_CLIENT_SECRET`, `MICROSOFT_TENANT_ID=common`, `MICROSOFT_REDIRECT_URI`
+- ⚠️ Pendiente: registrar Redirect URI en portal Azure AD → `https://isaak.verifactu.business/api/isaak/microsoft/callback`
 
 ---
 
-### P3-4-C: Chift ERP Aggregator — Sage, A3, ContaPlus y más
+### P3-4-C: Chift ERP Aggregator 🔄 (implementación completa — activación pendiente)
 
-**Objetivo:** Conectar con 50+ ERPs españoles a través de una sola API sin necesitar suscripción a cada uno.
+**ERPs viables para España via Chift** (investigación 2026-05-21):
 
-**Contexto (investigación 2026-05-21):**
+| ERP                        | Dominio        | Relevancia España                            | Categoría          |
+| -------------------------- | -------------- | -------------------------------------------- | ------------------ |
+| **Sage 200 ES**            | sage.com       | ⭐⭐⭐ — el más usado en PYME española       | Contabilidad       |
+| **A3ERP** (Wolters Kluwer) | a3software.com | ⭐⭐⭐ — #1 en gestorías y asesorías         | Contabilidad       |
+| **Odoo**                   | odoo.com       | ⭐⭐⭐ — ERP open source, crecimiento rápido | Contabilidad + ERP |
+| **Xero**                   | xero.com       | ⭐⭐ — empresas internacionales en España    | Contabilidad       |
+| **Cegid**                  | cegid.com      | ⭐⭐ — mid-market retail y servicios         | Contabilidad       |
+| **QuickBooks**             | intuit.com     | ⭐⭐ — algunas PYMEs y freelancers           | Facturación        |
+| **Pennylane**              | pennylane.com  | ⭐ — despachos contables                     | Contabilidad       |
+| **Holded**                 | holded.com     | ✅ Ya integrado directamente                 | Contabilidad + ERP |
 
-- Sage 200c y a3innuva requieren suscripción activa del cliente para acceder a su API.
-- Chift (chift.eu) y Nubyhub son aggregators que normalizan APIs de múltiples ERPs:
-  - Soportan: Sage, a3innuva, ContaPlus, Anfix, Pennylane, Holded, QuickBooks, Xero, Odoo...
-  - Una sola integración desde Isaak → acceso a todos los ERPs del cliente
-  - El cliente conecta su ERP en el widget de Chift → Isaak recibe los datos normalizados
-  - Pricing: fee por conexión activa, no por ERP
+> Chift también soporta: Exact, DATEV, Tripletex, MyUnisoft, Axonaut, Sellsy, Horus — menos relevantes para España.
 
-**Encaja perfectamente con `ErpClient` existente:**
-
-- Añadir `provider: 'chift'` en `ExternalConnection`
-- `ChiftErpClient implements ErpClient` — traduce Chift responses a `ErpInvoice`, `ErpContact`, etc.
-- Un solo adapter cubre todos los ERPs que Chift soporta
-
-**Cambios técnicos:**
+**Implementación completada (2026-05-21):**
 
 ```
-apps/isaak/app/lib/chift-erp-client.ts  — ChiftErpClient implements ErpClient
-apps/isaak/app/lib/erp-client-factory.ts — añadir case 'chift'
-apps/isaak/app/(workspace)/settings/    — UI conectar ERP via Chift widget
+apps/isaak/app/lib/chift-client.ts          — Token cache, chiftGet/Post/Delete
+apps/isaak/app/lib/chift-erp-client.ts      — ChiftErpClient implements ErpClient
+apps/isaak/app/lib/erp-client.ts            — ErpProvider += 'chift'
+apps/isaak/app/lib/erp-client-factory.ts    — case 'chift' en factory
+apps/isaak/app/api/isaak/chift/connect/     — POST: crea consumer + URL conexión
+apps/isaak/app/api/isaak/chift/callback/    — GET: Chift redirect handler
+apps/isaak/app/api/isaak/chift/status/      — GET: estado conexión
+apps/isaak/app/api/isaak/chift/disconnect/  — DELETE: desconectar
+apps/isaak/app/(workspace)/chift/page.tsx   — Workspace page
+apps/isaak/app/components/IsaakHomeLanding.tsx — Sección logos ERPs
 ```
 
-**Variables de entorno:**
+**Variables de entorno pendientes** (añadir en Vercel proyecto `isaak` cuando lleguen):
 
 ```
-CHIFT_CLIENT_ID / CHIFT_CLIENT_SECRET / CHIFT_API_BASE
+CHIFT_CLIENT_ID
+CHIFT_CLIENT_SECRET
+CHIFT_ACCOUNT_ID
 ```
 
-**Prerequisito:** Registrarse en chift.eu y obtener API key de desarrollo (acceso gratuito para dev).
-
-**Esfuerzo:** M (1 sprint una vez obtenidas las credenciales Chift)
+**Bloqueador:** Error de claim validator en portal Chift (st-perm, `actualValue: []`). Email enviado a support@chift.eu. Cuenta requiere activación manual por Chift.
 
 ---
 
-### Admin D4: MarketingCampaign (pendiente menor)
+### Admin D4: MarketingCampaign ✅ (2026-05-21)
 
-- Modelo Prisma `MarketingCampaign` + migración
-- Historial de campañas enviadas en panel admin `/admin-marketing`
-- Esfuerzo: XS (pocas horas)
+- Modelo Prisma `MarketingCampaign` + migración `20260521210000`
+- Send route persiste cada campaña tras envío (segment, subject, sentBy, counts)
+- Historial de últimas 20 campañas en tabla en `/admin-marketing`
 
 ---
 
 ## Stack técnico — librerías por fase
 
-| Fase/Sprint | Librerías añadidas                                  | Estado  |
-| ----------- | --------------------------------------------------- | ------- |
-| G           | `react-markdown`, `remark-gfm`                      | ✅      |
-| H           | `recharts`, `xlsx` (SheetJS)                        | ✅      |
-| VF-2        | `node-forge`, `@types/node-forge`                   | ✅      |
-| OG images   | `next/og` (built-in Next.js 15)                     | ✅      |
-| G-2         | Sin librerías nuevas (Google APIs via fetch nativo) | Pending |
-| M           | Sin librerías nuevas (Microsoft Graph via fetch)    | Pending |
-| P3-4-A/B    | Sin librerías nuevas (fetch nativo + OData params)  | Pending |
-| P3-4-C      | `chift-sdk` o fetch nativo según Chift docs         | Pending |
+| Fase/Sprint | Librerías añadidas                                   | Estado                        |
+| ----------- | ---------------------------------------------------- | ----------------------------- |
+| G           | `react-markdown`, `remark-gfm`                       | ✅                            |
+| H           | `recharts`, `xlsx` (SheetJS)                         | ✅                            |
+| VF-2        | `node-forge`, `@types/node-forge`                    | ✅                            |
+| OG images   | `next/og` (built-in Next.js 15)                      | ✅                            |
+| G-2         | Sin librerías nuevas (Google APIs via fetch nativo)  | ✅                            |
+| M           | Sin librerías nuevas (Microsoft Graph via fetch)     | ✅                            |
+| P3-4-A/B    | Sin librerías nuevas (fetch nativo + OData params)   | ⏳                            |
+| P3-4-C      | Sin librerías nuevas (fetch nativo según Chift docs) | 🔄 Bloqueado activación Chift |
 
 ---
 
@@ -299,6 +243,7 @@ CHIFT_CLIENT_ID / CHIFT_CLIENT_SECRET / CHIFT_API_BASE
 | Branding facturas PDF   | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                               |
 | Isaak Público           | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                             |
 | `INTERNAL_API_SECRET`   | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                           |
-| Google LLM tools (G-2)  | Chat route expone `google_*` tools que el LLM invoca directamente. Re-auth si scope insuficiente (`gmail.modify` upgrade).                                  |
-| Microsoft Graph (M)     | Multi-tenant Azure AD app. `IsaakMicrosoftToken` per `(tenantId, userId)`. Mismo patrón OAuth + auto-refresh que Google.                                    |
-| ERP aggregator (P3-4-C) | Chift como capa única para Sage/A3/ContaPlus/etc. `ChiftErpClient implements ErpClient` — un adapter cubre 50+ ERPs.                                        |
+| Google LLM tools (G-2)  | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                     |
+| Microsoft Graph (M)     | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                               |
+| ERP aggregator (P3-4-C) | Chift como capa única. `ChiftErpClient implements ErpClient` + 4 rutas API + `/chift` workspace. 🔄 Activación cuenta Chift pendiente.                      |
+| Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21                                                                      |

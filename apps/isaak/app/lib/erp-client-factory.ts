@@ -1,5 +1,4 @@
 // Factory: returns the right ErpClient for a tenant based on their active ExternalConnection.
-// Currently only Holded is implemented. Sage 200c and a3innuva come in P3-4-A/B.
 
 import { decryptHoldedSecret, getHoldedConnection } from './holded-integration';
 
@@ -29,7 +28,7 @@ export async function getErpClient(tenantId: string): Promise<ErpClient> {
   const conn = await prisma.externalConnection.findFirst({
     where: {
       tenantId,
-      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest'] },
+      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest', 'chift'] },
       connectionStatus: 'connected',
     },
     orderBy: { connectedAt: 'desc' },
@@ -56,6 +55,11 @@ export async function getErpClient(tenantId: string): Promise<ErpClient> {
         const apiKey = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
         return new HotelgestErpClient(apiKey);
       }
+      case 'chift': {
+        const { ChiftErpClient } = await import('./chift-erp-client');
+        const consumerId = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
+        return new ChiftErpClient(consumerId);
+      }
     }
   }
 
@@ -70,7 +74,7 @@ export async function hasErpConnected(tenantId: string): Promise<boolean> {
   const count = await prisma.externalConnection.count({
     where: {
       tenantId,
-      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest'] },
+      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest', 'chift'] },
       connectionStatus: 'connected',
     },
   });
