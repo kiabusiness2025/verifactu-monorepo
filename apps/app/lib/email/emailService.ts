@@ -3,7 +3,7 @@
  * Sistema completo de envío de emails con Resend
  */
 
-type EmailSenderProfile = 'default' | 'holded';
+type EmailSenderProfile = 'default' | 'holded' | 'holded_chatgpt' | 'holded_claude';
 
 function cleanEnv(value?: string | null) {
   return value?.replace(/[\r\n]/g, '').trim() || '';
@@ -14,7 +14,14 @@ const HOLDED_RESEND_API_KEY = cleanEnv(process.env.RESEND_API_KEY_HOLDED) || DEF
 const DEFAULT_EMAIL_FROM =
   cleanEnv(process.env.RESEND_FROM) || 'Verifactu Business <no-reply@verifactu.business>';
 const HOLDED_EMAIL_FROM =
-  cleanEnv(process.env.RESEND_FROM_HOLDED) || 'Holded <no-reply@holded.verifactu.business>';
+  cleanEnv(process.env.RESEND_FROM_HOLDED) ||
+  'Conector Holded <no-reply@holded.verifactu.business>';
+const HOLDED_CHATGPT_EMAIL_FROM =
+  cleanEnv(process.env.RESEND_FROM_HOLDED_CHATGPT) ||
+  'ChatGPT x Holded <no-reply@holded.verifactu.business>';
+const HOLDED_CLAUDE_EMAIL_FROM =
+  cleanEnv(process.env.RESEND_FROM_HOLDED_CLAUDE) ||
+  'Claude x Holded <no-reply@holded.verifactu.business>';
 
 // Alias de emails según contexto
 const EMAIL_FROM_SUPPORT = cleanEnv(process.env.RESEND_FROM_SUPPORT) || DEFAULT_EMAIL_FROM;
@@ -22,11 +29,14 @@ const EMAIL_FROM_NOREPLY = cleanEnv(process.env.RESEND_FROM_NOREPLY) || DEFAULT_
 const EMAIL_FROM_INFO = cleanEnv(process.env.RESEND_FROM_INFO) || DEFAULT_EMAIL_FROM;
 
 function resolveEmailTransport(senderProfile: EmailSenderProfile) {
+  if (senderProfile === 'holded_chatgpt') {
+    return { apiKey: HOLDED_RESEND_API_KEY, from: HOLDED_CHATGPT_EMAIL_FROM };
+  }
+  if (senderProfile === 'holded_claude') {
+    return { apiKey: HOLDED_RESEND_API_KEY, from: HOLDED_CLAUDE_EMAIL_FROM };
+  }
   if (senderProfile === 'holded') {
-    return {
-      apiKey: HOLDED_RESEND_API_KEY,
-      from: HOLDED_EMAIL_FROM,
-    };
+    return { apiKey: HOLDED_RESEND_API_KEY, from: HOLDED_EMAIL_FROM };
   }
 
   return {
@@ -34,6 +44,8 @@ function resolveEmailTransport(senderProfile: EmailSenderProfile) {
     from: EMAIL_FROM_NOREPLY,
   };
 }
+
+export type { EmailSenderProfile };
 
 export interface SendEmailParams {
   to: string;

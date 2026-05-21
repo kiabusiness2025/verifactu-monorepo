@@ -107,7 +107,7 @@ export function ConnectorPageShell({
               ))}
             </div>
             <p className="w-full text-center text-xs text-slate-400 sm:w-auto sm:text-right">
-              Expert Estudios Profesionales, SLU · Verifactu Business · Holded Solution Partner
+              Verifactu Business · Holded Solution Partner
             </p>
           </div>
         </footer>
