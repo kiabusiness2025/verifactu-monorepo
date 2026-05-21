@@ -8,7 +8,7 @@ const CALENDAR_API = 'https://www.googleapis.com/calendar/v3';
 const SCOPES = [
   'https://www.googleapis.com/auth/calendar.events',
   'https://www.googleapis.com/auth/userinfo.email',
-  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/gmail.modify',
   'https://www.googleapis.com/auth/drive.file',
 ].join(' ');
 
@@ -180,4 +180,80 @@ export async function syncFiscalDeadlinesToCalendar(
   }
 
   return { created, skipped, errors };
+}
+
+export type CalendarEvent = {
+  id: string;
+  summary?: string;
+  description?: string;
+  start?: { date?: string; dateTime?: string; timeZone?: string };
+  end?: { date?: string; dateTime?: string; timeZone?: string };
+  status?: string;
+  htmlLink?: string;
+};
+
+export async function listCalendarEvents(
+  accessToken: string,
+  options: { timeMin?: string; timeMax?: string; maxResults?: number; q?: string } = {}
+): Promise<CalendarEvent[]> {
+  const params = new URLSearchParams({
+    singleEvents: 'true',
+    orderBy: 'startTime',
+    maxResults: String(options.maxResults ?? 20),
+  });
+  if (options.timeMin) params.set('timeMin', options.timeMin);
+  else params.set('timeMin', new Date().toISOString());
+  if (options.timeMax) params.set('timeMax', options.timeMax);
+  if (options.q) params.set('q', options.q);
+
+  const res = await fetch(`${CALENDAR_API}/calendars/primary/events?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as { items?: CalendarEvent[] };
+  return data.items ?? [];
+}
+
+export async function createCalendarEvent(
+  accessToken: string,
+  event: {
+    summary: string;
+    description?: string;
+    start: { date?: string; dateTime?: string; timeZone?: string };
+    end: { date?: string; dateTime?: string; timeZone?: string };
+  }
+): Promise<{ id: string; htmlLink?: string } | null> {
+  const res = await fetch(`${CALENDAR_API}/calendars/primary/events`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(event),
+  });
+  if (!res.ok) return null;
+  return res.json() as Promise<{ id: string; htmlLink?: string }>;
+}
+
+export async function updateCalendarEvent(
+  accessToken: string,
+  eventId: string,
+  patch: {
+    summary?: string;
+    description?: string;
+    start?: { date?: string; dateTime?: string; timeZone?: string };
+    end?: { date?: string; dateTime?: string; timeZone?: string };
+  }
+): Promise<boolean> {
+  const res = await fetch(`${CALENDAR_API}/calendars/primary/events/${eventId}`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+  });
+  return res.ok;
+}
+
+export async function deleteCalendarEvent(accessToken: string, eventId: string): Promise<boolean> {
+  const res = await fetch(`${CALENDAR_API}/calendars/primary/events/${eventId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  return res.status === 204 || res.ok;
 }

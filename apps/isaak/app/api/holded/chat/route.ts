@@ -30,6 +30,7 @@ import { prisma } from '@/app/lib/prisma';
 import { getAeatNotifications, loadTenantCertPem } from '@/app/lib/aeat-sede';
 import { createIsaakInvoiceDraft, issueIsaakInvoice } from '@/app/lib/invoice-service';
 import { HOLDED_CHAT_TOOLS, executeHoldedTool, type HoldedToolName } from '@/app/lib/holded-tools';
+import { GOOGLE_CHAT_TOOLS, executeGoogleTool, isGoogleToolName } from '@/app/lib/google-tools';
 
 export const runtime = 'nodejs';
 
@@ -684,6 +685,8 @@ async function buildLlmReplyWithTools(input: {
   holdedApiKey: string;
   apiKey: string;
   model: string;
+  tenantId: string;
+  userId: string;
 }): Promise<string | null> {
   const MAX_ITERATIONS = 6;
 
@@ -705,7 +708,7 @@ async function buildLlmReplyWithTools(input: {
         max_tokens: 1024,
         system: input.systemPrompt,
         messages,
-        tools: HOLDED_CHAT_TOOLS,
+        tools: [...HOLDED_CHAT_TOOLS, ...GOOGLE_CHAT_TOOLS],
         tool_choice: { type: 'auto' },
       }),
     });
@@ -736,11 +739,9 @@ async function buildLlmReplyWithTools(input: {
     // Execute each tool call and collect results
     const toolResults: AnthropicContent[] = await Promise.all(
       toolUseBlocks.map(async (block) => {
-        const result = await executeHoldedTool(
-          input.holdedApiKey,
-          block.name as HoldedToolName,
-          block.input
-        );
+        const result = isGoogleToolName(block.name)
+          ? await executeGoogleTool(input.tenantId, input.userId, block.name, block.input)
+          : await executeHoldedTool(input.holdedApiKey, block.name as HoldedToolName, block.input);
         return {
           type: 'tool_result' as const,
           tool_use_id: block.id,
@@ -1220,6 +1221,8 @@ export async function POST(request: NextRequest) {
             holdedApiKey: effectiveHoldedApiKey,
             apiKey: anthropicApiKey,
             model: modelConfig?.model ?? 'claude-haiku-4-5-20251001',
+            tenantId: session.tenantId,
+            userId: session.userId,
           }).catch((error) => {
             console.warn('[holded/chat] tool loop failed, falling back', {
               tenantId: session.tenantId,
