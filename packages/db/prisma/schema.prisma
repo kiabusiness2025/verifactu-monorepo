@@ -538,6 +538,8 @@ model Tenant {
   isaakPublicEnabled Boolean @default(false) @map("isaak_public_enabled")
   isaakPublicSlug    String? @unique @map("isaak_public_slug")
 
+  whitelabelConfig Json? @map("whitelabel_config")
+
   users                       Membership[]
   userPref                    UserPreference[]
   tenantSubscriptions         TenantSubscription[]

@@ -3,6 +3,7 @@ import { getHoldedSession } from '@/app/lib/holded-session';
 import { listHoldedConversations } from '@/app/lib/holded-chat';
 import { loadBillingData } from '@/app/lib/settings';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
+import { prisma } from '@/app/lib/prisma';
 import IsaakSidebar from './components/IsaakSidebar';
 import IsaakCopilotPanel from './components/IsaakCopilotPanel';
 import IsaakBottomNav from './components/IsaakBottomNav';
@@ -22,14 +23,30 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     redirect('/auth');
   }
 
-  const [conversations, billing, holdedConn] = await Promise.all([
+  const [conversations, billing, holdedConn, tenantWl] = await Promise.all([
     listHoldedConversations({
       tenantId: session.tenantId,
       userId: session.userId,
     }).catch(() => []),
     loadBillingData({ tenantId: session.tenantId }).catch(() => null),
     getHoldedConnection(session.tenantId).catch(() => null),
+    prisma.tenant
+      .findUnique({ where: { id: session.tenantId }, select: { whitelabelConfig: true } })
+      .catch(() => null),
   ]);
+
+  type WhitelabelConfig = {
+    enabled?: boolean;
+    companyName?: string;
+    logoUrl?: string;
+    primaryColor?: string;
+    faviconUrl?: string;
+    supportEmail?: string;
+    hidePoweredBy?: boolean;
+  };
+  const whitelabel = ((tenantWl?.whitelabelConfig ?? null) as WhitelabelConfig | null)?.enabled
+    ? (tenantWl!.whitelabelConfig as WhitelabelConfig)
+    : null;
 
   const user = {
     name: session.name ?? 'Usuario',
@@ -53,11 +70,19 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
 
   return (
     <div className="flex h-[100dvh] overflow-hidden bg-[#0b1a40] font-sans">
+      {whitelabel?.primaryColor && (
+        <style
+          dangerouslySetInnerHTML={{
+            __html: `:root { --brand-primary: ${whitelabel.primaryColor}; }`,
+          }}
+        />
+      )}
       <IsaakSidebar
         user={user}
         conversations={conversations}
         planInfo={planInfo}
         holdedConnected={holdedConnected}
+        whitelabel={whitelabel}
       />
       <main className="relative flex flex-1 overflow-hidden bg-white">
         <div className="flex flex-1 flex-col overflow-hidden">
