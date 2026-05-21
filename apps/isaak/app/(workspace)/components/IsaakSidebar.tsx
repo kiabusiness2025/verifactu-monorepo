@@ -9,6 +9,7 @@ import {
   Bell,
   CalendarDays,
   ChevronLeft,
+  Cloud,
   Landmark,
   Mail,
   ChevronRight,
@@ -64,6 +65,7 @@ const NAV_SECTIONS = [
   { href: '/sede', label: 'Sede Electrónica', icon: PlugZap },
   { href: '/banking', label: 'Open Banking', icon: Landmark },
   { href: '/mail', label: 'Gmail Facturas', icon: Mail },
+  { href: '/microsoft', label: 'Microsoft 365', icon: Cloud },
   { href: '/advisor', label: 'Mis clientes', icon: Building2 },
   { href: '/settings', label: 'Ajustes', icon: Settings },
 ];

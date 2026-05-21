@@ -31,6 +31,11 @@ import { getAeatNotifications, loadTenantCertPem } from '@/app/lib/aeat-sede';
 import { createIsaakInvoiceDraft, issueIsaakInvoice } from '@/app/lib/invoice-service';
 import { HOLDED_CHAT_TOOLS, executeHoldedTool, type HoldedToolName } from '@/app/lib/holded-tools';
 import { GOOGLE_CHAT_TOOLS, executeGoogleTool, isGoogleToolName } from '@/app/lib/google-tools';
+import {
+  MICROSOFT_CHAT_TOOLS,
+  executeMicrosoftTool,
+  isMicrosoftToolName,
+} from '@/app/lib/microsoft-tools';
 
 export const runtime = 'nodejs';
 
@@ -708,7 +713,7 @@ async function buildLlmReplyWithTools(input: {
         max_tokens: 1024,
         system: input.systemPrompt,
         messages,
-        tools: [...HOLDED_CHAT_TOOLS, ...GOOGLE_CHAT_TOOLS],
+        tools: [...HOLDED_CHAT_TOOLS, ...GOOGLE_CHAT_TOOLS, ...MICROSOFT_CHAT_TOOLS],
         tool_choice: { type: 'auto' },
       }),
     });
@@ -741,7 +746,13 @@ async function buildLlmReplyWithTools(input: {
       toolUseBlocks.map(async (block) => {
         const result = isGoogleToolName(block.name)
           ? await executeGoogleTool(input.tenantId, input.userId, block.name, block.input)
-          : await executeHoldedTool(input.holdedApiKey, block.name as HoldedToolName, block.input);
+          : isMicrosoftToolName(block.name)
+            ? await executeMicrosoftTool(input.tenantId, input.userId, block.name, block.input)
+            : await executeHoldedTool(
+                input.holdedApiKey,
+                block.name as HoldedToolName,
+                block.input
+              );
         return {
           type: 'tool_result' as const,
           tool_use_id: block.id,

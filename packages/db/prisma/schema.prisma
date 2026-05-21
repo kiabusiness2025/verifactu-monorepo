@@ -561,6 +561,7 @@ model Tenant {
   externalSyncRuns            ExternalSyncRun[]
   isaakConversations          IsaakConversation[]
   isaakGoogleTokens           IsaakGoogleToken[]
+  isaakMicrosoftTokens        IsaakMicrosoftToken[]
   isaakAlerts                 IsaakAlert[]
   isaakGmailScans             IsaakGmailScan[]
   isaakPushSubscriptions      IsaakPushSubscription[]
@@ -1922,6 +1923,28 @@ model IsaakGoogleToken {
   @@unique([tenantId, userId])
   @@index([tenantId])
   @@map("isaak_google_tokens")
+}
+
+// ==================== ISAAK: MICROSOFT TOKEN ====================
+
+model IsaakMicrosoftToken {
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id") @db.Uuid
+  userId       String    @map("user_id")
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz
+  email        String?
+  displayName  String?   @map("display_name")
+  scopes       String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@map("isaak_microsoft_tokens")
 }
 
 // ==================== ISAAK: GMAIL SCANS ====================
