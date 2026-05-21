@@ -36,6 +36,11 @@ function isCronAuthorized(request: NextRequest) {
   return Boolean(received) && received === requiredSecret;
 }
 
+// Vercel Crons invoke with GET; POST kept for manual calls.
+export async function GET(request: NextRequest) {
+  return POST(request);
+}
+
 export async function POST(request: NextRequest) {
   if (!isCronAuthorized(request)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
@@ -63,9 +68,12 @@ export async function POST(request: NextRequest) {
         })),
       });
     } catch (err) {
-      console.warn('[cron/connector-health] createMany failed, falling back to individual inserts', {
-        message: err instanceof Error ? err.message : String(err),
-      });
+      console.warn(
+        '[cron/connector-health] createMany failed, falling back to individual inserts',
+        {
+          message: err instanceof Error ? err.message : String(err),
+        }
+      );
       for (const r of results) {
         try {
           await prisma.connectorHealthCheck.create({
