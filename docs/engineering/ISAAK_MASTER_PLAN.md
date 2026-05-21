@@ -125,21 +125,6 @@ Página: `apps/isaak/app/p/[slug]/page.tsx` — sin auth, 404 si inactivo.
 
 ### ~~P3-1: Modo Asesoría~~ — ✅ Completado 2026-05-19
 
-### P3-2: White-label
-
-**Objetivo:** Isaak con marca propia por tenant (logo, nombre, colores, dominio custom).
-
-**Precondición:** `InvoiceTemplate` + branding ya implementados (VF-T ✅).
-
-**Cambios técnicos:**
-
-- Campo `whitelabelConfig JSON` en `Tenant` (nombre app, colores, logoUrl, dominio)
-- Middleware: si request viene de dominio custom → cargar config del tenant asociado
-- UI pública: usar `whitelabelConfig` en lugar de branding Isaak
-- Plan Enterprise únicamente
-
-**Esfuerzo estimado:** M (1 sprint)
-
 ### P3-3: Modelos AEAT — 303/130/390
 
 **Objetivo:** Borradores de modelos fiscales pre-rellenados con datos Holded.

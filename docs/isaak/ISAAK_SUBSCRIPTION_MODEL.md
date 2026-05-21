@@ -46,15 +46,6 @@
 
 ---
 
-## Enterprise (>10 usuarios o white-label)
-
-- Precio: desde €499/mes
-- White-label: Isaak con tu marca (para asesorías/gestorías)
-- On-premise: deploy en infraestructura del cliente
-- SSO/SAML
-- SLA 99.9% con soporte 24/7
-- Formación del equipo incluida
-
 ---
 
 ## Lógica de trial → conversión

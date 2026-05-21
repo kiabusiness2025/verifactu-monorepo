@@ -28,13 +28,12 @@
 
 ## Tarifas definitivas (vigentes desde 2026-05-16)
 
-| Plan           | Precio          | Límites                                                            | IA incluida                          |
-| -------------- | --------------- | ------------------------------------------------------------------ | ------------------------------------ |
-| **Free**       | 0 €             | 10 mensajes/día · solo chat fiscal general · sin Holded            | Sí — Claude Haiku                    |
-| **Starter**    | 19 €/mes        | Holded conectado · 200 consultas/mes · sin OCR ni Google           | Sí — Claude Haiku                    |
-| **Pro**        | 49 €/mes        | Ilimitado · OCR · Google Calendar/Gmail/Drive · voz · push         | Sí — Claude Sonnet                   |
-| **Business**   | 149 €/mes       | Todo Pro + multi-usuario (10) · modelos AEAT · banking · multi-ERP | Sí — Claude Sonnet + GPT-4o opcional |
-| **Enterprise** | Desde 499 €/mes | White-label · on-premise · SSO · SLA 99,9%                         | A medida                             |
+| Plan         | Precio    | Límites                                                            | IA incluida                          |
+| ------------ | --------- | ------------------------------------------------------------------ | ------------------------------------ |
+| **Free**     | 0 €       | 10 mensajes/día · solo chat fiscal general · sin Holded            | Sí — Claude Haiku                    |
+| **Starter**  | 19 €/mes  | Holded conectado · 200 consultas/mes · sin OCR ni Google           | Sí — Claude Haiku                    |
+| **Pro**      | 49 €/mes  | Ilimitado · OCR · Google Calendar/Gmail/Drive · voz · push         | Sí — Claude Sonnet                   |
+| **Business** | 149 €/mes | Todo Pro + multi-usuario (10) · modelos AEAT · banking · multi-ERP | Sí — Claude Sonnet + GPT-4o opcional |
 
 **Descuento anual:** −20% en todos los planes de pago.
 
@@ -161,12 +160,11 @@ IsaakSiteChrome subtitle + footer fix · pricing AEAT section (Sede Electrónica
 
 ## Backlog P3 — Asesorías y B2B (mes 3+)
 
-| ID   | Tarea                                                                                                                                                   | Esfuerzo estimado |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| P3-1 | ~~**Modo Asesoría**~~ ✅ Completado 2026-05-19                                                                                                          | —                 |
-| P3-2 | **White-label**: Isaak con marca propia por tenant (logo, nombre, colores, dominio custom). Precondición: `InvoiceTemplate` + branding ya implementados | M (1 sprint)      |
-| P3-3 | **Modelos AEAT Business**: borradores 303, 130, 390 pre-rellenados con datos Holded. UI wizard paso a paso                                              | L (2 sprints)     |
-| P3-4 | **Conector Sage / A3**: segundo ERP. Arquitectura: `ERP_TYPE` por tenant, capa de abstracción `erp-client.ts`                                           | XL (3+ sprints)   |
+| ID   | Tarea                                                                                                         | Esfuerzo estimado |
+| ---- | ------------------------------------------------------------------------------------------------------------- | ----------------- |
+| P3-1 | ~~**Modo Asesoría**~~ ✅ Completado 2026-05-19                                                                | —                 |
+| P3-3 | **Modelos AEAT Business**: borradores 303, 130, 390 pre-rellenados con datos Holded. UI wizard paso a paso    | L (2 sprints)     |
+| P3-4 | **Conector Sage / A3**: segundo ERP. Arquitectura: `ERP_TYPE` por tenant, capa de abstracción `erp-client.ts` | XL (3+ sprints)   |
 
 ---
 

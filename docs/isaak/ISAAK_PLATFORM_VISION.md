@@ -58,13 +58,13 @@ un co-piloto que conoce tu negocio, trabaja a tu lado y actúa cuando le pides.
 
 - Usa Isaak para gestionar varios clientes desde un panel
 - Necesita alertas automáticas por cliente
-- Plan Enterprise / white-label
+- Plan Business (Modo Asesoría ✅)
 
 ### Terciario: CFO o director financiero de pyme mediana
 
 - 15–100 empleados, ERP propio, equipo de administración pequeño
 - Necesita dashboards, conciliación bancaria, análisis predictivo
-- Plan Business o Enterprise
+- Plan Business
 
 ---
 
@@ -113,7 +113,7 @@ SaaS mensual/anual con 30 días de trial completo (plan Pro).
 Starter   €29/mes  →  pymes pequeñas, 1 ERP, chat + dashboard
 Pro       €69/mes  →  email + calendar + OCR + voz
 Business  €149/mes →  banking + multi-ERP + equipo + documentos
-Enterprise  custom →  white-label, SLA, on-premise
+Business    €149/mes →  multi-usuario, banking, AEAT
 ```
 
 Ver detalle en `ISAAK_SUBSCRIPTION_MODEL.md`.
