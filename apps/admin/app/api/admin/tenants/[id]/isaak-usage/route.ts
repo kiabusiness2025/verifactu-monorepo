@@ -1,7 +1,6 @@
 /**
  * GET /api/admin/tenants/[id]/isaak-usage
- * Devuelve métricas de uso de Isaak para el tenant:
- * conversaciones, mensajes, feedback y última actividad.
+ * Métricas de uso de Isaak para un tenant.
  */
 
 import { query } from '@/lib/db';
@@ -16,22 +15,23 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     await requireAdmin(req);
     const { id: tenantId } = await params;
 
-    const [convRows, msgRows, feedbackRows, eventRows] = await Promise.all([
-      // Conversations
+    const [convRows, msgRows, activeRows, dailyRows, recentRows, topRows] = await Promise.all([
+      // Totals: conversations + first/last activity
       query<{
         total: number;
         last_activity: string | null;
         first_activity: string | null;
       }>(
         `SELECT
-           COUNT(*)::int          AS total,
-           MAX("updatedAt")::text AS last_activity,
-           MIN("createdAt")::text AS first_activity
-         FROM "IsaakConversation"
-         WHERE "tenantId" = $1`,
+           COUNT(*)::int               AS total,
+           MAX(last_activity)::text    AS last_activity,
+           MIN(created_at)::text       AS first_activity
+         FROM isaak_conversations
+         WHERE tenant_id = $1::uuid`,
         [tenantId]
       ),
-      // Messages (last 30 days vs total)
+
+      // Messages: total, last 30 days, by role
       query<{
         total_messages: number;
         messages_30d: number;
@@ -39,37 +39,85 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         assistant_messages: number;
       }>(
         `SELECT
-           COUNT(*)::int                                                      AS total_messages,
-           COUNT(*) FILTER (WHERE "createdAt" >= NOW() - INTERVAL '30 days')::int AS messages_30d,
-           COUNT(*) FILTER (WHERE role = 'user')::int                        AS user_messages,
-           COUNT(*) FILTER (WHERE role = 'assistant')::int                   AS assistant_messages
-         FROM "IsaakConversationMsg" m
-         JOIN "IsaakConversation"    c ON c.id = m."conversationId"
-         WHERE c."tenantId" = $1`,
+           COUNT(*)::int                                                           AS total_messages,
+           COUNT(*) FILTER (WHERE m.created_at >= NOW() - INTERVAL '30 days')::int AS messages_30d,
+           COUNT(*) FILTER (WHERE m.role = 'user')::int                            AS user_messages,
+           COUNT(*) FILTER (WHERE m.role = 'assistant')::int                       AS assistant_messages
+         FROM isaak_conversation_messages m
+         JOIN isaak_conversations c ON c.id = m.conversation_id
+         WHERE c.tenant_id = $1::uuid`,
         [tenantId]
       ),
-      // Feedback from isaak_feedback table (module_key = holded_chat)
+
+      // Active users last 7 days
+      query<{ active_users: number }>(
+        `SELECT COUNT(DISTINCT user_id)::int AS active_users
+         FROM isaak_conversations
+         WHERE tenant_id = $1::uuid
+           AND last_activity >= NOW() - INTERVAL '7 days'`,
+        [tenantId]
+      ),
+
+      // Messages per day last 14 days (user turns only)
+      query<{ day: string; user_msgs: number }>(
+        `SELECT
+           date_trunc('day', m.created_at AT TIME ZONE 'UTC')::date::text AS day,
+           COUNT(*) FILTER (WHERE m.role = 'user')::int                   AS user_msgs
+         FROM isaak_conversation_messages m
+         JOIN isaak_conversations c ON c.id = m.conversation_id
+         WHERE c.tenant_id = $1::uuid
+           AND m.created_at >= NOW() - INTERVAL '14 days'
+         GROUP BY 1
+         ORDER BY 1`,
+        [tenantId]
+      ),
+
+      // Recent 5 conversations
       query<{
-        thumbs_up: number;
-        thumbs_down: number;
+        id: string;
+        title: string | null;
+        message_count: number;
+        last_activity: string;
+        user_email: string;
+        user_name: string | null;
       }>(
         `SELECT
-           COUNT(*) FILTER (WHERE rating = 'thumbs_up')::int   AS thumbs_up,
-           COUNT(*) FILTER (WHERE rating = 'thumbs_down')::int AS thumbs_down
-         FROM isaak_feedback
-         WHERE module_key = 'holded_chat'
-           AND tenant_id  = $1::uuid`,
+           ic.id,
+           ic.title,
+           ic.message_count,
+           ic.last_activity::text,
+           u.email  AS user_email,
+           u.name   AS user_name
+         FROM isaak_conversations ic
+         JOIN "User" u ON u.id = ic.user_id
+         WHERE ic.tenant_id = $1::uuid
+         ORDER BY ic.last_activity DESC
+         LIMIT 5`,
         [tenantId]
-      ).catch(() => [{ thumbs_up: 0, thumbs_down: 0 }]),
-      // Usage events (FIRST_CHAT_CREATED, etc.)
-      query<{ type: string; count: number }>(
-        `SELECT type, COUNT(*)::int AS count
-         FROM "UsageEvent"
-         WHERE "tenantId" = $1
-           AND type LIKE '%CHAT%'
-         GROUP BY type`,
+      ),
+
+      // Top 5 users by message count
+      query<{
+        user_id: string;
+        user_email: string;
+        user_name: string | null;
+        conversations: number;
+        messages: number;
+      }>(
+        `SELECT
+           ic.user_id,
+           u.email                      AS user_email,
+           u.name                       AS user_name,
+           COUNT(DISTINCT ic.id)::int   AS conversations,
+           COALESCE(SUM(ic.message_count), 0)::int AS messages
+         FROM isaak_conversations ic
+         JOIN "User" u ON u.id = ic.user_id
+         WHERE ic.tenant_id = $1::uuid
+         GROUP BY ic.user_id, u.email, u.name
+         ORDER BY messages DESC
+         LIMIT 5`,
         [tenantId]
-      ).catch(() => [] as { type: string; count: number }[]),
+      ),
     ]);
 
     const conv = convRows[0] ?? { total: 0, last_activity: null, first_activity: null };
@@ -79,7 +127,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       user_messages: 0,
       assistant_messages: 0,
     };
-    const fb = feedbackRows[0] ?? { thumbs_up: 0, thumbs_down: 0 };
+    const active = activeRows[0]?.active_users ?? 0;
 
     return NextResponse.json({
       conversations: {
@@ -95,11 +143,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           assistant: msg.assistant_messages,
         },
       },
-      feedback: {
-        thumbsUp: fb.thumbs_up,
-        thumbsDown: fb.thumbs_down,
-      },
-      usageEvents: eventRows,
+      activeUsers7d: active,
+      dailyMessages: dailyRows,
+      recentConversations: recentRows,
+      topUsers: topRows,
     });
   } catch (error) {
     if (error instanceof Error && error.message.includes('FORBIDDEN')) {
