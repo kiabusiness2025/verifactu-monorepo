@@ -1,6 +1,12 @@
-import { sendCustomEmail } from '@/lib/email/emailService';
+import { sendCustomEmail, type EmailSenderProfile } from '@/lib/email/emailService';
 import { getPreferredFirstName, getPreferredFullName } from '@/lib/personName';
 import { getAppUrl } from '@verifactu/utils';
+
+function channelToSenderProfile(channel?: HoldedLifecycleChannel): EmailSenderProfile {
+  if (channel === 'claude') return 'holded_claude';
+  if (channel === 'chatgpt' || channel === 'mobile') return 'holded_chatgpt';
+  return 'holded';
+}
 
 const ADMIN_NOTIFICATION_EMAIL =
   process.env.SUPPORT_NOTIFICATION_EMAIL?.trim() || 'soporte@verifactu.business';
@@ -338,7 +344,7 @@ export async function sendWelcomeLifecycleEmails(args: TenantEmailContext) {
       sendCustomEmail({
         to: safeUserEmail,
         subject: 'Bienvenido a Verifactu Business',
-        senderProfile: 'holded',
+        senderProfile: channelToSenderProfile(args.channel),
         html: buildWelcomeUserHtml({
           userFirstName: safeUserFirstName,
           tenantDisplayName: company.displayName,
@@ -401,7 +407,7 @@ export async function sendHoldedConnectionLifecycleEmails(args: {
       sendCustomEmail({
         to: safeUserEmail,
         subject: `Holded: ${actionLabel}`,
-        senderProfile: 'holded',
+        senderProfile: channelToSenderProfile(args.channel),
         html: buildUserHtml({
           userFirstName: safeUserFirstName,
           tenantDisplayName: company.displayName,
@@ -422,7 +428,7 @@ export async function sendHoldedConnectionLifecycleEmails(args: {
       sendCustomEmail({
         to: safeCompanyEmail,
         subject: `Holded: ${actionLabel}`,
-        senderProfile: 'holded',
+        senderProfile: channelToSenderProfile(args.channel),
         html: buildUserHtml({
           userFirstName: 'equipo',
           tenantDisplayName: company.displayName,

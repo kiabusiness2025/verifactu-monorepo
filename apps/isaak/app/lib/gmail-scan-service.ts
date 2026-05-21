@@ -254,7 +254,7 @@ export async function scanGmailForInvoices(
 }
 
 /**
- * Check whether the stored token for this tenant/user includes the Gmail readonly scope.
+ * Check whether the stored token includes Gmail read access (readonly or modify).
  */
 export async function hasGmailScope(tenantId: string, userId: string): Promise<boolean> {
   const token = await prisma.isaakGoogleToken
@@ -264,5 +264,45 @@ export async function hasGmailScope(tenantId: string, userId: string): Promise<b
     })
     .catch(() => null);
   if (!token?.scopes) return false;
-  return token.scopes.includes('https://www.googleapis.com/auth/gmail.readonly');
+  return (
+    token.scopes.includes('https://www.googleapis.com/auth/gmail.readonly') ||
+    token.scopes.includes('https://www.googleapis.com/auth/gmail.modify')
+  );
+}
+
+/**
+ * Check whether the stored token includes gmail.modify (required for archive/label operations).
+ */
+export async function hasGmailModifyScope(tenantId: string, userId: string): Promise<boolean> {
+  const token = await prisma.isaakGoogleToken
+    .findUnique({
+      where: { tenantId_userId: { tenantId, userId } },
+      select: { scopes: true },
+    })
+    .catch(() => null);
+  if (!token?.scopes) return false;
+  return token.scopes.includes('https://www.googleapis.com/auth/gmail.modify');
+}
+
+/**
+ * Archive a Gmail message by removing it from the INBOX label.
+ * Requires gmail.modify scope.
+ */
+export async function archiveGmailMessage(
+  tenantId: string,
+  userId: string,
+  messageId: string
+): Promise<boolean> {
+  const accessToken = await refreshGoogleTokenIfNeeded(tenantId, userId);
+  if (!accessToken) return false;
+
+  const res = await fetch(`${GMAIL_API}/users/me/messages/${messageId}/modify`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ removeLabelIds: ['INBOX'] }),
+  });
+  return res.ok;
 }

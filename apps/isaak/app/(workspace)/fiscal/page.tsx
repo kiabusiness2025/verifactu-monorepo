@@ -8,6 +8,7 @@ import {
   BellOff,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   Clock,
   ExternalLink,
   Loader2,
@@ -148,6 +149,20 @@ export default function FiscalAlertsPage() {
             </div>
           </div>
         )}
+
+        {/* Modelos AEAT */}
+        <Link
+          href="/fiscal/modelos"
+          className="flex items-center justify-between rounded-xl border border-blue-200 bg-blue-50 px-5 py-4 hover:bg-blue-100 transition-colors"
+        >
+          <div>
+            <p className="text-[13px] font-semibold text-blue-900">Modelos AEAT — Borradores</p>
+            <p className="text-[11px] text-blue-700 mt-0.5">
+              303 · 130 · 390 pre-rellenados con tus datos de Holded
+            </p>
+          </div>
+          <ChevronDown size={16} className="rotate-[-90deg] text-blue-500 shrink-0" />
+        </Link>
 
         {/* AEAT Quick Access */}
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">

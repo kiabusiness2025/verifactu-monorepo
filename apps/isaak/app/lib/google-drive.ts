@@ -108,3 +108,38 @@ export async function uploadInvoiceToDrive(
 ): Promise<string | null> {
   return uploadFileToDrive(tenantId, userId, fileName, pdfBuffer, 'application/pdf');
 }
+
+export type DriveFile = {
+  id: string;
+  name: string;
+  mimeType: string;
+  size?: string;
+  modifiedTime?: string;
+  webViewLink?: string;
+};
+
+export async function listDriveFiles(
+  tenantId: string,
+  userId: string,
+  options: { maxResults?: number } = {}
+): Promise<DriveFile[]> {
+  const accessToken = await getAccessToken(tenantId, userId);
+  if (!accessToken) return [];
+
+  const folderId = await findOrCreateFolder(accessToken);
+  if (!folderId) return [];
+
+  const params = new URLSearchParams({
+    q: `'${folderId}' in parents and trashed=false`,
+    fields: 'files(id,name,mimeType,size,modifiedTime,webViewLink)',
+    pageSize: String(options.maxResults ?? 20),
+    orderBy: 'modifiedTime desc',
+  });
+
+  const res = await fetch(`${DRIVE_API}/files?${params.toString()}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as { files?: DriveFile[] };
+  return data.files ?? [];
+}

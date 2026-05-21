@@ -561,6 +561,7 @@ model Tenant {
   externalSyncRuns            ExternalSyncRun[]
   isaakConversations          IsaakConversation[]
   isaakGoogleTokens           IsaakGoogleToken[]
+  isaakMicrosoftTokens        IsaakMicrosoftToken[]
   isaakAlerts                 IsaakAlert[]
   isaakGmailScans             IsaakGmailScan[]
   isaakPushSubscriptions      IsaakPushSubscription[]
@@ -599,6 +600,7 @@ model Tenant {
   invoiceTemplates            InvoiceTemplate[]
   tenantCertificates          TenantCertificate[]
   advisorClients              AdvisorClient[]
+  erpOAuthTokens              ErpOAuthToken[]
 
   @@map("tenants")
 }
@@ -1522,6 +1524,7 @@ model ExternalConnection {
   claims                ClaimCase[]
   supportTickets        SupportTicket[]
   holdedMcpPats         HoldedMcpPersonalAccessToken[]
+  erpOAuthToken         ErpOAuthToken?
 
   @@unique([tenantId, provider, channelKey])
   @@index([tenantId, provider, channelKey, connectionStatus])
@@ -1534,6 +1537,25 @@ model ExternalConnection {
   @@index([tenantId, underClaimReview])
   @@index([technicalOperatorUserId])
   @@map("external_connections")
+}
+
+model ErpOAuthToken {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  connectionId    String   @unique @map("connection_id") @db.Uuid
+  tenantId        String   @map("tenant_id") @db.Uuid
+  provider        String
+  accessTokenEnc  String   @map("access_token_enc")
+  refreshTokenEnc String?  @map("refresh_token_enc")
+  expiresAt       DateTime @map("expires_at") @db.Timestamptz
+  scope           String   @default("")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  connection ExternalConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  tenant     Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, provider])
+  @@map("erp_oauth_tokens")
 }
 
 model ConnectionRecipient {
@@ -1901,6 +1923,28 @@ model IsaakGoogleToken {
   @@unique([tenantId, userId])
   @@index([tenantId])
   @@map("isaak_google_tokens")
+}
+
+// ==================== ISAAK: MICROSOFT TOKEN ====================
+
+model IsaakMicrosoftToken {
+  id           String    @id @default(cuid())
+  tenantId     String    @map("tenant_id") @db.Uuid
+  userId       String    @map("user_id")
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz
+  email        String?
+  displayName  String?   @map("display_name")
+  scopes       String?
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([tenantId])
+  @@map("isaak_microsoft_tokens")
 }
 
 // ==================== ISAAK: GMAIL SCANS ====================
@@ -2389,4 +2433,18 @@ model AdvisorClient {
 
   @@index([advisorTenantId, isActive])
   @@map("advisor_clients")
+}
+
+model MarketingCampaign {
+  id         String   @id @default(cuid())
+  segment    String
+  subject    String
+  sentBy     String   @map("sent_by")
+  sentCount  Int      @default(0) @map("sent_count")
+  failCount  Int      @default(0) @map("fail_count")
+  totalCount Int      @default(0) @map("total_count")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([createdAt(sort: Desc)])
+  @@map("marketing_campaigns")
 }

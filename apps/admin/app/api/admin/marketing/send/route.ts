@@ -12,14 +12,13 @@
  */
 
 import { requireAdmin } from '@/lib/adminAuth';
-import { query } from '@/lib/db';
+import { prisma, query } from '@/lib/db';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'Verifactu Business <soporte@verifactu.business>';
 const BATCH_SIZE = 100;
 
@@ -58,6 +57,7 @@ const SEGMENT_QUERY: Record<Segment, string> = {
 export async function POST(req: NextRequest) {
   try {
     const admin = await requireAdmin(req);
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const body = await req.json();
     const { segment, subject, html, text, dryRun } = body as {
@@ -139,6 +139,17 @@ export async function POST(req: NextRequest) {
     console.log(
       `[admin][marketing/send] segment=${segment} sent=${sent} failed=${failed} by=${admin.email}`
     );
+
+    await prisma.marketingCampaign.create({
+      data: {
+        segment,
+        subject: subject.trim(),
+        sentBy: admin.email ?? 'admin',
+        sentCount: sent,
+        failCount: failed,
+        totalCount: recipients.length,
+      },
+    });
 
     return NextResponse.json({ ok: true, segment, sent, failed, total: recipients.length });
   } catch (error) {

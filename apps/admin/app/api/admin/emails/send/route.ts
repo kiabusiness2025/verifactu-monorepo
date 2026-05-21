@@ -18,13 +18,13 @@ export const dynamic = 'force-dynamic';
  * }
  */
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const SUPPORT_EMAIL = 'Verifactu Business <soporte@verifactu.business>';
 
 export async function POST(request: NextRequest) {
   try {
     // Verificar autenticación de admin
     await requireAdmin(request);
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     const body = await request.json();
     const { originalEmailId, subject, message, html } = body;

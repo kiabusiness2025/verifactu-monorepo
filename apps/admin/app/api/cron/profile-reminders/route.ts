@@ -20,7 +20,6 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = 'Verifactu Business <soporte@verifactu.business>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.verifactu.business';
 const REMINDER_INTERVAL_DAYS = 3;
@@ -52,6 +51,7 @@ export async function POST(req: NextRequest) {
   if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
   }
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   // Ensure reminder log table exists
   await query(

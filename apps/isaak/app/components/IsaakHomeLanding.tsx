@@ -54,6 +54,18 @@ const ISAAK_DIFF = [
   'El software se adapta a ti, no al revés',
 ];
 
+// ERPs compatibles vía Chift — relevantes para España
+const ERP_PARTNERS = [
+  { name: 'Holded', domain: 'holded.com', connected: true },
+  { name: 'Sage', domain: 'sage.com', connected: false },
+  { name: 'A3ERP', domain: 'a3software.com', connected: false },
+  { name: 'Odoo', domain: 'odoo.com', connected: false },
+  { name: 'Xero', domain: 'xero.com', connected: false },
+  { name: 'Cegid', domain: 'cegid.com', connected: false },
+  { name: 'QuickBooks', domain: 'intuit.com', connected: false },
+  { name: 'Pennylane', domain: 'pennylane.com', connected: false },
+];
+
 type Connector = {
   name: string;
   tag: string;
@@ -517,8 +529,82 @@ export default function IsaakHomeLanding() {
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-slate-400">
-            Próximamente:{' '}
-            <span className="font-semibold text-slate-600">Sage · A3 · Xero · Stripe</span>
+            Holded conectado directamente ·{' '}
+            <span className="font-semibold text-slate-600">
+              Sage, A3ERP, Odoo, Xero y +40 ERPs más
+            </span>{' '}
+            disponibles próximamente
+          </p>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* S5b — ERP ECOSYSTEM                                                 */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <section className="border-y border-slate-100 bg-slate-50 py-14">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
+              Compatible con tu software de contabilidad
+            </p>
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-[#011c67]">
+              Conecta el ERP que ya usas
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Holded ya conectado · Sage, A3ERP, Odoo, Xero y más ERPs españoles{' '}
+              <span className="font-semibold text-slate-700">próximamente vía Chift</span> — una
+              integración, +40 ERPs.
+            </p>
+          </div>
+
+          <div className="mt-10 flex flex-wrap items-end justify-center gap-6">
+            {ERP_PARTNERS.map((erp) => (
+              <div key={erp.name} className="flex flex-col items-center gap-2">
+                <div
+                  className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${
+                    erp.connected
+                      ? 'border-[#2361d8]/30 bg-[#2361d8]/5 shadow-sm shadow-blue-100'
+                      : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  <img
+                    src={`https://logo.clearbit.com/${erp.domain}?size=64`}
+                    alt={erp.name}
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 object-contain"
+                  />
+                </div>
+                <span className="text-xs font-semibold text-slate-700">{erp.name}</span>
+                {erp.connected ? (
+                  <span className="text-[10px] font-bold text-emerald-600">✓ Conectado</span>
+                ) : (
+                  <span className="text-[10px] text-slate-400">Próximamente</span>
+                )}
+              </div>
+            ))}
+
+            {/* +40 más */}
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white">
+                <span className="text-base font-black text-slate-400">+40</span>
+              </div>
+              <span className="text-xs font-semibold text-slate-500">más</span>
+              <span className="text-[10px] text-slate-400">via Chift</span>
+            </div>
+          </div>
+
+          <p className="mt-8 text-center text-xs text-slate-400">
+            Powered by{' '}
+            <a
+              href="https://chift.eu"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-slate-600 hover:underline"
+            >
+              Chift
+            </a>{' '}
+            · Sage 200 ES · a3ERP · Odoo · Xero · Cegid · QuickBooks · Pennylane y más
           </p>
         </div>
       </section>
