@@ -114,14 +114,14 @@ export default function HoldedDirectSuccessPage() {
         <div className="mt-10 rounded-2xl border border-slate-200 bg-white px-6 py-5 text-center text-sm text-slate-600">
           ¿Necesitas ayuda?{' '}
           <a
-            href={`${HOLDED_SITE_URL}/conectores/claude/soporte`}
+            href={`${HOLDED_SITE_URL}/conectores/chatgpt/soporte`}
             className="font-semibold text-[#ff5460] underline-offset-2 hover:underline"
           >
             Contactar soporte
           </a>{' '}
           o consultar la{' '}
           <a
-            href={`${HOLDED_SITE_URL}/conectores/claude/docs`}
+            href={`${HOLDED_SITE_URL}/conectores/chatgpt/docs`}
             className="font-semibold text-slate-800 underline-offset-2 hover:underline"
           >
             documentación
