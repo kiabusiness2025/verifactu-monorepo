@@ -29,7 +29,7 @@ export async function getErpClient(tenantId: string): Promise<ErpClient> {
   const conn = await prisma.externalConnection.findFirst({
     where: {
       tenantId,
-      provider: { in: ['sage_200c', 'a3innuva'] },
+      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest'] },
       connectionStatus: 'connected',
     },
     orderBy: { connectedAt: 'desc' },
@@ -51,6 +51,11 @@ export async function getErpClient(tenantId: string): Promise<ErpClient> {
         const subscriptionKey = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
         return new A3ErpClient(token, subscriptionKey);
       }
+      case 'hotelgest': {
+        const { HotelgestErpClient } = await import('./hotelgest-erp-client');
+        const apiKey = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
+        return new HotelgestErpClient(apiKey);
+      }
     }
   }
 
@@ -65,7 +70,7 @@ export async function hasErpConnected(tenantId: string): Promise<boolean> {
   const count = await prisma.externalConnection.count({
     where: {
       tenantId,
-      provider: { in: ['sage_200c', 'a3innuva'] },
+      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest'] },
       connectionStatus: 'connected',
     },
   });
