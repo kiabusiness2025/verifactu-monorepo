@@ -11,7 +11,7 @@ export function buildFaqs(aiName: string, provider: string): FaqItem[] {
     },
     {
       q: '¿Funciona con cualquier plan de Holded?',
-      a: 'Funciona con cuentas de Holded que tengan la API disponible y permisos suficientes. Normalmente necesitas un plan de pago de Holded y rol Owner o Administrador para generar la API key. Las capacidades de productos, proyectos, CRM o contabilidad sólo devuelven datos si esos módulos están activos en tu cuenta.',
+      a: 'Funciona con cuentas de Holded que tengan la API disponible y permisos suficientes. Normalmente necesitas un plan de pago de Holded y rol Owner o Administrador para generar la API key. El conector hoy cubre facturación, contactos y contabilidad; las consultas sólo devuelven datos si esos módulos están activos en tu cuenta.',
     },
     {
       q: '¿Qué relación tiene el conector con la obligación VeriFactu/AEAT?',

@@ -25,6 +25,16 @@ jest.mock('@/lib/connectorHealth/checks', () => ({
   ]),
 }));
 
+jest.mock('@/lib/connectorHealth/run', () => ({
+  HEALTH_STALE_AFTER_MS: 15 * 60 * 1000,
+  refreshConnectorHealthInBackground: jest.fn(),
+}));
+
+jest.mock('next/server', () => {
+  const actual = jest.requireActual('next/server');
+  return { ...actual, after: jest.fn() };
+});
+
 import { NextRequest } from 'next/server';
 import { GET } from './route';
 import prisma from '@/lib/prisma';

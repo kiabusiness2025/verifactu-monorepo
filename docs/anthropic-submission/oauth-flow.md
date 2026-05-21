@@ -31,7 +31,7 @@ Configurable vía env `OAUTH_ALLOWED_REDIRECT_ORIGINS` para añadir tenants ente
 
 | Scope          | Descripción                                                                        |
 | -------------- | ---------------------------------------------------------------------------------- |
-| `holded:read`  | Lectura de facturas, contactos, productos, proyectos, CRM, contabilidad, tesorería |
+| `holded:read`  | Lectura de facturas y documentos, contactos y contabilidad (8 tools del preset `submission_v1`) |
 | `holded:write` | Crear borradores de factura con `approveDoc=false` forzado por servidor            |
 
 **Default scope:** `holded:read holded:write` (lo que el consent screen pide al usuario)

@@ -230,9 +230,7 @@ const realUsageExamples = [
 export default function ClaudeDocsPage() {
   return (
     <main className="page-enter min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#fffbf0_45%,#ffffff_100%)] text-slate-900">
-      <div className="pt-8">
-        <ConnectorStatusBadge connector="claude" />
-      </div>
+      <ConnectorStatusBadge connector="claude" />
       <section className="mx-auto max-w-5xl px-4 py-16">
         {/* ── Header ── */}
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">

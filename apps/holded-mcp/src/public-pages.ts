@@ -13,7 +13,19 @@ function escapeHtml(value: string) {
     .replaceAll("'", '&#39;');
 }
 
-const CAPABILITIES = [
+interface Capability {
+  icon: string;
+  title: string;
+  sub: string;
+  ex: string[];
+  /** Capacidad cuyo código existe pero aún no está expuesta en el preset de
+   *  tools `submission_v1` — se muestra como roadmap, no como disponible. */
+  roadmap?: boolean;
+}
+
+// Orden: primero las capacidades disponibles hoy (cubiertas por las 8 tools
+// del preset submission_v1), luego las marcadas como roadmap.
+const CAPABILITIES: Capability[] = [
   {
     icon: '🧾',
     title: 'Facturas',
@@ -39,30 +51,6 @@ const CAPABILITIES = [
     ex: ['Muéstrame los apuntes de marzo.', 'Explícame este asiento en lenguaje claro.'],
   },
   {
-    icon: '📝',
-    title: 'Borradores de factura',
-    sub: 'Prepara borradores solo después de confirmación explícita del usuario.',
-    ex: ['Prepara un borrador para Acme por 100 € + IVA.', 'Pídeme confirmación antes de crearlo.'],
-  },
-  {
-    icon: '📦',
-    title: 'Productos y stock',
-    sub: 'Lista catálogo, ficha de producto y stock disponible cuando está habilitado.',
-    ex: ['¿Qué productos tengo con stock bajo?', 'Enséñame precio y stock de este SKU.'],
-  },
-  {
-    icon: '📋',
-    title: 'Proyectos y tareas',
-    sub: 'Consulta proyectos abiertos, tareas pendientes e imputaciones de horas.',
-    ex: ['Resume mis proyectos activos.', '¿Qué tareas están pendientes esta semana?'],
-  },
-  {
-    icon: '📈',
-    title: 'CRM: leads y embudo',
-    sub: 'Visualiza el embudo de ventas y los leads asignados sin modificar nada.',
-    ex: ['Resume mi embudo por fases.', '¿Qué leads esperan seguimiento?'],
-  },
-  {
     icon: '⬇️',
     title: 'PDFs de documentos',
     sub: 'Descarga el PDF de una factura, presupuesto o albarán existente.',
@@ -72,13 +60,38 @@ const CAPABILITIES = [
     ],
   },
   {
+    icon: '📝',
+    title: 'Borradores de factura',
+    sub: 'Prepara borradores solo después de confirmación explícita del usuario.',
+    ex: ['Prepara un borrador para Acme por 100 € + IVA.', 'Pídeme confirmación antes de crearlo.'],
+  },
+  {
+    icon: '📦',
+    title: 'Productos y stock',
+    sub: 'Previsto: consultar catálogo, ficha de producto y stock disponible.',
+    ex: [],
+    roadmap: true,
+  },
+  {
+    icon: '📋',
+    title: 'Proyectos y tareas',
+    sub: 'Previsto: revisar proyectos abiertos, tareas pendientes e imputación de horas.',
+    ex: [],
+    roadmap: true,
+  },
+  {
+    icon: '📈',
+    title: 'CRM: leads y embudo',
+    sub: 'Previsto: visualizar el embudo de ventas y los leads asignados.',
+    ex: [],
+    roadmap: true,
+  },
+  {
     icon: '💼',
     title: 'Equipo y tesorería',
-    sub: 'Empleados, cuentas de tesorería, tipos de IVA, almacenes y series de numeración.',
-    ex: [
-      'Muéstrame mi equipo y cuentas de tesorería.',
-      'Lista almacenes y series antes de crear un borrador.',
-    ],
+    sub: 'Previsto: empleados, cuentas de tesorería, tipos de IVA, almacenes y series.',
+    ex: [],
+    roadmap: true,
   },
 ];
 
@@ -93,8 +106,17 @@ export function renderLandingPage(baseUrl: string) {
   const connectHref = escapeHtml(`${baseUrl.replace(/\/$/, '')}/launch`);
   const holdedBase = escapeHtml(HOLDED_BASE);
 
-  const capsHtml = CAPABILITIES.map(
-    (cap) => `
+  const renderCap = (cap: Capability) => {
+    if (cap.roadmap) {
+      return `
+      <article class="cap-card cap-card-roadmap">
+        <span class="cap-badge">Próximamente</span>
+        <span class="cap-icon">${cap.icon}</span>
+        <h3>${escapeHtml(cap.title)}</h3>
+        <p class="cap-sub">${escapeHtml(cap.sub)}</p>
+      </article>`;
+    }
+    return `
       <article class="cap-card">
         <span class="cap-icon">${cap.icon}</span>
         <h3>${escapeHtml(cap.title)}</h3>
@@ -102,8 +124,10 @@ export function renderLandingPage(baseUrl: string) {
         <div class="cap-examples">
           ${cap.ex.map((e) => `<span class="example-chip">${escapeHtml(e)}</span>`).join('\n          ')}
         </div>
-      </article>`
-  ).join('');
+      </article>`;
+  };
+  const capsHtml = CAPABILITIES.filter((cap) => !cap.roadmap).map(renderCap).join('');
+  const roadmapHtml = CAPABILITIES.filter((cap) => cap.roadmap).map(renderCap).join('');
 
   const trustHtml = TRUST_POINTS.map(
     (t) => `
@@ -296,6 +320,23 @@ export function renderLandingPage(baseUrl: string) {
       font-size: .7rem; font-weight: 500; line-height: 1.5; color: #475569;
     }
 
+    /* ── Roadmap (capacidades aún no expuestas) ─ */
+    .cap-card-roadmap { background: #f8fafc; border-style: dashed; }
+    .cap-card-roadmap .cap-icon { filter: grayscale(1); opacity: .45; }
+    .cap-card-roadmap h3 { color: var(--text-muted); }
+    .cap-badge {
+      align-self: flex-start;
+      margin-bottom: .625rem;
+      padding: .15rem .5rem;
+      border-radius: 9999px;
+      border: 1px solid var(--bdr);
+      background: #fff;
+      font-size: .6rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .1em;
+      color: var(--text-muted);
+    }
+    .roadmap-head { text-align: center; margin: 2.75rem 0 1.5rem; }
+
     /* ── Security ───────────────────────────── */
     .security-grid { display: grid; gap: 1.5rem; }
     @media (min-width: 900px) { .security-grid { grid-template-columns: 1fr 0.9fr; } }
@@ -392,7 +433,7 @@ export function renderLandingPage(baseUrl: string) {
     <h1>Pregunta a Holded desde Claude.</h1>
 
     <p class="desc">
-      Consulta facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural.
+      Consulta facturas, contactos y contabilidad en lenguaje natural.
       Crea borradores de factura solo con confirmación explícita. Tus credenciales se
       guardan en servidor y el acceso queda limitado a tu cuenta conectada.
     </p>
@@ -428,8 +469,8 @@ export function renderLandingPage(baseUrl: string) {
           Añade Holded a Claude en menos de dos minutos.
         </h2>
         <p style="font-size:.875rem;line-height:1.6;color:var(--text-muted);max-width:30rem;margin-top:.5rem;">
-          El conector usa el flujo de conector personalizado de Claude mientras finaliza la
-          revisión en el directorio oficial de Anthropic. Ya está operativo.
+          Ya está operativo. Se añade con el flujo de conector personalizado de Claude; en
+          paralelo, está en revisión para aparecer en el directorio oficial de Anthropic.
         </p>
       </div>
       <a href="${connectHref}" target="_blank" rel="noopener noreferrer" class="btn-p">
@@ -472,14 +513,22 @@ export function renderLandingPage(baseUrl: string) {
 <section class="sec">
   <div class="w">
     <div class="sec-head">
-      <p class="sec-label">Capacidades actuales</p>
+      <p class="sec-label">Capacidades del conector</p>
       <h2 class="sec-title">Preguntas de negocio, no menús.</h2>
       <p class="sec-sub">
-        Estas son las capacidades actuales del conector. El usuario pregunta en lenguaje
-        natural y Claude consulta Holded dentro de la cuenta autorizada.
+        El usuario pregunta en lenguaje natural y Claude consulta Holded dentro de la
+        cuenta autorizada. Estas son las capacidades disponibles hoy.
       </p>
     </div>
     <div class="cap-grid">${capsHtml}</div>
+    <div class="roadmap-head">
+      <p class="sec-label">En el roadmap</p>
+      <p class="sec-sub" style="margin-top:.5rem;">
+        Estas áreas se incorporarán al conector tras la aprobación en el directorio de
+        Anthropic. Hoy no están disponibles.
+      </p>
+    </div>
+    <div class="cap-grid">${roadmapHtml}</div>
     <div style="margin-top:2.5rem;display:flex;justify-content:center;">
       <a href="${connectHref}" target="_blank" rel="noopener noreferrer" class="btn-p">
         &#10230; Conectar Holded con Claude

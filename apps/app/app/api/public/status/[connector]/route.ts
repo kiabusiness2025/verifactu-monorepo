@@ -20,7 +20,11 @@
 
 import prisma from '@/lib/prisma';
 import { getCheckDefinitions, type ConnectorId } from '@/lib/connectorHealth/checks';
-import { NextRequest, NextResponse } from 'next/server';
+import {
+  HEALTH_STALE_AFTER_MS,
+  refreshConnectorHealthInBackground,
+} from '@/lib/connectorHealth/run';
+import { NextRequest, NextResponse, after } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,8 +100,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
         return samples[idx];
       })();
 
+      // `kind` viene de la definición; fallback por prefijo `tool_` para
+      // tolerar definiciones antiguas o mocks de test sin el campo.
+      const kind =
+        ('kind' in def && def.kind) || (def.checkType.startsWith('tool_') ? 'tool' : 'surface');
+
       return {
         checkType: def.checkType,
+        kind,
         target: def.target,
         status: latest?.status ?? 'unknown',
         latencyMs: latest?.latencyMs ?? null,
@@ -126,6 +136,20 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
       return c.lastCheckedAt > acc ? c.lastCheckedAt : acc;
     }, null);
 
+    // Autocuración: si el dato está obsoleto (el cron de Vercel dejó de
+    // dispararse), programamos un refresco en segundo plano que se ejecuta
+    // tras enviar la respuesta. El throttle vive dentro del helper.
+    const isStale =
+      !lastCheckedAt || Date.now() - new Date(lastCheckedAt).getTime() > HEALTH_STALE_AFTER_MS;
+    if (isStale) {
+      try {
+        after(refreshConnectorHealthInBackground);
+      } catch {
+        // `after()` fuera de contexto de request (p.ej. tests) — el cron
+        // sigue siendo el respaldo, no degradamos la respuesta.
+      }
+    }
+
     const okCount = checks.filter((c) => c.status === 'ok').length;
     const overallUptime24hPct = (() => {
       const sampled = checks.filter((c) => c.uptime24hPct !== null);
@@ -133,6 +157,11 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
       const sum = sampled.reduce((acc, c) => acc + (c.uptime24hPct ?? 0), 0);
       return Math.round((sum / sampled.length) * 10) / 10;
     })();
+
+    // Resumen separado de la familia `tool` (revisión en vivo de cada tool
+    // del conector) — alimenta el bloque "tools operativas X/Y" del badge.
+    const toolChecks = checks.filter((c) => c.kind === 'tool');
+    const surfaceChecks = checks.filter((c) => c.kind !== 'tool');
 
     return applyCors(
       NextResponse.json({
@@ -144,6 +173,13 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
         checksDegraded: checks.filter((c) => c.status === 'degraded').length,
         checksFail: checks.filter((c) => c.status === 'fail').length,
         checksUnknown: checks.filter((c) => c.status === 'unknown').length,
+        surfaceTotal: surfaceChecks.length,
+        surfaceOk: surfaceChecks.filter((c) => c.status === 'ok').length,
+        toolsTotal: toolChecks.length,
+        toolsOk: toolChecks.filter((c) => c.status === 'ok').length,
+        toolsDegraded: toolChecks.filter((c) => c.status === 'degraded').length,
+        toolsFail: toolChecks.filter((c) => c.status === 'fail').length,
+        toolsUnknown: toolChecks.filter((c) => c.status === 'unknown').length,
         overallUptime24hPct,
         checks,
       })
@@ -163,6 +199,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
           error: 'status_unavailable',
           checks: expectedChecks.map((def) => ({
             checkType: def.checkType,
+            kind:
+              ('kind' in def && def.kind) ||
+              (def.checkType.startsWith('tool_') ? 'tool' : 'surface'),
             target: def.target,
             status: 'unknown',
             latencyMs: null,

@@ -35,8 +35,8 @@ export function ConnectorMobileBanner({ provider }: ConnectorMobileBannerProps) 
       <div className="flex items-start gap-3">
         <Smartphone className={`mt-0.5 h-5 w-5 shrink-0 ${theme.iconAccent}`} />
         <div className="flex-1 text-sm leading-6 text-slate-800">
-          <strong>Estas en mobile.</strong> Para evitar problemas con el navegador embebido de
-          ChatGPT o Claude, usa nuestro flujo simplificado:
+          <strong>Estás en el móvil.</strong> El navegador interno de las apps de ChatGPT y Claude
+          a veces corta el inicio de sesión. Conéctate por este flujo y no se interrumpirá:
         </div>
       </div>
       <Link

@@ -194,9 +194,7 @@ const SECURITY_HIGHLIGHTS: ReadonlyArray<readonly [string, string]> = [
 export default function ChatGPTDocsPage() {
   return (
     <ConnectorPageShell provider="chatgpt" kind="docs">
-      <div className="pb-6">
-        <ConnectorStatusBadge connector="chatgpt" />
-      </div>
+      <ConnectorStatusBadge connector="chatgpt" />
       <ConnectorPageHero
         provider="chatgpt"
         badgeIcon={<MessageSquare className="h-4 w-4" />}

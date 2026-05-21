@@ -64,6 +64,9 @@ type Capability = {
   subtitle: string;
   Icon: ComponentType<{ className?: string }>;
   examples: string[];
+  /** Capacidad cuyo código existe pero aún no está expuesta en el preset de
+   *  tools de la submission actual — se muestra como roadmap, no disponible. */
+  roadmap?: boolean;
 };
 
 const THEMES: Record<ConnectorId, Theme> = {
@@ -104,7 +107,7 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
     dpaHref: '/conectores/claude/dpa',
     privacyHref: '/conectores/claude/privacy',
     termsHref: '/conectores/claude/terms',
-    connectHref: 'https://claude.verifactu.business/launch',
+    connectHref: 'https://holded-claude.verifactu.business/launch',
   },
   chatgpt: {
     id: 'chatgpt',
@@ -122,6 +125,8 @@ const CONFIGS: Record<ConnectorId, ConnectorConfig> = {
   },
 };
 
+// Orden: primero las capacidades disponibles hoy (cubiertas por las tools
+// expuestas en el preset de submission), luego las marcadas como roadmap.
 const CAPABILITIES: Capability[] = [
   {
     title: 'Facturas',
@@ -140,7 +145,7 @@ const CAPABILITIES: Capability[] = [
   },
   {
     title: 'Cuentas contables',
-    subtitle: 'Consulta el plan de cuentas y resume codigos, nombres y tipos cuando existan.',
+    subtitle: 'Consulta el plan de cuentas y resume códigos, nombres y tipos cuando existan.',
     Icon: Landmark,
     examples: ['Resume mis principales cuentas contables.', '¿Dónde se concentra el gasto?'],
   },
@@ -149,6 +154,15 @@ const CAPABILITIES: Capability[] = [
     subtitle: 'Lee apuntes existentes solo cuando el usuario indique fecha inicial y final.',
     Icon: BookOpen,
     examples: ['Muéstrame los apuntes de marzo.', 'Explícame este asiento en lenguaje claro.'],
+  },
+  {
+    title: 'PDFs de documentos',
+    subtitle: 'Descarga el PDF de una factura, presupuesto o albarán existente.',
+    Icon: FileDown,
+    examples: [
+      'Dame el PDF de la última factura de este cliente.',
+      'Recupera el presupuesto que necesito adjuntar.',
+    ],
   },
   {
     title: 'Borradores de factura',
@@ -161,39 +175,31 @@ const CAPABILITIES: Capability[] = [
   },
   {
     title: 'Productos y stock',
-    subtitle: 'Lista catálogo, ficha de producto y stock disponible cuando está habilitado.',
+    subtitle: 'Previsto: consultar catálogo, ficha de producto y stock disponible.',
     Icon: Package,
-    examples: ['¿Qué productos tengo con stock bajo?', 'Enséñame precio y stock de este SKU.'],
+    examples: [],
+    roadmap: true,
   },
   {
     title: 'Proyectos y tareas',
-    subtitle: 'Consulta proyectos abiertos, tareas pendientes e imputaciones de horas.',
+    subtitle: 'Previsto: revisar proyectos abiertos, tareas pendientes e imputación de horas.',
     Icon: FolderKanban,
-    examples: ['Resume mis proyectos activos.', '¿Qué tareas están pendientes esta semana?'],
+    examples: [],
+    roadmap: true,
   },
   {
     title: 'CRM: leads y embudo',
-    subtitle: 'Visualiza el embudo de ventas y los leads asignados sin modificar nada.',
+    subtitle: 'Previsto: visualizar el embudo de ventas y los leads asignados.',
     Icon: TrendingUp,
-    examples: ['Resume mi embudo por fases.', '¿Qué leads esperan seguimiento?'],
+    examples: [],
+    roadmap: true,
   },
   {
-    title: 'PDFs de documentos',
-    subtitle: 'Descarga el PDF de una factura, presupuesto o albaran existente.',
-    Icon: FileDown,
-    examples: [
-      'Dame el PDF de la última factura de este cliente.',
-      'Recupera el presupuesto que necesito adjuntar.',
-    ],
-  },
-  {
-    title: 'Equipo, tesoreria y catalogos',
-    subtitle: 'Empleados, cuentas de tesoreria, tipos de IVA, almacenes y series de numeracion.',
+    title: 'Equipo, tesorería y catálogos',
+    subtitle: 'Previsto: empleados, cuentas de tesorería, tipos de IVA, almacenes y series.',
     Icon: Briefcase,
-    examples: [
-      'Muéstrame mi equipo y cuentas de tesorería.',
-      'Lista almacenes y series antes de crear un borrador.',
-    ],
+    examples: [],
+    roadmap: true,
   },
 ];
 
@@ -292,7 +298,7 @@ const QUICK_CONNECT_STEPS: Record<
       n: '02',
       Icon: Zap,
       title: 'Acepta el aviso y haz clic en "Añadir"',
-      text: 'Claude muestra un aviso de seguridad estándar indicando que el conector fue sugerido por un enlace externo — es el comportamiento esperado. Verifica que el nombre sea "Holded" y la URL "claude.verifactu.business/mcp", luego pulsa "Añadir".',
+      text: 'Claude muestra un aviso de seguridad estándar indicando que el conector fue sugerido por un enlace externo — es el comportamiento esperado. Verifica que el nombre sea "Holded" y la URL "holded-claude.verifactu.business/mcp", luego pulsa "Añadir".',
     },
     {
       n: '03',
@@ -350,8 +356,8 @@ function ConnectorQuickConnect({ cfg, theme }: { cfg: ConnectorConfig; theme: Th
             </h2>
             {cfg.id === 'claude' && (
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
-                El conector usa el flujo de conector personalizado de Claude mientras finaliza la
-                revisión en el directorio oficial de Anthropic. Ya está operativo.
+                Ya está operativo. Se añade con el flujo de conector personalizado de Claude; en
+                paralelo, está en revisión para aparecer en el directorio oficial de Anthropic.
               </p>
             )}
           </div>
@@ -433,9 +439,9 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
           </h1>
 
           <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
-            Consulta facturas, contactos, contabilidad, CRM y proyectos en lenguaje natural. Crea
-            borradores de factura solo con confirmación explícita. Tus credenciales se guardan en
-            servidor y el acceso queda limitado a tu cuenta conectada.
+            Consulta facturas, contactos y contabilidad en lenguaje natural. Crea borradores de
+            factura solo con confirmación explícita. Tus credenciales se guardan en servidor y el
+            acceso queda limitado a tu cuenta conectada.
           </p>
 
           <div className="mt-9 flex flex-wrap justify-center gap-3">
@@ -499,24 +505,24 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
         <div className="mx-auto max-w-6xl px-4">
           <div className="mb-10 text-center">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
-              Capacidades actuales
+              Capacidades del conector
             </p>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
               Preguntas de negocio, no menús.
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Estas son las capacidades actuales del conector. El usuario pregunta en lenguaje
-              natural y {cfg.aiName} consulta Holded dentro de la cuenta autorizada.
+              El usuario pregunta en lenguaje natural y {cfg.aiName} consulta Holded dentro de la
+              cuenta autorizada. Estas son las capacidades disponibles hoy.
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            {CAPABILITIES.map((cap) => {
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {CAPABILITIES.filter((cap) => !cap.roadmap).map((cap) => {
               const { Icon } = cap;
               return (
                 <article
                   key={cap.title}
-                  className="flex min-h-[18rem] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                  className="flex min-h-[16rem] flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
                 >
                   <div
                     className={`flex h-10 w-10 items-center justify-center rounded-xl ${theme.accentBg}`}
@@ -538,6 +544,43 @@ export function ConnectorLandingClient({ connector }: { connector: ConnectorId }
                 </article>
               );
             })}
+          </div>
+
+          {/* Roadmap — capacidades cuyo código existe pero aún no está expuesto
+              en el preset de tools de la submission actual. Se muestran como
+              "próximamente" para no prometer algo que el conector no hace hoy. */}
+          <div className="mt-12">
+            <div className="text-center">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">
+                En el roadmap
+              </p>
+              <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+                Estas áreas se incorporarán al conector tras la aprobación en el directorio de{' '}
+                {cfg.provider}. Hoy no están disponibles.
+              </p>
+            </div>
+            <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {CAPABILITIES.filter((cap) => cap.roadmap).map((cap) => {
+                const { Icon } = cap;
+                return (
+                  <article
+                    key={cap.title}
+                    className="flex flex-col rounded-lg border border-dashed border-slate-300 bg-slate-50/60 p-5"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100">
+                        <Icon className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <span className="rounded-full border border-slate-300 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                        Próximamente
+                      </span>
+                    </div>
+                    <h3 className="mt-4 text-base font-bold text-slate-600">{cap.title}</h3>
+                    <p className="mt-1.5 text-sm leading-6 text-slate-500">{cap.subtitle}</p>
+                  </article>
+                );
+              })}
+            </div>
           </div>
 
           {cfg.connectHref && (

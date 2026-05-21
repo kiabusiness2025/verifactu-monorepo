@@ -1090,7 +1090,7 @@ export function buildHoldedAuthFailuresUserEmail(input: {
             <p style="margin:0 0 12px;font-size:14px;color:#0f172a;">Hemos detectado <strong>${input.failureCount} intentos de conexion fallidos</strong> con tu cuenta de Holded en los ultimos ${input.windowMinutes} minutos a traves de <strong>${escapeHtml(channelLabel)}</strong>.</p>
             <p style="margin:0 0 12px;font-size:14px;color:#0f172a;">Las causas mas frecuentes son:</p>
             <ul style="margin:0 0 16px;padding-left:20px;font-size:14px;color:#334155;">
-              <li>La API key de Holded ha sido <strong>regenerada o revocada</strong> en el panel de Holded.</li>
+              <li>La API key de Holded ha sido <strong>regenerada o revocada</strong>. Puedes generar una nueva en Holded &rarr; Configuracion &rarr; Integraciones &rarr; API (<a href="https://help.holded.com/es/articles/6896051-como-generar-y-usar-la-api-de-holded" style="color:#1d9e75;">guia paso a paso</a>) y pegarla al reconectar.</li>
               <li>Tu plan de Holded ha cambiado y ya no incluye acceso a la API.</li>
               <li>La cuenta de Holded esta suspendida o limitada temporalmente.</li>
             </ul>

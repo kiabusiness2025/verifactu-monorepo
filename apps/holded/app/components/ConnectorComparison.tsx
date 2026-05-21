@@ -73,14 +73,14 @@ function buildRows(aiName: string): Row[] {
       withConnector: `${aiName} consulta el diario con rango de fechas para devolverte apuntes filtrados por cuenta o concepto, listos para analizar.`,
     },
     {
-      scenario: 'Estado de proyectos abiertos y tareas pendientes',
-      withoutConnector: `${aiName} no ve tus proyectos. Te puede ayudar a planificar uno desde cero, pero no a hacer seguimiento de los que ya tienes en marcha.`,
-      withConnector: `${aiName} resume proyectos activos, los vincula al cliente correcto e identifica tareas pendientes y horas imputadas.`,
+      scenario: 'Descargar el PDF de una factura concreta',
+      withoutConnector: `${aiName} no puede acceder a tus documentos. Tienes que entrar a Holded, buscar la factura y descargar el PDF manualmente.`,
+      withConnector: `${aiName} recupera el PDF de una factura, presupuesto o albarán existente para que lo adjuntes sin salir de la conversación.`,
     },
     {
-      scenario: 'Embudo CRM y leads por fase',
-      withoutConnector: `${aiName} no conoce tu pipeline. Solo puede sugerir frameworks comerciales generales (BANT, MEDDIC) sin datos concretos.`,
-      withConnector: `${aiName} devuelve tu embudo real, las fases configuradas y los leads asignados a cada una.`,
+      scenario: 'Revisar el plan de cuentas contable',
+      withoutConnector: `${aiName} solo conoce teoría contable general. No puede ver cómo está estructurado tu plan de cuentas real.`,
+      withConnector: `${aiName} consulta tu plan de cuentas en Holded y resume códigos, nombres y tipos para que entiendas dónde se concentra cada partida.`,
     },
   ];
 }
