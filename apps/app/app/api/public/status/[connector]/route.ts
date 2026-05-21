@@ -20,7 +20,11 @@
 
 import prisma from '@/lib/prisma';
 import { getCheckDefinitions, type ConnectorId } from '@/lib/connectorHealth/checks';
-import { NextRequest, NextResponse } from 'next/server';
+import {
+  HEALTH_STALE_AFTER_MS,
+  refreshConnectorHealthInBackground,
+} from '@/lib/connectorHealth/run';
+import { NextRequest, NextResponse, after } from 'next/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -131,6 +135,20 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
       if (!acc) return c.lastCheckedAt;
       return c.lastCheckedAt > acc ? c.lastCheckedAt : acc;
     }, null);
+
+    // Autocuración: si el dato está obsoleto (el cron de Vercel dejó de
+    // dispararse), programamos un refresco en segundo plano que se ejecuta
+    // tras enviar la respuesta. El throttle vive dentro del helper.
+    const isStale =
+      !lastCheckedAt || Date.now() - new Date(lastCheckedAt).getTime() > HEALTH_STALE_AFTER_MS;
+    if (isStale) {
+      try {
+        after(refreshConnectorHealthInBackground);
+      } catch {
+        // `after()` fuera de contexto de request (p.ej. tests) — el cron
+        // sigue siendo el respaldo, no degradamos la respuesta.
+      }
+    }
 
     const okCount = checks.filter((c) => c.status === 'ok').length;
     const overallUptime24hPct = (() => {

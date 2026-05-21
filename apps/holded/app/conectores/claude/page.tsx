@@ -170,9 +170,7 @@ export default function ClaudeConnectorPage() {
       {/* F4.3: banner mobile-only que invita a usar /auth/holded-direct
           (sobrevive al iOS in-app browser de Claude mobile). */}
       <ConnectorMobileBanner provider="claude" />
-      <div className="pt-6">
-        <ConnectorStatusBadge connector="claude" />
-      </div>
+      <ConnectorStatusBadge connector="claude" />
       <ConnectorLandingClient connector="claude" />
     </>
   );
