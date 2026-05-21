@@ -52,6 +52,16 @@ type PlanInfo = {
   daysLeft: number | null;
 };
 
+type WhitelabelConfig = {
+  enabled?: boolean;
+  companyName?: string;
+  logoUrl?: string;
+  primaryColor?: string;
+  faviconUrl?: string;
+  supportEmail?: string;
+  hidePoweredBy?: boolean;
+};
+
 const NAV_SECTIONS = [
   { href: '/chat', label: 'Chat', icon: MessageSquare },
   { href: '/resumen', label: 'Resumen', icon: BarChart3 },
@@ -115,17 +125,25 @@ function PlanBadge({ plan }: { plan: PlanInfo }) {
   );
 }
 
+const DEFAULT_BRAND = '#2361d8';
+
 export default function IsaakSidebar({
   user,
   conversations,
   planInfo,
   holdedConnected,
+  whitelabel,
 }: {
   user: UserInfo;
   conversations: ConversationItem[];
   planInfo: PlanInfo;
   holdedConnected: boolean;
+  whitelabel?: WhitelabelConfig | null;
 }) {
+  const brandColor = whitelabel?.enabled
+    ? (whitelabel.primaryColor ?? DEFAULT_BRAND)
+    : DEFAULT_BRAND;
+  const appName = whitelabel?.enabled ? (whitelabel.companyName ?? 'Isaak') : 'Isaak';
   const pathname = usePathname();
   const router = useRouter();
   const [profileOpen, setProfileOpen] = useState(false);
@@ -181,19 +199,25 @@ export default function IsaakSidebar({
       {/* ── Logo ───────────────────────────────────────────── */}
       <div className={`flex items-center gap-3 py-5 ${collapsed ? 'justify-center px-2' : 'px-4'}`}>
         <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-xl">
-          <Image
-            src="/Personalidad/isaak-avatar-2.png"
-            alt="Isaak"
-            fill
-            sizes="36px"
-            className="object-cover"
-            priority
-          />
+          {whitelabel?.enabled && whitelabel.logoUrl ? (
+            <img src={whitelabel.logoUrl} alt={appName} className="h-full w-full object-contain" />
+          ) : (
+            <Image
+              src="/Personalidad/isaak-avatar-2.png"
+              alt="Isaak"
+              fill
+              sizes="36px"
+              className="object-cover"
+              priority
+            />
+          )}
         </div>
         {!collapsed && (
           <div>
-            <div className="text-[15px] font-bold tracking-tight text-white">Isaak</div>
-            <div className="text-[11px] text-slate-400">Asistente fiscal inteligente</div>
+            <div className="text-[15px] font-bold tracking-tight text-white">{appName}</div>
+            {!whitelabel?.enabled && (
+              <div className="text-[11px] text-slate-400">Asistente fiscal inteligente</div>
+            )}
           </div>
         )}
       </div>
@@ -204,7 +228,8 @@ export default function IsaakSidebar({
           href="/chat"
           onClick={() => router.refresh()}
           title={collapsed ? 'Nuevo chat' : undefined}
-          className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-[#2361d8] text-[13px] font-semibold text-white transition hover:bg-[#1d55c2]"
+          className="flex h-9 w-full items-center justify-center gap-2 rounded-lg text-[13px] font-semibold text-white transition"
+          style={{ backgroundColor: brandColor }}
         >
           <Plus size={15} />
           {!collapsed && 'Nuevo chat'}
@@ -379,7 +404,10 @@ export default function IsaakSidebar({
           <div className="absolute bottom-full left-2 right-2 mb-2 overflow-hidden rounded-2xl border border-white/10 bg-[#0d1e4a] shadow-2xl">
             {/* User header */}
             <div className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#2361d8] text-[13px] font-bold text-white">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[13px] font-bold text-white"
+                style={{ backgroundColor: brandColor }}
+              >
                 {user.initials}
               </div>
               <div className="min-w-0">

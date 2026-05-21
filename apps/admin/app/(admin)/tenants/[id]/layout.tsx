@@ -5,8 +5,8 @@ const tabs = [
   { label: 'Users', href: 'users' },
   { label: 'Billing', href: 'billing' },
   { label: 'Integrations', href: 'integrations' },
-  // F6.1: tab dedicada a las conexiones MCP/Holded del tenant.
   { label: 'Connectors', href: 'connectors' },
+  { label: 'Isaak', href: 'isaak' },
   { label: 'Audit', href: 'audit' },
 ];
 
