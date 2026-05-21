@@ -314,7 +314,9 @@ export async function ConnectorStatusBadge({
                           ? 'bg-rose-500'
                           : (status.toolsDegraded ?? 0) > 0
                             ? 'bg-amber-500'
-                            : 'bg-emerald-500'
+                            : (status.toolsOk ?? 0) === status.toolsTotal
+                              ? 'bg-emerald-500'
+                              : 'bg-slate-400'
                       }`}
                       aria-hidden
                     />

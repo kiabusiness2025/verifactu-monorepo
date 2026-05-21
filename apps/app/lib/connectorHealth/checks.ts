@@ -279,8 +279,8 @@ function probeDetail(listPath: string, detail: (id: string) => string, noun: str
   };
 }
 
-/** Probe de la tool de PDF: lista facturas y pide el PDF de la primera. */
-function probePdf(listPath: string) {
+/** Probe de la tool de PDF: lista documentos y pide el PDF del primero. */
+function probePdf(listPath: string, docType: 'invoice' | 'purchase' = 'invoice') {
   return async ({ get }: ToolProbeContext): Promise<ToolProbeOutcome> => {
     const list = await get(listPath);
     const listIssue = validateHoldedResponse(list);
@@ -293,7 +293,7 @@ function probePdf(listPath: string) {
     if (!id) {
       return { error: null, message: 'sin documentos para verificar PDF (cuenta vacía)' };
     }
-    const r = await get(`/api/invoicing/v1/documents/invoice/${id}/pdf`);
+    const r = await get(`/api/invoicing/v1/documents/${docType}/${id}/pdf`);
     if (r.isHtml) {
       return { error: 'html_response', message: `endpoint PDF devolvió HTML (HTTP ${r.httpStatus})` };
     }
@@ -424,8 +424,8 @@ function toolCheckSpecs(): ToolCheckSpec[] {
     {
       connector: 'chatgpt',
       checkType: 'tool_get_document_pdf',
-      primaryPath: DOCS_INVOICE,
-      run: probePdf(DOCS_INVOICE),
+      primaryPath: DOCS_PURCHASE,
+      run: probePdf(DOCS_PURCHASE, 'purchase'),
     },
     {
       connector: 'chatgpt',
