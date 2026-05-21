@@ -142,30 +142,50 @@ Página: `apps/isaak/app/p/[slug]/page.tsx` — sin auth, 404 si inactivo.
 
 ### P3-4: Conector Sage / A3
 
-**Objetivo:** Segundo ERP. Arquitectura extensible.
+**Objetivo:** Segundo y tercer ERP. Arquitectura extensible con capa de abstracción genérica.
 
-**Cambios técnicos:**
+**Plan detallado:** `docs/engineering/ERP_CONNECTORS_SAGE_A3_PLAN.md`
 
-- Campo `erpType: 'holded' | 'sage' | 'a3'` en `ExternalConnection`
-- Capa de abstracción: `apps/isaak/app/lib/erp-client.ts` — interface `ErpClient` con métodos `getInvoices()`, `getContacts()`, etc.
-- Adapters: `holded-erp-client.ts` (ya existe), `sage-erp-client.ts` (nuevo), `a3-erp-client.ts` (nuevo)
-- OAuth / API key flow específico por ERP
-- Add-on €15/mes/ERP adicional
+**Resumen técnico:**
 
-**Esfuerzo estimado:** XL (3+ sprints)
+- `provider: 'holded' | 'sage_200c' | 'a3innuva'` en `ExternalConnection` (sin campo nuevo — `provider` ya existe)
+- `apps/isaak/app/lib/erp-client.ts` — interface `ErpClient` + tipos `ErpInvoice`, `ErpContact`, `ErpSnapshot`
+- Adapters: `holded-erp-client.ts`, `sage-erp-client.ts`, `a3-erp-client.ts`
+- Nuevo modelo Prisma `ErpOAuthToken` (access + refresh token cifrados AES-256-GCM)
+- Factory `erp-client-factory.ts` → el chat Isaak llama a `getErpClient(tenantId)` en lugar de Holded directo
+- Add-on €15/mes/ERP en Stripe
+
+**Sprints:**
+
+- P3-4-A: Abstracción + migración Holded + **Sage 200c** (prioridad: mayor base SaaS España)
+- P3-4-B: **a3innuva** + billing add-on + multi-ERP selector
+- P3-4-C: Legacy desktop via Chift/Nubyhub (solo si hay demanda confirmada)
+
+**Variables de entorno nuevas:**
+
+```
+SAGE_CLIENT_ID / SAGE_CLIENT_SECRET / SAGE_OAUTH_BASE / SAGE_API_BASE
+A3_CLIENT_ID / A3_CLIENT_SECRET / A3_SUBSCRIPTION_KEY / A3_OAUTH_BASE / A3_API_BASE
+ERP_TOKEN_MASTER_KEY (AES-256 para cifrar tokens OAuth)
+```
+
+**Prerequisito:** Registrarse en developer.sage.com/200c y a3developers.wolterskluwer.es para obtener credenciales OAuth antes de iniciar P3-4-B.
+
+**Esfuerzo estimado:** XL (3 sprints de 2 semanas)
 
 ---
 
 ## Stack técnico — librerías por fase
 
-| Fase/Sprint | Librerías añadidas                | Estado  |
-| ----------- | --------------------------------- | ------- |
-| G           | `react-markdown`, `remark-gfm`    | ✅      |
-| H           | `recharts`, `xlsx` (SheetJS)      | ✅      |
-| VF-2        | `node-forge`, `@types/node-forge` | ✅      |
-| OG images   | `next/og` (built-in Next.js 15)   | ✅      |
-| P3-3        | Sin librerías nuevas previstas    | Pending |
-| P3-4        | SDK específico por ERP (Sage/A3)  | Pending |
+| Fase/Sprint | Librerías añadidas                                 | Estado  |
+| ----------- | -------------------------------------------------- | ------- |
+| G           | `react-markdown`, `remark-gfm`                     | ✅      |
+| H           | `recharts`, `xlsx` (SheetJS)                       | ✅      |
+| VF-2        | `node-forge`, `@types/node-forge`                  | ✅      |
+| OG images   | `next/og` (built-in Next.js 15)                    | ✅      |
+| P3-3        | Sin librerías nuevas previstas                     | Pending |
+| P3-4-A/B    | Sin librerías nuevas (fetch nativo + OData params) | Pending |
+| P3-4-C      | `chift-sdk` si se decide Chift                     | Pending |
 
 ---
 
