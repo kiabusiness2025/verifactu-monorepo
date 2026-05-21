@@ -96,8 +96,14 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
         return samples[idx];
       })();
 
+      // `kind` viene de la definición; fallback por prefijo `tool_` para
+      // tolerar definiciones antiguas o mocks de test sin el campo.
+      const kind =
+        ('kind' in def && def.kind) || (def.checkType.startsWith('tool_') ? 'tool' : 'surface');
+
       return {
         checkType: def.checkType,
+        kind,
         target: def.target,
         status: latest?.status ?? 'unknown',
         latencyMs: latest?.latencyMs ?? null,
@@ -134,6 +140,11 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
       return Math.round((sum / sampled.length) * 10) / 10;
     })();
 
+    // Resumen separado de la familia `tool` (revisión en vivo de cada tool
+    // del conector) — alimenta el bloque "tools operativas X/Y" del badge.
+    const toolChecks = checks.filter((c) => c.kind === 'tool');
+    const surfaceChecks = checks.filter((c) => c.kind !== 'tool');
+
     return applyCors(
       NextResponse.json({
         connector,
@@ -144,6 +155,13 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
         checksDegraded: checks.filter((c) => c.status === 'degraded').length,
         checksFail: checks.filter((c) => c.status === 'fail').length,
         checksUnknown: checks.filter((c) => c.status === 'unknown').length,
+        surfaceTotal: surfaceChecks.length,
+        surfaceOk: surfaceChecks.filter((c) => c.status === 'ok').length,
+        toolsTotal: toolChecks.length,
+        toolsOk: toolChecks.filter((c) => c.status === 'ok').length,
+        toolsDegraded: toolChecks.filter((c) => c.status === 'degraded').length,
+        toolsFail: toolChecks.filter((c) => c.status === 'fail').length,
+        toolsUnknown: toolChecks.filter((c) => c.status === 'unknown').length,
         overallUptime24hPct,
         checks,
       })
@@ -163,6 +181,9 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ connector:
           error: 'status_unavailable',
           checks: expectedChecks.map((def) => ({
             checkType: def.checkType,
+            kind:
+              ('kind' in def && def.kind) ||
+              (def.checkType.startsWith('tool_') ? 'tool' : 'surface'),
             target: def.target,
             status: 'unknown',
             latencyMs: null,

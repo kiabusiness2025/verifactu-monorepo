@@ -20,9 +20,11 @@ const APP_BASE_URL =
   process.env.NEXT_PUBLIC_VERIFACTU_APP_URL?.trim() || 'https://app.verifactu.business';
 
 type CheckStatus = 'ok' | 'degraded' | 'fail' | 'unknown';
+type CheckKind = 'surface' | 'tool';
 
 type Check = {
   checkType: string;
+  kind?: CheckKind;
   target: string;
   status: CheckStatus;
   latencyMs: number | null;
@@ -44,12 +46,20 @@ type StatusResponse = {
   checksOk?: number;
   checksDegraded?: number;
   checksFail?: number;
+  surfaceTotal?: number;
+  surfaceOk?: number;
+  toolsTotal?: number;
+  toolsOk?: number;
+  toolsDegraded?: number;
+  toolsFail?: number;
+  toolsUnknown?: number;
   overallUptime24hPct: number | null;
   checks: Check[];
   error?: string;
 };
 
 const CHECK_TYPE_LABEL_ES: Record<string, string> = {
+  // Superficie pública
   landing: 'Página de aterrizaje',
   docs: 'Documentación',
   privacy: 'Política de privacidad',
@@ -61,7 +71,24 @@ const CHECK_TYPE_LABEL_ES: Record<string, string> = {
   mcp_initialize: 'MCP initialize',
   tools_list: 'MCP tools/list',
   mcp_requires_auth: 'MCP rechaza sin Bearer',
+  // Tools en vivo (revisión de funcionamiento real contra Holded)
+  tool_list_documents: 'Tool · Listar documentos',
+  tool_get_document: 'Tool · Detalle de documento',
+  tool_get_document_pdf: 'Tool · PDF de documento',
+  tool_list_invoices: 'Tool · Listar facturas',
+  tool_get_invoice: 'Tool · Detalle de factura',
+  tool_list_contacts: 'Tool · Listar contactos',
+  tool_get_contact: 'Tool · Detalle de contacto',
+  tool_get_chart_of_accounts: 'Tool · Plan de cuentas',
+  tool_list_accounts: 'Tool · Plan de cuentas',
+  tool_get_journal: 'Tool · Diario contable',
+  tool_list_daily_ledger: 'Tool · Libro diario',
+  tool_create_invoice_draft: 'Tool · Crear borrador de factura',
 };
+
+function isToolCheck(check: Check): boolean {
+  return check.kind === 'tool' || check.checkType.startsWith('tool_');
+}
 
 const CONNECTOR_LABEL: Record<'chatgpt' | 'claude', string> = {
   chatgpt: 'ChatGPT',
@@ -143,6 +170,70 @@ async function fetchStatus(connector: 'chatgpt' | 'claude'): Promise<StatusRespo
   }
 }
 
+function CheckTable({
+  checks,
+  title,
+  firstColLabel,
+}: {
+  checks: Check[];
+  title: string;
+  firstColLabel: string;
+}) {
+  if (checks.length === 0) return null;
+  return (
+    <div className="overflow-x-auto px-3 pb-1">
+      <p className="px-2 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider opacity-60">
+        {title}
+      </p>
+      <table className="w-full min-w-[520px] text-left text-xs">
+        <thead className="text-[10px] uppercase tracking-wider opacity-70">
+          <tr>
+            <th className="px-2 py-1.5 font-semibold">{firstColLabel}</th>
+            <th className="px-2 py-1.5 font-semibold">Estado</th>
+            <th className="px-2 py-1.5 font-semibold text-right">Latencia</th>
+            <th className="px-2 py-1.5 font-semibold text-right">Uptime 24 h</th>
+            <th className="px-2 py-1.5 font-semibold text-right whitespace-nowrap">Última caída</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/40">
+          {checks.map((check) => (
+            <tr key={check.checkType}>
+              <td className="px-2 py-1.5">
+                <span className="font-medium">
+                  {CHECK_TYPE_LABEL_ES[check.checkType] ?? check.checkType}
+                </span>
+              </td>
+              <td className="px-2 py-1.5">
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    className={`inline-flex h-2 w-2 rounded-full ${CHECK_DOT[check.status]}`}
+                    aria-hidden
+                  />
+                  <span className="capitalize">{check.status}</span>
+                  {check.status === 'fail' && check.lastErrorCode && (
+                    <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">
+                      {check.lastErrorCode}
+                    </span>
+                  )}
+                </span>
+              </td>
+              <td className="px-2 py-1.5 text-right tabular-nums">
+                {formatLatency(check.latencyMs)}
+              </td>
+              <td className="px-2 py-1.5 text-right tabular-nums">
+                {formatUptime(check.uptime24hPct)}
+              </td>
+              <td className="px-2 py-1.5 text-right tabular-nums whitespace-nowrap opacity-70">
+                {check.lastFailedAt ? formatRelative(check.lastFailedAt) : '—'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export async function ConnectorStatusBadge({
   connector,
 }: {
@@ -181,6 +272,21 @@ export async function ConnectorStatusBadge({
 
           {status && status.checksTotal !== undefined && (
             <div className="flex flex-wrap items-center gap-2 text-xs">
+              {(status.toolsTotal ?? 0) > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-0.5 font-semibold">
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      (status.toolsFail ?? 0) > 0
+                        ? 'bg-rose-500'
+                        : (status.toolsDegraded ?? 0) > 0
+                          ? 'bg-amber-500'
+                          : 'bg-emerald-500'
+                    }`}
+                    aria-hidden
+                  />
+                  {status.toolsOk ?? 0}/{status.toolsTotal} tools operativas
+                </span>
+              )}
               <span className="inline-flex items-center gap-1 rounded-full bg-white/60 px-2 py-0.5 font-medium">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
                 {status.checksOk ?? 0} OK
@@ -214,55 +320,21 @@ export async function ConnectorStatusBadge({
                 aria-hidden
               />
             </summary>
-            <div className="overflow-x-auto px-3 pb-3">
-              <table className="w-full min-w-[520px] text-left text-xs">
-                <thead className="text-[10px] uppercase tracking-wider opacity-70">
-                  <tr>
-                    <th className="px-2 py-1.5 font-semibold">Surface check</th>
-                    <th className="px-2 py-1.5 font-semibold">Estado</th>
-                    <th className="px-2 py-1.5 font-semibold text-right">Latencia</th>
-                    <th className="px-2 py-1.5 font-semibold text-right">Uptime 24 h</th>
-                    <th className="px-2 py-1.5 font-semibold text-right whitespace-nowrap">Última caída</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/40">
-                  {status.checks.map((check) => (
-                    <tr key={check.checkType}>
-                      <td className="px-2 py-1.5">
-                        <span className="font-medium">
-                          {CHECK_TYPE_LABEL_ES[check.checkType] ?? check.checkType}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <span className="inline-flex items-center gap-1.5">
-                          <span
-                            className={`inline-flex h-2 w-2 rounded-full ${CHECK_DOT[check.status]}`}
-                            aria-hidden
-                          />
-                          <span className="capitalize">{check.status}</span>
-                          {check.status === 'fail' && check.lastErrorCode && (
-                            <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[10px] font-medium text-rose-700">
-                              {check.lastErrorCode}
-                            </span>
-                          )}
-                        </span>
-                      </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">
-                        {formatLatency(check.latencyMs)}
-                      </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums">
-                        {formatUptime(check.uptime24hPct)}
-                      </td>
-                      <td className="px-2 py-1.5 text-right tabular-nums whitespace-nowrap opacity-70">
-                        {check.lastFailedAt ? formatRelative(check.lastFailedAt) : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="mt-2 text-[10px] leading-relaxed opacity-60">
-                Checks ejecutados cada 5 minutos contra superficie pública (sin token). Uptime
-                calculado sobre las últimas 24 h. Cache del endpoint público 60 s.
+            <div className="pb-2">
+              <CheckTable
+                checks={status.checks.filter((c) => isToolCheck(c))}
+                title="Tools del conector · revisión en vivo"
+                firstColLabel="Tool"
+              />
+              <CheckTable
+                checks={status.checks.filter((c) => !isToolCheck(c))}
+                title="Superficie pública"
+                firstColLabel="Surface check"
+              />
+              <p className="mt-2 px-3 text-[10px] leading-relaxed opacity-60">
+                La superficie pública se comprueba sin token; las tools se ejecutan en vivo
+                contra una cuenta Holded de pruebas. Checks cada 5 minutos, uptime sobre las
+                últimas 24 h, cache del endpoint público 60 s.
               </p>
             </div>
           </details>
