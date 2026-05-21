@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-19
+**Última actualización**: 2026-05-21
 **Visión**: Isaak como agente fiscal y contable autónomo que conecta con datos reales del ERP, ejecuta acciones con confirmación, aprende de cada empresa y asesora en lenguaje llano.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
@@ -121,84 +121,184 @@ Página: `apps/isaak/app/p/[slug]/page.tsx` — sin auth, 404 si inactivo.
 
 ---
 
-## Backlog P3 — siguientes sprints
+## ~~P3-1~~ / ~~P3-3~~ / P3-4-A — Completados 2026-05-19/21
 
-### ~~P3-1: Modo Asesoría~~ — ✅ Completado 2026-05-19
+| Sprint            | Descripción                                                     | Commit     | Estado |
+| ----------------- | --------------------------------------------------------------- | ---------- | ------ |
+| P3-1              | Modo Asesoría — multi-cliente para asesores                     | `00d65830` | ✅     |
+| P3-3              | Modelos AEAT 303/130/390 — borradores con datos Holded          | `b0d3e5ad` | ✅     |
+| P3-4-A foundation | ErpClient interface, HoldedErpClient, factory, erp-oauth-tokens | `f7d22b7f` | ✅     |
+| P3-4-A Hotelgest  | Stub pendiente docs API del cliente                             | —          | ⏳     |
+| P3-4-A Sage 200c  | Stub — requiere credenciales `developer.sage.com`               | —          | ⏳     |
+| P3-4-B a3innuva   | Stub — requiere credenciales `a3developers.wolterskluwer.es`    | —          | ⏳     |
 
-### P3-3: Modelos AEAT — 303/130/390
+---
 
-**Objetivo:** Borradores de modelos fiscales pre-rellenados con datos Holded.
+## Backlog — Siguientes sprints (orden de prioridad)
+
+### G-2: Google Integrations — LLM Tools + Completar gaps (PRÓXIMO)
+
+**Objetivo:** Convertir a Isaak en operador activo de la suite Google del empresario. Actualmente Google Calendar/Gmail/Drive son herramientas manuales — el LLM no puede usarlas. G-2 las expone como herramientas del asistente.
+
+**Gap crítico actual:**
+
+- El chat `/api/holded/chat` no tiene ninguna herramienta Google → el usuario debe ir manualmente a `/calendar`, `/mail`
+- Calendar: falta listar eventos y editar/borrar
+- Drive: falta listar archivos subidos
+- Gmail: falta etiquetar/archivar mensajes procesados
 
 **Cambios técnicos:**
 
-- `generateModelo303(tenantId, trimestre)`: extrae IVA repercutido + soportado de Holded
-- `generateModelo130(tenantId, trimestre)`: pagos fraccionados IRPF para autónomos
-- `generateModelo390(tenantId, year)`: resumen anual IVA
-- UI wizard paso a paso con revisión antes de descarga/envío
-- Validación con datos reales de Holded via `get_tenant_holded_data`
-- Plan Business únicamente
+```
+apps/isaak/app/api/holded/chat/route.ts
+  → Añadir herramientas: google_calendar_list, google_calendar_create,
+    google_calendar_update, google_drive_list, google_drive_upload,
+    gmail_scan, gmail_process_attachment
 
-**Esfuerzo estimado:** L (2 sprints)
+apps/isaak/app/lib/google-calendar.ts
+  → Añadir listEvents(), updateEvent(), deleteEvent()
 
-### P3-4: Conector Sage / A3
+apps/isaak/app/lib/google-drive.ts
+  → Añadir listFiles(), deleteFile()
 
-**Objetivo:** Segundo y tercer ERP. Arquitectura extensible con capa de abstracción genérica.
+apps/isaak/app/lib/gmail-scan-service.ts
+  → Añadir archiveMessage(), addLabel() (scope upgrade: gmail.modify)
+```
 
-**Plan detallado:** `docs/engineering/ERP_CONNECTORS_SAGE_A3_PLAN.md`
+**Nuevo scope Gmail:** `gmail.modify` (en lugar de `gmail.readonly`) para archivar + etiquetar.  
+Re-autorización necesaria para usuarios ya conectados (prompt de re-auth automático si scope insuficiente).
 
-**Resumen técnico:**
+**Esfuerzo:** M (1 sprint)
 
-- `provider: 'holded' | 'sage_200c' | 'a3innuva'` en `ExternalConnection` (sin campo nuevo — `provider` ya existe)
-- `apps/isaak/app/lib/erp-client.ts` — interface `ErpClient` + tipos `ErpInvoice`, `ErpContact`, `ErpSnapshot`
-- Adapters: `holded-erp-client.ts`, `sage-erp-client.ts`, `a3-erp-client.ts`
-- Nuevo modelo Prisma `ErpOAuthToken` (access + refresh token cifrados AES-256-GCM)
-- Factory `erp-client-factory.ts` → el chat Isaak llama a `getErpClient(tenantId)` en lugar de Holded directo
-- Add-on €15/mes/ERP en Stripe
+---
 
-**Sprints:**
+### M: Microsoft Graph — OneDrive + Outlook Calendar + Outlook Mail
 
-- P3-4-A: Abstracción + migración Holded + **Sage 200c** (prioridad: mayor base SaaS España)
-- P3-4-B: **a3innuva** + billing add-on + multi-ERP selector
-- P3-4-C: Legacy desktop via Chift/Nubyhub (solo si hay demanda confirmada)
+**Objetivo:** Mismo nivel de integración que Google pero para el ecosistema Microsoft 365, dominante en empresas medianas-grandes en España.
+
+**Viabilidad confirmada (2026-05-21):**
+
+- App Azure AD multi-tenant = gratis. Sin coste por tenant conectado.
+- El usuario trae su licencia M365 — Verifactu solo necesita la app registration.
+- Scopes delegados: `Files.ReadWrite`, `Calendars.ReadWrite`, `Mail.ReadWrite`, `Mail.Send`, `User.Read`
+- OAuth idéntico al de Google — mismo patrón de token storage.
+
+**Cambios técnicos:**
+
+```
+packages/db/prisma/schema.prisma
+  → Nuevo modelo IsaakMicrosoftToken (tenantId, userId, accessToken,
+    refreshToken, expiresAt, email, scopes)
+  → Migración: 20260521_isaak_microsoft_token
+
+apps/isaak/app/lib/
+  → microsoft-oauth.ts     — OAuth flow, token refresh, scopes
+  → microsoft-calendar.ts  — listEvents, createEvent, updateEvent, deleteEvent
+  → microsoft-drive.ts     — listFiles, uploadFile, createFolder
+  → microsoft-mail.ts      — scanInbox, processAttachment, sendMail, archiveMail
+
+apps/isaak/app/api/isaak/microsoft/
+  → auth/route.ts          — redirect OAuth Azure AD
+  → callback/route.ts      — exchange code, store token
+  → status/route.ts        — estado conexión
+  → disconnect/route.ts    — revocar token
+  → sync/route.ts          — sync deadlines fiscales a Outlook Calendar
+
+apps/isaak/app/(workspace)/
+  → microsoft/page.tsx     — settings hub Microsoft (estado, scopes, sync)
+
+apps/isaak/app/api/holded/chat/route.ts
+  → Añadir herramientas microsoft_* (idénticas a google_* pero Microsoft Graph)
+```
 
 **Variables de entorno nuevas:**
 
 ```
-SAGE_CLIENT_ID / SAGE_CLIENT_SECRET / SAGE_OAUTH_BASE / SAGE_API_BASE
-A3_CLIENT_ID / A3_CLIENT_SECRET / A3_SUBSCRIPTION_KEY / A3_OAUTH_BASE / A3_API_BASE
-ERP_TOKEN_MASTER_KEY (AES-256 para cifrar tokens OAuth)
+MICROSOFT_CLIENT_ID       — Azure AD app (client) ID
+MICROSOFT_CLIENT_SECRET   — Azure AD client secret
+MICROSOFT_TENANT_ID       — 'common' para multi-tenant
+MICROSOFT_REDIRECT_URI    — https://isaak.verifactu.business/api/isaak/microsoft/callback
 ```
 
-**Prerequisito:** Registrarse en developer.sage.com/200c y a3developers.wolterskluwer.es para obtener credenciales OAuth antes de iniciar P3-4-B.
+**Esfuerzo:** L (1.5 sprints)
 
-**Esfuerzo estimado:** XL (3 sprints de 2 semanas)
+---
+
+### P3-4-C: Chift ERP Aggregator — Sage, A3, ContaPlus y más
+
+**Objetivo:** Conectar con 50+ ERPs españoles a través de una sola API sin necesitar suscripción a cada uno.
+
+**Contexto (investigación 2026-05-21):**
+
+- Sage 200c y a3innuva requieren suscripción activa del cliente para acceder a su API.
+- Chift (chift.eu) y Nubyhub son aggregators que normalizan APIs de múltiples ERPs:
+  - Soportan: Sage, a3innuva, ContaPlus, Anfix, Pennylane, Holded, QuickBooks, Xero, Odoo...
+  - Una sola integración desde Isaak → acceso a todos los ERPs del cliente
+  - El cliente conecta su ERP en el widget de Chift → Isaak recibe los datos normalizados
+  - Pricing: fee por conexión activa, no por ERP
+
+**Encaja perfectamente con `ErpClient` existente:**
+
+- Añadir `provider: 'chift'` en `ExternalConnection`
+- `ChiftErpClient implements ErpClient` — traduce Chift responses a `ErpInvoice`, `ErpContact`, etc.
+- Un solo adapter cubre todos los ERPs que Chift soporta
+
+**Cambios técnicos:**
+
+```
+apps/isaak/app/lib/chift-erp-client.ts  — ChiftErpClient implements ErpClient
+apps/isaak/app/lib/erp-client-factory.ts — añadir case 'chift'
+apps/isaak/app/(workspace)/settings/    — UI conectar ERP via Chift widget
+```
+
+**Variables de entorno:**
+
+```
+CHIFT_CLIENT_ID / CHIFT_CLIENT_SECRET / CHIFT_API_BASE
+```
+
+**Prerequisito:** Registrarse en chift.eu y obtener API key de desarrollo (acceso gratuito para dev).
+
+**Esfuerzo:** M (1 sprint una vez obtenidas las credenciales Chift)
+
+---
+
+### Admin D4: MarketingCampaign (pendiente menor)
+
+- Modelo Prisma `MarketingCampaign` + migración
+- Historial de campañas enviadas en panel admin `/admin-marketing`
+- Esfuerzo: XS (pocas horas)
 
 ---
 
 ## Stack técnico — librerías por fase
 
-| Fase/Sprint | Librerías añadidas                                 | Estado  |
-| ----------- | -------------------------------------------------- | ------- |
-| G           | `react-markdown`, `remark-gfm`                     | ✅      |
-| H           | `recharts`, `xlsx` (SheetJS)                       | ✅      |
-| VF-2        | `node-forge`, `@types/node-forge`                  | ✅      |
-| OG images   | `next/og` (built-in Next.js 15)                    | ✅      |
-| P3-3        | Sin librerías nuevas previstas                     | Pending |
-| P3-4-A/B    | Sin librerías nuevas (fetch nativo + OData params) | Pending |
-| P3-4-C      | `chift-sdk` si se decide Chift                     | Pending |
+| Fase/Sprint | Librerías añadidas                                  | Estado  |
+| ----------- | --------------------------------------------------- | ------- |
+| G           | `react-markdown`, `remark-gfm`                      | ✅      |
+| H           | `recharts`, `xlsx` (SheetJS)                        | ✅      |
+| VF-2        | `node-forge`, `@types/node-forge`                   | ✅      |
+| OG images   | `next/og` (built-in Next.js 15)                     | ✅      |
+| G-2         | Sin librerías nuevas (Google APIs via fetch nativo) | Pending |
+| M           | Sin librerías nuevas (Microsoft Graph via fetch)    | Pending |
+| P3-4-A/B    | Sin librerías nuevas (fetch nativo + OData params)  | Pending |
+| P3-4-C      | `chift-sdk` o fetch nativo según Chift docs         | Pending |
 
 ---
 
 ## Decisiones de arquitectura vigentes
 
-| Decisión               | Detalle                                                                                                                                                     |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Motor IA por plan      | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`           |
-| Rate limit free        | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público |
-| Acciones con escritura | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                        |
-| Certificados digitales | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                       |
-| mTLS AEAT              | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                           |
-| AEAT chat context      | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                         |
-| Branding facturas PDF  | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                               |
-| Isaak Público          | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                             |
-| `INTERNAL_API_SECRET`  | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                           |
+| Decisión                | Detalle                                                                                                                                                     |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Motor IA por plan       | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`           |
+| Rate limit free         | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público |
+| Acciones con escritura  | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                        |
+| Certificados digitales  | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                       |
+| mTLS AEAT               | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                           |
+| AEAT chat context       | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                         |
+| Branding facturas PDF   | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                               |
+| Isaak Público           | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                             |
+| `INTERNAL_API_SECRET`   | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                           |
+| Google LLM tools (G-2)  | Chat route expone `google_*` tools que el LLM invoca directamente. Re-auth si scope insuficiente (`gmail.modify` upgrade).                                  |
+| Microsoft Graph (M)     | Multi-tenant Azure AD app. `IsaakMicrosoftToken` per `(tenantId, userId)`. Mismo patrón OAuth + auto-refresh que Google.                                    |
+| ERP aggregator (P3-4-C) | Chift como capa única para Sage/A3/ContaPlus/etc. `ChiftErpClient implements ErpClient` — un adapter cubre 50+ ERPs.                                        |
