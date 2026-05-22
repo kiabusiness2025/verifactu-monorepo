@@ -8,8 +8,9 @@ const HOLDed_CONNECTORS_URL = 'https://holded.verifactu.business/conectores';
 const ISAAK_URL = 'https://isaak.verifactu.business';
 
 const navLinks = [
+  { label: 'Isaak', href: ISAAK_URL },
+  { label: 'Conectores', href: '/conectores' },
   { label: 'Precios', href: '/precios' },
-  { label: 'Servicios', href: '/servicios' },
   { label: 'Contacto', href: '/contacto' },
 ];
 
@@ -31,7 +32,7 @@ const pillars = [
   },
   {
     title: 'Modo conectado',
-    body: 'ERPs, Holded, bancos, CRM, ecommerce, Drive, APIs y archivos empresariales dentro de una sola capa conversacional empresarial.',
+    body: 'Holded conectado directamente. Sage, A3ERP, Odoo, Xero, Cegid y +40 ERPs más via Chift. Bancos, CRM, Drive y APIs — todo en una sola capa conversacional empresarial.',
     icon: Link2,
   },
 ];
@@ -71,12 +72,12 @@ export default function LandingPublicHubPhase1() {
                   Solicitar demo
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link
-                  href="/recursos/contacto"
+                <a
+                  href={ISAAK_URL}
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                 >
-                  Unirme a la beta
-                </Link>
+                  Empezar gratis
+                </a>
                 <Link
                   href="/asesorias"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
@@ -103,7 +104,7 @@ export default function LandingPublicHubPhase1() {
         <Container>
           <div className="max-w-3xl">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-              Arquitectura publica fase 1
+              Cuatro pilares del ecosistema
             </div>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
               Cumple, entiende y conecta tu negocio desde un unico ecosistema.
@@ -126,6 +127,14 @@ export default function LandingPublicHubPhase1() {
                 </article>
               );
             })}
+          </div>
+          <div className="mt-6 text-center">
+            <Link
+              href="/conectores"
+              className="text-sm font-semibold text-[#2361d8] hover:underline"
+            >
+              Ver todos los conectores disponibles →
+            </Link>
           </div>
         </Container>
       </section>
@@ -197,12 +206,13 @@ export default function LandingPublicHubPhase1() {
                   Primer hub vertical
                 </div>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                  Holded es nuestro primer ecosistema conectado.
+                  Holded conectado. Chift abre +40 ERPs más.
                 </h2>
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-blue-100 sm:text-base">
-                  El hub de Holded publica conectores, documentacion y piezas legales especificas
-                  sin convertir Holded en el centro de todo el producto. ChatGPT y Claude son
-                  canales. Isaak es la capa principal de orquestacion empresarial.
+                  Holded funciona hoy como fuente de datos directa para Isaak. A través de Chift,
+                  Sage, A3ERP, Odoo, Xero, Cegid, QuickBooks y más de 40 ERPs están disponibles sin
+                  configuración adicional. Isaak es la capa de orquestación empresarial: el ERP
+                  cambia, la experiencia con Isaak permanece.
                 </p>
               </div>
               <a
