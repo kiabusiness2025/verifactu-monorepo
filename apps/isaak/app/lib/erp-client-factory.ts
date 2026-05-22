@@ -1,9 +1,8 @@
 // Factory: returns the right ErpClient for a tenant based on their active ExternalConnection.
+// Supported providers: Holded (direct API), Chift (covers Sage, Xero, QuickBooks, Cegid, +40 ERPs),
+// Hotelgest (hotel management).
 
 import { decryptHoldedSecret, getHoldedConnection } from './holded-integration';
-
-// Note: HoldedConnectionRecord.apiKey is already decrypted by getHoldedConnection.
-// decryptHoldedSecret is still used for a3innuva subscriptionKey stored in apiKeyEnc.
 import { HoldedErpClient } from './holded-erp-client';
 import type { ErpClient } from './erp-client';
 import { prisma } from './prisma';
@@ -17,48 +16,36 @@ export class ErpNotConnectedError extends Error {
   }
 }
 
+const SECONDARY_PROVIDERS = ['hotelgest', 'chift'] as const;
+
 export async function getErpClient(tenantId: string): Promise<ErpClient> {
-  // 1. Try Holded (current sole provider)
+  // 1. Holded (most common)
   const holdedConn = await getHoldedConnection(tenantId);
   if (holdedConn?.apiKey) {
     return new HoldedErpClient(holdedConn.apiKey);
   }
 
-  // 2. Try other providers stored in ExternalConnection (P3-4-A/B: Sage, a3innuva)
+  // 2. Other providers (Chift = universal connector for Sage/Xero/QB/Cegid/…, Hotelgest)
   const conn = await prisma.externalConnection.findFirst({
     where: {
       tenantId,
-      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest', 'chift'] },
+      provider: { in: [...SECONDARY_PROVIDERS] },
       connectionStatus: 'connected',
     },
     orderBy: { connectedAt: 'desc' },
   });
 
   if (conn) {
-    // Lazy-loaded to avoid bundling OAuth clients when not needed
     switch (conn.provider) {
-      case 'sage_200c': {
-        const { SageErpClient } = await import('./sage-erp-client');
-        const { getErpOAuthToken } = await import('./erp-oauth-tokens');
-        const token = await getErpOAuthToken(conn.id);
-        return new SageErpClient(token);
-      }
-      case 'a3innuva': {
-        const { A3ErpClient } = await import('./a3-erp-client');
-        const { getErpOAuthToken } = await import('./erp-oauth-tokens');
-        const token = await getErpOAuthToken(conn.id);
-        const subscriptionKey = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
-        return new A3ErpClient(token, subscriptionKey);
+      case 'chift': {
+        const { ChiftErpClient } = await import('./chift-erp-client');
+        const consumerId = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
+        return new ChiftErpClient(consumerId);
       }
       case 'hotelgest': {
         const { HotelgestErpClient } = await import('./hotelgest-erp-client');
         const apiKey = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
         return new HotelgestErpClient(apiKey);
-      }
-      case 'chift': {
-        const { ChiftErpClient } = await import('./chift-erp-client');
-        const consumerId = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
-        return new ChiftErpClient(consumerId);
       }
     }
   }
@@ -74,7 +61,7 @@ export async function hasErpConnected(tenantId: string): Promise<boolean> {
   const count = await prisma.externalConnection.count({
     where: {
       tenantId,
-      provider: { in: ['sage_200c', 'a3innuva', 'hotelgest', 'chift'] },
+      provider: { in: [...SECONDARY_PROVIDERS] },
       connectionStatus: 'connected',
     },
   });
