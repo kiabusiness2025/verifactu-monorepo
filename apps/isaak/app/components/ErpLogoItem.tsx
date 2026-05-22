@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 
-type FallbackStage = 'clearbit' | 'favicon' | 'initial';
+type FallbackStage = 'favicon' | 'initial';
 
 interface Props {
   name: string;
@@ -14,16 +14,13 @@ interface Props {
 }
 
 export default function ErpLogoItem({ name, domain, href, color, initial, connected }: Props) {
-  const [stage, setStage] = useState<FallbackStage>('clearbit');
+  const [stage, setStage] = useState<FallbackStage>('favicon');
 
   function advance() {
-    setStage((s) => (s === 'clearbit' ? 'favicon' : 'initial'));
+    setStage('initial');
   }
 
-  const imgSrc =
-    stage === 'clearbit'
-      ? `https://logo.clearbit.com/${domain}`
-      : `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  const imgSrc = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
   return (
     <a
