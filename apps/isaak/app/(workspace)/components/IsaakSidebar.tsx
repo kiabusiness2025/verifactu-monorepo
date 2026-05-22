@@ -6,13 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
-  Bell,
-  Calculator,
-  CalendarDays,
   ChevronLeft,
-  Cloud,
-  Landmark,
-  Mail,
   ChevronRight,
   ChevronUp,
   CreditCard,
@@ -23,7 +17,6 @@ import {
   Loader2,
   MessageSquare,
   Plus,
-  PlugZap,
   Receipt,
   Settings,
   Sparkles,
@@ -31,7 +24,6 @@ import {
   UserCircle2,
   Building2,
   Users,
-  Users2,
 } from 'lucide-react';
 
 type ConversationItem = {
@@ -70,17 +62,6 @@ const NAV_SECTIONS = [
   { href: '/gastos', label: 'Gastos', icon: Receipt },
   { href: '/informes', label: 'Informes', icon: FileBarChart2 },
   { href: '/contactos', label: 'Contactos', icon: Users },
-  { href: '/equipo', label: 'Equipo', icon: Users2 },
-  { href: '/calendario', label: 'Calendario Fiscal', icon: CalendarDays },
-  { href: '/fiscal', label: 'Alertas Fiscales', icon: Bell },
-  { href: '/fiscal/modelos', label: 'Modelos AEAT', icon: Calculator },
-  { href: '/sede', label: 'Sede Electrónica', icon: PlugZap },
-  { href: '/banking', label: 'Open Banking', icon: Landmark },
-  { href: '/mail', label: 'Gmail Facturas', icon: Mail },
-  { href: '/microsoft', label: 'Microsoft 365', icon: Cloud },
-  { href: '/chift', label: 'ERP (Chift)', icon: PlugZap },
-  { href: '/advisor', label: 'Mis clientes', icon: Building2 },
-  { href: '/settings', label: 'Ajustes', icon: Settings },
 ];
 
 const PROFILE_MENU = [
@@ -267,33 +248,28 @@ export default function IsaakSidebar({
       {/* ── Separator ──────────────────────────────────────── */}
       <div className={`my-2 border-t border-white/5 ${collapsed ? 'mx-2' : 'mx-3'}`} />
 
-      {/* ── Integraciones ──────────────────────────────────── */}
+      {/* ── Ajustes ────────────────────────────────────────── */}
       <div className={collapsed ? 'px-1' : 'px-2'}>
-        {!collapsed && (
-          <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
-            Plataforma
-          </div>
-        )}
         <Link
-          href="/integrations"
-          title={collapsed ? 'Integraciones' : undefined}
+          href="/settings"
+          title={collapsed ? 'Ajustes' : undefined}
           className={`flex h-9 items-center rounded-lg text-[13px] font-medium transition ${
             collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
           } ${
-            isActive('/integrations')
+            isActive('/settings')
               ? 'bg-white/10 text-white'
               : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
           }`}
         >
           <div className="relative">
-            <PlugZap size={16} />
+            <Settings size={16} />
             {holdedConnected && (
               <span className="absolute -right-0.5 -top-0.5 h-1.5 w-1.5 rounded-full bg-emerald-400" />
             )}
           </div>
           {!collapsed && (
             <span className="flex flex-1 items-center justify-between">
-              Integraciones
+              Ajustes
               {holdedConnected && (
                 <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-400">
                   <span className="h-1 w-1 rounded-full bg-emerald-400" />
@@ -331,10 +307,10 @@ export default function IsaakSidebar({
                 <span className="text-[10px] text-amber-300">pendiente</span>
               </Link>
               <Link
-                href="/integrations"
+                href="/settings?section=connections"
                 className="flex items-center justify-between rounded-lg px-2 py-1.5 text-[12px] text-slate-300 transition hover:bg-white/5"
               >
-                <span>Integrar herramientas</span>
+                <span>Conectar ERP</span>
                 <span
                   className={`text-[10px] font-semibold ${holdedConnected ? 'text-emerald-300' : 'text-amber-300'}`}
                 >
@@ -346,7 +322,7 @@ export default function IsaakSidebar({
 
           {conversations.length > 0 && (
             <div className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-widest text-slate-600">
-              Recientes
+              Historial de chats
             </div>
           )}
           <div className="space-y-0.5">

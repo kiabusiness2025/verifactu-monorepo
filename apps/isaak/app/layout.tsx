@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
-import IsaakFloatingChatButton from './components/IsaakFloatingChatButton';
+import IsaakPublicSupportWidget from './components/IsaakPublicSupportWidget';
 import WhatsAppButton from './components/WhatsAppButton';
 import IsaakSiteChrome from './components/IsaakSiteChrome';
 import './globals.css';
@@ -68,7 +68,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={manrope.className}>
         <IsaakSiteChrome>{children}</IsaakSiteChrome>
         <WhatsAppButton />
-        <IsaakFloatingChatButton />
+        <IsaakPublicSupportWidget />
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});})}`,
