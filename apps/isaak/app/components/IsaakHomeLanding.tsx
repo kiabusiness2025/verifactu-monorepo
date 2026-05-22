@@ -15,6 +15,7 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import ErpLogoItem from './ErpLogoItem';
 import IsaakLiveDemo from './IsaakLiveDemo';
 import IsaakMetricsBar from './IsaakMetricsBar';
 
@@ -56,14 +57,70 @@ const ISAAK_DIFF = [
 
 // ERPs compatibles vía Chift — relevantes para España
 const ERP_PARTNERS = [
-  { name: 'Holded', initial: 'H', color: '#2361d8', connected: true },
-  { name: 'Sage', initial: 'S', color: '#00854A', connected: false },
-  { name: 'A3ERP', initial: 'A', color: '#F97316', connected: false },
-  { name: 'Odoo', initial: 'O', color: '#714B67', connected: false },
-  { name: 'Xero', initial: 'X', color: '#13B5EA', connected: false },
-  { name: 'Cegid', initial: 'C', color: '#0A3161', connected: false },
-  { name: 'QuickBooks', initial: 'Q', color: '#2CA01C', connected: false },
-  { name: 'Pennylane', initial: 'P', color: '#6366F1', connected: false },
+  {
+    name: 'Holded',
+    domain: 'holded.com',
+    href: 'https://holded.com/es',
+    initial: 'H',
+    color: '#2361d8',
+    connected: true,
+  },
+  {
+    name: 'Sage',
+    domain: 'sage.com',
+    href: 'https://sage.com/es-es',
+    initial: 'S',
+    color: '#00854A',
+    connected: false,
+  },
+  {
+    name: 'A3ERP',
+    domain: 'a3software.com',
+    href: 'https://a3software.com',
+    initial: 'A',
+    color: '#F97316',
+    connected: false,
+  },
+  {
+    name: 'Odoo',
+    domain: 'odoo.com',
+    href: 'https://odoo.com/es',
+    initial: 'O',
+    color: '#714B67',
+    connected: false,
+  },
+  {
+    name: 'Xero',
+    domain: 'xero.com',
+    href: 'https://xero.com',
+    initial: 'X',
+    color: '#13B5EA',
+    connected: false,
+  },
+  {
+    name: 'Cegid',
+    domain: 'cegid.com',
+    href: 'https://cegid.com/es',
+    initial: 'C',
+    color: '#0A3161',
+    connected: false,
+  },
+  {
+    name: 'QuickBooks',
+    domain: 'quickbooks.intuit.com',
+    href: 'https://quickbooks.intuit.com/es-es',
+    initial: 'Q',
+    color: '#2CA01C',
+    connected: false,
+  },
+  {
+    name: 'Pennylane',
+    domain: 'pennylane.com',
+    href: 'https://pennylane.com',
+    initial: 'P',
+    color: '#6366F1',
+    connected: false,
+  },
 ];
 
 type Connector = {
@@ -211,7 +268,7 @@ export default function IsaakHomeLanding() {
         </div>
 
         <div className="relative mx-auto max-w-7xl px-6">
-          <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
+          <div className="grid gap-10 lg:grid-cols-[1fr_1fr] lg:items-center">
             {/* Left: Copy */}
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-blue-300">
@@ -219,7 +276,7 @@ export default function IsaakHomeLanding() {
                 IA empresarial · Para el empresario
               </div>
 
-              <h1 className="mt-7 text-5xl font-black leading-[1.04] tracking-tight text-white sm:text-6xl lg:text-[68px]">
+              <h1 className="mt-7 text-4xl font-black leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-[48px] xl:text-[56px]">
                 Recupera el{' '}
                 <span className="bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
                   80%
@@ -278,7 +335,7 @@ export default function IsaakHomeLanding() {
             </div>
 
             {/* Right: Hero video */}
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl shadow-blue-500/20">
+            <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl shadow-blue-500/20 lg:aspect-auto lg:max-h-[540px]">
               <video
                 autoPlay
                 loop
@@ -568,28 +625,7 @@ export default function IsaakHomeLanding() {
 
           <div className="mt-10 flex flex-wrap items-end justify-center gap-6">
             {ERP_PARTNERS.map((erp) => (
-              <div key={erp.name} className="flex flex-col items-center gap-2">
-                <div
-                  className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${
-                    erp.connected
-                      ? 'border-[#2361d8]/30 shadow-sm shadow-blue-100'
-                      : 'border-slate-200'
-                  }`}
-                >
-                  <div
-                    className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black text-white"
-                    style={{ backgroundColor: erp.color }}
-                  >
-                    {erp.initial}
-                  </div>
-                </div>
-                <span className="text-xs font-semibold text-slate-700">{erp.name}</span>
-                {erp.connected ? (
-                  <span className="text-[10px] font-bold text-emerald-600">✓ Conectado</span>
-                ) : (
-                  <span className="text-[10px] text-slate-400">Próximamente</span>
-                )}
-              </div>
+              <ErpLogoItem key={erp.name} {...erp} />
             ))}
 
             {/* +40 más */}
