@@ -1,8 +1,17 @@
-import { ArrowRight, ShieldCheck, Sparkles, FileSpreadsheet, Link2 } from 'lucide-react';
-import { Landmark, Building2, Users } from 'lucide-react';
+import {
+  ArrowRight,
+  Building2,
+  CheckCircle2,
+  FileSpreadsheet,
+  Landmark,
+  Link2,
+  ShieldCheck,
+  Sparkles,
+  Users,
+} from 'lucide-react';
 import Link from 'next/link';
 import Header from './Header';
-import { Container, Footer, HeroTripleMock } from '../lib/home/ui';
+import { Container, Footer } from '../lib/home/ui';
 
 const HOLDed_CONNECTORS_URL = 'https://holded.verifactu.business/conectores';
 const ISAAK_URL = 'https://isaak.verifactu.business';
@@ -43,63 +52,134 @@ const audienceCards = [
   'Asesorias que necesitan clientes mas ordenados y menos persecucion documental.',
 ];
 
+const ECOSYSTEM_CARDS = [
+  {
+    icon: ShieldCheck,
+    title: 'Cumplimiento VeriFactu',
+    desc: 'AEAT, trazabilidad y Ley Antifraude. Registro de facturas con firma garantizada.',
+    badge: null,
+  },
+  {
+    icon: Sparkles,
+    title: 'Isaak — IA empresarial',
+    desc: 'Pregunta en español, obtén respuestas con datos reales. Tu empresa disponible 24/7.',
+    badge: null,
+  },
+  {
+    icon: Link2,
+    title: 'Conectores ERP',
+    desc: 'Holded conectado hoy. Sage, A3ERP, Odoo, Xero y +40 ERPs vía Chift.',
+    badge: null,
+  },
+  {
+    icon: Landmark,
+    title: 'Open Banking',
+    desc: 'Movimientos bancarios en tiempo real. Conciliación automática con facturas.',
+    badge: 'Próximo',
+  },
+];
+
 export default function LandingPublicHubPhase1() {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <Header navLinks={navLinks} />
 
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section className="border-b border-slate-200 bg-[linear-gradient(180deg,#f5f9ff_0%,#ffffff_72%)] py-16 sm:py-20">
         <Container>
-          <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+            {/* Left: Copy */}
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-[#2361d8]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
                 Hub principal del ecosistema
               </div>
-              <h1 className="mt-6 max-w-4xl text-4xl font-bold tracking-tight text-[#011c67] sm:text-6xl sm:leading-[1.04]">
-                El hub para entender, conectar y cumplir con tu empresa.
+              <h1 className="mt-6 max-w-2xl text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl sm:leading-[1.06]">
+                Tu empresa, conectada. Tus impuestos, bajo control. Tu IA, siempre disponible.
               </h1>
-              <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-                VeriFactu es el comienzo. Isaak es la capa que conecta tu empresa.
-                verifactu.business reune cumplimiento VeriFactu, conexion AEAT, modo Excel in-house,
-                conectores empresariales e Isaak como orquestador inteligente para autonomos, pymes
-                y asesorias.
+              <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
+                verifactu.business reúne cumplimiento AEAT, gestión empresarial con IA e integración
+                con tu ERP en un solo ecosistema. Empieza gratis hoy.
               </p>
+
+              <div className="mt-4 flex flex-wrap gap-2 text-sm text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  Sin tarjeta
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  IA incluida desde el plan gratuito
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  Holded conectado hoy
+                </span>
+              </div>
+
               <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <Link
-                  href="/demo"
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
-                >
-                  Solicitar demo
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
                 <a
                   href={ISAAK_URL}
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
                 >
                   Empezar gratis
+                  <ArrowRight className="h-4 w-4" />
                 </a>
+                <Link
+                  href="/demo"
+                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+                >
+                  Solicitar demo
+                </Link>
                 <Link
                   href="/asesorias"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                 >
-                  Soy asesoria
+                  Soy asesoría
                 </Link>
-                <a
-                  href={HOLDed_CONNECTORS_URL}
-                  className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
-                >
-                  Ver conectores
-                </a>
               </div>
             </div>
 
-            <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm">
-              <HeroTripleMock />
+            {/* Right: Ecosystem cards */}
+            <div className="space-y-3">
+              {ECOSYSTEM_CARDS.map(({ icon: Icon, title, desc, badge }) => (
+                <div
+                  key={title}
+                  className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#2361d8]/20 hover:shadow-md"
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2361d8]/10 text-[#2361d8]">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-[#011c67]">{title}</span>
+                      {badge && (
+                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 ring-1 ring-amber-200">
+                          {badge}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-sm leading-6 text-slate-500">{desc}</div>
+                  </div>
+                </div>
+              ))}
+
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" />
+                  <span className="text-sm font-semibold text-emerald-700">
+                    Disponible hoy · Plan gratuito
+                  </span>
+                </div>
+                <div className="mt-0.5 text-xs text-emerald-600">
+                  Sin tarjeta · Listo en 2 minutos · +40 ERPs conectados
+                </div>
+              </div>
             </div>
           </div>
         </Container>
       </section>
 
+      {/* ── PILARES ──────────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-20">
         <Container>
           <div className="max-w-3xl">
@@ -139,6 +219,7 @@ export default function LandingPublicHubPhase1() {
         </Container>
       </section>
 
+      {/* ── PARA QUIÉN ───────────────────────────────────────────────────── */}
       <section className="border-y border-slate-200 bg-slate-50/70 py-16 sm:py-20">
         <Container>
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
@@ -197,6 +278,7 @@ export default function LandingPublicHubPhase1() {
         </Container>
       </section>
 
+      {/* ── HOLDED / CHIFT CTA ───────────────────────────────────────────── */}
       <section className="py-16 sm:py-20">
         <Container>
           <div className="rounded-[2rem] border border-slate-200 bg-[#011c67] px-6 py-8 text-white shadow-sm sm:px-10 sm:py-10">
@@ -211,8 +293,8 @@ export default function LandingPublicHubPhase1() {
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-blue-100 sm:text-base">
                   Holded funciona hoy como fuente de datos directa para Isaak. A través de Chift,
                   Sage, A3ERP, Odoo, Xero, Cegid, QuickBooks y más de 40 ERPs están disponibles sin
-                  configuración adicional. Isaak es la capa de orquestación empresarial: el ERP
-                  cambia, la experiencia con Isaak permanece.
+                  configuración adicional. Isaak es la capa de orquestación: el ERP cambia, la
+                  experiencia con Isaak permanece.
                 </p>
               </div>
               <a
