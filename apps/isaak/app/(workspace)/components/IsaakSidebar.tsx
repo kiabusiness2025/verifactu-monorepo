@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   BarChart3,
   Bell,
+  Calculator,
   CalendarDays,
   ChevronLeft,
   Cloud,
@@ -72,6 +73,7 @@ const NAV_SECTIONS = [
   { href: '/equipo', label: 'Equipo', icon: Users2 },
   { href: '/calendario', label: 'Calendario Fiscal', icon: CalendarDays },
   { href: '/fiscal', label: 'Alertas Fiscales', icon: Bell },
+  { href: '/fiscal/modelos', label: 'Modelos AEAT', icon: Calculator },
   { href: '/sede', label: 'Sede Electrónica', icon: PlugZap },
   { href: '/banking', label: 'Open Banking', icon: Landmark },
   { href: '/mail', label: 'Gmail Facturas', icon: Mail },
