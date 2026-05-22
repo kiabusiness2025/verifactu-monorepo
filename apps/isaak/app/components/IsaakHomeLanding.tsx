@@ -16,7 +16,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import IsaakLiveDemo from './IsaakLiveDemo';
-import IsaakStatsCounter from './IsaakStatsCounter';
+import IsaakMetricsBar from './IsaakMetricsBar';
 
 // ── Data ─────────────────────────────────────────────────────────────────────
 
@@ -56,14 +56,14 @@ const ISAAK_DIFF = [
 
 // ERPs compatibles vía Chift — relevantes para España
 const ERP_PARTNERS = [
-  { name: 'Holded', domain: 'holded.com', connected: true },
-  { name: 'Sage', domain: 'sage.com', connected: false },
-  { name: 'A3ERP', domain: 'a3software.com', connected: false },
-  { name: 'Odoo', domain: 'odoo.com', connected: false },
-  { name: 'Xero', domain: 'xero.com', connected: false },
-  { name: 'Cegid', domain: 'cegid.com', connected: false },
-  { name: 'QuickBooks', domain: 'intuit.com', connected: false },
-  { name: 'Pennylane', domain: 'pennylane.com', connected: false },
+  { name: 'Holded', initial: 'H', color: '#2361d8', connected: true },
+  { name: 'Sage', initial: 'S', color: '#00854A', connected: false },
+  { name: 'A3ERP', initial: 'A', color: '#F97316', connected: false },
+  { name: 'Odoo', initial: 'O', color: '#714B67', connected: false },
+  { name: 'Xero', initial: 'X', color: '#13B5EA', connected: false },
+  { name: 'Cegid', initial: 'C', color: '#0A3161', connected: false },
+  { name: 'QuickBooks', initial: 'Q', color: '#2CA01C', connected: false },
+  { name: 'Pennylane', initial: 'P', color: '#6366F1', connected: false },
 ];
 
 type Connector = {
@@ -277,12 +277,16 @@ export default function IsaakHomeLanding() {
               </div>
             </div>
 
-            {/* Right: Stats */}
-            <div>
-              <IsaakStatsCounter />
-              <p className="mt-6 text-center text-xs text-blue-300/30">
-                Según datos de uso de Isaak en empresas conectadas
-              </p>
+            {/* Right: Hero video */}
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl shadow-blue-500/20">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="h-full w-full object-cover"
+                src="/isaak_banner_hero_v2.mp4"
+              />
             </div>
           </div>
         </div>
@@ -292,16 +296,21 @@ export default function IsaakHomeLanding() {
       </section>
 
       {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* S1b — METRICS BAR                                                  */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <IsaakMetricsBar />
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
       {/* S2 — EL PROBLEMA                                                   */}
       {/* ─────────────────────────────────────────────────────────────────── */}
       <section className="bg-white py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-3xl text-center">
-            <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-rose-600">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-blue-600">
               El problema real del empresario español
             </div>
             <h2 className="mt-6 text-4xl font-black leading-[1.1] tracking-tight text-slate-950 sm:text-5xl">
-              El día a día está diseñado <span className="text-rose-600">para hacerle perder</span>
+              El día a día está diseñado <span className="text-blue-700">para hacerle perder</span>
             </h2>
             <p className="mt-5 text-lg leading-8 text-slate-500">
               No es falta de capacidad. Es que el sistema de gestión empresarial está construido
@@ -313,8 +322,8 @@ export default function IsaakHomeLanding() {
             {/* Time column */}
             <div className="rounded-[2rem] border border-slate-200 bg-slate-50/70 p-8">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100">
-                  <Clock className="h-5 w-5 text-rose-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100">
+                  <Clock className="h-5 w-5 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-black text-slate-950">
                   El 80% de tu jornada se evapora aquí
@@ -326,12 +335,12 @@ export default function IsaakHomeLanding() {
                     key={p}
                     className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
                   >
-                    <X className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+                    <X className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
                     <p className="text-sm font-medium text-slate-700">{p}</p>
                   </div>
                 ))}
               </div>
-              <p className="mt-6 text-sm font-semibold italic text-rose-600">
+              <p className="mt-6 text-sm font-semibold italic text-slate-600">
                 "El empresario que debería dirigir, está administrando."
               </p>
             </div>
@@ -339,8 +348,8 @@ export default function IsaakHomeLanding() {
             {/* Errors column */}
             <div className="rounded-[2rem] border border-slate-200 bg-slate-50/70 p-8">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-rose-100">
-                  <AlertTriangle className="h-5 w-5 text-rose-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-100">
+                  <AlertTriangle className="h-5 w-5 text-blue-600" />
                 </div>
                 <h3 className="text-xl font-black text-slate-950">
                   Un solo error humano puede costarte miles
@@ -352,12 +361,12 @@ export default function IsaakHomeLanding() {
                     key={p}
                     className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
                   >
-                    <X className="mt-0.5 h-4 w-4 shrink-0 text-rose-500" />
+                    <X className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
                     <p className="text-sm font-medium text-slate-700">{p}</p>
                   </div>
                 ))}
               </div>
-              <p className="mt-6 text-sm font-semibold italic text-rose-600">
+              <p className="mt-6 text-sm font-semibold italic text-slate-600">
                 "No es negligencia. Es que el sistema exige demasiado al humano."
               </p>
             </div>
@@ -407,15 +416,15 @@ export default function IsaakHomeLanding() {
 
           <div className="mt-14 grid gap-6 lg:grid-cols-2">
             {/* Traditional - faded */}
-            <div className="rounded-[2rem] border border-white/5 bg-white/3 p-8 opacity-60">
-              <div className="inline-flex rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-bold text-white/40">
+            <div className="rounded-[2rem] border border-white/10 bg-white/5 p-8">
+              <div className="inline-flex rounded-full border border-white/15 bg-white/8 px-3 py-1 text-xs font-bold text-white/60">
                 Software de gestión tradicional
               </div>
               <ul className="mt-7 space-y-4">
                 {TRADITIONAL.map((item) => (
                   <li key={item} className="flex items-start gap-3">
-                    <X className="mt-0.5 h-4 w-4 shrink-0 text-rose-500/60" />
-                    <span className="text-sm leading-6 text-white/45">{item}</span>
+                    <X className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+                    <span className="text-sm leading-6 text-white/70">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -563,17 +572,16 @@ export default function IsaakHomeLanding() {
                 <div
                   className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${
                     erp.connected
-                      ? 'border-[#2361d8]/30 bg-[#2361d8]/5 shadow-sm shadow-blue-100'
-                      : 'border-slate-200 bg-white'
+                      ? 'border-[#2361d8]/30 shadow-sm shadow-blue-100'
+                      : 'border-slate-200'
                   }`}
                 >
-                  <img
-                    src={`https://logo.clearbit.com/${erp.domain}?size=64`}
-                    alt={erp.name}
-                    width={36}
-                    height={36}
-                    className="h-9 w-9 object-contain"
-                  />
+                  <div
+                    className="flex h-10 w-10 items-center justify-center rounded-xl text-sm font-black text-white"
+                    style={{ backgroundColor: erp.color }}
+                  >
+                    {erp.initial}
+                  </div>
                 </div>
                 <span className="text-xs font-semibold text-slate-700">{erp.name}</span>
                 {erp.connected ? (

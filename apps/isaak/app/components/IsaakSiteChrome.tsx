@@ -5,7 +5,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { CONTACT_URL } from '../lib/isaak-navigation';
 
 type Props = {
   children: React.ReactNode;
@@ -67,19 +66,10 @@ export default function IsaakSiteChrome({ children }: Props) {
                 {label}
               </Link>
             ))}
-            <a href={CONTACT_URL} className="hover:text-slate-900">
-              Solicitar acceso
-            </a>
           </nav>
 
           {/* Desktop CTAs */}
           <div className="hidden items-center gap-2 md:flex">
-            <Link
-              href="/support"
-              className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-            >
-              Solicitar acceso
-            </Link>
             <Link
               href="/chat"
               className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0]"
@@ -123,13 +113,6 @@ export default function IsaakSiteChrome({ children }: Props) {
                   {label}
                 </Link>
               ))}
-              <a
-                href={CONTACT_URL}
-                onClick={() => setMobileOpen(false)}
-                className="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
-              >
-                Solicitar acceso
-              </a>
               <div className="mt-2 border-t border-slate-100 pt-2">
                 <Link
                   href="/support"
@@ -172,9 +155,6 @@ export default function IsaakSiteChrome({ children }: Props) {
             </Link>
             <Link href="/asesorias" className="hover:text-slate-900">
               Asesorías
-            </Link>
-            <Link href="/pricing" className="hover:text-slate-900">
-              Precios
             </Link>
             <Link href="/pricing" className="hover:text-slate-900">
               Precios
