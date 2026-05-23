@@ -29,6 +29,7 @@ import {
 import { prisma } from '@/app/lib/prisma';
 import { getAeatNotifications, loadTenantCertPem } from '@/app/lib/aeat-sede';
 import { createIsaakInvoiceDraft, issueIsaakInvoice } from '@/app/lib/invoice-service';
+import { holdedCreateExpense } from '@/app/lib/holded-api';
 import { HOLDED_CHAT_TOOLS, executeHoldedTool, type HoldedToolName } from '@/app/lib/holded-tools';
 import { GOOGLE_CHAT_TOOLS, executeGoogleTool, isGoogleToolName } from '@/app/lib/google-tools';
 import {
@@ -341,6 +342,9 @@ function buildLlmInstructions(input: {
     analytics
       ? `Analitica: ventas_mes=${analytics.monthSales}, gastos_mes=${analytics.monthExpenses}, margen_mes=${analytics.monthMargin}, pendientes=${analytics.pendingCollectionsAmount}.`
       : 'Analitica: no disponible.',
+    analytics?.accountingPnL && analytics.accountingPnL.entriesProcessed > 0
+      ? `Resultado_contable_YTD (libro diario, fuente preferida sobre escaneo de documentos): ingresos=${analytics.accountingPnL.income}, gastos=${analytics.accountingPnL.expenses}, resultado=${analytics.accountingPnL.grossProfit}, margen_pct=${analytics.accountingPnL.margin ?? 'n/d'}, asientos=${analytics.accountingPnL.entriesProcessed}.`
+      : 'Resultado_contable_YTD: no disponible (sin asientos en libro diario o sin acceso a contabilidad).',
     probeSummary
       ? `Chequeo vivo: ${probeSummary.summary} Siguiente paso sugerido: ${probeSummary.nextStep}`
       : 'Chequeo vivo: no ejecutado.',
@@ -1095,52 +1099,37 @@ export async function POST(request: NextRequest) {
       const amountTotal =
         typeof pendingExpense.amountTotal === 'number' ? pendingExpense.amountTotal : 0;
 
-      const holdedPayload = {
-        date: expenseDate,
-        notes: invoiceNumber ? `${description} (Ref: ${invoiceNumber})` : description,
-        products: [
-          {
-            desc: description,
-            units: 1,
-            price: amountNet,
-            tax: Math.round(vatRate * 100),
-          },
-        ],
-      };
-
       try {
-        const holdedRes = await fetch(
-          'https://api.holded.com/api/invoicing/v1/documents/purchase',
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', key: holdedKey },
-            body: JSON.stringify(holdedPayload),
-          }
-        );
-        const holdedData = (await holdedRes.json().catch(() => ({}))) as {
-          id?: string;
-          status?: number;
-          info?: string;
-        };
-
-        if (!holdedRes.ok || holdedData.status === 0) {
-          reply = `No he podido registrar el gasto en Holded: ${holdedData.info ?? `Error ${holdedRes.status}`}. Puedes añadirlo manualmente en Holded.`;
-        } else {
-          const fmt = (n: number) =>
-            n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
-            ' €';
-          reply = [
-            `✅ Gasto registrado en Holded correctamente.`,
-            '',
-            `- **Proveedor:** ${supplierName}`,
-            `- **Total:** ${fmt(amountTotal)}`,
-            holdedData.id ? `- **ID Holded:** \`${holdedData.id}\`` : '',
-            '',
-            'Puedes verlo en la sección de Compras de Holded.',
-          ]
-            .filter(Boolean)
-            .join('\n');
-        }
+        const result = await holdedCreateExpense(holdedKey, {
+          contactName: supplierName,
+          date: expenseDate,
+          notes: invoiceNumber ? `${description} · Ref: ${invoiceNumber}` : description,
+          currency:
+            typeof pendingExpense.currency === 'string' ? pendingExpense.currency : 'EUR',
+          items: [
+            {
+              name: description,
+              units: 1,
+              subtotal: amountNet,
+              tax: Math.round(vatRate * 100),
+            },
+          ],
+        });
+        const fmt = (n: number) =>
+          n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+          ' €';
+        reply = [
+          `✅ Gasto registrado en Holded correctamente.`,
+          '',
+          `- **Proveedor:** ${supplierName}`,
+          `- **Total:** ${fmt(amountTotal)}`,
+          result.id ? `- **ID Holded:** \`${result.id}\`` : '',
+          result.docNumber ? `- **Nº documento:** ${result.docNumber}` : '',
+          '',
+          'Puedes verlo en la sección de Compras de Holded.',
+        ]
+          .filter(Boolean)
+          .join('\n');
       } catch (err) {
         console.error('[holded/chat] expense registration failed', err);
         reply =
