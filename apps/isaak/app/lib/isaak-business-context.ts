@@ -2,9 +2,11 @@ import type { IsaakInstructionProfile, IsaakOnboardingProfile } from '@verifactu
 import { getIsaakOnboardingState } from '@verifactu/integrations';
 import {
   buildHoldedAnalyticsSummary,
+  type HoldedAccountingPnL,
   type HoldedAnalyticsSummary,
   type HoldedSnapshot,
 } from '@/app/lib/holded-analytics';
+import { holdedGetPnL } from '@/app/lib/holded-api';
 import {
   fetchHoldedSnapshot,
   getHoldedConnection,
@@ -189,6 +191,22 @@ function buildContextSummary(input: {
         })} EUR.`
       );
     }
+
+    if (input.analytics.accountingPnL && input.analytics.accountingPnL.entriesProcessed > 0) {
+      const pnl = input.analytics.accountingPnL;
+      parts.push(
+        `Resultado contable YTD ${pnl.year} (libro diario): ingresos ${pnl.income.toLocaleString(
+          'es-ES',
+          { minimumFractionDigits: 0, maximumFractionDigits: 2 }
+        )} EUR, gastos ${pnl.expenses.toLocaleString('es-ES', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })} EUR, resultado ${pnl.grossProfit.toLocaleString('es-ES', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 2,
+        })} EUR${pnl.margin !== null ? ` (margen ${pnl.margin}%)` : ''}.`
+      );
+    }
   }
 
   return parts.join(' ');
@@ -278,16 +296,35 @@ export async function loadIsaakBusinessContext(
     }),
   ]);
 
-  const snapshot =
-    connection?.apiKey && connection.status !== 'disconnected'
-      ? await fetchHoldedSnapshot(connection.apiKey)
-          .then((result) => result)
+  const liveApiKey =
+    connection?.apiKey && connection.status !== 'disconnected' ? connection.apiKey : null;
+  const [snapshot, accountingPnL] = liveApiKey
+    ? await Promise.all([
+        fetchHoldedSnapshot(liveApiKey).catch((error) => {
+          console.error('[isaak context] holded snapshot read failed', error);
+          return null;
+        }),
+        holdedGetPnL(liveApiKey)
+          .then(
+            (pnl): HoldedAccountingPnL => ({
+              year: new Date().getFullYear(),
+              income: pnl.income,
+              expenses: pnl.expenses,
+              grossProfit: pnl.grossProfit,
+              margin: pnl.margin,
+              entriesProcessed: pnl.entriesProcessed,
+              period: pnl.period,
+            })
+          )
           .catch((error) => {
-            console.error('[isaak context] holded snapshot read failed', error);
+            console.error('[isaak context] holded P&L read failed', error);
             return null;
-          })
-      : null;
-  const analytics = snapshot ? buildHoldedAnalyticsSummary(snapshot) : null;
+          }),
+      ])
+    : [null, null];
+  const analytics = snapshot
+    ? buildHoldedAnalyticsSummary(snapshot, new Date(), accountingPnL)
+    : null;
 
   const effectiveCompleted = onboardingState.completed;
   const effectiveProfile =

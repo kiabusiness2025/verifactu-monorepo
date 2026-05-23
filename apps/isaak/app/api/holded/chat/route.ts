@@ -341,6 +341,9 @@ function buildLlmInstructions(input: {
     analytics
       ? `Analitica: ventas_mes=${analytics.monthSales}, gastos_mes=${analytics.monthExpenses}, margen_mes=${analytics.monthMargin}, pendientes=${analytics.pendingCollectionsAmount}.`
       : 'Analitica: no disponible.',
+    analytics?.accountingPnL && analytics.accountingPnL.entriesProcessed > 0
+      ? `Resultado_contable_YTD (libro diario, fuente preferida sobre escaneo de documentos): ingresos=${analytics.accountingPnL.income}, gastos=${analytics.accountingPnL.expenses}, resultado=${analytics.accountingPnL.grossProfit}, margen_pct=${analytics.accountingPnL.margin ?? 'n/d'}, asientos=${analytics.accountingPnL.entriesProcessed}.`
+      : 'Resultado_contable_YTD: no disponible (sin asientos en libro diario o sin acceso a contabilidad).',
     probeSummary
       ? `Chequeo vivo: ${probeSummary.summary} Siguiente paso sugerido: ${probeSummary.nextStep}`
       : 'Chequeo vivo: no ejecutado.',

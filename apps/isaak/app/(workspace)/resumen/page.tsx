@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, Clock, FileCheck, TrendingDown, TrendingUp } from 'lucide-react';
+import { BarChart3, Calculator, Clock, FileCheck, TrendingDown, TrendingUp } from 'lucide-react';
 import { Suspense } from 'react';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
-import { buildRangeSummary } from '@/app/lib/holded-analytics';
+import { buildRangeSummary, type HoldedAccountingPnL } from '@/app/lib/holded-analytics';
 import { prisma } from '@/app/lib/prisma';
 import ResumenChart, { type MonthlyPoint } from './components/ResumenChart';
 
@@ -58,6 +58,7 @@ async function DashboardContent() {
   let kpis: KpiCard[] = [];
   let chartData: MonthlyPoint[] = [];
   let verifactu: VerifactuStats | null = null;
+  let accountingPnL: HoldedAccountingPnL | null = null;
 
   try {
     const session = await getHoldedSession();
@@ -73,6 +74,7 @@ async function DashboardContent() {
       );
       const a = ctx.holded.analytics;
       const snapshot = ctx.holded.snapshot;
+      accountingPnL = a?.accountingPnL ?? null;
 
       if (a) {
         const vatEstimate = a.quarterSales > 0 ? a.quarterSales * 0.21 : null;
@@ -201,6 +203,55 @@ async function DashboardContent() {
           </div>
         ))}
       </div>
+
+      {accountingPnL && accountingPnL.entriesProcessed > 0 && (
+        <div className="mx-5 mb-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-1.5">
+            <Calculator size={13} className="text-[#2361d8]" />
+            <p className="text-[11px] font-semibold text-slate-500">
+              Resultado contable {accountingPnL.year} (libro diario · YTD)
+            </p>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">Ingresos</p>
+              <p className="text-[14px] font-semibold text-emerald-600">
+                {fmt(accountingPnL.income)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">Gastos</p>
+              <p className="text-[14px] font-semibold text-slate-700">
+                {fmt(accountingPnL.expenses)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">Resultado</p>
+              <p
+                className={`text-[14px] font-semibold ${
+                  accountingPnL.grossProfit >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                }`}
+              >
+                {fmt(accountingPnL.grossProfit)}
+              </p>
+            </div>
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">Margen</p>
+              <p
+                className={`text-[14px] font-semibold ${
+                  (accountingPnL.margin ?? 0) >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                }`}
+              >
+                {accountingPnL.margin !== null ? `${accountingPnL.margin}%` : '—'}
+              </p>
+            </div>
+          </div>
+          <p className="mt-2 text-[10px] text-slate-400">
+            Agregado desde {accountingPnL.entriesProcessed} asientos del libro diario (cuentas PGC
+            7xx ingresos · 6xx gastos).
+          </p>
+        </div>
+      )}
 
       {verifactu !== null && verifactu.issued + verifactu.drafts + verifactu.errors > 0 && (
         <div className="mx-5 mb-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">

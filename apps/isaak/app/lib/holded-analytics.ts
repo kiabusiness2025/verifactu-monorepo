@@ -2,6 +2,19 @@ import type { fetchHoldedSnapshot } from '@/app/lib/holded-integration';
 
 export type HoldedSnapshot = Awaited<ReturnType<typeof fetchHoldedSnapshot>>;
 
+// P&L sintético desde /accounting/v1/dailyledger (cuentas PGC 7xx / 6xx).
+// Más fiable que el escaneo de documentos: incluye asientos manuales y no
+// depende de heurísticas de docType para distinguir ingreso/gasto.
+export type HoldedAccountingPnL = {
+  year: number;
+  income: number;
+  expenses: number;
+  grossProfit: number;
+  margin: number | null;
+  entriesProcessed: number;
+  period: { from: string; to: string };
+};
+
 export type HoldedAnalyticsSummary = {
   monthSales: number;
   monthExpenses: number | null;
@@ -15,6 +28,7 @@ export type HoldedAnalyticsSummary = {
   contacts: number;
   accounts: number;
   expenseSignals: number;
+  accountingPnL: HoldedAccountingPnL | null;
   insight: string;
 };
 
@@ -219,6 +233,16 @@ function buildInsight(summary: Omit<HoldedAnalyticsSummary, 'insight'>) {
     );
   }
 
+  if (summary.accountingPnL && summary.accountingPnL.entriesProcessed > 0) {
+    const pnl = summary.accountingPnL;
+    fragments.push(
+      `resultado contable YTD de ${pnl.grossProfit.toLocaleString('es-ES', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      })} EUR${pnl.margin !== null ? ` (margen ${pnl.margin}%)` : ''}`
+    );
+  }
+
   if (fragments.length > 0) {
     return `${fragments.join(', ')}. Si quieres, sigo con el trimestre, cobros pendientes o resultados.`;
   }
@@ -288,7 +312,8 @@ export function buildYearAnalyticsSummary(
 
 export function buildHoldedAnalyticsSummary(
   snapshot: HoldedSnapshot,
-  now = new Date()
+  now: Date = new Date(),
+  accountingPnL: HoldedAccountingPnL | null = null
 ): HoldedAnalyticsSummary {
   const { start: monthStart, end: monthEnd } = getCurrentMonthRange(now);
   const { start: quarterStart, end: quarterEnd } = getCurrentQuarterRange(now);
@@ -347,6 +372,7 @@ export function buildHoldedAnalyticsSummary(
     contacts: snapshot.contacts.length,
     accounts: snapshot.accounts.length,
     expenseSignals,
+    accountingPnL,
   };
 
   return {
