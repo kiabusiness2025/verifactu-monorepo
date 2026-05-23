@@ -37,6 +37,16 @@ import {
   executeMicrosoftTool,
   isMicrosoftToolName,
 } from '@/app/lib/microsoft-tools';
+import {
+  CHIFT_CHAT_TOOLS,
+  executeChiftTool,
+  isChiftToolName,
+} from '@/app/lib/chift-tools';
+import {
+  BANKING_CHAT_TOOLS,
+  executeBankingTool,
+  isBankingToolName,
+} from '@/app/lib/banking-tools';
 
 export const runtime = 'nodejs';
 
@@ -269,6 +279,8 @@ function buildLlmInstructions(input: {
   workspaceSignalsBlock: string | null;
   aeatBlock?: string | null;
   advisorBanner?: string | null;
+  chiftLine?: string | null;
+  bankingLine?: string | null;
   recentFacts?: { category: string; factKey: string; valueJson: unknown }[];
   fewShotExamples?: { question: string; response: string }[];
 }) {
@@ -357,6 +369,12 @@ function buildLlmInstructions(input: {
     'Si el usuario pide diagnostico, nombra al menos facturas, contactos y contabilidad aunque alguno falle.',
     'Herramientas disponibles: puedes usar holded_get_verifactu_status para verificar si una factura tiene UUID Verifactu; holded_get_pnl para obtener el resultado contable actualizado del año; holded_list_payments para ver cobros y pagos; holded_send_document para enviar documentos por email (SIEMPRE pide confirmación explícita antes de enviar).',
     'Para holded_send_document: muestra primero un resumen claro (destinatario, documento, asunto) y espera que el usuario responda "sí", "confirmar" o similar antes de ejecutar la tool con confirmed=true.',
+    input.chiftLine
+      ? `ERP adicional vía Chift: ${input.chiftLine} Herramientas disponibles: chift_check_connection, chift_list_invoices, chift_get_invoice, chift_list_contacts, chift_get_pnl.`
+      : 'ERP adicional vía Chift: no conectado.',
+    input.bankingLine
+      ? `Banca abierta: ${input.bankingLine} Herramientas disponibles: banking_list_accounts (saldos reales), banking_list_transactions (movimientos), banking_get_cash_summary (flujo de caja). Prioriza estos datos de banco sobre los de Holded cuando el usuario pregunte por su saldo real o liquidez.`
+      : 'Banca abierta: no conectada.',
     input.workspaceSignalsBlock
       ? `Estado del workspace:\n${input.workspaceSignalsBlock}`
       : 'Estado del workspace: no disponible.',
@@ -432,6 +450,8 @@ async function buildLlmReply(input: {
   workspaceSignalsBlock: string | null;
   aeatBlock?: string | null;
   advisorBanner?: string | null;
+  chiftLine?: string | null;
+  bankingLine?: string | null;
   modelConfig?: HoldedChatModelConfig;
   memoryContext?: MemoryContext | null;
   fewShotExamples?: { question: string; response: string }[];
@@ -454,6 +474,8 @@ async function buildLlmReply(input: {
         workspaceSignalsBlock: input.workspaceSignalsBlock,
         aeatBlock: input.aeatBlock,
         advisorBanner: input.advisorBanner,
+        chiftLine: input.chiftLine,
+        bankingLine: input.bankingLine,
         recentFacts: input.memoryContext?.recentFacts ?? [],
         fewShotExamples: input.fewShotExamples ?? [],
       }),
@@ -698,6 +720,8 @@ async function buildLlmReplyWithTools(input: {
   model: string;
   tenantId: string;
   userId: string;
+  chiftConnected?: boolean;
+  bankingConnected?: boolean;
 }): Promise<string | null> {
   const MAX_ITERATIONS = 6;
 
@@ -719,7 +743,13 @@ async function buildLlmReplyWithTools(input: {
         max_tokens: 1024,
         system: input.systemPrompt,
         messages,
-        tools: [...HOLDED_CHAT_TOOLS, ...GOOGLE_CHAT_TOOLS, ...MICROSOFT_CHAT_TOOLS],
+        tools: [
+          ...HOLDED_CHAT_TOOLS,
+          ...GOOGLE_CHAT_TOOLS,
+          ...MICROSOFT_CHAT_TOOLS,
+          ...(input.chiftConnected ? CHIFT_CHAT_TOOLS : []),
+          ...(input.bankingConnected ? BANKING_CHAT_TOOLS : []),
+        ],
         tool_choice: { type: 'auto' },
       }),
     });
@@ -750,15 +780,19 @@ async function buildLlmReplyWithTools(input: {
     // Execute each tool call and collect results
     const toolResults: AnthropicContent[] = await Promise.all(
       toolUseBlocks.map(async (block) => {
-        const result = isGoogleToolName(block.name)
-          ? await executeGoogleTool(input.tenantId, input.userId, block.name, block.input)
-          : isMicrosoftToolName(block.name)
-            ? await executeMicrosoftTool(input.tenantId, input.userId, block.name, block.input)
-            : await executeHoldedTool(
-                input.holdedApiKey,
-                block.name as HoldedToolName,
-                block.input
-              );
+        const result = isBankingToolName(block.name)
+          ? await executeBankingTool(input.tenantId, block.name, block.input)
+          : isChiftToolName(block.name)
+          ? await executeChiftTool(input.tenantId, block.name, block.input)
+          : isGoogleToolName(block.name)
+            ? await executeGoogleTool(input.tenantId, input.userId, block.name, block.input)
+            : isMicrosoftToolName(block.name)
+              ? await executeMicrosoftTool(input.tenantId, input.userId, block.name, block.input)
+              : await executeHoldedTool(
+                  input.holdedApiKey,
+                  block.name as HoldedToolName,
+                  block.input
+                );
         return {
           type: 'tool_result' as const,
           tool_use_id: block.id,
@@ -1187,7 +1221,7 @@ export async function POST(request: NextRequest) {
       aeatBlock = [certLine, notifLine].filter(Boolean).join('\n');
     }
 
-    const [memoryContext, fewShotExamples] = await Promise.all([
+    const [memoryContext, fewShotExamples, chiftConn, bankingAccounts] = await Promise.all([
       conversation
         ? getSimpleMemoryContext(
             { tenantId: session.tenantId, userId: session.userId },
@@ -1195,7 +1229,37 @@ export async function POST(request: NextRequest) {
           ).catch(() => null)
         : Promise.resolve(null),
       getTenantFewShotExamples(session.tenantId).catch(() => []),
+      prisma.externalConnection
+        .findFirst({
+          where: {
+            tenantId: session.tenantId,
+            provider: 'chift',
+            connectionStatus: 'connected',
+          },
+          select: { providerAccountId: true, companyIdentityJson: true },
+        })
+        .catch(() => null),
+      prisma.seAccount
+        .findMany({
+          where: { tenantId: session.tenantId, status: 'active' },
+          select: { balance: true, currency: true, name: true },
+        })
+        .catch(() => [] as { balance: number; currency: string; name: string }[]),
     ]);
+
+    const chiftConnected = Boolean(chiftConn?.providerAccountId);
+    const chiftIdentity = chiftConn?.companyIdentityJson as Record<string, unknown> | null;
+    const chiftLine = chiftConnected
+      ? `Conectado${chiftIdentity?.name ? ` a ${String(chiftIdentity.name)}` : ''}${chiftIdentity?.currency ? ` (${String(chiftIdentity.currency)})` : ''}.`
+      : null;
+
+    const bankingConnected = bankingAccounts.length > 0;
+    const bankingTotalBalance = Math.round(
+      bankingAccounts.reduce((s, a) => s + Number(a.balance), 0) * 100
+    ) / 100;
+    const bankingLine = bankingConnected
+      ? `${bankingAccounts.length} cuenta${bankingAccounts.length > 1 ? 's' : ''} bancaria${bankingAccounts.length > 1 ? 's' : ''} conectada${bankingAccounts.length > 1 ? 's' : ''}. Saldo total actual: ${bankingTotalBalance.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EUR.`
+      : null;
 
     try {
       const anthropicApiKey =
@@ -1207,6 +1271,8 @@ export async function POST(request: NextRequest) {
         workspaceSignalsBlock,
         aeatBlock,
         advisorBanner,
+        chiftLine,
+        bankingLine,
         recentFacts: memoryContext?.recentFacts ?? [],
         fewShotExamples: fewShotExamples ?? [],
       });
@@ -1225,6 +1291,8 @@ export async function POST(request: NextRequest) {
             model: modelConfig?.model ?? 'claude-haiku-4-5-20251001',
             tenantId: session.tenantId,
             userId: session.userId,
+            chiftConnected,
+            bankingConnected,
           }).catch((error) => {
             console.warn('[holded/chat] tool loop failed, falling back', {
               tenantId: session.tenantId,
@@ -1240,6 +1308,8 @@ export async function POST(request: NextRequest) {
             workspaceSignalsBlock,
             aeatBlock,
             advisorBanner,
+            chiftLine,
+            bankingLine,
             modelConfig,
             memoryContext,
             fewShotExamples,
