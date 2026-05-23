@@ -16,6 +16,7 @@ import {
   Sparkles,
   ThumbsDown,
   ThumbsUp,
+  Upload,
   Volume2,
   VolumeX,
   X,
@@ -399,9 +400,11 @@ export default function IsaakChatSection({
   const [ratings, setRatings] = useState<Record<string, 'thumbs_up' | 'thumbs_down'>>({});
   const [quotaHit, setQuotaHit] = useState<QuotaHitState | null>(null);
   const [upgradeBannerDismissed, setUpgradeBannerDismissed] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<ISpeechRecognition | null>(null);
+  const dragCounterRef = useRef(0);
 
   // Stop TTS when component unmounts
   useEffect(() => {
@@ -441,6 +444,22 @@ export default function IsaakChatSection({
     recognitionRef.current = rec;
     rec.start();
   }, [isListening]);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current++;
+    if (e.dataTransfer.items.length > 0) setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounterRef.current--;
+    if (dragCounterRef.current === 0) setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+  }, []);
 
   const speakMessage = useCallback(
     (id: string, text: string) => {
@@ -497,6 +516,20 @@ export default function IsaakChatSection({
     },
     [ratings, conversationId]
   );
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    dragCounterRef.current = 0;
+    const file = e.dataTransfer.files?.[0];
+    if (!file) return;
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+    if (!allowed.includes(file.type)) {
+      setError('Formato no soportado. Usa PDF, JPG, PNG o WEBP.');
+      return;
+    }
+    void uploadFile(file);
+  };
 
   const chips = holdedConnected
     ? (QUICK_CHIPS[context] ?? QUICK_CHIPS.default)
@@ -612,7 +645,22 @@ export default function IsaakChatSection({
   // ── Empty state ────────────────────────────────────────────────────────────
   if (messages.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-5 py-8">
+      <div
+        className="relative flex h-full flex-col items-center justify-center px-5 py-8"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {isDragging && (
+          <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-2xl border-2 border-dashed border-[#2361d8] bg-[#eff6ff]/90 backdrop-blur-sm">
+            <div className="flex flex-col items-center gap-3 text-[#2361d8]">
+              <Upload size={36} className="opacity-80" />
+              <p className="text-[15px] font-semibold">Suelta aquí tu factura o ticket</p>
+              <p className="text-[12px] opacity-60">PDF, JPG, PNG o WEBP</p>
+            </div>
+          </div>
+        )}
         <div className="w-full max-w-xl">
           <div className="mb-5 flex flex-col items-center text-center">
             <p className="text-[18px] font-bold tracking-tight text-[#011c67]">
@@ -653,6 +701,10 @@ export default function IsaakChatSection({
                   <UpgradeBanner onDismiss={() => setUpgradeBannerDismissed(true)} />
                 </div>
               )}
+              <div className="mt-3 flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-slate-400 transition hover:border-[#2361d8]/40 hover:bg-blue-50/50 hover:text-[#2361d8]/70">
+                <Upload size={13} className="shrink-0" />
+                <span className="text-[12px]">Arrastra una factura o ticket para extraer datos</span>
+              </div>
             </>
           )}
 
@@ -691,7 +743,22 @@ export default function IsaakChatSection({
 
   // ── Chat active ────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-full flex-col">
+    <div
+      className="relative flex h-full flex-col"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="pointer-events-none absolute inset-0 z-50 flex items-center justify-center rounded-2xl border-2 border-dashed border-[#2361d8] bg-[#eff6ff]/90 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 text-[#2361d8]">
+            <Upload size={36} className="opacity-80" />
+            <p className="text-[15px] font-semibold">Suelta aquí tu factura o ticket</p>
+            <p className="text-[12px] opacity-60">PDF, JPG, PNG o WEBP</p>
+          </div>
+        </div>
+      )}
       <div className="flex-1 overflow-y-auto px-5 py-4">
         <div className="mx-auto max-w-2xl space-y-4">
           {messages.map((msg) =>
