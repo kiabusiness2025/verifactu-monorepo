@@ -1,4 +1,5 @@
 import { prisma } from '@/app/lib/prisma';
+import { loadPendingSuggestions } from '@/app/lib/bank-reconciliation';
 
 export const BANKING_CHAT_TOOLS = [
   {
@@ -69,6 +70,21 @@ export const BANKING_CHAT_TOOLS = [
         toDate: {
           type: 'string',
           description: 'Fecha fin YYYY-MM-DD. Por defecto: hoy.',
+        },
+      },
+    },
+  },
+  {
+    name: 'banking_get_reconciliation_status',
+    description:
+      'Devuelve el estado de conciliación bancaria: cuántos movimientos están sin conciliar, importe total pendiente y sugerencias de gastos de Holded que podrían emparejarse. Úsalo cuando el usuario pregunte por gastos sin clasificar, movimientos pendientes de conciliar o quiera ver si los pagos del banco están registrados en Holded.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        limit: {
+          type: 'number',
+          description:
+            'Máximo de movimientos pendientes a analizar (default 20, max 50). Cada uno incluye sus 3 mejores candidatos.',
         },
       },
     },
@@ -253,6 +269,49 @@ export async function executeBankingTool(
           netCashFlow: Math.round((totalIn - totalOut) * 100) / 100,
           transactionsAnalyzed: txStats.length,
           accountCount: accounts.length,
+        };
+      }
+
+      case 'banking_get_reconciliation_status': {
+        const limit = typeof input.limit === 'number' ? Math.min(input.limit, 50) : 20;
+        const pending = await loadPendingSuggestions(tenantId, limit);
+
+        const totalPendingAmount =
+          Math.round(pending.reduce((s, p) => s + Math.abs(Number(p.tx.amount)), 0) * 100) / 100;
+
+        const withConfidentMatch = pending.filter(
+          (p) => p.candidates[0] && p.candidates[0].score >= 0.85
+        ).length;
+
+        const withSomeMatch = pending.filter((p) => p.candidates.length > 0).length;
+        const withoutAnyMatch = pending.length - withSomeMatch;
+
+        const topSuggestions = pending.slice(0, 5).map((p) => ({
+          transaction: {
+            id: p.tx.id,
+            madeOn: p.tx.madeOn,
+            amount: Number(p.tx.amount),
+            description: p.tx.description,
+            payee: p.tx.payee,
+          },
+          bestMatch: p.candidates[0]
+            ? {
+                expenseId: p.candidates[0].expenseId,
+                score: Math.round(p.candidates[0].score * 100) / 100,
+                confidence: p.candidates[0].score >= 0.85 ? 'alta' : p.candidates[0].score >= 0.6 ? 'media' : 'baja',
+                evidenceReasons: p.candidates[0].evidenceReasons,
+              }
+            : null,
+          alternativeCount: Math.max(0, p.candidates.length - 1),
+        }));
+
+        return {
+          pendingCount: pending.length,
+          totalPendingAmount,
+          withConfidentMatch,
+          withSomeMatch,
+          withoutAnyMatch,
+          topSuggestions,
         };
       }
 

@@ -364,7 +364,7 @@ function buildLlmInstructions(input: {
     'Herramientas disponibles: puedes usar holded_get_verifactu_status para verificar si una factura tiene UUID Verifactu; holded_get_pnl para obtener el resultado contable actualizado del año; holded_list_payments para ver cobros y pagos; holded_send_document para enviar documentos por email (SIEMPRE pide confirmación explícita antes de enviar).',
     'Para holded_send_document: muestra primero un resumen claro (destinatario, documento, asunto) y espera que el usuario responda "sí", "confirmar" o similar antes de ejecutar la tool con confirmed=true.',
     input.bankingLine
-      ? `Banca abierta: ${input.bankingLine} Usa banking_list_accounts para ver saldos, banking_list_transactions para movimientos y banking_get_cash_summary para flujo de caja. Prioriza estos datos sobre los de Holded cuando el usuario pregunte por saldo real o liquidez disponible.`
+      ? `Banca abierta: ${input.bankingLine} Usa banking_list_accounts para ver saldos, banking_list_transactions para movimientos, banking_get_cash_summary para flujo de caja y banking_get_reconciliation_status para detectar movimientos sin emparejar con gastos de Holded. Prioriza estos datos sobre los de Holded cuando el usuario pregunte por saldo real o liquidez disponible.`
       : 'Banca abierta: no conectada. Si el usuario pregunta por su saldo bancario real, indícale que puede conectar su banco desde Workspace > Banca.',
     input.workspaceSignalsBlock
       ? `Estado del workspace:\n${input.workspaceSignalsBlock}`
