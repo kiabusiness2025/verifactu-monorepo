@@ -1,9 +1,9 @@
 /**
- * DB-backed daily quota for the Isaak free tier.
+ * DB-backed quota for Isaak chat.
  * Uses TenantSubscription.queriesUsedToday / dailyQueryLimit / lastQueryResetAt.
  *
- * Free tier default: 10 queries/day (dailyQueryLimit = 10 in the schema).
- * Paid plans (Starter+): dailyQueryLimit = -1 (unlimited).
+ * dailyQueryLimit = -1 → unlimited (default for all plans, including Free).
+ * Paid plans gate integrations (Holded, VeriFactu signing, banking), not query volume.
  *
  * Also handles unauthenticated (public) chat with an in-process IP counter as
  * a lightweight anti-abuse guard — not a hard paywall for public visitors.
@@ -14,8 +14,6 @@ import { prisma } from './prisma';
 export type QuotaCheckResult =
   | { allowed: true; remaining: number | null }
   | { allowed: false; message: string; resetsAt: string | null };
-
-const FREE_DAILY_DEFAULT = 10;
 
 function nextMidnightUTC(): string {
   const now = new Date();
@@ -115,13 +113,9 @@ function checkInProcessQuota(
   return { allowed: true, remaining: limit - entry.count };
 }
 
-// For authenticated tenants with no DB subscription row yet
-function checkInProcessTenantQuota(tenantId: string): QuotaCheckResult {
-  return checkInProcessQuota(
-    `tenant:${tenantId}`,
-    FREE_DAILY_DEFAULT,
-    `Has llegado a tus ${FREE_DAILY_DEFAULT} mensajes de hoy. Activa Isaak Starter desde 19 €/mes para continuar ahora, o vuelve mañana.`
-  );
+// For authenticated tenants with no DB subscription row yet — allow unlimited
+function checkInProcessTenantQuota(_tenantId: string): QuotaCheckResult {
+  return { allowed: true, remaining: null };
 }
 
 // Lightweight guard for unauthenticated (public) visitors — anti-abuse, not a hard paywall
