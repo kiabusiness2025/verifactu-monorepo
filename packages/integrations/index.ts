@@ -29,6 +29,21 @@ export {
   verifySaltEdgeWebhook,
 } from './saltedge';
 export {
+  GcbdError,
+  listInstitutions,
+  createAgreement,
+  createRequisition,
+  getRequisition,
+  deleteRequisition,
+  getAccountMeta,
+  getAccountDetails,
+  getAccountBalances,
+  getAccountTransactions,
+  verifyGcbdWebhook,
+  resolveBalance,
+  normalizeTransaction,
+} from './gocardless-bank-data';
+export {
   decryptHoldedSecret,
   disconnectHoldedConnection,
   encryptHoldedSecret,
@@ -166,5 +181,29 @@ export type {
   IsaakChatPrismaClient,
   IsaakChatSessionScope,
 } from './isaak/chat';
+export {
+  EbError,
+  listAspsps,
+  startEbAuth,
+  createEbSession,
+  getEbSession,
+  deleteEbSession,
+  getEbAccountDetails,
+  getEbAccountBalances,
+  getEbAccountTransactions,
+  getAllEbTransactions,
+  resolveEbBalance,
+  normalizeEbTransaction,
+} from './enable-banking';
+export type {
+  EbAspsp,
+  EbAuthResponse,
+  EbSessionAccount,
+  EbSession,
+  EbAccountDetails,
+  EbBalance,
+  EbTransaction,
+  EbTransactionsResponse,
+} from './enable-banking';
 export { recordUsageEvent } from './usage-events';
 export type { CanonicalUsageEventType } from './usage-events';

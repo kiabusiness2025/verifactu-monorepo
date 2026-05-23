@@ -2081,22 +2081,25 @@ model SeCustomer {
 }
 
 model SeConnection {
-  id           String   @id          // Salt Edge connection ID
+  id           String   @id          // Salt Edge connection ID or GoCardless BAD requisition ID
   tenantId     String   @map("tenant_id") @db.Uuid
-  seCustomerId String   @map("se_customer_id")
+  seCustomerId String?  @map("se_customer_id")  // null for GoCardless BAD connections
   providerCode String   @map("provider_code")
   providerName String   @map("provider_name")
   countryCode  String   @default("ES") @map("country_code")
   status       String   @default("pending")
+  provider     String   @default("saltedge")  // 'saltedge' | 'gcbd' | 'enablebanking'
   lastSyncAt   DateTime? @map("last_sync_at") @db.Timestamptz
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
 
   tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer   SeCustomer    @relation(fields: [seCustomerId], references: [id])
+  customer   SeCustomer?   @relation(fields: [seCustomerId], references: [id])
   accounts   SeAccount[]
 
   @@index([tenantId])
+  @@index([tenantId, provider])
   @@map("se_connections")
 }
 
