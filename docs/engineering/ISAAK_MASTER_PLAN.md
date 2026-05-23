@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-21 (sesión 2)
+**Última actualización**: 2026-05-23 (sesión 3 — Open Banking Enable Banking)
 **Visión**: Isaak como agente fiscal y contable autónomo que conecta con datos reales del ERP, ejecuta acciones con confirmación, aprende de cada empresa y asesora en lenguaje llano.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
@@ -215,6 +215,76 @@ CHIFT_ACCOUNT_ID
 
 ---
 
+## ✅ Completado en sesión 3 (2026-05-23) — Open Banking via Enable Banking
+
+**Contexto**: GoCardless Bank Account Data cerró nuevos registros → migración a **Enable Banking** (PSD2 AIS) como proveedor open banking principal. Mantiene Salt Edge como alternativa.
+
+### EB-1: Cliente Enable Banking ✅
+
+`packages/integrations/enable-banking.ts` — cliente completo con Node.js `crypto` nativo (sin librerías externas):
+
+- JWT RS256 con `kid = application_id`, caché 1h
+- Soporta clave privada PEM base64 o raw vía `ENABLE_BANKING_PRIVATE_KEY`
+- Funciones: `listAspsps`, `startEbAuth`, `createEbSession`, `getEbSession`, `deleteEbSession`, `getEbAccountDetails`, `getEbAccountBalances`, `getEbAccountTransactions`, `getAllEbTransactions` (auto-paginación vía `continuation_key`)
+- Helpers: `resolveEbBalance` (CLBD > ITAV > XPCD), `normalizeEbTransaction` (usa `entry_reference` como ID estable para deduplicación)
+- Exporta `EbError` con `code` y `status`
+
+### EB-2: Rutas API en Isaak ✅
+
+```
+apps/isaak/app/api/isaak/banking/eb/aspsps/route.ts    — GET lista bancos por país
+apps/isaak/app/api/isaak/banking/eb/connect/route.ts   — POST crea state (UUID) + connect_url
+apps/isaak/app/api/isaak/banking/eb/callback/route.ts  — GET intercambia code → session, upsert cuentas + 90d txs
+apps/isaak/app/api/isaak/banking/eb/sync/route.ts      — POST sync incremental manual
+```
+
+**Patrón CSRF state**: `state = randomUUID()` se guarda como SeConnection pendiente; al callback, transacción Prisma reemplaza ID pendiente por `session_id` real.
+
+### EB-3: Schema Prisma ✅
+
+- `SeConnection.expiresAt DateTime?` añadido (fecha caducidad sesión PSD2)
+- `SeConnection.provider` ahora discrimina entre `'saltedge' | 'gcbd' | 'enablebanking'`
+- Migración `20260523110000_se_connection_expires_at`
+
+### EB-4: Monitorización en cron `connector-health` ✅ (PR #116)
+
+- `checkEnableBankingConnections()`: marca como `'expired'` las sesiones con `expiresAt < now` + email "Reconectar banco"; aviso 7 días antes con email "Renovar conexión"
+- Ambas alertas deduplicadas (1 por ventana de 7 días por conexión)
+- `checkSaltEdgeConnections()` filtrado a `provider != 'enablebanking'` (EB tiene ciclo de vida por expiración, no por staleness)
+- Handler ejecuta los 3 checks en paralelo, devuelve `{ holded, saltEdge, enableBanking }`
+
+### EB-5: Sandbox verificado end-to-end ✅
+
+- App sandbox: `8dde10e3-f801-4f59-93f4-d41f6eac5604` (vars en Vercel)
+- Test confirmado con BBVA sandbox (user1/1234/OTP:012345) → connect_url → callback → SeConnection creada
+- Route temporal `test-connect` eliminada tras verificación
+
+### EB-6: App de producción registrada ✅ (2026-05-23)
+
+- App producción: `73fbe5d2-b322-4d71-ba5d-223be78df437` — estado **activa**
+- Keypair RSA 4096 generado (`/tmp/eb-prod-keys/`), certificado válido hasta mayo 2028
+- Redirect URLs registradas: `isaak.app`, `isaak.verifactu.business`, `localhost:3000`
+- Variables Vercel actualizadas con credenciales de producción
+
+**Variables de entorno (Vercel proyecto `isaak`):**
+
+```
+ENABLE_BANKING_APP_ID           — UUID de la app (sandbox o prod)
+ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
+```
+
+### Pendientes EB
+
+| Tarea                                                       | Prioridad | Detalle                                                                                |
+| ----------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------- |
+| UI en `/banking` para conectar banco                        | 🔴 Alta   | Selector ASPSP + botón "Conectar" + banner "Renovar" cuando `expiresAt < 7d`           |
+| Test end-to-end con banco real                              | 🔴 Alta   | Una vez UI lista, conectar un banco real desde producción                              |
+| Cron de sincronización periódica                            | 🟡 Media  | PSD2 permite ~4 syncs background/día — extender `connector-health` o crear `eb-sync`   |
+| Mergear PR #116 a main                                      | 🟡 Pdte   | Cleanup cron + remove test-connect                                                     |
+| Verificar `prisma migrate deploy` aplicó `expires_at`       | 🟡 Verif. | Columna nueva en `se_connections`                                                      |
+
+---
+
 ## Stack técnico — librerías por fase
 
 | Fase/Sprint | Librerías añadidas                                   | Estado                        |
@@ -246,4 +316,5 @@ CHIFT_ACCOUNT_ID
 | Google LLM tools (G-2)  | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                     |
 | Microsoft Graph (M)     | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                               |
 | ERP aggregator (P3-4-C) | Chift como capa única. `ChiftErpClient implements ErpClient` + 4 rutas API + `/chift` workspace. 🔄 Activación cuenta Chift pendiente.                      |
-| Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21                                                                      |
+| Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23          |
+| Open Banking EB         | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23 |
