@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "next dev -p 3012",
     "build": "next build",
-    "start": "next start -p 8080"
+    "start": "next start -p 8080",
+    "test": "jest --config jest.config.mjs"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.28.0",

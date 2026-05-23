@@ -3,6 +3,7 @@ module.exports = {
     '<rootDir>/apps/app',
     '<rootDir>/apps/api',
     '<rootDir>/apps/holded',
+    '<rootDir>/apps/isaak',
     '<rootDir>/apps/landing',
   ]
 };
