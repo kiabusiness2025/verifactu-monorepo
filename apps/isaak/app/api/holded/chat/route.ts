@@ -355,6 +355,8 @@ function buildLlmInstructions(input: {
       : 'Si desconoces el régimen fiscal, pregunta si es autónomo o sociedad antes de dar cifras concretas de impuestos.',
     'Si el usuario te pide un resumen, usa cifras concretas, concluye que significa para el negocio y remata con una recomendacion accionable.',
     'Si el usuario pide diagnostico, nombra al menos facturas, contactos y contabilidad aunque alguno falle.',
+    'Herramientas disponibles: puedes usar holded_get_verifactu_status para verificar si una factura tiene UUID Verifactu; holded_get_pnl para obtener el resultado contable actualizado del año; holded_list_payments para ver cobros y pagos; holded_send_document para enviar documentos por email (SIEMPRE pide confirmación explícita antes de enviar).',
+    'Para holded_send_document: muestra primero un resumen claro (destinatario, documento, asunto) y espera que el usuario responda "sí", "confirmar" o similar antes de ejecutar la tool con confirmed=true.',
     input.workspaceSignalsBlock
       ? `Estado del workspace:\n${input.workspaceSignalsBlock}`
       : 'Estado del workspace: no disponible.',

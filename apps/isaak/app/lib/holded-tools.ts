@@ -3,15 +3,19 @@ import {
   holdedGetContact,
   holdedGetDocument,
   holdedGetJournal,
+  holdedGetPnL,
+  holdedGetVerifactuStatus,
   holdedListContacts,
   holdedListDocuments,
   holdedListEmployees,
+  holdedListPayments,
   holdedListProducts,
   holdedListProjects,
   holdedListTreasuryAccounts,
+  holdedSendDocument,
 } from './holded-api';
 
-// Anthropic tool definitions for Isaak chat — 10 read tools
+// Anthropic tool definitions for Isaak chat — 14 tools (10 lectura + 4 nuevas)
 export const HOLDED_CHAT_TOOLS = [
   {
     name: 'holded_list_documents',
@@ -131,6 +135,103 @@ export const HOLDED_CHAT_TOOLS = [
     description: 'Lista los empleados del equipo en Holded.',
     input_schema: { type: 'object', properties: {} },
   },
+  {
+    name: 'holded_get_verifactu_status',
+    description:
+      'Consulta el estado Verifactu de una factura de venta concreta: si tiene UUID registrado en la AEAT, el QR y la huella (hash). Úsalo cuando el usuario pregunte si una factura específica está registrada en Verifactu o si cumple con el RD 1007/2023.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        invoiceId: {
+          type: 'string',
+          description: 'ID de la factura en Holded.',
+        },
+      },
+      required: ['invoiceId'],
+    },
+  },
+  {
+    name: 'holded_get_pnl',
+    description:
+      'Calcula el P&L contable del año (o rango indicado) desde el libro diario de Holded, agregando cuentas PGC 7xx (ingresos) y 6xx (gastos). Más fiable que el escaneo de documentos porque incluye asientos manuales. Úsalo cuando el usuario pregunte por beneficio, margen, resultado contable o PyG.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        year: {
+          type: 'number',
+          description: 'Año a consultar. Por defecto el año actual.',
+        },
+        starttmp: {
+          type: 'string',
+          description: 'Fecha inicio ISO 8601 o Unix (alternativa a year).',
+        },
+        endtmp: {
+          type: 'string',
+          description: 'Fecha fin ISO 8601 o Unix (alternativa a year).',
+        },
+      },
+    },
+  },
+  {
+    name: 'holded_list_payments',
+    description:
+      'Lista los pagos registrados en Holded (cobros y pagos). Úsalo para responder preguntas sobre flujo de caja, historial de cobros o pagos pendientes.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        starttmp: {
+          type: 'string',
+          description: 'Fecha inicio ISO 8601 o Unix. Por defecto: últimos 90 días.',
+        },
+        endtmp: {
+          type: 'string',
+          description: 'Fecha fin ISO 8601 o Unix. Por defecto: hoy.',
+        },
+        limit: {
+          type: 'number',
+          description: 'Máximo de pagos a devolver (default 50).',
+        },
+      },
+    },
+  },
+  {
+    name: 'holded_send_document',
+    description:
+      'Envía un documento de Holded (factura, presupuesto, etc.) por email al destinatario indicado. IMPORTANTE: antes de ejecutar esta acción, confirma siempre con el usuario los datos (destinatario, documento) y espera su aprobación explícita.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        docType: {
+          type: 'string',
+          enum: ['invoice', 'salesreceipt', 'creditnote', 'estimate', 'proforma', 'purchase'],
+          description: 'Tipo de documento.',
+        },
+        documentId: {
+          type: 'string',
+          description: 'ID del documento en Holded.',
+        },
+        emails: {
+          type: 'array',
+          items: { type: 'string' },
+          description: 'Lista de emails destinatarios.',
+        },
+        subject: {
+          type: 'string',
+          description: 'Asunto del email (opcional).',
+        },
+        body: {
+          type: 'string',
+          description: 'Cuerpo del email (opcional).',
+        },
+        confirmed: {
+          type: 'boolean',
+          description:
+            'Debe ser true. Solo llama a esta herramienta cuando el usuario haya confirmado explícitamente el envío.',
+        },
+      },
+      required: ['docType', 'documentId', 'emails', 'confirmed'],
+    },
+  },
 ] as const;
 
 export type HoldedToolName = (typeof HOLDED_CHAT_TOOLS)[number]['name'];
@@ -182,6 +283,40 @@ export async function executeHoldedTool(
         return await holdedListProjects(apiKey);
       case 'holded_list_employees':
         return await holdedListEmployees(apiKey);
+      case 'holded_get_verifactu_status':
+        return await holdedGetVerifactuStatus(apiKey, String(input.invoiceId ?? ''));
+      case 'holded_get_pnl':
+        return await holdedGetPnL(apiKey, {
+          year: typeof input.year === 'number' ? input.year : undefined,
+          starttmp: input.starttmp ? String(input.starttmp) : undefined,
+          endtmp: input.endtmp ? String(input.endtmp) : undefined,
+        });
+      case 'holded_list_payments':
+        return await holdedListPayments(apiKey, {
+          starttmp: input.starttmp ? String(input.starttmp) : undefined,
+          endtmp: input.endtmp ? String(input.endtmp) : undefined,
+          limit: typeof input.limit === 'number' ? Math.min(input.limit, 100) : 50,
+        });
+      case 'holded_send_document': {
+        if (!input.confirmed) {
+          return {
+            error: 'confirmation_required',
+            message:
+              'Esta acción requiere confirmación explícita del usuario. Muestra el resumen del envío y pide que confirme antes de proceder.',
+          };
+        }
+        const emails = Array.isArray(input.emails)
+          ? (input.emails as unknown[]).filter((e): e is string => typeof e === 'string')
+          : [];
+        if (emails.length === 0) {
+          return { error: 'invalid_input', message: 'Se requiere al menos un email destinatario.' };
+        }
+        return await holdedSendDocument(apiKey, String(input.docType ?? 'invoice'), String(input.documentId ?? ''), {
+          emails,
+          subject: typeof input.subject === 'string' ? input.subject : undefined,
+          body: typeof input.body === 'string' ? input.body : undefined,
+        });
+      }
       default:
         return { error: 'unknown_tool' };
     }
