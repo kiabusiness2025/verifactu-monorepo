@@ -188,7 +188,7 @@ export async function POST(req: Request) {
       maxAgeSeconds: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24,
     });
 
-    const res = NextResponse.json({ ok: true });
+    const res = NextResponse.json({ ok: true, token });
     res.cookies.set(cookieOpts);
     return res;
   } catch (error) {

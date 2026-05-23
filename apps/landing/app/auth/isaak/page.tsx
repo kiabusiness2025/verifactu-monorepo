@@ -10,7 +10,7 @@ import { useToast } from '../../components/Toast';
 import { signInWithEmail, signInWithGoogle } from '../../lib/auth';
 import { auth } from '../../lib/firebase';
 import { mintSessionCookie } from '../../lib/serverSession';
-import { getAppUrl } from '../../lib/urls';
+import { getAppUrl, getIsaakUrl } from '../../lib/urls';
 
 type AuthTab = 'magic' | 'password';
 
@@ -37,8 +37,11 @@ export default function IsaakAuthPage() {
     try {
       const target = new URL(nextParam);
       const appOrigin = new URL(appUrl).origin;
-      if (target.origin !== appOrigin) return `${appUrl}/dashboard/isaak`;
-      return target.toString();
+      const isaakOrigin = new URL(getIsaakUrl()).origin;
+      if (target.origin === appOrigin || target.origin === isaakOrigin) {
+        return target.toString();
+      }
+      return `${appUrl}/dashboard/isaak`;
     } catch {
       return `${appUrl}/dashboard/isaak`;
     }
@@ -49,7 +52,24 @@ export default function IsaakAuthPage() {
       if (redirectedRef.current) return;
       redirectedRef.current = true;
       try {
-        await mintSessionCookie(user, { rememberDevice: true });
+        const { token } = await mintSessionCookie(user, { rememberDevice: true });
+
+        // Cross-domain handoff: if the target is on a different origin (e.g. isaak.app),
+        // the __session cookie set here won't be sent there. Pass the JWT via URL so
+        // the target app can set its own cookie.
+        const targetUrl = new URL(redirectTarget);
+        const isCrossDomain = targetUrl.origin !== window.location.origin;
+        if (isCrossDomain && token) {
+          const acceptUrl = new URL('/api/auth/accept', targetUrl.origin);
+          acceptUrl.searchParams.set('_t', token);
+          acceptUrl.searchParams.set(
+            'next',
+            targetUrl.pathname + targetUrl.search + targetUrl.hash
+          );
+          window.location.href = acceptUrl.toString();
+          return;
+        }
+
         const redirectUrl = `/api/dashboard-redirect?target=${encodeURIComponent(redirectTarget)}`;
         window.location.href = redirectUrl;
       } catch {
