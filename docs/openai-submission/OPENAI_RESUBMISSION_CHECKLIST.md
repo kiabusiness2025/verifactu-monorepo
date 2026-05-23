@@ -1,6 +1,6 @@
 # OpenAI Resubmission Checklist — Holded (submission v2)
 
-Last updated: **2026-05-18 (tarde)** after the wave of fixes in PR #88 (brotli + paginación + endtmp + $ref + scope narrowing to 10 tools).
+Last updated: **2026-05-23** after live runtime re-check: production still exposes the 10-tool `openai_review_invoicing_v1` surface, `chatgpt-app-submission.json` validates locally, and live `tools/list` matches the manifest 1:1.
 
 ## ⚠️ Deploy gate — CRITICAL order of operations
 
@@ -8,12 +8,12 @@ The portal compares the JSON we upload with `tools/list` returned by the live ru
 
 **Required order:**
 
-1. ✅ **Merge PR #88 to `main`** so the runtime switches to preset `openai_review_invoicing_v1` (10 tools).
-2. ✅ **Wait for Vercel deploy to go live** and verify with `curl https://holded.verifactu.business/api/mcp/holded -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'` → must return `10`.
-3. ✅ **Run** `node scripts/validate-openai-submission.mjs` locally (must say "Validation passed. tools: 10").
-4. ✅ **Upload `docs/openai-submission/chatgpt-app-submission.json`** to the App Review portal. Expected import result: **Imported 10. Skipped 0. Missing 0. Mismatched 0.**
-5. ✅ **Run the 16 manual tests** below in ChatGPT web AND mobile (this is the actual blocker, not the JSON).
-6. ✅ **Submit** with the message suggested at the bottom.
+1. [x] **Merge PR #88 to `main`** so the runtime switches to preset `openai_review_invoicing_v1` (10 tools).
+2. [x] **Wait for Vercel deploy to go live** and verify with `curl https://holded.verifactu.business/api/mcp/holded -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'` → must return `10`. Re-checked live on 2026-05-23.
+3. [x] **Run** `node scripts/validate-openai-submission.mjs` locally (must say "Validation passed. tools: 10"). Re-run on 2026-05-23: passed.
+4. [ ] **Upload or re-import `docs/openai-submission/chatgpt-app-submission.json`** to the App Review portal. Expected import result: **Imported 10. Skipped 0. Missing 0. Mismatched 0.** Not verifiable from Codex.
+5. [ ] **Run the 16 manual tests** below in ChatGPT web AND mobile (this is the actual blocker, not the JSON).
+6. [ ] **Submit** with the message suggested at the bottom after manual evidence is attached.
 
 ### Understanding the importer warnings if you upload BEFORE the deploy
 
@@ -50,8 +50,8 @@ If you upload the JSON before merging/deploying PR #88, the importer compares ag
 - [x] Authentication: OAuth 2.0 (not NONE)
 - [x] Token endpoint auth method: none (PKCE-only public clients)
 - [x] Domain `holded.verifactu.business` is verified in Vercel and serves valid TLS
-- [ ] **POST-DEPLOY:** `chatgpt-app-submission.json` uploaded (10 tools, schema v1) — importer reports `Imported 10. Skipped 0. Missing 0. Mismatched 0.`
-- [ ] **POST-DEPLOY:** Tool annotations match the MCP runtime — verified by diffing `tools/list` against the manifest (0 diffs, 10/10)
+- [ ] **PORTAL:** `chatgpt-app-submission.json` uploaded/re-imported (10 tools, schema v1) — importer reports `Imported 10. Skipped 0. Missing 0. Mismatched 0.`
+- [x] **RUNTIME:** Tool catalog matches the MCP runtime — live `tools/list` diffed against the manifest on 2026-05-23 (0 missing, 0 extra, 10/10)
 - [x] `holded_create_invoice_draft` is `readOnlyHint: false`, `destructiveHint: false` (creates a draft only)
 - [x] `holded_list_daily_ledger` description and schema make the explicit date range required (`startDate`/`endDate` or `startTimestamp`/`endTimestamp`)
 

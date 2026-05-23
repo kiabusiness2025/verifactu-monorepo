@@ -1,13 +1,13 @@
 # Web and Mobile Review Checklist — Holded Connector (ChatGPT)
 
-Last updated: **2026-05-18** for submission v2 (10 tools: `openai_review_invoicing_v1` preset).
+Last updated: **2026-05-23** for submission v2 (10 tools: `openai_review_invoicing_v1` preset). Runtime/API sanity checks are green; ChatGPT web/mobile manual QA is still open.
 
 The OpenAI portal cannot validate ChatGPT web and mobile connection flows for us. A human tester must complete this checklist with the demo tenant before resubmitting. The 32 expected runs (16 test cases × web + mobile) are listed below.
 
 ## Preconditions
 
-- [ ] PR #88 merged and deployed to production. Runtime exposes the 10 tools of `openai_review_invoicing_v1` preset.
-- [ ] `curl https://holded.verifactu.business/api/mcp/holded -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'` returns `10`.
+- [x] PR #88 merged and deployed to production. Runtime exposes the 10 tools of `openai_review_invoicing_v1` preset.
+- [x] `curl https://holded.verifactu.business/api/mcp/holded -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq '.result.tools | length'` returns `10`. Re-checked live on 2026-05-23.
 - [ ] `chatgpt-app-submission.json` uploaded to the portal — importer reports `Imported 10. Skipped 0. Missing 0. Mismatched 0.`
 - [ ] Demo Holded tenant has stable sample data:
   - [ ] At least 5 sales invoices visible (one of them should be referenceable, e.g. `F0030`).
@@ -31,10 +31,10 @@ The OpenAI portal cannot validate ChatGPT web and mobile connection flows for us
 
 ## Endpoint Checks (sanity)
 
-- [ ] `https://holded.verifactu.business/.well-known/oauth-authorization-server` returns expected metadata.
-- [ ] `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded` returns expected protected resource metadata.
-- [ ] `https://holded.verifactu.business/api/mcp/holded` returns the MCP descriptor.
-- [ ] Unauthenticated `tools/call` returns `401` with `WWW-Authenticate` header.
+- [x] `https://holded.verifactu.business/.well-known/oauth-authorization-server` returns expected metadata. Re-checked on 2026-05-23.
+- [x] `https://holded.verifactu.business/.well-known/oauth-protected-resource/api/mcp/holded` returns expected protected resource metadata. Re-checked on 2026-05-23.
+- [x] `https://holded.verifactu.business/api/mcp/holded` returns the MCP descriptor. Re-checked on 2026-05-23.
+- [x] Unauthenticated `tools/call` returns `401` with `WWW-Authenticate` header. Re-checked on 2026-05-23.
 
 ## Positive Tests — Web (10 cases)
 
