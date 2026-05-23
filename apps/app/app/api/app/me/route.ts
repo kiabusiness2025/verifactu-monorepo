@@ -41,8 +41,7 @@ export async function GET(request: NextRequest) {
         id: userWithCompanies.id,
         email: userWithCompanies.email,
         name: userWithCompanies.name,
-        role: userWithCompanies.role,
-        emailVerified: userWithCompanies.emailVerified,
+        firstName: userWithCompanies.firstName,
       },
       companiesOwned: userWithCompanies.companiesOwned,
       memberships: userWithCompanies.memberships.map(
