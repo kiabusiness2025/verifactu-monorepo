@@ -30,6 +30,21 @@ export {
   verifySaltEdgeWebhook,
 } from './saltedge';
 export {
+  GcbdError,
+  listInstitutions,
+  createAgreement,
+  createRequisition,
+  getRequisition,
+  deleteRequisition,
+  getAccountMeta,
+  getAccountDetails,
+  getAccountBalances,
+  getAccountTransactions,
+  verifyGcbdWebhook,
+  resolveBalance,
+  normalizeTransaction,
+} from './gocardless-bank-data';
+export {
   decryptHoldedSecret,
   disconnectHoldedConnection,
   encryptHoldedSecret,
