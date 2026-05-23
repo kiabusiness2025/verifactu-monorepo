@@ -1,5 +1,6 @@
 import { notFound } from 'next/navigation';
 import { prisma } from '@/app/lib/prisma';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import IsaakPublicChat from './IsaakPublicChat';
 
 export const dynamic = 'force-dynamic';
@@ -72,7 +73,7 @@ export default async function IsaakPublicPage({ params }: Props) {
         <p className="text-[11px] text-slate-400">
           Asistente IA impulsado por{' '}
           <a
-            href="https://isaak.verifactu.business"
+            href={ISAAK_PUBLIC_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="text-[#2361d8] hover:underline"

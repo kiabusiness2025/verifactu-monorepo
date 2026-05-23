@@ -180,13 +180,16 @@ TIPOS DE IVA (vigentes hasta nueva modificación):
 
 // ── URLs de producto Isaak ─────────────────────────────────────────────────────
 
+const _base =
+  process.env.NEXT_PUBLIC_ISAAK_SITE_URL?.replace(/\/$/, '') || 'https://isaak.verifactu.business';
+
 export const ISAAK_URLS = {
-  register: 'https://isaak.verifactu.business',
-  pricing: 'https://isaak.verifactu.business/pricing',
-  settings: 'https://isaak.verifactu.business/settings?wl=1',
+  register: _base,
+  pricing: `${_base}/pricing`,
+  settings: `${_base}/settings?wl=1`,
   connectorClaude: 'https://holded.verifactu.business/conectores/claude',
   connectorChatGPT: 'https://holded.verifactu.business/conectores/chatgpt',
-} as const;
+};
 
 // ── Instrucciones de formato para WhatsApp ────────────────────────────────────
 

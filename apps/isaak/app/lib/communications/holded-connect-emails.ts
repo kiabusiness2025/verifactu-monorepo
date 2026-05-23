@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 
 type ConnectInput = {
   userEmail: string | null;
@@ -64,14 +65,12 @@ function resolveSender() {
   return (
     cleanEnv(process.env.RESEND_FROM_ISAAK) ||
     cleanEnv(process.env.RESEND_FROM) ||
-    'Isaak <no-reply@isaak.verifactu.business>'
+    `Isaak <no-reply@${new URL(ISAAK_PUBLIC_URL).hostname}>`
   );
 }
 
 function isaakDashboardUrl() {
-  return (
-    (cleanEnv(process.env.NEXT_PUBLIC_ISAAK_URL) || 'https://app.verifactu.business') + '/chat'
-  );
+  return `${ISAAK_PUBLIC_URL}/chat`;
 }
 
 function legalFooter() {

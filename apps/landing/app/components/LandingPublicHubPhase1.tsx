@@ -41,15 +41,15 @@ const pillars = [
   },
   {
     title: 'Modo conectado',
-    body: 'Holded conectado directamente. Sage, A3ERP, Odoo, Xero, Cegid y +40 ERPs más via Chift. Bancos, CRM, Drive y APIs — todo en una sola capa conversacional empresarial.',
+    body: 'Holded conectado hoy. Sage, A3ERP, Odoo, Xero, Cegid y más de 40 ERPs compatibles próximamente. Bancos, CRM, Drive y APIs — todo accesible desde Isaak.',
     icon: Link2,
   },
 ];
 
 const audienceCards = [
-  'Autonomos y microempresas que necesitan empezar por orden y cumplimiento.',
-  'Pymes que quieren conectar fiscalidad, datos, ERP y operaciones.',
-  'Asesorias que necesitan clientes mas ordenados y menos persecucion documental.',
+  'Autónomos y microempresas que necesitan empezar por orden y cumplimiento.',
+  'PYMEs que quieren conectar fiscalidad, datos y operaciones.',
+  'Asesorías que necesitan clientes más ordenados y menos persecución documental.',
 ];
 
 const ECOSYSTEM_CARDS = [
@@ -68,7 +68,7 @@ const ECOSYSTEM_CARDS = [
   {
     icon: Link2,
     title: 'Conectores ERP',
-    desc: 'Holded conectado hoy. Sage, A3ERP, Odoo, Xero y +40 ERPs vía Chift.',
+    desc: 'Holded conectado hoy. Sage, A3ERP, Odoo, Xero y +40 ERPs compatibles próximamente.',
     badge: null,
   },
   {
@@ -91,7 +91,7 @@ export default function LandingPublicHubPhase1() {
             {/* Left: Copy */}
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-[#2361d8]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-                Hub principal del ecosistema
+                Verifactu Business
               </div>
               <h1 className="mt-6 max-w-2xl text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl sm:leading-[1.06]">
                 Tu empresa, conectada. Tus impuestos, bajo control. Tu IA, siempre disponible.
@@ -187,7 +187,7 @@ export default function LandingPublicHubPhase1() {
               Cuatro pilares del ecosistema
             </div>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Cumple, entiende y conecta tu negocio desde un unico ecosistema.
+              Cumple, entiende y conecta tu negocio desde un único ecosistema.
             </h2>
           </div>
 
@@ -225,15 +225,15 @@ export default function LandingPublicHubPhase1() {
           <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-                Para asesorias y empresas reales
+                Para asesorías y empresas reales
               </div>
               <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                Una plataforma para unir fiscalidad, datos, Excel, ERP y asesoria.
+                Una plataforma para unir fiscalidad, datos, Excel, ERP y asesoría.
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-600">
-                No todas las empresas empiezan por una API. Algunas llegan con Excel, otras con
-                Holded y otras con informacion dispersa. El ecosistema esta pensado para ordenar esa
-                realidad sin forzar una migracion total desde el primer dia.
+                No todas las empresas empiezan por una integración. Algunas llegan con Excel, otras
+                con Holded y otras con información dispersa. La plataforma está pensada para ordenar
+                esa realidad sin forzar una migración total desde el primer día.
               </p>
               <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
                 <div className="flex items-center gap-3 text-sm font-semibold text-slate-900">
@@ -278,30 +278,29 @@ export default function LandingPublicHubPhase1() {
         </Container>
       </section>
 
-      {/* ── HOLDED / CHIFT CTA ───────────────────────────────────────────── */}
+      {/* ── HOLDED CTA ───────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-20">
         <Container>
           <div className="rounded-[2rem] border border-slate-200 bg-[#011c67] px-6 py-8 text-white shadow-sm sm:px-10 sm:py-10">
             <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
-                  Primer hub vertical
+                  Conector ERP disponible hoy
                 </div>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                  Holded conectado. Chift abre +40 ERPs más.
+                  ¿Usas Holded? Conecta en 2 minutos.
                 </h2>
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-blue-100 sm:text-base">
-                  Holded funciona hoy como fuente de datos directa para Isaak. A través de Chift,
-                  Sage, A3ERP, Odoo, Xero, Cegid, QuickBooks y más de 40 ERPs están disponibles sin
-                  configuración adicional. Isaak es la capa de orquestación: el ERP cambia, la
-                  experiencia con Isaak permanece.
+                  Isaak lee tu empresa directamente desde Holded: facturas, clientes, contabilidad y
+                  proyectos. Pregunta en español, obtén respuestas con datos reales. Sage, A3ERP,
+                  Odoo, Xero y más ERPs compatibles próximamente.
                 </p>
               </div>
               <a
                 href={HOLDed_CONNECTORS_URL}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#011c67] transition hover:bg-slate-100"
               >
-                Ir al hub Holded
+                Conectar Holded
                 <ArrowRight className="h-4 w-4" />
               </a>
             </div>

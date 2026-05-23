@@ -1,4 +1,5 @@
 import { callLLM, AIError } from '@verifactu/utils';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import type { AIProvider } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
 import { appendConversationMessage, ensureHoldedConversation } from '@/app/lib/holded-chat';
@@ -147,7 +148,7 @@ function generateFallbackResponse(message: string, authenticated: boolean) {
 }
 
 function buildPublicSystemPrompt() {
-  return `Eres Isaak, el asistente fiscal y operativo de isaak.verifactu.business.
+  return `Eres Isaak, el asistente fiscal y operativo de ${ISAAK_PUBLIC_URL}.
 
 Objetivo:
 - Ayudar con tramites, dudas fiscales, impuestos y consejos practicos.
@@ -172,7 +173,7 @@ function buildAuthenticatedSystemPrompt(context: AuthenticatedChatContext) {
     ? context.goals.slice(0, 3).join(', ')
     : 'resolver dudas fiscales y ordenar el negocio con calma';
 
-  return `Eres Isaak, el asistente fiscal y operativo del workspace autenticado de isaak.verifactu.business.
+  return `Eres Isaak, el asistente fiscal y operativo del workspace autenticado de ${ISAAK_PUBLIC_URL}.
 
 Objetivo:
 - Ayudar con dudas fiscales, contables y operativas sin agobiar a la persona usuaria.

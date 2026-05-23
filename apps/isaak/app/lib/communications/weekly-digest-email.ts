@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import type { FiscalDeadline } from '@/app/lib/fiscal-calendar';
 
 export type WeeklyDigestInput = {
@@ -113,7 +114,7 @@ function buildDigestHtml(input: WeeklyDigestInput): string {
         ${deadlinesHtml}
 
         <tr><td style="padding:28px 32px;">
-          <a href="https://isaak.verifactu.business"
+          <a href="${ISAAK_PUBLIC_URL}"
              style="display:inline-block;background:#2361d8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:14px 28px;border-radius:9999px;">
             Abrir Isaak
           </a>
@@ -122,8 +123,8 @@ function buildDigestHtml(input: WeeklyDigestInput): string {
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
             © 2026 Verifactu Business ·
-            <a href="https://isaak.verifactu.business/settings?section=notificaciones" style="color:#94a3b8;">Gestionar notificaciones</a> ·
-            <a href="https://isaak.verifactu.business" style="color:#94a3b8;">isaak.verifactu.business</a>
+            <a href="${ISAAK_PUBLIC_URL}/settings?section=notificaciones" style="color:#94a3b8;">Gestionar notificaciones</a> ·
+            <a href="${ISAAK_PUBLIC_URL}" style="color:#94a3b8;">${new URL(ISAAK_PUBLIC_URL).hostname}</a>
           </p>
         </td></tr>
       </table>
@@ -151,7 +152,7 @@ function buildDigestText(input: WeeklyDigestInput): string {
     }
   }
 
-  lines.push('', 'Abre Isaak: https://isaak.verifactu.business');
+  lines.push('', `Abre Isaak: ${ISAAK_PUBLIC_URL}`);
   return lines.join('\n');
 }
 
