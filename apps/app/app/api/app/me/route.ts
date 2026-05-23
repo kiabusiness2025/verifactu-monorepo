@@ -41,17 +41,16 @@ export async function GET(request: NextRequest) {
         id: userWithCompanies.id,
         email: userWithCompanies.email,
         name: userWithCompanies.name,
-        image: userWithCompanies.image,
         role: userWithCompanies.role,
         emailVerified: userWithCompanies.emailVerified,
       },
       companiesOwned: userWithCompanies.companiesOwned,
       memberships: userWithCompanies.memberships.map(
         (m: (typeof userWithCompanies.memberships)[number]) => ({
-        id: m.id,
-        role: m.role,
-        company: m.company,
-      })
+          id: m.id,
+          role: m.role,
+          company: m.company,
+        })
       ),
     });
   } catch (error) {
