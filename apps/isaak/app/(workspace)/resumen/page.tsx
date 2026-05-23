@@ -1,10 +1,22 @@
 import type { Metadata } from 'next';
 import type { LucideIcon } from 'lucide-react';
-import { BarChart3, Calculator, Clock, FileCheck, TrendingDown, TrendingUp } from 'lucide-react';
+import {
+  AlertTriangle,
+  BarChart3,
+  Calculator,
+  Clock,
+  FileCheck,
+  TrendingDown,
+  TrendingUp,
+} from 'lucide-react';
 import { Suspense } from 'react';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { buildRangeSummary, type HoldedAccountingPnL } from '@/app/lib/holded-analytics';
+import {
+  loadIsaakWorkspaceSignals,
+  type IsaakVerifactuSignal,
+} from '@/app/lib/isaak-workspace-signals';
 import { prisma } from '@/app/lib/prisma';
 import ResumenChart, { type MonthlyPoint } from './components/ResumenChart';
 
@@ -59,6 +71,7 @@ async function DashboardContent() {
   let chartData: MonthlyPoint[] = [];
   let verifactu: VerifactuStats | null = null;
   let accountingPnL: HoldedAccountingPnL | null = null;
+  let verifactuSignal: IsaakVerifactuSignal | null = null;
 
   try {
     const session = await getHoldedSession();
@@ -121,7 +134,13 @@ async function DashboardContent() {
         chartData = buildMonthlyChart(snapshot);
       }
 
-      // Verifactu invoice stats
+      // Verifactu Holded signal + local stats
+      const wsSignals = await loadIsaakWorkspaceSignals({
+        tenantId: session.tenantId,
+        context: ctx,
+      }).catch(() => null);
+      verifactuSignal = wsSignals?.verifactu ?? null;
+
       const [issued, drafts, errors] = await Promise.all([
         prisma.invoice.count({
           where: {
@@ -203,6 +222,25 @@ async function DashboardContent() {
           </div>
         ))}
       </div>
+
+      {verifactuSignal?.checked && verifactuSignal.invoicesWithoutUuid > 0 && (
+        <div className="mx-5 mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600" />
+            <div>
+              <p className="text-[12px] font-semibold text-amber-800">
+                {verifactuSignal.invoicesWithoutUuid} factura
+                {verifactuSignal.invoicesWithoutUuid > 1 ? 's' : ''} sin UUID Verifactu
+              </p>
+              <p className="mt-0.5 text-[11px] text-amber-700">
+                De las últimas {verifactuSignal.invoicesChecked} facturas revisadas (90 días),{' '}
+                {verifactuSignal.invoicesWithoutUuid} no tienen UUID Verifactu. El RD 1007/2023
+                obliga a registrar todas las facturas. Pregunta a Isaak para saber cómo resolverlo.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {accountingPnL && accountingPnL.entriesProcessed > 0 && (
         <div className="mx-5 mb-3 rounded-xl border border-slate-100 bg-white px-4 py-3 shadow-sm">

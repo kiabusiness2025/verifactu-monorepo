@@ -1,5 +1,6 @@
 import type { IsaakBusinessContext } from './isaak-business-context';
 import { getUpcomingDeadlines } from './fiscal-calendar';
+import { holdedListDocuments } from './holded-api';
 import { prisma } from './prisma';
 
 export type IsaakWorkspaceBillingSnapshot = {
@@ -17,10 +18,17 @@ export type IsaakWorkspaceDeadline = {
   description: string;
 };
 
+export type IsaakVerifactuSignal = {
+  invoicesChecked: number;
+  invoicesWithoutUuid: number;
+  checked: boolean;
+};
+
 export type IsaakWorkspaceSignals = {
   billing: IsaakWorkspaceBillingSnapshot;
   pendingTasks: string[];
   upcomingDeadlines: IsaakWorkspaceDeadline[];
+  verifactu: IsaakVerifactuSignal | null;
 };
 
 export const ISAAK_PROFILE_INTERVIEW_GUIDANCE = [
@@ -36,9 +44,37 @@ function toIsoDate(value: Date | null | undefined) {
   return value ? value.toISOString() : null;
 }
 
+function hasVerifactuUuid(doc: Record<string, unknown>): boolean {
+  const vf =
+    (doc.verifactu as Record<string, unknown> | undefined) ||
+    (doc.verifactuData as Record<string, unknown> | undefined) ||
+    {};
+  return Boolean(vf.uuid || doc.verifactuUuid || doc.qrCode);
+}
+
+async function loadVerifactuSignal(apiKey: string): Promise<IsaakVerifactuSignal> {
+  const now = Math.floor(Date.now() / 1000);
+  const ninetyDaysAgo = String(now - 90 * 24 * 3600);
+
+  const { documents } = await holdedListDocuments(apiKey, {
+    docType: 'invoice',
+    starttmp: ninetyDaysAgo,
+    endtmp: String(now),
+    limit: 50,
+  });
+
+  const invoicesChecked = documents.length;
+  const invoicesWithoutUuid = documents.filter(
+    (doc) => !hasVerifactuUuid(doc as Record<string, unknown>)
+  ).length;
+
+  return { invoicesChecked, invoicesWithoutUuid, checked: true };
+}
+
 function buildPendingTasks(
   context: IsaakBusinessContext | null,
-  billing: IsaakWorkspaceBillingSnapshot
+  billing: IsaakWorkspaceBillingSnapshot,
+  verifactu: IsaakVerifactuSignal | null
 ) {
   const tasks: string[] = [];
 
@@ -68,18 +104,33 @@ function buildPendingTasks(
     }
   }
 
-  return tasks.slice(0, 4);
+  if (verifactu?.checked && verifactu.invoicesWithoutUuid > 0) {
+    tasks.push(
+      `Revisar Verifactu: ${verifactu.invoicesWithoutUuid} factura${verifactu.invoicesWithoutUuid > 1 ? 's' : ''} de los últimos 90 días sin UUID Verifactu (obligatorio desde RD 1007/2023).`
+    );
+  }
+
+  return tasks.slice(0, 5);
 }
 
 export async function loadIsaakWorkspaceSignals(input: {
   tenantId: string;
   context?: IsaakBusinessContext | null;
+  holdedApiKey?: string | null;
 }): Promise<IsaakWorkspaceSignals> {
-  const subscription = await prisma.tenantSubscription.findFirst({
-    where: { tenantId: input.tenantId },
-    include: { plan: true },
-    orderBy: [{ createdAt: 'desc' }],
-  });
+  const holdedApiKey =
+    input.holdedApiKey ?? input.context?.holded.connection?.apiKey ?? null;
+
+  const [subscription, verifactu] = await Promise.all([
+    prisma.tenantSubscription.findFirst({
+      where: { tenantId: input.tenantId },
+      include: { plan: true },
+      orderBy: [{ createdAt: 'desc' }],
+    }),
+    holdedApiKey
+      ? loadVerifactuSignal(holdedApiKey).catch(() => null)
+      : Promise.resolve(null),
+  ]);
 
   const trialEndsAt = subscription?.trialEndsAt ?? null;
   const daysUntilTrialEnd =
@@ -106,8 +157,9 @@ export async function loadIsaakWorkspaceSignals(input: {
 
   return {
     billing,
-    pendingTasks: buildPendingTasks(input.context ?? null, billing),
+    pendingTasks: buildPendingTasks(input.context ?? null, billing, verifactu),
     upcomingDeadlines,
+    verifactu,
   };
 }
 
@@ -135,10 +187,17 @@ export function formatWorkspaceSignalsForPrompt(signals: IsaakWorkspaceSignals) 
         .join(' | ')
     : 'Sin plazos fiscales próximos cargados.';
 
+  const verifactuSummary = signals.verifactu?.checked
+    ? signals.verifactu.invoicesWithoutUuid > 0
+      ? `ALERTA VERIFACTU: ${signals.verifactu.invoicesWithoutUuid} de ${signals.verifactu.invoicesChecked} facturas recientes (90 días) no tienen UUID Verifactu. Obligatorio según RD 1007/2023. Menciona este riesgo de cumplimiento cuando sea relevante.`
+      : `Verifactu: ${signals.verifactu.invoicesChecked} facturas revisadas en los últimos 90 días, todas con UUID. Cumplimiento correcto.`
+    : 'Verifactu: estado no verificado (sin conexión Holded o sin datos).';
+
   return [
     billingSummary,
     `Tareas pendientes detectadas: ${pendingSummary}`,
     `Próximos plazos fiscales: ${deadlineSummary}`,
+    verifactuSummary,
     ISAAK_PROFILE_INTERVIEW_GUIDANCE,
   ].join('\n');
 }
