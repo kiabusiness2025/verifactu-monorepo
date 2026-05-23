@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { getFiscalDeadlines } from '@/app/lib/fiscal-calendar';
 import { sendWeeklyDigest } from '@/app/lib/communications/weekly-digest-email';
+import { getHoldedConnection } from '@/app/lib/holded-integration';
+import { fetchHoldedSnapshot } from '@/app/lib/holded-integration';
+import { buildRangeSummary } from '@/app/lib/holded-analytics';
+import { holdedListTreasuryAccounts } from '@/app/lib/holded-api';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -71,6 +75,41 @@ export async function GET(req: NextRequest) {
 
       const userName = membership.user?.firstName || membership.user?.name?.split(' ')[0] || null;
 
+      // Enrich with Holded financial data if connected
+      let pnl: { sales: number; expenses: number | null; margin: number | null } | null = null;
+      let bankBalance: number | null = null;
+      try {
+        const connection = await getHoldedConnection(tenant.id);
+        if (connection?.apiKey) {
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+          const [snapshot, accounts] = await Promise.allSettled([
+            fetchHoldedSnapshot(connection.apiKey),
+            holdedListTreasuryAccounts(connection.apiKey),
+          ]);
+          if (snapshot.status === 'fulfilled' && snapshot.value) {
+            const range = buildRangeSummary(snapshot.value, monthStart, monthEnd);
+            if (range.sales > 0 || range.expenseSignals > 0) {
+              pnl = { sales: range.sales, expenses: range.expenses, margin: range.margin };
+            }
+          }
+          if (accounts.status === 'fulfilled' && Array.isArray(accounts.value)) {
+            const total = accounts.value.reduce((sum: number, acc: Record<string, unknown>) => {
+              const bal =
+                typeof acc.balance === 'number'
+                  ? acc.balance
+                  : typeof acc.amount === 'number'
+                    ? acc.amount
+                    : 0;
+              return sum + bal;
+            }, 0);
+            if (total !== 0) bankBalance = total;
+          }
+        }
+      } catch {
+        // Non-critical: digest still sends without financial data
+      }
+
       await sendWeeklyDigest({
         userEmail: recipientEmail,
         userName,
@@ -78,6 +117,8 @@ export async function GET(req: NextRequest) {
         conversationsThisWeek,
         alertsThisWeek,
         upcomingDeadlines: upcoming,
+        pnl,
+        bankBalance,
       });
 
       sent++;
