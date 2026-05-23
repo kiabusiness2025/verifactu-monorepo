@@ -3,12 +3,9 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { FileText, Trash2, UploadCloud } from 'lucide-react';
-import { EInformaSearch } from '@/components/companies/EInformaSearch';
 import { useToast } from '@/components/notifications/ToastNotifications';
-import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 
 type SelectedCompany = {
-  einformaId?: string;
   name: string;
   legalName?: string;
   nif?: string;
@@ -70,7 +67,6 @@ export default function OnboardingPage() {
   const [legalName, setLegalName] = useState('');
   const [nif, setNif] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [manualMode, setManualMode] = useState(false);
   const [docType, setDocType] = useState<CompanyDocumentType>('deed');
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
@@ -129,11 +125,9 @@ export default function OnboardingPage() {
     if (!nif.trim()) setNif(normalized.nif || '');
   }
 
-  async function handleSelect(company: { einformaId: string; name: string; nif: string }) {
+  function handleSelect(company: { name: string; nif: string }) {
     setManualMode(true);
-    setIsLoadingDetails(true);
     setSelected({
-      einformaId: company.einformaId,
       name: company.name,
       legalName: company.name,
       nif: company.nif,
@@ -141,51 +135,6 @@ export default function OnboardingPage() {
     setCompanyName(company.name);
     setLegalName(company.name);
     setNif(company.nif);
-
-    try {
-      const res = await fetch(
-        `/api/onboarding/einforma/company?einformaId=${encodeURIComponent(company.einformaId)}&taxId=${encodeURIComponent(company.nif || '')}`
-      );
-      const data = await res.json().catch(() => null);
-      if (res.ok && data?.ok) {
-        const info = data.company;
-        const normalized = data.normalized ?? {};
-        setSelected({
-          einformaId: company.einformaId,
-          name: info.name,
-          legalName: info.legalName,
-          nif: info.nif,
-          cnae: info.cnae,
-          cnaeCode: normalized.cnaeCode,
-          cnaeText: normalized.cnaeText,
-          legalForm: info.legalForm,
-          status: info.status,
-          email: info.email,
-          phone: info.phone,
-          employees: info.employees,
-          sales: info.sales,
-          salesYear: info.salesYear,
-          lastBalanceDate: info.lastBalanceDate,
-          website: info.website,
-          capitalSocial: info.capitalSocial,
-          incorporationDate: info.incorporationDate,
-          address: info.address,
-          city: normalized.city ?? info.city,
-          postalCode: normalized.postalCode ?? info.postalCode,
-          province: info.province,
-          country: normalized.country ?? info.country,
-          representative: info.representative,
-          raw: info.raw,
-        });
-        setCompanyName(info.name || company.name);
-        setLegalName(info.legalName || info.name || company.name);
-        setNif(info.nif || company.nif);
-      }
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsLoadingDetails(false);
-    }
   }
 
   async function handleUploadCompanyDocument(file: File) {
@@ -253,8 +202,7 @@ export default function OnboardingPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          source: selected?.einformaId ? 'einforma' : 'manual',
-          einformaId: selected?.einformaId,
+          source: 'manual',
           name: companyName.trim(),
           legalName: legalName.trim(),
           nif: nif.trim(),
@@ -372,21 +320,6 @@ export default function OnboardingPage() {
           </div>
 
           <div className="mt-6 space-y-4">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
-                Buscar empresa
-              </p>
-              <div className="mt-3">
-                <EInformaSearch
-                  onSelect={handleSelect}
-                  onManualEntryRequested={() => setManualMode(true)}
-                />
-              </div>
-              {isLoadingDetails && (
-                <p className="mt-2 text-xs text-slate-500">Cargando datos de la empresa...</p>
-              )}
-            </div>
-
             <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
               <p className="font-semibold">Consejo rápido</p>
               <p className="mt-1 text-xs text-blue-800">
@@ -525,20 +458,6 @@ export default function OnboardingPage() {
                 disabled={!manualMode && !selected}
               />
             </label>
-            <EinformaAutofillButton
-              taxIdValue={nif}
-              onApply={(normalized, meta) => {
-                setManualMode(true);
-                applyNormalized(normalized);
-                if (meta?.cached || meta?.cacheSource) {
-                  setSelected(
-                    (prev) => prev ?? { name: normalized.name || '', nif: normalized.nif || '' }
-                  );
-                }
-              }}
-              disabled={!manualMode && !selected}
-            />
-
             {selected && (
               <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-xs text-slate-600 space-y-2">
                 <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">

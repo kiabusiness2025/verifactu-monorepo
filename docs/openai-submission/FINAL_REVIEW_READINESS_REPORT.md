@@ -3,6 +3,25 @@
 Date: 2026-04-29 (initial) · 2026-05-15 (controlled-errors wave + preset realignment)
 App: Holded Connector
 
+## 2026-05-23 update — production runtime aligned, manual ChatGPT QA still pending
+
+Live checks against `https://holded.verifactu.business/api/mcp/holded` confirm the production runtime is aligned with submission v2:
+
+- ✅ Runtime `tools/list` returns exactly the **10 tools** declared in `chatgpt-app-submission.json` (`0` missing, `0` extra).
+- ✅ `node scripts/validate-openai-submission.mjs` passes locally with 10 tools, 10 positive test cases, and 6 negative test cases.
+- ✅ `holded_list_daily_ledger` exposes both ISO date inputs (`startDate` / `endDate`) and Unix timestamp inputs (`startTimestamp` / `endTimestamp`).
+- ✅ `holded_list_contacts` exposes the local fallback filter note for `name`, matching the pagination/filtering hardening already in production.
+- ✅ Endpoint sanity checks pass: MCP descriptor, `initialize`, CORS/OPTIONS, protected-resource metadata, authorization-server metadata, and unauthenticated `tools/call` returning `401` with `WWW-Authenticate`.
+
+Remaining blockers are outside code/runtime verification:
+
+1. Upload or re-import `chatgpt-app-submission.json` in the OpenAI App Review portal and confirm `Imported 10. Skipped 0. Missing 0. Mismatched 0`.
+2. Run the full 16-case matrix in ChatGPT web.
+3. Run the same matrix in ChatGPT mobile.
+4. Attach evidence and submit.
+
+Sections below are historical snapshots. Any mention of `openai_review_v2`, 14 tools, or ledger timestamps-only behavior reflects the earlier submission wave, not the current production runtime.
+
 ## 🟢 2026-05-15 update — runtime/manifest aligned, only ChatGPT manual QA pending
 
 After the second wave of soporte testing (four cases returned `-32000 Internal MCP error` instead of controlled errors) and the discovery that production exposed a wider tool surface than the signed manifest (22 vs 14), the connector is now in a verified-aligned state:
@@ -18,6 +37,7 @@ After the second wave of soporte testing (four cases returned `-32000 Internal M
 - ✅ OAuth discovery JSON is well-formed with every field OpenAI looks for (issuer, authorization/token/registration endpoints, scopes, response_types, grant_types, S256).
 
 PRs merged for this wave:
+
 - [#80](https://github.com/kiabusiness2025/verifactu-monorepo/pull/80) — controlled errors + preset revert (deployed via Vercel 2026-05-15 18:57 UTC).
 - [#81](https://github.com/kiabusiness2025/verifactu-monorepo/pull/81) — CI infrastructure (pnpm version, jest ESM, prisma scope, build-admin path filter, Resend dummy env) — prerequisite for #80 to reach `main`.
 

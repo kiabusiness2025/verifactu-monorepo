@@ -86,7 +86,6 @@ La ruta de lectura recomendada es:
 - DB: Prisma + Postgres (Vercel Postgres).
 - Email: Resend (admin).
 - Suscripciones: Stripe (admin).
-- eInforma: onboarding y busqueda de empresas (app y admin).
 - Isaak unificado: asistencia proactiva por seccion en landing, panel cliente y admin.
 
 ## Isaak (estado Feb 2026)
@@ -152,7 +151,7 @@ La documentacion detallada de variables esta en:
 - Holded pasa a resolverse en modo `channel-aware`: `external_connections` es la fuente operativa activa para `dashboard` y `chatgpt`, con estado, sync, error y disconnect aislados por `channel_key`.
 - El runtime MCP/OAuth se ha reforzado con PKCE S256, codigos de autorizacion de un solo uso y metadata alineada con OpenAI para discovery y protected resource.
 - Se ha reforzado la compatibilidad con entornos legacy: `tenant_profiles` se lee y escribe segun disponibilidad real de columnas, y se corrigieron incidencias de produccion por columnas ausentes y por SQL mal formado en `holdedConnectionResolver`.
-- El perimetro publico del conector queda ahora mas claro: eInforma sale de la surface publica del conector y el preset publico por defecto `openai_review_v2` mantiene una exposicion limitada y revisable.
+- El perimetro publico del conector queda ahora mas claro: el preset publico por defecto `openai_review_v2` mantiene una exposicion limitada y revisable.
 - La capacidad publica validada hoy del conector queda centrada en facturas, contactos, cuentas contables, diario, bookings y proyectos; el detalle operativo del preset actual esta documentado en `apps/app/README.md`.
 
 ## Pipeline de video demo (automatizacion de marketing)
@@ -216,7 +215,7 @@ Puedes modificar el guion en generate-sora-demo-video.js para futuras demos.
 ## Siguientes pasos (prioridad)
 
 1. Terminar paneles admin: usuarios, suscripciones, emails, Vercel, soporte.
-2. Completar onboarding con eInforma y activar trial.
+2. Completar onboarding y activar trial.
 3. Verificar permisos y auditoria (admin/support).
 4. Revisar seeds y datos demo.
 5. Dashboard /app: "Acciones con Isaak" ya dinamico por empresa demo (API stub; pendiente conectar a tenants reales).

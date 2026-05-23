@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable @typescript-eslint/no-require-imports */
 
 const fs = require('fs');
 const path = require('path');
@@ -35,8 +36,8 @@ const CRITICAL_DEPS_BY_APP = {
         'app/(dashboard)/dashboard/isaak/page.tsx',
         'app/dashboard/admin-dashboard/page.tsx',
         'app/dashboard/admin/companies/[id]/page.tsx',
-        'app/dashboard/admin/companies/new/page.tsx'
-      ]
+        'app/dashboard/admin/companies/new/page.tsx',
+      ],
     },
     'framer-motion': {
       version: '^11.15.0',
@@ -44,34 +45,30 @@ const CRITICAL_DEPS_BY_APP = {
         'components/isaak/IsaakDeadlineNotifications.tsx',
         'components/isaak/IsaakPreferencesModal.tsx',
         'components/isaak/IsaakProactiveBubbles.tsx',
-        'components/isaak/IsaakSmartFloating.tsx'
-      ]
+        'components/isaak/IsaakSmartFloating.tsx',
+      ],
     },
     'next-auth': {
       version: '^4.24.11',
-      files: [
-        'app/dashboard/settings/page.tsx'
-      ]
+      files: ['app/dashboard/settings/page.tsx'],
     },
     'decimal.js': {
       version: '^10.4.3',
-      files: [
-        'lib/hooks/useArticles.ts'
-      ]
+      files: ['lib/hooks/useArticles.ts'],
     },
-    'resend': {
+    resend: {
       version: '^4.1.0',
       files: [
         'app/api/admin/emails/send/custom/route.ts',
         'app/api/admin/emails/send/route.ts',
-        'app/workflows/email-steps.ts'
-      ]
-    }
+        'app/workflows/email-steps.ts',
+      ],
+    },
   },
   'apps/landing': {
     // Landing tiene menos dependencias críticas específicas
     // La mayoría son compartidas de Next.js
-  }
+  },
 };
 
 // Obtener dependencias críticas para este app
@@ -87,8 +84,8 @@ try {
 }
 
 const installedDeps = {
-  ...packageJson.dependencies || {},
-  ...packageJson.devDependencies || {}
+  ...(packageJson.dependencies || {}),
+  ...(packageJson.devDependencies || {}),
 };
 
 let hasErrors = false;
@@ -100,16 +97,21 @@ for (const [dep, info] of Object.entries(criticalDeps)) {
     console.error(`❌ MISSING: ${dep}`);
     console.error(`   Recommended version: ${info.version}`);
     console.error(`   Required by:`);
-    info.files.forEach(file => console.error(`     - ${file}`));
+    info.files.forEach((file) => console.error(`     - ${file}`));
     console.error(`   Fix: npm install ${dep}@${info.version}\n`);
     hasErrors = true;
   } else {
     const installedVersion = installedDeps[dep];
     console.log(`✅ ${dep} (${installedVersion})`);
-    
+
     // Advertencia si la versión no coincide (no bloqueante)
-    if (info.version && !installedVersion.includes(info.version.replace('^', '').replace('~', ''))) {
-      console.warn(`   ⚠️  Installed version ${installedVersion} differs from recommended ${info.version}`);
+    if (
+      info.version &&
+      !installedVersion.includes(info.version.replace('^', '').replace('~', ''))
+    ) {
+      console.warn(
+        `   ⚠️  Installed version ${installedVersion} differs from recommended ${info.version}`
+      );
       hasWarnings = true;
     }
   }
@@ -117,9 +119,9 @@ for (const [dep, info] of Object.entries(criticalDeps)) {
 
 // Verificar dependencias esenciales de Next.js
 const essentialDeps = {
-  'next': packageJson.dependencies?.next,
-  'react': packageJson.dependencies?.react,
-  'react-dom': packageJson.dependencies?.['react-dom']
+  next: packageJson.dependencies?.next,
+  react: packageJson.dependencies?.react,
+  'react-dom': packageJson.dependencies?.['react-dom'],
 };
 
 console.log('\n📦 Essential Next.js dependencies:');

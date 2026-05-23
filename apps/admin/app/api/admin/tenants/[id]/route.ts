@@ -222,7 +222,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const body = await req.json();
     const normalized = body?.normalized ?? null;
     const profile = body?.profile ?? null;
-    const isEinforma = !!normalized;
 
     const legalName = String(
       normalized?.legalName || normalized?.name || body?.legalName || ''
@@ -230,16 +229,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const taxId = String(normalized?.nif || body?.taxId || '')
       .trim()
       .toUpperCase();
-    const address = isEinforma
-      ? String(normalized?.address || profile?.address?.street || '').trim() || null
-      : body?.address
-        ? String(body.address).trim()
-        : null;
-    const cnae = isEinforma
-      ? String(profile?.cnae || '').trim() || null
-      : body?.cnae
-        ? String(body.cnae).trim()
-        : null;
+    const address = body?.address
+      ? String(body.address).trim()
+      : String(normalized?.address || profile?.address?.street || '').trim() || null;
+    const cnae = body?.cnae ? String(body.cnae).trim() : String(profile?.cnae || '').trim() || null;
 
     const cnaeCode = normalized?.cnaeCode ?? null;
     const cnaeText = normalized?.cnaeText ?? null;
@@ -273,10 +266,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       ? profile.raw.manualEditHistory
       : null;
     const adminEditHistory = adminEditHistoryFromPayload ?? adminEditHistoryFromRaw ?? null;
-    const einformaTaxIdVerified =
-      !!taxId && !!normalized?.nif && String(normalized.nif).toUpperCase() === taxId;
-    const einformaRaw = isEinforma ? (profile?.raw ?? profile ?? null) : null;
-    const profileSource = isEinforma ? 'einforma' : 'manual';
 
     if (!legalName || !taxId) {
       return NextResponse.json({ error: 'legalName y taxId son obligatorios' }, { status: 400 });
@@ -310,7 +299,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if (hasTenantProfiles) {
       const profileCandidates: Array<{ column: string; value: unknown }> = [
         { column: 'tenant_id', value: tenantId },
-        { column: 'source', value: profileSource },
+        { column: 'source', value: 'manual' },
         { column: 'source_id', value: sourceId },
         { column: 'cnae', value: cnae },
         { column: 'cnae_code', value: cnaeCode },
@@ -332,9 +321,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         { column: 'sales', value: sales },
         { column: 'sales_year', value: salesYear },
         { column: 'last_balance_date', value: lastBalanceDate },
-        { column: 'einforma_last_sync_at', value: isEinforma ? now : null },
-        { column: 'einforma_tax_id_verified', value: isEinforma ? einformaTaxIdVerified : null },
-        { column: 'einforma_raw', value: einformaRaw },
         { column: 'admin_edit_history', value: adminEditHistory },
         { column: 'updated_at', value: now },
       ];

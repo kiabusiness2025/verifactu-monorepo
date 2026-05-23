@@ -85,7 +85,7 @@ export async function getOrCreateSqlUserFromFirebase(
     user = await prisma.user.update({
       where: { id: user.id },
       data: {
-        authProvider: "FIREBASE",
+        authProvider: 'FIREBASE',
         authSubject: uid,
         name: name || user.name, // Update name if provided
       },
@@ -98,7 +98,7 @@ export async function getOrCreateSqlUserFromFirebase(
     data: {
       email,
       name: name || email.split('@')[0], // Use email prefix if no name
-      authProvider: "FIREBASE",
+      authProvider: 'FIREBASE',
       authSubject: uid,
     },
   });
@@ -117,9 +117,7 @@ export async function getUserWithCompanies(userId: string) {
       id: true,
       email: true,
       name: true,
-      image: true,
-      role: true,
-      emailVerified: true,
+      firstName: true,
       createdAt: true,
       companiesOwned: {
         include: {

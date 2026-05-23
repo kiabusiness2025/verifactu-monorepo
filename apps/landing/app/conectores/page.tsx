@@ -7,7 +7,7 @@ import { Container, Footer } from '../lib/home/ui';
 export const metadata: Metadata = {
   title: 'Conectores | Verifactu Business',
   description:
-    'Holded conectado directamente. Sage, A3ERP, Odoo, Xero, Cegid, QuickBooks y +40 ERPs más via Chift. Isaak como capa de orquestación empresarial.',
+    'Holded conectado hoy. Sage, A3ERP, Odoo, Xero, Cegid, QuickBooks y +40 ERPs compatibles próximamente. Isaak como eje central de tu gestión empresarial.',
 };
 
 const ISAAK_URL = 'https://isaak.verifactu.business';
@@ -36,11 +36,11 @@ const CONNECTORS = [
     cta: 'Ver hub Holded',
   },
   {
-    name: 'Chift — +40 ERPs',
+    name: '+40 ERPs compatibles',
     tag: 'Sage · A3ERP · Odoo · Xero · Cegid · QuickBooks · Próximamente',
     status: 'soon' as const,
     icon: Link2,
-    desc: 'Una sola integración universal que conecta Isaak con más de 40 sistemas contables y ERP del mercado español y europeo. Cambia de ERP cuando quieras — Isaak no cambia.',
+    desc: 'Una sola conexión que abre Isaak a más de 40 sistemas contables y ERP del mercado español y europeo. Cambia de ERP cuando quieras — la experiencia con Isaak no cambia.',
     features: [
       'Sage 200 ES y A3ERP',
       'Odoo, Xero, Cegid, QuickBooks',
@@ -67,8 +67,8 @@ export default function ConnectorsPage() {
               El ERP que ya usas, conectado a Isaak.
             </h1>
             <p className="mt-5 text-lg leading-8 text-slate-600">
-              Holded funciona hoy. Sage, A3ERP, Odoo, Xero y más de 40 ERPs llegan vía Chift. Isaak
-              es la capa de orquestación: el ERP cambia, la experiencia permanece.
+              Holded funciona hoy. Sage, A3ERP, Odoo, Xero y más de 40 ERPs compatibles
+              próximamente. Cambia de ERP cuando quieras — la experiencia con Isaak no cambia.
             </p>
           </div>
         </Container>
@@ -149,12 +149,12 @@ export default function ConnectorsPage() {
               </div>
               <div>
                 <h2 className="text-xl font-bold text-[#011c67]">
-                  Isaak como capa de orquestación
+                  Isaak es el eje central de tu gestión
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Los conectores no son el producto. Son la puerta de entrada. Isaak conecta tu ERP,
-                  tu banca, tus documentos y tu equipo en una sola capa conversacional: pregunta en
-                  español, obtén respuestas con datos reales de tu empresa.
+                  Los conectores son la puerta de entrada. Isaak conecta tu ERP, tu banca, tus
+                  documentos y tu equipo en un solo lugar: pregunta en español, obtén respuestas con
+                  datos reales de tu empresa. Sin aprender ningún software nuevo.
                 </p>
                 <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                   <a

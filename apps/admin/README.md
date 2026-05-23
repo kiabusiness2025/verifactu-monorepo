@@ -96,23 +96,10 @@ RESEND_API_KEY=
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 
-# eInforma
-EINFORMA_CLIENT_ID=
-EINFORMA_CLIENT_SECRET=
-EINFORMA_TOKEN_URL=
-EINFORMA_API_BASE_URL=
-EINFORMA_SCOPE=
-EINFORMA_TIMEOUT_MS=8000
-
 # Vercel/GitHub
 VERCEL_TOKEN=
 GITHUB_TOKEN=
 ```
-
-Documentacion eInforma:
-
-- `docs/runbooks/einforma-credentials.md`
-- `docs/runbooks/einforma-mapping.md`
 
 ## Arranque local
 

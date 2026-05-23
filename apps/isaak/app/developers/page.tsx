@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 
 export const metadata: Metadata = {
   title: 'Developers — MCP Inspector | Isaak',
@@ -110,22 +111,22 @@ pnpm --dir apps/app dev
     id: 'isaak',
     emoji: '🔵',
     label: 'Servidor Isaak MCP',
-    subtitle: 'apps/isaak + apps/app · isaak.verifactu.business',
+    subtitle: `apps/isaak + apps/app · ${new URL(ISAAK_PUBLIC_URL).hostname}`,
     transport: 'Streamable HTTP',
-    url: 'https://isaak.verifactu.business/api/mcp/isaak',
+    url: `${ISAAK_PUBLIC_URL}/api/mcp/isaak`,
     auth: 'Bearer isk_live_TU_API_KEY',
     toolCount: '9 tools',
     toolDetail: 'facturas, VeriFactu, resumen fiscal, contexto empresa',
     docUrl: 'https://verifactu.business/developers',
     steps: [
       'Genera una API key en Isaak → Configuración → API keys.',
-      'Transport: Streamable HTTP · URL: https://isaak.verifactu.business/api/mcp/isaak',
+      `Transport: Streamable HTTP · URL: ${ISAAK_PUBLIC_URL}/api/mcp/isaak`,
       'Añade header Authorization: Bearer isk_live_TU_API_KEY',
       'Pulsa Connect.',
       'tools/list muestra las 9 herramientas de Isaak.',
     ],
     code: `# Transport: Streamable HTTP
-# URL: https://isaak.verifactu.business/api/mcp/isaak
+# URL: ${ISAAK_PUBLIC_URL}/api/mcp/isaak
 # Header: Authorization: Bearer isk_live_TU_API_KEY
 #
 # → Connect → 9 tools listadas`,

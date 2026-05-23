@@ -141,7 +141,7 @@ const CONNECTORS: Connector[] = [
   },
   {
     name: 'Open Banking',
-    tag: 'Salt Edge · PSD2',
+    tag: 'Tu banco en tiempo real',
     icon: <Landmark className="h-5 w-5 text-[#2361d8]" />,
     desc: 'Movimientos bancarios en tiempo real. Conciliación automática: Isaak cruza transacciones con facturas.',
     example: '¿Qué movimientos no tienen factura asociada?',
@@ -208,7 +208,7 @@ const PRICE_TEASER = [
     id: 'free',
     name: 'Free',
     price: '0 €',
-    tagline: 'Chat fiscal · Facturas VeriFactu AEAT · 10 msg/día',
+    tagline: 'Consultas ilimitadas · Facturas VeriFactu · Sin tarjeta',
     cta: 'Empezar gratis',
     href: '/auth',
     highlight: false,
@@ -217,7 +217,7 @@ const PRICE_TEASER = [
     id: 'starter',
     name: 'Starter',
     price: '19 €',
-    tagline: 'Holded conectado · 200 consultas/mes · Claude Haiku',
+    tagline: 'Holded conectado · Gestión financiera en tiempo real',
     cta: 'Empezar ahora',
     href: '/signup?plan=starter',
     highlight: false,
@@ -226,7 +226,7 @@ const PRICE_TEASER = [
     id: 'pro',
     name: 'Pro',
     price: '49 €',
-    tagline: 'Ilimitado · OCR · Google · WhatsApp · Voz · Claude Sonnet',
+    tagline: 'Documentos · Google · WhatsApp · Voz · Multicanal',
     cta: 'Trial 14 días sin tarjeta',
     href: '/signup?plan=pro',
     highlight: true,
@@ -235,7 +235,7 @@ const PRICE_TEASER = [
     id: 'business',
     name: 'Business',
     price: '149 €',
-    tagline: 'Open Banking · Modelos AEAT · Multi-usuario · Banking',
+    tagline: 'Banca conectada · Modelos AEAT · Multi-usuario · Empresa',
     cta: 'Hablar con ventas',
     href: '/support',
     highlight: false,
@@ -617,9 +617,8 @@ export default function IsaakHomeLanding() {
               Conecta el ERP que ya usas
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Holded ya conectado · Sage, A3ERP, Odoo, Xero y más ERPs españoles{' '}
-              <span className="font-semibold text-slate-700">próximamente vía Chift</span> — una
-              integración, +40 ERPs.
+              Holded ya conectado · Sage, A3ERP, Odoo, Xero y más ERPs españoles próximamente — una
+              conexión, +40 ERPs.
             </p>
           </div>
 
@@ -634,21 +633,12 @@ export default function IsaakHomeLanding() {
                 <span className="text-base font-black text-slate-400">+40</span>
               </div>
               <span className="text-xs font-semibold text-slate-500">más</span>
-              <span className="text-[10px] text-slate-400">via Chift</span>
+              <span className="text-[10px] text-slate-400">próximamente</span>
             </div>
           </div>
 
           <p className="mt-8 text-center text-xs text-slate-400">
-            Powered by{' '}
-            <a
-              href="https://chift.eu"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold text-slate-600 hover:underline"
-            >
-              Chift
-            </a>{' '}
-            · Sage 200 ES · a3ERP · Odoo · Xero · Cegid · QuickBooks · Pennylane y más
+            Sage 200 ES · a3ERP · Odoo · Xero · Cegid · QuickBooks · Pennylane y más
           </p>
         </div>
       </section>
@@ -689,6 +679,56 @@ export default function IsaakHomeLanding() {
                 </div>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      {/* S6b — CASO DE ÉXITO: EXPERT ESTUDIOS                                */}
+      {/* ─────────────────────────────────────────────────────────────────── */}
+      <section className="bg-[#010b2e] py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-4xl">
+            <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:gap-16">
+              {/* Left: label + quote */}
+              <div className="flex-1">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.16em] text-blue-200">
+                  Beta · Primer caso real
+                </div>
+                <blockquote className="mt-6 text-2xl font-bold leading-snug text-white sm:text-3xl">
+                  "Gestionamos el VeriFactu de nuestros clientes como colaboradores sociales de la
+                  AEAT. Con Isaak, revisar estados, detectar incidencias y preparar datos para
+                  declaraciones pasa de horas a minutos. Primera asesoría en probarlo antes del
+                  lanzamiento."
+                </blockquote>
+                <div className="mt-8 flex items-center gap-4 border-t border-white/10 pt-7">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2361d8] text-lg font-black text-white">
+                    E
+                  </div>
+                  <div>
+                    <p className="font-bold text-white">Expert Estudios Profesionales SLU</p>
+                    <p className="mt-0.5 text-sm text-blue-200">
+                      Asesoría · Colaborador social AEAT · Beta tester Isaak
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right: stats */}
+              <div className="grid grid-cols-2 gap-4 lg:w-72 lg:shrink-0">
+                {[
+                  { value: '-80%', label: 'Tiempo en consultas recurrentes' },
+                  { value: '6+', label: 'Clientes gestionados con Isaak' },
+                  { value: '100%', label: 'Acceso a datos Holded + API' },
+                  { value: '1ª', label: 'Asesoría beta tester en España' },
+                ].map(({ value, label }) => (
+                  <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
+                    <div className="text-3xl font-black text-white">{value}</div>
+                    <div className="mt-1 text-xs leading-5 text-blue-200">{label}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>

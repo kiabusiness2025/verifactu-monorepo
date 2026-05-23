@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import type { FiscalDeadline } from '@/app/lib/fiscal-calendar';
 
 export type WeeklyDigestInput = {
@@ -8,6 +9,8 @@ export type WeeklyDigestInput = {
   conversationsThisWeek: number;
   alertsThisWeek: number;
   upcomingDeadlines: Pick<FiscalDeadline, 'title' | 'date' | 'modelo'>[];
+  pnl?: { sales: number; expenses: number | null; margin: number | null } | null;
+  bankBalance?: number | null;
 };
 
 function cleanEnv(value: string | undefined) {
@@ -61,6 +64,62 @@ function deadlineRowHtml(d: Pick<FiscalDeadline, 'title' | 'date' | 'modelo'>) {
     </tr>`;
 }
 
+function formatEur(value: number) {
+  return new Intl.NumberFormat('es-ES', {
+    style: 'currency',
+    currency: 'EUR',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function buildFinancialHtml(input: WeeklyDigestInput): string {
+  const hasPnl = input.pnl != null;
+  const hasBankBalance = input.bankBalance != null;
+  if (!hasPnl && !hasBankBalance) return '';
+
+  const cells: string[] = [];
+
+  if (hasBankBalance) {
+    cells.push(`
+      <td style="padding-right:8px;width:33%;">
+        <div style="background:#f0fdf4;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:600;color:#16a34a;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Saldo bancario</div>
+          <div style="font-size:20px;font-weight:700;color:#166534;">${formatEur(input.bankBalance!)}</div>
+        </div>
+      </td>`);
+  }
+
+  if (hasPnl && input.pnl!.sales > 0) {
+    cells.push(`
+      <td style="padding-right:8px;width:33%;">
+        <div style="background:#f0f7ff;border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:600;color:#2361d8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Ventas (mes)</div>
+          <div style="font-size:20px;font-weight:700;color:#1e3a8a;">${formatEur(input.pnl!.sales)}</div>
+        </div>
+      </td>`);
+  }
+
+  if (hasPnl && input.pnl!.margin != null) {
+    const marginColor = input.pnl!.margin >= 0 ? '#166534' : '#9f1239';
+    const marginBg = input.pnl!.margin >= 0 ? '#f0fdf4' : '#fff1f2';
+    cells.push(`
+      <td style="width:33%;">
+        <div style="background:${marginBg};border-radius:12px;padding:14px 16px;">
+          <div style="font-size:11px;font-weight:600;color:${marginColor};text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px;">Margen (mes)</div>
+          <div style="font-size:20px;font-weight:700;color:${marginColor};">${formatEur(input.pnl!.margin)}</div>
+        </div>
+      </td>`);
+  }
+
+  if (cells.length === 0) return '';
+
+  return `
+    <tr><td style="padding:24px 32px 0;">
+      <h2 style="margin:0 0 12px;font-size:14px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em;">Estado financiero</h2>
+      <table width="100%" cellpadding="0" cellspacing="0"><tr>${cells.join('')}</tr></table>
+    </td></tr>`;
+}
+
 function buildDigestHtml(input: WeeklyDigestInput): string {
   const deadlinesHtml =
     input.upcomingDeadlines.length > 0
@@ -110,10 +169,12 @@ function buildDigestHtml(input: WeeklyDigestInput): string {
           </table>
         </td></tr>
 
+        ${buildFinancialHtml(input)}
+
         ${deadlinesHtml}
 
         <tr><td style="padding:28px 32px;">
-          <a href="https://isaak.verifactu.business"
+          <a href="${ISAAK_PUBLIC_URL}"
              style="display:inline-block;background:#2361d8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:14px 28px;border-radius:9999px;">
             Abrir Isaak
           </a>
@@ -122,8 +183,8 @@ function buildDigestHtml(input: WeeklyDigestInput): string {
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
             © 2026 Verifactu Business ·
-            <a href="https://isaak.verifactu.business/settings?section=notificaciones" style="color:#94a3b8;">Gestionar notificaciones</a> ·
-            <a href="https://isaak.verifactu.business" style="color:#94a3b8;">isaak.verifactu.business</a>
+            <a href="${ISAAK_PUBLIC_URL}/settings?section=notificaciones" style="color:#94a3b8;">Gestionar notificaciones</a> ·
+            <a href="${ISAAK_PUBLIC_URL}" style="color:#94a3b8;">${new URL(ISAAK_PUBLIC_URL).hostname}</a>
           </p>
         </td></tr>
       </table>
@@ -142,6 +203,13 @@ function buildDigestText(input: WeeklyDigestInput): string {
     `• ${input.alertsThisWeek} alertas fiscales`,
   ];
 
+  if (input.bankBalance != null || input.pnl != null) {
+    lines.push('', 'Estado financiero:');
+    if (input.bankBalance != null) lines.push(`• Saldo bancario: ${formatEur(input.bankBalance)}`);
+    if (input.pnl?.sales) lines.push(`• Ventas (mes): ${formatEur(input.pnl.sales)}`);
+    if (input.pnl?.margin != null) lines.push(`• Margen (mes): ${formatEur(input.pnl.margin)}`);
+  }
+
   if (input.upcomingDeadlines.length > 0) {
     lines.push('', 'Próximos vencimientos:');
     for (const d of input.upcomingDeadlines) {
@@ -151,7 +219,7 @@ function buildDigestText(input: WeeklyDigestInput): string {
     }
   }
 
-  lines.push('', 'Abre Isaak: https://isaak.verifactu.business');
+  lines.push('', `Abre Isaak: ${ISAAK_PUBLIC_URL}`);
   return lines.join('\n');
 }
 

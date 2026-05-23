@@ -1,25 +1,24 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import { EinformaAutofillButton } from "@/src/components/einforma/EinformaAutofillButton";
+import React, { useState } from 'react';
 
 export function CreateInvoiceForm() {
   const [invoice, setInvoice] = useState({
-    id: "",
-    number: "",
-    issueDate: "",
+    id: '',
+    number: '',
+    issueDate: '',
     total: 0,
     tax: {
       rate: 0.21,
       amount: 0,
     },
     customer: {
-      name: "",
-      nif: "",
+      name: '',
+      nif: '',
     },
     issuer: {
-      name: "Mi Empresa",
-      nif: "A12345678",
+      name: 'Mi Empresa',
+      nif: 'A12345678',
     },
   });
 
@@ -32,7 +31,7 @@ export function CreateInvoiceForm() {
       ...prev,
       customer: {
         ...prev.customer,
-        name: prev.customer.name || normalized.legalName || normalized.name || "",
+        name: prev.customer.name || normalized.legalName || normalized.name || '',
         nif: prev.customer.nif || normalized.nif || prev.customer.nif,
       },
     }));
@@ -40,10 +39,10 @@ export function CreateInvoiceForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const response = await fetch("/api/verifactu/register-invoice", {
-      method: "POST",
+    const response = await fetch('/api/verifactu/register-invoice', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(invoice),
     });
@@ -110,12 +109,6 @@ export function CreateInvoiceForm() {
                   customer: { ...invoice.customer, nif: e.target.value },
                 })
               }
-            />
-          </div>
-          <div>
-            <EinformaAutofillButton
-              taxIdValue={invoice.customer.nif}
-              onApply={applyNormalized}
             />
           </div>
         </div>

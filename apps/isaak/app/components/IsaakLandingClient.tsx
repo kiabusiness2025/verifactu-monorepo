@@ -116,7 +116,7 @@ const faqs = [
   },
   {
     q: '¿Puede trabajar con Claude, ChatGPT y otras IAs?',
-    a: 'Sí. Isaak expone sus datos a través de conectores MCP para Claude.ai y ChatGPT. También tiene su propio workspace en isaak.verifactu.business con chat completo.',
+    a: 'Sí. Isaak expone sus datos a través de conectores MCP para Claude.ai y ChatGPT. También tiene su propio workspace en isaak.app con chat completo.',
   },
   {
     q: '¿Isaak recuerda conversaciones y contexto?',
@@ -187,11 +187,11 @@ function ContactContent() {
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <a
-          href="mailto:soporte@isaak.verifactu.business"
+          href="mailto:soporte@verifactu.business"
           className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-[#2361d8]/40 hover:bg-blue-50 hover:text-[#2361d8]"
         >
           <Mail size={16} className="text-[#2361d8]" />
-          soporte@isaak.verifactu.business
+          soporte@verifactu.business
         </a>
         <Link
           href="/support"

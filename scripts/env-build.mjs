@@ -71,17 +71,6 @@ const sharedSession = [
 
 const sharedDb = ['DATABASE_URL', 'DIRECT_DATABASE_URL', 'PRISMA_DATABASE_URL', 'POSTGRES_URL'];
 
-const einforma = [
-  'EINFORMA_TOKEN_URL',
-  'EINFORMA_API_BASE_URL',
-  'EINFORMA_CLIENT_ID',
-  'EINFORMA_CLIENT_SECRET',
-  'EINFORMA_SCOPE',
-  'EINFORMA_SEARCH_PARAMS',
-  'EINFORMA_TIMEOUT_MS',
-  'EINFORMA_API_KEY',
-];
-
 const firebaseAdmin = [
   'FIREBASE_ADMIN_PROJECT_ID',
   'FIREBASE_ADMIN_CLIENT_EMAIL',
@@ -161,7 +150,6 @@ const appKeys = [
   ...commonPublic,
   ...sharedSession,
   ...sharedDb,
-  ...einforma,
   ...firebaseAdmin,
   ...oauth,
   ...organization,
@@ -173,7 +161,6 @@ const adminKeys = [
   ...commonPublic,
   ...sharedSession,
   ...sharedDb,
-  ...einforma,
   ...firebaseAdmin,
   ...oauth,
   ...organization,
@@ -185,7 +172,7 @@ const adminKeys = [
 
 const landingKeys = [...commonPublic, ...organization, ...ai, ...stripe];
 
-const apiKeys = [...sharedDb, ...einforma, ...aeat, ...resend, ...stripe, ...organization];
+const apiKeys = [...sharedDb, ...aeat, ...resend, ...stripe, ...organization];
 
 const outputs = [
   { file: path.join(root, 'apps', 'app', '.env.local'), keys: appKeys },
