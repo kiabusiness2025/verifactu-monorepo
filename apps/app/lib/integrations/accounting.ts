@@ -19,6 +19,18 @@ const HOLDED_HISTORY_SCAN_BUDGET_MS = Math.max(
   Number(process.env.HOLDED_HISTORY_SCAN_BUDGET_MS || '7000')
 );
 
+const HOLDED_RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
+const HOLDED_MAX_RETRIES = 2;
+
+function holdedSleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+function holdedBackoffMs(attempt: number) {
+  const base = 200 * 2 ** attempt;
+  return Math.max(50, Math.floor(base + base * (Math.random() - 0.5)));
+}
+
 export { encryptIntegrationSecret };
 
 export type HoldedProbeProfile = 'dashboard' | 'chatgpt';
@@ -149,34 +161,41 @@ function buildHoldedHeaders(apiKey: string, accept = 'application/json') {
 }
 
 async function holdedRequest<T>(options: HoldedRequestOptions): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? HOLDED_TIMEOUT_MS);
+  for (let attempt = 0; attempt <= HOLDED_MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? HOLDED_TIMEOUT_MS);
 
-  try {
-    const response = await fetch(buildHoldedUrl(options.path, options.query), {
-      method: options.method ?? 'GET',
-      headers: buildHoldedHeaders(options.apiKey),
-      body: options.body ? JSON.stringify(options.body) : undefined,
-      signal: controller.signal,
-      cache: 'no-store',
-    });
+    try {
+      const response = await fetch(buildHoldedUrl(options.path, options.query), {
+        method: options.method ?? 'GET',
+        headers: buildHoldedHeaders(options.apiKey),
+        body: options.body ? JSON.stringify(options.body) : undefined,
+        signal: controller.signal,
+        cache: 'no-store',
+      });
 
-    const rawText = await response.text();
-    const parsed = rawText ? safeJsonParse(rawText) : null;
+      const rawText = await response.text();
+      const parsed = rawText ? safeJsonParse(rawText) : null;
 
-    if (!response.ok) {
-      const payload =
-        parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
-      const message = buildHoldedErrorMessage(response.status, payload, rawText);
-      const err = new Error(message) as Error & { status?: number };
-      err.status = response.status;
-      throw err;
+      if (!response.ok) {
+        if (HOLDED_RETRYABLE_STATUS.has(response.status) && attempt < HOLDED_MAX_RETRIES) {
+          await holdedSleep(holdedBackoffMs(attempt));
+          continue;
+        }
+        const payload =
+          parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
+        const message = buildHoldedErrorMessage(response.status, payload, rawText);
+        const err = new Error(message) as Error & { status?: number };
+        err.status = response.status;
+        throw err;
+      }
+
+      return (parsed as T) ?? (null as T);
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return (parsed as T) ?? (null as T);
-  } finally {
-    clearTimeout(timeout);
   }
+  throw new Error(`Holded request failed: ${options.path}`);
 }
 
 function safeJsonParse(raw: string) {
@@ -218,49 +237,56 @@ async function holdedBinaryRequest(
     defaultContentType?: string;
   }
 ): Promise<HoldedBinaryFile> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? HOLDED_TIMEOUT_MS);
+  for (let attempt = 0; attempt <= HOLDED_MAX_RETRIES; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? HOLDED_TIMEOUT_MS);
 
-  try {
-    const response = await fetch(buildHoldedUrl(options.path, options.query), {
-      method: options.method ?? 'GET',
-      headers: buildHoldedHeaders(
-        options.apiKey,
-        options.accept ?? 'application/pdf, application/octet-stream, application/json'
-      ),
-      signal: controller.signal,
-      cache: 'no-store',
-    });
+    try {
+      const response = await fetch(buildHoldedUrl(options.path, options.query), {
+        method: options.method ?? 'GET',
+        headers: buildHoldedHeaders(
+          options.apiKey,
+          options.accept ?? 'application/pdf, application/octet-stream, application/json'
+        ),
+        signal: controller.signal,
+        cache: 'no-store',
+      });
 
-    if (!response.ok) {
-      const rawText = await response.text();
-      const parsed = rawText ? safeJsonParse(rawText) : null;
-      const payload =
-        parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
-      const message =
-        payload?.error ||
-        payload?.message ||
-        `Holded API request failed with status ${response.status}`;
-      throw new Error(message);
+      if (!response.ok) {
+        if (HOLDED_RETRYABLE_STATUS.has(response.status) && attempt < HOLDED_MAX_RETRIES) {
+          await holdedSleep(holdedBackoffMs(attempt));
+          continue;
+        }
+        const rawText = await response.text();
+        const parsed = rawText ? safeJsonParse(rawText) : null;
+        const payload =
+          parsed && typeof parsed === 'object' ? (parsed as HoldedApiErrorPayload) : null;
+        const message =
+          payload?.error ||
+          payload?.message ||
+          `Holded API request failed with status ${response.status}`;
+        throw new Error(message);
+      }
+
+      const data = await response.arrayBuffer();
+      const contentType =
+        response.headers?.get?.('content-type') ?? options.defaultContentType ?? 'application/pdf';
+      const fileName =
+        extractFilenameFromContentDisposition(
+          response.headers?.get?.('content-disposition') ?? null
+        ) ?? null;
+
+      return {
+        base64: Buffer.from(data).toString('base64'),
+        contentType,
+        fileName,
+        size: data.byteLength,
+      };
+    } finally {
+      clearTimeout(timeout);
     }
-
-    const data = await response.arrayBuffer();
-    const contentType =
-      response.headers?.get?.('content-type') ?? options.defaultContentType ?? 'application/pdf';
-    const fileName =
-      extractFilenameFromContentDisposition(
-        response.headers?.get?.('content-disposition') ?? null
-      ) ?? null;
-
-    return {
-      base64: Buffer.from(data).toString('base64'),
-      contentType,
-      fileName,
-      size: data.byteLength,
-    };
-  } finally {
-    clearTimeout(timeout);
   }
+  throw new Error(`Holded binary request failed: ${options.path}`);
 }
 
 async function holdedMultipartRequest(

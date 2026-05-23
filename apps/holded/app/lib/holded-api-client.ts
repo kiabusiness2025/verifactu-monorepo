@@ -2,6 +2,18 @@
 // Mirrors apps/holded-mcp/src/holded-client.ts without the MCP-specific dependencies.
 
 const HOLDED_API_BASE = 'https://api.holded.com';
+const HOLDED_TIMEOUT_MS = 10_000;
+const MAX_RETRIES = 2;
+const RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+function backoffDelayMs(attempt: number) {
+  const base = 200 * 2 ** attempt;
+  return Math.max(50, Math.floor(base + base * (Math.random() - 0.5)));
+}
 
 export class HoldedApiError extends Error {
   constructor(
@@ -23,27 +35,42 @@ export class HoldedClient {
 
   private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
     const url = `${HOLDED_API_BASE}${path}`;
-    const res = await fetch(url, {
-      ...options,
-      headers: {
-        key: this.apiKey,
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        'Accept-Encoding': 'identity',
-        ...options.headers,
-      },
-    });
 
-    if (!res.ok) {
-      const body = await res.text().catch(() => '');
-      throw new HoldedApiError(
-        `Holded API ${res.status}: ${res.statusText}${body ? ` — ${body}` : ''}`,
-        res.status,
-        path
-      );
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), HOLDED_TIMEOUT_MS);
+      try {
+        const res = await fetch(url, {
+          ...options,
+          signal: controller.signal,
+          headers: {
+            key: this.apiKey,
+            'Content-Type': 'application/json',
+            Accept: 'application/json',
+            'Accept-Encoding': 'identity',
+            ...options.headers,
+          },
+        });
+
+        if (!res.ok) {
+          if (RETRYABLE_STATUS.has(res.status) && attempt < MAX_RETRIES) {
+            await sleep(backoffDelayMs(attempt));
+            continue;
+          }
+          const body = await res.text().catch(() => '');
+          throw new HoldedApiError(
+            `Holded API ${res.status}: ${res.statusText}${body ? ` — ${body}` : ''}`,
+            res.status,
+            path
+          );
+        }
+
+        return res.json() as Promise<T>;
+      } finally {
+        clearTimeout(timer);
+      }
     }
-
-    return res.json() as Promise<T>;
+    throw new HoldedApiError('Holded API request failed after retries', 0, path);
   }
 
   // ── Facturación / Documentos ──────────────────────────────────────────────
