@@ -38,7 +38,7 @@ Este paquete evita que cada app implemente su propia version de:
 - `holded/diagnostics.ts` -> resumenes y diagnosticos legibles de modulos soportados
 - `isaak/onboarding.ts` -> estado y guardado del onboarding compartido heredado
 - `isaak/chat.ts` -> conversaciones, memoria y continuidad conversacional heredada
-- `stripe.ts`, `resend.ts`, `vercel.ts`, `github.ts`, `einforma.ts` -> clientes auxiliares externos
+- `stripe.ts`, `resend.ts`, `vercel.ts`, `github.ts` -> clientes auxiliares externos
 - `usage-events.ts` -> eventos de uso canonicos
 
 ## Capa compartida de Holded

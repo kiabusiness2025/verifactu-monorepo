@@ -23,15 +23,15 @@
 
 ### Packages Compartidos (`packages/`)
 
-| Package                     | Propósito                                        |
-| --------------------------- | ------------------------------------------------ |
-| **@verifactu/db**           | Prisma schema, migraciones, seeders              |
-| **@verifactu/auth**         | Configuración auth (Firebase + NextAuth)         |
-| **@verifactu/ui**           | Componentes reutilizables                        |
-| **@verifactu/utils**        | Utilidades comunes                               |
-| **@verifactu/integrations** | Integraciones (Holded, eInforma, Stripe, Resend) |
-| **eslint-config**           | Configuración ESLint compartida                  |
-| **typescript-config**       | Configuración TypeScript compartida              |
+| Package                     | Propósito                                              |
+| --------------------------- | ------------------------------------------------------ |
+| **@verifactu/db**           | Prisma schema, migraciones, seeders                    |
+| **@verifactu/auth**         | Configuración auth (Firebase + NextAuth)               |
+| **@verifactu/ui**           | Componentes reutilizables                              |
+| **@verifactu/utils**        | Utilidades comunes                                     |
+| **@verifactu/integrations** | Integraciones (Holded, Stripe, Resend, Vercel, GitHub) |
+| **eslint-config**           | Configuración ESLint compartida                        |
+| **typescript-config**       | Configuración TypeScript compartida                    |
 
 ## Stack Técnico
 
@@ -171,12 +171,11 @@ Consultar en:
 - `apps/client/README.md` - Variables client
 - `apps/landing/.env.example` - Variables landing
 
-Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, eInforma, Google Cloud, etc.
+Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, Google Cloud, etc.
 
 ## Integraciones Externas
 
 - **Holded**: Sincronización de empresas, facturación, cheques
-- **eInforma**: Búsqueda y onboarding de empresas
 - **Stripe**: Pagos y suscripciones (admin)
 - **Resend**: Email transaccional
 - **Firebase**: Autenticación y real-time en app/client

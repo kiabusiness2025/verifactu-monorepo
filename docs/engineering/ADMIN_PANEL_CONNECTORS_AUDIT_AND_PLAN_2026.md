@@ -89,7 +89,7 @@ Content:
 **Tenants:**
 
 - `GET /api/admin/tenants` — lista con filtros ✓
-- `POST /api/admin/tenants` — crear (manual o Einforma) ✓
+- `POST /api/admin/tenants` — crear (manual) ✓
 - `PATCH /api/admin/tenants/[id]` — editar metadatos ✓
 - `POST /api/admin/tenants/[id]/suspend` / `unsuspend` ✓
 - `GET /api/admin/tenants/[id]/connectors` — conexiones del tenant ✓

@@ -426,7 +426,6 @@ export async function POST(req: Request) {
     const body = await req.json();
     const normalized = body?.normalized ?? null;
     const profile = body?.profile ?? null;
-    const isEinforma = !!normalized;
 
     const legalName = String(
       normalized?.legalName || normalized?.name || body?.legalName || ''
@@ -434,16 +433,10 @@ export async function POST(req: Request) {
     const taxId = String(normalized?.nif || body?.taxId || '')
       .trim()
       .toUpperCase();
-    const address = isEinforma
-      ? String(normalized?.address || profile?.address?.street || '').trim() || null
-      : body?.address
-        ? String(body.address).trim()
-        : null;
-    const cnae = isEinforma
-      ? String(profile?.cnae || '').trim() || null
-      : body?.cnae
-        ? String(body.cnae).trim()
-        : null;
+    const address = body?.address
+      ? String(body.address).trim()
+      : String(normalized?.address || profile?.address?.street || '').trim() || null;
+    const cnae = body?.cnae ? String(body.cnae).trim() : String(profile?.cnae || '').trim() || null;
 
     const cnaeCode = normalized?.cnaeCode ?? null;
     const cnaeText = normalized?.cnaeText ?? null;
@@ -477,10 +470,6 @@ export async function POST(req: Request) {
       ? profile.raw.manualEditHistory
       : null;
     const adminEditHistory = adminEditHistoryFromPayload ?? adminEditHistoryFromRaw ?? null;
-    const einformaTaxIdVerified =
-      !!taxId && !!normalized?.nif && String(normalized.nif).toUpperCase() === taxId;
-    const einformaRaw = isEinforma ? (profile?.raw ?? profile ?? null) : null;
-    const profileSource = isEinforma ? 'einforma' : 'manual';
 
     // Validación básica
     if (!legalName || !taxId) {
@@ -536,13 +525,13 @@ export async function POST(req: Request) {
       tenantValues
     );
 
-    if (address || cnae || isEinforma) {
+    if (address || cnae) {
       try {
         const hasTenantProfiles = await tableExists('tenant_profiles');
         if (hasTenantProfiles) {
           const profileCandidates: Array<{ column: string; value: unknown }> = [
             { column: 'tenant_id', value: tenantId },
-            { column: 'source', value: profileSource },
+            { column: 'source', value: 'manual' },
             { column: 'source_id', value: sourceId },
             { column: 'cnae', value: cnae },
             { column: 'cnae_code', value: cnaeCode },
@@ -564,12 +553,6 @@ export async function POST(req: Request) {
             { column: 'sales', value: sales },
             { column: 'sales_year', value: salesYear },
             { column: 'last_balance_date', value: lastBalanceDate },
-            { column: 'einforma_last_sync_at', value: isEinforma ? now : null },
-            {
-              column: 'einforma_tax_id_verified',
-              value: isEinforma ? einformaTaxIdVerified : null,
-            },
-            { column: 'einforma_raw', value: einformaRaw },
             { column: 'admin_edit_history', value: adminEditHistory },
             { column: 'updated_at', value: now },
           ];
@@ -586,7 +569,7 @@ export async function POST(req: Request) {
             const placeholders = availableColumns
               .map((column, i) => {
                 if (column === 'tenant_id') return `$${i + 1}::uuid`;
-                if (column === 'updated_at' || column === 'einforma_last_sync_at') {
+                if (column === 'updated_at') {
                   return `$${i + 1}::timestamptz`;
                 }
                 if (column === 'incorporation_date' || column === 'last_balance_date') {

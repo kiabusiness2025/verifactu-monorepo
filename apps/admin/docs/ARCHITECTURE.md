@@ -25,7 +25,7 @@ verifactu-monorepo/
 │   ├── auth/             # NextAuth + RBAC
 │   ├── billing/          # Stripe wrappers
 │   ├── email/            # Resend templates
-│   └── integrations/     # eInforma, Vercel, GitHub
+│   └── integrations/     # Holded, Vercel, GitHub, Stripe, Resend
 │
 ├── docs/                 # Documentación general
 ├── scripts/              # Scripts de utilidad
@@ -142,7 +142,7 @@ canImpersonate(user);
 
 ```typescript
 // Clients API
--stripeClient - eInformaClient - resendClient - vercelClient - githubClient;
+-stripeClient - resendClient - vercelClient - githubClient;
 
 // Usado mayormente en apps/admin
 ````
