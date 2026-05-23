@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { decryptHoldedSecret } from '@/app/lib/holded-integration';
 import { getChiftFolders } from '@/app/lib/chift-client';
+import { sendChiftConnectedNotification } from '@/app/lib/communications/integration-emails';
 
 export const runtime = 'nodejs';
 
@@ -88,6 +89,19 @@ export async function GET(request: NextRequest) {
         companyIdentityJson: (companyIdentity ?? undefined) as Prisma.InputJsonValue | undefined,
       },
     });
+
+    // Send connection confirmation email (best-effort)
+    if (conn.connectedByUserId) {
+      const user = await prisma.user
+        .findUnique({ where: { id: conn.connectedByUserId }, select: { email: true, name: true } })
+        .catch(() => null);
+      sendChiftConnectedNotification({
+        userEmail: user?.email ?? null,
+        userName: user?.name ?? null,
+        erpCompanyName: (companyIdentity?.name as string | null | undefined) ?? null,
+        erpVat: (companyIdentity?.vat as string | null | undefined) ?? null,
+      }).catch(() => null);
+    }
 
     return NextResponse.redirect(`${integrationsUrl}?chift=connected`);
   } catch (err) {

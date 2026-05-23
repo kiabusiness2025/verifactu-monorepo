@@ -1,5 +1,6 @@
 import { exchangeCodeForTokens, getUserEmail } from '@/app/lib/google-calendar';
 import { prisma } from '@/app/lib/prisma';
+import { sendGoogleConnectedNotification } from '@/app/lib/communications/integration-emails';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -55,6 +56,16 @@ export async function GET(request: NextRequest) {
         scopes: tokens.scope,
       },
     });
+
+    // Load user info for email (best-effort, non-blocking)
+    const user = await prisma.user
+      .findUnique({ where: { id: userId }, select: { email: true, name: true } })
+      .catch(() => null);
+    sendGoogleConnectedNotification({
+      userEmail: user?.email ?? null,
+      userName: user?.name ?? null,
+      connectedGoogleEmail: email,
+    }).catch(() => null);
 
     return NextResponse.redirect(`${integrationsUrl}?google=connected`);
   } catch {
