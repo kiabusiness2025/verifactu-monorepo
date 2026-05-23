@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowDownLeft,
   ArrowUpRight,
   Building2,
@@ -11,9 +12,18 @@ import {
   Landmark,
   Loader2,
   RefreshCw,
+  Search,
   Unlink,
   X,
 } from 'lucide-react';
+
+type Connection = {
+  providerName: string;
+  status: string;
+  provider: string;
+  expiresAt: string | null;
+  lastSyncAt: string | null;
+};
 
 type Account = {
   id: string;
@@ -23,7 +33,7 @@ type Account = {
   currency: string;
   iban: string | null;
   status: string;
-  connection: { providerName: string; status: string };
+  connection: Connection;
 };
 
 type Transaction = {
@@ -61,6 +71,12 @@ type ReconcileSuggestion = {
   }[];
 };
 
+type Aspsp = {
+  name: string;
+  country: string;
+  logo?: string;
+};
+
 function fmtMoney(amount: number, currency = 'EUR') {
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(amount);
 }
@@ -73,13 +89,18 @@ function fmtDate(iso: string) {
   });
 }
 
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  return Math.ceil(ms / 86_400_000);
+}
+
 export default function BankingPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
-  const [connecting, setConnecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'movements' | 'reconcile'>('movements');
 
@@ -88,6 +109,13 @@ export default function BankingPage() {
   const [suggestions, setSuggestions] = useState<ReconcileSuggestion[]>([]);
   const [reconciling, setReconciling] = useState(false);
   const [confirmingTx, setConfirmingTx] = useState<string | null>(null);
+
+  // Bank picker (Enable Banking)
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerAspsps, setPickerAspsps] = useState<Aspsp[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pickerSearch, setPickerSearch] = useState('');
+  const [connectingBank, setConnectingBank] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -137,11 +165,35 @@ export default function BankingPage() {
     }
   }, [accounts, selectedAccount, loadTransactions, loadReconcile]);
 
-  async function handleConnect() {
-    setConnecting(true);
+  const openBankPicker = useCallback(async () => {
+    setPickerOpen(true);
+    setPickerSearch('');
+    if (pickerAspsps.length > 0) return;
+    setPickerLoading(true);
+    try {
+      const res = await fetch('/api/isaak/banking/eb/aspsps?country=ES');
+      if (res.ok) {
+        const data = (await res.json()) as { aspsps: Aspsp[] };
+        setPickerAspsps(data.aspsps ?? []);
+      } else {
+        setError('No se pudo cargar la lista de bancos.');
+      }
+    } catch {
+      setError('No se pudo cargar la lista de bancos.');
+    } finally {
+      setPickerLoading(false);
+    }
+  }, [pickerAspsps.length]);
+
+  async function handleConnectBank(aspspName: string, country: string) {
+    setConnectingBank(aspspName);
     setError(null);
     try {
-      const res = await fetch('/api/isaak/banking/saltedge/connect', { method: 'POST' });
+      const res = await fetch('/api/isaak/banking/eb/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ aspspName, country }),
+      });
       const data = (await res.json()) as { connect_url?: string; error?: string };
       if (!res.ok || !data.connect_url) {
         setError(data.error ?? 'No se pudo iniciar la conexión.');
@@ -151,7 +203,7 @@ export default function BankingPage() {
     } catch {
       setError('No se pudo iniciar la conexión bancaria.');
     } finally {
-      setConnecting(false);
+      setConnectingBank(null);
     }
   }
 
@@ -159,8 +211,25 @@ export default function BankingPage() {
     setSyncing(true);
     setError(null);
     try {
-      await fetch('/api/isaak/banking/saltedge/accounts', { method: 'POST' });
-      await fetch('/api/isaak/banking/saltedge/transactions', { method: 'POST' });
+      const hasEb = accounts.some((a) => a.connection.provider === 'enablebanking');
+      const hasSaltEdge = accounts.some((a) => a.connection.provider === 'saltedge');
+
+      await Promise.allSettled([
+        hasEb
+          ? fetch('/api/isaak/banking/eb/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({}),
+            })
+          : Promise.resolve(),
+        hasSaltEdge
+          ? fetch('/api/isaak/banking/saltedge/accounts', { method: 'POST' })
+          : Promise.resolve(),
+        hasSaltEdge
+          ? fetch('/api/isaak/banking/saltedge/transactions', { method: 'POST' })
+          : Promise.resolve(),
+      ]);
+
       await load();
       await loadTransactions(selectedAccount ?? undefined);
       await loadReconcile();
@@ -225,6 +294,29 @@ export default function BankingPage() {
   const connected = accounts.length > 0;
   const totalBalance = accounts.reduce((sum, a) => sum + (a.balance ?? 0), 0);
 
+  // Build unique list of EB connections by provider name to show expiry banners
+  const ebExpiring = Array.from(
+    new Map(
+      accounts
+        .filter((a) => a.connection.provider === 'enablebanking' && a.connection.expiresAt)
+        .map((a) => {
+          const days = daysUntil(a.connection.expiresAt);
+          return [
+            a.connection.providerName,
+            { name: a.connection.providerName, days, expiresAt: a.connection.expiresAt! },
+          ] as const;
+        })
+    ).values()
+  )
+    .filter((c) => c.days !== null && c.days <= 7)
+    .sort((a, b) => (a.days ?? 0) - (b.days ?? 0));
+
+  const filteredAspsps = pickerSearch
+    ? pickerAspsps.filter((a) =>
+        a.name.toLowerCase().includes(pickerSearch.toLowerCase())
+      )
+    : pickerAspsps;
+
   return (
     <div className="flex h-full flex-col overflow-y-auto">
       {/* Header */}
@@ -258,6 +350,64 @@ export default function BankingPage() {
           </div>
         )}
 
+        {/* ── Expiry warnings ── */}
+        {ebExpiring.map((conn) => (
+          <div
+            key={conn.name}
+            className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
+              (conn.days ?? 0) <= 0
+                ? 'border-rose-200 bg-rose-50'
+                : 'border-amber-200 bg-amber-50'
+            }`}
+          >
+            <div className="flex items-start gap-2">
+              <AlertTriangle
+                size={14}
+                className={`mt-0.5 shrink-0 ${
+                  (conn.days ?? 0) <= 0 ? 'text-rose-600' : 'text-amber-600'
+                }`}
+              />
+              <div>
+                <p
+                  className={`text-[12px] font-semibold ${
+                    (conn.days ?? 0) <= 0 ? 'text-rose-800' : 'text-amber-800'
+                  }`}
+                >
+                  {(conn.days ?? 0) <= 0
+                    ? `Tu conexión con ${conn.name} ha expirado`
+                    : `Tu conexión con ${conn.name} expira en ${conn.days} día${conn.days === 1 ? '' : 's'}`}
+                </p>
+                <p
+                  className={`mt-0.5 text-[11px] ${
+                    (conn.days ?? 0) <= 0 ? 'text-rose-700' : 'text-amber-700'
+                  }`}
+                >
+                  Renueva la conexión para que Isaak siga accediendo a tus movimientos sin
+                  interrupción.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleConnectBank(conn.name, 'ES')}
+              disabled={connectingBank === conn.name}
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-[11px] font-semibold text-white transition disabled:opacity-60 ${
+                (conn.days ?? 0) <= 0
+                  ? 'bg-rose-600 hover:bg-rose-700'
+                  : 'bg-amber-600 hover:bg-amber-700'
+              }`}
+            >
+              {connectingBank === conn.name ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (conn.days ?? 0) <= 0 ? (
+                'Reconectar'
+              ) : (
+                'Renovar'
+              )}
+            </button>
+          </div>
+        ))}
+
         {!connected ? (
           /* ── Empty state ── */
           <div className="flex flex-col items-center gap-5 rounded-2xl border border-slate-200 bg-white py-14 shadow-sm">
@@ -273,19 +423,14 @@ export default function BankingPage() {
             </div>
             <button
               type="button"
-              onClick={() => void handleConnect()}
-              disabled={connecting}
-              className="flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#1f55c0] disabled:opacity-60"
+              onClick={() => void openBankPicker()}
+              className="flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#1f55c0]"
             >
-              {connecting ? (
-                <Loader2 size={14} className="animate-spin" />
-              ) : (
-                <Building2 size={14} />
-              )}
-              {connecting ? 'Iniciando…' : 'Conectar banco español'}
+              <Building2 size={14} />
+              Conectar banco español
             </button>
             <p className="text-[11px] text-slate-400">
-              Tecnología Salt Edge · Acceso de solo lectura · Sin almacenar credenciales
+              Tecnología Enable Banking · PSD2 · Acceso de solo lectura
             </p>
           </div>
         ) : (
@@ -348,7 +493,7 @@ export default function BankingPage() {
                       <p className="text-[13px] font-semibold text-slate-800">
                         {fmtMoney(account.balance, account.currency)}
                       </p>
-                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                      <div className="mt-0.5 flex items-center justify-end gap-1">
                         <CheckCircle2 size={10} className="text-emerald-500" />
                         <span className="text-[10px] text-emerald-600">Activa</span>
                       </div>
@@ -546,7 +691,7 @@ export default function BankingPage() {
                                   key={c.expenseId}
                                   className="flex items-center gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
                                 >
-                                  <div className="flex-1 min-w-0">
+                                  <div className="min-w-0 flex-1">
                                     <div className="flex items-center gap-2">
                                       <span
                                         className={`inline-flex h-5 min-w-[36px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
@@ -623,21 +768,117 @@ export default function BankingPage() {
               </div>
               <button
                 type="button"
-                onClick={() => void handleConnect()}
-                disabled={connecting}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-[#2361d8] transition hover:bg-[#2361d8]/5 disabled:opacity-50"
+                onClick={() => void openBankPicker()}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-[12px] font-medium text-[#2361d8] transition hover:bg-[#2361d8]/5"
               >
-                {connecting ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Building2 size={12} />
-                )}
+                <Building2 size={12} />
                 Conectar banco
               </button>
             </div>
           </>
         )}
       </div>
+
+      {/* ── Bank picker modal ── */}
+      {pickerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4"
+          onClick={() => !connectingBank && setPickerOpen(false)}
+        >
+          <div
+            className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+              <div>
+                <h3 className="text-[14px] font-semibold text-slate-900">Elige tu banco</h3>
+                <p className="text-[11px] text-slate-500">
+                  Selecciona el tuyo para conectar mediante PSD2/Open Banking
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => !connectingBank && setPickerOpen(false)}
+                disabled={!!connectingBank}
+                className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-50 hover:text-slate-600 disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="border-b border-slate-100 px-5 py-3">
+              <div className="relative">
+                <Search
+                  size={12}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                />
+                <input
+                  type="text"
+                  value={pickerSearch}
+                  onChange={(e) => setPickerSearch(e.target.value)}
+                  placeholder="Buscar banco…"
+                  className="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-[12px] focus:border-[#2361d8] focus:outline-none focus:ring-1 focus:ring-[#2361d8]/30"
+                />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto">
+              {pickerLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 size={20} className="animate-spin text-slate-400" />
+                </div>
+              ) : filteredAspsps.length === 0 ? (
+                <p className="px-5 py-8 text-center text-[12px] text-slate-400">
+                  {pickerSearch
+                    ? 'No se encontraron bancos con ese nombre.'
+                    : 'No hay bancos disponibles.'}
+                </p>
+              ) : (
+                <ul className="divide-y divide-slate-50">
+                  {filteredAspsps.map((aspsp) => (
+                    <li key={`${aspsp.name}-${aspsp.country}`}>
+                      <button
+                        type="button"
+                        disabled={!!connectingBank}
+                        onClick={() => void handleConnectBank(aspsp.name, aspsp.country)}
+                        className="flex w-full items-center gap-3 px-5 py-3 text-left transition hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                          {aspsp.logo ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={aspsp.logo}
+                              alt={aspsp.name}
+                              className="h-full w-full object-contain"
+                            />
+                          ) : (
+                            <Building2 size={16} className="text-slate-400" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[13px] font-medium text-slate-800">
+                            {aspsp.name}
+                          </p>
+                          <p className="text-[10px] text-slate-400">{aspsp.country}</p>
+                        </div>
+                        {connectingBank === aspsp.name && (
+                          <Loader2 size={14} className="animate-spin text-slate-400" />
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="border-t border-slate-100 bg-slate-50 px-5 py-3 text-center">
+              <p className="text-[10px] text-slate-400">
+                Tecnología Enable Banking · Cumple PSD2 · Acceso de solo lectura
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

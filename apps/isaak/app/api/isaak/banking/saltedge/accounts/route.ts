@@ -17,7 +17,17 @@ export async function GET(_request: NextRequest) {
 
   const accounts = await prisma.seAccount.findMany({
     where: { tenantId: session.tenantId, status: 'active' },
-    include: { connection: { select: { providerName: true, status: true } } },
+    include: {
+      connection: {
+        select: {
+          providerName: true,
+          status: true,
+          provider: true,
+          expiresAt: true,
+          lastSyncAt: true,
+        },
+      },
+    },
     orderBy: { createdAt: 'desc' },
   });
 
