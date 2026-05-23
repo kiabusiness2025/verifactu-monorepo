@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { buildIsaakAuthUrl } from '@/app/lib/isaak-navigation';
+import { buildIsaakAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import { toSettingsSession } from '@/app/lib/settings';
 
 export const runtime = 'nodejs';
@@ -19,7 +19,7 @@ export async function POST() {
         'El cambio de contraseña se realiza desde la página de acceso. Usa el enlace de recuperación.',
       redirectUrl: buildIsaakAuthUrl(
         'isaak_settings_change_password',
-        'https://isaak.verifactu.business/settings?section=profile'
+        `${ISAAK_PUBLIC_URL}/settings?section=profile`
       ),
     },
     { status: 409 }

@@ -25,6 +25,7 @@ import {
   type WaWebhookBody,
 } from '@/app/lib/whatsapp';
 import { buildIsaakQueryFromFlow, type WaFlowResponseData } from '@/app/lib/whatsapp-flows';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 import {
   buildFiscalKnowledgeBlock,
   buildGeneralAdvisorInstructions,
@@ -550,8 +551,7 @@ async function runIsaakPipeline(input: {
     // REV-5: cuota solo en modo enriquecido
     const { allowed } = await checkWhatsAppQuota(tenantId);
     if (!allowed) {
-      const limitMsg =
-        'Has alcanzado el límite diario de mensajes de tu plan. Actualiza tu plan en isaak.verifactu.business/pricing para continuar.';
+      const limitMsg = `Has alcanzado el límite diario de mensajes de tu plan. Actualiza tu plan en ${ISAAK_PUBLIC_URL}/pricing para continuar.`;
       await sendWhatsAppText(normalizePhone(from), limitMsg);
       await saveOutboundEvent(threadId, tenantId, limitMsg);
       return;

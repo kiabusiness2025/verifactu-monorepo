@@ -89,12 +89,6 @@ function buildActions({
         href: '/dashboard/onboarding?next=/dashboard',
       },
       {
-        id: 'einforma-search',
-        title: 'Busca tu empresa con el buscador y completa datos',
-        action: 'Buscar empresa',
-        href: '/dashboard/onboarding?step=company&next=/dashboard',
-      },
-      {
         id: 'trial-activate',
         title: 'Activa tu prueba de 30 días',
         action: 'Activar prueba',
@@ -354,115 +348,114 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       invoicePrevYearAgg,
       expensePrevYearAgg,
       expensePrevYearTaxRows,
-    ] =
-      await Promise.all([
-        prisma.invoice.aggregate({
-          where: {
-            tenantId: activeTenantId,
-            issueDate: { gte: monthStart, lt: monthEnd },
-            status: { not: 'draft' },
-          },
-          _sum: {
-            amountGross: true,
-            amountTax: true,
-          },
-          _count: {
-            _all: true,
-          },
-        }),
-        prisma.expenseRecord.aggregate({
-          where: {
-            tenantId: activeTenantId,
-            date: { gte: monthStart, lt: monthEnd },
-          },
-          _sum: {
-            amount: true,
-          },
-          _count: {
-            _all: true,
-          },
-        }),
-        prisma.expenseRecord.findMany({
-          where: {
-            tenantId: activeTenantId,
-            date: { gte: monthStart, lt: monthEnd },
-          },
-          select: { amount: true, taxRate: true },
-        }),
-        prisma.invoice.count({
-          where: {
-            tenantId: activeTenantId,
-            status: 'draft',
-          },
-        }),
-        prisma.invoice.count({
-          where: {
-            tenantId: activeTenantId,
-            status: 'issued',
-          },
-        }),
-        prisma.invoice.findFirst({
-          where: {
-            tenantId: activeTenantId,
-            verifactuStatus: { not: null },
-          },
-          select: { id: true },
-        }),
-        prisma.invoice.aggregate({
-          where: {
-            tenantId: activeTenantId,
-            issueDate: { gte: yearStart, lt: yearEnd },
-            status: { not: 'draft' },
-          },
-          _sum: {
-            amountGross: true,
-            amountTax: true,
-          },
-        }),
-        prisma.expenseRecord.aggregate({
-          where: {
-            tenantId: activeTenantId,
-            date: { gte: yearStart, lt: yearEnd },
-          },
-          _sum: {
-            amount: true,
-          },
-        }),
-        prisma.expenseRecord.findMany({
-          where: {
-            tenantId: activeTenantId,
-            date: { gte: yearStart, lt: yearEnd },
-          },
-          select: { amount: true, taxRate: true },
-        }),
-        prisma.invoice.aggregate({
-          where: {
-            tenantId: activeTenantId,
-            issueDate: { gte: prevYearStart, lt: prevYearEnd },
-            status: { not: 'draft' },
-          },
-          _sum: {
-            amountGross: true,
-            amountTax: true,
-          },
-        }),
-        prisma.expenseRecord.aggregate({
-          where: {
-            tenantId: activeTenantId,
-            date: { gte: prevYearStart, lt: prevYearEnd },
-          },
-          _sum: {
-            amount: true,
-          },
-        }),
-        prisma.expenseRecord.findMany({
-          where: {
-            tenantId: activeTenantId,
-            date: { gte: prevYearStart, lt: prevYearEnd },
-          },
-          select: { amount: true, taxRate: true },
-        }),
-      ]);
+    ] = await Promise.all([
+      prisma.invoice.aggregate({
+        where: {
+          tenantId: activeTenantId,
+          issueDate: { gte: monthStart, lt: monthEnd },
+          status: { not: 'draft' },
+        },
+        _sum: {
+          amountGross: true,
+          amountTax: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      prisma.expenseRecord.aggregate({
+        where: {
+          tenantId: activeTenantId,
+          date: { gte: monthStart, lt: monthEnd },
+        },
+        _sum: {
+          amount: true,
+        },
+        _count: {
+          _all: true,
+        },
+      }),
+      prisma.expenseRecord.findMany({
+        where: {
+          tenantId: activeTenantId,
+          date: { gte: monthStart, lt: monthEnd },
+        },
+        select: { amount: true, taxRate: true },
+      }),
+      prisma.invoice.count({
+        where: {
+          tenantId: activeTenantId,
+          status: 'draft',
+        },
+      }),
+      prisma.invoice.count({
+        where: {
+          tenantId: activeTenantId,
+          status: 'issued',
+        },
+      }),
+      prisma.invoice.findFirst({
+        where: {
+          tenantId: activeTenantId,
+          verifactuStatus: { not: null },
+        },
+        select: { id: true },
+      }),
+      prisma.invoice.aggregate({
+        where: {
+          tenantId: activeTenantId,
+          issueDate: { gte: yearStart, lt: yearEnd },
+          status: { not: 'draft' },
+        },
+        _sum: {
+          amountGross: true,
+          amountTax: true,
+        },
+      }),
+      prisma.expenseRecord.aggregate({
+        where: {
+          tenantId: activeTenantId,
+          date: { gte: yearStart, lt: yearEnd },
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+      prisma.expenseRecord.findMany({
+        where: {
+          tenantId: activeTenantId,
+          date: { gte: yearStart, lt: yearEnd },
+        },
+        select: { amount: true, taxRate: true },
+      }),
+      prisma.invoice.aggregate({
+        where: {
+          tenantId: activeTenantId,
+          issueDate: { gte: prevYearStart, lt: prevYearEnd },
+          status: { not: 'draft' },
+        },
+        _sum: {
+          amountGross: true,
+          amountTax: true,
+        },
+      }),
+      prisma.expenseRecord.aggregate({
+        where: {
+          tenantId: activeTenantId,
+          date: { gte: prevYearStart, lt: prevYearEnd },
+        },
+        _sum: {
+          amount: true,
+        },
+      }),
+      prisma.expenseRecord.findMany({
+        where: {
+          tenantId: activeTenantId,
+          date: { gte: prevYearStart, lt: prevYearEnd },
+        },
+        select: { amount: true, taxRate: true },
+      }),
+    ]);
 
     const sales = toNumber(invoiceAgg._sum.amountGross);
     const expenses = toNumber(expenseAgg._sum.amount);

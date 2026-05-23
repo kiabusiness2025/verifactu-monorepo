@@ -89,7 +89,7 @@ Content:
 **Tenants:**
 
 - `GET /api/admin/tenants` — lista con filtros ✓
-- `POST /api/admin/tenants` — crear (manual o Einforma) ✓
+- `POST /api/admin/tenants` — crear (manual) ✓
 - `PATCH /api/admin/tenants/[id]` — editar metadatos ✓
 - `POST /api/admin/tenants/[id]/suspend` / `unsuspend` ✓
 - `GET /api/admin/tenants/[id]/connectors` — conexiones del tenant ✓
@@ -150,16 +150,16 @@ Content:
 
 ---
 
-### Sprint S1 · CRUD Completo de Conectores — ✅ COMPLETADO (parcial)
+### Sprint S1 · CRUD Completo de Conectores — ✅ COMPLETADO
 
 | Tarea                                                 | Estado | Notas                                                |
 | ----------------------------------------------------- | ------ | ---------------------------------------------------- |
 | S1-A: Página `/connectors` — tabla global con filtros | ✅     | Canal, estado, búsqueda, paginación, export CSV      |
 | S1-B: Página `/connectors/[id]` — detalle completo    | ✅     | Metadatos, actividad real (PAT log), tokens, revocar |
 | S1-C: Acción Revocar token                            | ✅     | `POST /api/admin/connectors/[id]/tokens/[id]/revoke` |
-| S1-D: Acción Test Ping                                | ⬜     | API `POST /ping` — pendiente                         |
-| S1-E: Acción Reactivar conector                       | ⬜     | API `POST /reactivate` — pendiente                   |
-| S1-F: Acción Eliminar conector (hard delete)          | ⬜     | Pendiente                                            |
+| S1-D: Acción Test Ping                                | ✅     | `POST /api/admin/connectors/[id]/ping`               |
+| S1-E: Acción Reactivar conector                       | ✅     | `POST /api/admin/connectors/[id]/reactivate`         |
+| S1-F: Acción Eliminar conector (hard delete)          | ✅     | `DELETE /api/admin/connectors/[id]`                  |
 
 ---
 
@@ -193,22 +193,22 @@ Content:
 
 ### Sprint S5 · Email Marketing Scaffold — ✅ COMPLETADO
 
-| Tarea                                                         | Estado | Notas                                    |
-| ------------------------------------------------------------- | ------ | ---------------------------------------- |
-| Página `/admin-marketing` con 3 segmentos + CampaignForm      | ✅     |                                          |
-| API `POST /api/admin/marketing/send` con dry-run + envío real | ✅     |                                          |
-| Segmentos: all_users · holded_connected · holded_error        | ✅     |                                          |
-| Historial de campañas (modelo Prisma `MarketingCampaign`)     | ⬜     | Pendiente — actualmente sin persistencia |
+| Tarea                                                         | Estado | Notas                                           |
+| ------------------------------------------------------------- | ------ | ----------------------------------------------- |
+| Página `/admin-marketing` con 3 segmentos + CampaignForm      | ✅     |                                                 |
+| API `POST /api/admin/marketing/send` con dry-run + envío real | ✅     |                                                 |
+| Segmentos: all_users · holded_connected · holded_error        | ✅     |                                                 |
+| Historial de campañas (modelo Prisma `MarketingCampaign`)     | ✅     | Modelo + UI implementados en `/admin-marketing` |
 
 ---
 
 ### Sprint S6 · Monitorización y Alertas — ✅ COMPLETADO
 
-| Tarea                                                                        | Estado | Notas                                             |
-| ---------------------------------------------------------------------------- | ------ | ------------------------------------------------- |
-| KPIs en `/panel`: Activos 30d, dormant, queries hoy, errores conectores      | ✅     | Basado en PAT audit log (señal real de actividad) |
-| Alertas "Atención requerida" en panel (dormant, error, demos, recordatorios) | ✅     |                                                   |
-| Badge alertas en nav lateral                                                 | ⬜     | Pendiente — requiere entender AppShell API        |
+| Tarea                                                                        | Estado | Notas                                                                                  |
+| ---------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------------------- |
+| KPIs en `/panel`: Activos 30d, dormant, queries hoy, errores conectores      | ✅     | Basado en PAT audit log (señal real de actividad)                                      |
+| Alertas "Atención requerida" en panel (dormant, error, demos, recordatorios) | ✅     |                                                                                        |
+| Badge alertas en nav lateral                                                 | ✅     | Implementado en `apps/admin/app/(admin)/layout.tsx` via `/api/admin/connectors/health` |
 
 ---
 

@@ -7,7 +7,6 @@ import { useToast } from '@/components/notifications/ToastNotifications';
 import IsaakToneSettings from '@/components/settings/IsaakToneSettings';
 import { auth } from '@/lib/firebase';
 import { buildFullName, normalizePersonNamePart, splitFullName } from '@/lib/personName';
-import { EinformaAutofillButton } from '@/src/components/einforma/EinformaAutofillButton';
 import { formatCurrency, formatDateTime } from '@/src/lib/formatters';
 import { sendPasswordResetEmail, updateProfile } from 'firebase/auth';
 import { Camera } from 'lucide-react';
@@ -84,12 +83,6 @@ function SettingsContent() {
     website: '',
     taxId: '',
   });
-  const [einformaMeta, setEinformaMeta] = useState<{
-    cached?: boolean;
-    cacheSource?: string | null;
-    lastSyncAt?: string | null;
-  } | null>(null);
-
   const handleSaveGeneral = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -681,32 +674,6 @@ function SettingsContent() {
                       setGeneralSettings({ ...generalSettings, taxId: e.target.value })
                     }
                   />
-                  <EinformaAutofillButton
-                    taxIdValue={generalSettings.taxId}
-                    onApply={(normalized, meta) => {
-                      setGeneralSettings((prev) => ({
-                        ...prev,
-                        companyName:
-                          prev.companyName ||
-                          normalized.legalName ||
-                          normalized.name ||
-                          prev.companyName,
-                        taxId: prev.taxId || normalized.nif || prev.taxId,
-                        address: prev.address || normalized.address || prev.address,
-                        city: prev.city || normalized.city || prev.city,
-                        postalCode: prev.postalCode || normalized.postalCode || prev.postalCode,
-                        country: prev.country || normalized.country || prev.country,
-                        website: prev.website || normalized.website || prev.website,
-                      }));
-                      setEinformaMeta(meta);
-                    }}
-                  />
-                  {einformaMeta?.lastSyncAt ? (
-                    <div className="mt-2 text-xs text-slate-500">
-                      {einformaMeta.cached ? 'Snapshot (<=30 días)' : 'Consulta en vivo'} ·
-                      Actualizado: {einformaMeta.lastSyncAt}
-                    </div>
-                  ) : null}
 
                   <AccessibleInput
                     label="Dirección"

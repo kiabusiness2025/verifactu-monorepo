@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { callLLM } from '@verifactu/utils';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 
 export const runtime = 'nodejs';
 
@@ -26,18 +27,17 @@ function checkRate(ip: string): boolean {
   return false;
 }
 
-const SYSTEM_PROMPT = `Eres el asistente de ventas de Isaak (isaak.verifactu.business), la plataforma de IA empresarial de Verifactu Business. Tu misión es orientar a visitantes sobre planes, precios y cómo empezar. Responde en español, de forma directa y amigable. Máximo 3-4 frases por respuesta.
+const SYSTEM_PROMPT = `Eres el asistente de ventas de Isaak (${ISAAK_PUBLIC_URL}), la plataforma de IA empresarial de Verifactu Business. Tu misión es orientar a visitantes sobre planes, precios y cómo empezar. Responde en español, de forma directa y amigable. Máximo 3-4 frases por respuesta.
 
 PLANES DISPONIBLES (precios sin IVA):
 
 1. Starter — 19 €/mes
-   - 1 ERP conectado (Holded u otro vía Chift)
-   - 100 consultas/mes a Isaak
+   - 1 ERP conectado (Holded)
+   - Consultas ilimitadas a Isaak
    - Dashboard de ventas y gastos
    - Cumplimiento VeriFactu incluido
 
 2. Pyme — 49 €/mes
-   - Consultas ilimitadas a Isaak
    - Google integrations (Gmail, Calendar, Drive)
    - Subida de documentos y facturas
    - Informes y análisis avanzados
@@ -48,27 +48,27 @@ PLANES DISPONIBLES (precios sin IVA):
    - Alertas fiscales y modelos AEAT
    - Acceso API + webhooks
 
-Todos los planes incluyen prueba gratuita de 14 días sin tarjeta.
+Todos los planes incluyen prueba gratuita de 14 días sin tarjeta. El plan Free es gratuito para siempre con consultas ilimitadas.
 
 QUÉ ES ISAAK:
-Isaak es una capa de IA conversacional que se conecta a tu ERP (Holded, Sage, A3ERP, Odoo, Xero y +40 más vía Chift), banca, correo y documentos. Permite hacer preguntas en español y obtener respuestas con datos reales de tu empresa. No es otro ERP — conecta los que ya usas.
+Isaak es la IA que gestiona tu empresa en tiempo real. Se conecta a tu ERP (Holded hoy, Sage, A3ERP, Odoo, Xero y +40 más próximamente), banca, correo y documentos. Permite hacer preguntas en español y obtener respuestas con datos reales de tu empresa. No es otro ERP — conecta los que ya usas.
 
 CARACTERÍSTICAS CLAVE:
 - Cumplimiento VeriFactu: AEAT, trazabilidad y Ley Antifraude
-- ERP conectado: Holded directo + 40+ ERPs vía Chift
+- ERP conectado: Holded directo (más ERPs próximamente)
 - Open Banking: movimientos bancarios en tiempo real (próximamente)
 - Chat 24/7: pregunta por ventas, gastos, facturas, cobros, proveedores
 
 PROCESO DE CONTRATACIÓN:
-1. Crear cuenta gratuita en isaak.verifactu.business (sin tarjeta)
+1. Crear cuenta gratuita en ${ISAAK_PUBLIC_URL} (sin tarjeta)
 2. Conectar el ERP desde Ajustes → Conexiones
 3. Empezar a usar Isaak inmediatamente
-4. Actualizar plan si se superan los límites del gratuito
+4. Actualizar plan si se necesitan integraciones avanzadas
 
 LIMITACIONES:
 - No tienes acceso a datos de empresa específica
 - Para soporte técnico, dirigir a soporte@verifactu.business
-- Cuando el usuario quiera registrarse: https://isaak.verifactu.business/auth`;
+- Cuando el usuario quiera registrarse: ${ISAAK_PUBLIC_URL}/auth`;
 
 type HistoryItem = { role: 'user' | 'assistant'; content: string };
 
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
       {
         error:
           'Has alcanzado el límite de consultas. Crea una cuenta gratuita para continuar sin límites.',
-        cta: 'https://isaak.verifactu.business',
+        cta: ISAAK_PUBLIC_URL,
       },
       { status: 429 }
     );

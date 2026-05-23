@@ -139,7 +139,6 @@ export async function POST(req: Request) {
         source_id;
 
       if (shouldCreateProfile) {
-        const isEinforma = (source ?? 'manual') === 'einforma';
         await query(
           `INSERT INTO tenant_profiles (
              tenant_id,
@@ -159,11 +158,9 @@ export async function POST(req: Request) {
              province,
              country,
              representative,
-             einforma_last_sync_at,
-             einforma_tax_id_verified,
              updated_at
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, NOW())
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, NOW())
            ON CONFLICT (tenant_id) DO UPDATE
            SET source = EXCLUDED.source,
                source_id = EXCLUDED.source_id,
@@ -181,8 +178,6 @@ export async function POST(req: Request) {
                province = EXCLUDED.province,
                country = EXCLUDED.country,
                representative = EXCLUDED.representative,
-               einforma_last_sync_at = EXCLUDED.einforma_last_sync_at,
-               einforma_tax_id_verified = EXCLUDED.einforma_tax_id_verified,
                updated_at = NOW()`,
           [
             tenantId,
@@ -202,8 +197,6 @@ export async function POST(req: Request) {
             province ?? null,
             country ?? null,
             representative ?? null,
-            isEinforma ? new Date() : null,
-            isEinforma ? true : null,
           ]
         );
       }

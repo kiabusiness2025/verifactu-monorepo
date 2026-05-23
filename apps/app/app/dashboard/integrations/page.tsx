@@ -89,7 +89,6 @@ export default function IntegrationsPage() {
   const [logs, setLogs] = useState<SyncLog[]>([]);
   const [logsSummary, setLogsSummary] = useState<LogsSummaryPayload | null>(null);
   const [drive, setDrive] = useState<DriveStatus | null>(null);
-  const [taxId, setTaxId] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState(false);
@@ -227,36 +226,12 @@ export default function IntegrationsPage() {
     }
   };
 
-  const enrichTenant = async () => {
-    if (!taxId.trim()) {
-      setMessage('Introduce un NIF/CIF para eInforma.');
-      return;
-    }
-    setLoading(true);
-    setMessage(null);
-    try {
-      const res = await fetch('/api/integrations/einforma/enrich-tenant', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taxId: taxId.trim().toUpperCase() }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.error || 'No se pudo enriquecer empresa');
-      setMessage(`Empresa enriquecida: ${data?.normalized?.name || 'OK'}`);
-    } catch (err) {
-      setMessage(err instanceof Error ? err.message : 'No se pudo enriquecer empresa');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <header>
         <h1 className="text-2xl font-bold text-slate-900">Integraciones</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Estado de integracion contable via API, sincronizacion manual y alta de empresa con
-          eInforma.
+          Estado de integracion contable via API y sincronizacion manual.
         </p>
       </header>
 
@@ -407,24 +382,6 @@ export default function IntegrationsPage() {
             className="rounded-full border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           >
             Desconectar
-          </button>
-        </div>
-      </section>
-
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-base font-semibold text-slate-900">Anadir empresa con eInforma</h2>
-        <div className="mt-3 flex gap-2">
-          <input
-            value={taxId}
-            onChange={(e) => setTaxId(e.target.value)}
-            placeholder="NIF/CIF"
-            className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm"
-          />
-          <button
-            onClick={enrichTenant}
-            className="rounded-lg bg-[#0b6cfb] px-4 text-sm font-semibold text-white hover:bg-[#095edb]"
-          >
-            Enriquecer
           </button>
         </div>
       </section>

@@ -619,9 +619,6 @@ model TenantProfile {
   fiscalAddress         Json?     @map("fiscal_address")
   taxRegime             String?   @map("tax_regime")
   defaultCurrency       String    @default("EUR") @map("default_currency")
-  einformaLastSyncAt    DateTime? @map("einforma_last_sync_at") @db.Timestamptz
-  einformaTaxIdVerified Boolean?  @map("einforma_tax_id_verified")
-  einformaRaw           Json?     @map("einforma_raw")
   adminEditHistory      Json?     @map("admin_edit_history")
   cnae                  String?
   cnaeCode              String?   @map("cnae_code")
@@ -647,21 +644,6 @@ model TenantProfile {
   updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("tenant_profiles")
-}
-
-model EinformaLookup {
-  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  queryType  String   @map("query_type")
-  queryValue String   @map("query_value")
-  raw        Json
-  normalized Json
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
-
-  @@unique([queryType, queryValue])
-  @@index([expiresAt])
-  @@map("einforma_lookups")
 }
 
 model Membership {
@@ -790,7 +772,7 @@ model TenantSubscription {
   stripeStatus         String?   @map("stripe_status")
   cancelAtPeriodEnd    Boolean?  @default(false) @map("cancel_at_period_end")
   queriesUsedToday     Int       @default(0) @map("queries_used_today")
-  dailyQueryLimit      Int       @default(10) @map("daily_query_limit")
+  dailyQueryLimit      Int       @default(-1) @map("daily_query_limit")
   lastQueryResetAt     DateTime  @default(now()) @map("last_query_reset_at") @db.Timestamptz
   updatedAt            DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz

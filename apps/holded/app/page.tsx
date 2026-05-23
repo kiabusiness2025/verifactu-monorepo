@@ -369,6 +369,38 @@ export default function HoldedHomePage() {
               </Link>
             </p>
           </div>
+
+          {/* Isaak cross-promotion — for users without Claude or ChatGPT */}
+          <div className="mt-4 rounded-2xl border border-indigo-100 bg-[linear-gradient(135deg,#f0f4ff_0%,#ffffff_100%)] p-6 shadow-sm">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#011c67]">
+                  <Sparkles className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-slate-900">
+                    ¿Todavía no tienes Claude ni ChatGPT?
+                  </p>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">
+                    Prueba <strong>Isaak</strong> — la IA que ya viene lista con Holded conectado,
+                    consultas fiscales en español y gestión de facturas VeriFactu. Sin suscripción
+                    de IA aparte. Empieza gratis.
+                  </p>
+                </div>
+              </div>
+              <div className="shrink-0 sm:pl-4">
+                <Link
+                  href="https://isaak.verifactu.business"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#011c67] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#01236b]"
+                >
+                  Probar Isaak gratis
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -494,12 +526,26 @@ export default function HoldedHomePage() {
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/contacto"
-              className="inline-flex items-center rounded-full border border-slate-300 bg-white px-6 py-3.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              href="https://isaak.verifactu.business"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-[#011c67] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#01236b]"
             >
-              Hablar con el equipo
+              Probar Isaak gratis
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
+          <p className="mt-4 text-sm text-slate-400">
+            ¿Sin Claude ni ChatGPT?{' '}
+            <Link
+              href="https://isaak.verifactu.business"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-[#011c67] hover:underline"
+            >
+              Isaak ya incluye la IA →
+            </Link>
+          </p>
         </div>
       </section>
     </main>

@@ -3,6 +3,7 @@ import { formatDateTime } from '@/src/lib/formatters';
 import { Prisma } from '@verifactu/db';
 import Link from 'next/link';
 import { UsersSearchBar } from './UsersSearchBar';
+import BetaInviteForm from './BetaInviteForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -130,6 +131,8 @@ export default async function UsersPage({ searchParams }: PageProps) {
           Exportar CSV
         </a>
       </header>
+
+      <BetaInviteForm />
 
       <UsersSearchBar initialSearch={search} initialStatus={status} />
 

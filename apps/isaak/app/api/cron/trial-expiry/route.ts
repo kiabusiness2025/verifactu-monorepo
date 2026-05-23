@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@verifactu/integrations';
 import { prisma } from '@/app/lib/prisma';
+import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -49,7 +50,7 @@ function trialEmailHtml(daysLeft: number, tenantName: string, firstName: string)
             Tu espacio <strong>${tenantName || 'en Isaak'}</strong> tiene acceso completo hasta que termine la prueba.
             Para continuar usando Isaak sin interrupciones, activa un plan antes de que expire.
           </p>
-          <a href="https://isaak.verifactu.business/settings?section=billing"
+          <a href="${ISAAK_PUBLIC_URL}/settings?section=billing"
              style="display:inline-block;background:#2361d8;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:14px 28px;border-radius:9999px;margin:8px 0 24px;">
             Ver planes y activar
           </a>
@@ -60,7 +61,7 @@ function trialEmailHtml(daysLeft: number, tenantName: string, firstName: string)
         </td></tr>
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
-            © 2026 Verifactu Business · <a href="https://isaak.verifactu.business" style="color:#94a3b8;">isaak.verifactu.business</a>
+            © 2026 Verifactu Business · <a href="${ISAAK_PUBLIC_URL}" style="color:#94a3b8;">${new URL(ISAAK_PUBLIC_URL).hostname}</a>
           </p>
         </td></tr>
       </table>

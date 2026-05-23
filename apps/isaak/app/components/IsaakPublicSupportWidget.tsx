@@ -170,7 +170,7 @@ export default function IsaakPublicSupportWidget() {
           {/* CTA to register */}
           <div className="border-t border-white/5 bg-white/3 px-4 py-2.5">
             <a
-              href="https://isaak.verifactu.business/auth"
+              href={`${process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business'}/auth`}
               className="flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#1f55c0]"
             >
               Empezar gratis — sin tarjeta

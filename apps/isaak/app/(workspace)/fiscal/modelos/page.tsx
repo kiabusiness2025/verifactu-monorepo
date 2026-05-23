@@ -1,6 +1,14 @@
 'use client';
 
-import { AlertTriangle, Calculator, ExternalLink, Loader2, Lock, Plug } from 'lucide-react';
+import {
+  AlertTriangle,
+  Calculator,
+  ExternalLink,
+  Loader2,
+  Lock,
+  Plug,
+  Printer,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import type {
@@ -251,7 +259,7 @@ function Modelo303Panel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4 print:hidden">
         <h2 className="font-semibold text-slate-800">
           Modelo 303 — Autoliquidación IVA trimestral
         </h2>
@@ -294,6 +302,14 @@ function Modelo303Panel() {
 
       {result && (
         <div className="space-y-5">
+          <div className="hidden print:block mb-4">
+            <h2 className="text-lg font-bold text-slate-900">
+              Modelo 303 — IVA trimestral · {TRIMESTRE_LABEL[periodo]} {ejercicio}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Borrador estimado por Isaak · {new Date().toLocaleDateString('es-ES')}
+            </p>
+          </div>
           <Advertencias items={result.advertencias} />
           <div className="grid md:grid-cols-2 gap-5">
             <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-3">
@@ -320,6 +336,16 @@ function Modelo303Panel() {
             <ResultBadge value={result.resultado} />
           </div>
           <Disclaimer />
+          <div className="flex justify-end print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              <Printer size={15} />
+              Imprimir / Guardar PDF
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -363,7 +389,7 @@ function Modelo130Panel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4 print:hidden">
         <h2 className="font-semibold text-slate-800">
           Modelo 130 — Pago fraccionado IRPF (autónomos)
         </h2>
@@ -434,6 +460,14 @@ function Modelo130Panel() {
 
       {result && (
         <div className="space-y-5">
+          <div className="hidden print:block mb-4">
+            <h2 className="text-lg font-bold text-slate-900">
+              Modelo 130 — IRPF autónomos · {TRIMESTRE_LABEL[periodo]} {ejercicio}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Borrador estimado por Isaak · {new Date().toLocaleDateString('es-ES')}
+            </p>
+          </div>
           <Advertencias items={result.advertencias} />
           <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-1">
             <CasillaRow
@@ -457,6 +491,16 @@ function Modelo130Panel() {
             <ResultBadge value={result.resultado} />
           </div>
           <Disclaimer />
+          <div className="flex justify-end print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              <Printer size={15} />
+              Imprimir / Guardar PDF
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -491,7 +535,7 @@ function Modelo390Panel() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4">
+      <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-4 print:hidden">
         <h2 className="font-semibold text-slate-800">Modelo 390 — Resumen anual IVA</h2>
         <div className="flex flex-wrap gap-3">
           <select
@@ -522,6 +566,14 @@ function Modelo390Panel() {
 
       {result && (
         <div className="space-y-5">
+          <div className="hidden print:block mb-4">
+            <h2 className="text-lg font-bold text-slate-900">
+              Modelo 390 — IVA anual · Ejercicio {ejercicio}
+            </h2>
+            <p className="text-xs text-slate-500 mt-1">
+              Borrador estimado por Isaak · {new Date().toLocaleDateString('es-ES')}
+            </p>
+          </div>
           <Advertencias items={result.advertencias} />
           {result.trimestresDisponibles.length > 0 && (
             <p className="text-sm text-slate-500">
@@ -553,6 +605,16 @@ function Modelo390Panel() {
             <ResultBadge value={result.resultado} />
           </div>
           <Disclaimer />
+          <div className="flex justify-end print:hidden">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              <Printer size={15} />
+              Imprimir / Guardar PDF
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -580,7 +642,7 @@ export default function ModelosPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 rounded-xl bg-slate-100 p-1">
+      <div className="flex gap-1 rounded-xl bg-slate-100 p-1 print:hidden">
         {(['303', '130', '390'] as ActiveTab[]).map((t) => (
           <button
             key={t}
