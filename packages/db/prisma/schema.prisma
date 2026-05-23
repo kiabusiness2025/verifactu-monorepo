@@ -2106,8 +2106,9 @@ model SeConnection {
   providerName String   @map("provider_name")
   countryCode  String   @default("ES") @map("country_code")
   status       String   @default("pending")
-  provider     String   @default("saltedge")  // 'saltedge' | 'gcbd'
+  provider     String   @default("saltedge")  // 'saltedge' | 'gcbd' | 'enablebanking'
   lastSyncAt   DateTime? @map("last_sync_at") @db.Timestamptz
+  expiresAt    DateTime? @map("expires_at") @db.Timestamptz
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
 
