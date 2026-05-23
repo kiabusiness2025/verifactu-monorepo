@@ -16,12 +16,6 @@ export function SuppliersForm({
   onCancel,
   loading = false,
 }: SuppliersFormProps) {
-  const [einformaLoading, setEinformaLoading] = useState(false);
-  const [einformaMeta, setEinformaMeta] = useState<{
-    cached?: boolean;
-    cacheSource?: string;
-    lastSyncAt?: string | null;
-  } | null>(null);
   const toast = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -53,54 +47,6 @@ export function SuppliersForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await onSubmit(formData);
-  };
-
-  const normalizedNif = formData.nif.trim().toUpperCase();
-  const isValidNif = /^[A-Z0-9]{8,9}$/.test(normalizedNif);
-
-  const handleEinforma = async () => {
-    const taxId = normalizedNif;
-    if (!taxId || !isValidNif) {
-      toast.warning('NIF/CIF inv?lido', 'Introduce un NIF/CIF v?lido antes de autocompletar.');
-      return;
-    }
-    setEinformaLoading(true);
-    setEinformaMeta(null);
-    try {
-      const res = await fetch(
-        `/api/integrations/einforma/company?taxId=${encodeURIComponent(taxId)}`
-      );
-      const data = await res.json();
-      const normalized = data?.normalized;
-      if (!res.ok || !normalized) {
-        toast.error('No se pudo completar', data?.error ?? 'Consulta fallida en el buscador.');
-        return;
-      }
-      setFormData((prev) => ({
-        ...prev,
-        name: normalized.name || prev.name,
-        address: normalized.address || prev.address,
-        city: normalized.city || prev.city,
-        postalCode: normalized.postalCode || prev.postalCode,
-        country: normalized.country || prev.country,
-        email: prev.email,
-        phone: prev.phone,
-      }));
-      setEinformaMeta({
-        cached: data?.cached,
-        cacheSource: data?.cacheSource,
-        lastSyncAt: data?.lastSyncAt ?? null,
-      });
-      toast.success(
-        'Datos completados',
-        data?.cached ? 'Se usó snapshot del buscador.' : 'Datos traídos desde búsqueda en vivo.'
-      );
-    } catch (error) {
-      console.error('eInforma autocomplete error:', error);
-      toast.error('Error de búsqueda', 'No se pudo completar la ficha.');
-    } finally {
-      setEinformaLoading(false);
-    }
   };
 
   return (
@@ -152,41 +98,14 @@ export function SuppliersForm({
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">NIF/CIF</label>
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="text"
-              name="nif"
-              value={formData.nif}
-              onChange={handleChange}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="12345678A"
-            />
-            <button
-              type="button"
-              onClick={handleEinforma}
-              disabled={einformaLoading || !normalizedNif || !isValidNif}
-              className="px-3 py-2 text-xs font-medium border rounded-lg text-blue-700 border-blue-200 hover:bg-blue-50 disabled:opacity-50"
-            >
-              {einformaLoading ? 'Buscando...' : 'Autocompletar empresa'}
-            </button>
-            {einformaMeta ? (
-              <span className="rounded-full border px-2 py-1 text-[10px] text-slate-600">
-                {einformaMeta.cached && einformaMeta.cacheSource === 'tenantProfile'
-                  ? 'Snapshot'
-                  : 'Consulta en vivo'}
-              </span>
-            ) : null}
-          </div>
-          {einformaMeta?.cached && einformaMeta.lastSyncAt ? (
-            <div className="mt-1 text-[11px] text-slate-500">
-              Actualizado: {new Date(einformaMeta.lastSyncAt).toLocaleString('es-ES')}
-            </div>
-          ) : null}
-          {!einformaLoading && normalizedNif && !isValidNif ? (
-            <div className="mt-1 text-[11px] text-amber-600">
-              NIF/CIF no v?lido. Revisa el formato antes de buscar.
-            </div>
-          ) : null}
+          <input
+            type="text"
+            name="nif"
+            value={formData.nif}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="12345678A"
+          />
         </div>
 
         <div className="col-span-2">
