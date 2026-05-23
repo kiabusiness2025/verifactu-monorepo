@@ -196,7 +196,7 @@ Incluyen: Firebase, Next Auth, Stripe, Resend, Holded, Google Cloud, etc.
 ⏳ **En Progreso / Pendiente**
 
 1. Completar paneles admin: suscripciones, emails, Vercel, soporte
-2. Onboarding con eInforma y trial automático
+2. Completar onboarding y activar trial automático
 3. Verificación de permisos y auditoría (admin/support)
 4. Dashboard de app: "Acciones con Isaak" (API stub; conectar a tenants)
 5. Mobile Flutter: completar setup
