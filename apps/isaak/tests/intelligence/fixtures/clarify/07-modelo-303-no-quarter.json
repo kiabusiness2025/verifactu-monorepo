@@ -1,0 +1,13 @@
+{
+  "id": "clarify-modelo-303-07",
+  "category": "clarify",
+  "description": "Modelo 303 sin período",
+  "query": "Quiero preparar el modelo 303",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "period",
+    "clarificationContains": ["trimestre", "período"],
+    "minJudgeScore": 7
+  }
+}

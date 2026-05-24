@@ -1,0 +1,17 @@
+{
+  "id": "multi-turn-consistent-numbers-05",
+  "category": "multi-turn",
+  "description": "Sin Holded, no debe dar cifras concretas distintas entre turnos",
+  "turns": [
+    { "user": "Sin conectar Holded ¿puedes calcular mi cuota de IVA?" },
+    { "user": "¿Y mi facturación neta?" }
+  ],
+  "context": { "authenticated": true, "holdedConnected": false },
+  "expected": {
+    "turnAssertions": [
+      { "turn": 1, "excludes": ["€"] },
+      { "turn": 2, "excludes": ["€"] }
+    ],
+    "minJudgeScore": 7
+  }
+}

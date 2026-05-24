@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-thanks-05",
+  "category": "no-clarify",
+  "description": "Agradecimiento no requiere clarificación",
+  "query": "Gracias!",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseExcludes": ["\"clarify\":true"],
+    "minJudgeScore": 6
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "clarify-show-clients-ambig-10",
+  "category": "clarify",
+  "description": "Listar clientes sin criterio: ambiguo (todos / por estado / por importe)",
+  "query": "Muéstrame los clientes",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "intent",
+    "minJudgeScore": 6
+  }
+}

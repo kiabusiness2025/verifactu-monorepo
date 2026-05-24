@@ -1,0 +1,13 @@
+{
+  "id": "clarify-payment-no-target-08",
+  "category": "clarify",
+  "description": "Registrar pago sin importe ni factura",
+  "query": "Registra el pago",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "entity",
+    "clarificationContains": ["factura", "importe", "cliente"],
+    "minJudgeScore": 7
+  }
+}

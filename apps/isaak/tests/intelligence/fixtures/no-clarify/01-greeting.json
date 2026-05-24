@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-greeting-01",
+  "category": "no-clarify",
+  "description": "Saludo simple no requiere clarificación",
+  "query": "Hola Isaak",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseExcludes": ["\"clarify\":true", "{\"clarify\":"],
+    "minJudgeScore": 7
+  }
+}

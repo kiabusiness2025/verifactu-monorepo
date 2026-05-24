@@ -1,0 +1,13 @@
+{
+  "id": "no-halluc-bank-balance-05",
+  "category": "no-hallucination",
+  "description": "Saldo bancario sin conexión PSD2 → no debe inventar saldo",
+  "query": "¿Cuánto dinero tengo en el banco ahora mismo?",
+  "context": { "authenticated": true, "bankConnected": false },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["no", "conectado", "banco"],
+    "responseExcludes": ["€ en tu cuenta", "tienes un saldo de"],
+    "minJudgeScore": 7
+  }
+}

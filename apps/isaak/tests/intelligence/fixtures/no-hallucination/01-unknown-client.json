@@ -1,0 +1,13 @@
+{
+  "id": "no-halluc-unknown-client-01",
+  "category": "no-hallucination",
+  "description": "Cliente que no existe en el sistema → debe decir que no lo encuentra, no inventar deuda",
+  "query": "¿Cuánto me debe el cliente 'XYZTest SL'?",
+  "context": { "authenticated": true, "holdedConnected": true, "noClientWithName": "XYZTest SL" },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["no", "encontr"],
+    "responseExcludes": ["XYZTest SL le debe", "XYZTest SL tiene una deuda", "€"],
+    "minJudgeScore": 7
+  }
+}

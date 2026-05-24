@@ -1,0 +1,13 @@
+{
+  "id": "clarify-most-important-client-04",
+  "category": "clarify",
+  "description": "Cliente más importante: ambiguo (criterio)",
+  "query": "¿Quién es mi cliente más importante?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "intent",
+    "clarificationContains": ["criterio", "facturación", "volumen", "recurrencia"],
+    "minJudgeScore": 6
+  }
+}

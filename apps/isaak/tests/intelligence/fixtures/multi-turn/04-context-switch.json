@@ -1,0 +1,17 @@
+{
+  "id": "multi-turn-context-switch-04",
+  "category": "multi-turn",
+  "description": "Cambio explícito de tema en turno 3 debe re-clarificar período (no asumir el anterior)",
+  "turns": [
+    { "user": "¿Cuánto vendí este mes?" },
+    { "user": "Vale gracias" },
+    { "user": "¿Y los gastos del año pasado?" }
+  ],
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "turnAssertions": [
+      { "turn": 3, "shouldClarify": false }
+    ],
+    "minJudgeScore": 7
+  }
+}

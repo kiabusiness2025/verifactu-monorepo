@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-fiscal-calendar-06",
+  "category": "no-clarify",
+  "description": "Pregunta general sobre fechas fiscales",
+  "query": "¿Cuándo vence el modelo 303 del primer trimestre?",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["20 de abril"],
+    "minJudgeScore": 6
+  }
+}

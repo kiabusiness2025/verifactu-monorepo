@@ -1,0 +1,17 @@
+{
+  "id": "multi-turn-no-question-repeat-03",
+  "category": "multi-turn",
+  "description": "Tras responder a clarificación, no debe re-preguntar lo mismo",
+  "turns": [
+    { "user": "¿Cuánto IVA pago?" },
+    { "user": "Tercer trimestre de 2026" },
+    { "user": "¿Y de IRPF?" }
+  ],
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "turnAssertions": [
+      { "turn": 3, "excludes": ["qué trimestre", "qué período"] }
+    ],
+    "minJudgeScore": 7
+  }
+}

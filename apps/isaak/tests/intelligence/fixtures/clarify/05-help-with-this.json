@@ -1,0 +1,13 @@
+{
+  "id": "clarify-help-with-this-05",
+  "category": "clarify",
+  "description": "Petición vaga sin intención clara",
+  "query": "Ayúdame con esto",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "intent",
+    "clarificationContains": ["qué", "necesitas", "ayudarte"],
+    "minJudgeScore": 7
+  }
+}

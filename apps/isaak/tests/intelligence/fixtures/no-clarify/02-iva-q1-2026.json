@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-iva-q1-2026-02",
+  "category": "no-clarify",
+  "description": "IVA Q1 2026: período preciso, no debe clarificar",
+  "query": "Resume el IVA repercutido del primer trimestre de 2026",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseExcludes": ["\"clarify\":true"],
+    "minJudgeScore": 6
+  }
+}
