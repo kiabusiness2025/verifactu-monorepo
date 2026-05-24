@@ -603,6 +603,7 @@ model Tenant {
   tenantCertificates            TenantCertificate[]
   advisorClients                AdvisorClient[]
   erpOAuthTokens                ErpOAuthToken[]
+  onboardingEmails              IsaakOnboardingEmail[]
 
   @@map("tenants")
 }
@@ -2035,6 +2036,19 @@ model IsaakAlert {
   @@index([status])
   @@index([dueDate])
   @@map("isaak_alerts")
+}
+
+model IsaakOnboardingEmail {
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id") @db.Uuid
+  emailType String   @map("email_type")
+  sentAt    DateTime @default(now()) @map("sent_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, emailType])
+  @@index([tenantId])
+  @@map("isaak_onboarding_emails")
 }
 
 // ==================== ISAAK: PUSH SUBSCRIPTIONS ====================
