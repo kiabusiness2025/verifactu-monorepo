@@ -48,6 +48,13 @@ export type AIRichMessage =
   | { role: 'user'; content: string | AIToolResultBlock[] }
   | { role: 'assistant'; content: string | AIAssistantBlock[] };
 
+export type AIInputImage = {
+  /** Public URL (https://...) or data URL (data:image/jpeg;base64,...) */
+  url: string;
+  /** "auto" | "low" | "high" — fed straight to OpenAI's detail parameter */
+  detail?: 'auto' | 'low' | 'high';
+};
+
 export type CallLLMParams = {
   provider?: AIProvider;
   model?: string;
@@ -56,6 +63,7 @@ export type CallLLMParams = {
   messages?: AIMessage[];
   richMessages?: AIRichMessage[];
   inputText?: string;
+  inputImages?: AIInputImage[];
   temperature?: number;
   maxOutputTokens?: number;
   responseFormat?: AIResponseFormat;
