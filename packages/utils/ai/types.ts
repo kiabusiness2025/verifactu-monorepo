@@ -21,10 +21,16 @@ export type CallLLMParams = {
   enableFallback?: boolean;
 };
 
+export type AIUsage = {
+  inputTokens: number;
+  outputTokens: number;
+};
+
 export type NormalizedLLMResponse = {
   text: string;
   provider: AIProvider;
   model: string;
   latencyMs?: number;
+  usage?: AIUsage;
   raw?: unknown;
 };

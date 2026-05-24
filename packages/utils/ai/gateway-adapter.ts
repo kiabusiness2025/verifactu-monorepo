@@ -19,6 +19,10 @@ type GatewayChatResponse = {
       content?: string | null;
     };
   }>;
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+  };
   error?: {
     message?: string;
   };
@@ -91,7 +95,13 @@ export async function gatewayAdapter(
   }
 
   const text = data.choices?.[0]?.message?.content ?? null;
-  return normalizeResponse(text, 'gateway', model, data);
+  const usage = data.usage
+    ? {
+        inputTokens: data.usage.prompt_tokens ?? 0,
+        outputTokens: data.usage.completion_tokens ?? 0,
+      }
+    : undefined;
+  return normalizeResponse(text, 'gateway', model, data, usage);
 }
 
 registerAdapter('gateway', gatewayAdapter);
