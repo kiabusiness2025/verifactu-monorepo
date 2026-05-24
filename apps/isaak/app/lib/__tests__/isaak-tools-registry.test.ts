@@ -75,6 +75,46 @@ describe('buildReadOnlyToolsForContext', () => {
     expect(names).not.toContain('microsoft_mail_archive');
   });
 
+  it('filters by category list when options.only is provided', () => {
+    const fullCtx = ctx({
+      holdedConnected: true,
+      holdedApiKey: 'sk',
+      bankConnected: true,
+      googleConnected: true,
+      microsoftConnected: true,
+    });
+    const onlyBanking = buildReadOnlyToolsForContext(fullCtx, { only: ['banking'] });
+    const names = onlyBanking.map((t) => t.name);
+    expect(names).toEqual(expect.arrayContaining(['banking_list_accounts']));
+    expect(names.every((n) => n.startsWith('banking_'))).toBe(true);
+    expect(onlyBanking.length).toBe(6);
+  });
+
+  it('filtering across two categories returns sum of both', () => {
+    const fullCtx = ctx({
+      holdedConnected: true,
+      holdedApiKey: 'sk',
+      bankConnected: true,
+      googleConnected: true,
+      microsoftConnected: true,
+    });
+    const subset = buildReadOnlyToolsForContext(fullCtx, { only: ['holded', 'banking'] });
+    expect(subset.length).toBe(13 + 6);
+  });
+
+  it('empty options.only is treated as no filter', () => {
+    const fullCtx = ctx({
+      holdedConnected: true,
+      holdedApiKey: 'sk',
+      bankConnected: true,
+      googleConnected: true,
+      microsoftConnected: true,
+    });
+    const allTools = buildReadOnlyToolsForContext(fullCtx);
+    const withEmpty = buildReadOnlyToolsForContext(fullCtx, { only: [] });
+    expect(withEmpty.length).toBe(allTools.length);
+  });
+
   it('combines all categories when everything is connected', () => {
     const tools = buildReadOnlyToolsForContext(
       ctx({

@@ -77,25 +77,32 @@ export type IsaakToolContext = {
   microsoftConnected: boolean;
 };
 
-export function buildReadOnlyToolsForContext(ctx: IsaakToolContext): AITool[] {
+export type ToolCategoryFilter = 'holded' | 'banking' | 'google' | 'microsoft';
+
+export function buildReadOnlyToolsForContext(
+  ctx: IsaakToolContext,
+  options?: { only?: ToolCategoryFilter[] }
+): AITool[] {
+  const allow = options?.only?.length ? new Set(options.only) : null;
+  const include = (cat: ToolCategoryFilter) => !allow || allow.has(cat);
   const out: AITool[] = [];
 
-  if (ctx.holdedConnected && ctx.holdedApiKey) {
+  if (include('holded') && ctx.holdedConnected && ctx.holdedApiKey) {
     for (const t of HOLDED_CHAT_TOOLS) {
       if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
     }
   }
-  if (ctx.bankConnected) {
+  if (include('banking') && ctx.bankConnected) {
     for (const t of BANKING_CHAT_TOOLS) {
       if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
     }
   }
-  if (ctx.googleConnected) {
+  if (include('google') && ctx.googleConnected) {
     for (const t of GOOGLE_CHAT_TOOLS) {
       if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
     }
   }
-  if (ctx.microsoftConnected) {
+  if (include('microsoft') && ctx.microsoftConnected) {
     for (const t of MICROSOFT_CHAT_TOOLS) {
       if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
     }
