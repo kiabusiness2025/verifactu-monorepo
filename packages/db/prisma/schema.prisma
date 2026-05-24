@@ -1915,12 +1915,19 @@ model IsaakChatMetric {
   isFallback      Boolean @default(false) @map("is_fallback")
   historyTurns    Int     @default(0) @map("history_turns")
 
+  // F3: classifier routing metadata
+  classifierModel     String? @map("classifier_model")
+  classifierLatencyMs Int?    @map("classifier_latency_ms")
+  routedTo            String? @map("routed_to") // 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback'
+  ambiguityType       String? @map("ambiguity_type")
+
   errorCode String?  @map("error_code")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   @@index([tenantId, createdAt])
   @@index([conversationId, createdAt])
   @@index([modelUsed, createdAt])
+  @@index([routedTo, createdAt])
   @@map("isaak_chat_metrics")
 }
 

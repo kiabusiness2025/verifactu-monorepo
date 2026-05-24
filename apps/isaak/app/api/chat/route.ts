@@ -28,6 +28,7 @@ import {
   type IsaakToolContext,
 } from '@/app/lib/isaak-tools-registry';
 import { runIsaakToolLoop } from '@/app/lib/isaak-tool-loop';
+import { classifyIntent } from '@/app/lib/isaak-intent-classifier';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -392,53 +393,106 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // F2: if the tenant has at least one integration connected, run the
-    // tool-calling loop so the LLM can fetch real data. Otherwise keep the
-    // F1 single-shot flow (still valuable for fiscal advice without data).
+    // F3 router: when authenticated, run the Haiku classifier first.
+    // - ambiguous query → answer with clarify JSON directly (no Sonnet call)
+    // - !needsTools → Sonnet without tools[] (saves schema tokens + latency)
+    // - needsTools → Sonnet with tools filtered to relevantCategories
     const toolContext = authenticated?.toolContext ?? null;
-    const tools = toolContext ? buildReadOnlyToolsForContext(toolContext) : [];
-    const useToolLoop = Boolean(authenticated?.promptContext && tools.length > 0);
 
-    let result: LLMResult | null;
+    let result: LLMResult | null = null;
     let toolNamesUsed: string[] = [];
     let iterations = 0;
+    let routedTo: 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback' =
+      'fallback';
+    let classifierModel: string | null = null;
+    let classifierLatencyMs: number | null = null;
+    let ambiguityType: string | null = null;
+    let useToolLoop = false;
 
-    if (useToolLoop && authenticated && toolContext) {
-      const loop = await runIsaakToolLoop({
-        systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext),
+    if (authenticated && toolContext) {
+      const classification = await classifyIntent({
+        message,
         history,
-        userMessage: message,
-        tools,
-        context: toolContext,
-        model: modelConfig.model,
-        provider: modelConfig.provider,
-        feature: 'workspace_chat_tools',
-        maxOutputTokens: 1200,
+        context: {
+          holdedConnected: toolContext.holdedConnected,
+          bankConnected: toolContext.bankConnected,
+          googleConnected: toolContext.googleConnected,
+          microsoftConnected: toolContext.microsoftConnected,
+        },
       });
-      result = loop.text
-        ? {
-            text: loop.text,
-            provider: loop.provider,
-            model: loop.model,
-            latencyMs: loop.totalLatencyMs,
-            usage: loop.totalUsage,
-          }
-        : null;
-      toolNamesUsed = loop.toolNames;
-      iterations = loop.iterations;
-      if (!result) {
-        console.warn('[Isaak Chat] tool loop returned empty text', {
-          iterations: loop.iterations,
-          stopped: loop.stoppedReason,
+      classifierModel = classification.modelUsed;
+      classifierLatencyMs = classification.latencyMs;
+      ambiguityType = classification.ambiguityType;
+
+      if (classification.ambiguous && classification.suggestedClarification) {
+        // Direct clarify response — skip Sonnet entirely.
+        const options = classification.suggestedOptions ?? [];
+        const clarifyJson = JSON.stringify({
+          clarify: true,
+          question: classification.suggestedClarification,
+          options,
         });
+        result = {
+          text: clarifyJson,
+          provider: 'anthropic',
+          model: classification.modelUsed,
+          latencyMs: classification.latencyMs,
+          usage: undefined,
+        };
+        routedTo = 'clarify_direct';
+      } else if (classification.needsTools && classification.relevantCategories.length > 0) {
+        // Filter tools to the subset the classifier marked as relevant.
+        const filteredTools = buildReadOnlyToolsForContext(toolContext, {
+          only: classification.relevantCategories,
+        });
+        if (filteredTools.length > 0) {
+          useToolLoop = true;
+          const loop = await runIsaakToolLoop({
+            systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext),
+            history,
+            userMessage: message,
+            tools: filteredTools,
+            context: toolContext,
+            model: modelConfig.model,
+            provider: modelConfig.provider,
+            feature: 'workspace_chat_tools',
+            maxOutputTokens: 1200,
+          });
+          result = loop.text
+            ? {
+                text: loop.text,
+                provider: loop.provider,
+                model: loop.model,
+                latencyMs: loop.totalLatencyMs,
+                usage: loop.totalUsage,
+              }
+            : null;
+          toolNamesUsed = loop.toolNames;
+          iterations = loop.iterations;
+          routedTo = 'sonnet_with_tools';
+        }
+      }
+
+      // Fallback if classifier said no tools, no clarify, OR if the filtered
+      // toolset was empty (relevant category not connected): plain Sonnet.
+      if (!result) {
+        result = await getLLMResponse(
+          message,
+          history,
+          authenticated.promptContext,
+          modelConfig
+        );
+        if (result) routedTo = 'sonnet_no_tools';
       }
     } else {
+      // Public (unauthenticated) chat: F1 single-shot, no classifier.
       result = await getLLMResponse(
         message,
         history,
         authenticated?.promptContext ?? null,
         modelConfig
       );
+      if (result) routedTo = 'sonnet_no_tools';
     }
 
     if (result) {
@@ -487,6 +541,10 @@ export async function POST(request: NextRequest) {
         isClarification,
         isFallback,
         historyTurns: history.length,
+        classifierModel,
+        classifierLatencyMs,
+        routedTo,
+        ambiguityType,
       }).catch((err) => {
         console.error('[Isaak Chat] recordChatMetric failed', err);
       });
