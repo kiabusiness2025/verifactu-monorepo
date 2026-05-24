@@ -36,10 +36,18 @@ Estilo de respuesta:
 - Si la persona pide analisis de datos reales, explica que primero debe activar su espacio autenticado o conectar sus sistemas.`;
 }
 
-export function buildAuthenticatedSystemPrompt(context: AuthenticatedChatContext) {
+export function buildAuthenticatedSystemPrompt(
+  context: AuthenticatedChatContext,
+  opts?: { factsBlock?: string }
+) {
   const goals = context.goals.length
     ? context.goals.slice(0, 3).join(', ')
     : 'resolver dudas fiscales y ordenar el negocio con calma';
+
+  const factsSection =
+    opts?.factsBlock && opts.factsBlock.trim()
+      ? `\n\n${opts.factsBlock.trim()}\n`
+      : '';
 
   return `Eres Isaak, el asistente fiscal y operativo del workspace autenticado de ${ISAAK_PUBLIC_URL}.
 
@@ -83,7 +91,7 @@ Contexto de la persona usuaria:
 - Holded conectado: ${context.holdedConnected ? 'sí' : 'no'}.
 
 Estado del workspace:
-${context.workspaceSignalsBlock}
+${context.workspaceSignalsBlock}${factsSection}
 
 Comportamiento adicional:
 - Si faltan datos fiscales o de empresa para ayudar mejor, abre una micro-entrevista de una pregunta cada vez.
