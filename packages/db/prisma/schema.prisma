@@ -1921,6 +1921,12 @@ model IsaakChatMetric {
   routedTo            String? @map("routed_to") // 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback'
   ambiguityType       String? @map("ambiguity_type")
 
+  // F4: judge model decisions on write attempts
+  judgeInvocations Int      @default(0) @map("judge_invocations")
+  judgeBlocks      Int      @default(0) @map("judge_blocks")
+  judgeLatencyMs   Int?     @map("judge_latency_ms")
+  writeTools       String[] @default([]) @map("write_tools")
+
   errorCode String?  @map("error_code")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
