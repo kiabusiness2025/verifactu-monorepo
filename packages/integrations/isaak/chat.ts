@@ -145,6 +145,24 @@ export async function ensureTenantConversation(
   });
 }
 
+export async function listRecentTenantConversationMessages(
+  prisma: IsaakChatPrismaClient,
+  conversationId: string,
+  limit: number = RECENT_MESSAGE_LIMIT
+): Promise<Array<{ role: 'user' | 'assistant'; content: string }>> {
+  const safeLimit = Math.max(1, Math.min(50, limit));
+  const rows = await prisma.isaakConversationMsg.findMany({
+    where: { conversationId },
+    orderBy: { createdAt: 'desc' },
+    take: safeLimit,
+    select: { role: true, content: true },
+  });
+  return rows
+    .reverse()
+    .filter((row) => row.role === 'user' || row.role === 'assistant')
+    .map((row) => ({ role: row.role as 'user' | 'assistant', content: row.content }));
+}
+
 export async function appendTenantConversationMessage(
   prisma: IsaakChatPrismaClient,
   input: {
