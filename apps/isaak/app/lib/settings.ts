@@ -79,9 +79,26 @@ export type SettingsBillingData = {
   invoices: SettingsBillingInvoice[];
 };
 
+export type TeamMember = {
+  id: string;
+  userId: string;
+  name: string | null;
+  email: string | null;
+  image: string | null;
+  role: string;
+  status: string;
+  createdAt: string;
+  confirmedAt: string | null;
+  isCurrentUser: boolean;
+};
+
 export type SettingsTeamData = {
   enabled: boolean;
   activeMembers: number;
+  maxSeats: number;
+  planCode: string;
+  canManage: boolean;
+  members: TeamMember[];
 };
 
 export type SettingsData = {
@@ -296,8 +313,27 @@ export async function loadBillingData(input: {
   return billing;
 }
 
+function maxSeatsForPlan(planCode: string): number {
+  switch (planCode) {
+    case 'enterprise':
+      return -1;
+    case 'business':
+      return 10;
+    case 'empresa':
+      return 5;
+    case 'pyme':
+      return 3;
+    default:
+      return 1;
+  }
+}
+
+function canManageTeam(role: string): boolean {
+  return role === 'owner' || role === 'admin' || role === 'company_admin';
+}
+
 export async function loadSettingsData(session: SettingsSession): Promise<SettingsData> {
-  const [user, tenantProfile, connection, onboardingState, billing, activeMembers] =
+  const [user, tenantProfile, connection, onboardingState, billing, memberships, subscription] =
     await Promise.all([
       prisma.user.findUnique({
         where: { id: session.userId },
@@ -333,16 +369,51 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
         tenantId: session.tenantId,
         includeInvoices: false,
       }),
-      prisma.membership.count({
+      prisma.membership.findMany({
         where: {
           tenantId: session.tenantId,
-          status: 'active',
+          status: { in: ['active', 'invited'] },
         },
+        include: {
+          user: { select: { id: true, name: true, email: true, image: true } },
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+      prisma.tenantSubscription.findFirst({
+        where: { tenantId: session.tenantId },
+        include: { plan: true },
+        orderBy: { createdAt: 'desc' },
       }),
     ]);
 
   const onboarding = onboardingState.profile;
   const instructions = onboardingState.instructions;
+
+  const planCode = subscription?.plan?.code ?? billing.code ?? 'free';
+  const maxSeats = maxSeatsForPlan(planCode);
+  const activeMembers = memberships.filter((m) => m.status === 'active').length;
+  const callerMembership = memberships.find((m) => m.userId === session.userId);
+  const callerRole = callerMembership?.role ?? 'member';
+
+  const teamData: SettingsTeamData = {
+    enabled: true,
+    activeMembers,
+    maxSeats,
+    planCode,
+    canManage: canManageTeam(callerRole),
+    members: memberships.map((m) => ({
+      id: m.id,
+      userId: m.userId,
+      name: m.user.name,
+      email: m.user.email,
+      image: m.user.image,
+      role: m.role,
+      status: m.status,
+      createdAt: m.createdAt.toISOString(),
+      confirmedAt: m.confirmedAt?.toISOString() ?? null,
+      isCurrentUser: m.userId === session.userId,
+    })),
+  };
 
   return {
     profile: {
@@ -398,10 +469,7 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
       ),
     },
     billing,
-    team: {
-      enabled: false,
-      activeMembers,
-    },
+    team: teamData,
   };
 }
 
