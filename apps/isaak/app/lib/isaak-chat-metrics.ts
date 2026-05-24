@@ -43,6 +43,11 @@ export type RecordChatMetricInput = {
   isClarification?: boolean;
   isFallback?: boolean;
   historyTurns?: number;
+  // F3: classifier routing metadata
+  classifierModel?: string | null;
+  classifierLatencyMs?: number | null;
+  routedTo?: 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback' | null;
+  ambiguityType?: string | null;
   errorCode?: string | null;
 };
 
@@ -70,6 +75,10 @@ export async function recordChatMetric(input: RecordChatMetricInput): Promise<vo
       isClarification: Boolean(input.isClarification),
       isFallback: Boolean(input.isFallback),
       historyTurns: input.historyTurns ?? 0,
+      classifierModel: input.classifierModel ?? null,
+      classifierLatencyMs: input.classifierLatencyMs ?? null,
+      routedTo: input.routedTo ?? null,
+      ambiguityType: input.ambiguityType ?? null,
       errorCode: input.errorCode ?? null,
     },
   });
