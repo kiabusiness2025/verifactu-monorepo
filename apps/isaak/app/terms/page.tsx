@@ -117,15 +117,16 @@ export default function IsaakTermsPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="font-semibold text-slate-800">Open Banking — Salt Edge</div>
+            <div className="font-semibold text-slate-800">Open Banking (PSD2)</div>
             <p className="mt-2 text-sm text-slate-600">
-              La integración bancaria se realiza a través de Salt Edge, proveedor regulado PSD2. Al
-              conectar una cuenta bancaria otorgas consentimiento explícito mediante un flujo OAuth
-              regulado. Isaak usa los movimientos bancarios exclusivamente para la conciliación con
-              facturas en Holded. No almacenamos credenciales bancarias. Puedes revocar el
+              La integración bancaria se realiza a través de proveedores de agregación PSD2
+              regulados como proveedores de servicios de información de cuentas (AISP): Salt Edge,
+              Enable Banking y GoCardless Bank Account Data. Al conectar una cuenta bancaria otorgas
+              consentimiento explícito mediante un flujo OAuth regulado. Isaak usa los movimientos
+              bancarios exclusivamente para la conciliación con facturas y el análisis de tesorería
+              en tu espacio de trabajo. No almacenamos credenciales bancarias. Puedes revocar el
               consentimiento en cualquier momento desde Ajustes → Open Banking, lo que desconecta el
-              acceso a los datos bancarios. Salt Edge opera bajo su propio marco regulatorio como
-              proveedor de servicios de información de cuentas (AISP).
+              acceso a los datos bancarios.
             </p>
           </div>
 

@@ -135,8 +135,8 @@ const CATALOG_ITEMS = [
   },
   {
     id: 'banking',
-    name: 'Banca (Salt Edge)',
-    desc: 'Cuentas bancarias y conciliación automática',
+    name: 'Open Banking',
+    desc: 'Movimientos bancarios y conciliación automática — PSD2',
     logo: '🏦',
     status: 'active',
   },
@@ -914,10 +914,10 @@ function BankingCard() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[14px] font-semibold text-slate-900">Banca (Salt Edge)</span>
+              <span className="text-[14px] font-semibold text-slate-900">Open Banking</span>
             </div>
             <div className="text-[12px] text-slate-500">
-              Cuentas bancarias, movimientos y conciliación
+              Movimientos bancarios y conciliación automática
             </div>
           </div>
         </div>

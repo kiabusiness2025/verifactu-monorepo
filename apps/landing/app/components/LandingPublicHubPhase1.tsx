@@ -75,7 +75,7 @@ const ECOSYSTEM_CARDS = [
     icon: Landmark,
     title: 'Open Banking',
     desc: 'Movimientos bancarios en tiempo real. Conciliación automática con facturas.',
-    badge: 'Próximo',
+    badge: null,
   },
 ];
 
