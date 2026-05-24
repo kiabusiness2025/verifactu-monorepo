@@ -20,6 +20,10 @@
     {
       "path": "/api/cron/connector-health",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/eb-sync",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

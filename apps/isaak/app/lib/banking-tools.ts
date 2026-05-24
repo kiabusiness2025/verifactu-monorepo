@@ -5,7 +5,7 @@ export const BANKING_CHAT_TOOLS = [
   {
     name: 'banking_check_connection',
     description:
-      'Comprueba si el usuario tiene cuentas bancarias conectadas vía banca abierta (Salt Edge / open banking). Úsalo antes de usar otras herramientas de banca o cuando el usuario pregunte sobre su saldo real.',
+      'Comprueba si el usuario tiene cuentas bancarias conectadas vía banca abierta (Salt Edge, Enable Banking / PSD2 u open banking). Úsalo antes de usar otras herramientas de banca o cuando el usuario pregunte sobre su saldo real. También avisa si alguna conexión PSD2 está próxima a expirar.',
     input_schema: { type: 'object', properties: {} },
   },
   {
@@ -122,19 +122,20 @@ export async function executeBankingTool(
   try {
     switch (toolName) {
       case 'banking_check_connection': {
-        const customer = await prisma.seCustomer
-          .findUnique({
-            where: { tenantId },
-            include: {
-              connections: {
-                where: { status: 'active' },
-                select: { id: true, providerName: true, status: true },
-              },
-            },
+        // Query connections directly — works for all providers (Salt Edge, GoCardless, Enable Banking).
+        // Note: Enable Banking connections have seCustomerId = null and no SeCustomer record.
+        const connections = await prisma.seConnection
+          .findMany({
+            where: { tenantId, status: 'active' },
+            select: { id: true, providerName: true, provider: true, expiresAt: true },
           })
-          .catch(() => null);
+          .catch(() => [] as { id: string; providerName: string; provider: string; expiresAt: Date | null }[]);
 
-        if (!customer) {
+        const accountCount = await prisma.seAccount
+          .count({ where: { tenantId, status: 'active' } })
+          .catch(() => 0);
+
+        if (connections.length === 0 || accountCount === 0) {
           return {
             connected: false,
             message:
@@ -142,15 +143,30 @@ export async function executeBankingTool(
           };
         }
 
-        const accountCount = await prisma.seAccount
-          .count({ where: { tenantId, status: 'active' } })
-          .catch(() => 0);
+        // Warn about Enable Banking sessions expiring within 7 days
+        const now = new Date();
+        const expiringSoon = connections.filter((c) => {
+          if (c.provider !== 'enablebanking' || !c.expiresAt) return false;
+          const daysLeft = Math.ceil(
+            (new Date(c.expiresAt).getTime() - now.getTime()) / 86_400_000
+          );
+          return daysLeft <= 7;
+        });
 
         return {
-          connected: accountCount > 0,
-          activeConnections: customer.connections.length,
+          connected: true,
+          activeConnections: connections.length,
           activeAccounts: accountCount,
-          providers: customer.connections.map((c) => c.providerName),
+          providers: connections.map((c) => ({ name: c.providerName, type: c.provider })),
+          ...(expiringSoon.length > 0
+            ? {
+                warning: `${expiringSoon.length} conexión(es) PSD2 expiran pronto. El usuario debe reconectar desde Workspace > Banca.`,
+                expiringSoon: expiringSoon.map((c) => ({
+                  bank: c.providerName,
+                  expiresAt: c.expiresAt,
+                })),
+              }
+            : {}),
         };
       }
 
