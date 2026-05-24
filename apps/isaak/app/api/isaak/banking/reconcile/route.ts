@@ -4,22 +4,29 @@
  *     Devuelve { matched, skipped, total }.
  *
  * GET /api/isaak/banking/reconcile
- *   → Devuelve estadísticas + sugerencias pendientes (hasta 20 transacciones).
+ *   → Devuelve estadísticas + sugerencias pendientes (hasta 20 transacciones)
+ *     + matches auto-aplicados recientes (últimos 30 días).
  *
  * POST /api/isaak/banking/reconcile  { action: 'confirm', txId, expenseId }
  *   → Confirma manualmente un match.
  *
  * POST /api/isaak/banking/reconcile  { action: 'dismiss', txId }
  *   → Descarta la transacción (marca como conciliada sin gasto asociado).
+ *
+ * POST /api/isaak/banking/reconcile  { action: 'undo', txId }
+ *   → Deshace un match (falso positivo del auto-apply).
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
 import {
+  AUTO_APPLY_THRESHOLD,
   reconcileTenant,
   loadPendingSuggestions,
+  loadRecentAutoMatched,
   confirmMatch,
+  undoMatch,
 } from '@/app/lib/bank-reconciliation';
 
 export const runtime = 'nodejs';
@@ -31,7 +38,7 @@ export async function GET(_req: NextRequest) {
   }
   const { tenantId } = session;
 
-  const [totalTx, reconciledTx, suggestions] = await Promise.all([
+  const [totalTx, reconciledTx, suggestions, autoMatched] = await Promise.all([
     prisma.seTransaction.count({
       where: { tenantId, amount: { lt: 0 }, duplicated: false, status: 'posted' },
     }),
@@ -39,6 +46,7 @@ export async function GET(_req: NextRequest) {
       where: { tenantId, amount: { lt: 0 }, duplicated: false, reconciledAt: { not: null } },
     }),
     loadPendingSuggestions(tenantId, 20),
+    loadRecentAutoMatched(tenantId, 20),
   ]);
 
   return NextResponse.json({
@@ -46,6 +54,7 @@ export async function GET(_req: NextRequest) {
       total: totalTx,
       reconciled: reconciledTx,
       pending: totalTx - reconciledTx,
+      autoApplyThreshold: AUTO_APPLY_THRESHOLD,
     },
     suggestions: suggestions.map(({ tx, candidates }) => ({
       tx: {
@@ -62,6 +71,17 @@ export async function GET(_req: NextRequest) {
         evidenceReasons: c.evidenceReasons,
         scoreComponents: c.scoreComponents,
       })),
+    })),
+    autoMatched: autoMatched.map((m) => ({
+      txId: m.txId,
+      txAmount: m.txAmount,
+      txMadeOn: m.txMadeOn,
+      txDescription: m.txDescription,
+      expenseId: m.expenseId,
+      expenseDescription: m.expenseDescription,
+      expenseSupplier: m.expenseSupplier,
+      scorePercent: Math.round(m.matchScore * 100),
+      matchedAt: m.matchedAt.toISOString(),
     })),
   });
 }
@@ -103,6 +123,14 @@ export async function POST(req: NextRequest) {
       where: { id: body.txId },
       data: { reconciledAt: new Date() },
     });
+    return NextResponse.json({ ok: true });
+  }
+
+  if (body.action === 'undo') {
+    if (!body.txId) return NextResponse.json({ error: 'txId requerido.' }, { status: 400 });
+    const tx = await prisma.seTransaction.findFirst({ where: { id: body.txId, tenantId } });
+    if (!tx) return NextResponse.json({ error: 'Transacción no encontrada.' }, { status: 404 });
+    await undoMatch(tenantId, body.txId);
     return NextResponse.json({ ok: true });
   }
 

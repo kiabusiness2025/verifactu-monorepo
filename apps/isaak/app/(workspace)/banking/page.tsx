@@ -71,6 +71,18 @@ type ReconcileSuggestion = {
   }[];
 };
 
+type AutoMatched = {
+  txId: string;
+  txAmount: number;
+  txMadeOn: string;
+  txDescription: string;
+  expenseId: string | null;
+  expenseDescription: string | null;
+  expenseSupplier: string | null;
+  scorePercent: number;
+  matchedAt: string;
+};
+
 type Aspsp = {
   name: string;
   country: string;
@@ -107,8 +119,10 @@ export default function BankingPage() {
   // Reconciliation state
   const [reconcileStats, setReconcileStats] = useState<ReconcileStats | null>(null);
   const [suggestions, setSuggestions] = useState<ReconcileSuggestion[]>([]);
+  const [autoMatched, setAutoMatched] = useState<AutoMatched[]>([]);
   const [reconciling, setReconciling] = useState(false);
   const [confirmingTx, setConfirmingTx] = useState<string | null>(null);
+  const [undoingTxId, setUndoingTxId] = useState<string | null>(null);
 
   // Bank picker (Enable Banking)
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -148,9 +162,11 @@ export default function BankingPage() {
       const data = (await res.json()) as {
         stats: ReconcileStats;
         suggestions: ReconcileSuggestion[];
+        autoMatched: AutoMatched[];
       };
       setReconcileStats(data.stats ?? null);
       setSuggestions(data.suggestions ?? []);
+      setAutoMatched(data.autoMatched ?? []);
     }
   }, []);
 
@@ -280,6 +296,20 @@ export default function BankingPage() {
       await loadReconcile();
     } finally {
       setConfirmingTx(null);
+    }
+  }
+
+  async function handleUndo(txId: string) {
+    setUndoingTxId(txId);
+    try {
+      await fetch('/api/isaak/banking/reconcile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'undo', txId }),
+      });
+      await loadReconcile();
+    } finally {
+      setUndoingTxId(null);
     }
   }
 
@@ -640,6 +670,60 @@ export default function BankingPage() {
                     {reconciling ? 'Ejecutando…' : 'Reconciliar'}
                   </button>
                 </div>
+
+                {/* Auto-applied matches (≥95% score) */}
+                {autoMatched.length > 0 && (
+                  <div className="overflow-hidden rounded-xl border border-emerald-200 bg-white shadow-sm">
+                    <div className="flex items-center justify-between border-b border-emerald-100 bg-emerald-50/40 px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={14} className="text-emerald-600" />
+                        <span className="text-[12px] font-semibold text-emerald-900">
+                          Auto-aplicados ({autoMatched.length})
+                        </span>
+                      </div>
+                      <span className="text-[10px] text-emerald-700">
+                        Score ≥95% · Últimos 30 días
+                      </span>
+                    </div>
+                    <ul className="divide-y divide-slate-50">
+                      {autoMatched.map((m) => (
+                        <li key={m.txId} className="flex items-center gap-3 px-5 py-3">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-50">
+                            <CheckCircle2 size={12} className="text-emerald-600" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-[12px] font-medium text-slate-800">
+                                {m.txDescription || 'Sin descripción'}
+                              </p>
+                              <span className="shrink-0 text-[12px] font-semibold text-slate-700">
+                                {fmtMoney(Math.abs(m.txAmount))}
+                              </span>
+                            </div>
+                            <p className="mt-0.5 truncate text-[10px] text-slate-400">
+                              {fmtDate(m.txMadeOn)} ↔ {m.expenseSupplier || m.expenseDescription || 'gasto'}
+                              {' · '}
+                              <span className="font-semibold text-emerald-600">{m.scorePercent}%</span>
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            disabled={undoingTxId === m.txId}
+                            onClick={() => void handleUndo(m.txId)}
+                            title="Deshacer match (falso positivo)"
+                            className="shrink-0 rounded-md border border-slate-200 px-2.5 py-1 text-[10px] font-medium text-slate-600 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                          >
+                            {undoingTxId === m.txId ? (
+                              <Loader2 size={10} className="animate-spin" />
+                            ) : (
+                              'Deshacer'
+                            )}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 {/* Suggestions */}
                 {suggestions.length === 0 ? (

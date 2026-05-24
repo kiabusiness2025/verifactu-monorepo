@@ -7,11 +7,18 @@
  * o bruto (`expense.amount × (1 + expense.taxRate)`). Se prueba ambos y se toma el mejor.
  *
  * Score final = amountScore×0.40 + dateScore×0.35 + textScore×0.25
- * Auto-match cuando score ≥ confidenceThreshold (default 0.85).
+ *
+ * Tiers:
+ *   - score ≥ AUTO_APPLY_THRESHOLD (0.95): auto-aplicado silenciosamente, marcado reconciliado
+ *   - SUGGEST_THRESHOLD (0.50) ≤ score < AUTO_APPLY_THRESHOLD: audit creado, requiere confirmación humana
+ *   - score < SUGGEST_THRESHOLD: descartado
  */
 
 import { prisma } from './prisma';
 import type { Prisma } from '@prisma/client';
+
+export const AUTO_APPLY_THRESHOLD = 0.95;
+export const SUGGEST_THRESHOLD = 0.5;
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Types
@@ -238,7 +245,9 @@ export async function reconcileTenant(tenantId: string): Promise<{
   const config = await prisma.bankReconciliationConfig.findUnique({
     where: { tenantId },
   });
-  const threshold = config?.confidenceThreshold ?? 0.85;
+  // Bumped default from 0.85 → 0.95: only auto-apply on very high confidence.
+  // Lower scores still create audit records for human review.
+  const threshold = config?.confidenceThreshold ?? AUTO_APPLY_THRESHOLD;
 
   // Transacciones negativas (gastos) aún no conciliadas
   const transactions = await prisma.seTransaction.findMany({
@@ -325,6 +334,89 @@ export async function confirmMatch(
   await prisma.seTransaction.update({
     where: { id: txId },
     data: { reconciledAt: new Date() },
+  });
+}
+
+/**
+ * Deshace un match: borra el audit y limpia `reconciledAt`.
+ * Útil para corregir falsos positivos del auto-match.
+ */
+export async function undoMatch(tenantId: string, txId: string): Promise<void> {
+  await prisma.seTransactionMatchAudit.deleteMany({
+    where: { tenantId, seTransactionId: txId },
+  });
+  await prisma.seTransaction.update({
+    where: { id: txId },
+    data: { reconciledAt: null },
+  });
+}
+
+/**
+ * Carga matches recientemente auto-aplicados (últimos 30 días) para revisión.
+ * El usuario puede deshacerlos si detecta un falso positivo.
+ */
+export async function loadRecentAutoMatched(
+  tenantId: string,
+  limit = 20
+): Promise<
+  Array<{
+    txId: string;
+    txAmount: number;
+    txMadeOn: string;
+    txDescription: string;
+    expenseId: string | null;
+    expenseDescription: string | null;
+    expenseSupplier: string | null;
+    matchScore: number;
+    matchedAt: Date;
+  }>
+> {
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000);
+
+  const audits = await prisma.seTransactionMatchAudit.findMany({
+    where: {
+      tenantId,
+      autoMatched: true,
+      matchedExpenseId: { not: null },
+      createdAt: { gte: thirtyDaysAgo },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: limit,
+  });
+
+  const txIds = audits.map((a) => a.seTransactionId);
+  const expenseIds = audits
+    .map((a) => a.matchedExpenseId)
+    .filter((id): id is string => id !== null);
+
+  const [transactions, expenses] = await Promise.all([
+    prisma.seTransaction.findMany({
+      where: { id: { in: txIds } },
+      select: { id: true, amount: true, madeOn: true, description: true, payee: true },
+    }),
+    prisma.expenseRecord.findMany({
+      where: { id: { in: expenseIds } },
+      select: { id: true, description: true, supplier: { select: { name: true } } },
+    }),
+  ]);
+
+  const txMap = new Map(transactions.map((t) => [t.id, t]));
+  const expMap = new Map(expenses.map((e) => [e.id, e]));
+
+  return audits.map((a) => {
+    const tx = txMap.get(a.seTransactionId);
+    const exp = a.matchedExpenseId ? expMap.get(a.matchedExpenseId) : null;
+    return {
+      txId: a.seTransactionId,
+      txAmount: tx ? Number(tx.amount) : 0,
+      txMadeOn: tx?.madeOn ?? '',
+      txDescription: tx?.description ?? tx?.payee ?? '',
+      expenseId: a.matchedExpenseId,
+      expenseDescription: exp?.description ?? null,
+      expenseSupplier: exp?.supplier?.name ?? null,
+      matchScore: a.matchScore,
+      matchedAt: a.createdAt,
+    };
   });
 }
 
