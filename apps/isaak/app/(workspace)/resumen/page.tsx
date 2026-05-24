@@ -20,6 +20,7 @@ import {
 } from '@/app/lib/isaak-workspace-signals';
 import { prisma } from '@/app/lib/prisma';
 import ResumenChart, { type MonthlyPoint } from './components/ResumenChart';
+import CashFlowChart, { type CashFlowPoint } from './components/CashFlowChart';
 
 export const metadata: Metadata = { title: 'Resumen — Isaak' };
 
@@ -76,6 +77,80 @@ type CashForecast = {
   recentOut: number;
 };
 
+async function loadCashFlowSeries(tenantId: string, weeks = 12): Promise<CashFlowPoint[]> {
+  try {
+    const now = new Date();
+    // Anchor to Monday of current week
+    const monday = new Date(now);
+    const dow = monday.getDay() || 7;
+    monday.setDate(monday.getDate() - (dow - 1));
+    monday.setHours(0, 0, 0, 0);
+
+    const from = new Date(monday);
+    from.setDate(from.getDate() - (weeks - 1) * 7);
+    const fromStr = from.toISOString().slice(0, 10);
+
+    const txs = await prisma.seTransaction.findMany({
+      where: {
+        tenantId,
+        madeOn: { gte: fromStr },
+        status: 'posted',
+        duplicated: false,
+      },
+      select: { amount: true, madeOn: true },
+    });
+
+    if (txs.length === 0) return [];
+
+    // Bucket transactions by week start (Monday)
+    const buckets = new Map<string, { inflow: number; outflow: number }>();
+    for (let i = 0; i < weeks; i++) {
+      const ws = new Date(from);
+      ws.setDate(ws.getDate() + i * 7);
+      const key = ws.toISOString().slice(0, 10);
+      buckets.set(key, { inflow: 0, outflow: 0 });
+    }
+
+    for (const tx of txs) {
+      const txDate = new Date(tx.madeOn);
+      const diffDays = Math.floor((txDate.getTime() - from.getTime()) / 86_400_000);
+      if (diffDays < 0) continue;
+      const weekIndex = Math.floor(diffDays / 7);
+      if (weekIndex >= weeks) continue;
+
+      const ws = new Date(from);
+      ws.setDate(ws.getDate() + weekIndex * 7);
+      const key = ws.toISOString().slice(0, 10);
+      const bucket = buckets.get(key);
+      if (!bucket) continue;
+
+      const amt = Number(tx.amount);
+      if (amt > 0) bucket.inflow += amt;
+      else bucket.outflow += Math.abs(amt);
+    }
+
+    const points: CashFlowPoint[] = [];
+    let i = 0;
+    for (const [key, bucket] of buckets) {
+      const d = new Date(key);
+      const label =
+        i === weeks - 1
+          ? 'Esta'
+          : `${d.getDate()}/${d.getMonth() + 1}`;
+      points.push({
+        label,
+        inflow: Math.round(bucket.inflow * 100) / 100,
+        outflow: Math.round(bucket.outflow * 100) / 100,
+        net: Math.round((bucket.inflow - bucket.outflow) * 100) / 100,
+      });
+      i++;
+    }
+    return points;
+  } catch {
+    return [];
+  }
+}
+
 async function loadCashForecast(tenantId: string): Promise<CashForecast | null> {
   try {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
@@ -116,6 +191,7 @@ async function DashboardContent() {
   let accountingPnL: HoldedAccountingPnL | null = null;
   let verifactuSignal: IsaakVerifactuSignal | null = null;
   let cashForecast: CashForecast | null = null;
+  let cashFlow: CashFlowPoint[] = [];
 
   try {
     const session = await getHoldedSession();
@@ -186,6 +262,9 @@ async function DashboardContent() {
         forecast.forecastBalance = Math.round((forecast.currentBalance + pendingIn) * 100) / 100;
         cashForecast = forecast;
       }
+
+      // Cash flow series — weekly inflow/outflow (last 12 weeks)
+      cashFlow = await loadCashFlowSeries(session.tenantId);
 
       // Verifactu Holded signal + local stats
       const wsSignals = await loadIsaakWorkspaceSignals({
@@ -328,6 +407,18 @@ async function DashboardContent() {
           </div>
         </div>
       )}
+
+      {/* ── Cash Flow Chart (real banking data) ──────────────────────────── */}
+      {cashFlow.length > 0 &&
+        cashFlow.some((p) => p.inflow > 0 || p.outflow > 0) && (
+          <div className="mx-5 mb-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[12px] font-semibold text-slate-500">Cash flow semanal</p>
+              <p className="text-[10px] text-slate-400">Últimas 12 semanas · datos bancarios</p>
+            </div>
+            <CashFlowChart data={cashFlow} />
+          </div>
+        )}
 
       {verifactuSignal?.checked && verifactuSignal.invoicesWithoutUuid > 0 && (
         <div className="mx-5 mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
