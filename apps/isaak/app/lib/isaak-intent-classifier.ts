@@ -57,7 +57,8 @@ Devuelve EXCLUSIVAMENTE JSON válido (sin markdown, sin backticks, sin texto ext
   "suggestedClarification": string | null,
   "suggestedOptions": string[] | null,
   "needsTools": boolean,
-  "relevantCategories": ("holded" | "banking" | "google" | "microsoft")[]
+  "relevantCategories": ("holded" | "banking" | "google" | "microsoft")[],
+  "hasWriteIntent": boolean
 }
 
 Reglas:
@@ -71,13 +72,16 @@ Reglas:
   - "google": Google Calendar, Gmail, Google Drive
   - "microsoft": Outlook Calendar, Outlook Mail, OneDrive
 - Si needsTools=true pero el tenant NO tiene esa categoría conectada, igual marca relevantCategories — quien orquesta decidirá si pedir conectar.
+- hasWriteIntent=true si el usuario pide MODIFICAR algo: crear/emitir factura, registrar pago, dar de alta cliente, enviar documento, archivar email. NO marcar true para preguntas o consultas. También true cuando el usuario CONFIRMA una acción anterior ("sí, hazlo", "confirma", "adelante").
 
 Ejemplos:
-- "hola" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":false,"relevantCategories":[]}
-- "ventas" → {"ambiguous":true,"ambiguityType":"period","suggestedClarification":"¿De qué período quieres ver las ventas?","suggestedOptions":["Este mes","Este trimestre","Este año"],"needsTools":false,"relevantCategories":[]}
-- "ventas de marzo" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":true,"relevantCategories":["holded"]}
-- "saldo en banco" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":true,"relevantCategories":["banking"]}
-- "qué es Verifactu" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":false,"relevantCategories":[]}`;
+- "hola" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":false,"relevantCategories":[],"hasWriteIntent":false}
+- "ventas" → {"ambiguous":true,"ambiguityType":"period","suggestedClarification":"¿De qué período quieres ver las ventas?","suggestedOptions":["Este mes","Este trimestre","Este año"],"needsTools":false,"relevantCategories":[],"hasWriteIntent":false}
+- "ventas de marzo" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":true,"relevantCategories":["holded"],"hasWriteIntent":false}
+- "saldo en banco" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":true,"relevantCategories":["banking"],"hasWriteIntent":false}
+- "qué es Verifactu" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":false,"relevantCategories":[],"hasWriteIntent":false}
+- "emite una factura a Acme por 500€ de servicios de consultoría" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":true,"relevantCategories":["holded"],"hasWriteIntent":true}
+- "sí, confirma" → {"ambiguous":false,"ambiguityType":"none","suggestedClarification":null,"suggestedOptions":null,"needsTools":true,"relevantCategories":["holded"],"hasWriteIntent":true}`;
 }
 
 export type ClassifyIntentInput = {

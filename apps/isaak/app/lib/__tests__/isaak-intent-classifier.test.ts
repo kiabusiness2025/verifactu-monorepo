@@ -125,4 +125,43 @@ describe('parseClassifierJson', () => {
     const r = parseClassifierJson(raw, MODEL, 100);
     expect(r.ambiguous).toBe(false);
   });
+
+  it('parses hasWriteIntent=true for action queries', () => {
+    const raw = JSON.stringify({
+      ambiguous: false,
+      ambiguityType: 'none',
+      suggestedClarification: null,
+      suggestedOptions: null,
+      needsTools: true,
+      relevantCategories: ['holded'],
+      hasWriteIntent: true,
+    });
+    const r = parseClassifierJson(raw, MODEL, 100);
+    expect(r.hasWriteIntent).toBe(true);
+  });
+
+  it('defaults hasWriteIntent=false when field is missing', () => {
+    const raw = JSON.stringify({
+      ambiguous: false,
+      ambiguityType: 'none',
+      needsTools: true,
+      relevantCategories: ['banking'],
+    });
+    const r = parseClassifierJson(raw, MODEL, 100);
+    expect(r.hasWriteIntent).toBe(false);
+  });
+
+  it('forces hasWriteIntent=false when ambiguous=true', () => {
+    const raw = JSON.stringify({
+      ambiguous: true,
+      ambiguityType: 'entity',
+      suggestedClarification: '¿Qué cliente?',
+      suggestedOptions: ['Acme', 'Beta'],
+      needsTools: false,
+      relevantCategories: [],
+      hasWriteIntent: true,
+    });
+    const r = parseClassifierJson(raw, MODEL, 100);
+    expect(r.hasWriteIntent).toBe(false);
+  });
 });

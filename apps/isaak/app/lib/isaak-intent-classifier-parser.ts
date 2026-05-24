@@ -12,6 +12,8 @@ export type ClassificationResult = {
   suggestedOptions: string[] | null;
   needsTools: boolean;
   relevantCategories: ToolCategory[];
+  // F4: write intent detection
+  hasWriteIntent: boolean;
   modelUsed: string;
   latencyMs: number;
   parseError?: string;
@@ -43,6 +45,7 @@ export function emptyClassificationResult(
     suggestedOptions: null,
     needsTools: true, // safe default — better to expose tools than miss real data
     relevantCategories: ['holded', 'banking', 'google', 'microsoft'],
+    hasWriteIntent: false, // safe default — writes need explicit intent
     modelUsed: model,
     latencyMs,
     parseError: reason,
@@ -97,6 +100,8 @@ export function parseClassifierJson(
     suggestedOptions = opts.length ? opts : null;
   }
 
+  const hasWriteIntent = obj.hasWriteIntent === true;
+
   return {
     ambiguous,
     ambiguityType: ambiguous ? ambiguityType : 'none',
@@ -104,6 +109,7 @@ export function parseClassifierJson(
     suggestedOptions: ambiguous ? suggestedOptions : null,
     needsTools: ambiguous ? false : needsTools,
     relevantCategories: needsTools && !ambiguous ? relevantCategories : [],
+    hasWriteIntent: ambiguous ? false : hasWriteIntent,
     modelUsed: model,
     latencyMs,
   };

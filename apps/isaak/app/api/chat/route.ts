@@ -401,6 +401,10 @@ export async function POST(request: NextRequest) {
 
     let result: LLMResult | null = null;
     let toolNamesUsed: string[] = [];
+    let writeToolsUsed: string[] = [];
+    let judgeInvocations = 0;
+    let judgeBlocks = 0;
+    let judgeLatencyMs: number | null = null;
     let iterations = 0;
     let routedTo: 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback' =
       'fallback';
@@ -442,8 +446,12 @@ export async function POST(request: NextRequest) {
         routedTo = 'clarify_direct';
       } else if (classification.needsTools && classification.relevantCategories.length > 0) {
         // Filter tools to the subset the classifier marked as relevant.
+        // F4: if the classifier detected write intent, include write tools too
+        // (the judge model will gate each write attempt before execution).
+        const allowWrites = classification.hasWriteIntent;
         const filteredTools = buildReadOnlyToolsForContext(toolContext, {
           only: classification.relevantCategories,
+          allowWrites,
         });
         if (filteredTools.length > 0) {
           useToolLoop = true;
@@ -455,8 +463,9 @@ export async function POST(request: NextRequest) {
             context: toolContext,
             model: modelConfig.model,
             provider: modelConfig.provider,
-            feature: 'workspace_chat_tools',
+            feature: allowWrites ? 'workspace_chat_tools_write' : 'workspace_chat_tools',
             maxOutputTokens: 1200,
+            allowWrites,
           });
           result = loop.text
             ? {
@@ -468,6 +477,10 @@ export async function POST(request: NextRequest) {
               }
             : null;
           toolNamesUsed = loop.toolNames;
+          writeToolsUsed = loop.writeToolNames;
+          judgeInvocations = loop.judgeInvocations;
+          judgeBlocks = loop.judgeBlocks;
+          judgeLatencyMs = loop.judgeTotalLatencyMs || null;
           iterations = loop.iterations;
           routedTo = 'sonnet_with_tools';
         }
@@ -545,6 +558,10 @@ export async function POST(request: NextRequest) {
         classifierLatencyMs,
         routedTo,
         ambiguityType,
+        judgeInvocations,
+        judgeBlocks,
+        judgeLatencyMs,
+        writeTools: writeToolsUsed,
       }).catch((err) => {
         console.error('[Isaak Chat] recordChatMetric failed', err);
       });
