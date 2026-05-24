@@ -1,0 +1,13 @@
+{
+  "id": "clarify-sales-no-period-01",
+  "category": "clarify",
+  "description": "Pregunta de ventas sin período → debe pedir clarificación de período",
+  "query": "¿Cómo van las ventas?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "period",
+    "clarificationContains": ["período", "mes", "trimestre"],
+    "minJudgeScore": 7
+  }
+}

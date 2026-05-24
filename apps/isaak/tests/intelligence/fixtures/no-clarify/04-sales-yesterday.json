@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-sales-yesterday-04",
+  "category": "no-clarify",
+  "description": "Ventas de ayer: período claro, no clarifica",
+  "query": "¿Cuánto vendí ayer?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseExcludes": ["\"clarify\":true"],
+    "minJudgeScore": 6
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "multi-turn-name-memory-02",
+  "category": "multi-turn",
+  "description": "Nombre dado en turno 1 debe recordarse en turno 3",
+  "turns": [
+    { "user": "Hola, me llamo Marta y soy autónoma" },
+    { "user": "Necesito declarar el IRPF" },
+    { "user": "¿Cómo me llamaba?" }
+  ],
+  "context": { "authenticated": true },
+  "expected": {
+    "turnAssertions": [
+      { "turn": 3, "contains": ["Marta"] }
+    ],
+    "minJudgeScore": 8
+  }
+}

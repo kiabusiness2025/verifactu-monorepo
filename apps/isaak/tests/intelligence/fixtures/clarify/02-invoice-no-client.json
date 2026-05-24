@@ -1,0 +1,13 @@
+{
+  "id": "clarify-invoice-no-client-02",
+  "category": "clarify",
+  "description": "Petición de factura sin cliente ni importe → debe clarificar",
+  "query": "Crea una factura",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "entity",
+    "clarificationContains": ["cliente", "importe", "concepto"],
+    "minJudgeScore": 7
+  }
+}

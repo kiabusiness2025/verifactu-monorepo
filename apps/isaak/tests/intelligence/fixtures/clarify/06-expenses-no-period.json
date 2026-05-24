@@ -1,0 +1,13 @@
+{
+  "id": "clarify-expenses-no-period-06",
+  "category": "clarify",
+  "description": "Gastos sin período",
+  "query": "Resúmeme los gastos",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "period",
+    "clarificationContains": ["período", "mes", "trimestre", "año"],
+    "minJudgeScore": 7
+  }
+}

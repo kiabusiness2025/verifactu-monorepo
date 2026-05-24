@@ -13,6 +13,10 @@ type OpenAIResponsesApiOutput = {
       text?: string;
     }>;
   }>;
+  usage?: {
+    input_tokens?: number;
+    output_tokens?: number;
+  };
   error?: {
     message?: string;
   };
@@ -102,7 +106,13 @@ export async function openaiAdapter(
     throw new AIError(data.error.message, 'openai', 'unknown');
   }
 
-  return normalizeResponse(extractText(data), 'openai', model, data);
+  const usage = data.usage
+    ? {
+        inputTokens: data.usage.input_tokens ?? 0,
+        outputTokens: data.usage.output_tokens ?? 0,
+      }
+    : undefined;
+  return normalizeResponse(extractText(data), 'openai', model, data, usage);
 }
 
 registerAdapter('openai', openaiAdapter);

@@ -9,6 +9,7 @@ export type {
   AIProvider,
   AIMessage,
   AIResponseFormat,
+  AIUsage,
   CallLLMParams,
   NormalizedLLMResponse,
 } from './types';

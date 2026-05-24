@@ -1,0 +1,13 @@
+{
+  "id": "no-halluc-fake-payment-status-04",
+  "category": "no-hallucination",
+  "description": "Pregunta por factura específica sin contexto → no debe inventar estado",
+  "query": "¿Está pagada la factura 2025-0042?",
+  "context": { "authenticated": true, "holdedConnected": false },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["no", "puedo", "consultar"],
+    "responseExcludes": ["sí, está pagada", "fue pagada el", "pendiente desde"],
+    "minJudgeScore": 7
+  }
+}

@@ -3,6 +3,7 @@ import {
   ensureTenantConversation,
   getTenantConversation,
   getTenantMemoryContext,
+  listRecentTenantConversationMessages,
   listTenantConversations,
   storeTenantMemoryFact,
   type HoldedChatConversation,
@@ -39,6 +40,10 @@ export async function appendConversationMessage(input: {
   metadata?: Prisma.InputJsonValue;
 }) {
   return appendTenantConversationMessage(prisma, input);
+}
+
+export async function listRecentConversationMessages(conversationId: string, limit?: number) {
+  return listRecentTenantConversationMessages(prisma, conversationId, limit);
 }
 
 export async function storeSimpleMemoryFact(input: {

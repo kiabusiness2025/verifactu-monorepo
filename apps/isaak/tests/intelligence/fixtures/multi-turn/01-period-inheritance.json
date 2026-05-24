@@ -1,0 +1,17 @@
+{
+  "id": "multi-turn-period-inheritance-01",
+  "category": "multi-turn",
+  "description": "Establece período en turno 2, debe usarlo en turno 3 sin volver a preguntar",
+  "turns": [
+    { "user": "¿Cómo van las ventas?" },
+    { "user": "Este mes" },
+    { "user": "¿Y los gastos?" }
+  ],
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "turnAssertions": [
+      { "turn": 3, "excludes": ["¿qué período", "qué mes", "qué trimestre"], "shouldClarify": false }
+    ],
+    "minJudgeScore": 7
+  }
+}

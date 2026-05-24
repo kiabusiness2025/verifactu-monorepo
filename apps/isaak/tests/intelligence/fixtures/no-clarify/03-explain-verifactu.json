@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-explain-verifactu-03",
+  "category": "no-clarify",
+  "description": "Pregunta conceptual: no requiere clarificación",
+  "query": "¿Qué es Verifactu en una frase?",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["facturación", "trazable"],
+    "minJudgeScore": 7
+  }
+}

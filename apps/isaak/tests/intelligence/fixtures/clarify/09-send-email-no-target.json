@@ -1,0 +1,13 @@
+{
+  "id": "clarify-send-email-no-target-09",
+  "category": "clarify",
+  "description": "Enviar email sin destinatario claro",
+  "query": "Envía un email recordando el pago",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "entity",
+    "clarificationContains": ["cliente", "factura", "destinatario"],
+    "minJudgeScore": 7
+  }
+}

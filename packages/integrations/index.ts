@@ -173,6 +173,7 @@ export {
   ensureTenantConversation,
   getTenantConversation,
   getTenantMemoryContext,
+  listRecentTenantConversationMessages,
   listTenantConversations,
   storeTenantMemoryFact,
 } from './isaak/chat';

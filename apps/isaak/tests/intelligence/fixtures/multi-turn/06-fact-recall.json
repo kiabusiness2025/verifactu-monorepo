@@ -1,0 +1,18 @@
+{
+  "id": "multi-turn-fact-recall-06",
+  "category": "multi-turn",
+  "description": "Hecho de negocio dado en turno 1 debe usarse en turno 3 sin re-preguntar",
+  "turns": [
+    { "user": "Mi empresa es una SL, módulo general de IVA, ejercicio fiscal natural" },
+    { "user": "¿Cuántos modelos trimestrales tengo que presentar?" },
+    { "user": "¿Y cuándo termina el plazo del próximo?" }
+  ],
+  "context": { "authenticated": true },
+  "expected": {
+    "turnAssertions": [
+      { "turn": 2, "excludes": ["¿Qué tipo de empresa", "régimen"] },
+      { "turn": 3, "excludes": ["qué modelo"] }
+    ],
+    "minJudgeScore": 7
+  }
+}

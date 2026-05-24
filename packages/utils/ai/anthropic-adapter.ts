@@ -15,6 +15,7 @@ type AnthropicMessage = {
 
 type AnthropicResponse = {
   content?: Array<{ type: string; text?: string }>;
+  usage?: { input_tokens?: number; output_tokens?: number };
   error?: { message?: string };
 };
 
@@ -85,7 +86,13 @@ export async function anthropicAdapter(
   }
 
   const text = data.content?.find((b) => b.type === 'text')?.text ?? null;
-  return normalizeResponse(text, 'anthropic', model, data);
+  const usage = data.usage
+    ? {
+        inputTokens: data.usage.input_tokens ?? 0,
+        outputTokens: data.usage.output_tokens ?? 0,
+      }
+    : undefined;
+  return normalizeResponse(text, 'anthropic', model, data, usage);
 }
 
 registerAdapter('anthropic', anthropicAdapter);

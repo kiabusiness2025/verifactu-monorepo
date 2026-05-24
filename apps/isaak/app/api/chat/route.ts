@@ -1,8 +1,11 @@
 import { callLLM, AIError } from '@verifactu/utils';
-import { ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation';
-import type { AIProvider } from '@verifactu/utils';
+import type { AIMessage, AIProvider } from '@verifactu/utils';
 import { NextRequest, NextResponse } from 'next/server';
-import { appendConversationMessage, ensureHoldedConversation } from '@/app/lib/holded-chat';
+import {
+  appendConversationMessage,
+  ensureHoldedConversation,
+  listRecentConversationMessages,
+} from '@/app/lib/holded-chat';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import {
   formatWorkspaceSignalsForPrompt,
@@ -11,25 +14,21 @@ import {
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
 import { checkIsaakChatQuota, checkPublicChatQuota } from '@/app/lib/isaak-quota';
+import {
+  detectClarificationResponse,
+  recordChatMetric,
+} from '@/app/lib/isaak-chat-metrics';
+import {
+  buildAuthenticatedSystemPrompt,
+  buildPublicSystemPrompt,
+  type AuthenticatedChatContext,
+} from '@/app/lib/isaak-chat-prompts';
+
+const SHORT_MEMORY_TURNS = 8;
 
 type RateEntry = {
   count: number;
   resetAt: number;
-};
-
-type AuthenticatedChatContext = {
-  tenantId: string;
-  userId: string;
-  preferredName: string;
-  companyName: string;
-  contextSummary: string;
-  roleLabel: string;
-  sectorLabel: string;
-  communicationStyle: string;
-  knowledgeLevel: string;
-  goals: string[];
-  holdedConnected: boolean;
-  workspaceSignalsBlock: string;
 };
 
 const RATE_LIMIT = 20;
@@ -147,74 +146,6 @@ function generateFallbackResponse(message: string, authenticated: boolean) {
   return 'Soy Isaak. Puedo ayudarte con trámites, dudas fiscales, impuestos y decisiones prácticas en lenguaje claro. Cuéntame tu caso y te propongo el siguiente paso.';
 }
 
-function buildPublicSystemPrompt() {
-  return `Eres Isaak, el asistente fiscal y operativo de ${ISAAK_PUBLIC_URL}.
-
-Objetivo:
-- Ayudar con tramites, dudas fiscales, impuestos y consejos practicos.
-- Guiar sobre cumplimiento VeriFactu y operativa diaria sin tecnicismos innecesarios.
-- Mantener tono claro, accionable y cercano.
-
-Identidad:
-- No eres un chatbot generico de facturacion.
-- Eres Isaak.
-- Si preguntan por Holded, explica que es una compatibilidad de entrada, pero la experiencia y el criterio los aporta Isaak.
-
-Estilo de respuesta:
-- Espanol, breve, practico y orientado al siguiente paso.
-- Evita texto legal extenso.
-- Si falta contexto, pide solo lo minimo para avanzar.
-- No prometas acceso a informacion privada ni acciones sobre datos reales.
-- Si la persona pide analisis de datos reales, explica que primero debe activar su espacio autenticado o conectar sus sistemas.`;
-}
-
-function buildAuthenticatedSystemPrompt(context: AuthenticatedChatContext) {
-  const goals = context.goals.length
-    ? context.goals.slice(0, 3).join(', ')
-    : 'resolver dudas fiscales y ordenar el negocio con calma';
-
-  return `Eres Isaak, el asistente fiscal y operativo del workspace autenticado de ${ISAAK_PUBLIC_URL}.
-
-Objetivo:
-- Ayudar con dudas fiscales, contables y operativas sin agobiar a la persona usuaria.
-- Detectar su estado actual y orientar el siguiente paso con claridad.
-- Aprovechar su contexto real de perfil, plan, tareas pendientes y calendario fiscal.
-
-Reglas de producto:
-- Existe un modo gratis limitado para usuarios autenticados aunque no tengan Holded conectado.
-- No pidas conectar Holded por defecto.
-- Solo sugiere conectar Holded cuando la peticion requiera datos reales, sincronizacion, lectura de ventas, gastos, cobros, contactos, facturas o acciones sobre sistemas conectados.
-- Si no hay Holded, sigue ayudando con criterio fiscal, explicaciones, checklist, prioridades y onboarding.
-- No inventes datos ni des por hecho informacion que no aparezca en el contexto.
-
-Estilo:
-- Espanol claro, calmado, humano y practico.
-- Respuestas breves por defecto, con foco en el siguiente paso.
-- Sin tecnicismos innecesarios.
-- Si falta contexto, pide una sola cosa cada vez.
-
-Contexto de la persona usuaria:
-- Nombre preferido: ${context.preferredName}.
-- Empresa: ${context.companyName}.
-- Rol: ${context.roleLabel}.
-- Actividad: ${context.sectorLabel}.
-- Estilo preferido: ${context.communicationStyle}.
-- Nivel esperado: ${context.knowledgeLevel}.
-- Objetivos principales: ${goals}.
-- Resumen actual: ${context.contextSummary}
-- Holded conectado: ${context.holdedConnected ? 'sí' : 'no'}.
-
-Estado del workspace:
-${context.workspaceSignalsBlock}
-
-Comportamiento adicional:
-- Si faltan datos fiscales o de empresa para ayudar mejor, abre una micro-entrevista de una pregunta cada vez.
-- En cada pregunta breve ofrece siempre las opciones "Prefiero no decirlo" y "No lo sé".
-- Si la respuesta es "No lo sé", explica cómo averiguarlo y cuándo conviene revisar la Sede Electrónica de la AEAT o el certificado electronico.
-- Si la persona pregunta por campaña de renta, cierre de ejercicio o cuentas anuales, prioriza plazos, checklist y orden de trabajo.
-- Si la peticion requiere datos reales y no hay Holded, dilo con claridad y sin bloquear la ayuda general.`;
-}
-
 function logProvider(
   provider: AIProvider | 'fallback',
   model: string,
@@ -296,19 +227,30 @@ async function loadAuthenticatedChatContext() {
   };
 }
 
+type LLMResult = {
+  text: string;
+  provider: AIProvider;
+  model: string;
+  latencyMs?: number;
+  usage?: { inputTokens: number; outputTokens: number };
+};
+
 async function getLLMResponse(
   message: string,
+  history: AIMessage[],
   authenticatedContext: AuthenticatedChatContext | null,
   modelConfig: ModelConfig
-): Promise<{ text: string; provider: AIProvider; model: string } | null> {
+): Promise<LLMResult | null> {
   try {
+    const messages: AIMessage[] = [...history, { role: 'user', content: message }];
+
     const result = await callLLM({
       provider: modelConfig.provider,
       model: modelConfig.model,
       instructions: authenticatedContext
         ? buildAuthenticatedSystemPrompt(authenticatedContext)
         : buildPublicSystemPrompt(),
-      inputText: message,
+      messages,
       temperature: authenticatedContext ? 0.45 : 0.5,
       maxOutputTokens: authenticatedContext ? 550 : 450,
       feature: authenticatedContext ? 'workspace_chat_free' : 'public_chat',
@@ -392,6 +334,7 @@ export async function POST(request: NextRequest) {
     const modelConfig = resolveModelForPlan(planCode);
 
     let conversation: Awaited<ReturnType<typeof ensureHoldedConversation>> | null = null;
+    let history: AIMessage[] = [];
 
     if (authenticated) {
       conversation = await ensureHoldedConversation(authenticated.conversationScope, {
@@ -400,6 +343,12 @@ export async function POST(request: NextRequest) {
       }).catch(() => null);
 
       if (conversation) {
+        // Load short-term memory BEFORE persisting the new user message so we
+        // don't duplicate it in the prompt.
+        history = await listRecentConversationMessages(conversation.id, SHORT_MEMORY_TURNS).catch(
+          () => []
+        );
+
         await appendConversationMessage({
           conversationId: conversation.id,
           role: 'user',
@@ -408,7 +357,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const result = await getLLMResponse(message, authenticated?.promptContext ?? null, modelConfig);
+    const result = await getLLMResponse(
+      message,
+      history,
+      authenticated?.promptContext ?? null,
+      modelConfig
+    );
+
     if (result) {
       logProvider(
         result.provider,
@@ -417,17 +372,44 @@ export async function POST(request: NextRequest) {
         authenticated ? 'workspace' : 'public'
       );
 
+      const isClarification = detectClarificationResponse(result.text);
+      const isFallback = result.provider !== modelConfig.provider;
+
       if (conversation) {
         await appendConversationMessage({
           conversationId: conversation.id,
           role: 'assistant',
           content: result.text,
+          metadata: {
+            provider: result.provider,
+            model: result.model,
+            latencyMs: result.latencyMs ?? null,
+            isClarification,
+            isFallback,
+          },
         }).catch(() => null);
       }
+
+      await recordChatMetric({
+        tenantId: authenticated?.session.tenantId ?? null,
+        userId: authenticated?.session.userId ?? null,
+        conversationId: conversation?.id ?? null,
+        provider: result.provider,
+        modelUsed: result.model,
+        feature: authenticated ? 'workspace_chat_free' : 'public_chat',
+        usage: result.usage,
+        latencyMs: result.latencyMs ?? null,
+        isClarification,
+        isFallback,
+        historyTurns: history.length,
+      }).catch((err) => {
+        console.error('[Isaak Chat] recordChatMetric failed', err);
+      });
 
       return NextResponse.json({
         response: result.text,
         reply: result.text,
+        isClarification,
         conversation: conversation
           ? { id: conversation.id, title: conversation.title ?? '' }
           : null,
@@ -442,8 +424,23 @@ export async function POST(request: NextRequest) {
         conversationId: conversation.id,
         role: 'assistant',
         content: fallback,
+        metadata: { provider: 'fallback', model: 'rule-based', isFallback: true },
       }).catch(() => null);
     }
+
+    await recordChatMetric({
+      tenantId: authenticated?.session.tenantId ?? null,
+      userId: authenticated?.session.userId ?? null,
+      conversationId: conversation?.id ?? null,
+      provider: 'fallback',
+      modelUsed: 'rule-based',
+      feature: authenticated ? 'workspace_chat_free' : 'public_chat',
+      isFallback: true,
+      historyTurns: history.length,
+      errorCode: 'llm_unavailable',
+    }).catch((err) => {
+      console.error('[Isaak Chat] recordChatMetric failed', err);
+    });
 
     return NextResponse.json({
       response: fallback,

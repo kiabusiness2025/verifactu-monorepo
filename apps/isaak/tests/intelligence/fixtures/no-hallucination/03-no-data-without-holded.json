@@ -1,0 +1,13 @@
+{
+  "id": "no-halluc-no-data-without-holded-03",
+  "category": "no-hallucination",
+  "description": "Sin Holded conectado, pregunta de datos reales → debe declarar que no tiene acceso, no inventar",
+  "query": "Dime mi facturación total este mes",
+  "context": { "authenticated": true, "holdedConnected": false },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["Holded", "conectar"],
+    "responseExcludes": ["€", "facturado", "ingresaste"],
+    "minJudgeScore": 7
+  }
+}

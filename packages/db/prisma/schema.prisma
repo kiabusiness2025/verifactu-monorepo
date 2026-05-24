@@ -540,69 +540,69 @@ model Tenant {
 
   whitelabelConfig Json? @map("whitelabel_config")
 
-  users                       Membership[]
-  userPref                    UserPreference[]
-  tenantSubscriptions         TenantSubscription[]
-  profile                     TenantProfile?
-  invoices                    Invoice[]
-  quotes                      Quote[]
-  invoiceLines                InvoiceLine[]
-  payments                    Payment[]
-  customers                   Customer[]
-  suppliers                   Supplier[]
-  articles                    Article[]
-  expenses                    ExpenseRecord[]
-  integrations                TenantIntegration[]
-  externalConnections         ExternalConnection[]
-  channelIdentities           ChannelIdentity[]
-  integrationMaps             IntegrationMap[]
-  syncConflicts               SyncConflict[]
-  syncOutboxItems             SyncOutbox[]
-  syncLogs                    SyncLog[]
-  externalConnectionAuditLogs ExternalConnectionAuditLog[]
-  externalSyncRuns            ExternalSyncRun[]
-  isaakConversations          IsaakConversation[]
-  isaakGoogleTokens           IsaakGoogleToken[]
-  isaakMicrosoftTokens        IsaakMicrosoftToken[]
-  isaakAlerts                 IsaakAlert[]
-  isaakGmailScans             IsaakGmailScan[]
-  isaakPushSubscriptions      IsaakPushSubscription[]
-  isaakPushPreferences        IsaakPushPreferences[]
-  isaakMemoryFacts            IsaakMemoryFact[]
-  isaakOnboardingProfiles     IsaakOnboardingProfile[]
-  usageEvents                 UsageEvent[]
-  demoOnboardings             UserOnboarding[]
-  supportSessions             SupportSession[]
-  orders                      Order[]
-  orderLines                  OrderLine[]
-  fulfillmentCases            FulfillmentCase[]
-  fulfillmentTasks            FulfillmentTask[]
-  supportTickets              SupportTicket[]
-  supportMessages             SupportMessage[]
-  whatsappThreads             WhatsAppThread[]
-  whatsappEvents              WhatsAppEvent[]
-  customIntegrationRequests   CustomIntegrationRequest[]
-  connectionRecipients        ConnectionRecipient[]
-  accessRequests              AccessRequest[]
-  claimCases                  ClaimCase[]
-  isaakPlatformKeys           IsaakPlatformKey[]
-  isaakApiAuditLogs           IsaakApiAuditLog[]
+  users                         Membership[]
+  userPref                      UserPreference[]
+  tenantSubscriptions           TenantSubscription[]
+  profile                       TenantProfile?
+  invoices                      Invoice[]
+  quotes                        Quote[]
+  invoiceLines                  InvoiceLine[]
+  payments                      Payment[]
+  customers                     Customer[]
+  suppliers                     Supplier[]
+  articles                      Article[]
+  expenses                      ExpenseRecord[]
+  integrations                  TenantIntegration[]
+  externalConnections           ExternalConnection[]
+  channelIdentities             ChannelIdentity[]
+  integrationMaps               IntegrationMap[]
+  syncConflicts                 SyncConflict[]
+  syncOutboxItems               SyncOutbox[]
+  syncLogs                      SyncLog[]
+  externalConnectionAuditLogs   ExternalConnectionAuditLog[]
+  externalSyncRuns              ExternalSyncRun[]
+  isaakConversations            IsaakConversation[]
+  isaakGoogleTokens             IsaakGoogleToken[]
+  isaakMicrosoftTokens          IsaakMicrosoftToken[]
+  isaakAlerts                   IsaakAlert[]
+  isaakGmailScans               IsaakGmailScan[]
+  isaakPushSubscriptions        IsaakPushSubscription[]
+  isaakPushPreferences          IsaakPushPreferences[]
+  isaakMemoryFacts              IsaakMemoryFact[]
+  isaakOnboardingProfiles       IsaakOnboardingProfile[]
+  usageEvents                   UsageEvent[]
+  demoOnboardings               UserOnboarding[]
+  supportSessions               SupportSession[]
+  orders                        Order[]
+  orderLines                    OrderLine[]
+  fulfillmentCases              FulfillmentCase[]
+  fulfillmentTasks              FulfillmentTask[]
+  supportTickets                SupportTicket[]
+  supportMessages               SupportMessage[]
+  whatsappThreads               WhatsAppThread[]
+  whatsappEvents                WhatsAppEvent[]
+  customIntegrationRequests     CustomIntegrationRequest[]
+  connectionRecipients          ConnectionRecipient[]
+  accessRequests                AccessRequest[]
+  claimCases                    ClaimCase[]
+  isaakPlatformKeys             IsaakPlatformKey[]
+  isaakApiAuditLogs             IsaakApiAuditLog[]
   holdedMcpPersonalAccessTokens HoldedMcpPersonalAccessToken[]
-  holdedMcpPatAuditLogs       HoldedMcpPatAuditLog[]
-  isaakWebhookEndpoints       IsaakWebhookEndpoint[]
-  isaakProposedActions        IsaakProposedAction[]
-  gcMandates                  GcMandate[]
-  gcPayments                  GcPayment[]
-  seCustomer                  SeCustomer?
-  seConnections               SeConnection[]
-  seAccounts                  SeAccount[]
-  seTransactions              SeTransaction[]
-  seTransactionMatchAudits    SeTransactionMatchAudit[]
-  bankReconciliationConfig    BankReconciliationConfig?
-  invoiceTemplates            InvoiceTemplate[]
-  tenantCertificates          TenantCertificate[]
-  advisorClients              AdvisorClient[]
-  erpOAuthTokens              ErpOAuthToken[]
+  holdedMcpPatAuditLogs         HoldedMcpPatAuditLog[]
+  isaakWebhookEndpoints         IsaakWebhookEndpoint[]
+  isaakProposedActions          IsaakProposedAction[]
+  gcMandates                    GcMandate[]
+  gcPayments                    GcPayment[]
+  seCustomer                    SeCustomer?
+  seConnections                 SeConnection[]
+  seAccounts                    SeAccount[]
+  seTransactions                SeTransaction[]
+  seTransactionMatchAudits      SeTransactionMatchAudit[]
+  bankReconciliationConfig      BankReconciliationConfig?
+  invoiceTemplates              InvoiceTemplate[]
+  tenantCertificates            TenantCertificate[]
+  advisorClients                AdvisorClient[]
+  erpOAuthTokens                ErpOAuthToken[]
 
   @@map("tenants")
 }
@@ -611,37 +611,37 @@ model TenantProfile {
   tenantId String @id @map("tenant_id") @db.Uuid
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  source                String    @default("manual")
-  sourceId              String?   @map("source_id")
-  taxId                 String?   @map("tax_id")
-  legalName             String?   @map("legal_name")
-  tradeName             String?   @map("trade_name")
-  fiscalAddress         Json?     @map("fiscal_address")
-  taxRegime             String?   @map("tax_regime")
-  defaultCurrency       String    @default("EUR") @map("default_currency")
-  adminEditHistory      Json?     @map("admin_edit_history")
-  cnae                  String?
-  cnaeCode              String?   @map("cnae_code")
-  cnaeText              String?   @map("cnae_text")
-  legalForm             String?   @map("legal_form")
-  status                String?
-  website               String?
-  capitalSocial         Decimal?  @map("capital_social")
-  incorporationDate     DateTime? @map("incorporation_date") @db.Date
-  address               String?
-  postalCode            String?   @map("postal_code")
-  city                  String?
-  province              String?
-  country               String?
-  representative        String?
-  representativeRole    String?   @map("representative_role")
-  email                 String?
-  phone                 String?
-  employees             Int?
-  sales                 Decimal?
-  salesYear             Int?      @map("sales_year")
-  lastBalanceDate       DateTime? @map("last_balance_date") @db.Date
-  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  source             String    @default("manual")
+  sourceId           String?   @map("source_id")
+  taxId              String?   @map("tax_id")
+  legalName          String?   @map("legal_name")
+  tradeName          String?   @map("trade_name")
+  fiscalAddress      Json?     @map("fiscal_address")
+  taxRegime          String?   @map("tax_regime")
+  defaultCurrency    String    @default("EUR") @map("default_currency")
+  adminEditHistory   Json?     @map("admin_edit_history")
+  cnae               String?
+  cnaeCode           String?   @map("cnae_code")
+  cnaeText           String?   @map("cnae_text")
+  legalForm          String?   @map("legal_form")
+  status             String?
+  website            String?
+  capitalSocial      Decimal?  @map("capital_social")
+  incorporationDate  DateTime? @map("incorporation_date") @db.Date
+  address            String?
+  postalCode         String?   @map("postal_code")
+  city               String?
+  province           String?
+  country            String?
+  representative     String?
+  representativeRole String?   @map("representative_role")
+  email              String?
+  phone              String?
+  employees          Int?
+  sales              Decimal?
+  salesYear          Int?      @map("sales_year")
+  lastBalanceDate    DateTime? @map("last_balance_date") @db.Date
+  updatedAt          DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("tenant_profiles")
 }
@@ -1127,15 +1127,15 @@ model WhatsAppEvent {
 }
 
 model WhatsAppTemplate {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   @unique
-  category    String   @default("general")
-  language    String   @default("es")
-  body        String
-  variables   Json?
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String   @unique
+  category  String   @default("general")
+  language  String   @default("es")
+  body      String
+  variables Json?
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@index([category, isActive])
   @@index([language])
@@ -1436,8 +1436,8 @@ model ExpenseRecord {
   createdAt                 DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                 DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  supplier Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  tenant                   Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  supplier                 Supplier?                 @relation(fields: [supplierId], references: [id], onDelete: SetNull)
   seTransactionMatchAudits SeTransactionMatchAudit[]
 
   @@index([tenantId])
@@ -1498,9 +1498,9 @@ model ExternalConnection {
   createdAt               DateTime         @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime         @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant                Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  connectedByUser       User?                        @relation("ExternalConnectionConnectedByUser", fields: [connectedByUserId], references: [id], onDelete: SetNull)
-  technicalOperatorUser User?                        @relation("ExternalConnectionTechnicalOperatorUser", fields: [technicalOperatorUserId], references: [id], onDelete: SetNull)
+  tenant                Tenant                         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connectedByUser       User?                          @relation("ExternalConnectionConnectedByUser", fields: [connectedByUserId], references: [id], onDelete: SetNull)
+  technicalOperatorUser User?                          @relation("ExternalConnectionTechnicalOperatorUser", fields: [technicalOperatorUserId], references: [id], onDelete: SetNull)
   auditLogs             ExternalConnectionAuditLog[]
   syncRuns              ExternalSyncRun[]
   recipients            ConnectionRecipient[]
@@ -1888,6 +1888,42 @@ model IsaakMemoryFact {
   @@map("isaak_memory_facts")
 }
 
+// ==================== ISAAK: CHAT METRICS (F1) ====================
+
+model IsaakChatMetric {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String? @map("tenant_id") @db.Uuid
+  userId         String? @map("user_id")
+  conversationId String? @map("conversation_id") @db.Uuid
+  messageId      String? @map("message_id") @db.Uuid
+
+  provider  String
+  modelUsed String  @map("model_used")
+  feature   String?
+
+  inputTokens      Int     @default(0) @map("input_tokens")
+  outputTokens     Int     @default(0) @map("output_tokens")
+  estimatedCostEur Decimal @default(0) @map("estimated_cost_eur") @db.Decimal(12, 8)
+
+  latencyMs    Int  @default(0) @map("latency_ms")
+  firstTokenMs Int? @map("first_token_ms")
+
+  toolCallsCount Int      @default(0) @map("tool_calls_count")
+  toolNames      String[] @default([]) @map("tool_names")
+
+  isClarification Boolean @default(false) @map("is_clarification")
+  isFallback      Boolean @default(false) @map("is_fallback")
+  historyTurns    Int     @default(0) @map("history_turns")
+
+  errorCode String?  @map("error_code")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([tenantId, createdAt])
+  @@index([conversationId, createdAt])
+  @@index([modelUsed, createdAt])
+  @@map("isaak_chat_metrics")
+}
+
 // ==================== ISAAK: GOOGLE TOKENS ====================
 
 model IsaakGoogleToken {
@@ -2012,9 +2048,9 @@ model IsaakPushPreferences {
   id                    String   @id @default(cuid())
   tenantId              String   @map("tenant_id") @db.Uuid
   userId                String   @map("user_id") @db.Uuid
-  alertaFiscal          Boolean  @default(true)  @map("alerta_fiscal")
-  documentoSinConciliar Boolean  @default(true)  @map("documento_sin_conciliar")
-  avisoProactivoIsaak   Boolean  @default(true)  @map("aviso_proactivo_isaak")
+  alertaFiscal          Boolean  @default(true) @map("alerta_fiscal")
+  documentoSinConciliar Boolean  @default(true) @map("documento_sin_conciliar")
+  avisoProactivoIsaak   Boolean  @default(true) @map("aviso_proactivo_isaak")
   updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -2027,14 +2063,14 @@ model IsaakPushPreferences {
 // ==================== GOCARDLESS ====================
 
 model GcMandate {
-  id          String   @id          // GoCardless mandate ID (MDxxxxxxxxx)
-  tenantId    String   @map("tenant_id") @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  gcCustomerId String  @map("gc_customer_id")
-  status      String   @default("pending_submission") @map("status")
-  scheme      String   @default("sepa_core")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+  id           String   @id // GoCardless mandate ID (MDxxxxxxxxx)
+  tenantId     String   @map("tenant_id") @db.Uuid
+  userId       String   @map("user_id") @db.Uuid
+  gcCustomerId String   @map("gc_customer_id")
+  status       String   @default("pending_submission") @map("status")
+  scheme       String   @default("sepa_core")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   payments GcPayment[]
@@ -2045,17 +2081,17 @@ model GcMandate {
 }
 
 model GcPayment {
-  id          String   @id          // GoCardless payment ID (PMxxxxxxxxx)
+  id          String   @id // GoCardless payment ID (PMxxxxxxxxx)
   tenantId    String   @map("tenant_id") @db.Uuid
   mandateId   String   @map("mandate_id")
   amountCents Int      @map("amount_cents")
   currency    String   @default("EUR")
-  chargeDate  String   @map("charge_date")    // YYYY-MM-DD
+  chargeDate  String   @map("charge_date") // YYYY-MM-DD
   status      String   @default("pending_submission")
   description String?
   reference   String?
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant  Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   mandate GcMandate @relation(fields: [mandateId], references: [id])
@@ -2068,35 +2104,35 @@ model GcPayment {
 // ==================== SALTEDGE (Open Banking / PSD2) ====================
 
 model SeCustomer {
-  id         String   @id          // Salt Edge customer ID (customer_id en v6)
+  id         String   @id // Salt Edge customer ID (customer_id en v6)
   tenantId   String   @unique @map("tenant_id") @db.Uuid
-  identifier String   @unique      // nuestro identificador (tenant ID como string)
-  secret     String?               // deprecado en v6 — ya no se usa Customer-secret header
+  identifier String   @unique // nuestro identificador (tenant ID como string)
+  secret     String? // deprecado en v6 — ya no se usa Customer-secret header
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant      Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   connections SeConnection[]
 
   @@map("se_customers")
 }
 
 model SeConnection {
-  id           String   @id          // Salt Edge connection ID or GoCardless BAD requisition ID
-  tenantId     String   @map("tenant_id") @db.Uuid
-  seCustomerId String?  @map("se_customer_id")  // null for GoCardless BAD connections
-  providerCode String   @map("provider_code")
-  providerName String   @map("provider_name")
-  countryCode  String   @default("ES") @map("country_code")
-  status       String   @default("pending")
-  provider     String   @default("saltedge")  // 'saltedge' | 'gcbd' | 'enablebanking'
+  id           String    @id // Salt Edge connection ID or GoCardless BAD requisition ID
+  tenantId     String    @map("tenant_id") @db.Uuid
+  seCustomerId String?   @map("se_customer_id") // null for GoCardless BAD connections
+  providerCode String    @map("provider_code")
+  providerName String    @map("provider_name")
+  countryCode  String    @default("ES") @map("country_code")
+  status       String    @default("pending")
+  provider     String    @default("saltedge") // 'saltedge' | 'gcbd' | 'enablebanking'
   lastSyncAt   DateTime? @map("last_sync_at") @db.Timestamptz
   expiresAt    DateTime? @map("expires_at") @db.Timestamptz
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant     Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  customer   SeCustomer?   @relation(fields: [seCustomerId], references: [id])
-  accounts   SeAccount[]
+  tenant   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer SeCustomer? @relation(fields: [seCustomerId], references: [id])
+  accounts SeAccount[]
 
   @@index([tenantId])
   @@index([tenantId, provider])
@@ -2104,7 +2140,7 @@ model SeConnection {
 }
 
 model SeAccount {
-  id           String   @id          // Salt Edge account ID
+  id           String   @id // Salt Edge account ID
   tenantId     String   @map("tenant_id") @db.Uuid
   connectionId String   @map("connection_id")
   name         String
@@ -2114,10 +2150,10 @@ model SeAccount {
   iban         String?
   status       String   @default("active")
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  connection   SeConnection   @relation(fields: [connectionId], references: [id])
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connection   SeConnection    @relation(fields: [connectionId], references: [id])
   transactions SeTransaction[]
 
   @@index([tenantId])
@@ -2126,25 +2162,25 @@ model SeAccount {
 }
 
 model SeTransaction {
-  id           String   @id          // Salt Edge transaction ID
-  tenantId     String   @map("tenant_id") @db.Uuid
-  accountId    String   @map("account_id")
-  status       String   @default("posted") // posted | pending
-  madeOn       String   @map("made_on")    // YYYY-MM-DD
-  amount       Decimal  @db.Decimal(18, 2) // negativo = gasto
-  currency     String   @default("EUR")
+  id           String    @id // Salt Edge transaction ID
+  tenantId     String    @map("tenant_id") @db.Uuid
+  accountId    String    @map("account_id")
+  status       String    @default("posted") // posted | pending
+  madeOn       String    @map("made_on") // YYYY-MM-DD
+  amount       Decimal   @db.Decimal(18, 2) // negativo = gasto
+  currency     String    @default("EUR")
   description  String
-  category     String   @default("uncategorized")
+  category     String    @default("uncategorized")
   payee        String?
   payer        String?
-  duplicated   Boolean  @default(false)
+  duplicated   Boolean   @default(false)
   reconciledAt DateTime? @map("reconciled_at") @db.Timestamptz
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt    DateTime @updatedAt  @map("updated_at") @db.Timestamptz
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant        Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  account       SeAccount                     @relation(fields: [accountId], references: [id])
-  matchAudits   SeTransactionMatchAudit[]
+  tenant      Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  account     SeAccount                 @relation(fields: [accountId], references: [id])
+  matchAudits SeTransactionMatchAudit[]
 
   @@index([tenantId])
   @@index([accountId])
@@ -2155,16 +2191,16 @@ model SeTransaction {
 // ==================== BANK RECONCILIATION CONFIG ====================
 
 model BankReconciliationConfig {
-  tenantId            String  @id @map("tenant_id") @db.Uuid
-  tenant              Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String @id @map("tenant_id") @db.Uuid
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   amountToleranceEur  Decimal @default(1.00) @map("amount_tolerance_eur") @db.Decimal(10, 2)
-  dateWindowDays      Int     @default(3)    @map("date_window_days")
+  dateWindowDays      Int     @default(3) @map("date_window_days")
   confidenceThreshold Float   @default(0.85) @map("confidence_threshold")
   autoMatchEnabled    Boolean @default(true) @map("auto_match_enabled")
 
-  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt           DateTime @updatedAt      @map("updated_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@map("bank_reconciliation_configs")
 }
@@ -2172,20 +2208,20 @@ model BankReconciliationConfig {
 // ==================== BANK RECONCILIATION AUDIT ====================
 
 model SeTransactionMatchAudit {
-  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId              String   @map("tenant_id") @db.Uuid
-  seTransactionId       String   @map("se_transaction_id")
-  matchedExpenseId      String?  @map("matched_expense_id") @db.Uuid
-  matchScore            Float    @map("match_score")
-  scoreComponents       Json     @map("score_components") // { amountScore, dateScore, textScore, amountMatch?, dateMatch?, textSimilarity? }
-  evidenceReasons       Json     @map("evidence_reasons") // array of reason strings
-  autoMatched           Boolean  @map("auto_matched")
-  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId         String   @map("tenant_id") @db.Uuid
+  seTransactionId  String   @map("se_transaction_id")
+  matchedExpenseId String?  @map("matched_expense_id") @db.Uuid
+  matchScore       Float    @map("match_score")
+  scoreComponents  Json     @map("score_components") // { amountScore, dateScore, textScore, amountMatch?, dateMatch?, textSimilarity? }
+  evidenceReasons  Json     @map("evidence_reasons") // array of reason strings
+  autoMatched      Boolean  @map("auto_matched")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant               Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  seTransaction        SeTransaction       @relation(fields: [seTransactionId], references: [id], onDelete: Cascade)
-  matchedExpense       ExpenseRecord?      @relation(fields: [matchedExpenseId], references: [id], onDelete: SetNull)
+  tenant         Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  seTransaction  SeTransaction  @relation(fields: [seTransactionId], references: [id], onDelete: Cascade)
+  matchedExpense ExpenseRecord? @relation(fields: [matchedExpenseId], references: [id], onDelete: SetNull)
 
   @@index([tenantId])
   @@index([seTransactionId])
@@ -2197,26 +2233,26 @@ model SeTransactionMatchAudit {
 // ==================== DEMO REQUESTS ====================
 
 model DemoRequest {
-  id          String            @id @default(cuid())
-  createdAt   DateTime          @default(now()) @map("created_at")
-  updatedAt   DateTime          @updatedAt @map("updated_at")
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   name        String
   email       String
   phone       String?
-  companyName String            @map("company_name")
-  taxId       String?           @map("tax_id")
+  companyName String  @map("company_name")
+  taxId       String? @map("tax_id")
   role        String?
-  usesHolded  Boolean           @default(false) @map("uses_holded")
+  usesHolded  Boolean @default(false) @map("uses_holded")
   objective   String?
 
-  source      String?
-  consent     Boolean           @default(false)
+  source  String?
+  consent Boolean @default(false)
 
-  status      DemoRequestStatus @default(PENDING)
-  notes       String?
+  status DemoRequestStatus @default(PENDING)
+  notes  String?
 
-  metadataJson Json?            @map("metadata_json")
+  metadataJson Json? @map("metadata_json")
 
   @@index([status])
   @@index([createdAt])
@@ -2226,18 +2262,18 @@ model DemoRequest {
 // ==================== ISAAK PLATFORM ====================
 
 model IsaakProposedAction {
-  id          String    @id @default(cuid())
-  tenantId    String    @map("tenant_id") @db.Uuid
-  proposedBy  String    @map("proposed_by")
-  type        String
-  status      String    @default("pending")
-  payload     Json
-  reason      String?
-  riskLevel   String    @default("medium") @map("risk_level")
-  expiresAt   DateTime? @map("expires_at") @db.Timestamptz
-  executedAt  DateTime? @map("executed_at") @db.Timestamptz
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  id         String    @id @default(cuid())
+  tenantId   String    @map("tenant_id") @db.Uuid
+  proposedBy String    @map("proposed_by")
+  type       String
+  status     String    @default("pending")
+  payload    Json
+  reason     String?
+  riskLevel  String    @default("medium") @map("risk_level")
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz
+  executedAt DateTime? @map("executed_at") @db.Timestamptz
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
@@ -2321,7 +2357,7 @@ model HoldedMcpPersonalAccessToken {
   id              String    @id @default(cuid())
   tenantId        String    @map("tenant_id") @db.Uuid
   createdByUserId String    @map("created_by_user_id")
-  connectionId   String?   @map("connection_id") @db.Uuid
+  connectionId    String?   @map("connection_id") @db.Uuid
   /// Channel this PAT was issued for. Mirrors ExternalConnection.channelKey.
   /// Allowed values: "chatgpt", "claude", "dashboard".
   channelKey      String    @default("chatgpt") @map("channel_key")
@@ -2337,8 +2373,8 @@ model HoldedMcpPersonalAccessToken {
   createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant     Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  connection ExternalConnection? @relation(fields: [connectionId], references: [id], onDelete: SetNull)
+  tenant     Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connection ExternalConnection?    @relation(fields: [connectionId], references: [id], onDelete: SetNull)
   auditLogs  HoldedMcpPatAuditLog[]
 
   @@unique([tenantId, name])
@@ -2350,20 +2386,20 @@ model HoldedMcpPersonalAccessToken {
 /// Audit log for HoldedMcpPersonalAccessToken usage. Lightweight — captures the
 /// minimum needed for security review (created/used/revoked, IP, tool name).
 model HoldedMcpPatAuditLog {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id") @db.Uuid
-  patId       String?  @map("pat_id")
+  id        String   @id @default(cuid())
+  tenantId  String   @map("tenant_id") @db.Uuid
+  patId     String?  @map("pat_id")
   /// Event type: "created" | "used" | "revoked" | "rejected"
-  event       String
-  channel     String?
-  toolName    String?  @map("tool_name")
-  status      Int?
-  ip          String?
-  userAgent   String?  @map("user_agent")
-  meta        Json?
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  event     String
+  channel   String?
+  toolName  String?  @map("tool_name")
+  status    Int?
+  ip        String?
+  userAgent String?  @map("user_agent")
+  meta      Json?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant Tenant                       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant Tenant                        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   pat    HoldedMcpPersonalAccessToken? @relation(fields: [patId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, createdAt])
@@ -2403,20 +2439,20 @@ model ConnectorHealthCheck {
 }
 
 model AdvisorClient {
-  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  advisorTenantId String   @map("advisor_tenant_id") @db.Uuid
-  advisorTenant   Tenant   @relation(fields: [advisorTenantId], references: [id], onDelete: Cascade)
+  id              String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  advisorTenantId String @map("advisor_tenant_id") @db.Uuid
+  advisorTenant   Tenant @relation(fields: [advisorTenantId], references: [id], onDelete: Cascade)
 
   alias           String
-  companyName     String?  @map("company_name")
+  companyName     String? @map("company_name")
   nif             String?
-  holdedApiKeyEnc String?  @map("holded_api_key_enc") @db.Text
-  holdedKeyMasked String?  @map("holded_key_masked")
-  notes           String?  @db.Text
-  isActive        Boolean  @default(true) @map("is_active")
+  holdedApiKeyEnc String? @map("holded_api_key_enc") @db.Text
+  holdedKeyMasked String? @map("holded_key_masked")
+  notes           String? @db.Text
+  isActive        Boolean @default(true) @map("is_active")
 
-  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@index([advisorTenantId, isActive])
   @@map("advisor_clients")

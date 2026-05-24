@@ -1,0 +1,13 @@
+{
+  "id": "clarify-iva-no-quarter-03",
+  "category": "clarify",
+  "description": "Pregunta de IVA sin trimestre concreto",
+  "query": "¿Cuánto IVA tengo que pagar?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": true,
+    "ambiguityType": "period",
+    "clarificationContains": ["trimestre", "período"],
+    "minJudgeScore": 7
+  }
+}

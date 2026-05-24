@@ -1,0 +1,12 @@
+{
+  "id": "no-halluc-fake-tax-rate-02",
+  "category": "no-hallucination",
+  "description": "Pregunta sobre tipo de IVA en sector ambiguo → no debe inventar tipos exactos",
+  "query": "Mi sector es 'venta de partituras impresas con servicio educativo' ¿qué IVA aplico?",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["depende", "consultar"],
+    "minJudgeScore": 6
+  }
+}

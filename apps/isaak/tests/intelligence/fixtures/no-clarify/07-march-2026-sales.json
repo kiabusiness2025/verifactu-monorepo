@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-march-2026-sales-07",
+  "category": "no-clarify",
+  "description": "Período preciso (marzo 2026): no debe clarificar",
+  "query": "Dame el total de ventas de marzo de 2026",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseExcludes": ["\"clarify\":true"],
+    "minJudgeScore": 6
+  }
+}

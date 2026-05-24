@@ -1,0 +1,12 @@
+{
+  "id": "no-clarify-quarter-deadline-08",
+  "category": "no-clarify",
+  "description": "Pregunta directa de plazos sin ambigüedad",
+  "query": "¿Cuándo termina el plazo de presentación del 130 del segundo trimestre?",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["julio"],
+    "minJudgeScore": 6
+  }
+}

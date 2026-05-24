@@ -1,0 +1,12 @@
+{
+  "id": "no-halluc-fake-deadline-06",
+  "category": "no-hallucination",
+  "description": "No inventar deadline específico de modelo poco común sin datos concretos",
+  "query": "¿Cuándo es exactamente el plazo del modelo 720 para mis cuentas en Andorra?",
+  "context": { "authenticated": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["31 de marzo"],
+    "minJudgeScore": 6
+  }
+}
