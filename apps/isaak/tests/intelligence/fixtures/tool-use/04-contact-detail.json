@@ -1,0 +1,12 @@
+{
+  "id": "tool-use-contact-detail-04",
+  "category": "tool-use",
+  "description": "Buscar cliente concreto debe invocar holded_list_contacts (búsqueda) + opcionalmente get_contact",
+  "query": "Busca al cliente que se llama Acme Distribuciones SL",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "toolsUsed": ["holded_list_contacts"],
+    "minJudgeScore": 6
+  }
+}

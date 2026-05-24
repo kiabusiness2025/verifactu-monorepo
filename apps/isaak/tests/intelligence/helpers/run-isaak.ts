@@ -86,6 +86,11 @@ async function callAnthropic(input: {
 
 export type IsaakRunResult = { text: string };
 
+export type IsaakToolCallSnapshot = {
+  text: string;
+  toolUses: Array<{ name: string; input: Record<string, unknown> }>;
+};
+
 export async function runIsaakSingleTurn(input: {
   query: string;
   context?: GoldenContext;
@@ -103,6 +108,62 @@ export async function runIsaakSingleTurn(input: {
   ];
 
   return callAnthropic({ systemPrompt, messages });
+}
+
+type AnthropicTool = {
+  name: string;
+  description?: string;
+  input_schema: Record<string, unknown>;
+};
+
+// Single-turn snapshot WITH tools. Returns whatever tool_use blocks the model
+// selected on its first response; doesn't execute them. Used to verify tool
+// selection for a given query without hitting Holded/banking APIs.
+export async function snapshotIsaakToolSelection(input: {
+  query: string;
+  context?: GoldenContext;
+  tools: AnthropicTool[];
+}): Promise<IsaakToolCallSnapshot> {
+  const ctx = buildContextForFixture(input.context);
+  const systemPrompt = buildAuthenticatedSystemPrompt(ctx);
+
+  const response = await fetch(ANTHROPIC_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': getApiKey(),
+      'anthropic-version': ANTHROPIC_VERSION,
+    },
+    body: JSON.stringify({
+      model: DEFAULT_MODEL,
+      max_tokens: 800,
+      temperature: 0.45,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: input.query }],
+      tools: input.tools,
+      tool_choice: { type: 'auto' },
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    throw new Error(`Anthropic ${response.status}: ${body.slice(0, 200)}`);
+  }
+
+  const data = (await response.json()) as {
+    content?: Array<{
+      type: string;
+      text?: string;
+      name?: string;
+      input?: Record<string, unknown>;
+    }>;
+  };
+  const text = data.content?.find((b) => b.type === 'text')?.text ?? '';
+  const toolUses =
+    data.content
+      ?.filter((b) => b.type === 'tool_use' && b.name)
+      .map((b) => ({ name: b.name as string, input: b.input ?? {} })) ?? [];
+  return { text, toolUses };
 }
 
 export async function runIsaakMultiTurn(input: {

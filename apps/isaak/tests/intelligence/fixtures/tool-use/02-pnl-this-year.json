@@ -1,0 +1,12 @@
+{
+  "id": "tool-use-pnl-02",
+  "category": "tool-use",
+  "description": "Pregunta de P&L debe invocar holded_get_pnl",
+  "query": "¿Cómo va el resultado contable este año?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "toolsUsed": ["holded_get_pnl"],
+    "minJudgeScore": 7
+  }
+}
