@@ -13,7 +13,6 @@ import {
   ChevronRight,
   ChevronUp,
   CreditCard,
-  Database,
   ExternalLink,
   FileBarChart2,
   Landmark,
@@ -103,7 +102,6 @@ const PROFILE_CONFIG = [
 
 // ── Profile popover — Integraciones y herramientas ────────────────────────
 const PROFILE_TOOLS = [
-  { href: '/settings?section=connections', label: 'Holded ERP', icon: Database },
   { href: '/integrations', label: 'Integraciones', icon: Plug },
   { href: '/microsoft', label: 'Microsoft 365', icon: Monitor },
   { href: '/mail', label: 'Gmail Facturas', icon: Mail },
