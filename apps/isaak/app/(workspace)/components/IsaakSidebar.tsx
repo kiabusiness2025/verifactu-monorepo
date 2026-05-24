@@ -279,7 +279,7 @@ export default function IsaakSidebar({
             {/* group divider + optional label */}
             {gi > 0 && (
               <div className={`my-1.5 ${collapsed ? 'mx-1' : 'mx-1'}`}>
-                {!collapsed && group.label ? (
+                {'label' in group && !collapsed && group.label ? (
                   <span className="block px-1.5 pb-0.5 pt-1 text-[9px] font-semibold uppercase tracking-widest text-slate-600">
                     {group.label}
                   </span>
