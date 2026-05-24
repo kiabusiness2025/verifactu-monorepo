@@ -35,6 +35,7 @@ import {
   resolveModelForPlan,
 } from '@/app/lib/isaak-chat-context';
 import { streamIsaakChat, type ChatStreamMetrics } from '@/app/lib/isaak-chat-stream';
+import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -137,17 +138,23 @@ export async function POST(req: NextRequest) {
     }).catch(() => null);
   }
 
-  // Classifier first — clarify path short-circuits without streaming Sonnet.
-  const classification = await classifyIntent({
-    message,
-    history,
-    context: {
-      holdedConnected: authenticated.toolContext.holdedConnected,
-      bankConnected: authenticated.toolContext.bankConnected,
-      googleConnected: authenticated.toolContext.googleConnected,
-      microsoftConnected: authenticated.toolContext.microsoftConnected,
-    },
-  });
+  // F6b: classifier + RAG retrieval run in parallel.
+  const [classification, ragResult] = await Promise.all([
+    classifyIntent({
+      message,
+      history,
+      context: {
+        holdedConnected: authenticated.toolContext.holdedConnected,
+        bankConnected: authenticated.toolContext.bankConnected,
+        googleConnected: authenticated.toolContext.googleConnected,
+        microsoftConnected: authenticated.toolContext.microsoftConnected,
+      },
+    }),
+    retrieveFactsForChat({
+      tenantId: authenticated.session.tenantId,
+      queryText: message,
+    }),
+  ]);
 
   const persistAndMetric = async (input: {
     text: string;
@@ -195,6 +202,9 @@ export async function POST(req: NextRequest) {
       judgeBlocks: input.metrics?.judgeBlocks ?? 0,
       judgeLatencyMs: input.metrics?.judgeTotalLatencyMs ?? null,
       writeTools: input.metrics?.writeToolNames ?? [],
+      factsRetrieved: ragResult.factsRetrieved,
+      ragLatencyMs: ragResult.latencyMs,
+      ragTopSimilarity: ragResult.topSimilarity,
     }).catch((err) => {
       console.error('[Isaak Chat Stream] recordChatMetric failed', err);
     });
@@ -239,7 +249,9 @@ export async function POST(req: NextRequest) {
   }
 
   const { stream, metricsPromise } = streamIsaakChat({
-    systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext),
+    systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext, {
+      factsBlock: ragResult.factsBlock,
+    }),
     history,
     userMessage: message,
     tools,
