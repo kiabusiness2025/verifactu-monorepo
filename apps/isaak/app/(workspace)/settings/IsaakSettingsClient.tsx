@@ -11,16 +11,23 @@ import {
   CheckCircle2,
   Code2,
   CreditCard,
+  Crown,
   ExternalLink,
   LifeBuoy,
   Loader2,
+  Mail,
   MessageCircle,
   PlugZap,
   RefreshCcw,
+  Shield,
   Sparkles,
+  Trash2,
   Unplug,
   UserCircle2,
+  UserMinus,
+  UserPlus,
   Users,
+  X,
 } from 'lucide-react';
 
 type SettingsData = {
@@ -96,6 +103,21 @@ type SettingsData = {
   team: {
     enabled: boolean;
     activeMembers: number;
+    maxSeats: number;
+    planCode: string;
+    canManage: boolean;
+    members: Array<{
+      id: string;
+      userId: string;
+      name: string | null;
+      email: string | null;
+      image: string | null;
+      role: string;
+      status: string;
+      createdAt: string;
+      confirmedAt: string | null;
+      isCurrentUser: boolean;
+    }>;
   };
 };
 
@@ -616,6 +638,15 @@ export default function IsaakSettingsClient({
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCompanyLogo, setUploadingCompanyLogo] = useState(false);
 
+  // Team management state
+  const [teamMembers, setTeamMembers] = useState(settingsData.team.members);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState<'member' | 'admin'>('member');
+  const [inviteSending, setInviteSending] = useState(false);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+
   useEffect(() => {
     if (activeSection !== 'billing') return;
     if (billing.invoices.length > 0) return;
@@ -688,6 +719,65 @@ export default function IsaakSettingsClient({
       throw err;
     } finally {
       setSavingSection(null);
+    }
+  }
+
+  async function sendTeamInvite() {
+    if (!inviteEmail.trim()) return;
+    setInviteSending(true);
+    setInviteSuccess(null);
+    setInviteError(null);
+    try {
+      const res = await fetch('/api/team/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: inviteEmail.trim(), role: inviteRole }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        setInviteError(data?.error || 'No se pudo enviar la invitación.');
+        return;
+      }
+      setInviteSuccess(`Invitación enviada a ${inviteEmail.trim()}.`);
+      setInviteEmail('');
+      // Optimistic: add invited member to list
+      setTeamMembers((prev) => [
+        ...prev,
+        {
+          id: data.membershipId as string,
+          userId: '',
+          name: null,
+          email: inviteEmail.trim(),
+          image: null,
+          role: inviteRole,
+          status: 'invited',
+          createdAt: new Date().toISOString(),
+          confirmedAt: null,
+          isCurrentUser: false,
+        },
+      ]);
+    } catch {
+      setInviteError('No se pudo enviar la invitación.');
+    } finally {
+      setInviteSending(false);
+    }
+  }
+
+  async function removeMember(membershipId: string) {
+    if (!confirm('¿Eliminar este miembro del espacio de trabajo?')) return;
+    setRemovingMemberId(membershipId);
+    try {
+      const res = await fetch(`/api/team/members/${membershipId}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        setInviteError(data?.error || 'No se pudo eliminar el miembro.');
+        return;
+      }
+      setTeamMembers((prev) => prev.filter((m) => m.id !== membershipId));
+    } catch {
+      setInviteError('No se pudo eliminar el miembro.');
+    } finally {
+      setRemovingMemberId(null);
     }
   }
 
@@ -967,9 +1057,9 @@ export default function IsaakSettingsClient({
                       {item.label}
                     </span>
                     <span className="flex items-center gap-1.5">
-                      {item.key === 'team' && !settingsData.team.enabled ? (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-500">
-                          Pronto
+                      {item.key === 'team' && settingsData.team.members.length > 1 ? (
+                        <span className="rounded-full bg-[#2361d8]/10 px-2 py-0.5 text-[11px] font-medium text-[#2361d8]">
+                          {settingsData.team.members.filter((m) => m.status === 'active').length}
                         </span>
                       ) : null}
                       {item.external ? <ExternalLink className="h-3 w-3 text-slate-400" /> : null}
@@ -1633,16 +1723,217 @@ export default function IsaakSettingsClient({
             ) : null}
 
             {activeSection === 'team' ? (
-              <section className="mt-6 rounded-[1.6rem] border border-slate-200 bg-slate-50/70 p-5">
-                <div className="text-lg font-semibold text-slate-950">Equipo</div>
-                <div className="mt-5 rounded-[1.5rem] border border-dashed border-slate-200 bg-white px-5 py-6">
-                  <div className="text-sm font-semibold text-slate-950">
-                    {settingsData.team.activeMembers} usuarios activos en este espacio
-                  </div>
-                  <div className="mt-2 text-sm text-slate-500">
-                    Invitaciones, cambios de rol y bajas llegaran en la siguiente fase.
+              <section className="mt-6 space-y-4">
+                {/* Header */}
+                <div className="rounded-[1.6rem] border border-slate-200 bg-slate-50/70 p-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="text-lg font-semibold text-slate-950">Equipo</div>
+                      <div className="mt-0.5 text-sm text-slate-500">
+                        {teamMembers.filter((m) => m.status === 'active').length} de{' '}
+                        {settingsData.team.maxSeats === -1
+                          ? 'ilimitados'
+                          : settingsData.team.maxSeats}{' '}
+                        usuarios activos
+                      </div>
+                    </div>
+                    {settingsData.team.maxSeats !== -1 && (
+                      <div className="h-2 w-24 overflow-hidden rounded-full bg-slate-200">
+                        <div
+                          className="h-full rounded-full bg-[#2361d8] transition-all"
+                          style={{
+                            width: `${Math.min(100, (teamMembers.filter((m) => m.status === 'active').length / settingsData.team.maxSeats) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Invite form (admins only) */}
+                {settingsData.team.canManage && (
+                  <div className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
+                    <div className="text-sm font-semibold text-slate-950">Invitar miembro</div>
+                    <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+                      <div className="relative flex-1">
+                        <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                        <input
+                          type="email"
+                          placeholder="email@empresa.com"
+                          value={inviteEmail}
+                          onChange={(e) => {
+                            setInviteEmail(e.target.value);
+                            setInviteError(null);
+                            setInviteSuccess(null);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') void sendTeamInvite();
+                          }}
+                          className="w-full rounded-full border border-slate-200 bg-slate-50 py-2 pl-9 pr-4 text-sm text-slate-900 placeholder-slate-400 focus:border-[#2361d8] focus:bg-white focus:outline-none focus:ring-1 focus:ring-[#2361d8]"
+                        />
+                      </div>
+                      <select
+                        value={inviteRole}
+                        onChange={(e) => setInviteRole(e.target.value as 'member' | 'admin')}
+                        className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-700 focus:border-[#2361d8] focus:outline-none"
+                      >
+                        <option value="member">Miembro</option>
+                        <option value="admin">Administrador</option>
+                      </select>
+                      <button
+                        type="button"
+                        disabled={inviteSending || !inviteEmail.trim()}
+                        onClick={() => void sendTeamInvite()}
+                        className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-5 py-2 text-sm font-semibold text-white transition hover:bg-[#1d55c2] disabled:opacity-60"
+                      >
+                        {inviteSending ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <UserPlus className="h-4 w-4" />
+                        )}
+                        Invitar
+                      </button>
+                    </div>
+                    {inviteSuccess && (
+                      <div className="mt-2 flex items-center gap-1.5 text-sm text-emerald-600">
+                        <CheckCircle2 className="h-4 w-4" />
+                        {inviteSuccess}
+                      </div>
+                    )}
+                    {inviteError && (
+                      <div className="mt-2 text-sm text-rose-600">{inviteError}</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Member list */}
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white">
+                  {teamMembers.length === 0 ? (
+                    <div className="px-5 py-8 text-center text-sm text-slate-500">
+                      Aún no hay miembros en este espacio.
+                    </div>
+                  ) : (
+                    <ul className="divide-y divide-slate-100">
+                      {teamMembers.map((member, idx) => {
+                        const initials = (
+                          member.name?.charAt(0) ||
+                          member.email?.charAt(0) ||
+                          '?'
+                        ).toUpperCase();
+                        const isRemoving = removingMemberId === member.id;
+                        const isPending = member.status === 'invited';
+                        return (
+                          <li
+                            key={member.id}
+                            className={`flex items-center gap-3 px-5 py-3.5 ${idx === 0 ? 'rounded-t-[1.6rem]' : ''} ${idx === teamMembers.length - 1 ? 'rounded-b-[1.6rem]' : ''}`}
+                          >
+                            {/* Avatar */}
+                            {member.image ? (
+                              <Image
+                                src={member.image}
+                                alt={member.name ?? ''}
+                                width={36}
+                                height={36}
+                                className="h-9 w-9 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[#2361d8]/10 text-sm font-semibold text-[#2361d8]">
+                                {initials}
+                              </div>
+                            )}
+                            {/* Info */}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <span className="truncate text-sm font-semibold text-slate-900">
+                                  {member.name ?? member.email ?? 'Desconocido'}
+                                </span>
+                                {member.isCurrentUser && (
+                                  <span className="rounded-full bg-[#2361d8]/10 px-2 py-0.5 text-[11px] font-medium text-[#2361d8]">
+                                    Tú
+                                  </span>
+                                )}
+                                {isPending && (
+                                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                                    Pendiente
+                                  </span>
+                                )}
+                              </div>
+                              {member.name && member.email ? (
+                                <div className="truncate text-xs text-slate-400">{member.email}</div>
+                              ) : null}
+                            </div>
+                            {/* Role badge */}
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              {member.role === 'owner' && (
+                                <span className="flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-700">
+                                  <Crown className="h-3 w-3" />
+                                  Propietario
+                                </span>
+                              )}
+                              {(member.role === 'admin' || member.role === 'company_admin') && (
+                                <span className="flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 text-[11px] font-semibold text-violet-700">
+                                  <Shield className="h-3 w-3" />
+                                  Admin
+                                </span>
+                              )}
+                              {member.role === 'member' && (
+                                <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-600">
+                                  Miembro
+                                </span>
+                              )}
+                            </div>
+                            {/* Remove action */}
+                            {settingsData.team.canManage &&
+                              !member.isCurrentUser &&
+                              member.role !== 'owner' && (
+                                <button
+                                  type="button"
+                                  disabled={isRemoving}
+                                  onClick={() => void removeMember(member.id)}
+                                  title="Eliminar del espacio"
+                                  className="ml-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-slate-400 transition hover:bg-rose-50 hover:text-rose-500 disabled:opacity-50"
+                                >
+                                  {isRemoving ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <UserMinus className="h-4 w-4" />
+                                  )}
+                                </button>
+                              )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Upgrade CTA if at limit */}
+                {settingsData.team.maxSeats !== -1 &&
+                  teamMembers.filter((m) => m.status !== 'disabled').length >=
+                    settingsData.team.maxSeats && (
+                    <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4">
+                      <div className="text-sm font-semibold text-amber-900">
+                        Límite de usuarios alcanzado
+                      </div>
+                      <div className="mt-1 text-sm text-amber-700">
+                        Tu plan {settingsData.team.planCode} permite{' '}
+                        {settingsData.team.maxSeats} usuarios. Actualiza para añadir más.
+                      </div>
+                      <a
+                        href="/support?source=team_seats_limit"
+                        className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
+                      >
+                        <Users className="h-4 w-4" />
+                        Ampliar equipo
+                      </a>
+                    </div>
+                  )}
+
+                {/* Unused icon imports (to avoid TS unused var errors) */}
+                <span className="hidden">
+                  <Trash2 className="h-0 w-0" />
+                  <X className="h-0 w-0" />
+                </span>
               </section>
             ) : null}
 
