@@ -402,9 +402,6 @@ export default function IsaakSidebar({
                 >
                   <Icon size={13} className="shrink-0 text-slate-500" />
                   {label}
-                  {label === 'Holded ERP' && holdedConnected && (
-                    <span className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  )}
                 </Link>
               ))}
             </div>
