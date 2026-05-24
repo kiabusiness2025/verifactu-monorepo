@@ -13,6 +13,9 @@ import {
   holdedListProjects,
   holdedListTreasuryAccounts,
   holdedSendDocument,
+  holdedCreateInvoice,
+  holdedRegisterPayment,
+  holdedCreateContact,
 } from './holded-api';
 
 // Anthropic tool definitions for Isaak chat — 14 tools (10 lectura + 4 nuevas)
@@ -195,6 +198,113 @@ export const HOLDED_CHAT_TOOLS = [
     },
   },
   {
+    name: 'holded_create_invoice',
+    description:
+      'Crea una factura de venta en Holded. IMPORTANTE: antes de ejecutar, muestra al usuario el resumen (cliente, líneas, importe total con IVA) y espera su confirmación explícita. Si no sabes el contactId, usa holded_list_contacts primero para buscarlo.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        contactId: {
+          type: 'string',
+          description: 'ID del cliente en Holded (obtenerlo con holded_list_contacts si no se conoce).',
+        },
+        items: {
+          type: 'array',
+          description: 'Líneas de la factura.',
+          items: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: 'Descripción del concepto.' },
+              units: { type: 'number', description: 'Cantidad.' },
+              subtotal: { type: 'number', description: 'Precio unitario sin impuestos (€).' },
+              tax: { type: 'number', description: 'IVA en % (default 21). Usar 0 si exento.' },
+            },
+            required: ['name', 'units', 'subtotal'],
+          },
+        },
+        date: {
+          type: 'string',
+          description: 'Fecha de la factura YYYY-MM-DD. Por defecto: hoy.',
+        },
+        notes: { type: 'string', description: 'Notas o comentarios adicionales.' },
+        currency: { type: 'string', description: 'Código de moneda ISO (default EUR).' },
+        confirmed: {
+          type: 'boolean',
+          description:
+            'Debe ser true. Solo llama con confirmed=true cuando el usuario haya confirmado explícitamente los datos.',
+        },
+      },
+      required: ['contactId', 'items', 'confirmed'],
+    },
+  },
+  {
+    name: 'holded_register_payment',
+    description:
+      'Registra el cobro de una factura en Holded (la marca como pagada total o parcialmente). IMPORTANTE: confirma con el usuario el importe y la fecha antes de ejecutar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        documentId: {
+          type: 'string',
+          description: 'ID de la factura en Holded (obtenerlo con holded_list_documents).',
+        },
+        amount: {
+          type: 'number',
+          description: 'Importe del cobro en €. Normalmente el total de la factura.',
+        },
+        date: {
+          type: 'string',
+          description: 'Fecha de cobro YYYY-MM-DD. Por defecto: hoy.',
+        },
+        docType: {
+          type: 'string',
+          enum: ['invoice', 'salesreceipt', 'purchase'],
+          description: 'Tipo de documento (default invoice).',
+        },
+        accountId: {
+          type: 'string',
+          description:
+            'ID de la cuenta de tesorería donde se registra el cobro (opcional). Usar holded_list_treasury_accounts para obtener IDs.',
+        },
+        confirmed: {
+          type: 'boolean',
+          description:
+            'Debe ser true. Solo llama con confirmed=true cuando el usuario haya confirmado.',
+        },
+      },
+      required: ['documentId', 'amount', 'confirmed'],
+    },
+  },
+  {
+    name: 'holded_create_contact',
+    description:
+      'Crea un nuevo contacto (cliente o proveedor) en Holded. IMPORTANTE: muestra al usuario los datos a crear y espera confirmación antes de ejecutar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', description: 'Nombre del contacto o razón social.' },
+        email: { type: 'string', description: 'Email de contacto (opcional).' },
+        phone: { type: 'string', description: 'Teléfono (opcional).' },
+        nif: { type: 'string', description: 'NIF / CIF / NIE del contacto (opcional).' },
+        type: {
+          type: 'string',
+          enum: ['client', 'supplier', 'both'],
+          description: 'Tipo de contacto: client=cliente, supplier=proveedor, both=ambos. Default: client.',
+        },
+        address: { type: 'string', description: 'Dirección postal (opcional).' },
+        city: { type: 'string', description: 'Ciudad (opcional).' },
+        postalCode: { type: 'string', description: 'Código postal (opcional).' },
+        country: { type: 'string', description: 'País ISO 2 letras (default ES).' },
+        confirmed: {
+          type: 'boolean',
+          description:
+            'Debe ser true. Solo llama con confirmed=true cuando el usuario haya confirmado los datos.',
+        },
+      },
+      required: ['name', 'confirmed'],
+    },
+  },
+  {
     name: 'holded_send_document',
     description:
       'Envía un documento de Holded (factura, presupuesto, etc.) por email al destinatario indicado. IMPORTANTE: antes de ejecutar esta acción, confirma siempre con el usuario los datos (destinatario, documento) y espera su aprobación explícita.',
@@ -317,6 +427,115 @@ export async function executeHoldedTool(
           body: typeof input.body === 'string' ? input.body : undefined,
         });
       }
+
+      case 'holded_create_invoice': {
+        if (!input.confirmed) {
+          return {
+            error: 'confirmation_required',
+            message:
+              'Esta acción requiere confirmación explícita. Muestra al usuario el resumen de la factura (cliente, líneas, total con IVA) y espera que confirme antes de proceder.',
+          };
+        }
+        const contactId = String(input.contactId ?? '');
+        if (!contactId) {
+          return { error: 'invalid_input', message: 'Se requiere contactId. Usa holded_list_contacts para obtenerlo.' };
+        }
+        const rawItems = Array.isArray(input.items) ? input.items : [];
+        if (rawItems.length === 0) {
+          return { error: 'invalid_input', message: 'Se requiere al menos una línea de factura.' };
+        }
+        const items = rawItems.map((item) => {
+          const i = item as Record<string, unknown>;
+          return {
+            name: String(i.name ?? ''),
+            units: typeof i.units === 'number' ? i.units : 1,
+            subtotal: typeof i.subtotal === 'number' ? i.subtotal : 0,
+            tax: typeof i.tax === 'number' ? i.tax : 21,
+          };
+        });
+        const dateUnix = input.date
+          ? Math.floor(new Date(String(input.date)).getTime() / 1000)
+          : Math.floor(Date.now() / 1000);
+        const result = await holdedCreateInvoice(apiKey, {
+          contactId,
+          date: dateUnix,
+          notes: typeof input.notes === 'string' ? input.notes : undefined,
+          currency: typeof input.currency === 'string' ? input.currency : 'EUR',
+          items,
+        });
+        return {
+          success: true,
+          id: result.id,
+          docNumber: result.docNumber,
+          message: `Factura ${result.docNumber ?? result.id} creada correctamente en Holded.`,
+        };
+      }
+
+      case 'holded_register_payment': {
+        if (!input.confirmed) {
+          return {
+            error: 'confirmation_required',
+            message:
+              'Esta acción requiere confirmación explícita. Muestra al usuario el importe, la factura y la fecha de cobro, y espera que confirme.',
+          };
+        }
+        const documentId = String(input.documentId ?? '');
+        if (!documentId) {
+          return { error: 'invalid_input', message: 'Se requiere documentId.' };
+        }
+        const amount = typeof input.amount === 'number' ? input.amount : 0;
+        if (amount <= 0) {
+          return { error: 'invalid_input', message: 'El importe debe ser mayor que 0.' };
+        }
+        const dateUnix = input.date
+          ? Math.floor(new Date(String(input.date)).getTime() / 1000)
+          : Math.floor(Date.now() / 1000);
+        const result = await holdedRegisterPayment(apiKey, {
+          documentId,
+          docType: typeof input.docType === 'string' ? input.docType : 'invoice',
+          date: dateUnix,
+          amount,
+          accountId: typeof input.accountId === 'string' ? input.accountId : undefined,
+        });
+        return {
+          success: result.success,
+          message: `Cobro de ${amount} € registrado correctamente en la factura ${documentId}.`,
+        };
+      }
+
+      case 'holded_create_contact': {
+        if (!input.confirmed) {
+          return {
+            error: 'confirmation_required',
+            message:
+              'Esta acción requiere confirmación explícita. Muestra al usuario los datos del contacto a crear y espera que confirme.',
+          };
+        }
+        const name = String(input.name ?? '').trim();
+        if (!name) {
+          return { error: 'invalid_input', message: 'Se requiere el nombre del contacto.' };
+        }
+        const typeVal = typeof input.type === 'string' && ['client', 'supplier', 'both'].includes(input.type)
+          ? (input.type as 'client' | 'supplier' | 'both')
+          : 'client';
+        const result = await holdedCreateContact(apiKey, {
+          name,
+          email: typeof input.email === 'string' ? input.email : undefined,
+          phone: typeof input.phone === 'string' ? input.phone : undefined,
+          nif: typeof input.nif === 'string' ? input.nif : undefined,
+          type: typeVal,
+          address: typeof input.address === 'string' ? input.address : undefined,
+          city: typeof input.city === 'string' ? input.city : undefined,
+          postalCode: typeof input.postalCode === 'string' ? input.postalCode : undefined,
+          country: typeof input.country === 'string' ? input.country : 'ES',
+        });
+        return {
+          success: true,
+          id: result.id,
+          message: `Contacto "${name}" creado correctamente en Holded con ID ${result.id}.`,
+        };
+      }
+
       default:
         return { error: 'unknown_tool' };
     }

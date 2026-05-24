@@ -408,3 +408,121 @@ export async function holdedListPayments(
   const limit = params?.limit ?? 50;
   return { payments: all.slice(0, limit), total: all.length, truncated: all.length > limit };
 }
+
+// ── Crear factura de venta ────────────────────────────────────────────────────
+
+export type CreateInvoiceParams = {
+  contactId: string;
+  date?: number;   // Unix timestamp — default: today
+  notes?: string;
+  currency?: string;
+  items: Array<{
+    name: string;
+    units: number;
+    subtotal: number; // unit price before tax
+    tax?: number;     // VAT %, default 21
+  }>;
+};
+
+export async function holdedCreateInvoice(
+  apiKey: string,
+  params: CreateInvoiceParams
+): Promise<{ id: string; docNumber?: string; raw: unknown }> {
+  const payload: Record<string, unknown> = {
+    contactId: params.contactId,
+    date: params.date ?? Math.floor(Date.now() / 1000),
+    notes: params.notes ?? '',
+    currency: params.currency ?? 'EUR',
+    items: params.items.map((item) => ({
+      name: item.name,
+      units: item.units,
+      subtotal: item.subtotal,
+      tax: item.tax ?? 21,
+    })),
+  };
+
+  const raw = (await holdedPost(
+    apiKey,
+    '/api/invoicing/v1/documents/invoice',
+    payload
+  )) as Record<string, unknown>;
+
+  return {
+    id: String(raw?.id ?? raw?.docId ?? ''),
+    docNumber: raw?.docNumber as string | undefined,
+    raw,
+  };
+}
+
+// ── Registrar cobro en factura ────────────────────────────────────────────────
+
+export type RegisterPaymentParams = {
+  docType?: string;  // default 'invoice'
+  documentId: string;
+  date?: number;     // Unix timestamp — default: today
+  amount: number;
+  accountId?: string; // treasury account ID (optional)
+};
+
+export async function holdedRegisterPayment(
+  apiKey: string,
+  params: RegisterPaymentParams
+): Promise<{ success: boolean; raw: unknown }> {
+  const docType = params.docType ?? 'invoice';
+  const payload: Record<string, unknown> = {
+    date: params.date ?? Math.floor(Date.now() / 1000),
+    amount: params.amount,
+  };
+  if (params.accountId) payload.accountId = params.accountId;
+
+  const raw = await holdedPost(
+    apiKey,
+    `/api/invoicing/v1/documents/${docType}/${params.documentId}/pay`,
+    payload
+  );
+
+  return { success: true, raw };
+}
+
+// ── Crear contacto ────────────────────────────────────────────────────────────
+
+export type CreateContactParams = {
+  name: string;
+  email?: string;
+  phone?: string;
+  nif?: string;                              // 'code' in Holded API
+  type?: 'client' | 'supplier' | 'both';    // 1 | 2 | 3
+  address?: string;
+  city?: string;
+  postalCode?: string;
+  country?: string; // ISO 2-letter, default 'ES'
+};
+
+export async function holdedCreateContact(
+  apiKey: string,
+  params: CreateContactParams
+): Promise<{ id: string; raw: unknown }> {
+  const typeMap: Record<string, number> = { client: 1, supplier: 2, both: 3 };
+  const payload: Record<string, unknown> = {
+    name: params.name,
+    country: params.country ?? 'ES',
+    type: typeMap[params.type ?? 'client'] ?? 1,
+  };
+  if (params.email) payload.email = params.email;
+  if (params.phone) payload.phone = params.phone;
+  if (params.nif) payload.code = params.nif;
+  if (params.address) payload.address = params.address;
+  if (params.city) payload.city = params.city;
+  if (params.postalCode) payload.cp = params.postalCode;
+
+  const raw = (await holdedPost(
+    apiKey,
+    '/api/invoicing/v1/contacts',
+    payload
+  )) as Record<string, unknown>;
+
+  return {
+    id: String(raw?.id ?? raw?.contactId ?? ''),
+    raw,
+  };
+}
