@@ -309,6 +309,7 @@ model User {
   invoicesCreatedBy       Invoice[]                @relation("CreatedByUser")
   isaakConversations      IsaakConversation[]
   isaakMemoryFacts        IsaakMemoryFact[]
+  isaakLongTermMemory     IsaakLongTermMemory[]
   usageEvents             UsageEvent[]
 
   // NextAuth relations
@@ -569,6 +570,7 @@ model Tenant {
   isaakPushSubscriptions        IsaakPushSubscription[]
   isaakPushPreferences          IsaakPushPreferences[]
   isaakMemoryFacts              IsaakMemoryFact[]
+  isaakLongTermMemory           IsaakLongTermMemory[]
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -1887,6 +1889,38 @@ model IsaakMemoryFact {
   @@index([userId, createdAt])
   @@index([conversationId, createdAt])
   @@map("isaak_memory_facts")
+}
+
+// ==================== ISAAK: LONG-TERM MEMORY (F6, RAG) ====================
+// Free-text facts indexed by pgvector embedding for semantic retrieval.
+// Sibling of IsaakMemoryFact (which is for structured key-value facts).
+
+model IsaakLongTermMemory {
+  id             String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId       String  @map("tenant_id") @db.Uuid
+  userId         String? @map("user_id")
+  conversationId String? @map("conversation_id") @db.Uuid
+
+  fact      String                       @db.Text
+  factType  String                       @map("fact_type") // 'preference' | 'history' | 'decision' | 'profile' | 'other'
+  // pgvector column managed via raw migration; Unsupported() makes Prisma keep
+  // it intact across migrate operations.
+  embedding Unsupported("vector(1536)")?
+
+  source      String // 'user' | 'tool_result' | 'feedback' | 'admin'
+  sourceMsgId String?   @map("source_msg_id")
+  confidence  Float     @default(1.0)
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User?  @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([tenantId, factType])
+  @@index([tenantId, expiresAt])
+  @@map("isaak_long_term_memory")
 }
 
 // ==================== ISAAK: CHAT METRICS (F1) ====================
