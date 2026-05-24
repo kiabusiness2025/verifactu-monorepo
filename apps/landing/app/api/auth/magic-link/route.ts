@@ -33,9 +33,15 @@ function getFirebaseApp() {
   const existing = admin.apps.find((a) => a?.name === '[DEFAULT]');
   if (existing) return existing;
 
-  const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim();
-  const privateKeyRaw = process.env.FIREBASE_PRIVATE_KEY?.trim();
+  const projectId = (
+    process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.FIREBASE_PROJECT_ID
+  )?.trim();
+  const clientEmail = (
+    process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL
+  )?.trim();
+  const privateKeyRaw = (
+    process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY
+  )?.trim();
 
   if (!projectId || !clientEmail || !privateKeyRaw) return null;
 
@@ -123,7 +129,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Servicio de correo no disponible.' }, { status: 503 });
     }
 
-    const fromEmail = process.env.RESEND_FROM_EMAIL?.trim() || 'Isaak <noreply@verifactu.business>';
+    const fromEmail =
+      (
+        process.env.RESEND_FROM_ISAAK ||
+        process.env.RESEND_FROM_EMAIL ||
+        process.env.RESEND_FROM
+      )?.trim() || 'Isaak <noreply@verifactu.business>';
 
     const html = `
 <!DOCTYPE html>
