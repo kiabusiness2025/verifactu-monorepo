@@ -20,9 +20,29 @@ import {
   isMicrosoftToolName,
 } from './microsoft-tools';
 
-// F2: only READ tools are exposed to the model. Write actions (create,
-// register, send, archive) come in F4 behind a judge model + explicit
-// confirmation handshake.
+// F4: write actions allowed when allowWrites=true. Every write call goes
+// through the GPT-4o-mini judge before execution. The judge can allow,
+// block, or require user confirmation. Reads stay always-on for F2/F3.
+const WRITE_TOOL_NAMES = new Set<string>([
+  // Holded write
+  'holded_create_invoice',
+  'holded_register_payment',
+  'holded_create_contact',
+  'holded_send_document',
+  // Google write (NOT enabled in F4 v1 — kept for visibility / future)
+  // 'google_calendar_create_event', 'google_calendar_update_event',
+  // 'google_calendar_delete_event', 'google_gmail_archive',
+  // Microsoft write (NOT enabled in F4 v1)
+  // 'microsoft_calendar_create_event', 'microsoft_calendar_update_event',
+  // 'microsoft_calendar_delete_event', 'microsoft_mail_archive',
+  // 'microsoft_mail_send',
+]);
+
+export function isWriteToolName(name: string): boolean {
+  return WRITE_TOOL_NAMES.has(name);
+}
+
+// F2: only READ tools are exposed when allowWrites=false.
 const READ_ONLY_NAMES = new Set<string>([
   // Holded
   'holded_list_documents',
@@ -81,30 +101,33 @@ export type ToolCategoryFilter = 'holded' | 'banking' | 'google' | 'microsoft';
 
 export function buildReadOnlyToolsForContext(
   ctx: IsaakToolContext,
-  options?: { only?: ToolCategoryFilter[] }
+  options?: { only?: ToolCategoryFilter[]; allowWrites?: boolean }
 ): AITool[] {
   const allow = options?.only?.length ? new Set(options.only) : null;
   const include = (cat: ToolCategoryFilter) => !allow || allow.has(cat);
+  const allowWrites = options?.allowWrites === true;
+  const isAllowed = (name: string) =>
+    READ_ONLY_NAMES.has(name) || (allowWrites && WRITE_TOOL_NAMES.has(name));
   const out: AITool[] = [];
 
   if (include('holded') && ctx.holdedConnected && ctx.holdedApiKey) {
     for (const t of HOLDED_CHAT_TOOLS) {
-      if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
+      if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
   if (include('banking') && ctx.bankConnected) {
     for (const t of BANKING_CHAT_TOOLS) {
-      if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
+      if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
   if (include('google') && ctx.googleConnected) {
     for (const t of GOOGLE_CHAT_TOOLS) {
-      if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
+      if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
   if (include('microsoft') && ctx.microsoftConnected) {
     for (const t of MICROSOFT_CHAT_TOOLS) {
-      if (READ_ONLY_NAMES.has(t.name)) out.push(toAITool(t));
+      if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
 
@@ -121,18 +144,24 @@ export type IsaakToolExecutionResult = {
 
 export async function executeIsaakTool(
   toolUse: AIToolUse,
-  ctx: IsaakToolContext
+  ctx: IsaakToolContext,
+  options?: { allowWrites?: boolean }
 ): Promise<IsaakToolExecutionResult> {
   const name = toolUse.name;
   const start = Date.now();
+  const allowWrites = options?.allowWrites === true;
+  const isAllowed =
+    READ_ONLY_NAMES.has(name) || (allowWrites && WRITE_TOOL_NAMES.has(name));
 
-  if (!READ_ONLY_NAMES.has(name)) {
+  if (!isAllowed) {
     return {
       toolName: name,
       toolUseId: toolUse.id,
       content: JSON.stringify({
-        error: 'write_not_allowed',
-        message: 'Tool not enabled in read-only mode (F2).',
+        error: WRITE_TOOL_NAMES.has(name) ? 'write_not_allowed_in_this_session' : 'unknown_tool',
+        message: WRITE_TOOL_NAMES.has(name)
+          ? 'Esta tool de escritura no está habilitada en esta sesión. Pide al usuario que confirme la acción y vuelve a intentarlo.'
+          : 'Tool desconocida.',
       }),
       isError: true,
       latencyMs: Date.now() - start,

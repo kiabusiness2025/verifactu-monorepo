@@ -1,4 +1,8 @@
-import { buildReadOnlyToolsForContext, type IsaakToolContext } from '../isaak-tools-registry';
+import {
+  buildReadOnlyToolsForContext,
+  isWriteToolName,
+  type IsaakToolContext,
+} from '../isaak-tools-registry';
 
 function ctx(overrides: Partial<IsaakToolContext> = {}): IsaakToolContext {
   return {
@@ -113,6 +117,55 @@ describe('buildReadOnlyToolsForContext', () => {
     const allTools = buildReadOnlyToolsForContext(fullCtx);
     const withEmpty = buildReadOnlyToolsForContext(fullCtx, { only: [] });
     expect(withEmpty.length).toBe(allTools.length);
+  });
+
+  describe('writes (F4)', () => {
+    it('isWriteToolName flags Holded write tools', () => {
+      expect(isWriteToolName('holded_create_invoice')).toBe(true);
+      expect(isWriteToolName('holded_register_payment')).toBe(true);
+      expect(isWriteToolName('holded_create_contact')).toBe(true);
+      expect(isWriteToolName('holded_send_document')).toBe(true);
+    });
+
+    it('isWriteToolName returns false for reads', () => {
+      expect(isWriteToolName('holded_list_documents')).toBe(false);
+      expect(isWriteToolName('banking_list_accounts')).toBe(false);
+      expect(isWriteToolName('unknown_tool')).toBe(false);
+    });
+
+    it('allowWrites=false excludes write tools (default)', () => {
+      const tools = buildReadOnlyToolsForContext(
+        ctx({ holdedConnected: true, holdedApiKey: 'sk' })
+      );
+      const names = tools.map((t) => t.name);
+      expect(names).not.toContain('holded_create_invoice');
+      expect(names).not.toContain('holded_register_payment');
+    });
+
+    it('allowWrites=true includes Holded write tools', () => {
+      const tools = buildReadOnlyToolsForContext(
+        ctx({ holdedConnected: true, holdedApiKey: 'sk' }),
+        { allowWrites: true }
+      );
+      const names = tools.map((t) => t.name);
+      expect(names).toContain('holded_create_invoice');
+      expect(names).toContain('holded_register_payment');
+      expect(names).toContain('holded_create_contact');
+      expect(names).toContain('holded_send_document');
+    });
+
+    it('allowWrites=true plus category filter still narrows correctly', () => {
+      const tools = buildReadOnlyToolsForContext(
+        ctx({
+          holdedConnected: true,
+          holdedApiKey: 'sk',
+          bankConnected: true,
+        }),
+        { only: ['banking'], allowWrites: true }
+      );
+      const names = tools.map((t) => t.name);
+      expect(names.every((n) => n.startsWith('banking_'))).toBe(true);
+    });
   });
 
   it('combines all categories when everything is connected', () => {
