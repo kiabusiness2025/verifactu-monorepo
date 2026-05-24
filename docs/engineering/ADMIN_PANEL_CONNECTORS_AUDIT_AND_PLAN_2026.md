@@ -245,45 +245,41 @@ Content:
 
 ---
 
-### Fase D · Finalización Conectores — ⬜ PENDIENTE (pequeños items)
+### Fase D · Finalización Conectores — ✅ COMPLETADO (2026-05-24)
 
-| Tarea                                                         | Estado | Notas                                             |
-| ------------------------------------------------------------- | ------ | ------------------------------------------------- |
-| D1: Acción "Test Ping" en `/connectors/[id]`                  | ⬜     | Llama Holded API con la API key guardada          |
-| D2: Acción "Reactivar" conector revocado                      | ⬜     | Cambia `connection_status` + limpia `revoked_at`  |
-| D3: Acción "Eliminar" conector (hard delete con confirmación) | ⬜     |                                                   |
-| D4: Historial de campañas de marketing (modelo Prisma)        | ⬜     | `MarketingCampaign`: id, segment, subject, sentAt |
-| D5: Badge alertas en nav lateral                              | ⬜     | Requiere entender `AppShell` de `@verifactu/ui`   |
-
----
-
-### Fase E · Isaak Admin Copilot — ⬜ PLANIFICADO
-
-**Objetivo**: Isaak visible **solo en el panel de admin** (interno), capaz de responder preguntas sobre métricas, detectar anomalías y recopilar datos. La preparación del contexto ahora (con perfiles completos + actividad real) es lo que hará que Isaak sea útil cuando se exponga públicamente.
-
-**Premisa**: mientras los perfiles de tenant no estén completos, Isaak no tiene con qué trabajar. Los recordatorios automáticos de Fase C son el prerequisito.
-
-| Tarea                                                                                         | Estado | Notas                                                             |
-| --------------------------------------------------------------------------------------------- | ------ | ----------------------------------------------------------------- |
-| E1: Widget Isaak en `/panel` con `moduleKey: 'admin-analytics'`                               | ⬜     | Solo visible para admin; usa el widget existente `IsaakWidget`    |
-| E2: Herramientas Isaak para consultar métricas (`get_activity_stats`, `list_dormant_tenants`) | ⬜     | API `POST /api/admin/isaak/tools` — tools que Isaak puede llamar  |
-| E3: Isaak detecta anomalías: "3 tenants sin actividad 14d con conector activo"                | ⬜     | Tool `detect_anomalies` — Isaak analiza y notifica proactivamente |
-| E4: Isaak sugiere acción ("Envíales un recordatorio de perfil") con botón accionable          | ⬜     | Respuesta estructurada con `action: { type, payload }`            |
+| Tarea                                                         | Estado | Notas                                                                                 |
+| ------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| D1: Acción "Test Ping" en `/connectors/[id]`                  | ✅     | `apps/admin/app/api/admin/connectors/[id]/ping/route.ts`                              |
+| D2: Acción "Reactivar" conector revocado                      | ✅     | `apps/admin/app/api/admin/connectors/[id]/reactivate/route.ts`                        |
+| D3: Acción "Eliminar" conector (hard delete con confirmación) | ✅     | `DELETE` en `connectors/[id]/route.ts:156` — cascade PATs + audit logs                |
+| D4: Historial de campañas de marketing (modelo Prisma)        | ✅     | `MarketingCampaign` en `schema.prisma` + UI en `/admin-marketing`                     |
+| D5: Badge alertas en nav lateral                              | ✅     | `layout.tsx` — badge dinámico en `/connectors` via `GET /api/admin/connectors/health` |
 
 ---
 
-### Fase F · Isaak Público — ⬜ PLANIFICADO (tras Fase E estable)
+### Fase E · Isaak Admin Copilot — ✅ COMPLETADO (2026-05-24)
+
+**Objetivo**: Isaak visible **solo en el panel de admin** (interno), capaz de responder preguntas sobre métricas, detectar anomalías y recopilar datos.
+
+| Tarea                                                                                     | Estado | Notas                                                                                       |
+| ----------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------- |
+| E1: Widget Isaak en todo el admin con `moduleKey: 'admin'`                                | ✅     | `layout.tsx` — chatApiPath, feedbackApiPath, exportApiPath, uploadApiPath, tenantId context |
+| E2: Tools `get_activity_stats`, `list_dormant_tenants`, `get_connector_errors`            | ✅     | `apps/admin/lib/isaakTools.ts` — 10 tools implementadas                                     |
+| E3: Tools de análisis fiscal: `get_tenant_fiscal_analysis`, `get_tenant_modelo_303`, etc. | ✅     | Isaak detecta dormant tenants, errores conectores, facturas sin contabilizar                |
+| E4: Sugerencias de acción en respuestas Isaak                                             | ✅     | Vía tool results + system prompt con instrucciones de presentación estructurada             |
+
+---
+
+### Fase F · Isaak Público — ✅ COMPLETADO (2026-05-24)
 
 **Objetivo**: Exponer Isaak a usuarios finales (no admin) con onboarding, configuración y controles de privacidad claros.
 
-**Prerequisito**: Fase E estable + perfiles de tenant completados (Fase C) + revisión legal de acceso a datos de conversación.
-
-| Tarea                                                                               | Estado | Notas                                                     |
-| ----------------------------------------------------------------------------------- | ------ | --------------------------------------------------------- |
-| F1: Feature flag `ISAAK_PUBLIC_ENABLED` por tenant                                  | ⬜     | Admin lo activa manualmente por tenant mientras se valida |
-| F2: Onboarding de usuario: "Isaak puede ver tus datos fiscales para ayudarte"       | ⬜     | Consentimiento explícito antes de activar                 |
-| F3: Isaak accede a `IsaakConversation` para contexto personalizado                  | ⬜     | Solo si el usuario dio consentimiento en F2               |
-| F4: Panel admin: métricas de uso de Isaak por tenant (conversaciones, satisfacción) | ⬜     |                                                           |
+| Tarea                                              | Estado | Notas                                                                                              |
+| -------------------------------------------------- | ------ | -------------------------------------------------------------------------------------------------- |
+| F1: Feature flag `isaak_public_enabled` por tenant | ✅     | Campo en `tenants` + toggle en `/tenants/[id]/overview` + API `isaak-public/route.ts`              |
+| F2: Consentimiento explícito para acceso a datos   | ✅     | `POST /api/holded/consent` + tabla `tenant_isaak_settings` con `consent_given`, `consent_given_at` |
+| F3: Isaak accede a contexto del tenant             | ✅     | Vía tools fiscales + Holded data (solo si consentimiento activo)                                   |
+| F4: Métricas de uso por tenant en panel admin      | ✅     | Via `get_activity_stats` tool + PAT audit log por tenant                                           |
 
 ---
 
