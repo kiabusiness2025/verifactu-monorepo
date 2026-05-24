@@ -28,6 +28,10 @@
     {
       "path": "/api/cron/banking-alerts",
       "schedule": "30 7 * * *"
+    },
+    {
+      "path": "/api/cron/onboarding-nudge",
+      "schedule": "0 10 * * *"
     }
   ]
 }
