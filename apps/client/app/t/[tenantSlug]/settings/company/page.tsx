@@ -243,8 +243,7 @@ export default function CompanySettingsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Aquí no llamamos a eInforma. Puedes crear tu empresa manualmente y empezar a trabajar al
-            instante.
+            Crea tu empresa manualmente y empieza a trabajar al instante.
           </p>
 
           <form className="space-y-3" onSubmit={handleCreateCompany}>
