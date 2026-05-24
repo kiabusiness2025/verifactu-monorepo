@@ -92,6 +92,14 @@ export type TeamMember = {
   isCurrentUser: boolean;
 };
 
+export type WorkspaceSummary = {
+  tenantId: string;
+  name: string;
+  taxId: string | null;
+  role: string;
+  isCurrent: boolean;
+};
+
 export type SettingsTeamData = {
   enabled: boolean;
   activeMembers: number;
@@ -99,6 +107,7 @@ export type SettingsTeamData = {
   planCode: string;
   canManage: boolean;
   members: TeamMember[];
+  workspaces: WorkspaceSummary[];
 };
 
 export type SettingsData = {
@@ -333,8 +342,16 @@ function canManageTeam(role: string): boolean {
 }
 
 export async function loadSettingsData(session: SettingsSession): Promise<SettingsData> {
-  const [user, tenantProfile, connection, onboardingState, billing, memberships, subscription] =
-    await Promise.all([
+  const [
+    user,
+    tenantProfile,
+    connection,
+    onboardingState,
+    billing,
+    memberships,
+    subscription,
+    userWorkspaces,
+  ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.userId },
         select: { id: true, name: true, email: true, image: true, phone: true },
@@ -384,6 +401,20 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
         include: { plan: true },
         orderBy: { createdAt: 'desc' },
       }),
+      prisma.membership.findMany({
+        where: { userId: session.userId, status: 'active' },
+        include: {
+          tenant: {
+            select: {
+              id: true,
+              name: true,
+              legalName: true,
+              profile: { select: { tradeName: true, legalName: true, taxId: true } },
+            },
+          },
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
     ]);
 
   const onboarding = onboardingState.profile;
@@ -394,6 +425,19 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
   const activeMembers = memberships.filter((m) => m.status === 'active').length;
   const callerMembership = memberships.find((m) => m.userId === session.userId);
   const callerRole = callerMembership?.role ?? 'member';
+
+  const workspaces: WorkspaceSummary[] = userWorkspaces.map((m) => ({
+    tenantId: m.tenantId,
+    role: m.role,
+    name:
+      m.tenant.profile?.tradeName ??
+      m.tenant.profile?.legalName ??
+      m.tenant.legalName ??
+      m.tenant.name ??
+      'Espacio sin nombre',
+    taxId: m.tenant.profile?.taxId ?? null,
+    isCurrent: m.tenantId === session.tenantId,
+  }));
 
   const teamData: SettingsTeamData = {
     enabled: true,
@@ -413,6 +457,7 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
       confirmedAt: m.confirmedAt?.toISOString() ?? null,
       isCurrentUser: m.userId === session.userId,
     })),
+    workspaces,
   };
 
   return {
