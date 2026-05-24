@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state');
   const error = searchParams.get('error');
 
-  const bankingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/banking`;
+  const bankingUrl = `${new URL(request.url).origin}/banking`;
 
   if (error || !code || !state) {
     return NextResponse.redirect(
@@ -46,21 +46,16 @@ export async function GET(request: NextRequest) {
   });
 
   if (!pending) {
-    return NextResponse.redirect(
-      new URL(`${bankingUrl}?eb_error=invalid_state`, request.url)
-    );
+    return NextResponse.redirect(new URL(`${bankingUrl}?eb_error=invalid_state`, request.url));
   }
 
   try {
     const ebSession = await createEbSession(code);
     const sessionId = ebSession.session_id;
-    const expiresAt = ebSession.access?.valid_until
-      ? new Date(ebSession.access.valid_until)
-      : null;
+    const expiresAt = ebSession.access?.valid_until ? new Date(ebSession.access.valid_until) : null;
 
     // Build the real connection from session data
-    const aspspName =
-      ebSession.aspsp?.name ?? pending.providerCode;
+    const aspspName = ebSession.aspsp?.name ?? pending.providerCode;
 
     // Replace pending (state) connection with real (session_id) connection
     await prisma.$transaction(async (tx) => {
@@ -100,8 +95,7 @@ export async function GET(request: NextRequest) {
         const currency =
           acct.currency ??
           (details.status === 'fulfilled' ? (details.value.currency ?? 'EUR') : 'EUR');
-        const balance =
-          balances.status === 'fulfilled' ? resolveEbBalance(balances.value) : 0;
+        const balance = balances.status === 'fulfilled' ? resolveEbBalance(balances.value) : 0;
 
         await prisma.seAccount.upsert({
           where: { id: acct.uid },
@@ -122,12 +116,7 @@ export async function GET(request: NextRequest) {
         // Fetch last 90 days of transactions
         const txs = await getAllEbTransactions(acct.uid, nDaysAgo(90)).catch(() => []);
         for (const tx of txs) {
-          const normalized = normalizeEbTransaction(
-            tx,
-            acct.uid,
-            pending.tenantId,
-            'posted'
-          );
+          const normalized = normalizeEbTransaction(tx, acct.uid, pending.tenantId, 'posted');
           await prisma.seTransaction.upsert({
             where: { id: normalized.id },
             create: normalized,
@@ -150,8 +139,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(`${bankingUrl}?eb_callback=1`, request.url));
   } catch (err) {
     console.error('[eb-callback]', err);
-    return NextResponse.redirect(
-      new URL(`${bankingUrl}?eb_error=sync_failed`, request.url)
-    );
+    return NextResponse.redirect(new URL(`${bankingUrl}?eb_error=sync_failed`, request.url));
   }
 }

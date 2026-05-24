@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   AlertTriangle,
@@ -108,12 +109,16 @@ function daysUntil(iso: string | null): number | null {
 }
 
 export default function BankingPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'movements' | 'reconcile'>('movements');
 
   // Reconciliation state
@@ -130,6 +135,24 @@ export default function BankingPage() {
   const [pickerLoading, setPickerLoading] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
   const [connectingBank, setConnectingBank] = useState<string | null>(null);
+
+  // Handle OAuth callback params
+  useEffect(() => {
+    const cb = searchParams.get('eb_callback');
+    const err = searchParams.get('eb_error');
+    if (cb === '1') {
+      setSuccess('Banco conectado correctamente. Tus cuentas y movimientos están disponibles.');
+      router.replace('/banking');
+    } else if (err) {
+      const messages: Record<string, string> = {
+        missing_params: 'El proceso de conexión fue cancelado.',
+        invalid_state: 'La sesión de conexión expiró. Inténtalo de nuevo.',
+        sync_failed: 'Error al sincronizar las cuentas. Inténtalo de nuevo.',
+      };
+      setError(messages[err] ?? `Error al conectar el banco (${err}).`);
+      router.replace('/banking');
+    }
+  }, [searchParams, router]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -342,9 +365,7 @@ export default function BankingPage() {
     .sort((a, b) => (a.days ?? 0) - (b.days ?? 0));
 
   const filteredAspsps = pickerSearch
-    ? pickerAspsps.filter((a) =>
-        a.name.toLowerCase().includes(pickerSearch.toLowerCase())
-      )
+    ? pickerAspsps.filter((a) => a.name.toLowerCase().includes(pickerSearch.toLowerCase()))
     : pickerAspsps;
 
   return (
@@ -373,6 +394,23 @@ export default function BankingPage() {
       </div>
 
       <div className="flex-1 space-y-4 p-5">
+        {success && (
+          <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[12px] text-emerald-800">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={14} className="shrink-0 text-emerald-600" />
+              {success}
+            </div>
+            <button
+              type="button"
+              title="Cerrar"
+              onClick={() => setSuccess(null)}
+              className="shrink-0 text-emerald-500 hover:text-emerald-700"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {error && (
           <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] text-rose-700">
             <AlertCircle size={14} className="mt-0.5 shrink-0" />
@@ -385,9 +423,7 @@ export default function BankingPage() {
           <div
             key={conn.name}
             className={`flex items-center justify-between rounded-xl border px-4 py-3 ${
-              (conn.days ?? 0) <= 0
-                ? 'border-rose-200 bg-rose-50'
-                : 'border-amber-200 bg-amber-50'
+              (conn.days ?? 0) <= 0 ? 'border-rose-200 bg-rose-50' : 'border-amber-200 bg-amber-50'
             }`}
           >
             <div className="flex items-start gap-2">
@@ -701,9 +737,12 @@ export default function BankingPage() {
                               </span>
                             </div>
                             <p className="mt-0.5 truncate text-[10px] text-slate-400">
-                              {fmtDate(m.txMadeOn)} ↔ {m.expenseSupplier || m.expenseDescription || 'gasto'}
+                              {fmtDate(m.txMadeOn)} ↔{' '}
+                              {m.expenseSupplier || m.expenseDescription || 'gasto'}
                               {' · '}
-                              <span className="font-semibold text-emerald-600">{m.scorePercent}%</span>
+                              <span className="font-semibold text-emerald-600">
+                                {m.scorePercent}%
+                              </span>
                             </p>
                           </div>
                           <button
@@ -929,7 +968,6 @@ export default function BankingPage() {
                       >
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
                           {aspsp.logo ? (
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={aspsp.logo}
                               alt={aspsp.name}
