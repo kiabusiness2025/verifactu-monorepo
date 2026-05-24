@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
 import { exchangeMicrosoftCode, getMicrosoftUserProfile } from '@/app/lib/microsoft-oauth';
+import { sendMicrosoftConnectedNotification } from '@/app/lib/communications/integration-emails';
 
 export const runtime = 'nodejs';
 
@@ -57,6 +58,17 @@ export async function GET(request: NextRequest) {
         scopes: tokens.scope,
       },
     });
+
+    // Load Isaak user info for email (best-effort, non-blocking)
+    const user = await prisma.user
+      .findUnique({ where: { id: userId }, select: { email: true, name: true } })
+      .catch(() => null);
+    sendMicrosoftConnectedNotification({
+      userEmail: user?.email ?? null,
+      userName: user?.name ?? null,
+      microsoftEmail: profile.email,
+      microsoftDisplayName: profile.displayName,
+    }).catch(() => null);
 
     return NextResponse.redirect(`${integrationsUrl}?microsoft=connected`);
   } catch {

@@ -8,6 +8,7 @@
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
 import { getConnection, listAccounts } from '@verifactu/integrations/saltedge';
+import { sendBankingConnectedNotification } from '@/app/lib/communications/integration-emails';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -86,6 +87,20 @@ export async function GET(request: NextRequest) {
         });
       }
     }
+
+    // Send connection confirmation email (best-effort)
+    const accountCount =
+      conn.status === 'active'
+        ? await prisma.seAccount
+            .count({ where: { tenantId: session.tenantId, connectionId } })
+            .catch(() => 0)
+        : 0;
+    sendBankingConnectedNotification({
+      userEmail: session.email ?? null,
+      userName: session.name ?? null,
+      bankName: conn.provider_name ?? null,
+      accountCount,
+    }).catch(() => null);
 
     return NextResponse.redirect(new URL(`${settingsUrl}?gc_callback=1`, request.url));
   } catch (err: unknown) {

@@ -115,15 +115,16 @@ export default function IsaakPrivacyPage() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="font-semibold text-slate-800">Open Banking — Salt Edge</div>
+            <div className="font-semibold text-slate-800">Open Banking (PSD2)</div>
             <p className="mt-2 text-sm text-slate-600">
-              La integración bancaria utiliza Salt Edge como proveedor de agregación PSD2. Cuando
-              conectas una cuenta bancaria, Salt Edge accede a los movimientos bajo tu
-              consentimiento explícito mediante un flujo OAuth regulado. Isaak almacena los
-              movimientos en tu espacio de trabajo para habilitar la conciliación automática con
-              facturas de Holded. No almacenamos credenciales bancarias: el acceso se gestiona
-              mediante tokens de sesión renovables. Puedes revocar el acceso a tu banco en cualquier
-              momento desde Ajustes → Open Banking.
+              La integración bancaria se realiza a través de proveedores de agregación PSD2
+              regulados (Salt Edge, Enable Banking, GoCardless Bank Account Data). Cuando conectas
+              una cuenta bancaria, el proveedor accede a tus movimientos bajo consentimiento
+              explícito mediante un flujo OAuth regulado. Isaak almacena los movimientos en tu
+              espacio de trabajo para habilitar la conciliación automática con facturas. No
+              almacenamos credenciales bancarias: el acceso se gestiona mediante tokens de sesión
+              renovables. Puedes revocar el acceso en cualquier momento desde Ajustes → Open
+              Banking.
             </p>
           </div>
 
@@ -200,7 +201,9 @@ export default function IsaakPrivacyPage() {
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-semibold text-slate-700">Open Banking</div>
-              <p className="mt-1 text-xs">Salt Edge (agregación PSD2 regulada).</p>
+              <p className="mt-1 text-xs">
+                Salt Edge, Enable Banking, GoCardless Bank Account Data (agregación PSD2 regulada).
+              </p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
               <div className="font-semibold text-slate-700">Mensajería</div>
