@@ -49,18 +49,39 @@ export async function openaiAdapter(
     instructions,
     messages = [],
     inputText,
+    inputImages,
     temperature,
     maxOutputTokens,
     responseFormat = 'text',
   } = params;
 
+  type OpenAIContentBlock =
+    | { type: 'input_text'; text: string }
+    | { type: 'input_image'; image_url: string; detail?: 'auto' | 'low' | 'high' };
+
   const trimmedInput = inputText?.trim();
-  const input = messages.length
-    ? messages.map((m) => ({
-        role: m.role,
-        content: [{ type: 'input_text', text: m.content }],
-      }))
-    : trimmedInput || undefined;
+  let input: unknown;
+
+  if (messages.length) {
+    input = messages.map((m) => ({
+      role: m.role,
+      content: [{ type: 'input_text', text: m.content }],
+    }));
+  } else if (inputImages?.length) {
+    // Multimodal single-turn input: optional text + one or more images.
+    const content: OpenAIContentBlock[] = [];
+    if (trimmedInput) content.push({ type: 'input_text', text: trimmedInput });
+    for (const img of inputImages) {
+      content.push({
+        type: 'input_image',
+        image_url: img.url,
+        ...(img.detail ? { detail: img.detail } : {}),
+      });
+    }
+    input = [{ role: 'user', content }];
+  } else if (trimmedInput) {
+    input = trimmedInput;
+  }
 
   if (!instructions?.trim() && !input) {
     throw new AIError('OpenAI adapter requires instructions or input', 'openai', 'unknown');

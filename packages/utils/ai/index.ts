@@ -9,6 +9,7 @@ export type {
   AIProvider,
   AIMessage,
   AIAssistantBlock,
+  AIInputImage,
   AIResponseFormat,
   AIRichMessage,
   AITool,
