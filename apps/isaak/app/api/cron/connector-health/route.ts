@@ -1,15 +1,19 @@
 /**
  * GET /api/cron/connector-health
  *
- * Runs daily (07:00 CET). Two checks:
+ * Runs daily (07:00 CET). Three checks:
  *
  * 1. Holded API keys: re-probe any connected tenant whose lastValidatedAt is
  *    null or older than 7 days. If the probe fails, update connectionStatus to
  *    'error' and send an alert email. If it passes, bump lastValidatedAt.
  *
- * 2. Salt Edge connections: any 'active' SeConnection whose lastSyncAt is null
- *    or older than 72 h is considered stale. Creates an isaakAlert (deduplicated
- *    to one per 7-day window) and sends an email.
+ * 2. Salt Edge / GCBD connections: any 'active' SeConnection (non-EB) whose
+ *    lastSyncAt is null or older than 72 h is considered stale. Creates an
+ *    isaakAlert (deduplicated to one per 7-day window) and sends an email.
+ *
+ * 3. Enable Banking sessions: PSD2 AIS sessions expire (typically 90–180 days).
+ *    Warns the user when a session expires within 7 days; marks it 'expired'
+ *    and alerts when the expiry date has passed.
  */
 
 import { timingSafeEqual } from 'crypto';
@@ -175,6 +179,7 @@ async function checkSaltEdgeConnections(): Promise<{
   const connections = await prisma.seConnection.findMany({
     where: {
       status: 'active',
+      provider: { not: 'enablebanking' }, // EB sessions are handled separately (they expire)
       OR: [{ lastSyncAt: null }, { lastSyncAt: { lt: staleThreshold } }],
     },
     select: {
@@ -234,6 +239,110 @@ async function checkSaltEdgeConnections(): Promise<{
   return { checked: connections.length, stale, alerted, errors };
 }
 
+// ── Enable Banking session expiry check ──────────────────────────────────────
+
+async function checkEnableBankingConnections(): Promise<{
+  checked: number;
+  expiredNow: number;
+  expiringSoon: number;
+  alerted: number;
+  errors: number;
+}> {
+  const now = new Date();
+  const in7Days = new Date(Date.now() + 7 * 86_400_000);
+
+  const connections = await prisma.seConnection.findMany({
+    where: { provider: 'enablebanking', status: 'active' },
+    select: {
+      id: true,
+      tenantId: true,
+      providerName: true,
+      expiresAt: true,
+    },
+  });
+
+  let expiredNow = 0;
+  let expiringSoon = 0;
+  let alerted = 0;
+  let errors = 0;
+
+  for (const conn of connections) {
+    try {
+      if (!conn.expiresAt) continue;
+
+      if (conn.expiresAt < now) {
+        // Session already expired — flip status and alert once
+        await prisma.seConnection.update({
+          where: { id: conn.id },
+          data: { status: 'expired' },
+        });
+        expiredNow++;
+
+        const alertType = `eb_session_expired_${conn.id}`;
+        if (await alreadyAlertedRecently(conn.tenantId, alertType, 7)) continue;
+
+        await createAlert({
+          tenantId: conn.tenantId,
+          type: alertType,
+          title: `Banca: conexión con ${conn.providerName} expirada`,
+          body: `Tu autorización con ${conn.providerName} ha caducado. Reconecta el banco para que Isaak pueda seguir sincronizando movimientos y saldos.`,
+          channel: 'email',
+          metadata: { connectionId: conn.id, providerName: conn.providerName },
+        });
+
+        const recipient = await getRecipient(conn.tenantId);
+        if (recipient) {
+          await sendConnectorHealthAlert({
+            userEmail: recipient.email,
+            userName: recipient.name,
+            connector: 'banking',
+            connectorName: conn.providerName,
+            reason: `Tu autorización PSD2 con ${conn.providerName} ha caducado. Debes reconectar el banco para que Isaak pueda seguir accediendo a tus movimientos y saldos.`,
+            actionUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://isaak.app'}/banking`,
+            actionLabel: 'Reconectar banco',
+          }).catch(() => null);
+        }
+
+        alerted++;
+      } else if (conn.expiresAt < in7Days) {
+        // Expiring within 7 days — warn once per window
+        expiringSoon++;
+        const daysLeft = Math.ceil((conn.expiresAt.getTime() - now.getTime()) / 86_400_000);
+        const alertType = `eb_session_expiring_${conn.id}`;
+        if (await alreadyAlertedRecently(conn.tenantId, alertType, 7)) continue;
+
+        await createAlert({
+          tenantId: conn.tenantId,
+          type: alertType,
+          title: `Banca: conexión con ${conn.providerName} próxima a expirar`,
+          body: `Tu autorización con ${conn.providerName} expirará en ${daysLeft} día${daysLeft === 1 ? '' : 's'}. Renueva la conexión para no interrumpir la sincronización.`,
+          channel: 'email',
+          metadata: { connectionId: conn.id, providerName: conn.providerName, daysLeft },
+        });
+
+        const recipient = await getRecipient(conn.tenantId);
+        if (recipient) {
+          await sendConnectorHealthAlert({
+            userEmail: recipient.email,
+            userName: recipient.name,
+            connector: 'banking',
+            connectorName: conn.providerName,
+            reason: `Tu autorización PSD2 con ${conn.providerName} expira en ${daysLeft} día${daysLeft === 1 ? '' : 's'}. Renueva la conexión para que Isaak siga accediendo a tus movimientos sin interrupción.`,
+            actionUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://isaak.app'}/banking`,
+            actionLabel: 'Renovar conexión',
+          }).catch(() => null);
+        }
+
+        alerted++;
+      }
+    } catch {
+      errors++;
+    }
+  }
+
+  return { checked: connections.length, expiredNow, expiringSoon, alerted, errors };
+}
+
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -241,14 +350,19 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const [holded, saltEdge] = await Promise.allSettled([
+  const [holded, saltEdge, enableBanking] = await Promise.allSettled([
     checkHoldedConnections(),
     checkSaltEdgeConnections(),
+    checkEnableBankingConnections(),
   ]);
 
   return NextResponse.json({
     ok: true,
     holded: holded.status === 'fulfilled' ? holded.value : { error: String(holded.reason) },
     saltEdge: saltEdge.status === 'fulfilled' ? saltEdge.value : { error: String(saltEdge.reason) },
+    enableBanking:
+      enableBanking.status === 'fulfilled'
+        ? enableBanking.value
+        : { error: String(enableBanking.reason) },
   });
 }

@@ -5,7 +5,7 @@ export const BANKING_CHAT_TOOLS = [
   {
     name: 'banking_check_connection',
     description:
-      'Comprueba si el usuario tiene cuentas bancarias conectadas vía banca abierta (Salt Edge / open banking). Úsalo antes de usar otras herramientas de banca o cuando el usuario pregunte sobre su saldo real.',
+      'Comprueba si el usuario tiene cuentas bancarias conectadas vía banca abierta (Salt Edge, Enable Banking / PSD2 u open banking). Úsalo antes de usar otras herramientas de banca o cuando el usuario pregunte sobre su saldo real. También avisa si alguna conexión PSD2 está próxima a expirar.',
     input_schema: { type: 'object', properties: {} },
   },
   {
@@ -75,6 +75,21 @@ export const BANKING_CHAT_TOOLS = [
     },
   },
   {
+    name: 'banking_get_cash_forecast',
+    description:
+      'Devuelve la previsión de tesorería a 30 días: saldo bancario real + cobros pendientes (facturas por cobrar de Holded) - pagos pendientes. Úsalo cuando el usuario pregunte por su previsión de liquidez, flujo de caja futuro o cuánto dinero va a tener el próximo mes.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        pendingIn: {
+          type: 'number',
+          description:
+            'Importe pendiente de cobro (€) de Holded, si ya se conoce de banking_check_connection o de holded. Si no se pasa, se calcula desde la BD.',
+        },
+      },
+    },
+  },
+  {
     name: 'banking_get_reconciliation_status',
     description:
       'Devuelve el estado de conciliación bancaria: cuántos movimientos están sin conciliar, importe total pendiente y sugerencias de gastos de Holded que podrían emparejarse. Úsalo cuando el usuario pregunte por gastos sin clasificar, movimientos pendientes de conciliar o quiera ver si los pagos del banco están registrados en Holded.',
@@ -122,19 +137,20 @@ export async function executeBankingTool(
   try {
     switch (toolName) {
       case 'banking_check_connection': {
-        const customer = await prisma.seCustomer
-          .findUnique({
-            where: { tenantId },
-            include: {
-              connections: {
-                where: { status: 'active' },
-                select: { id: true, providerName: true, status: true },
-              },
-            },
+        // Query connections directly — works for all providers (Salt Edge, GoCardless, Enable Banking).
+        // Note: Enable Banking connections have seCustomerId = null and no SeCustomer record.
+        const connections = await prisma.seConnection
+          .findMany({
+            where: { tenantId, status: 'active' },
+            select: { id: true, providerName: true, provider: true, expiresAt: true },
           })
-          .catch(() => null);
+          .catch(() => [] as { id: string; providerName: string; provider: string; expiresAt: Date | null }[]);
 
-        if (!customer) {
+        const accountCount = await prisma.seAccount
+          .count({ where: { tenantId, status: 'active' } })
+          .catch(() => 0);
+
+        if (connections.length === 0 || accountCount === 0) {
           return {
             connected: false,
             message:
@@ -142,15 +158,30 @@ export async function executeBankingTool(
           };
         }
 
-        const accountCount = await prisma.seAccount
-          .count({ where: { tenantId, status: 'active' } })
-          .catch(() => 0);
+        // Warn about Enable Banking sessions expiring within 7 days
+        const now = new Date();
+        const expiringSoon = connections.filter((c) => {
+          if (c.provider !== 'enablebanking' || !c.expiresAt) return false;
+          const daysLeft = Math.ceil(
+            (new Date(c.expiresAt).getTime() - now.getTime()) / 86_400_000
+          );
+          return daysLeft <= 7;
+        });
 
         return {
-          connected: accountCount > 0,
-          activeConnections: customer.connections.length,
+          connected: true,
+          activeConnections: connections.length,
           activeAccounts: accountCount,
-          providers: customer.connections.map((c) => c.providerName),
+          providers: connections.map((c) => ({ name: c.providerName, type: c.provider })),
+          ...(expiringSoon.length > 0
+            ? {
+                warning: `${expiringSoon.length} conexión(es) PSD2 expiran pronto. El usuario debe reconectar desde Workspace > Banca.`,
+                expiringSoon: expiringSoon.map((c) => ({
+                  bank: c.providerName,
+                  expiresAt: c.expiresAt,
+                })),
+              }
+            : {}),
         };
       }
 
@@ -269,6 +300,64 @@ export async function executeBankingTool(
           netCashFlow: Math.round((totalIn - totalOut) * 100) / 100,
           transactionsAnalyzed: txStats.length,
           accountCount: accounts.length,
+        };
+      }
+
+      case 'banking_get_cash_forecast': {
+        const [accounts, txStats] = await Promise.all([
+          prisma.seAccount.findMany({
+            where: { tenantId, status: 'active' },
+            select: { balance: true, currency: true },
+          }),
+          prisma.seTransaction.findMany({
+            where: {
+              tenantId,
+              madeOn: { gte: thirtyDaysAgo() },
+              status: 'posted',
+              duplicated: false,
+            },
+            select: { amount: true },
+          }),
+        ]);
+
+        if (accounts.length === 0) {
+          return {
+            connected: false,
+            message:
+              'No hay cuentas bancarias activas. El usuario puede conectar su banco desde Workspace > Banca.',
+          };
+        }
+
+        const currentBalance =
+          Math.round(accounts.reduce((s, a) => s + Number(a.balance), 0) * 100) / 100;
+
+        let recentIn = 0;
+        let recentOut = 0;
+        for (const tx of txStats) {
+          const amt = Number(tx.amount);
+          if (amt > 0) recentIn += amt;
+          else recentOut += Math.abs(amt);
+        }
+
+        // pendingIn can be passed by the caller (e.g. from holded analytics)
+        const pendingIn =
+          typeof input.pendingIn === 'number' ? input.pendingIn : 0;
+
+        const forecastBalance = Math.round((currentBalance + pendingIn) * 100) / 100;
+
+        return {
+          currentBalance,
+          accountCount: accounts.length,
+          pendingIn,
+          forecastBalance,
+          recentIn: Math.round(recentIn * 100) / 100,
+          recentOut: Math.round(recentOut * 100) / 100,
+          netFlow: Math.round((recentIn - recentOut) * 100) / 100,
+          period: { from: thirtyDaysAgo(), to: today() },
+          note:
+            pendingIn > 0
+              ? `Previsión 30d: ${forecastBalance.toLocaleString('es-ES')} € (saldo actual + ${pendingIn.toLocaleString('es-ES')} € pendiente de cobro)`
+              : `Saldo bancario actual: ${currentBalance.toLocaleString('es-ES')} €. Añade el pendiente de cobro de Holded para una previsión completa.`,
         };
       }
 
