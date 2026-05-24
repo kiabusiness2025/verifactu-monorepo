@@ -16,6 +16,7 @@ import {
   LogOut,
   Loader2,
   MessageSquare,
+  MessageCircle,
   Plus,
   Receipt,
   Settings,
@@ -24,6 +25,7 @@ import {
   UserCircle2,
   Building2,
   Users,
+  Users2,
 } from 'lucide-react';
 
 type ConversationItem = {
@@ -62,6 +64,8 @@ const NAV_SECTIONS = [
   { href: '/gastos', label: 'Gastos', icon: Receipt },
   { href: '/informes', label: 'Informes', icon: FileBarChart2 },
   { href: '/contactos', label: 'Contactos', icon: Users },
+  { href: '/equipo', label: 'Equipo', icon: Users2 },
+  { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
 ];
 
 const PROFILE_MENU = [
