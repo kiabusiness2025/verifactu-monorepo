@@ -48,6 +48,11 @@ export type RecordChatMetricInput = {
   classifierLatencyMs?: number | null;
   routedTo?: 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback' | null;
   ambiguityType?: string | null;
+  // F4: judge metrics
+  judgeInvocations?: number;
+  judgeBlocks?: number;
+  judgeLatencyMs?: number | null;
+  writeTools?: string[];
   errorCode?: string | null;
 };
 
@@ -79,6 +84,10 @@ export async function recordChatMetric(input: RecordChatMetricInput): Promise<vo
       classifierLatencyMs: input.classifierLatencyMs ?? null,
       routedTo: input.routedTo ?? null,
       ambiguityType: input.ambiguityType ?? null,
+      judgeInvocations: input.judgeInvocations ?? 0,
+      judgeBlocks: input.judgeBlocks ?? 0,
+      judgeLatencyMs: input.judgeLatencyMs ?? null,
+      writeTools: input.writeTools ?? [],
       errorCode: input.errorCode ?? null,
     },
   });
