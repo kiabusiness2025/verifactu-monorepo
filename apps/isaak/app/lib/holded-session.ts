@@ -5,6 +5,30 @@ import {
 } from '@verifactu/auth';
 import { prisma } from './prisma';
 
+// If the user has switched to a different workspace via UserPreference,
+// use that tenantId — but only if they still have an active membership there.
+async function resolveEffectiveTenantId(
+  userId: string,
+  cookieTenantId: string
+): Promise<string> {
+  const pref = await prisma.userPreference.findUnique({
+    where: { userId },
+    select: { preferredTenantId: true },
+  });
+
+  const preferred = pref?.preferredTenantId;
+  if (!preferred || preferred === cookieTenantId) {
+    return cookieTenantId;
+  }
+
+  const membership = await prisma.membership.findUnique({
+    where: { tenantId_userId: { tenantId: preferred, userId } },
+    select: { status: true },
+  });
+
+  return membership?.status === 'active' ? preferred : cookieTenantId;
+}
+
 export async function getHoldedSession() {
   const cookieStore = await cookies();
   const session = await resolveSharedTenantSession({
@@ -17,7 +41,11 @@ export async function getHoldedSession() {
   });
 
   if (session?.userId) {
-    return session;
+    const effectiveTenantId = await resolveEffectiveTenantId(
+      session.userId,
+      session.tenantId
+    );
+    return { ...session, tenantId: effectiveTenantId };
   }
 
   const payload = await getSharedSessionPayloadFromCookieStore(cookieStore);

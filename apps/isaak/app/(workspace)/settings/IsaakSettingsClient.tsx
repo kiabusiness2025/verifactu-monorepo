@@ -118,6 +118,13 @@ type SettingsData = {
       confirmedAt: string | null;
       isCurrentUser: boolean;
     }>;
+    workspaces: Array<{
+      tenantId: string;
+      name: string;
+      taxId: string | null;
+      role: string;
+      isCurrent: boolean;
+    }>;
   };
 };
 
@@ -646,6 +653,7 @@ export default function IsaakSettingsClient({
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [switchingTenantId, setSwitchingTenantId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeSection !== 'billing') return;
@@ -760,6 +768,28 @@ export default function IsaakSettingsClient({
       setInviteError('No se pudo enviar la invitación.');
     } finally {
       setInviteSending(false);
+    }
+  }
+
+  async function switchWorkspace(tenantId: string) {
+    setSwitchingTenantId(tenantId);
+    try {
+      const res = await fetch('/api/team/switch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tenantId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        setInviteError(data?.error || 'No se pudo cambiar de espacio.');
+        return;
+      }
+      // Hard reload to refresh server-side session resolution
+      window.location.assign('/chat?workspaceSwitched=1');
+    } catch {
+      setInviteError('No se pudo cambiar de espacio.');
+    } finally {
+      setSwitchingTenantId(null);
     }
   }
 
@@ -1724,6 +1754,58 @@ export default function IsaakSettingsClient({
 
             {activeSection === 'team' ? (
               <section className="mt-6 space-y-4">
+                {/* Workspaces switcher (if user has more than 1) */}
+                {settingsData.team.workspaces.length > 1 && (
+                  <div className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
+                    <div className="text-sm font-semibold text-slate-950">Tus espacios</div>
+                    <div className="mt-0.5 text-xs text-slate-500">
+                      Cambia entre los workspaces a los que perteneces.
+                    </div>
+                    <ul className="mt-3 divide-y divide-slate-100">
+                      {settingsData.team.workspaces.map((ws) => {
+                        const isSwitching = switchingTenantId === ws.tenantId;
+                        return (
+                          <li
+                            key={ws.tenantId}
+                            className="flex items-center gap-3 py-3"
+                          >
+                            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#2361d8]/10 text-sm font-semibold text-[#2361d8]">
+                              {ws.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-semibold text-slate-900">
+                                {ws.name}
+                              </div>
+                              <div className="truncate text-xs text-slate-400">
+                                {ws.taxId ?? `${ws.role}`}
+                              </div>
+                            </div>
+                            {ws.isCurrent ? (
+                              <span className="rounded-full bg-emerald-100 px-3 py-1 text-[11px] font-semibold text-emerald-700">
+                                Activo
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                disabled={isSwitching || switchingTenantId !== null}
+                                onClick={() => void switchWorkspace(ws.tenantId)}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 transition hover:border-[#2361d8] hover:text-[#2361d8] disabled:opacity-50"
+                              >
+                                {isSwitching ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <RefreshCcw className="h-3 w-3" />
+                                )}
+                                Cambiar
+                              </button>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                )}
+
                 {/* Header */}
                 <div className="rounded-[1.6rem] border border-slate-200 bg-slate-50/70 p-5">
                   <div className="flex items-center justify-between">
