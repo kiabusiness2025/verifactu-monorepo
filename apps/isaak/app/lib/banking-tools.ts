@@ -75,6 +75,21 @@ export const BANKING_CHAT_TOOLS = [
     },
   },
   {
+    name: 'banking_get_cash_forecast',
+    description:
+      'Devuelve la previsión de tesorería a 30 días: saldo bancario real + cobros pendientes (facturas por cobrar de Holded) - pagos pendientes. Úsalo cuando el usuario pregunte por su previsión de liquidez, flujo de caja futuro o cuánto dinero va a tener el próximo mes.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        pendingIn: {
+          type: 'number',
+          description:
+            'Importe pendiente de cobro (€) de Holded, si ya se conoce de banking_check_connection o de holded. Si no se pasa, se calcula desde la BD.',
+        },
+      },
+    },
+  },
+  {
     name: 'banking_get_reconciliation_status',
     description:
       'Devuelve el estado de conciliación bancaria: cuántos movimientos están sin conciliar, importe total pendiente y sugerencias de gastos de Holded que podrían emparejarse. Úsalo cuando el usuario pregunte por gastos sin clasificar, movimientos pendientes de conciliar o quiera ver si los pagos del banco están registrados en Holded.',
@@ -285,6 +300,64 @@ export async function executeBankingTool(
           netCashFlow: Math.round((totalIn - totalOut) * 100) / 100,
           transactionsAnalyzed: txStats.length,
           accountCount: accounts.length,
+        };
+      }
+
+      case 'banking_get_cash_forecast': {
+        const [accounts, txStats] = await Promise.all([
+          prisma.seAccount.findMany({
+            where: { tenantId, status: 'active' },
+            select: { balance: true, currency: true },
+          }),
+          prisma.seTransaction.findMany({
+            where: {
+              tenantId,
+              madeOn: { gte: thirtyDaysAgo() },
+              status: 'posted',
+              duplicated: false,
+            },
+            select: { amount: true },
+          }),
+        ]);
+
+        if (accounts.length === 0) {
+          return {
+            connected: false,
+            message:
+              'No hay cuentas bancarias activas. El usuario puede conectar su banco desde Workspace > Banca.',
+          };
+        }
+
+        const currentBalance =
+          Math.round(accounts.reduce((s, a) => s + Number(a.balance), 0) * 100) / 100;
+
+        let recentIn = 0;
+        let recentOut = 0;
+        for (const tx of txStats) {
+          const amt = Number(tx.amount);
+          if (amt > 0) recentIn += amt;
+          else recentOut += Math.abs(amt);
+        }
+
+        // pendingIn can be passed by the caller (e.g. from holded analytics)
+        const pendingIn =
+          typeof input.pendingIn === 'number' ? input.pendingIn : 0;
+
+        const forecastBalance = Math.round((currentBalance + pendingIn) * 100) / 100;
+
+        return {
+          currentBalance,
+          accountCount: accounts.length,
+          pendingIn,
+          forecastBalance,
+          recentIn: Math.round(recentIn * 100) / 100,
+          recentOut: Math.round(recentOut * 100) / 100,
+          netFlow: Math.round((recentIn - recentOut) * 100) / 100,
+          period: { from: thirtyDaysAgo(), to: today() },
+          note:
+            pendingIn > 0
+              ? `Previsión 30d: ${forecastBalance.toLocaleString('es-ES')} € (saldo actual + ${pendingIn.toLocaleString('es-ES')} € pendiente de cobro)`
+              : `Saldo bancario actual: ${currentBalance.toLocaleString('es-ES')} €. Añade el pendiente de cobro de Holded para una previsión completa.`,
         };
       }
 

@@ -6,6 +6,7 @@ import {
   Calculator,
   Clock,
   FileCheck,
+  Landmark,
   TrendingDown,
   TrendingUp,
 } from 'lucide-react';
@@ -66,12 +67,55 @@ type VerifactuStats = {
   errors: number;
 };
 
+type CashForecast = {
+  currentBalance: number;
+  accountCount: number;
+  pendingIn: number;
+  forecastBalance: number;
+  recentIn: number;
+  recentOut: number;
+};
+
+async function loadCashForecast(tenantId: string): Promise<CashForecast | null> {
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10);
+    const [accounts, txStats] = await Promise.all([
+      prisma.seAccount.findMany({
+        where: { tenantId, status: 'active' },
+        select: { balance: true },
+      }),
+      prisma.seTransaction.findMany({
+        where: { tenantId, madeOn: { gte: thirtyDaysAgo }, status: 'posted', duplicated: false },
+        select: { amount: true },
+      }),
+    ]);
+    if (accounts.length === 0) return null;
+    const currentBalance = Math.round(accounts.reduce((s, a) => s + Number(a.balance), 0) * 100) / 100;
+    let recentIn = 0, recentOut = 0;
+    for (const tx of txStats) {
+      const amt = Number(tx.amount);
+      if (amt > 0) recentIn += amt; else recentOut += Math.abs(amt);
+    }
+    return {
+      currentBalance,
+      accountCount: accounts.length,
+      pendingIn: 0,     // filled in after analytics load
+      forecastBalance: currentBalance,
+      recentIn: Math.round(recentIn * 100) / 100,
+      recentOut: Math.round(recentOut * 100) / 100,
+    };
+  } catch {
+    return null;
+  }
+}
+
 async function DashboardContent() {
   let kpis: KpiCard[] = [];
   let chartData: MonthlyPoint[] = [];
   let verifactu: VerifactuStats | null = null;
   let accountingPnL: HoldedAccountingPnL | null = null;
   let verifactuSignal: IsaakVerifactuSignal | null = null;
+  let cashForecast: CashForecast | null = null;
 
   try {
     const session = await getHoldedSession();
@@ -132,6 +176,15 @@ async function DashboardContent() {
 
       if (snapshot) {
         chartData = buildMonthlyChart(snapshot);
+      }
+
+      // Cash forecast — real bank balance + pending collections
+      const forecast = await loadCashForecast(session.tenantId);
+      if (forecast) {
+        const pendingIn = a?.pendingCollectionsAmount ?? 0;
+        forecast.pendingIn = pendingIn;
+        forecast.forecastBalance = Math.round((forecast.currentBalance + pendingIn) * 100) / 100;
+        cashForecast = forecast;
       }
 
       // Verifactu Holded signal + local stats
@@ -222,6 +275,59 @@ async function DashboardContent() {
           </div>
         ))}
       </div>
+
+      {/* ── Cash Forecast Widget ─────────────────────────────────────────── */}
+      {cashForecast ? (
+        <div className="mx-5 mb-3 rounded-xl border border-[#2361d8]/20 bg-white px-4 py-3 shadow-sm">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Landmark size={13} className="text-[#2361d8]" />
+            <p className="text-[11px] font-semibold text-slate-500">
+              Tesorería real · {cashForecast.accountCount} cuenta{cashForecast.accountCount !== 1 ? 's' : ''} bancaria{cashForecast.accountCount !== 1 ? 's' : ''}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div>
+              <p className="text-[10px] uppercase tracking-wide text-slate-400">Saldo actual</p>
+              <p className="text-[15px] font-bold text-slate-800">
+                {fmt(cashForecast.currentBalance)}
+              </p>
+            </div>
+            {cashForecast.pendingIn > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-slate-400">Cobros pendientes</p>
+                <p className="text-[15px] font-bold text-emerald-600">
+                  +{fmt(cashForecast.pendingIn)}
+                </p>
+              </div>
+            )}
+            {cashForecast.pendingIn > 0 && (
+              <div>
+                <p className="text-[10px] uppercase tracking-wide text-slate-400">Previsión 30d</p>
+                <p className={`text-[15px] font-bold ${cashForecast.forecastBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {fmt(cashForecast.forecastBalance)}
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-3 border-t border-slate-100 pt-2">
+            <span className="text-[10px] text-slate-400">Últimos 30 días:</span>
+            <span className="text-[10px] text-emerald-600">↑ {fmt(cashForecast.recentIn)} entradas</span>
+            <span className="text-[10px] text-rose-500">↓ {fmt(cashForecast.recentOut)} salidas</span>
+          </div>
+        </div>
+      ) : (
+        <div className="mx-5 mb-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Landmark size={13} className="text-slate-400" />
+            <p className="text-[11px] text-slate-400">
+              Conecta tu banco para ver tu tesorería real y previsión de liquidez →{' '}
+              <a href="/banking" className="font-medium text-[#2361d8] hover:underline">
+                Workspace &rsaquo; Banca
+              </a>
+            </p>
+          </div>
+        </div>
+      )}
 
       {verifactuSignal?.checked && verifactuSignal.invoicesWithoutUuid > 0 && (
         <div className="mx-5 mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
