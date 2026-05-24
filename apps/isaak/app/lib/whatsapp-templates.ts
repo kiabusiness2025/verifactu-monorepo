@@ -102,6 +102,60 @@ export function buildModelo303Components(
   ];
 }
 
+// ── Template 4: Saldo bancario bajo ──────────────────────────────────────────
+//
+// Cuerpo para Meta:
+// "Hola {{1}}, tu saldo bancario está en {{2}} €, por debajo del umbral habitual.
+//  Accede a Isaak para revisar tu tesorería y tomar acción."
+//
+// Parámetros: [firstName, saldoEuros]
+// Registro en Meta: UTILITY — PENDIENTE DE REGISTRO
+
+export const TEMPLATE_SALDO_BAJO = 'saldo_bancario_bajo';
+
+export function buildSaldoBajoComponents(
+  firstName: string,
+  saldoEuros: string
+): WaTemplateComponent[] {
+  return [
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: firstName },
+        { type: 'text', text: saldoEuros },
+      ],
+    },
+  ];
+}
+
+// ── Template 5: Renovar conexión Enable Banking ───────────────────────────────
+//
+// Cuerpo para Meta:
+// "Hola {{1}}, tu conexión bancaria con {{2}} expira el {{3}}.
+//  Renuévala desde Isaak antes de que se desconecte."
+//
+// Parámetros: [firstName, bankName, fechaExpiracion]
+// Registro en Meta: UTILITY — PENDIENTE DE REGISTRO
+
+export const TEMPLATE_EB_EXPIRY = 'renovar_conexion_bancaria';
+
+export function buildEbExpiryComponents(
+  firstName: string,
+  bankName: string,
+  fechaExpiracion: string
+): WaTemplateComponent[] {
+  return [
+    {
+      type: 'body',
+      parameters: [
+        { type: 'text', text: firstName },
+        { type: 'text', text: bankName },
+        { type: 'text', text: fechaExpiracion },
+      ],
+    },
+  ];
+}
+
 // ── Selector automático de template por tipo de alerta ───────────────────────
 
 export type FiscalAlertTemplateInput = {
