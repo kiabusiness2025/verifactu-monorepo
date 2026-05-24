@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-23 (sesión 3 — Open Banking Enable Banking)
+**Última actualización**: 2026-05-24 (sesión 4 — Sidebar + Integraciones UX)
 **Visión**: Isaak como agente fiscal y contable autónomo que conecta con datos reales del ERP, ejecuta acciones con confirmación, aprende de cada empresa y asesora en lenguaje llano.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
@@ -11,20 +11,20 @@
 
 ### Base S1–S10 ✅
 
-| Componente                                   | Estado | Notas                                                            |
-| -------------------------------------------- | ------ | ---------------------------------------------------------------- |
-| Auth + workspace layout                      | ✅     | Sesión, onboarding, sidebar, bottom nav                          |
-| `/api/holded/chat` (chat con ERP)            | ✅     | Holded context, historial, memoria, herramientas, model-per-plan |
-| `/api/chat` (chat libre/público)             | ✅     | Auth opcional, fallback rules, rate-limit IP                     |
-| `/resumen` dashboard KPIs                    | ✅     | Ventas, gastos, cobros, IVA, gráfico 6m                          |
-| Verifactu — create + PDF + QR                | ✅     | S4 completo                                                      |
-| Stripe billing (checkout/portal/cancel/cron) | ✅     | S5 completo                                                      |
-| OCR + upload gastos                          | ✅     | S6: `upload-expense`, Claude Vision, confirmación                |
-| Voz STT + TTS                                | ✅     | S7: Web Speech API                                               |
-| Google Calendar + Gmail + Drive              | ✅     | S8-A/B/C/D + G-2 LLM tools (2026-05-21)                          |
-| Alertas fiscales cron                        | ✅     | S8-B: D-15/7/3/1, hub `/fiscal`, panel acceso AEAT               |
-| Push notifications                           | ✅     | S10-B: VAPID, Service Worker                                     |
-| PWA                                          | ✅     | S10-A: manifest, 8 iconos                                        |
+| Componente                                   | Estado | Notas                                                              |
+| -------------------------------------------- | ------ | ------------------------------------------------------------------ |
+| Auth + workspace layout                      | ✅     | Sesión, onboarding, sidebar rediseñado por categorías (2026-05-24) |
+| `/api/holded/chat` (chat con ERP)            | ✅     | Holded context, historial, memoria, herramientas, model-per-plan   |
+| `/api/chat` (chat libre/público)             | ✅     | Auth opcional, fallback rules, rate-limit IP                       |
+| `/resumen` dashboard KPIs                    | ✅     | Ventas, gastos, cobros, IVA, gráfico 6m                            |
+| Verifactu — create + PDF + QR                | ✅     | S4 completo                                                        |
+| Stripe billing (checkout/portal/cancel/cron) | ✅     | S5 completo                                                        |
+| OCR + upload gastos                          | ✅     | S6: `upload-expense`, Claude Vision, confirmación                  |
+| Voz STT + TTS                                | ✅     | S7: Web Speech API                                                 |
+| Google Calendar + Gmail + Drive              | ✅     | S8-A/B/C/D + G-2 LLM tools (2026-05-21)                            |
+| Alertas fiscales cron                        | ✅     | S8-B: D-15/7/3/1, hub `/fiscal`, panel acceso AEAT                 |
+| Push notifications                           | ✅     | S10-B: VAPID, Service Worker                                       |
+| PWA                                          | ✅     | S10-A: manifest, 8 iconos                                          |
 
 ### P0 / P1 / P2 ✅ (completado 2026-05-18)
 
@@ -215,6 +215,26 @@ CHIFT_ACCOUNT_ID
 
 ---
 
+## ✅ Completado en sesión 4 (2026-05-24) — Sidebar + Integraciones UX
+
+### Sidebar reorganizado ✅
+
+- `NAV_GROUPS`: categorías "Contabilidad" + "Empresa" + ítems raíz Chat/Resumen
+- Popover perfil (esquina inf. derecha) con 2 secciones: Configuración + Integraciones y herramientas
+- Holded movido a /integrations (no como entrada independiente en sidebar)
+- CSS variable `--brand-color` en `<aside>` para tenant theming sin warnings IDE
+- Sidebar `w-56`, historial hasta 30 conversaciones
+
+### Página `/integrations` rediseñada ✅
+
+- 2 tabs: Conectores + API & MCP
+- Catálogo `INTEGRATIONS: IntegrationMeta[]` con 10 integraciones categorizadas
+- Filtros por categoría (ERP / Google / Microsoft / Banca / Comunicación / Pagos)
+- Buscador por nombre y descripción
+- `SoonCard` para Factusol y Stripe (`available: false`)
+
+---
+
 ## ✅ Completado en sesión 3 (2026-05-23) — Open Banking via Enable Banking
 
 **Contexto**: GoCardless Bank Account Data cerró nuevos registros → migración a **Enable Banking** (PSD2 AIS) como proveedor open banking principal. Mantiene Salt Edge como alternativa.
@@ -275,13 +295,13 @@ ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 
 ### Pendientes EB
 
-| Tarea                                                       | Prioridad | Detalle                                                                                |
-| ----------------------------------------------------------- | --------- | -------------------------------------------------------------------------------------- |
-| UI en `/banking` para conectar banco                        | 🔴 Alta   | Selector ASPSP + botón "Conectar" + banner "Renovar" cuando `expiresAt < 7d`           |
-| Test end-to-end con banco real                              | 🔴 Alta   | Una vez UI lista, conectar un banco real desde producción                              |
-| Cron de sincronización periódica                            | 🟡 Media  | PSD2 permite ~4 syncs background/día — extender `connector-health` o crear `eb-sync`   |
-| Mergear PR #116 a main                                      | 🟡 Pdte   | Cleanup cron + remove test-connect                                                     |
-| Verificar `prisma migrate deploy` aplicó `expires_at`       | 🟡 Verif. | Columna nueva en `se_connections`                                                      |
+| Tarea                                                 | Prioridad | Detalle                                                                              |
+| ----------------------------------------------------- | --------- | ------------------------------------------------------------------------------------ |
+| UI en `/banking` para conectar banco                  | 🔴 Alta   | Selector ASPSP + botón "Conectar" + banner "Renovar" cuando `expiresAt < 7d`         |
+| Test end-to-end con banco real                        | 🔴 Alta   | Una vez UI lista, conectar un banco real desde producción                            |
+| Cron de sincronización periódica                      | 🟡 Media  | PSD2 permite ~4 syncs background/día — extender `connector-health` o crear `eb-sync` |
+| Mergear PR #116 a main                                | 🟡 Pdte   | Cleanup cron + remove test-connect                                                   |
+| Verificar `prisma migrate deploy` aplicó `expires_at` | 🟡 Verif. | Columna nueva en `se_connections`                                                    |
 
 ---
 
@@ -302,19 +322,19 @@ ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 
 ## Decisiones de arquitectura vigentes
 
-| Decisión                | Detalle                                                                                                                                                     |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Motor IA por plan       | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`           |
-| Rate limit free         | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público |
-| Acciones con escritura  | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                        |
-| Certificados digitales  | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                       |
-| mTLS AEAT               | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                           |
-| AEAT chat context       | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                         |
-| Branding facturas PDF   | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                               |
-| Isaak Público           | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                             |
-| `INTERNAL_API_SECRET`   | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                           |
-| Google LLM tools (G-2)  | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                     |
-| Microsoft Graph (M)     | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                               |
-| ERP aggregator (P3-4-C) | Chift como capa única. `ChiftErpClient implements ErpClient` + 4 rutas API + `/chift` workspace. 🔄 Activación cuenta Chift pendiente.                      |
-| Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23          |
+| Decisión                | Detalle                                                                                                                                                                     |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Motor IA por plan       | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`                           |
+| Rate limit free         | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público                 |
+| Acciones con escritura  | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                                        |
+| Certificados digitales  | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                                       |
+| mTLS AEAT               | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                                           |
+| AEAT chat context       | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                                         |
+| Branding facturas PDF   | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                                               |
+| Isaak Público           | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                                             |
+| `INTERNAL_API_SECRET`   | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                                           |
+| Google LLM tools (G-2)  | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                                     |
+| Microsoft Graph (M)     | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                                               |
+| ERP aggregator (P3-4-C) | Chift como capa única. `ChiftErpClient implements ErpClient` + 4 rutas API + `/chift` workspace. 🔄 Activación cuenta Chift pendiente.                                      |
+| Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23                          |
 | Open Banking EB         | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23 |
