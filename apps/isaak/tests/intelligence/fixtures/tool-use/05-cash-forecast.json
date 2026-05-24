@@ -1,0 +1,12 @@
+{
+  "id": "tool-use-cash-forecast-05",
+  "category": "tool-use",
+  "description": "Previsión de caja debe invocar banking_get_cash_forecast",
+  "query": "¿Cómo va a quedar mi tesorería en los próximos 30 días?",
+  "context": { "authenticated": true, "holdedConnected": true, "bankConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "toolsUsed": ["banking_get_cash_forecast"],
+    "minJudgeScore": 6
+  }
+}

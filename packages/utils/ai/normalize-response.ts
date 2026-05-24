@@ -1,4 +1,4 @@
-import type { AIProvider, AIUsage, NormalizedLLMResponse } from './types';
+import type { AIProvider, AIToolUse, AIUsage, NormalizedLLMResponse } from './types';
 import { AIError } from './errors';
 
 export function normalizeResponse(
@@ -6,10 +6,20 @@ export function normalizeResponse(
   provider: AIProvider,
   model: string,
   raw?: unknown,
-  usage?: AIUsage
+  usage?: AIUsage,
+  extras?: { toolUses?: AIToolUse[]; stopReason?: string }
 ): NormalizedLLMResponse {
-  if (!text?.trim()) {
+  const hasToolUses = (extras?.toolUses?.length ?? 0) > 0;
+  if (!text?.trim() && !hasToolUses) {
     throw new AIError('Provider returned empty response', provider, 'empty_response');
   }
-  return { text: text.trim(), provider, model, raw, usage };
+  return {
+    text: text?.trim() ?? '',
+    provider,
+    model,
+    raw,
+    usage,
+    toolUses: extras?.toolUses,
+    stopReason: extras?.stopReason,
+  };
 }

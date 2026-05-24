@@ -1,0 +1,12 @@
+{
+  "id": "tool-use-list-invoices-01",
+  "category": "tool-use",
+  "description": "Query de facturas recientes debe invocar holded_list_documents",
+  "query": "Enséñame las últimas 10 facturas emitidas",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "toolsUsed": ["holded_list_documents"],
+    "minJudgeScore": 7
+  }
+}

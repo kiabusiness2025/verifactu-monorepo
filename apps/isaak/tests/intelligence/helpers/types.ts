@@ -1,4 +1,9 @@
-export type GoldenCategory = 'clarify' | 'no-clarify' | 'no-hallucination' | 'multi-turn';
+export type GoldenCategory =
+  | 'clarify'
+  | 'no-clarify'
+  | 'no-hallucination'
+  | 'multi-turn'
+  | 'tool-use';
 
 export type GoldenTurn = {
   user: string;

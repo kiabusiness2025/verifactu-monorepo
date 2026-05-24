@@ -1,0 +1,12 @@
+{
+  "id": "tool-use-verifactu-status-06",
+  "category": "tool-use",
+  "description": "Estado Verifactu de factura específica debe invocar holded_get_verifactu_status",
+  "query": "¿Está registrada en Verifactu la factura con id 64a8b3f...?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "toolsUsed": ["holded_get_verifactu_status"],
+    "minJudgeScore": 6
+  }
+}

@@ -1,4 +1,8 @@
-import type { CallLLMParams, NormalizedLLMResponse } from './types';
+import type {
+  AIToolUse,
+  CallLLMParams,
+  NormalizedLLMResponse,
+} from './types';
 import type { AIConfig } from './config';
 import { AIError, classifyHttpError } from './errors';
 import { normalizeResponse } from './normalize-response';
@@ -8,18 +12,36 @@ import { registerAdapter } from './provider-router';
 const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
 const ANTHROPIC_VERSION = '2023-06-01';
 
+type AnthropicContentBlock =
+  | { type: 'text'; text: string }
+  | { type: 'tool_use'; id: string; name: string; input: Record<string, unknown> }
+  | { type: 'tool_result'; tool_use_id: string; content: string; is_error?: boolean };
+
 type AnthropicMessage = {
   role: 'user' | 'assistant';
-  content: string;
+  content: string | AnthropicContentBlock[];
 };
 
 type AnthropicResponse = {
-  content?: Array<{ type: string; text?: string }>;
+  content?: Array<{
+    type: string;
+    text?: string;
+    id?: string;
+    name?: string;
+    input?: Record<string, unknown>;
+  }>;
+  stop_reason?: string;
   usage?: { input_tokens?: number; output_tokens?: number };
   error?: { message?: string };
 };
 
 function buildMessages(params: CallLLMParams): AnthropicMessage[] {
+  if (params.richMessages?.length) {
+    return params.richMessages.map((m) => ({
+      role: m.role,
+      content: m.content as AnthropicMessage['content'],
+    }));
+  }
   if (params.messages?.length) {
     return params.messages.map((m) => ({ role: m.role, content: m.content }));
   }
@@ -59,6 +81,11 @@ export async function anthropicAdapter(
     payload.temperature = params.temperature;
   }
 
+  if (params.tools?.length) {
+    payload.tools = params.tools;
+    payload.tool_choice = params.toolChoice ?? { type: 'auto' };
+  }
+
   const response = await fetch(ANTHROPIC_API_URL, {
     method: 'POST',
     headers: {
@@ -86,13 +113,24 @@ export async function anthropicAdapter(
   }
 
   const text = data.content?.find((b) => b.type === 'text')?.text ?? null;
+  const toolUses: AIToolUse[] =
+    data.content
+      ?.filter((b) => b.type === 'tool_use' && b.id && b.name)
+      .map((b) => ({
+        id: b.id as string,
+        name: b.name as string,
+        input: (b.input as Record<string, unknown>) ?? {},
+      })) ?? [];
   const usage = data.usage
     ? {
         inputTokens: data.usage.input_tokens ?? 0,
         outputTokens: data.usage.output_tokens ?? 0,
       }
     : undefined;
-  return normalizeResponse(text, 'anthropic', model, data, usage);
+  return normalizeResponse(text, 'anthropic', model, data, usage, {
+    toolUses: toolUses.length ? toolUses : undefined,
+    stopReason: data.stop_reason,
+  });
 }
 
 registerAdapter('anthropic', anthropicAdapter);

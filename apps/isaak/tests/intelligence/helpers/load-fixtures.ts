@@ -18,6 +18,12 @@ export function loadFixturesByCategory(category: GoldenCategory): GoldenFixture[
 }
 
 export function loadAllFixtures(): GoldenFixture[] {
-  const categories: GoldenCategory[] = ['clarify', 'no-clarify', 'no-hallucination', 'multi-turn'];
+  const categories: GoldenCategory[] = [
+    'clarify',
+    'no-clarify',
+    'no-hallucination',
+    'multi-turn',
+    'tool-use',
+  ];
   return categories.flatMap((cat) => loadFixturesByCategory(cat));
 }

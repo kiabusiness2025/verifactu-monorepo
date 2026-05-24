@@ -23,6 +23,11 @@ import {
   buildPublicSystemPrompt,
   type AuthenticatedChatContext,
 } from '@/app/lib/isaak-chat-prompts';
+import {
+  buildReadOnlyToolsForContext,
+  type IsaakToolContext,
+} from '@/app/lib/isaak-tools-registry';
+import { runIsaakToolLoop } from '@/app/lib/isaak-tool-loop';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -183,12 +188,42 @@ async function loadAuthenticatedChatContext() {
     context: businessContext,
   }).catch(() => null);
 
+  const [bankAccountCount, googleToken, microsoftToken] = await Promise.all([
+    prisma.seAccount
+      .count({ where: { tenantId: session.tenantId, status: 'active' } })
+      .catch(() => 0),
+    prisma.isaakGoogleToken
+      .findFirst({
+        where: { tenantId: session.tenantId, userId: session.userId },
+        select: { id: true },
+      })
+      .catch(() => null),
+    prisma.isaakMicrosoftToken
+      .findFirst({
+        where: { tenantId: session.tenantId, userId: session.userId },
+        select: { id: true },
+      })
+      .catch(() => null),
+  ]);
+
+  const holdedApiKey = businessContext?.holded?.connection?.apiKey ?? null;
+  const holdedConnected = Boolean(businessContext?.holded.hasLiveConnection);
+
   return {
     session,
     conversationScope: {
       tenantId: session.tenantId,
       userId: session.userId,
     },
+    toolContext: {
+      tenantId: session.tenantId,
+      userId: session.userId,
+      holdedApiKey,
+      holdedConnected,
+      bankConnected: bankAccountCount > 0,
+      googleConnected: Boolean(googleToken),
+      microsoftConnected: Boolean(microsoftToken),
+    } satisfies IsaakToolContext,
     promptContext: {
       tenantId: session.tenantId,
       userId: session.userId,
@@ -357,12 +392,54 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const result = await getLLMResponse(
-      message,
-      history,
-      authenticated?.promptContext ?? null,
-      modelConfig
-    );
+    // F2: if the tenant has at least one integration connected, run the
+    // tool-calling loop so the LLM can fetch real data. Otherwise keep the
+    // F1 single-shot flow (still valuable for fiscal advice without data).
+    const toolContext = authenticated?.toolContext ?? null;
+    const tools = toolContext ? buildReadOnlyToolsForContext(toolContext) : [];
+    const useToolLoop = Boolean(authenticated?.promptContext && tools.length > 0);
+
+    let result: LLMResult | null;
+    let toolNamesUsed: string[] = [];
+    let iterations = 0;
+
+    if (useToolLoop && authenticated && toolContext) {
+      const loop = await runIsaakToolLoop({
+        systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext),
+        history,
+        userMessage: message,
+        tools,
+        context: toolContext,
+        model: modelConfig.model,
+        provider: modelConfig.provider,
+        feature: 'workspace_chat_tools',
+        maxOutputTokens: 1200,
+      });
+      result = loop.text
+        ? {
+            text: loop.text,
+            provider: loop.provider,
+            model: loop.model,
+            latencyMs: loop.totalLatencyMs,
+            usage: loop.totalUsage,
+          }
+        : null;
+      toolNamesUsed = loop.toolNames;
+      iterations = loop.iterations;
+      if (!result) {
+        console.warn('[Isaak Chat] tool loop returned empty text', {
+          iterations: loop.iterations,
+          stopped: loop.stoppedReason,
+        });
+      }
+    } else {
+      result = await getLLMResponse(
+        message,
+        history,
+        authenticated?.promptContext ?? null,
+        modelConfig
+      );
+    }
 
     if (result) {
       logProvider(
@@ -386,6 +463,9 @@ export async function POST(request: NextRequest) {
             latencyMs: result.latencyMs ?? null,
             isClarification,
             isFallback,
+            toolCallsCount: toolNamesUsed.length,
+            toolNames: toolNamesUsed,
+            iterations,
           },
         }).catch(() => null);
       }
@@ -396,9 +476,14 @@ export async function POST(request: NextRequest) {
         conversationId: conversation?.id ?? null,
         provider: result.provider,
         modelUsed: result.model,
-        feature: authenticated ? 'workspace_chat_free' : 'public_chat',
+        feature: useToolLoop
+          ? 'workspace_chat_tools'
+          : authenticated
+            ? 'workspace_chat_free'
+            : 'public_chat',
         usage: result.usage,
         latencyMs: result.latencyMs ?? null,
+        toolCalls: toolNamesUsed,
         isClarification,
         isFallback,
         historyTurns: history.length,
