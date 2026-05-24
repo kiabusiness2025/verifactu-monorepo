@@ -22,6 +22,7 @@ type PLData = {
   summary: PLSummary;
   expensesByCategory: Record<string, number>;
   monthly: MonthlyRow[];
+  truncated?: boolean;
 };
 
 function fmt(n: number) {
@@ -71,15 +72,23 @@ export default function InformesClient({ year: initYear }: { year: number }) {
   const [month, setMonth] = useState<number | null>(null);
   const [data, setData] = useState<PLData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [noHolded, setNoHolded] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setNoHolded(false);
     const url = month
       ? `/api/reports/pl?year=${year}&month=${month}`
       : `/api/reports/pl?year=${year}`;
     fetch(url)
-      .then((r) => r.json())
-      .then((d) => setData(d.ok ? d : null))
+      .then(async (r) => {
+        const d = await r.json();
+        if (r.status === 422) {
+          setNoHolded(true);
+          return;
+        }
+        setData(d.ok ? d : null);
+      })
       .finally(() => setLoading(false));
   }, [year, month]);
 
@@ -143,12 +152,31 @@ export default function InformesClient({ year: initYear }: { year: number }) {
           <div className="flex items-center justify-center py-16 text-sm text-slate-400">
             Calculando…
           </div>
+        ) : noHolded ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <p className="text-sm text-slate-500">
+              Conecta tu cuenta de Holded para ver la cuenta de resultados en tiempo real.
+            </p>
+            <a
+              href="/settings/connections"
+              className="rounded-lg bg-[#2361d8] px-4 py-2 text-sm font-medium text-white hover:bg-[#1a4fc4]"
+            >
+              Conectar Holded
+            </a>
+          </div>
         ) : !s ? (
           <div className="flex items-center justify-center py-16 text-sm text-slate-400">
             Sin datos para el período seleccionado.
           </div>
         ) : (
           <>
+            {/* Truncated warning */}
+            {data!.truncated && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-700">
+                Hay más de 500 documentos en el período. Los totales pueden ser incompletos.
+              </div>
+            )}
+
             {/* KPI cards */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <KpiCard
