@@ -232,16 +232,16 @@ Content:
 
 ---
 
-### Fase C · Recordatorios Automáticos de Perfil — ⬜ SIGUIENTE
+### Fase C · Recordatorios Automáticos de Perfil — ✅ COMPLETADO (2026-05-24)
 
 **Objetivo**: Email automático cada 2-3 días a tenants con perfil incompleto (sin email, teléfono, CNAE o representante), hasta que completen los datos.
 
-| Tarea                                                                                                       | Estado | Notas                                                                      |
-| ----------------------------------------------------------------------------------------------------------- | ------ | -------------------------------------------------------------------------- |
-| C1: Script/API `GET /api/admin/tenants/incomplete-profiles` — lista tenants incompletos                     | ⬜     | Criterio: profile NULL o faltan ≥2 de {email, phone, cnae, representative} |
-| C2: Rutina diaria programada (CCR) que llama C1 + envía recordatorios por segmento                          | ⬜     | Cadencia: no más de 1 email cada 3 días por tenant                         |
-| C3: Tabla `profile_reminder_log` (tenant_id, sent_at) para respetar cadencia                                | ⬜     | O campo `last_profile_reminder_at` en tenant_profiles                      |
-| C4: Dashboard en `/admin-marketing` — "Recordatorios activos": cuántos tenants y cuándo fue el último envío | ⬜     |                                                                            |
+| Tarea                                                                                             | Estado | Notas                                                                        |
+| ------------------------------------------------------------------------------------------------- | ------ | ---------------------------------------------------------------------------- |
+| C1: `GET /api/admin/tenants/incomplete-profiles` — lista paginada con search                      | ✅     | `apps/admin/app/api/admin/tenants/incomplete-profiles/route.ts`              |
+| C2: Cron Vercel diario `0 8 * * 1-5` → `POST /api/cron/profile-reminders`                         | ✅     | `apps/admin/vercel.json` + route con auth Bearer CRON_SECRET o admin session |
+| C3: Tabla SQL `profile_reminder_logs` (tenant_id, sent_at) — cadencia 3 días                      | ✅     | Creada on-demand en el cron; throttle via NOT IN subquery                    |
+| C4: `RemindersWidget` en `/admin-marketing` — incompletos, pendientes, último envío, botón manual | ✅     | `RemindersWidget.tsx` + `GET /api/admin/profile-reminders/status`            |
 
 ---
 
