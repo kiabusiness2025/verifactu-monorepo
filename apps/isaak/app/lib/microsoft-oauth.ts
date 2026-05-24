@@ -19,6 +19,7 @@ function getClientSecret() {
   return process.env.MICROSOFT_CLIENT_SECRET ?? '';
 }
 export function getMicrosoftRedirectUri() {
+  if (process.env.MICROSOFT_REDIRECT_URI) return process.env.MICROSOFT_REDIRECT_URI;
   const base =
     process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? 'http://localhost:3002';
   return `${base}/api/isaak/microsoft/callback`;

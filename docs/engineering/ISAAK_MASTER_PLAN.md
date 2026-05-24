@@ -293,15 +293,15 @@ ENABLE_BANKING_APP_ID           — UUID de la app (sandbox o prod)
 ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 ```
 
-### Pendientes EB
+### Estado EB — 2026-05-24
 
-| Tarea                                                 | Prioridad | Detalle                                                                              |
-| ----------------------------------------------------- | --------- | ------------------------------------------------------------------------------------ |
-| UI en `/banking` para conectar banco                  | 🔴 Alta   | Selector ASPSP + botón "Conectar" + banner "Renovar" cuando `expiresAt < 7d`         |
-| Test end-to-end con banco real                        | 🔴 Alta   | Una vez UI lista, conectar un banco real desde producción                            |
-| Cron de sincronización periódica                      | 🟡 Media  | PSD2 permite ~4 syncs background/día — extender `connector-health` o crear `eb-sync` |
-| Mergear PR #116 a main                                | 🟡 Pdte   | Cleanup cron + remove test-connect                                                   |
-| Verificar `prisma migrate deploy` aplicó `expires_at` | 🟡 Verif. | Columna nueva en `se_connections`                                                    |
+| Tarea                                              | Estado | Detalle                                                                                   |
+| -------------------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
+| UI en `/banking` para conectar banco               | ✅     | Picker ASPSP + botón Conectar + banners expiración ≤7d — ya implementado                  |
+| Feedback post-OAuth (`?eb_callback` / `?eb_error`) | ✅     | Banner verde/rojo + limpieza de URL. 2026-05-24                                           |
+| Redirect callback seguro                           | ✅     | Deriva origin de `request.url`, no de `NEXT_PUBLIC_APP_URL`. 2026-05-24                   |
+| Cron de sincronización periódica                   | ✅     | `/api/cron/eb-sync` · `0 */6 * * *` · multi-tenant + reconcile. Registrado en vercel.json |
+| Test end-to-end con banco real                     | 🟡     | Pendiente conectar un banco real en producción para validar flujo completo                |
 
 ---
 
