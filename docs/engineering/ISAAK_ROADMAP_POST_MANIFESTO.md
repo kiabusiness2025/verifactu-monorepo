@@ -561,5 +561,196 @@ Esta experiencia de 20 años es la ventaja competitiva más difícil de replicar
 
 ---
 
-*Documento vivo. Actualizar en cada sprint con PRs completados y cambios de prioridad.*  
-*Próxima revisión: inicio de implementación F9.*
+*Documento vivo. Actualizar en cada sprint con PRs completados y cambios de prioridad.*
+
+---
+
+# Anexo I — Organización por MÓDULOS (2026-05-26)
+
+A medida que el roadmap evoluciona, las features F9-F20 originales se reorganizan en
+**módulos funcionales** con tareas atómicas. Esta sección reemplaza el seguimiento por
+"F" números cuando una feature crece en sub-fases o cuando aparecen módulos nuevos
+(Mercantil, Sede AEAT) no contemplados al inicio.
+
+## Módulo L — Isaak Ledger (fuente de verdad)
+
+| ID | Tarea | Estado | Commits / PR |
+| -- | ----- | ------ | ------------ |
+| L1 | Schema `IsaakLedgerEntry` + migración + hash chain SHA-256 | ✅ | F9 fase 1 — `3c86b330` |
+| L2 | Repositorio con advisory lock + SQL builders puros | ✅ | F9 fase 2 — `8dd2853b` |
+| L3 | Importer Holded → Ledger idempotente + tools LLM | ✅ | F9 fase 3 — `90c2f6a9` |
+| L4 | Separación de cuentas PGC (caja 570, socios 551/552, partidas 555) | ⏳ | Requisito para R128/R129 con datos reales |
+| L5 | Compute de saldos por cuenta para snapshot de auditoría | ⏳ | Depende L4 |
+| L6 | Endpoint público `/api/isaak/ledger/entry` para integraciones externas | ⏳ | |
+
+## Módulo E — Excel export + UI de auditoría
+
+| ID | Tarea | Estado | Commits / PR |
+| -- | ----- | ------ | ------------ |
+| E1 | Builders puros: libro IVA emitidas/recibidas, diario, modelo 303 | ✅ | F10 — `ee1222ed` |
+| E2 | Endpoint `GET /api/isaak/export/excel` + tool LLM | ✅ | F10 — `ee1222ed` |
+| E3 | UI `/auditoria` con violaciones + descargas + KPIs | ✅ | UI — `ef61742b` |
+| E4 | PDF: borradores 303/130/111 imprimibles con sello | ⏳ |
+| E5 | Memoria abreviada + cuentas anuales (modelos depósito RM) | ⏳ |
+
+## Módulo I — Inspector AEAT
+
+| ID | Tarea | Estado | Commits / PR |
+| -- | ----- | ------ | ------------ |
+| I1 | Motor puro + 16 reglas BOE/LIVA/LIRPF base | ✅ | F11 fase 1 — `c3cd78fd` |
+| I2a | Refactor schema RuleScope multi-dim + R000 perfil + R040 → R040A/B | ✅ | F11 fase 2a — `a6094c48` |
+| I2b | 18 reglas (facturación, IVA deducible, retenciones ampliadas) | ✅ | F11 fase 2b — `85955f4b` |
+| I2c | 10 reglas audit cross-cutting + AuditLedgerSnapshot | ✅ | F11 fase 2c — `6444aa5c` |
+| I3 | Endpoint `/api/isaak/audit` + tool `isaak_audit_ledger` + cron mensual | ✅ | F11 fase 3 — `254b0296` |
+| I4a | `IsaakTaxReturn` schema + endpoints + tools + audit wiring | ✅ | F11 fase 4a — `ddd27a99` |
+| I4b | 6 reglas sectoriales/territoriales (51 totales) | ✅ | F11 fase 4b — `13c2be1f` |
+| I5 | Más reglas sectoriales (hostelería caja, transporte 100%, coworking) | ⏳ |
+| I6 | Reglas de trinchera del fundador (30+ casos reales de gestoría) | ⏳ |
+| I7 | UI wizard de perfil fiscal R000 (gating del Inspector) | ⏳ |
+
+## Módulo F — Inspector LLM contextual (Capa 2)
+
+| ID | Tarea | Estado | Commits / PR |
+| -- | ----- | ------ | ------------ |
+| F12-A | Sub-agente `inspector` en el registry con system prompt especializado | ⏳ |
+| F12-B | Triggers: ejecutar tras Capa 1 si no hay reglas que apliquen y hay keywords fiscales | ⏳ |
+| F12-C | Golden tests con casos legales reales | ⏳ |
+
+## Módulo R — RAG corpus AEAT (Capa 3 Inspector)
+
+| ID | Tarea | Estado | Commits / PR |
+| -- | ----- | ------ | ------------ |
+| R1 | Schema `IsaakAeatCorpus` + chunker + sources registry + SQL builders | ✅ | F13 fase 1 — `d8d2cfe2` |
+| R2a | Ingester PDF: manuales prácticos IRPF/IVA/Sociedades AEAT | ⏳ |
+| R2b | Ingester HTML: BOE consolidados (LIVA, LIRPF, LIS, LGT, RD facturación, RD Verifactu) | ⏳ |
+| R2c | Ingester INFORMA: scraping criterios DGT por categoría | ⏳ |
+| R3 | Tool LLM `inspector_search_aeat(query, sourceType?)` para sub-agente Inspector | ⏳ |
+| R4 | Cron trimestral de re-ingestión con detección de cambios | ⏳ |
+| R5 | UI panel admin para forzar re-ingest y ver health del corpus | ⏳ |
+
+## Módulo TEAR — Consulta vinculante automática (F14)
+
+| ID | Tarea | Estado | Commits / PR |
+| -- | ----- | ------ | ------------ |
+| T1 | Plantilla oficial DGT con campos identificativos | ⏳ |
+| T2 | Trigger: cuando Inspector Capa 3 retorna confianza <0.85 → ofrecer al usuario | ⏳ |
+| T3 | LLM generation de Hechos + Cuestión planteada + Normativa | ⏳ |
+| T4 | PDF export + firma digital (vía Módulo C) o email | ⏳ |
+
+## Módulo M — Mercantil (NUEVO — alineado con scraping en curso)
+
+Pieza nueva para evitar que el usuario teclee datos incorrectos. Cada vez que añade su
+empresa, un cliente o un proveedor, Isaak verifica contra fuentes públicas.
+
+| ID | Tarea | Estado |
+| -- | ----- | ------ |
+| M1 | Cliente AEAT NIF validation (endpoint público sin cert) | 🚧 En curso (equipo) |
+| M2 | Cliente VIES SOAP para NIF-IVA intracomunitario UE | 🚧 En curso (equipo) |
+| M3 | BORME scraping (constitución, cambios admin, ampliaciones capital) | ⏳ |
+| M4 | Registro Mercantil Central HTML scraping (cuentas anuales, admin actual) | ⏳ |
+| M5 | Catastro lookup para inmuebles (alquileres, R230) | ⏳ |
+| M6 | Tabla `mercantile_lookups` con cache 30 días + invalidación BORME | ⏳ |
+| M7 | Tool LLM `isaak_lookup_company(query)` para sub-agente `gestion` | ⏳ |
+| M8 | Refuerzo del Inspector R035 (NIF B2B): valida vía M1 antes de permitir factura | ⏳ |
+| M9 | UI inline en formularios de contacto (auto-fill + diff visual) | ⏳ |
+
+**Fuentes y restricciones legales:**
+- AEAT NIF: pública, gratuita, rate-limit ~60 req/min razonable
+- VIES: pública UE, gratuita, SOAP fiable
+- BORME: PDF diario gratuito, requiere parser; alternativa RSS
+- Registro Mercantil Central: HTML scraping, frágil (cambian estructura), aceptable para casos puntuales
+- Catastro: API REST pública
+
+**Caching obligatorio**: las consultas a fuentes públicas tienen rate-limit; cache 30 días en
+`mercantile_lookups` invalidado por `last_borme_event` cuando esa fuente publica cambio para
+el NIF en cuestión.
+
+## Módulo C — Cert digital AEAT y Sede Electrónica
+
+Extiende lo ya operativo (Verifactu mTLS + sede census/notif) en 3 fases con riesgo creciente.
+
+### C-0 — Base ya operativa
+
+| ID | Tarea | Estado | Notas |
+| -- | ----- | ------ | ----- |
+| C-0.1 | Upload P12 → PEM-JSON cifrado AES-256-GCM con `CERT_MASTER_KEY` | ✅ | Schema `TenantCertificate` |
+| C-0.2 | mTLS `https.Agent` per-tenant | ✅ | `certificate-crypto.ts` |
+| C-0.3 | Verifactu SOAP mTLS (AEAT firma + envío) | ✅ | `apps/api` |
+| C-0.4 | `/api/isaak/sede/census` (lectura censo) | ✅ | `aeat-sede.ts` |
+| C-0.5 | `/api/isaak/sede/notifications` (lectura básica) | ✅ | `aeat-sede.ts` |
+
+### C-A — Lectura ampliada (riesgo BAJO, valor inmediato)
+
+| ID | Tarea | Estado |
+| -- | ----- | ------ |
+| C-A1 | Buzón DEH (Dirección Electrónica Habilitada): pull notificaciones + push al cliente | ⏳ |
+| C-A2 | Censo 036/037 con diff detection (domicilio fiscal, IAE, obligaciones) | ⏳ |
+| C-A3 | Descarga de justificantes PDF de modelos presentados (auto-adjuntar a `IsaakTaxReturn.attachmentUrl`) | ⏳ |
+| C-A4 | Buzón AEAT con resumen IA semanal (qué llegó, gravedad, plazo si aplica) | ⏳ |
+| C-A5 | Cron diario para C-A1 + C-A2 con dedupe de notificaciones | ⏳ |
+
+**Coste estimado:** ~5 días. **Riesgo:** mínimo (solo lectura).
+
+### C-B — Borrador asistido + presentación con confirmación (riesgo MEDIO, valor alto)
+
+| ID | Tarea | Estado |
+| -- | ----- | ------ |
+| C-B1 | Borrador 303: cálculo desde Ledger → UI revisión → confirmación → envío SOAP | ⏳ |
+| C-B2 | Borrador 130 (IRPF fraccionado) | ⏳ |
+| C-B3 | Borrador 111 (retenciones trabajo) + 115 (alquileres) | ⏳ |
+| C-B4 | Borrador 349 (intracom) + 347 (operaciones >3.005,06€) | ⏳ |
+| C-B5 | Opción de firma local del cliente vía WebCrypto (alternativa al cert server-side) | ⏳ |
+| C-B6 | Tabla `IsaakAeatSubmission` con audit log: payload, respuesta, cert fingerprint, userId que aprobó | ⏳ |
+
+**Coste estimado:** ~10-15 días por modelo (303 primero, resto después). **Riesgo:** medio (consentimiento explícito por cada presentación).
+
+### C-C — Presentación 100% automática (riesgo ALTO, máximo valor)
+
+| ID | Tarea | Estado |
+| -- | ----- | ------ |
+| C-C1 | Cron trimestral que presenta 303 automáticamente cuando todos los R086/R100 pasan | ⏳ |
+| C-C2 | Veto-window 48h: cliente recibe email "vamos a presentar el 303 con X€" y puede vetar con un click | ⏳ |
+| C-C3 | Rectificativa automática si veto post-presentación | ⏳ |
+| C-C4 | Cobertura RC profesional (~€2-5k/año) — proceso institucional B5 | ⏳ |
+| C-C5 | Dashboard admin con métricas de presentaciones auto vs vetadas vs rechazadas AEAT | ⏳ |
+
+**Coste estimado:** ~5 días tras C-B. **Riesgo:** alto (errores se traducen en multa AEAT Art. 27 LGT) → no abrir hasta tener RC profesional contratada.
+
+**Decisiones críticas tomadas para C:**
+- Almacenamiento cert: **server-side cifrado** AES-256-GCM (ya operativo). Opción opt-in de firma local con WebCrypto para clientes que prefieren máxima privacidad.
+- Audit log obligatorio en `IsaakAeatSubmission` antes de C-B1.
+- RC profesional contratada antes de C-C1.
+
+## Módulos restantes (sin cambios sobre roadmap original)
+
+- F15-F16: canales (Telegram, WhatsApp ampliado, Slack, Teams)
+- F17: gestión externa (Airtable, Notion, Trello)
+- F18: cobros (Stripe Connect, GoCardless AIS)
+- F19: ERP/CRM (HubSpot, Odoo)
+- F20: documentos (Dropbox, Drive OCR ampliación)
+
+## Dependencias críticas entre módulos
+
+```
+L1-L3 ✅ ─┬─→ E1-E3 ✅
+          ├─→ I1-I4 ✅
+          ├─→ L4 ⏳ ─→ L5 ⏳ ─→ I128/I129 con datos reales
+          └─→ B1 (Verifactu desde Ledger, no Holded)
+
+I4a ✅ (TaxReturn) ─→ C-A3 (justificantes auto-attach)
+                  ─→ C-B (borradores con cruces validados)
+                  ─→ C-C (automatización con audit log)
+
+R1 ✅ ─→ R2-R3 ⏳ ─→ F12 (Inspector Capa 2) ─→ F14 (TEAR)
+
+M1-M2 🚧 ─→ M7 tool LLM ─→ refuerzo Inspector R035 ─→ wizard contacts UI
+```
+
+## Secuencia recomendada Q3 2026
+
+1. **Cierre Módulo M (Mercantil)** — ya en marcha por el equipo, integrar M7+M8 con Inspector
+2. **C-A1 a C-A5** — lectura sede ampliada, riesgo bajo, valor inmediato para piloto
+3. **L4-L5** — separación cuentas PGC, desbloquea R128/R129 con datos reales
+4. **I7** — UI wizard R000 perfil fiscal para silenciar warnings genéricos y activar scoping sectorial/territorial
+5. **R2a + R3** — primer ingester PDF (Manual IRPF AEAT) + tool `inspector_search_aeat`
+6. **C-B1** — borrador asistido del 303 (cierra ciclo "Robot Contable supervisado")

@@ -1,11 +1,11 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-25 (cierre manifiesto F1-F8 + roadmap Robot Contable)
+**Última actualización**: 2026-05-26 (cierre F11 fase 4 + apertura módulos Mercantil y Sede AEAT)
 **Visión**: Isaak como **Robot Contable** autónomo — el empresario opera SOLO a través de Isaak; Isaak es la fuente de verdad, el Inspector AEAT preventivo y el ejecutor fiscal.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
 > Para el manifesto técnico F1-F8 (completado) ver `docs/engineering/ISAAK_INTELLIGENCE.md`.
-> **Para el roadmap post-manifiesto F9-F20 + Track B institucional ver `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`** (fase activa).
+> **Para el roadmap post-manifiesto detallado por módulos ver `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`** (fase activa).
 
 ---
 
@@ -363,32 +363,37 @@ Inteligencia conversacional + tool-calling + multi-proveedor + sub-agentes opera
 
 ## Roadmap Robot Contable — activo (Q2 2026 →)
 
-Detalle completo en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`.
+Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`.
 
-**Track A técnico (F9-F20):**
+### Resumen por módulos
 
-| Fase | Componente | Estado |
-| ---- | ---------- | ------ |
-| **F9** | **Isaak Ledger nativo** (Postgres + hash chain inmutable) | 🚧 En curso |
-| F10 | Excel solo lectura (exceljs export automático) | ⏳ |
-| F11 | Inspector AEAT Capa 1 (80-100 reglas TypeScript) | ⏳ |
-| F12 | Inspector AEAT Capa 2 (sub-agente LLM contextual) | ⏳ |
-| F13 | Inspector AEAT Capa 3 (RAG sobre BOE + doctrina DGT) | ⏳ |
-| F14 | Consulta vinculante TEAR automática | ⏳ |
-| F15 | Telegram + WhatsApp ampliado | ⏳ |
-| F16 | Slack + Microsoft Teams | ⏳ |
-| F17 | Airtable + Notion + Trello | ⏳ |
-| F18 | Stripe Connect + GoCardless AIS | ⏳ |
-| F19 | HubSpot + Odoo | ⏳ |
-| F20 | Dropbox + Drive OCR | ⏳ |
+| Módulo | Componente | Estado |
+| ------ | ---------- | ------ |
+| **L — Ledger nativo** | F9: schema + hash chain + repo + importer Holded | ✅ Operativo |
+| **E — Excel export** | F10: 4 informes solo lectura + UI `/auditoria` | ✅ Operativo |
+| **I — Inspector AEAT** | F11 fases 1-4: 51 reglas + R000 perfil + auditoría + cron mensual | ✅ Operativo |
+| **R — RAG corpus** | F13 fase 1: scaffolding (schema + chunker + sources) | ✅ Fase 1 cerrada |
+| **R — RAG corpus** | F13 fase 2: ingester PDF/BOE + tool `inspector_search_aeat` | ⏳ |
+| **M — Mercantil** | Scraping NIF/BORME/RMC + tool `isaak_lookup_company` | 🚧 En curso |
+| **C — Cert digital AEAT** | C-0: Verifactu mTLS + Sede census/notif lectura | ✅ Operativo |
+| **C — Cert digital AEAT** | C-A: lectura ampliada (DEH push, justificantes, buzón) | ⏳ |
+| **C — Cert digital AEAT** | C-B: borrador asistido (presentación 303 con confirmación) | ⏳ |
+| **C — Cert digital AEAT** | C-C: presentación automática (cron + veto-window + RC profesional) | ⏳ |
+| **F — Inspector LLM Capa 2** | F12: sub-agente inspector contextual con prompt especializado | ⏳ |
+| **TEAR** | F14: consulta vinculante DGT automática | ⏳ |
+| **Canales** | F15-F16: Telegram + WhatsApp ampliado + Slack + Teams | ⏳ |
+| **Gestión externa** | F17: Airtable + Notion + Trello | ⏳ |
+| **Cobros** | F18: Stripe Connect + GoCardless AIS | ⏳ |
+| **ERP/CRM** | F19: HubSpot + Odoo | ⏳ |
+| **Documentos** | F20: Dropbox + Drive OCR ampliación | ⏳ |
 
-**Track B institucional (B1-B6):**
+### Track B institucional
 
 | ID | Componente | Estado |
 | -- | ---------- | ------ |
-| B1 | Verifactu SOAP nativo desde Ledger (desacopla Holded) | ⏳ Depende F9 |
+| B1 | Verifactu SOAP nativo desde Ledger (desacopla Holded) | ⏳ Depende L4 |
 | B2 | SII (Suministro Inmediato Información, RD 596/2016) | ⏳ |
-| B3 | Modelos 303/130/111/180/347 automáticos | ⏳ |
+| B3 | Modelos 303/130/111/180/347 automáticos (cierre con C-B/C) | ⏳ |
 | B4 | GTM: gestorías → autónomos sin gestoría → "sin asesor" | ⏳ |
 | B5 | Certificación AEAT / homologación software fiscal | ⏳ |
 | B6 | Robot Contable v1 (autonomía total) | ⏳ 2027 |
@@ -396,3 +401,5 @@ Detalle completo en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`.
 **Estrategia económica:** bootstrap. No se requiere inversión externa para llegar a product-market fit. Inversión solo se evalúa post-certificación AEAT (+18-24 meses).
 
 **Descartados:** Salt Edge, Chift (costes elevados — reemplazados por Enable Banking + GoCardless AIS).
+
+**Métricas técnicas hoy (2026-05-26):** 51 reglas Inspector · 415 tests verdes · type-check limpio · UI auditoría operativa.
