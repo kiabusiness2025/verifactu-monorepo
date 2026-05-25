@@ -31,6 +31,11 @@ import { runIsaakToolLoop } from '@/app/lib/isaak-tool-loop';
 import { classifyIntent } from '@/app/lib/isaak-intent-classifier';
 import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
 import { retrieveFewShotForChat } from '@/app/lib/isaak-few-shot';
+import {
+  getSubAgent,
+  pickSubAgent,
+  type SubAgentId,
+} from '@/app/lib/isaak-sub-agents';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -424,6 +429,7 @@ export async function POST(request: NextRequest) {
     let fewShotInjected = 0;
     let fewShotLatencyMs: number | null = null;
     let fewShotTopSimilarity: number | null = null;
+    let subAgent: SubAgentId | null = null;
 
     if (authenticated && toolContext) {
       // F7: classifier + RAG facts + few-shot examples all run in parallel.
@@ -479,29 +485,66 @@ export async function POST(request: NextRequest) {
         };
         routedTo = 'clarify_direct';
       } else if (classification.needsTools && classification.relevantCategories.length > 0) {
+        // F8: route to a specialist sub-agent when the message has strong
+        // domain signals (e.g. fiscal). Sub-agents reuse the F2 tool loop
+        // with their own system prompt + tool-category restriction. Writes
+        // stay on the orchestrator path (judge guardrail).
+        const subAgentId: SubAgentId | null = pickSubAgent({
+          message,
+          classifierCategories: classification.relevantCategories,
+          hasWriteIntent: classification.hasWriteIntent,
+        });
+
         // Filter tools to the subset the classifier marked as relevant.
         // F4: if the classifier detected write intent, include write tools too
         // (the judge model will gate each write attempt before execution).
         const allowWrites = classification.hasWriteIntent;
+
+        let agentSystemPrompt: string;
+        let agentToolCategories = classification.relevantCategories;
+        let agentMaxOutputTokens = 1200;
+        let agentTemperature: number | undefined;
+
+        if (subAgentId) {
+          const agent = getSubAgent(subAgentId);
+          subAgent = subAgentId;
+          // Sub-agent overrides the orchestrator prompt but reuses the same
+          // factsBlock + fewShotBlock so long-term memory and feedback loop
+          // still inform the specialist.
+          const factsTail = factsBlock ? `\n\n${factsBlock.trim()}` : '';
+          const fewShotTail = fewShotBlock ? `\n\n${fewShotBlock.trim()}` : '';
+          agentSystemPrompt = `${agent.systemPrompt}${factsTail}${fewShotTail}`;
+          agentToolCategories = agent.toolCategories;
+          agentMaxOutputTokens = agent.maxOutputTokens;
+          agentTemperature = agent.temperature;
+        } else {
+          agentSystemPrompt = buildAuthenticatedSystemPrompt(authenticated.promptContext, {
+            factsBlock,
+            fewShotBlock,
+          });
+        }
+
         const filteredTools = buildReadOnlyToolsForContext(toolContext, {
-          only: classification.relevantCategories,
+          only: agentToolCategories,
           allowWrites,
         });
         if (filteredTools.length > 0) {
           useToolLoop = true;
           const loop = await runIsaakToolLoop({
-            systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext, {
-              factsBlock,
-              fewShotBlock,
-            }),
+            systemPrompt: agentSystemPrompt,
             history,
             userMessage: message,
             tools: filteredTools,
             context: toolContext,
             model: modelConfig.model,
             provider: modelConfig.provider,
-            feature: allowWrites ? 'workspace_chat_tools_write' : 'workspace_chat_tools',
-            maxOutputTokens: 1200,
+            feature: subAgentId
+              ? `workspace_chat_subagent_${subAgentId}`
+              : allowWrites
+                ? 'workspace_chat_tools_write'
+                : 'workspace_chat_tools',
+            maxOutputTokens: agentMaxOutputTokens,
+            temperature: agentTemperature,
             allowWrites,
           });
           result = loop.text
@@ -608,6 +651,7 @@ export async function POST(request: NextRequest) {
         fewShotInjected,
         fewShotLatencyMs,
         fewShotTopSimilarity,
+        subAgent,
       }).catch((err) => {
         console.error('[Isaak Chat] recordChatMetric failed', err);
       });
