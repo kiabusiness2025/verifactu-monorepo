@@ -32,6 +32,10 @@
     {
       "path": "/api/cron/onboarding-nudge",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/audit-monthly",
+      "schedule": "0 3 1 * *"
     }
   ]
 }

@@ -18,15 +18,20 @@ function ctx(overrides: Partial<IsaakToolContext> = {}): IsaakToolContext {
 }
 
 describe('buildReadOnlyToolsForContext', () => {
-  it('returns empty when no integration is connected', () => {
-    expect(buildReadOnlyToolsForContext(ctx())).toEqual([]);
+  it('returns only the ledger reads (audit) when no external integration is connected', () => {
+    // Ledger tools are internal infrastructure — they need no external
+    // OAuth/API connection, only an authenticated tenant. After F11 fase 3
+    // the audit read tool is always present.
+    const tools = buildReadOnlyToolsForContext(ctx());
+    const names = tools.map((t) => t.name);
+    expect(names).toEqual(['isaak_audit_ledger']);
   });
 
-  it('excludes Holded tools if no apiKey, even when holdedConnected=true', () => {
+  it('excludes Holded tools if no apiKey, even when holdedConnected=true (only ledger reads remain)', () => {
     const tools = buildReadOnlyToolsForContext(
       ctx({ holdedConnected: true, holdedApiKey: null })
     );
-    expect(tools).toEqual([]);
+    expect(tools.map((t) => t.name)).toEqual(['isaak_audit_ledger']);
   });
 
   it('includes Holded read-only tools when api key is present', () => {
@@ -178,9 +183,9 @@ describe('buildReadOnlyToolsForContext', () => {
         microsoftConnected: true,
       })
     );
-    // 13 Holded + 6 banking + 4 google + 4 microsoft = 27 (ledger tools
-    // are all writes → not included when allowWrites=false default)
-    expect(tools.length).toBe(27);
+    // 13 Holded + 6 banking + 4 google + 4 microsoft + 1 ledger read
+    // (isaak_audit_ledger) = 28 (ledger writes excluded sin allowWrites)
+    expect(tools.length).toBe(28);
     // each tool exposes the Anthropic-compatible shape
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
@@ -194,27 +199,30 @@ describe('buildReadOnlyToolsForContext', () => {
       expect(isWriteToolName('isaak_ledger_import_holded')).toBe(true);
     });
 
-    it('does NOT include ledger tools without allowWrites (they are all writes)', () => {
+    it('without allowWrites only exposes ledger READ (audit)', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), { only: ['ledger'] });
-      expect(tools).toEqual([]);
+      expect(tools.map((t) => t.name)).toEqual(['isaak_audit_ledger']);
     });
 
-    it('includes ledger tools when allowWrites=true and only=["ledger"]', () => {
+    it('with allowWrites=true and only=["ledger"] exposes audit + 2 writes', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), {
         only: ['ledger'],
         allowWrites: true,
       });
       const names = tools.map((t) => t.name).sort();
-      expect(names).toEqual(['isaak_ledger_create_entry', 'isaak_ledger_import_holded']);
+      expect(names).toEqual([
+        'isaak_audit_ledger',
+        'isaak_ledger_create_entry',
+        'isaak_ledger_import_holded',
+      ]);
     });
 
     it('ledger tools do not require any connection flag (gated only by auth)', () => {
-      // No flags set; ledger is internal infrastructure, always available.
       const tools = buildReadOnlyToolsForContext(ctx(), {
         only: ['ledger'],
         allowWrites: true,
       });
-      expect(tools.length).toBe(2);
+      expect(tools.length).toBe(3);
     });
 
     it('combining ledger + holded gates work independently', () => {

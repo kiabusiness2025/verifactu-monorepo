@@ -26,6 +26,8 @@ import {
   HOLDED_DOC_TYPES,
   type HoldedDocType,
 } from './isaak-ledger-holded-mapper';
+import { buildAuditSnapshotForTenant } from './isaak-audit-loader';
+import { runAudit } from './inspector-aeat-audit';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -111,6 +113,31 @@ export const LEDGER_CHAT_TOOLS = [
         },
       },
       required: ['docTypes'],
+    },
+  },
+  {
+    name: 'isaak_audit_ledger',
+    description:
+      'Inspector AEAT preventivo: corre la auditoría completa sobre el Isaak Ledger del tenant en el periodo indicado y devuelve violaciones (errores, warnings, infos) con cita normativa. Útil al cierre mensual/trimestral o cuando el usuario pregunta "¿está todo correcto?". NO modifica datos.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        periodFrom: {
+          type: 'string',
+          description: 'Inicio del periodo a auditar en formato YYYY-MM-DD (inclusivo).',
+        },
+        periodTo: {
+          type: 'string',
+          description: 'Fin del periodo a auditar en formato YYYY-MM-DD (inclusivo).',
+        },
+        scope: {
+          type: 'string',
+          enum: ['monthly_close', 'quarterly_close', 'annual_close', 'on_demand'],
+          description:
+            'Naturaleza del audit. monthly/quarterly/annual = cierre formal, on_demand = consulta puntual del usuario.',
+        },
+      },
+      required: ['periodFrom', 'periodTo'],
     },
   },
 ] as const;
@@ -219,6 +246,68 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'import_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_audit_ledger') {
+    const periodFrom = String(args.periodFrom ?? '');
+    const periodTo = String(args.periodTo ?? '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(periodFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(periodTo)) {
+      return { ok: false, error: 'invalid_period', message: 'periodFrom y periodTo deben ser YYYY-MM-DD' };
+    }
+    if (periodTo < periodFrom) {
+      return { ok: false, error: 'invalid_period', message: 'periodTo no puede ser anterior a periodFrom' };
+    }
+    const scope = (args.scope as 'monthly_close' | 'quarterly_close' | 'annual_close' | 'on_demand' | undefined) ?? 'on_demand';
+    try {
+      const snapshot = await buildAuditSnapshotForTenant({
+        tenantId: ctx.tenantId,
+        periodFrom,
+        periodTo,
+      });
+      const report = runAudit({ scope, snapshot });
+      // Resumen compacto para que el LLM no tenga que parsear estructuras grandes.
+      const summary = {
+        period: { from: periodFrom, to: periodTo },
+        passed: report.passed,
+        counts: {
+          errors: report.errors.length,
+          warnings: report.warnings.length,
+          infos: report.infos.length,
+        },
+        ledgerHighlights: {
+          vatRepercutido: snapshot.vatRepercutidoTotal,
+          vatSoportado: snapshot.vatSoportadoTotal,
+          retentionsProfessionals: snapshot.retentionsToProfessionals,
+          retentionsLandlords: snapshot.retentionsToLandlords,
+          retentionsEmployees: snapshot.retentionsToEmployees,
+          intracomOps: snapshot.intracomOperationsCount,
+          presentedModels: snapshot.presentedModels.map((m) => m.model),
+          cashBalance: snapshot.cashBalance,
+          banksWithoutReconciliation: snapshot.bankAccounts.filter(
+            (a) => !a.lastReconciliationDate,
+          ).length,
+        },
+      };
+      return {
+        ok: true,
+        summary,
+        // Lista completa de violaciones para que el LLM pueda enumerar
+        // citas concretas al usuario.
+        errors: report.errors,
+        warnings: report.warnings,
+        infos: report.infos,
+        skippedByScope: report.skippedByScope,
+        message: report.passed
+          ? `Auditoría OK (${report.warnings.length} avisos, ${report.infos.length} notas).`
+          : `Auditoría con ${report.errors.length} ERRORES. Resúmelos al usuario con citas y propón qué corregir primero.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'audit_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }
