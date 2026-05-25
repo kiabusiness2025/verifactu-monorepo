@@ -425,6 +425,52 @@ describe('R017 — Intracom sin NIF-IVA', () => {
     };
     expect(withRule('R017', ctx).warnings).toHaveLength(0);
   });
+
+  it('ERROR si viesValidation.valid=false (fase 5 enrichment)', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '1000.00',
+        description: 'Entrega intracomunitaria a Alemania',
+        date: '2026-05-01',
+        vatRate: '0',
+        counterpartyNif: 'DE123456789',
+        docType: 'invoice',
+        viesValidation: {
+          vatNumber: 'DE123456789',
+          valid: false,
+          checkedAt: '2026-05-25T10:00:00Z',
+          source: 'vies',
+        },
+      },
+    };
+    const r = withRule('R017', ctx);
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]?.message).toMatch(/NO está en VIES/);
+  });
+
+  it('no aplica si viesValidation.valid=true (NIF UE confirmado)', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '1000.00',
+        description: 'Entrega intracomunitaria a Alemania',
+        date: '2026-05-01',
+        vatRate: '0',
+        counterpartyNif: 'DE123456789',
+        docType: 'invoice',
+        viesValidation: {
+          vatNumber: 'DE123456789',
+          valid: true,
+          name: 'Acme GmbH',
+          checkedAt: '2026-05-25T10:00:00Z',
+          source: 'vies',
+        },
+      },
+    };
+    expect(withRule('R017', ctx).errors).toHaveLength(0);
+    expect(withRule('R017', ctx).warnings).toHaveLength(0);
+  });
 });
 
 describe('R019 — ISP no identificada', () => {
@@ -538,6 +584,50 @@ describe('R035 — NIF destinatario B2B', () => {
         date: '2026-05-01',
         recipientType: 'b2c',
         docType: 'invoice',
+      },
+    };
+    expect(withRule('R035', ctx).errors).toHaveLength(0);
+  });
+
+  it('ERROR si B2B con NIF formato OK pero VIES dice no válido (fase 5)', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        recipientType: 'b2b',
+        counterpartyNif: 'B12345678',
+        docType: 'invoice',
+        viesValidation: {
+          vatNumber: 'ESB12345678',
+          valid: false,
+          checkedAt: '2026-05-25T10:00:00Z',
+          source: 'vies',
+        },
+      },
+    };
+    const r = withRule('R035', ctx);
+    expect(r.errors).toHaveLength(1);
+    expect(r.errors[0]?.message).toMatch(/VIES/);
+  });
+
+  it('no aplica si B2B con NIF + VIES válido', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        recipientType: 'b2b',
+        counterpartyNif: 'B12345678',
+        docType: 'invoice',
+        viesValidation: {
+          vatNumber: 'ESB12345678',
+          valid: true,
+          checkedAt: '2026-05-25T10:00:00Z',
+          source: 'vies',
+        },
       },
     };
     expect(withRule('R035', ctx).errors).toHaveLength(0);

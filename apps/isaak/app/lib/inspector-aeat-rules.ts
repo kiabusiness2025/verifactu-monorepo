@@ -767,6 +767,24 @@ const R017: AeatRule = {
     const d = ctx.data.description ?? '';
     if (!descriptionContainsAny(d, ['intracomunitar', 'cliente ue', 'entrega ue', 'servicio ue', 'cliente alemania', 'cliente francia', 'cliente italia', 'cliente portugal'])) return NO_APPLY;
     const nif = ctx.data.counterpartyNif ?? '';
+    const vies = ctx.data.viesValidation;
+
+    // F11 fase 5: si tenemos validación VIES real, mandamos sobre la
+    // heurística por prefijo. VIES válido → no aplica; VIES inválido →
+    // ERROR (no solo warning).
+    if (vies) {
+      if (vies.valid) return NO_APPLY;
+      return {
+        applies: true,
+        severity: 'error',
+        message: `NIF-IVA "${vies.vatNumber}" NO está en VIES (validado el ${vies.checkedAt.slice(0, 10)}). La operación intracomunitaria NO puede acogerse a la exención del Art. 25 LIVA; debes repercutir IVA español al 21%.`,
+        legalBasis: [{ law: 'LIVA', article: 'Art. 25', url: URL_LIVA }],
+        recommendation:
+          'Verifica el NIF-IVA con el cliente. Si no se puede validar en VIES, emite la factura con IVA español al 21%.',
+      };
+    }
+
+    // Fallback heurístico (sin enrichment): warning si NIF sin prefijo país.
     const looksLikeEUVat = /^[A-Z]{2}/.test(nif);
     if (looksLikeEUVat) return NO_APPLY;
     return {
@@ -776,7 +794,7 @@ const R017: AeatRule = {
         'Operación intracomunitaria detectada: el NIF del cliente debe empezar por el código de país UE (DE, FR, IT, PT, NL...) y estar validado en el VIES. Sin VIES válido, la operación NO está exenta y debes repercutir IVA español.',
       legalBasis: [{ law: 'LIVA', article: 'Art. 25', url: URL_LIVA }],
       recommendation:
-        'Valida el NIF-IVA del cliente en https://ec.europa.eu/taxation_customs/vies/ antes de emitir como exenta. Documenta el resultado.',
+        'Pide a Isaak validar el NIF-IVA con la tool isaak_validate_vat_intracom, o consulta directamente https://ec.europa.eu/taxation_customs/vies/.',
     };
   },
 };
@@ -887,15 +905,33 @@ const R035: AeatRule = {
     if (ctx.action !== 'invoice_out') return NO_APPLY;
     if (ctx.data.recipientType !== 'b2b') return NO_APPLY;
     const nif = ctx.data.counterpartyNif;
-    if (typeof nif === 'string' && nif.trim().length >= 8) return NO_APPLY;
-    return {
-      applies: true,
-      severity: 'error',
-      message:
-        'Factura B2B sin NIF/datos del destinatario: el destinatario empresario/profesional debe identificarse con NIF. Sin ese dato, la factura no permite la deducción al receptor.',
-      legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 6.1.d', url: URL_RD_FACT }],
-      recommendation: 'Solicita NIF + razón social + dirección al destinatario antes de emitir.',
-    };
+    const hasNif = typeof nif === 'string' && nif.trim().length >= 8;
+    if (!hasNif) {
+      return {
+        applies: true,
+        severity: 'error',
+        message:
+          'Factura B2B sin NIF/datos del destinatario: el destinatario empresario/profesional debe identificarse con NIF. Sin ese dato, la factura no permite la deducción al receptor.',
+        legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 6.1.d', url: URL_RD_FACT }],
+        recommendation: 'Solicita NIF + razón social + dirección al destinatario antes de emitir.',
+      };
+    }
+    // F11 fase 5: si hay validación VIES real y dice que no es válido,
+    // bloqueamos también aunque tenga formato.
+    const vies = ctx.data.viesValidation;
+    if (vies && !vies.valid) {
+      return {
+        applies: true,
+        severity: 'error',
+        message: `Factura B2B con NIF "${nif}" que NO se ha podido validar en VIES (verificado el ${vies.checkedAt.slice(0, 10)}). La factura puede ser rechazada por el cliente y, si es intracomunitaria, no acogerse a exención.`,
+        legalBasis: [
+          { law: 'RD 1619/2012', article: 'Art. 6.1.d', url: URL_RD_FACT },
+          { law: 'LIVA', article: 'Art. 25', url: URL_LIVA },
+        ],
+        recommendation: 'Confirma con el cliente que el NIF que te ha facilitado es correcto antes de emitir.',
+      };
+    }
+    return NO_APPLY;
   },
 };
 

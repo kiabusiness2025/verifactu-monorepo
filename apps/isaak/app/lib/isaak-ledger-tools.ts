@@ -39,6 +39,7 @@ import {
 } from './isaak-tax-returns';
 import { syncAeatSedeForTenant } from './aeat-sede-sync';
 import { prisma } from './prisma';
+import { ViesAdapter } from './company-intelligence-sources';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -226,6 +227,22 @@ export const LEDGER_CHAT_TOOLS = [
         },
       },
       required: ['model', 'period', 'amountDeclared'],
+    },
+  },
+  {
+    name: 'isaak_validate_vat_intracom',
+    description:
+      'Valida un NIF-IVA intracomunitario contra el VIES de la Comisión Europea (Company Intelligence ViesAdapter). Útil ANTES de emitir factura B2B intracomunitaria exenta del Art. 25 LIVA. Si el VIES dice que NO es válido, la operación debe llevar IVA español al 21%, no exenta.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        vatNumber: {
+          type: 'string',
+          description:
+            'NIF-IVA con prefijo país UE (ej. DE123456789, FRBN12345678901, ESB12345678). Si solo tienes el NIF español sin prefijo, antepón "ES".',
+        },
+      },
+      required: ['vatNumber'],
     },
   },
   {
@@ -499,6 +516,48 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'record_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_validate_vat_intracom') {
+    const vatRaw = String(args.vatNumber ?? '').trim().toUpperCase().replace(/\s+/g, '');
+    if (!/^[A-Z]{2}[A-Z0-9]{2,15}$/.test(vatRaw)) {
+      return {
+        ok: false,
+        error: 'invalid_vat_format',
+        message: 'vatNumber debe empezar con prefijo país UE (2 letras) seguido del número (ej. DE123456789, ESB12345678).',
+      };
+    }
+    try {
+      // Para VIES europeo el adapter actual está optimizado para ES; para
+      // otros países UE haríamos llamada equivalente. Aquí reusamos
+      // checkVat que acepta cualquier vat con prefijo.
+      const adapter = new ViesAdapter();
+      const signal = await adapter.checkVat(vatRaw);
+      if (!signal) {
+        return {
+          ok: false,
+          error: 'vies_unreachable',
+          message: 'No se pudo contactar con VIES (puede estar caído temporalmente). Reintenta o consulta manualmente https://ec.europa.eu/taxation_customs/vies/.',
+        };
+      }
+      return {
+        ok: true,
+        valid: signal.valid,
+        vatNumber: signal.vatNumber,
+        name: signal.name ?? null,
+        address: signal.address ?? null,
+        checkedAt: signal.checkedAt,
+        message: signal.valid
+          ? `VIES confirma que ${vatRaw} es válido${signal.name ? ` (titular: ${signal.name})` : ''}.`
+          : `VIES indica que ${vatRaw} NO es válido. Si vas a emitir una factura intracomunitaria a este cliente, NO puedes acogerte a la exención del Art. 25 LIVA — repercute IVA español al 21%.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'vies_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }

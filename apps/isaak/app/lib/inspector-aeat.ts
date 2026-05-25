@@ -73,6 +73,16 @@ export type PendingInvoiceIn = {
   paymentMethod?: 'cash' | 'transfer' | 'card' | 'other' | null;
   date: string; // 'YYYY-MM-DD' (de la factura/operación)
   receivedDate?: string | null; // fecha de recepción de la factura (opcional)
+  // F11 fase 5: enrichment desde Company Intelligence (opcional). Cuando
+  // está presente, R017/R035 usan esto en vez de heurísticas por prefijo.
+  viesValidation?: {
+    vatNumber: string; // formato 'ESB12345678' o 'DE123456789'
+    valid: boolean;
+    name?: string | null;
+    address?: string | null;
+    checkedAt: string; // ISO
+    source: 'vies' | 'cache';
+  } | null;
 };
 
 export type PendingInvoiceOut = PendingInvoiceIn & {

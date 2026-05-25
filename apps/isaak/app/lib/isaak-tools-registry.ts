@@ -81,12 +81,13 @@ const READ_ONLY_NAMES = new Set<string>([
   'google_calendar_list_events',
   'google_gmail_scan_invoices',
   'google_drive_list_files',
-  // Isaak Ledger reads (F11 fase 3 / F10 / fase 4 / C-A)
+  // Isaak Ledger reads (F11 fase 3 / F10 / fase 4 / C-A / fase 5)
   'isaak_audit_ledger',
   'isaak_export_ledger_excel',
   'isaak_list_tax_returns',
   'isaak_list_aeat_notifications',
   'isaak_list_aeat_census_changes',
+  'isaak_validate_vat_intracom',
   // Microsoft (read-only subset)
   'microsoft_check_connection',
   'microsoft_calendar_list_events',
