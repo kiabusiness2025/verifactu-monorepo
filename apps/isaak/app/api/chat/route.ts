@@ -29,6 +29,7 @@ import {
 } from '@/app/lib/isaak-tools-registry';
 import { runIsaakToolLoop } from '@/app/lib/isaak-tool-loop';
 import { classifyIntent } from '@/app/lib/isaak-intent-classifier';
+import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -275,7 +276,8 @@ async function getLLMResponse(
   message: string,
   history: AIMessage[],
   authenticatedContext: AuthenticatedChatContext | null,
-  modelConfig: ModelConfig
+  modelConfig: ModelConfig,
+  factsBlock?: string
 ): Promise<LLMResult | null> {
   try {
     const messages: AIMessage[] = [...history, { role: 'user', content: message }];
@@ -284,7 +286,7 @@ async function getLLMResponse(
       provider: modelConfig.provider,
       model: modelConfig.model,
       instructions: authenticatedContext
-        ? buildAuthenticatedSystemPrompt(authenticatedContext)
+        ? buildAuthenticatedSystemPrompt(authenticatedContext, { factsBlock })
         : buildPublicSystemPrompt(),
       messages,
       temperature: authenticatedContext ? 0.45 : 0.5,
@@ -412,18 +414,35 @@ export async function POST(request: NextRequest) {
     let classifierLatencyMs: number | null = null;
     let ambiguityType: string | null = null;
     let useToolLoop = false;
+    let factsBlock = '';
+    let factsRetrieved = 0;
+    let ragLatencyMs: number | null = null;
+    let ragTopSimilarity: number | null = null;
 
     if (authenticated && toolContext) {
-      const classification = await classifyIntent({
-        message,
-        history,
-        context: {
-          holdedConnected: toolContext.holdedConnected,
-          bankConnected: toolContext.bankConnected,
-          googleConnected: toolContext.googleConnected,
-          microsoftConnected: toolContext.microsoftConnected,
-        },
-      });
+      // F6b: classifier + RAG retrieval run in parallel. They're independent
+      // so we want combined latency to be max(classifier, rag) not sum.
+      const [classification, ragResult] = await Promise.all([
+        classifyIntent({
+          message,
+          history,
+          context: {
+            holdedConnected: toolContext.holdedConnected,
+            bankConnected: toolContext.bankConnected,
+            googleConnected: toolContext.googleConnected,
+            microsoftConnected: toolContext.microsoftConnected,
+          },
+        }),
+        retrieveFactsForChat({
+          tenantId: authenticated.session.tenantId,
+          queryText: message,
+        }),
+      ]);
+
+      factsBlock = ragResult.factsBlock;
+      factsRetrieved = ragResult.factsRetrieved;
+      ragLatencyMs = ragResult.latencyMs;
+      ragTopSimilarity = ragResult.topSimilarity;
       classifierModel = classification.modelUsed;
       classifierLatencyMs = classification.latencyMs;
       ambiguityType = classification.ambiguityType;
@@ -456,7 +475,9 @@ export async function POST(request: NextRequest) {
         if (filteredTools.length > 0) {
           useToolLoop = true;
           const loop = await runIsaakToolLoop({
-            systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext),
+            systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext, {
+              factsBlock,
+            }),
             history,
             userMessage: message,
             tools: filteredTools,
@@ -487,13 +508,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Fallback if classifier said no tools, no clarify, OR if the filtered
-      // toolset was empty (relevant category not connected): plain Sonnet.
+      // toolset was empty (relevant category not connected): plain Sonnet
+      // with the RAG facts block injected in the system prompt.
       if (!result) {
         result = await getLLMResponse(
           message,
           history,
           authenticated.promptContext,
-          modelConfig
+          modelConfig,
+          factsBlock
         );
         if (result) routedTo = 'sonnet_no_tools';
       }
@@ -562,6 +585,9 @@ export async function POST(request: NextRequest) {
         judgeBlocks,
         judgeLatencyMs,
         writeTools: writeToolsUsed,
+        factsRetrieved,
+        ragLatencyMs,
+        ragTopSimilarity,
       }).catch((err) => {
         console.error('[Isaak Chat] recordChatMetric failed', err);
       });

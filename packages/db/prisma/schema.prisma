@@ -1962,6 +1962,11 @@ model IsaakChatMetric {
   judgeLatencyMs   Int?     @map("judge_latency_ms")
   writeTools       String[] @default([]) @map("write_tools")
 
+  // F6b: long-term memory RAG retrieval
+  factsRetrieved   Int    @default(0) @map("facts_retrieved")
+  ragLatencyMs     Int?   @map("rag_latency_ms")
+  ragTopSimilarity Float? @map("rag_top_similarity")
+
   errorCode String?  @map("error_code")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 

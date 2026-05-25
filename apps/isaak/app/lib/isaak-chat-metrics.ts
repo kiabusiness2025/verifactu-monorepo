@@ -53,6 +53,10 @@ export type RecordChatMetricInput = {
   judgeBlocks?: number;
   judgeLatencyMs?: number | null;
   writeTools?: string[];
+  // F6b: RAG retrieval
+  factsRetrieved?: number;
+  ragLatencyMs?: number | null;
+  ragTopSimilarity?: number | null;
   errorCode?: string | null;
 };
 
@@ -88,6 +92,9 @@ export async function recordChatMetric(input: RecordChatMetricInput): Promise<vo
       judgeBlocks: input.judgeBlocks ?? 0,
       judgeLatencyMs: input.judgeLatencyMs ?? null,
       writeTools: input.writeTools ?? [],
+      factsRetrieved: input.factsRetrieved ?? 0,
+      ragLatencyMs: input.ragLatencyMs ?? null,
+      ragTopSimilarity: input.ragTopSimilarity ?? null,
       errorCode: input.errorCode ?? null,
     },
   });
