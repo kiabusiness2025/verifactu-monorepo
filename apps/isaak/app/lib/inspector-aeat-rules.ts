@@ -1094,6 +1094,190 @@ const R044: AeatRule = {
 };
 
 // ════════════════════════════════════════════════════════════════════════
+// F11 fase 4b — Reglas sectoriales y territoriales
+// ════════════════════════════════════════════════════════════════════════
+
+// R220 — Construcción: ISP obligatoria en facturas subcontrata
+// Extiende R019 con scope sector='construccion' (más estricto).
+const R220: AeatRule = {
+  id: 'R220',
+  category: 'iva_repercutido',
+  description:
+    'Empresa de construcción: las subcontratas a otra empresa están sujetas a inversión del sujeto pasivo (Art. 84.Uno.2.f LIVA). La factura debe indicar ISP explícitamente.',
+  appliesTo: {
+    actions: ['invoice_out'],
+    sector: ['construccion', 'construccion_obra', 'subcontrata'],
+  },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const data = ctx.data;
+    if (data.recipientType !== 'b2b') return NO_APPLY;
+    const d = data.description ?? '';
+    const ispMarkers = ['isp', 'inversion sujeto pasivo', 'inversión sujeto pasivo', 'art. 84', 'art 84'];
+    if (descriptionContainsAny(d, ispMarkers)) return NO_APPLY;
+    const rate = data.vatRate ? Number.parseFloat(data.vatRate) : null;
+    // Si lleva IVA repercutido (>0), R019 ya alertaría sobre sector
+    // construcción. Aquí enfocamos en cuando IVA=0 pero falta la mención.
+    if (rate === null || rate > 0) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message:
+        'Empresa del sector construcción: si esta es una subcontrata B2B (entre empresas), la factura DEBE incluir la mención explícita "Inversión del sujeto pasivo (Art. 84.Uno.2.f LIVA)". Sin esa mención, la factura no es deducible para el receptor y es sancionable.',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 84.Uno.2.f', url: URL_LIVA },
+        { law: 'RD 1619/2012', article: 'Art. 6.1.m', url: URL_RD_FACT },
+      ],
+      recommendation:
+        'Añade la mención ISP a la descripción/concepto de la factura. Si la operación NO es subcontrata (es venta a cliente final / B2C / suministro de material puro), elimina la marca de sector construcción del documento.',
+    };
+  },
+};
+
+// R230 — Alquiler de vivienda exento de IVA (Art. 20.Uno.23 LIVA)
+const R230: AeatRule = {
+  id: 'R230',
+  category: 'iva_repercutido',
+  description:
+    'Arrendamiento de vivienda destinada exclusivamente a hogar: operación exenta de IVA. NO debe repercutirse IVA.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const d = ctx.data.description ?? '';
+    if (!descriptionContainsAny(d, ['alquiler vivienda', 'arrendamiento vivienda', 'renta vivienda', 'alquiler piso', 'alquiler de vivienda'])) return NO_APPLY;
+    const rate = ctx.data.vatRate ? Number.parseFloat(ctx.data.vatRate) : null;
+    if (rate === null || rate === 0) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message: `Alquiler de vivienda con tipo IVA ${rate}%. El arrendamiento de vivienda para uso exclusivo de habitación está EXENTO de IVA (Art. 20.Uno.23 LIVA). Si has repercutido IVA, debes emitir factura rectificativa.`,
+      legalBasis: [{ law: 'LIVA', article: 'Art. 20.Uno.23', url: URL_LIVA }],
+      recommendation:
+        'Emite factura rectificativa con tipo 0% y "operación exenta Art. 20.Uno.23 LIVA". Si el destino es local de negocio (no vivienda), corrige la descripción del concepto.',
+    };
+  },
+};
+
+// R300 — Canarias: usar IGIC, no IVA peninsular
+const R300: AeatRule = {
+  id: 'R300',
+  category: 'iva_repercutido',
+  description:
+    'Tenant en territorio fiscal de Canarias: las operaciones interiores tributan por IGIC (tipos 0/3/7/9,5/15/20), NO por IVA peninsular.',
+  appliesTo: {
+    actions: ['invoice_out'],
+    territory: ['canarias'],
+  },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const rate = ctx.data.vatRate ? Number.parseFloat(ctx.data.vatRate) : null;
+    if (rate === null) return NO_APPLY;
+    // Tipos IVA peninsulares 21/10/4 indican que se ha aplicado IVA en
+    // vez de IGIC. Los tipos IGIC son 0/3/6.5/7/9.5/15/20 (algunos
+    // distintos del IVA). Si el tipo es 21/10/4 explícito y el tenant
+    // está en Canarias, es un error casi seguro.
+    const ivaPeninsular = [21, 10, 4];
+    if (!ivaPeninsular.includes(rate)) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message: `Factura emitida desde Canarias con IVA peninsular (${rate}%). Las entregas interiores en Canarias tributan por IGIC (Impuesto General Indirecto Canario), no por IVA. Tipos IGIC vigentes: 0%, 3%, 6,5%, 7%, 9,5%, 15%, 20%.`,
+      legalBasis: [
+        { law: 'Ley 20/1991', article: 'Art. 50 (Régimen Económico y Fiscal de Canarias)' },
+        { law: 'Ley 4/2012', article: 'IGIC' },
+      ],
+      recommendation:
+        'Sustituye el IVA por IGIC al tipo correspondiente. Si la operación es con península, sí aplica IVA pero se trata como exportación a Canarias (Art. 21 LIVA), no como entrega interior.',
+    };
+  },
+};
+
+// R301 — País Vasco: TicketBAI obligatorio para sistemas de facturación
+const R301: AeatRule = {
+  id: 'R301',
+  category: 'verifactu_obligaciones',
+  description:
+    'Empresas/autónomos del País Vasco: deben usar software TicketBAI (no Verifactu) según la Diputación Foral correspondiente.',
+  appliesTo: {
+    actions: ['invoice_out'],
+    territory: ['pais_vasco'],
+  },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'info',
+      message:
+        'Recuerda: en País Vasco la obligación es TicketBAI (no VERI*FACTU peninsular). Cada Diputación Foral (Bizkaia, Gipuzkoa, Álava) tiene su propio calendario y especificación. Isaak puede emitir registros TicketBAI cuando confirmas la diputación.',
+      legalBasis: [
+        { law: 'Norma Foral 5/2020 Bizkaia', article: 'TicketBAI' },
+        { law: 'Norma Foral 4/2020 Gipuzkoa', article: 'TicketBAI' },
+        { law: 'Norma Foral 18/2020 Álava', article: 'TicketBAI' },
+      ],
+      recommendation:
+        'Indica en tu perfil fiscal qué Diputación Foral corresponde para activar las reglas TicketBAI específicas.',
+    };
+  },
+};
+
+// R302 — Navarra foral
+const R302: AeatRule = {
+  id: 'R302',
+  category: 'censos',
+  description:
+    'Empresas/autónomos en Navarra: tributación foral, modelos propios (F-04, F-09 en vez de 303, 130).',
+  appliesTo: {
+    actions: ['invoice_out', 'tax_payment'],
+    territory: ['navarra'],
+  },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out' && ctx.action !== 'tax_payment') return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'info',
+      message:
+        'Hacienda Foral de Navarra: los modelos son distintos a los peninsulares (F-04 en vez de 303, F-09 en vez de 130). Las fechas y umbrales también pueden variar.',
+      legalBasis: [{ law: 'Convenio Económico Navarra-Estado', article: 'Disposiciones generales' }],
+      recommendation:
+        'Comprueba el calendario fiscal de la Hacienda Foral de Navarra; Isaak no presenta automáticamente en hacienda foral todavía.',
+    };
+  },
+};
+
+// R210 — Ecommerce B2C UE → OSS si supera 10.000€/año
+const R210: AeatRule = {
+  id: 'R210',
+  category: 'comercio_exterior',
+  description:
+    'Ventas B2C a otros países UE: si superan 10.000€/año en el conjunto de la UE, deben declararse por OSS (Ventanilla Única).',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const data = ctx.data;
+    if (data.recipientType !== 'b2c') return NO_APPLY;
+    const d = data.description ?? '';
+    const ueMarkers = [
+      'cliente alemania', 'cliente francia', 'cliente italia', 'cliente portugal',
+      'cliente paises bajos', 'cliente países bajos', 'cliente belgica', 'cliente bélgica',
+      'cliente irlanda', 'envio ue', 'envío ue', 'venta ue', 'ecommerce ue',
+    ];
+    if (!descriptionContainsAny(d, ueMarkers)) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'info',
+      message:
+        'Venta B2C a cliente de otro país UE: si tu total anual de ventas B2C transfronterizas en la UE supera 10.000€, debes inscribirte al régimen OSS (One-Stop-Shop) y repercutir el IVA del país de destino, no el español. Por debajo del umbral, sigue aplicando IVA español.',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 73 (umbral OSS)', url: URL_LIVA },
+        { law: 'LIVA', article: 'Art. 163 quaterdecies (OSS)', url: URL_LIVA },
+      ],
+      recommendation:
+        'Calcula tu volumen anual de B2C-UE. Si supera 10.000€, inscríbete en OSS (modelo 035) y aplica IVA país destino. Isaak no detecta el umbral acumulado todavía — es revisión manual.',
+    };
+  },
+};
+
+// ════════════════════════════════════════════════════════════════════════
 
 // ─── Registro completo ───────────────────────────────────────────────────
 
@@ -1123,6 +1307,8 @@ export const AEAT_RULES: ReadonlyArray<AeatRule> = [
   R060,
   // PGC / sociedades
   R070, R125,
+  // F11 fase 4b — sectoriales y territoriales
+  R210, R220, R230, R300, R301, R302,
 ];
 
 export function findRuleById(id: string): AeatRule | undefined {

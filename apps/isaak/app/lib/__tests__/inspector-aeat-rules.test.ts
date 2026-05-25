@@ -751,6 +751,203 @@ describe('R125 — Multas/sanciones/donativos no deducibles', () => {
   });
 });
 
+// ────────────────────────────────────────────────────────────────────────
+// F11 fase 4b — sectoriales / territoriales
+// ────────────────────────────────────────────────────────────────────────
+
+describe('R220 — Construcción ISP obligatoria', () => {
+  it('error si sector=construccion, B2B, IVA 0% y descripción sin ISP', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '5000.00',
+        description: 'Subcontrata obra estructura edificio',
+        date: '2026-05-01',
+        vatRate: '0',
+        recipientType: 'b2b',
+        docType: 'invoice',
+      },
+      profile: { sector: 'construccion' },
+    };
+    expect(withRule('R220', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica si la descripción incluye ISP explícita', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '5000.00',
+        description: 'Subcontrata estructura — ISP Art. 84.Uno.2.f',
+        date: '2026-05-01',
+        vatRate: '0',
+        recipientType: 'b2b',
+        docType: 'invoice',
+      },
+      profile: { sector: 'construccion' },
+    };
+    expect(withRule('R220', ctx).errors).toHaveLength(0);
+  });
+  it('skipped si el perfil no es sector construcción', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '5000.00',
+        description: 'Servicio',
+        date: '2026-05-01',
+        vatRate: '0',
+        recipientType: 'b2b',
+        docType: 'invoice',
+      },
+      profile: { sector: 'consultoria' },
+    };
+    expect(withRule('R220', ctx).skippedByScope).toContain('R220');
+  });
+});
+
+describe('R230 — Alquiler vivienda exento IVA', () => {
+  it('error si emisión de alquiler de vivienda con IVA repercutido', () => {
+    expect(
+      withRule(
+        'R230',
+        invoiceOutCtx({ description: 'Alquiler de vivienda mensual', vatRate: '21' }),
+      ).errors,
+    ).toHaveLength(1);
+  });
+  it('no aplica si tipo 0% (correcto)', () => {
+    expect(
+      withRule(
+        'R230',
+        invoiceOutCtx({ description: 'Alquiler de vivienda mensual', vatRate: '0' }),
+      ).errors,
+    ).toHaveLength(0);
+  });
+  it('no aplica si la descripción no menciona vivienda', () => {
+    expect(
+      withRule(
+        'R230',
+        invoiceOutCtx({ description: 'Alquiler local de negocio', vatRate: '21' }),
+      ).errors,
+    ).toHaveLength(0);
+  });
+});
+
+describe('R300 — Canarias debe usar IGIC, no IVA peninsular', () => {
+  it('error si tenant Canarias emite con IVA 21%', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '121.00',
+        description: 'Servicio',
+        date: '2026-05-01',
+        vatRate: '21',
+        docType: 'invoice',
+      },
+      profile: { territory: 'canarias' },
+    };
+    expect(withRule('R300', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica si IVA 0 (no es claramente peninsular)', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'Servicio',
+        date: '2026-05-01',
+        vatRate: '0',
+        docType: 'invoice',
+      },
+      profile: { territory: 'canarias' },
+    };
+    expect(withRule('R300', ctx).errors).toHaveLength(0);
+  });
+  it('skipped si tenant no es Canarias', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '121.00',
+        description: 'Servicio',
+        date: '2026-05-01',
+        vatRate: '21',
+        docType: 'invoice',
+      },
+      profile: { territory: 'comun' },
+    };
+    expect(withRule('R300', ctx).skippedByScope).toContain('R300');
+  });
+});
+
+describe('R301 — País Vasco TicketBAI', () => {
+  it('info siempre al emitir desde País Vasco', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'Servicio',
+        date: '2026-05-01',
+        vatRate: '21',
+        docType: 'invoice',
+      },
+      profile: { territory: 'pais_vasco' },
+    };
+    expect(withRule('R301', ctx).infos).toHaveLength(1);
+  });
+  it('skipped si tenant no es País Vasco', () => {
+    expect(
+      withRule(
+        'R301',
+        invoiceOutCtx({ profile: { territory: 'comun' } }),
+      ).skippedByScope,
+    ).toContain('R301');
+  });
+});
+
+describe('R302 — Navarra foral', () => {
+  it('info si territorio Navarra emite factura', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'Servicio',
+        date: '2026-05-01',
+        vatRate: '21',
+        docType: 'invoice',
+      },
+      profile: { territory: 'navarra' },
+    };
+    expect(withRule('R302', ctx).infos).toHaveLength(1);
+  });
+});
+
+describe('R210 — Ecommerce B2C UE → OSS', () => {
+  it('info si B2C y descripción menciona cliente UE', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '50.00',
+        description: 'Venta UE a cliente Alemania',
+        date: '2026-05-01',
+        vatRate: '21',
+        recipientType: 'b2c',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R210', ctx).infos).toHaveLength(1);
+  });
+  it('no aplica si B2B (intracom va por VIES, no OSS)', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '500.00',
+        description: 'Venta UE a cliente Alemania',
+        date: '2026-05-01',
+        vatRate: '0',
+        recipientType: 'b2b',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R210', ctx).infos).toHaveLength(0);
+  });
+});
+
 describe('AEAT_RULES — sanity', () => {
   it('todas las reglas tienen id único', () => {
     const ids = AEAT_RULES.map((r) => r.id);
