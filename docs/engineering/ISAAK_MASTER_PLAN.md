@@ -322,19 +322,45 @@ ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 
 ## Decisiones de arquitectura vigentes
 
-| Decisión                | Detalle                                                                                                                                                                     |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Motor IA por plan       | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`                           |
-| Rate limit free         | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público                 |
-| Acciones con escritura  | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                                        |
-| Certificados digitales  | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                                       |
-| mTLS AEAT               | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                                           |
-| AEAT chat context       | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                                         |
-| Branding facturas PDF   | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                                               |
-| Isaak Público           | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                                             |
-| `INTERNAL_API_SECRET`   | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                                           |
-| Google LLM tools (G-2)  | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                                     |
-| Microsoft Graph (M)     | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                                               |
-| ERP aggregator (P3-4-C) | Chift como capa única. `ChiftErpClient implements ErpClient` + 4 rutas API + `/chift` workspace. 🔄 Activación cuenta Chift pendiente.                                      |
-| Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23                          |
-| Open Banking EB         | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23 |
+| Decisión                      | Detalle                                                                                                                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Motor IA por plan             | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`                                                             |
+| Rate limit free               | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público                                                   |
+| Acciones con escritura        | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                                                                          |
+| Certificados digitales        | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                                                                         |
+| mTLS AEAT                     | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                                                                             |
+| AEAT chat context             | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                                                                           |
+| Branding facturas PDF         | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                                                                                 |
+| Isaak Público                 | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                                                                               |
+| `INTERNAL_API_SECRET`         | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                                                                             |
+| Google LLM tools (G-2)        | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                                                                       |
+| Microsoft Graph (M)           | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                                                                                 |
+| ERP aggregator (P3-4-C)       | ⚠️ **Suspendido** — Chift bloqueado por activación cuenta. Sustituido por integraciones sectoriales directas (ver sección abajo).                                                                             |
+| Cron connector-health         | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23                                                            |
+| Open Banking EB               | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23                                   |
+| **Integraciones sectoriales** | **Nuevo eje estratégico (2026-05-25)**: Isaak conecta con software de gestión sectorial (HotelGest, Inmovilla, Revo, Nubimed…) en lugar de ERPs genéricos. Ver `docs/engineering/SECTOR_INTEGRATIONS_PLAN.md` |
+
+---
+
+## ✳️ Pivote estratégico — Integraciones Sectoriales (2026-05-25)
+
+**Decisión**: Isaak abandona la dependencia de ERPs contables genéricos (Chift/Sage/A3) como eje de integraciones y pivota hacia **software de gestión sectorial** (PMS hotelero, POS restauración, gestión clínica, inmobiliarias, etc.).
+
+**Rationale**: El software sectorial ya ES el ERP del cliente. HotelGest para hoteles, Revo XEF para restaurantes, Nubimed para clínicas — estos sistemas contienen todos los datos operativos y fiscales. Isaak actúa como capa de inteligencia encima de ellos sin obligar al cliente a adoptar un ERP adicional.
+
+**Holded**: se mantiene como conector **legacy** para clientes existentes. No es la línea de crecimiento.
+
+### Estado por integración
+
+| Integración     | Sector          | API                      | Estado           |
+| --------------- | --------------- | ------------------------ | ---------------- |
+| **HotelGest**   | Hoteles         | Privada (cliente piloto) | 🔄 Sprint activo |
+| **Inmovilla**   | Inmobiliarias   | Pública documentada      | ⏳ Backlog P1    |
+| **Revo XEF**    | Restaurantes    | Partner + cliente        | ⏳ Backlog P1    |
+| **Nubimed**     | Clínicas/Dental | Pública documentada      | ⏳ Backlog P1    |
+| **TeamUp**      | Gimnasios       | Gratuita                 | ⏳ Backlog P2    |
+| **Loyverse**    | Comercio/Retail | Gratuita OAuth2          | ⏳ Backlog P2    |
+| **RepairShopr** | Talleres        | Swagger pública          | ⏳ Backlog P2    |
+| Chift           | ERPs genéricos  | Bloqueada                | ⏸️ Suspendida    |
+
+**Plan completo**: `docs/engineering/SECTOR_INTEGRATIONS_PLAN.md`

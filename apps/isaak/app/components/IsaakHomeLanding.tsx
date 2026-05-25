@@ -15,7 +15,7 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import ErpLogoItem from './ErpLogoItem';
+import SectorLogoItem from './SectorLogoItem';
 import IsaakLiveDemo from './IsaakLiveDemo';
 import IsaakMetricsBar from './IsaakMetricsBar';
 
@@ -52,73 +52,72 @@ const ISAAK_DIFF = [
   'Isaak te alerta en tiempo real, sin esperar a nadie',
   'Los errores se detectan antes de que ocurran',
   '80% de tu tiempo: dirigiendo y tomando decisiones',
-  'El software se adapta a ti, no al revés',
+  'Tu software sectorial + banco + AEAT — un solo chat',
 ];
 
-// ERPs compatibles vía Chift — relevantes para España
-const ERP_PARTNERS = [
+// Software de gestión sectorial — Isaak conecta directamente con el software que el cliente ya usa
+const SECTOR_PARTNERS = [
   {
-    name: 'Holded',
-    domain: 'holded.com',
-    href: 'https://holded.com/es',
+    name: 'HotelGest',
+    sector: 'Hoteles',
+    domain: 'hotelgest.com',
+    href: 'https://hotelgest.com',
     initial: 'H',
-    color: '#2361d8',
+    color: '#1a56db',
     connected: true,
   },
   {
-    name: 'Sage',
-    domain: 'sage.com',
-    href: 'https://sage.com/es-es',
-    initial: 'S',
-    color: '#00854A',
+    name: 'Inmovilla',
+    sector: 'Inmobiliarias',
+    domain: 'inmovilla.com',
+    href: 'https://inmovilla.com',
+    initial: 'I',
+    color: '#6D28D9',
     connected: false,
   },
   {
-    name: 'A3ERP',
-    domain: 'a3software.com',
-    href: 'https://a3software.com',
-    initial: 'A',
-    color: '#F97316',
+    name: 'Revo XEF',
+    sector: 'Restaurantes',
+    domain: 'revo.works',
+    href: 'https://revo.works',
+    initial: 'R',
+    color: '#DC2626',
     connected: false,
   },
   {
-    name: 'Odoo',
-    domain: 'odoo.com',
-    href: 'https://odoo.com/es',
-    initial: 'O',
-    color: '#714B67',
+    name: 'Nubimed',
+    sector: 'Clínicas',
+    domain: 'nubimed.com',
+    href: 'https://nubimed.com',
+    initial: 'N',
+    color: '#059669',
     connected: false,
   },
   {
-    name: 'Xero',
-    domain: 'xero.com',
-    href: 'https://xero.com',
-    initial: 'X',
-    color: '#13B5EA',
+    name: 'TeamUp',
+    sector: 'Gimnasios',
+    domain: 'goteamup.com',
+    href: 'https://goteamup.com',
+    initial: 'T',
+    color: '#D97706',
     connected: false,
   },
   {
-    name: 'Cegid',
-    domain: 'cegid.com',
-    href: 'https://cegid.com/es',
-    initial: 'C',
-    color: '#0A3161',
+    name: 'Loyverse',
+    sector: 'Comercio',
+    domain: 'loyverse.com',
+    href: 'https://loyverse.com',
+    initial: 'L',
+    color: '#0284C7',
     connected: false,
   },
   {
-    name: 'QuickBooks',
-    domain: 'quickbooks.intuit.com',
-    href: 'https://quickbooks.intuit.com/es-es',
-    initial: 'Q',
-    color: '#2CA01C',
-    connected: false,
-  },
-  {
-    name: 'Pennylane',
-    domain: 'pennylane.com',
-    href: 'https://pennylane.com',
-    initial: 'P',
-    color: '#6366F1',
+    name: 'RepairShopr',
+    sector: 'Talleres',
+    domain: 'repairshopr.com',
+    href: 'https://repairshopr.com',
+    initial: 'T',
+    color: '#7C3AED',
     connected: false,
   },
 ];
@@ -133,11 +132,11 @@ type Connector = {
 
 const CONNECTORS: Connector[] = [
   {
-    name: 'Holded',
-    tag: 'ERP conectado',
+    name: 'Tu software de gestión',
+    tag: 'HotelGest · Inmovilla · Revo · Nubimed',
     icon: <Database className="h-5 w-5 text-[#2361d8]" />,
-    desc: 'Ventas, gastos, cobros y facturas en tiempo real. Isaak lee tu empresa financiera y fiscal sin que hagas nada.',
-    example: '¿Cuánto me deben mis clientes este mes?',
+    desc: 'Isaak obtiene datos de tu software habitual y los convierte en asesoramiento real. Sin cambiar de programa, sin exportar nada.',
+    example: '¿Cuánto hemos facturado este mes y qué IVA tengo que declarar?',
   },
   {
     name: 'Open Banking',
@@ -506,11 +505,10 @@ export default function IsaakHomeLanding() {
 
           <div className="mx-auto mt-14 max-w-3xl text-center">
             <blockquote className="text-2xl font-black leading-snug text-white sm:text-3xl">
-              "En Sage, en Holded, en Odoo — la IA es un botón añadido.
+              "Isaak no sustituye tu software ni a tu gestor.
               <br />
-              <span className="text-blue-400">En Isaak, la IA es el producto.</span>
-              <br />
-              Los botones se conectan a ella."
+              <span className="text-blue-400">Es la capa de IA que los conecta</span>
+              <br />y los hace hablar en español con el empresario."
             </blockquote>
           </div>
         </div>
@@ -563,11 +561,11 @@ export default function IsaakHomeLanding() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-black tracking-tight text-[#011c67] sm:text-4xl">
-              Se conecta con todo lo que ya usas
+              Asesora y gestiona tu empresa con los datos que ya tienes
             </h2>
             <p className="mt-4 text-base leading-7 text-slate-500">
-              Isaak no requiere migrar nada. Se instala encima de tus herramientas y las hace hablar
-              entre sí en tiempo real.
+              Isaak obtiene los datos directamente de tu software habitual — sin migraciones, sin
+              configuración — y los convierte en asesoramiento fiscal y de negocio en tiempo real.
             </p>
           </div>
           <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -595,11 +593,12 @@ export default function IsaakHomeLanding() {
             ))}
           </div>
           <p className="mt-8 text-center text-sm text-slate-400">
-            Holded conectado directamente ·{' '}
-            <span className="font-semibold text-slate-600">
-              Sage, A3ERP, Odoo, Xero y +40 ERPs más
-            </span>{' '}
-            disponibles próximamente
+            HotelGest activo ·{' '}
+            <span className="font-semibold text-slate-600">Inmovilla, Revo XEF, Nubimed y más</span>{' '}
+            próximamente ·{' '}
+            <Link href="/integraciones" className="font-semibold text-[#2361d8] hover:underline">
+              Ver todas las integraciones →
+            </Link>
           </p>
         </div>
       </section>
@@ -611,26 +610,26 @@ export default function IsaakHomeLanding() {
         <div className="mx-auto max-w-7xl px-6">
           <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-slate-400">
-              Compatible con tu software de contabilidad
+              Isaak como centro de operaciones
             </p>
             <h2 className="mt-3 text-2xl font-black tracking-tight text-[#011c67]">
-              Conecta el ERP que ya usas
+              La inteligencia encima del software que ya usas.
             </h2>
             <p className="mt-2 text-sm text-slate-500">
-              Holded ya conectado · Sage, A3ERP, Odoo, Xero y más ERPs españoles próximamente — una
-              conexión, +40 ERPs.
+              Tu hotel tiene HotelGest. Tu restaurante tiene Revo. Isaak se convierte en el centro
+              de operaciones encima — sin que cambies nada de lo que ya usas.
             </p>
           </div>
 
           <div className="mt-10 flex flex-wrap items-end justify-center gap-6">
-            {ERP_PARTNERS.map((erp) => (
-              <ErpLogoItem key={erp.name} {...erp} />
+            {SECTOR_PARTNERS.map((s) => (
+              <SectorLogoItem key={s.name} {...s} />
             ))}
 
-            {/* +40 más */}
+            {/* más sectores */}
             <div className="flex flex-col items-center gap-2">
               <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white">
-                <span className="text-base font-black text-slate-400">+40</span>
+                <span className="text-base font-black text-slate-400">+</span>
               </div>
               <span className="text-xs font-semibold text-slate-500">más</span>
               <span className="text-[10px] text-slate-400">próximamente</span>
@@ -638,7 +637,8 @@ export default function IsaakHomeLanding() {
           </div>
 
           <p className="mt-8 text-center text-xs text-slate-400">
-            Sage 200 ES · a3ERP · Odoo · Xero · Cegid · QuickBooks · Pennylane y más
+            Hoteles · Restaurantes · Clínicas · Inmobiliarias · Gimnasios · Comercio · Talleres y
+            más sectores
           </p>
         </div>
       </section>

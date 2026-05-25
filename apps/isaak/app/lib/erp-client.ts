@@ -1,7 +1,14 @@
 // ERP abstraction layer — provider-agnostic interface for Isaak chat and dashboard.
 // Holded is implemented directly; Sage 200c and a3innuva via OAuth adapters (P3-4-A/B).
 
-export type ErpProvider = 'holded' | 'sage_200c' | 'a3innuva' | 'hotelgest' | 'chift';
+export type ErpProvider =
+  | 'holded'
+  | 'sage_200c'
+  | 'a3innuva'
+  | 'hotelgest'
+  | 'inmovilla'
+  | 'revo'
+  | 'nubimed';
 
 export interface ErpInvoiceLine {
   description: string;
