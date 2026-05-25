@@ -571,6 +571,7 @@ model Tenant {
   isaakPushPreferences          IsaakPushPreferences[]
   isaakMemoryFacts              IsaakMemoryFact[]
   isaakLongTermMemory           IsaakLongTermMemory[]
+  isaakLedgerEntries            IsaakLedgerEntry[]
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -2544,4 +2545,66 @@ model MarketingCampaign {
 
   @@index([createdAt(sort: Desc)])
   @@map("marketing_campaigns")
+}
+
+// ==================== ISAAK LEDGER (F9) ====================
+// Libro mayor interno de Isaak. Fuente de verdad contable.
+// Cada asiento se encadena por hash al anterior del mismo tenant
+// (chronological order via createdAt + id) garantizando audit trail
+// inmutable equivalente al requerido por Verifactu y SII.
+//
+// tenantId SIEMPRE primer filtro en queries (aislamiento estricto,
+// igual que IsaakLongTermMemory).
+
+model IsaakLedgerEntry {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  entryDate DateTime @map("entry_date") @db.Date
+  docNumber String?  @map("doc_number")
+  docType   String   @map("doc_type") // 'invoice_in' | 'invoice_out' | 'expense' | 'payroll' | 'journal' | 'tax_payment'
+
+  counterpartyNif  String? @map("counterparty_nif")
+  counterpartyName String? @map("counterparty_name")
+
+  amount    Decimal  @db.Decimal(14, 2)
+  currency  String   @default("EUR") @db.VarChar(3)
+  taxBase   Decimal? @map("tax_base") @db.Decimal(14, 2)
+  vatRate   Decimal? @map("vat_rate") @db.Decimal(5, 2)
+  vatAmount Decimal? @map("vat_amount") @db.Decimal(14, 2)
+
+  accountDebit  String? @map("account_debit") // PGC 2007
+  accountCredit String? @map("account_credit")
+
+  description   String  @db.Text
+  attachmentUrl String? @map("attachment_url") @db.Text
+
+  sourceSystem String  @map("source_system") // 'holded' | 'manual' | 'ocr' | 'banking' | 'isaak_auto'
+  holdedId     String? @map("holded_id")
+
+  // Hash chain (cadena inmutable de audit trail)
+  hash     String  @db.VarChar(64) // SHA-256 hex
+  prevHash String? @map("prev_hash") @db.VarChar(64)
+  sequence BigInt  @default(autoincrement()) // orden incremental por tenant (via partial unique)
+
+  // Estado fiscal
+  verifactuRef String?   @map("verifactu_ref")
+  verifactuAt  DateTime? @map("verifactu_at") @db.Timestamptz
+  sii          Boolean   @default(false)
+  siiSentAt    DateTime? @map("sii_sent_at") @db.Timestamptz
+
+  // Auditoría
+  createdBy String   @map("created_by") // userId o 'isaak-auto'
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, hash])
+  @@index([tenantId, entryDate(sort: Desc)])
+  @@index([tenantId, docType, entryDate])
+  @@index([tenantId, sequence(sort: Desc)])
+  @@index([tenantId, sourceSystem])
+  @@index([tenantId, verifactuRef])
+  @@map("isaak_ledger_entries")
 }
