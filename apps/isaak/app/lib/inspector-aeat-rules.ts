@@ -593,21 +593,536 @@ const R070: AeatRule = {
   },
 };
 
+// ════════════════════════════════════════════════════════════════════════
+// F11 fase 2b — 18 reglas adicionales (Inspector → pyme útil)
+// ════════════════════════════════════════════════════════════════════════
+
+// ─── IVA deducibilidad / repercutido (continuación) ─────────────────────
+
+// R005 IVA deducido sin factura válida
+const R005: AeatRule = {
+  id: 'R005',
+  category: 'iva_deducibilidad',
+  description:
+    'IVA deducido en gasto sin factura completa: requiere documento justificativo (factura ordinaria) para ejercitar el derecho.',
+  appliesTo: scopeFor(['invoice_in', 'expense']),
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
+    const data = ctx.data;
+    if (!data.vatAmount || Number.parseFloat(data.vatAmount) === 0) return NO_APPLY;
+    const d = (data.description ?? '').toLowerCase();
+    const noInvoiceMarkers = ['ticket', 'recibo', 'sin factura', 'comprobante', 'tique'];
+    if (!descriptionContainsAny(d, noInvoiceMarkers)) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message:
+        'IVA deducido sobre un ticket/recibo simplificado: el derecho a deducir requiere factura ordinaria con identificación del destinatario. Solicita factura completa al proveedor.',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 97', url: URL_LIVA },
+        { law: 'RD 1619/2012', article: 'Art. 6', url: URL_RD_FACT },
+      ],
+      recommendation:
+        'Pide al proveedor factura ordinaria con NIF, base, cuota y desglose. Hasta que llegue, registra el gasto sin IVA deducible.',
+    };
+  },
+};
+
+// R006 IVA deducido antes de recibir factura
+const R006: AeatRule = {
+  id: 'R006',
+  category: 'iva_deducibilidad',
+  description:
+    'IVA solo puede deducirse desde la recepción de la factura. Si la fecha de operación es anterior pero la factura aún no se ha recibido, no es deducible todavía.',
+  appliesTo: scopeFor(['invoice_in', 'expense']),
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
+    const data = ctx.data;
+    if (!data.vatAmount || Number.parseFloat(data.vatAmount) === 0) return NO_APPLY;
+    const opDate = data.date;
+    const receivedDate = data.receivedDate;
+    if (!receivedDate || !opDate) return NO_APPLY;
+    const opMs = Date.parse(opDate);
+    const recMs = Date.parse(receivedDate);
+    if (!Number.isFinite(opMs) || !Number.isFinite(recMs)) return NO_APPLY;
+    if (recMs <= opMs) return NO_APPLY;
+    const daysAhead = Math.floor((recMs - opMs) / (1000 * 60 * 60 * 24));
+    if (daysAhead < 1) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'warning',
+      message: `La operación es de ${opDate} pero la factura se recibió el ${receivedDate} (${daysAhead} días después). El IVA solo es deducible desde la recepción, no desde la operación.`,
+      legalBasis: [{ law: 'LIVA', article: 'Art. 99', url: URL_LIVA }],
+      recommendation:
+        'Imputa la deducción al periodo en que se recibe la factura, no al del devengo.',
+    };
+  },
+};
+
+// R007 Gasto descripción sugiere uso personal/doméstico
+const R007: AeatRule = {
+  id: 'R007',
+  category: 'iva_deducibilidad',
+  description:
+    'No son deducibles los bienes/servicios destinados a necesidades privadas o uso personal.',
+  appliesTo: scopeFor(['invoice_in', 'expense']),
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
+    const d = ctx.data.description ?? '';
+    const personalMarkers = [
+      'personal', 'particular', 'domestico', 'doméstico', 'familiar',
+      'casa', 'hogar', 'regalo cumpleanos', 'regalo cumpleaños',
+      'vacaciones', 'colegio hijos', 'guarderia hijos',
+    ];
+    if (!descriptionContainsAny(d, personalMarkers)) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'warning',
+      message:
+        'La descripción sugiere uso personal/doméstico. Los bienes y servicios destinados a necesidades privadas no son afectos a la actividad y su IVA NO es deducible.',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 95.Uno', url: URL_LIVA },
+        { law: 'LIVA', article: 'Art. 96.Uno', url: URL_LIVA },
+      ],
+      recommendation:
+        'Si efectivamente es un gasto de la actividad, ajusta la descripción para reflejar el uso empresarial. Si es uso mixto, aplica la regla del 50% (vehículos).',
+    };
+  },
+};
+
+// R009 IVA fuera del plazo de 4 años para deducir
+const R009: AeatRule = {
+  id: 'R009',
+  category: 'iva_deducibilidad',
+  description:
+    'El derecho a deducir caduca a los 4 años desde el devengo. Después solo cabe procedimiento extraordinario.',
+  appliesTo: scopeFor(['invoice_in', 'expense']),
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
+    const data = ctx.data;
+    if (!data.vatAmount || Number.parseFloat(data.vatAmount) === 0) return NO_APPLY;
+    const opMs = Date.parse(data.date);
+    const now = ctx.now ?? new Date();
+    if (!Number.isFinite(opMs)) return NO_APPLY;
+    const yearsAgo = (now.getTime() - opMs) / (1000 * 60 * 60 * 24 * 365.25);
+    if (yearsAgo < 4) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message: `La operación tiene más de 4 años (${yearsAgo.toFixed(1)}). El derecho a deducir el IVA ha caducado salvo procedimiento extraordinario (rectificación de cuotas).`,
+      legalBasis: [{ law: 'LIVA', article: 'Art. 99.Tres', url: URL_LIVA }],
+      recommendation:
+        'Registra el gasto sin IVA deducible. Si crees que cabe rectificación, consulta con un asesor antes de presentar.',
+    };
+  },
+};
+
+// R016 Servicio profesional B2B sin IVA ni exención indicada
+const R016: AeatRule = {
+  id: 'R016',
+  category: 'iva_repercutido',
+  description:
+    'Factura emitida B2B de servicios sin IVA ni indicación de exención/no sujeción/ISP: requiere justificación.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const data = ctx.data;
+    if (data.recipientType && data.recipientType !== 'b2b') return NO_APPLY;
+    const rate = data.vatRate ? Number.parseFloat(data.vatRate) : null;
+    if (rate === null || rate > 0) return NO_APPLY;
+    const d = data.description ?? '';
+    // Si la descripción ya menciona el supuesto, no avisamos.
+    if (
+      descriptionContainsAny(d, [
+        'exento', 'exenta', 'no sujet', 'inversion sujeto pasivo', 'inversión sujeto pasivo',
+        'isp', 'intracomunitar', 'exportacion', 'exportación', 'art. 20', 'art 20',
+      ])
+    )
+      return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'warning',
+      message:
+        'Factura B2B emitida sin IVA: la operación debe justificarse como exención (Art. 20 LIVA), no sujeción, inversión sujeto pasivo o intracomunitaria. Sin justificación, lo normal es repercutir 21%.',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 4', url: URL_LIVA },
+        { law: 'LIVA', article: 'Art. 20', url: URL_LIVA },
+        { law: 'RD 1619/2012', article: 'Art. 6.1.j', url: URL_RD_FACT },
+      ],
+      recommendation:
+        'Indica en la descripción de la factura la base legal de la exención o ISP (p.ej. "Operación exenta Art. 20.Uno.21º LIVA — formación").',
+    };
+  },
+};
+
+// R017 Operación intracomunitaria sin NIF-IVA/VIES validado
+const R017: AeatRule = {
+  id: 'R017',
+  category: 'comercio_exterior',
+  description:
+    'Operaciones intracomunitarias exentas requieren NIF-IVA del cliente validado en el VIES.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const d = ctx.data.description ?? '';
+    if (!descriptionContainsAny(d, ['intracomunitar', 'cliente ue', 'entrega ue', 'servicio ue', 'cliente alemania', 'cliente francia', 'cliente italia', 'cliente portugal'])) return NO_APPLY;
+    const nif = ctx.data.counterpartyNif ?? '';
+    const looksLikeEUVat = /^[A-Z]{2}/.test(nif);
+    if (looksLikeEUVat) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'warning',
+      message:
+        'Operación intracomunitaria detectada: el NIF del cliente debe empezar por el código de país UE (DE, FR, IT, PT, NL...) y estar validado en el VIES. Sin VIES válido, la operación NO está exenta y debes repercutir IVA español.',
+      legalBasis: [{ law: 'LIVA', article: 'Art. 25', url: URL_LIVA }],
+      recommendation:
+        'Valida el NIF-IVA del cliente en https://ec.europa.eu/taxation_customs/vies/ antes de emitir como exenta. Documenta el resultado.',
+    };
+  },
+};
+
+// R019 Inversión del sujeto pasivo no identificada en factura
+const R019: AeatRule = {
+  id: 'R019',
+  category: 'iva_repercutido',
+  description:
+    'En supuestos de ISP la factura debe indicar expresamente "Inversión del sujeto pasivo" o referencia al Art. 84 LIVA.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const d = ctx.data.description ?? '';
+    const ispMarkers = ['isp', 'inversion sujeto pasivo', 'inversión sujeto pasivo', 'art. 84', 'art 84'];
+    const sectorMarkers = ['construccion', 'construcción', 'subcontrata', 'chatarra', 'oro inversion', 'oro inversión', 'inmueble afecto', 'rehabilitacion inmueble'];
+    if (!descriptionContainsAny(d, sectorMarkers)) return NO_APPLY;
+    if (descriptionContainsAny(d, ispMarkers)) return NO_APPLY;
+    const rate = ctx.data.vatRate ? Number.parseFloat(ctx.data.vatRate) : null;
+    if (rate !== null && rate > 0) return NO_APPLY; // si llevan IVA repercutido no hay ISP
+    return {
+      applies: true,
+      severity: 'warning',
+      message:
+        'Operación en sector con frecuente inversión del sujeto pasivo (construcción/subcontratas/chatarra/oro inversión). Si aplica ISP, la factura DEBE indicar expresamente "Inversión del sujeto pasivo (Art. 84.Uno.2º LIVA)".',
+      legalBasis: [{ law: 'LIVA', article: 'Art. 84.Uno.2º', url: URL_LIVA }],
+      recommendation:
+        'Añade la mención ISP explícita en la descripción de la factura o emite con IVA si no aplica el supuesto.',
+    };
+  },
+};
+
+// R022 Hostelería con tipo distinto del 10% sin causa
+const R022: AeatRule = {
+  id: 'R022',
+  category: 'iva_repercutido',
+  description: 'Servicios de hostelería tributan al 10% IVA; otros tipos requieren motivo (catering atípico, alcohol, etc.).',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const d = ctx.data.description ?? '';
+    if (!descriptionContainsAny(d, ['hostelería', 'hosteleria', 'restaurante', 'menu', 'menú', 'comida', 'catering', 'banquete'])) return NO_APPLY;
+    const rate = ctx.data.vatRate ? Number.parseFloat(ctx.data.vatRate) : null;
+    if (rate === null) return NO_APPLY;
+    if (rate === 10) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'warning',
+      message: `Factura de hostelería con tipo IVA ${rate}%. El tipo aplicable a hostelería es el 10% reducido. Verifica.`,
+      legalBasis: [{ law: 'LIVA', article: 'Art. 91.Uno.2.2º', url: URL_LIVA }],
+    };
+  },
+};
+
+// ─── Facturación electrónica / formato factura ──────────────────────────
+
+// R033 Factura emitida sin número o serie correlativa
+const R033: AeatRule = {
+  id: 'R033',
+  category: 'facturacion_electronica',
+  description: 'Toda factura debe tener número y, en su caso, serie correlativa.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const num = ctx.data.docNumber;
+    // Solo evaluamos si el campo está presente (no undefined) — undefined
+    // significa "no tenemos el dato"; "" o falsy explícito es violación.
+    if (num === undefined) return NO_APPLY;
+    if (typeof num === 'string' && num.trim().length > 0) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message:
+        'Factura sin número: el Reglamento de Facturación exige número (y serie cuando aplique) correlativo dentro de cada serie. Sin número, la factura no es válida fiscalmente.',
+      legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 6.1.b', url: URL_RD_FACT }],
+    };
+  },
+};
+
+// R034 Factura sin NIF del emisor
+const R034: AeatRule = {
+  id: 'R034',
+  category: 'facturacion_electronica',
+  description: 'Toda factura completa debe identificar al emisor con NIF.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const nif = ctx.data.emitterNif;
+    if (nif === undefined) return NO_APPLY;
+    if (typeof nif === 'string' && nif.trim().length >= 8) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message:
+        'Factura sin NIF del emisor: dato obligatorio en factura completa según el Art. 6.1.c RD 1619/2012.',
+      legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 6.1.c', url: URL_RD_FACT }],
+    };
+  },
+};
+
+// R035 Factura B2B sin NIF/datos del destinatario
+const R035: AeatRule = {
+  id: 'R035',
+  category: 'facturacion_electronica',
+  description: 'En operaciones B2B la factura debe identificar al destinatario con NIF.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    if (ctx.data.recipientType !== 'b2b') return NO_APPLY;
+    const nif = ctx.data.counterpartyNif;
+    if (typeof nif === 'string' && nif.trim().length >= 8) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message:
+        'Factura B2B sin NIF/datos del destinatario: el destinatario empresario/profesional debe identificarse con NIF. Sin ese dato, la factura no permite la deducción al receptor.',
+      legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 6.1.d', url: URL_RD_FACT }],
+      recommendation: 'Solicita NIF + razón social + dirección al destinatario antes de emitir.',
+    };
+  },
+};
+
+// R036 Factura emitida sin desglose base/tipo/cuota
+const R036: AeatRule = {
+  id: 'R036',
+  category: 'facturacion_electronica',
+  description: 'La factura completa debe desglosar base imponible, tipo y cuota de IVA.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const data = ctx.data;
+    if (data.docType !== 'invoice' && data.docType !== 'rectificativa') return NO_APPLY;
+    const missing: string[] = [];
+    if (!data.vatBase) missing.push('base imponible');
+    if (!data.vatRate) missing.push('tipo de IVA');
+    if (!data.vatAmount) missing.push('cuota de IVA');
+    if (missing.length === 0) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message: `Factura ordinaria sin desglose: faltan ${missing.join(', ')}. El Reglamento exige consignar separadamente la base, el tipo y la cuota.`,
+      legalBasis: [
+        { law: 'RD 1619/2012', article: 'Art. 6.1.g/h/i', url: URL_RD_FACT },
+      ],
+    };
+  },
+};
+
+// R039 Factura rectificativa sin referencia a la rectificada
+const R039: AeatRule = {
+  id: 'R039',
+  category: 'facturacion_electronica',
+  description: 'Factura rectificativa debe identificar la factura que rectifica.',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    if (ctx.data.docType !== 'rectificativa') return NO_APPLY;
+    const ref = ctx.data.rectifiesDocNumber;
+    if (typeof ref === 'string' && ref.trim().length > 0) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'error',
+      message:
+        'Factura rectificativa sin referencia a la factura original: el Art. 15 RD 1619/2012 exige identificar la rectificada (número, fecha) y la causa de la rectificación.',
+      legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 15', url: URL_RD_FACT }],
+    };
+  },
+};
+
+// R047 Factura electrónica B2B obligatoria — recordatorio
+const R047: AeatRule = {
+  id: 'R047',
+  category: 'facturacion_electronica',
+  description: 'La factura electrónica entre empresarios será obligatoria conforme entre en vigor el reglamento de la Ley 18/2022 (Ley Crea y Crece).',
+  appliesTo: { actions: ['invoice_out'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    if (ctx.data.recipientType !== 'b2b') return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'info',
+      message:
+        'Factura B2B: la Ley 18/2022 (Crea y Crece) y su reglamento van a obligar a la factura electrónica entre empresarios. Mantén tu emisión en formato estructurado (Facturae/UBL/CII) para evitar adaptaciones posteriores.',
+      legalBasis: [
+        { law: 'Ley 18/2022', article: 'Art. 12' },
+      ],
+    };
+  },
+};
+
+// ─── IRPF retenciones (continuación) ────────────────────────────────────
+
+// R080 Administrador societario — retención general 35% (19% si pyme)
+const R080: AeatRule = {
+  id: 'R080',
+  category: 'irpf_retenciones',
+  description:
+    'Retribuciones de administradores: retención 35% general; 19% si entidad con cifra de negocios < 100.000€ en el periodo anterior.',
+  appliesTo: { actions: ['payroll'], taxpayerType: ['sl', 'sa'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'payroll') return NO_APPLY;
+    if (ctx.data.role !== 'administrator') return NO_APPLY;
+    const withheld = ctx.data.irpfWithheld ? Number.parseFloat(ctx.data.irpfWithheld) : null;
+    const gross = Number.parseFloat(ctx.data.grossAmount);
+    if (!Number.isFinite(gross) || gross === 0) return NO_APPLY;
+    if (withheld === null) {
+      return {
+        applies: true,
+        severity: 'warning',
+        message:
+          'Pago a administrador sin retención IRPF informada. La normativa exige 35% (19% si cifra de negocios < 100.000€). Revisa el cálculo.',
+        legalBasis: [{ law: 'LIRPF', article: 'Art. 101.2', url: URL_LIRPF }],
+      };
+    }
+    const rate = (withheld / gross) * 100;
+    if (rate < 18.5 || (rate > 19.5 && rate < 34.5)) {
+      return {
+        applies: true,
+        severity: 'warning',
+        message: `Retención al administrador del ${rate.toFixed(1)}%: tipos legales son 35% (general) o 19% (entidades con cifra de negocios < 100.000€). Confirma cuál procede.`,
+        legalBasis: [{ law: 'LIRPF', article: 'Art. 101.2', url: URL_LIRPF }],
+        recommendation: 'Verifica la cifra de negocios del periodo anterior para decidir entre 19% o 35%.',
+      };
+    }
+    return NO_APPLY;
+  },
+};
+
+// R082 Curso/conferencia/seminario sin retención 15%
+const R082: AeatRule = {
+  id: 'R082',
+  category: 'irpf_retenciones',
+  description:
+    'Rendimientos por impartir cursos, conferencias, coloquios, seminarios y similares: retención del 15%.',
+  appliesTo: { actions: ['invoice_in', 'expense'] },
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
+    const d = ctx.data.description ?? '';
+    if (!descriptionContainsAny(d, ['curso', 'conferencia', 'seminario', 'coloquio', 'ponencia', 'formacion impartida', 'formación impartida', 'masterclass'])) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'warning',
+      message:
+        'Pago por curso/conferencia/seminario: cuando se paga a una persona física por impartir actividad formativa puntual, debe retenerse el 15% e ingresarlo en modelo 111.',
+      legalBasis: [
+        { law: 'LIRPF', article: 'Art. 17.2.c' },
+        { law: 'Reglamento IRPF', article: 'Art. 101' },
+      ],
+    };
+  },
+};
+
+// ─── Contabilidad / gasto no deducible ──────────────────────────────────
+
+// R125 Multas/sanciones/donativos como gasto deducible
+const R125: AeatRule = {
+  id: 'R125',
+  category: 'sociedades',
+  description:
+    'Multas y sanciones (administrativas y penales) y donativos no son gasto deducible en IS ni en estimación directa IRPF.',
+  appliesTo: scopeFor(['invoice_in', 'expense', 'journal']),
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (ctx.action === 'tax_payment' || ctx.action === 'payroll' || ctx.action === 'profile_check') return NO_APPLY;
+    if (ctx.action === 'invoice_out') return NO_APPLY;
+    const d = ctx.data.description ?? '';
+    const markers = ['multa', 'sancion', 'sanción', 'recargo trafico', 'donativo', 'donacion', 'donación', 'penalizacion', 'penalización'];
+    if (!descriptionContainsAny(d, markers)) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'warning',
+      message:
+        'Multas/sanciones/donativos: NO son gasto deducible (Art. 15 LIS / Art. 28-30 LIRPF). Si lo registras como gasto, recuerda hacer el ajuste positivo al resultado contable en el modelo 200 o IRPF.',
+      legalBasis: [
+        { law: 'LIS', article: 'Art. 15.c', url: URL_LIS },
+        { law: 'LIRPF', article: 'Art. 28-30', url: URL_LIRPF },
+      ],
+      recommendation:
+        'Registra el gasto en cuenta diferenciada (p.ej. 678 Gastos excepcionales) y marca el ajuste extracontable.',
+    };
+  },
+};
+
+// R044 — Pago efectivo posiblemente fraccionado (placeholder hasta tener
+// contexto de ledger agregado en F11 fase 2c).
+const R044: AeatRule = {
+  id: 'R044',
+  category: 'tesoreria',
+  description:
+    'Pago en efectivo fraccionado por la misma operación: la suma debe respetarse para el límite de 1.000€.',
+  appliesTo: scopeFor(['invoice_in', 'invoice_out', 'expense']),
+  check: (ctx: RuleContext): RuleEvaluation => {
+    if (
+      ctx.action === 'payroll' ||
+      ctx.action === 'tax_payment' ||
+      ctx.action === 'journal' ||
+      ctx.action === 'profile_check'
+    )
+      return NO_APPLY;
+    const data = ctx.data;
+    if (data.paymentMethod !== 'cash') return NO_APPLY;
+    // Heurística action-time: si el importe está justo por debajo del
+    // umbral (>=900 y <1000), avisamos por riesgo de fragmentación.
+    if (!decimalGTE(data.amount, '900')) return NO_APPLY;
+    if (decimalGTE(data.amount, '1000')) return NO_APPLY;
+    return {
+      applies: true,
+      severity: 'info',
+      message:
+        'Pago en efectivo justo por debajo del umbral (1.000€): la Ley 7/2012 obliga a sumar pagos fraccionados de una misma operación. Si esta es la segunda parte de una operación previa, ya superas el límite y la operación entera es sancionable.',
+      legalBasis: [{ law: 'Ley 7/2012', article: 'Art. 7.Uno.2', url: URL_LEY_7_2012 }],
+      recommendation:
+        '¿Ha habido un pago previo en efectivo por la misma operación? Si sí, regulariza usando otro medio de pago para los próximos.',
+    };
+  },
+};
+
+// ════════════════════════════════════════════════════════════════════════
+
 // ─── Registro completo ───────────────────────────────────────────────────
 
 import { R000_PROFILE_CHECK } from './inspector-aeat-profile';
 
 export const AEAT_RULES: ReadonlyArray<AeatRule> = [
+  // Transversal
   R000_PROFILE_CHECK,
+  // IVA deducibilidad
   R001, R002, R003, R004,
-  R010, R011, R012,
+  R005, R006, R007, R009,
+  // IVA repercutido / comercio exterior
+  R016, R017, R019, R022,
+  // IRPF retenciones
+  R010, R011, R012, R080, R082,
+  // Plazos
   R020,
+  // Facturación / efectivo / formato
   R030, R031, R032,
-  R040A, R040B,
-  R041,
+  R033, R034, R035, R036, R039,
+  R044, R047,
+  // Verifactu / conservación
+  R040A, R040B, R041,
+  // Vinculadas
   R050,
+  // Régimen RE
   R060,
-  R070,
+  // PGC / sociedades
+  R070, R125,
 ];
 
 export function findRuleById(id: string): AeatRule | undefined {

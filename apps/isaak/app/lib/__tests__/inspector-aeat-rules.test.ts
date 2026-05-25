@@ -280,6 +280,477 @@ describe('R070 — Asiento PGC sin cuentas', () => {
   });
 });
 
+// ────────────────────────────────────────────────────────────────────────
+// F11 fase 2b — tests para las 18 reglas adicionales
+// ────────────────────────────────────────────────────────────────────────
+
+describe('R005 — IVA deducido sin factura válida', () => {
+  it('error si description sugiere ticket/recibo y hay IVA', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_in',
+      data: {
+        amount: '121.00',
+        vatAmount: '21.00',
+        description: 'Ticket de supermercado para comida oficina',
+        date: '2026-05-01',
+      },
+    };
+    expect(withRule('R005', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica si no se menciona ticket/recibo', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_in',
+      data: {
+        amount: '121.00',
+        vatAmount: '21.00',
+        description: 'Factura de hosting',
+        date: '2026-05-01',
+      },
+    };
+    expect(withRule('R005', ctx).errors).toHaveLength(0);
+  });
+});
+
+describe('R006 — IVA deducido antes de recibir factura', () => {
+  it('warning si recibida después de la operación', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_in',
+      data: {
+        amount: '121.00',
+        vatAmount: '21.00',
+        description: 'Servicios',
+        date: '2026-05-01',
+        receivedDate: '2026-06-10',
+      },
+    };
+    expect(withRule('R006', ctx).warnings).toHaveLength(1);
+  });
+  it('no aplica si no hay receivedDate', () => {
+    expect(withRule('R006', invoiceInCtx()).warnings).toHaveLength(0);
+  });
+});
+
+describe('R007 — Gasto descripción uso personal', () => {
+  it('warning si description sugiere uso personal', () => {
+    expect(
+      withRule('R007', invoiceInCtx({ description: 'Compra material personal del socio' })).warnings,
+    ).toHaveLength(1);
+  });
+  it('no aplica si description es profesional', () => {
+    expect(withRule('R007', invoiceInCtx({ description: 'Software facturación' })).warnings).toHaveLength(0);
+  });
+});
+
+describe('R009 — IVA fuera de plazo 4 años', () => {
+  it('error si operación de hace más de 4 años con IVA', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_in',
+      data: {
+        amount: '121.00',
+        vatAmount: '21.00',
+        description: 'Material',
+        date: '2020-01-01',
+      },
+      now: new Date('2026-05-25T00:00:00Z'),
+    };
+    expect(withRule('R009', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica si operación reciente', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_in',
+      data: { amount: '121.00', vatAmount: '21.00', description: 'x', date: '2025-12-01' },
+      now: new Date('2026-05-25T00:00:00Z'),
+    };
+    expect(withRule('R009', ctx).errors).toHaveLength(0);
+  });
+});
+
+describe('R016 — Servicio B2B sin IVA ni exención', () => {
+  it('warning si emisión B2B con tipo 0 y sin justificación', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '500.00',
+        description: 'Servicios consultoría',
+        date: '2026-05-01',
+        vatRate: '0',
+        docType: 'invoice',
+        recipientType: 'b2b',
+      },
+    };
+    expect(withRule('R016', ctx).warnings).toHaveLength(1);
+  });
+  it('no aplica si la descripción menciona exención', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '500.00',
+        description: 'Formación exenta Art. 20.Uno.9º LIVA',
+        date: '2026-05-01',
+        vatRate: '0',
+        docType: 'invoice',
+        recipientType: 'b2b',
+      },
+    };
+    expect(withRule('R016', ctx).warnings).toHaveLength(0);
+  });
+});
+
+describe('R017 — Intracom sin NIF-IVA', () => {
+  it('warning si description menciona intracom y NIF sin prefijo país', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '1000.00',
+        description: 'Entrega intracomunitaria a cliente Francia',
+        date: '2026-05-01',
+        vatRate: '0',
+        counterpartyNif: 'B12345678',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R017', ctx).warnings).toHaveLength(1);
+  });
+  it('no aplica si NIF parece NIF-IVA UE (DE...)', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '1000.00',
+        description: 'Entrega intracomunitaria a cliente alemán',
+        date: '2026-05-01',
+        vatRate: '0',
+        counterpartyNif: 'DE123456789',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R017', ctx).warnings).toHaveLength(0);
+  });
+});
+
+describe('R019 — ISP no identificada', () => {
+  it('warning si sector con ISP típico y no mencionado en description', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '5000.00',
+        description: 'Subcontrata obra de construcción residencial',
+        date: '2026-05-01',
+        vatRate: '0',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R019', ctx).warnings).toHaveLength(1);
+  });
+  it('no aplica si description menciona ISP explícita', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '5000.00',
+        description: 'Subcontrata construcción — Inversión sujeto pasivo Art. 84.Uno.2º',
+        date: '2026-05-01',
+        vatRate: '0',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R019', ctx).warnings).toHaveLength(0);
+  });
+});
+
+describe('R022 — Hostelería con tipo distinto del 10%', () => {
+  it('warning si emisión hostelería al 21%', () => {
+    expect(
+      withRule('R022', invoiceOutCtx({ description: 'Menú hostelería del día', vatRate: '21' })).warnings,
+    ).toHaveLength(1);
+  });
+  it('no aplica si tipo es 10%', () => {
+    expect(
+      withRule('R022', invoiceOutCtx({ description: 'Menú restaurante', vatRate: '10' })).warnings,
+    ).toHaveLength(0);
+  });
+});
+
+describe('R033 — Factura sin número', () => {
+  it('error si docNumber es cadena vacía', () => {
+    const r = withRule('R033', invoiceOutCtx());
+    // docNumber undefined → skip
+    expect(r.errors).toHaveLength(0);
+
+    const r2 = withRule('R033', {
+      ...invoiceOutCtx(),
+      data: { ...(invoiceOutCtx() as { data: { amount: string } & Record<string, unknown> }).data, docNumber: '' as string },
+    } as RuleContext);
+    expect(r2.errors).toHaveLength(1);
+  });
+});
+
+describe('R034 — NIF emisor', () => {
+  it('error si emitterNif vacío', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        emitterNif: '',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R034', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica si emitterNif undefined (no tenemos el dato)', () => {
+    expect(withRule('R034', invoiceOutCtx()).errors).toHaveLength(0);
+  });
+  it('no aplica si emitterNif válido (>=8 chars)', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        emitterNif: 'B12345678',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R034', ctx).errors).toHaveLength(0);
+  });
+});
+
+describe('R035 — NIF destinatario B2B', () => {
+  it('error si B2B sin NIF del cliente', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        recipientType: 'b2b',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R035', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica a B2C', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        recipientType: 'b2c',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R035', ctx).errors).toHaveLength(0);
+  });
+});
+
+describe('R036 — Desglose base/tipo/cuota', () => {
+  it('error si factura ordinaria sin base/tipo/cuota', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '121.00',
+        description: 'x',
+        date: '2026-05-01',
+        docType: 'invoice',
+        // sin vatBase / vatRate / vatAmount
+      },
+    };
+    expect(withRule('R036', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica si completo', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '121.00',
+        vatBase: '100.00',
+        vatRate: '21.00',
+        vatAmount: '21.00',
+        description: 'x',
+        date: '2026-05-01',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R036', ctx).errors).toHaveLength(0);
+  });
+});
+
+describe('R039 — Rectificativa sin referencia', () => {
+  it('error si rectificativa no indica factura origen', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'Anulación',
+        date: '2026-05-01',
+        docType: 'rectificativa',
+      },
+    };
+    expect(withRule('R039', ctx).errors).toHaveLength(1);
+  });
+  it('no aplica si rectificativa con referencia', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'Anulación factura F-2025-100',
+        date: '2026-05-01',
+        docType: 'rectificativa',
+        rectifiesDocNumber: 'F-2025-100',
+      },
+    };
+    expect(withRule('R039', ctx).errors).toHaveLength(0);
+  });
+});
+
+describe('R044 — Efectivo posiblemente fraccionado', () => {
+  it('info si efectivo entre 900 y 999€', () => {
+    expect(
+      withRule('R044', invoiceInCtx({ amount: '950.00', paymentMethod: 'cash' })).infos,
+    ).toHaveLength(1);
+  });
+  it('no aplica si <900€', () => {
+    expect(
+      withRule('R044', invoiceInCtx({ amount: '800.00', paymentMethod: 'cash' })).infos,
+    ).toHaveLength(0);
+  });
+});
+
+describe('R047 — Factura electrónica B2B (info)', () => {
+  it('info siempre que emisor B2B', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        recipientType: 'b2b',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R047', ctx).infos).toHaveLength(1);
+  });
+  it('no aplica a B2C', () => {
+    const ctx: RuleContext = {
+      action: 'invoice_out',
+      data: {
+        amount: '100.00',
+        description: 'x',
+        date: '2026-05-01',
+        recipientType: 'b2c',
+        docType: 'invoice',
+      },
+    };
+    expect(withRule('R047', ctx).infos).toHaveLength(0);
+  });
+});
+
+describe('R080 — Administrador IRPF 35%/19%', () => {
+  it('warning si tipo intermedio (ej. 24%)', () => {
+    const ctx: RuleContext = {
+      action: 'payroll',
+      data: {
+        grossAmount: '5000.00',
+        netAmount: '3800.00',
+        irpfWithheld: '1200.00',
+        period: '2026-05',
+        role: 'administrator',
+      },
+      profile: { taxpayerType: 'sl' },
+    };
+    expect(withRule('R080', ctx).warnings).toHaveLength(1);
+  });
+
+  it('no aplica si retención = 35% (general)', () => {
+    const ctx: RuleContext = {
+      action: 'payroll',
+      data: {
+        grossAmount: '5000.00',
+        netAmount: '3250.00',
+        irpfWithheld: '1750.00',
+        period: '2026-05',
+        role: 'administrator',
+      },
+      profile: { taxpayerType: 'sl' },
+    };
+    expect(withRule('R080', ctx).warnings).toHaveLength(0);
+  });
+
+  it('no aplica si retención = 19% (entidad pequeña)', () => {
+    const ctx: RuleContext = {
+      action: 'payroll',
+      data: {
+        grossAmount: '5000.00',
+        netAmount: '4050.00',
+        irpfWithheld: '950.00',
+        period: '2026-05',
+        role: 'administrator',
+      },
+      profile: { taxpayerType: 'sl' },
+    };
+    expect(withRule('R080', ctx).warnings).toHaveLength(0);
+  });
+
+  it('no aplica a empleado normal', () => {
+    const ctx: RuleContext = {
+      action: 'payroll',
+      data: {
+        grossAmount: '2000.00',
+        netAmount: '1700.00',
+        irpfWithheld: '300.00',
+        period: '2026-05',
+        role: 'employee',
+      },
+      profile: { taxpayerType: 'sl' },
+    };
+    expect(withRule('R080', ctx).warnings).toHaveLength(0);
+  });
+
+  it('no aplica si perfil autónomo (regla scoped a SL/SA)', () => {
+    const ctx: RuleContext = {
+      action: 'payroll',
+      data: {
+        grossAmount: '5000.00',
+        netAmount: '4500.00',
+        irpfWithheld: '500.00',
+        period: '2026-05',
+        role: 'administrator',
+      },
+      profile: { taxpayerType: 'autonomo' },
+    };
+    const r = withRule('R080', ctx);
+    expect(r.skippedByScope).toContain('R080');
+  });
+});
+
+describe('R082 — Curso/conferencia retención 15%', () => {
+  it('warning si description menciona conferencia', () => {
+    expect(
+      withRule('R082', invoiceInCtx({ description: 'Honorarios por conferencia en congreso' })).warnings,
+    ).toHaveLength(1);
+  });
+});
+
+describe('R125 — Multas/sanciones/donativos no deducibles', () => {
+  it('warning si gasto menciona multa', () => {
+    expect(
+      withRule('R125', invoiceInCtx({ description: 'Multa de tráfico empresa' })).warnings,
+    ).toHaveLength(1);
+  });
+  it('warning en asiento por donativo', () => {
+    const ctx: RuleContext = {
+      action: 'journal',
+      data: { description: 'Donativo a fundación X', amount: '500.00' },
+    };
+    expect(withRule('R125', ctx).warnings).toHaveLength(1);
+  });
+  it('no aplica a gastos normales', () => {
+    expect(
+      withRule('R125', invoiceInCtx({ description: 'Material de oficina' })).warnings,
+    ).toHaveLength(0);
+  });
+});
+
 describe('AEAT_RULES — sanity', () => {
   it('todas las reglas tienen id único', () => {
     const ids = AEAT_RULES.map((r) => r.id);
