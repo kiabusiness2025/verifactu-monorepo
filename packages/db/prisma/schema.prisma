@@ -573,6 +573,9 @@ model Tenant {
   isaakLongTermMemory           IsaakLongTermMemory[]
   isaakLedgerEntries            IsaakLedgerEntry[]
   isaakTaxReturns               IsaakTaxReturn[]
+  isaakAeatNotifications        IsaakAeatNotification[]
+  isaakAeatCensusSnapshots      IsaakAeatCensusSnapshot[]
+  isaakAeatCensusChanges        IsaakAeatCensusChange[]
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -2710,4 +2713,107 @@ model IsaakTaxReturn {
   @@index([tenantId, dueDate])
   @@index([tenantId, fiscalYear])
   @@map("isaak_tax_returns")
+}
+
+// ==================== ISAAK AEAT SEDE — C-A (lectura ampliada) ====================
+//
+// Persistencia de notificaciones AEAT (DEH) y snapshots del censo
+// 036/037 para detectar cambios. Sin estas tablas, cada consulta a la
+// sede AEAT haría un round-trip; con persistencia podemos:
+//   * deduplicar notificaciones que el cron pulla a diario
+//   * detectar cambios censales (domicilio, IAE, obligaciones)
+//   * adjuntar justificantes PDF a IsaakTaxReturn al descargarlos
+//   * disparar alertas push solo cuando llega algo NUEVO
+
+model IsaakAeatNotification {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // ID externo asignado por AEAT — único por (tenant, externalId)
+  externalId String @map("external_id")
+
+  title     String
+  emisor    String
+  tipo      String // tipo notificación AEAT (ej. 'comunicacion', 'requerimiento')
+  estado    String // 'pendiente' | 'leida' | 'expirada' | 'archivada'
+
+  notificationDate DateTime  @map("notification_date") @db.Timestamptz
+  receivedAt       DateTime  @default(now()) @map("received_at") @db.Timestamptz
+  acknowledgedAt   DateTime? @map("acknowledged_at") @db.Timestamptz
+  expiresAt        DateTime? @map("expires_at") @db.Timestamptz
+
+  // Si la notificación tiene un PDF adjunto y se ha descargado.
+  pdfUrl       String? @map("pdf_url") @db.Text
+  pdfStoredAt  DateTime? @map("pdf_stored_at") @db.Timestamptz
+
+  // Si la notificación causó una alerta in-app o email
+  alertSent    Boolean @default(false) @map("alert_sent")
+  alertSentAt  DateTime? @map("alert_sent_at") @db.Timestamptz
+
+  // Raw payload de AEAT para auditoría (opcional)
+  rawXml       String? @map("raw_xml") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, externalId])
+  @@index([tenantId, estado])
+  @@index([tenantId, notificationDate(sort: Desc)])
+  @@index([tenantId, alertSent])
+  @@map("isaak_aeat_notifications")
+}
+
+// Snapshot del censo 036/037 — guardamos en JSON para diff posterior
+// y conservamos histórico. El cron compara el último snapshot con el
+// pull del día y crea una IsaakAeatCensusChange por cada diferencia.
+model IsaakAeatCensusSnapshot {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Censo capturado como objeto: nombre, domicilio fiscal, IAE,
+  // obligaciones, fecha de alta, etc. — todo lo que AEAT devuelva.
+  data Json
+
+  // Hash del JSON canónico para dedupe rápido (no insertamos si el
+  // contenido es idéntico al snapshot anterior).
+  contentHash String @map("content_hash") @db.VarChar(64)
+
+  capturedAt DateTime @default(now()) @map("captured_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, capturedAt(sort: Desc)])
+  @@map("isaak_aeat_census_snapshots")
+}
+
+// Cambios censales detectados al comparar dos snapshots consecutivos.
+// Util para que Isaak avise al cliente: "han cambiado tu domicilio
+// fiscal", "tu IAE ya no aparece en el censo", etc.
+model IsaakAeatCensusChange {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Campo censal afectado: 'domicilio_fiscal' | 'iae' | 'obligaciones' |
+  // 'nombre' | 'modelo_036' | 'baja' ...
+  field       String
+  changeType  String @map("change_type") // 'added' | 'removed' | 'modified'
+  oldValue    String? @map("old_value") @db.Text
+  newValue    String? @map("new_value") @db.Text
+
+  // Referencias a los snapshots que produjeron el diff
+  previousSnapshotId String? @map("previous_snapshot_id") @db.Uuid
+  currentSnapshotId  String  @map("current_snapshot_id") @db.Uuid
+
+  alertSent   Boolean @default(false) @map("alert_sent")
+  alertSentAt DateTime? @map("alert_sent_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([tenantId, alertSent])
+  @@map("isaak_aeat_census_changes")
 }

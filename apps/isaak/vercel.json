@@ -36,6 +36,10 @@
     {
       "path": "/api/cron/audit-monthly",
       "schedule": "0 3 1 * *"
+    },
+    {
+      "path": "/api/cron/aeat-sede-sync",
+      "schedule": "0 6 * * *"
     }
   ]
 }

@@ -37,6 +37,8 @@ import {
   type TaxReturnModel,
   type TaxReturnStatus,
 } from './isaak-tax-returns';
+import { syncAeatSedeForTenant } from './aeat-sede-sync';
+import { prisma } from './prisma';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -224,6 +226,49 @@ export const LEDGER_CHAT_TOOLS = [
         },
       },
       required: ['model', 'period', 'amountDeclared'],
+    },
+  },
+  {
+    name: 'isaak_sync_aeat_sede',
+    description:
+      'Sincroniza la sede AEAT del tenant: descarga notificaciones DEH y censo 036/037, dedupe lo ya conocido y crea alertas si hay notificaciones críticas o cambios censales. Solo funciona si el tenant tiene cert digital cargado. NO modifica datos en AEAT (solo lectura).',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'isaak_list_aeat_notifications',
+    description:
+      'Lista las notificaciones AEAT del tenant ya persistidas. Útil para responder "¿qué notificaciones AEAT tengo?". Filtra por estado/severity opcionalmente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        estado: {
+          type: 'string',
+          enum: ['pendiente', 'leida', 'expirada', 'archivada'],
+          description: 'Filtrar por estado (opcional).',
+        },
+        onlyUnacknowledged: {
+          type: 'boolean',
+          description: 'Si true, solo devuelve las que no han sido marcadas como leídas.',
+        },
+        limit: {
+          type: 'number',
+          description: 'Máximo de notificaciones a devolver (default 20, máx 100).',
+        },
+      },
+    },
+  },
+  {
+    name: 'isaak_list_aeat_census_changes',
+    description:
+      'Lista los cambios censales (036/037) detectados por Isaak en los últimos N días. Útil para responder "¿ha cambiado algo en mi censo AEAT?".',
+    input_schema: {
+      type: 'object',
+      properties: {
+        days: {
+          type: 'number',
+          description: 'Ventana de días hacia atrás (default 90, máx 365).',
+        },
+      },
     },
   },
   {
@@ -454,6 +499,122 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'record_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_sync_aeat_sede') {
+    try {
+      const result = await syncAeatSedeForTenant(ctx.tenantId);
+      return {
+        ok: result.ok,
+        notifications: result.notifications,
+        census: result.census,
+        errors: result.errors,
+        message: result.ok
+          ? `Sincronización OK: ${result.notifications.persisted} notificaciones nuevas, ${result.census.changesDetected} cambios censales.`
+          : `Sincronización con errores: ${result.errors.join('; ')}`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'sync_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_list_aeat_notifications') {
+    const estado = args.estado as string | undefined;
+    const onlyUnacknowledged = args.onlyUnacknowledged === true;
+    const limit = Math.max(
+      1,
+      Math.min(100, typeof args.limit === 'number' ? args.limit : 20),
+    );
+    const where: {
+      tenantId: string;
+      estado?: string;
+      acknowledgedAt?: null;
+    } = { tenantId: ctx.tenantId };
+    if (estado) where.estado = estado;
+    if (onlyUnacknowledged) where.acknowledgedAt = null;
+    try {
+      const rows = await prisma.isaakAeatNotification.findMany({
+        where,
+        orderBy: { notificationDate: 'desc' },
+        take: limit,
+        select: {
+          id: true,
+          externalId: true,
+          title: true,
+          emisor: true,
+          tipo: true,
+          estado: true,
+          notificationDate: true,
+          acknowledgedAt: true,
+          alertSent: true,
+        },
+      });
+      return {
+        ok: true,
+        count: rows.length,
+        notifications: rows.map((r) => ({
+          id: r.id,
+          externalId: r.externalId,
+          title: r.title,
+          emisor: r.emisor,
+          tipo: r.tipo,
+          estado: r.estado,
+          notificationDate: r.notificationDate.toISOString(),
+          acknowledged: r.acknowledgedAt !== null,
+          alertSent: r.alertSent,
+        })),
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'list_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_list_aeat_census_changes') {
+    const days = Math.max(
+      1,
+      Math.min(365, typeof args.days === 'number' ? args.days : 90),
+    );
+    const since = new Date(Date.now() - days * 86_400_000);
+    try {
+      const rows = await prisma.isaakAeatCensusChange.findMany({
+        where: { tenantId: ctx.tenantId, createdAt: { gte: since } },
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        select: {
+          field: true,
+          changeType: true,
+          oldValue: true,
+          newValue: true,
+          createdAt: true,
+        },
+      });
+      return {
+        ok: true,
+        count: rows.length,
+        windowDays: days,
+        changes: rows.map((r) => ({
+          field: r.field,
+          changeType: r.changeType,
+          oldValue: r.oldValue,
+          newValue: r.newValue,
+          detectedAt: r.createdAt.toISOString(),
+        })),
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'list_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }
