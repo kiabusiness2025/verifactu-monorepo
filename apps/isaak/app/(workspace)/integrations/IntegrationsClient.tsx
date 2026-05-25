@@ -66,18 +66,6 @@ type MicrosoftStatus = {
   microsoftConfigured: boolean;
 };
 
-type ChiftStatus = {
-  connected: boolean;
-  status: string;
-  connectionId: string | null;
-  companyName: string | null;
-  companyVat: string | null;
-  currency: string | null;
-  connectedAt: string | null;
-  lastError: string | null;
-  chiftConfigured: boolean;
-};
-
 type GmailInvoiceCandidate = {
   id: string;
   threadId: string;
@@ -93,11 +81,18 @@ type Tab = 'connectors' | 'developer';
 
 // ── Categories & catalog ───────────────────────────────────────────────────────
 
-type CategoryKey = 'all' | 'erp' | 'google' | 'microsoft' | 'banca' | 'comunicacion' | 'pagos';
+type CategoryKey =
+  | 'all'
+  | 'sectorial'
+  | 'google'
+  | 'microsoft'
+  | 'banca'
+  | 'comunicacion'
+  | 'pagos';
 
 const CATEGORIES: { key: CategoryKey; label: string; icon: React.ElementType }[] = [
   { key: 'all', label: 'Todos', icon: LayoutGrid },
-  { key: 'erp', label: 'ERP', icon: Plug },
+  { key: 'sectorial', label: 'Sectorial', icon: Plug },
   { key: 'google', label: 'Google', icon: Globe },
   { key: 'microsoft', label: 'Microsoft', icon: Monitor },
   { key: 'banca', label: 'Banca', icon: Landmark },
@@ -118,25 +113,49 @@ const INTEGRATIONS: IntegrationMeta[] = [
   {
     id: 'holded',
     name: 'Holded',
-    category: 'erp',
+    category: 'sectorial',
     desc: 'Facturación, CRM y contabilidad en la nube',
     logo: '🟠',
     available: true,
   },
   {
-    id: 'chift',
-    name: 'ERP via Chift',
-    category: 'erp',
-    desc: 'Sage 200, A3ERP, Odoo, QuickBooks, Xero y +40 ERPs',
-    logo: '🔌',
+    id: 'hotelgest',
+    name: 'HotelGest',
+    category: 'sectorial',
+    desc: 'PMS hotelero — reservas, ocupación, RevPAR y facturación',
+    logo: '🏨',
     available: true,
   },
   {
-    id: 'factusol',
-    name: 'Factusol',
-    category: 'erp',
-    desc: 'Software de gestión y facturación español',
-    logo: '🧾',
+    id: 'inmovilla',
+    name: 'Inmovilla',
+    category: 'sectorial',
+    desc: 'Gestión inmobiliaria — propiedades, operaciones y clientes',
+    logo: '🏠',
+    available: false,
+  },
+  {
+    id: 'revo',
+    name: 'Revo XEF',
+    category: 'sectorial',
+    desc: 'TPV para restaurantes, bares y hostelería',
+    logo: '🍽️',
+    available: false,
+  },
+  {
+    id: 'nubimed',
+    name: 'Nubimed',
+    category: 'sectorial',
+    desc: 'Gestión de clínicas dentales y médicas',
+    logo: '🏥',
+    available: false,
+  },
+  {
+    id: 'teamup',
+    name: 'TeamUp',
+    category: 'sectorial',
+    desc: 'Gestión de gimnasios y centros deportivos',
+    logo: '💪',
     available: false,
   },
   {
@@ -198,7 +217,7 @@ const INTEGRATIONS: IntegrationMeta[] = [
 ];
 
 const CATEGORY_SECTION_LABELS: Record<Exclude<CategoryKey, 'all'>, string> = {
-  erp: 'ERP & Contabilidad',
+  sectorial: 'Software Sectorial',
   google: 'Google Workspace',
   microsoft: 'Microsoft 365',
   banca: 'Banca',
@@ -332,49 +351,6 @@ function HoldedCard({ status }: { status: HoldedStatus }) {
                 </span>
               ))}
             </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function ChiftCard({ status }: { status: ChiftStatus }) {
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-start justify-between gap-4 px-5 py-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-lg">
-            🔌
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[14px] font-semibold text-slate-900">ERP via Chift</span>
-              <StatusDot
-                active={status.connected}
-                label={status.connected ? 'Activo' : 'Sin conectar'}
-              />
-            </div>
-            <div className="text-[12px] text-slate-500">
-              Sage 200, A3ERP, Odoo, QuickBooks, Xero y +40 ERPs
-            </div>
-          </div>
-        </div>
-        <Link
-          href="/chift"
-          className="shrink-0 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition hover:bg-slate-50"
-        >
-          Gestionar
-        </Link>
-      </div>
-      {status.connected && (
-        <div className="border-t border-slate-100 bg-slate-50/50 px-5 py-2.5 text-[12px] text-slate-600">
-          {status.companyName && (
-            <>
-              Empresa: <span className="font-medium">{status.companyName}</span>
-              {status.companyVat && <> · NIF: {status.companyVat}</>}
-              {status.connectedAt && <> · {fmtDate(status.connectedAt)}</>}
-            </>
           )}
         </div>
       )}
@@ -1062,7 +1038,6 @@ export default function IntegrationsClient() {
   const [holdedStatus, setHoldedStatus] = useState<HoldedStatus | null>(null);
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(null);
   const [microsoftStatus, setMicrosoftStatus] = useState<MicrosoftStatus | null>(null);
-  const [chiftStatus, setChiftStatus] = useState<ChiftStatus | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -1071,11 +1046,10 @@ export default function IntegrationsClient() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [holdedRes, googleRes, msRes, chiftRes] = await Promise.allSettled([
+      const [holdedRes, googleRes, msRes] = await Promise.allSettled([
         fetch('/api/settings/connections'),
         fetch('/api/isaak/google/status'),
         fetch('/api/isaak/microsoft/status'),
-        fetch('/api/isaak/chift/status'),
       ]);
       if (holdedRes.status === 'fulfilled' && holdedRes.value.ok) {
         const d = (await holdedRes.value.json().catch(() => null)) as {
@@ -1092,10 +1066,6 @@ export default function IntegrationsClient() {
         const d = (await msRes.value.json().catch(() => null)) as MicrosoftStatus | null;
         if (d) setMicrosoftStatus(d);
       }
-      if (chiftRes.status === 'fulfilled' && chiftRes.value.ok) {
-        const d = (await chiftRes.value.json().catch(() => null)) as ChiftStatus | null;
-        if (d) setChiftStatus(d);
-      }
     } finally {
       setLoading(false);
     }
@@ -1107,9 +1077,6 @@ export default function IntegrationsClient() {
     const g = params.get('google');
     if (g === 'connected') setNotice('Google conectado correctamente.');
     if (g === 'error') setError('No se pudo conectar Google. Inténtalo de nuevo.');
-    const chift = params.get('chift');
-    if (chift === 'connected') setNotice('ERP conectado via Chift.');
-    if (chift === 'error') setError('No se pudo conectar el ERP. Inténtalo de nuevo.');
   }, [loadAll]);
 
   async function syncGoogle() {
@@ -1152,7 +1119,7 @@ export default function IntegrationsClient() {
 
   const visibleCategories = useMemo<Exclude<CategoryKey, 'all'>[]>(() => {
     const cats: Exclude<CategoryKey, 'all'>[] = [
-      'erp',
+      'sectorial',
       'google',
       'microsoft',
       'banca',
@@ -1183,8 +1150,15 @@ export default function IntegrationsClient() {
     switch (item.id) {
       case 'holded':
         return holdedStatus ? <HoldedCard key={item.id} status={holdedStatus} /> : null;
-      case 'chift':
-        return chiftStatus ? <ChiftCard key={item.id} status={chiftStatus} /> : null;
+      case 'hotelgest':
+        return (
+          <SoonCard
+            key={item.id}
+            name={item.name}
+            desc="Conecta tu cuenta HotelGest — disponible próximamente en este panel."
+            logo={item.logo}
+          />
+        );
       case 'google-calendar':
         return googleStatus ? (
           <GoogleCalCard

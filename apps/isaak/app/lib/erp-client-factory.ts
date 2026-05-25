@@ -1,6 +1,5 @@
 // Factory: returns the right ErpClient for a tenant based on their active ExternalConnection.
-// Supported providers: Holded (direct API), Chift (covers Sage, Xero, QuickBooks, Cegid, +40 ERPs),
-// Hotelgest (hotel management).
+// Supported providers: Holded (direct API), sector-specific software (HotelGest, Inmovilla, Revo, Nubimed…)
 
 import { decryptHoldedSecret, getHoldedConnection } from './holded-integration';
 import { HoldedErpClient } from './holded-erp-client';
@@ -16,37 +15,35 @@ export class ErpNotConnectedError extends Error {
   }
 }
 
-const SECONDARY_PROVIDERS = ['hotelgest', 'chift'] as const;
+const SECTOR_PROVIDERS = ['hotelgest', 'inmovilla', 'revo', 'nubimed'] as const;
 
 export async function getErpClient(tenantId: string): Promise<ErpClient> {
-  // 1. Holded (most common)
+  // 1. Holded (legacy — existing clients)
   const holdedConn = await getHoldedConnection(tenantId);
   if (holdedConn?.apiKey) {
     return new HoldedErpClient(holdedConn.apiKey);
   }
 
-  // 2. Other providers (Chift = universal connector for Sage/Xero/QB/Cegid/…, Hotelgest)
+  // 2. Sector-specific software connectors
   const conn = await prisma.externalConnection.findFirst({
     where: {
       tenantId,
-      provider: { in: [...SECONDARY_PROVIDERS] },
+      provider: { in: [...SECTOR_PROVIDERS] },
       connectionStatus: 'connected',
     },
     orderBy: { connectedAt: 'desc' },
   });
 
   if (conn) {
+    const apiKey = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
     switch (conn.provider) {
-      case 'chift': {
-        const { ChiftErpClient } = await import('./chift-erp-client');
-        const consumerId = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
-        return new ChiftErpClient(consumerId);
-      }
       case 'hotelgest': {
         const { HotelgestErpClient } = await import('./hotelgest-erp-client');
-        const apiKey = conn.apiKeyEnc ? decryptHoldedSecret(conn.apiKeyEnc) : '';
         return new HotelgestErpClient(apiKey);
       }
+      // Inmovilla, Revo, Nubimed — stubs pending API docs
+      default:
+        throw new Error(`Sector provider ${conn.provider} not yet implemented`);
     }
   }
 
@@ -61,7 +58,7 @@ export async function hasErpConnected(tenantId: string): Promise<boolean> {
   const count = await prisma.externalConnection.count({
     where: {
       tenantId,
-      provider: { in: [...SECONDARY_PROVIDERS] },
+      provider: { in: [...SECTOR_PROVIDERS] },
       connectionStatus: 'connected',
     },
   });

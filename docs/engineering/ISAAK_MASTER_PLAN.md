@@ -324,22 +324,102 @@ ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 
 ## Decisiones de arquitectura vigentes
 
-| Decisión                | Detalle                                                                                                                                                                     |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Motor IA por plan       | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`                           |
-| Rate limit free         | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público                 |
-| Acciones con escritura  | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                                        |
-| Certificados digitales  | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                                       |
-| mTLS AEAT               | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                                           |
-| AEAT chat context       | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                                         |
-| Branding facturas PDF   | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                                               |
-| Isaak Público           | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                                             |
-| `INTERNAL_API_SECRET`   | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                                           |
-| Google LLM tools (G-2)  | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                                     |
-| Microsoft Graph (M)     | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                                               |
-| ERP aggregator (P3-4-C) | Chift como capa única. `ChiftErpClient implements ErpClient` + 4 rutas API + `/chift` workspace. 🔄 Activación cuenta Chift pendiente.                                      |
-| Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23                          |
-| Open Banking EB         | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23 |
+| Decisión                      | Detalle                                                                                                                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Motor IA por plan             | Free/Starter → `claude-haiku-4-5`. Pro → `claude-sonnet-4-6`. Business → Sonnet + GPT-4o opcional. Abstracción en `callLLM` de `@verifactu/utils`                                                             |
+| Rate limit free               | `TenantSubscription.dailyQueryLimit/queriesUsedToday/lastQueryResetAt` — reset diario, check en `isaak-quota.ts`. Por `tenantId` si auth, por IP si público                                                   |
+| Acciones con escritura        | Confirmación obligatoria. El assistant propone, el usuario confirma. Sin excepciones                                                                                                                          |
+| Certificados digitales        | P12 upload → PEM-JSON (node-forge) → AES-256-GCM con `CERT_MASTER_KEY`. Campo `encryptedP12` almacena PEM-JSON cifrado, nunca raw P12                                                                         |
+| mTLS AEAT                     | `https.Agent` con `{cert, key}` PEM del tenant. URLs configurables via `AEAT_NOTIF_WS_URL` / `AEAT_CENSUS_WS_URL`                                                                                             |
+| AEAT chat context             | `isAeatQuery(message)` → carga cert + notificaciones → `aeatBlock` en system prompt                                                                                                                           |
+| Branding facturas PDF         | `InvoiceTemplate.isDefault` del tenant → merge sobre `adminEditHistory.branding` → fallback colores Verifactu                                                                                                 |
+| Isaak Público                 | Rate limit 15/h por IP vía `checkPublicChatQuota`. Auto-slug desde nombre empresa. Claude Haiku                                                                                                               |
+| `INTERNAL_API_SECRET`         | Bypass auth cookie para llamadas server-to-server entre `apps/isaak` y `apps/api`                                                                                                                             |
+| Google LLM tools (G-2)        | 8 tools en chat route: calendar CRUD, gmail scan+archive, drive list. Scope gmail.modify. ✅ 2026-05-21                                                                                                       |
+| Microsoft Graph (M)           | Multi-tenant Azure AD. `IsaakMicrosoftToken` per `(tenantId, userId)`. 9 tools: Outlook Calendar+Mail+OneDrive. ✅ 2026-05-21                                                                                 |
+| ERP aggregator (P3-4-C)       | ⚠️ **Suspendido** — Chift bloqueado por activación cuenta. Sustituido por integraciones sectoriales directas (ver sección abajo).                                                                             |
+| Cron connector-health         | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23                                                            |
+| Open Banking EB               | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23                                   |
+| **Integraciones sectoriales** | **Nuevo eje estratégico (2026-05-25)**: Isaak conecta con software de gestión sectorial (HotelGest, Inmovilla, Revo, Nubimed…) en lugar de ERPs genéricos. Ver `docs/engineering/SECTOR_INTEGRATIONS_PLAN.md` |
+| **Company Intelligence**      | **Activo (2026-05-25)**: módulo de ficha empresa desde fuentes oficiales (BORME, VIES, GLEIF, PLACSP). 9 reglas C001-C007 + R040A/R040B. Adapters mockeables. Ver `docs/isaak/COMPANY_INTELLIGENCE.md`        |
+
+---
+
+## ✳️ Pivote estratégico — Integraciones Sectoriales (2026-05-25)
+
+**Decisión**: Isaak abandona la dependencia de ERPs contables genéricos (Chift/Sage/A3) como eje de integraciones y pivota hacia **software de gestión sectorial** (PMS hotelero, POS restauración, gestión clínica, inmobiliarias, etc.).
+
+**Rationale**: El software sectorial ya ES el ERP del cliente. HotelGest para hoteles, Revo XEF para restaurantes, Nubimed para clínicas — estos sistemas contienen todos los datos operativos y fiscales. Isaak actúa como capa de inteligencia encima de ellos sin obligar al cliente a adoptar un ERP adicional.
+
+**Holded**: se mantiene como conector **legacy** para clientes existentes. No es la línea de crecimiento.
+
+### Estado por integración
+
+| Integración     | Sector          | API                      | Estado           |
+| --------------- | --------------- | ------------------------ | ---------------- |
+| **HotelGest**   | Hoteles         | Privada (cliente piloto) | 🔄 Sprint activo |
+| **Inmovilla**   | Inmobiliarias   | Pública documentada      | ⏳ Backlog P1    |
+| **Revo XEF**    | Restaurantes    | Partner + cliente        | ⏳ Backlog P1    |
+| **Nubimed**     | Clínicas/Dental | Pública documentada      | ⏳ Backlog P1    |
+| **TeamUp**      | Gimnasios       | Gratuita                 | ⏳ Backlog P2    |
+| **Loyverse**    | Comercio/Retail | Gratuita OAuth2          | ⏳ Backlog P2    |
+| **RepairShopr** | Talleres        | Swagger pública          | ⏳ Backlog P2    |
+| Chift           | ERPs genéricos  | Bloqueada                | ⏸️ Suspendida    |
+
+**Plan completo**: `docs/engineering/SECTOR_INTEGRATIONS_PLAN.md`
+
+---
+
+## ✅ Company Intelligence — Ficha Empresa (2026-05-25)
+
+Módulo TypeScript completo que construye perfiles fiscales-mercantiles automáticos de empresas a partir de datos del usuario y fuentes públicas oficiales. Se integra en el flujo de onboarding, el chat y el módulo de alertas de Isaak.
+
+**Doc completo**: `docs/isaak/COMPANY_INTELLIGENCE.md`
+
+### Arquitectura del módulo
+
+```
+company-intelligence-types.ts       — tipos: CompanyProfile, CompanyProfileInput, CompanyMatch…
+company-intelligence-normalizers.ts — normalizeLegalName, detectLegalForm, validateNifFormat (NIF/NIE/CIF con checksum)
+company-intelligence-scoring.ts     — scoreCompanyMatch() Jaro-Winkler + NIF/VAT + provincia (0–100)
+company-intelligence-sources.ts     — CompanyDataSourceAdapter + 5 adapters (UserProvided, BORME, VIES, GLEIF, PLACSP)
+company-intelligence-service.ts     — CompanyIntelligenceService.buildProfile() + inferencia contribuyente + obligaciones
+company-intelligence-rules.ts       — 9 reglas evaluables: C001-C007 + R040A/R040B
+__tests__/company-intelligence.test.ts — 88 tests unitarios (todos verdes)
+```
+
+**Convivencia con Inspector AEAT (F11)**: este módulo aporta **reglas sobre el perfil de empresa** (C001-C007). El Inspector AEAT (51 reglas, módulo I) aporta **reglas sobre transacciones y acciones**. Los IDs R040A/R040B coinciden de nombre pero aplican en momentos distintos:
+
+- En Company Intelligence: al construir/actualizar la ficha de empresa (severity progresiva por fecha).
+- En Inspector AEAT: al emitir factura (`invoice_out` action) con scope por `taxpayerType`.
+
+Mantener separados por ahora; revaluar fusión cuando se cierre el wizard R000 de perfil fiscal.
+
+### Principios de diseño
+
+- **Trazabilidad total**: cada dato guarda `source`, `retrievedAt`, `confidence` — nada sin provenance
+- **Sin scraping**: solo fuentes oficiales (BORME, VIES, GLEIF, PLACSP) y open data
+- **Adapters mockeables**: `fetchFn` inyectable → tests 100% sin red
+- **Inferencia prudente**: obligaciones fiscales son "probables", nunca definitivas
+
+### Reglas del motor
+
+| ID    | Severidad          | Condición                                              | Notas                        |
+| ----- | ------------------ | ------------------------------------------------------ | ---------------------------- |
+| C001  | ERROR              | Falta NIF                                              | —                            |
+| C002  | ERROR              | Formato NIF inválido (checksum)                        | Cubre NIF/NIE/CIF            |
+| C003  | WARNING            | Forma jurídica no identificada                         | —                            |
+| C004  | WARNING            | Régimen IVA no declarado                               | —                            |
+| C005  | WARNING            | Territorio fiscal no declarado                         | Afecta qué hacienda gestiona |
+| C006  | WARNING            | Match mercantil de baja confianza                      | —                            |
+| C007  | WARNING            | VAT intracomunitario inválido en VIES                  | —                            |
+| R040A | INFO/WARNING/ERROR | VeriFactu/SIF · Sociedades desde 2027-01-01            | Severidad progresiva         |
+| R040B | INFO/WARNING/ERROR | VeriFactu/SIF · Autónomos y entidades desde 2027-07-01 | Severidad progresiva         |
+
+### Tests
+
+- **88 tests** en `app/lib/__tests__/company-intelligence.test.ts` (incluidos en la suite global)
+- Cobertura completa: normalizers, scoring, adapters (mocked), service, rules
 
 ---
 
@@ -372,13 +452,15 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 | **L — Ledger nativo** | F9: schema + hash chain + repo + importer Holded | ✅ Operativo |
 | **E — Excel export** | F10: 4 informes solo lectura + UI `/auditoria` | ✅ Operativo |
 | **I — Inspector AEAT** | F11 fases 1-4: 51 reglas + R000 perfil + auditoría + cron mensual | ✅ Operativo |
+| **CI — Company Intelligence** | Ficha empresa desde fuentes oficiales: 9 reglas C001-C007 + R040A/R040B | ✅ Operativo |
 | **R — RAG corpus** | F13 fase 1: scaffolding (schema + chunker + sources) | ✅ Fase 1 cerrada |
 | **R — RAG corpus** | F13 fase 2: ingester PDF/BOE + tool `inspector_search_aeat` | ⏳ |
-| **M — Mercantil** | Scraping NIF/BORME/RMC + tool `isaak_lookup_company` | 🚧 En curso |
 | **C — Cert digital AEAT** | C-0: Verifactu mTLS + Sede census/notif lectura | ✅ Operativo |
-| **C — Cert digital AEAT** | C-A: lectura ampliada (DEH push, justificantes, buzón) | ⏳ |
+| **C — Cert digital AEAT** | C-A1/A2/A5: persistencia DEH + diff censo + cron diario + 3 tools LLM | ✅ Operativo |
+| **C — Cert digital AEAT** | C-A3 (justificantes PDF) + C-A4 (resumen IA semanal) | ⏳ |
 | **C — Cert digital AEAT** | C-B: borrador asistido (presentación 303 con confirmación) | ⏳ |
 | **C — Cert digital AEAT** | C-C: presentación automática (cron + veto-window + RC profesional) | ⏳ |
+| **Sectoriales** | HotelGest (sprint), Inmovilla/Revo/Nubimed P1, TeamUp/Loyverse/RepairShopr P2 | 🔄 |
 | **F — Inspector LLM Capa 2** | F12: sub-agente inspector contextual con prompt especializado | ⏳ |
 | **TEAR** | F14: consulta vinculante DGT automática | ⏳ |
 | **Canales** | F15-F16: Telegram + WhatsApp ampliado + Slack + Teams | ⏳ |
@@ -394,12 +476,18 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 | B1 | Verifactu SOAP nativo desde Ledger (desacopla Holded) | ⏳ Depende L4 |
 | B2 | SII (Suministro Inmediato Información, RD 596/2016) | ⏳ |
 | B3 | Modelos 303/130/111/180/347 automáticos (cierre con C-B/C) | ⏳ |
-| B4 | GTM: gestorías → autónomos sin gestoría → "sin asesor" | ⏳ |
+| B4 | GTM: gestorías + sectoriales → autónomos sin gestoría → "sin asesor" | ⏳ |
 | B5 | Certificación AEAT / homologación software fiscal | ⏳ |
 | B6 | Robot Contable v1 (autonomía total) | ⏳ 2027 |
 
 **Estrategia económica:** bootstrap. No se requiere inversión externa para llegar a product-market fit. Inversión solo se evalúa post-certificación AEAT (+18-24 meses).
 
-**Descartados:** Salt Edge, Chift (costes elevados — reemplazados por Enable Banking + GoCardless AIS).
+**Métricas técnicas (2026-05-26):** 51 reglas Inspector AEAT (módulo I) + 9 reglas Company Intelligence (módulo CI) = **60 reglas activas** · 435 tests rama Inspector + 88 tests CI · type-check limpio · UI `/auditoria` operativa · cron sede diario + cron auditoría mensual.
 
-**Métricas técnicas hoy (2026-05-26):** 51 reglas Inspector · 415 tests verdes · type-check limpio · UI auditoría operativa.
+### Próximos pasos de unificación CI ↔ Inspector AEAT
+
+- **Convergencia R040A/R040B**: ambas líneas tienen reglas con el mismo ID pero objetivos distintos. Mantener separadas por ahora (CI = perfil empresa, I = transacciones); revaluar fusión cuando se cierre el wizard R000.
+- **Bridge CI → Inspector R035**: usar `CompanyIntelligenceService.buildProfile()` antes de aceptar factura B2B con NIF → valida vía VIES automáticamente. Convierte R035 de "warning" a "error con NIF corregido sugerido".
+- **Bridge CI → Inspector R017**: validar NIF-IVA intracomunitario vía ViesAdapter antes de permitir factura exenta intracom.
+- **UI integrada**: `/contactos` debe llamar a `buildProfile()` al crear un proveedor/cliente para autocompletar y prevenir errores de captura.
+- **Onboarding R000**: el wizard de perfil fiscal puede arrancar con `buildProfile(NIF del tenant)` y pre-rellenar el formulario; el usuario solo confirma o ajusta.

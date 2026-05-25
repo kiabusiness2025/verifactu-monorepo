@@ -1,13 +1,28 @@
 # Isaak — Plan Maestro de Producto
 
-> Última actualización: **2026-05-19**
-> Estado: documento vivo — actualizado tras completar P0/P1/P2 + sprint VF + sprints WA
+> Última actualización: **2026-05-25** — Pivote estratégico: integraciones sectoriales
+> Estado: documento vivo
 
 ---
 
 ## Visión
 
-**Isaak** es el copiloto fiscal y contable de la pyme española: un agente de IA que conecta con el ERP del cliente (Holded primero), lee sus datos reales, ejecuta acciones con confirmación explícita y asesora en lenguaje llano sobre IVA, IRPF, cobros, gastos y Verifactu. No sustituye al gestor — le da contexto de calidad y automatiza el trabajo repetitivo.
+**Isaak** es el copiloto fiscal, contable y operativo de la pyme española: un agente de IA que conecta con el **software de gestión que cada sector ya usa** — HotelGest para hoteles, Revo XEF para restaurantes, Nubimed para clínicas, Inmovilla para inmobiliarias — y añade encima la capa de inteligencia fiscal, contable y de negocio.
+
+No sustituye al gestor ni al software sectorial. Es la capa de IA que los conecta y los hace hablar en español con el empresario.
+
+### ⚠️ Pivote estratégico (2026-05-25)
+
+El modelo anterior conectaba Isaak con **ERPs genéricos** (Holded, Sage, A3) como fuente de datos contables. El nuevo modelo conecta Isaak directamente con el **software de gestión sectorial** que el cliente ya usa cada día.
+
+| Antes                               | Ahora                                                  |
+| ----------------------------------- | ------------------------------------------------------ |
+| Holded/Sage como ERP + Isaak encima | Software sectorial (HotelGest, Revo...) + Isaak encima |
+| Cliente necesitaba adoptar un ERP   | Cliente usa lo que ya tiene                            |
+| Datos contables genéricos           | Datos operativos ricos + fiscal automático             |
+| Diferenciación baja                 | Copiloto vertical único por sector                     |
+
+**Holded se mantiene** como conector legacy para clientes existentes y como alternativa para empresas sin software sectorial específico.
 
 ---
 
@@ -128,6 +143,23 @@ IsaakSiteChrome subtitle + footer fix · pricing AEAT section (Sede Electrónica
 
 ---
 
+### ✅ Company Intelligence — Ficha Empresa (2026-05-25)
+
+Módulo que construye automáticamente la ficha fiscal-mercantil de cada empresa cliente, combinando datos del usuario con fuentes oficiales (VIES, GLEIF, BORME, PLACSP).
+
+**Valor de producto:**
+
+- Onboarding sin fricción: Isaak infiere forma jurídica, tipo de contribuyente y régimen IVA desde el NIF y el nombre
+- Alertas automáticas cuando faltan datos críticos (NIF, territorio fiscal, régimen IVA)
+- Reglas VeriFactu/SIF (R040A/R040B) con cuenta atrás a 2027-01-01 para sociedades y 2027-07-01 para autónomos
+- Trazabilidad completa: cada dato tiene fuente, fecha de consulta y nivel de confianza
+- Integrado con el chat: Isaak usa el perfil para personalizar el asesoramiento fiscal por empresa
+
+**Ficheros**: `app/lib/company-intelligence-*.ts` (6 ficheros + 88 tests)  
+**Doc técnica**: `docs/isaak/COMPANY_INTELLIGENCE.md`
+
+---
+
 ### ✅ P3-1 Modo Asesoría (2026-05-19, commit 00d65830)
 
 - `AdvisorClient` Prisma model — alias, NIF, Holded API key cifrada AES-256-GCM, is_active, notas
@@ -160,11 +192,11 @@ IsaakSiteChrome subtitle + footer fix · pricing AEAT section (Sede Electrónica
 
 ## Backlog P3 — Asesorías y B2B (mes 3+)
 
-| ID   | Tarea                                                                                                         | Esfuerzo estimado |
-| ---- | ------------------------------------------------------------------------------------------------------------- | ----------------- |
-| P3-1 | ~~**Modo Asesoría**~~ ✅ Completado 2026-05-19                                                                | —                 |
-| P3-3 | **Modelos AEAT Business**: borradores 303, 130, 390 pre-rellenados con datos Holded. UI wizard paso a paso    | L (2 sprints)     |
-| P3-4 | **Conector Sage / A3**: segundo ERP. Arquitectura: `ERP_TYPE` por tenant, capa de abstracción `erp-client.ts` | XL (3+ sprints)   |
+| ID   | Tarea                                                                                                                                                            | Esfuerzo estimado |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| P3-1 | ~~**Modo Asesoría**~~ ✅ Completado 2026-05-19                                                                                                                   | —                 |
+| P3-3 | **Modelos AEAT Business**: borradores 303, 130, 390 pre-rellenados con datos Holded. UI wizard paso a paso                                                       | L (2 sprints)     |
+| P3-4 | ~~**Conector Sage / A3**~~ → **Integraciones sectoriales**: HotelGest (activo), Inmovilla, Revo XEF, Nubimed. Ver `docs/engineering/SECTOR_INTEGRATIONS_PLAN.md` | L por sector      |
 
 ---
 

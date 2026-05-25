@@ -27,7 +27,7 @@ CREATE TABLE "isaak_long_term_memory" (
   CONSTRAINT "isaak_long_term_memory_tenant_fkey"
     FOREIGN KEY ("tenant_id") REFERENCES "tenants"("id") ON DELETE CASCADE,
   CONSTRAINT "isaak_long_term_memory_user_fkey"
-    FOREIGN KEY ("user_id") REFERENCES "users"("id") ON DELETE SET NULL
+    FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE SET NULL
 );
 
 CREATE INDEX "isaak_long_term_memory_tenant_idx"

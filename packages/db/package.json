@@ -11,7 +11,7 @@
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
+    "db:migrate:deploy": "node scripts/migrate-deploy.mjs",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "prisma:generate": "prisma generate --schema=./prisma/schema.prisma",
