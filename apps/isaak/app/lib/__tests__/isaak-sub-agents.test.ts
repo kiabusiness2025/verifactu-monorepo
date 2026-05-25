@@ -1,5 +1,7 @@
 import {
+  detectBankingIntent,
   detectFiscalIntent,
+  detectGestionIntent,
   getSubAgent,
   listSubAgents,
   pickSubAgent,
@@ -39,8 +41,54 @@ describe('detectFiscalIntent', () => {
   });
 });
 
+describe('detectBankingIntent', () => {
+  it('matches saldo / tesoreria / liquidez', () => {
+    expect(detectBankingIntent('¿Cuál es mi saldo bancario?')).toBe(true);
+    expect(detectBankingIntent('Quiero ver la tesorería')).toBe(true);
+    expect(detectBankingIntent('Necesito mejorar la liquidez')).toBe(true);
+  });
+
+  it('matches cash flow / runway / forecast keywords', () => {
+    expect(detectBankingIntent('Previsión de caja a 30 días')).toBe(true);
+    expect(detectBankingIntent('¿Cuánto runway tengo?')).toBe(true);
+    expect(detectBankingIntent('Quiero ver el flujo de caja')).toBe(true);
+  });
+
+  it('matches reconciliation', () => {
+    expect(detectBankingIntent('Necesito conciliar los gastos')).toBe(true);
+    expect(detectBankingIntent('Estado de la conciliación bancaria')).toBe(true);
+  });
+
+  it('rejects fiscal-only or generic queries', () => {
+    expect(detectBankingIntent('¿Cuándo presento el IVA?')).toBe(false);
+    expect(detectBankingIntent('Hola')).toBe(false);
+  });
+});
+
+describe('detectGestionIntent', () => {
+  it('matches CRM keywords (cliente, proveedor, contacto)', () => {
+    expect(detectGestionIntent('Crea un cliente nuevo')).toBe(true);
+    expect(detectGestionIntent('Lista mis proveedores')).toBe(true);
+  });
+
+  it('matches calendar/email keywords', () => {
+    expect(detectGestionIntent('Agenda una reunión el viernes')).toBe(true);
+    expect(detectGestionIntent('Envía un email a Acme')).toBe(true);
+    expect(detectGestionIntent('Revisa mi bandeja de Outlook')).toBe(true);
+  });
+
+  it('matches catalog keywords (producto, servicio)', () => {
+    expect(detectGestionIntent('Añade un producto al catálogo')).toBe(true);
+  });
+
+  it('rejects banking/fiscal queries', () => {
+    expect(detectGestionIntent('¿Cuál es mi saldo en el banco?')).toBe(false);
+    expect(detectGestionIntent('¿Cuándo presento el 303?')).toBe(false);
+  });
+});
+
 describe('pickSubAgent', () => {
-  it('returns null when write intent is set (writes stay on the orchestrator)', () => {
+  it('returns null when fiscal write intent is set', () => {
     const result = pickSubAgent({
       message: '¿Cómo está el modelo 303?',
       classifierCategories: ['holded'],
@@ -59,14 +107,64 @@ describe('pickSubAgent', () => {
     ).toBe('fiscal');
   });
 
-  it('returns null for non-fiscal reads', () => {
+  it('returns banking for read-intent banking queries', () => {
     expect(
       pickSubAgent({
-        message: '¿Cuánto dinero tengo en el banco?',
+        message: '¿Cuánto saldo tengo en el banco?',
         classifierCategories: ['banking'],
         hasWriteIntent: false,
       })
+    ).toBe('banking');
+  });
+
+  it('returns null when banking query has write intent', () => {
+    expect(
+      pickSubAgent({
+        message: 'Marca este movimiento bancario como conciliado',
+        classifierCategories: ['banking'],
+        hasWriteIntent: true,
+      })
     ).toBeNull();
+  });
+
+  it('returns gestion for CRM read queries', () => {
+    expect(
+      pickSubAgent({
+        message: 'Muéstrame el contacto de Acme SL',
+        classifierCategories: ['holded'],
+        hasWriteIntent: false,
+      })
+    ).toBe('gestion');
+  });
+
+  it('returns gestion EVEN with write intent (the gestion agent handles writes)', () => {
+    expect(
+      pickSubAgent({
+        message: 'Crea una factura al cliente Acme por 500€',
+        classifierCategories: ['holded'],
+        hasWriteIntent: true,
+      })
+    ).toBe('gestion');
+  });
+
+  it('prioritises fiscal over gestion when both match', () => {
+    expect(
+      pickSubAgent({
+        message: '¿El IVA del cliente Acme está pagado?',
+        classifierCategories: ['holded'],
+        hasWriteIntent: false,
+      })
+    ).toBe('fiscal');
+  });
+
+  it('prioritises banking over gestion when both match', () => {
+    expect(
+      pickSubAgent({
+        message: 'Cobros bancarios pendientes del cliente Acme',
+        classifierCategories: ['banking'],
+        hasWriteIntent: false,
+      })
+    ).toBe('banking');
   });
 
   it('returns null for greetings and conceptual chit-chat', () => {
@@ -103,9 +201,24 @@ describe('SubAgent registry', () => {
     expect(fiscal.systemPrompt).toContain('NO INVENTES');
   });
 
-  it('listSubAgents returns at least the fiscal agent', () => {
+  it('listSubAgents returns all three specialists', () => {
     const agents = listSubAgents();
-    expect(agents.length).toBeGreaterThanOrEqual(1);
-    expect(agents.find((a) => a.id === 'fiscal')).toBeTruthy();
+    const ids = agents.map((a) => a.id).sort();
+    expect(ids).toEqual(['banking', 'fiscal', 'gestion']);
+  });
+
+  it('banking agent has banking tools and a lower-temperature default', () => {
+    const banking = getSubAgent('banking');
+    expect(banking.toolCategories).toContain('banking');
+    expect(banking.systemPrompt).toContain('PSD2');
+    expect(banking.systemPrompt).toContain('NO INVENTES');
+    expect(banking.temperature).toBeLessThan(0.5);
+  });
+
+  it('gestion agent has the broadest tool surface', () => {
+    const gestion = getSubAgent('gestion');
+    expect(gestion.toolCategories).toEqual(expect.arrayContaining(['holded', 'google', 'microsoft']));
+    expect(gestion.systemPrompt).toContain('confirma');
+    expect(gestion.maxIterations).toBeGreaterThanOrEqual(8);
   });
 });
