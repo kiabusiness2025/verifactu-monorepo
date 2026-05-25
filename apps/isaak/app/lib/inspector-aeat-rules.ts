@@ -145,7 +145,7 @@ const R004: AeatRule = {
   description: 'Tipos de IVA reconocidos en España: 0%, 4%, 5%, 10%, 21%. Otros valores requieren revisión.',
   appliesTo: scopeFor(['invoice_in', 'invoice_out', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
-    if (ctx.action === 'payroll' || ctx.action === 'tax_payment' || ctx.action === 'journal' || ctx.action === 'profile_check') return NO_APPLY;
+    if (ctx.action === 'payroll' || ctx.action === 'tax_payment' || ctx.action === 'journal' || ctx.action === 'profile_check' || ctx.action === 'audit') return NO_APPLY;
     const rateStr = ctx.data.vatRate;
     if (rateStr === null || rateStr === undefined || rateStr === '') return NO_APPLY;
     const rate = Number.parseFloat(rateStr);
@@ -260,7 +260,7 @@ const R030: AeatRule = {
       ctx.action === 'payroll' ||
       ctx.action === 'tax_payment' ||
       ctx.action === 'journal' ||
-      ctx.action === 'profile_check'
+      ctx.action === 'profile_check' || ctx.action === 'audit'
     )
       return NO_APPLY;
     const data = ctx.data;
@@ -523,7 +523,7 @@ const R050: AeatRule = {
       ctx.action === 'payroll' ||
       ctx.action === 'tax_payment' ||
       ctx.action === 'journal' ||
-      ctx.action === 'profile_check'
+      ctx.action === 'profile_check' || ctx.action === 'audit'
     )
       return NO_APPLY;
     const data = ctx.data;
@@ -1039,7 +1039,7 @@ const R125: AeatRule = {
     'Multas y sanciones (administrativas y penales) y donativos no son gasto deducible en IS ni en estimación directa IRPF.',
   appliesTo: scopeFor(['invoice_in', 'expense', 'journal']),
   check: (ctx: RuleContext): RuleEvaluation => {
-    if (ctx.action === 'tax_payment' || ctx.action === 'payroll' || ctx.action === 'profile_check') return NO_APPLY;
+    if (ctx.action === 'tax_payment' || ctx.action === 'payroll' || ctx.action === 'profile_check' || ctx.action === 'audit') return NO_APPLY;
     if (ctx.action === 'invoice_out') return NO_APPLY;
     const d = ctx.data.description ?? '';
     const markers = ['multa', 'sancion', 'sanción', 'recargo trafico', 'donativo', 'donacion', 'donación', 'penalizacion', 'penalización'];
@@ -1072,7 +1072,7 @@ const R044: AeatRule = {
       ctx.action === 'payroll' ||
       ctx.action === 'tax_payment' ||
       ctx.action === 'journal' ||
-      ctx.action === 'profile_check'
+      ctx.action === 'profile_check' || ctx.action === 'audit'
     )
       return NO_APPLY;
     const data = ctx.data;

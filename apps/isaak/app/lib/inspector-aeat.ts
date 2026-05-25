@@ -115,6 +115,58 @@ export type PendingProfileCheck = {
   reason: 'onboarding' | 'pre_action' | 'admin_review';
 };
 
+// F11 fase 2c — Audit-time context.
+//
+// A "audit" run inspects the tenant's FULL state (period aggregate of
+// the ledger + presented models + balances) rather than a single
+// pending action. Rules like "caja negativa", "modelo 303 esperado pero
+// no presentado", "alquileres con retención no declarados en 115" solo
+// pueden detectarse a este nivel — son cruces y umbrales agregados.
+//
+// El snapshot se construye con `buildAuditSnapshot()` (en
+// inspector-aeat-audit.ts) a partir de la tabla IsaakLedgerEntry; las
+// reglas siguen siendo PURAS (consumen el snapshot, no la DB).
+
+export type PresentedTaxModel = {
+  model: string; // '303' | '130' | '111' | '115' | '347' | '180' | ...
+  period: string; // 'Q1-2026' | 'M03-2026' | 'A-2025'
+  amountDeclared: string; // decimal as string
+  presentedAt?: string | null; // ISO date
+};
+
+export type BankAccountSummary = {
+  account: string; // PGC 572 / IBAN / alias
+  balance: string;
+  lastReconciliationDate: string | null; // 'YYYY-MM-DD' o null si nunca
+};
+
+export type AuditLedgerSnapshot = {
+  // Período auditado
+  periodFrom: string; // 'YYYY-MM-DD'
+  periodTo: string;
+  // Agregados fiscales sobre el periodo
+  vatRepercutidoTotal: string;
+  vatSoportadoTotal: string;
+  retentionsToProfessionals: string; // sum(retención 15/7%) — base para modelo 111
+  retentionsToLandlords: string; // sum(retención 19% alquileres) — modelo 115
+  retentionsToEmployees: string; // sum(retención nóminas) — modelo 111 parte trabajo
+  intracomOperationsCount: number; // disparador 349
+  // Modelos presentados en el período (de fuente externa o input usuario)
+  presentedModels: ReadonlyArray<PresentedTaxModel>;
+  // Saldos contables a fin de periodo
+  cashBalance: string; // cuenta 570 (caja). Negativo = R129
+  partnersBalance: string; // cuenta 551/552 (socios)
+  pendingAccountsBalance: string; // cuenta 555 (partidas pendientes)
+  bankAccounts: ReadonlyArray<BankAccountSummary>;
+  // Calidad contable
+  unaccountedInvoicesInWithVat: number; // facturas recibidas con IVA NO contabilizadas
+};
+
+export type PendingAudit = {
+  scope: 'monthly_close' | 'quarterly_close' | 'annual_close' | 'on_demand';
+  snapshot: AuditLedgerSnapshot;
+};
+
 export type RuleContextBase = {
   now?: Date;
   // Optional taxpayer profile. When present, rules can scope themselves
@@ -132,6 +184,7 @@ export type RuleContext = RuleContextBase &
     | { action: 'tax_payment'; data: PendingTaxPayment }
     | { action: 'journal'; data: PendingJournal }
     | { action: 'profile_check'; data: PendingProfileCheck }
+    | { action: 'audit'; data: PendingAudit }
   );
 
 // Snapshot of the taxpayer profile passed to the engine. The full
