@@ -61,6 +61,8 @@ export type RecordChatMetricInput = {
   fewShotInjected?: number;
   fewShotLatencyMs?: number | null;
   fewShotTopSimilarity?: number | null;
+  // F8: specialist sub-agent
+  subAgent?: string | null;
   errorCode?: string | null;
 };
 
@@ -102,6 +104,7 @@ export async function recordChatMetric(input: RecordChatMetricInput): Promise<vo
       fewShotInjected: input.fewShotInjected ?? 0,
       fewShotLatencyMs: input.fewShotLatencyMs ?? null,
       fewShotTopSimilarity: input.fewShotTopSimilarity ?? null,
+      subAgent: input.subAgent ?? null,
       errorCode: input.errorCode ?? null,
     },
   });

@@ -859,6 +859,15 @@ ORDER BY calls DESC;
 | Fecha | Cambio | Autor |
 |-------|--------|-------|
 | 2026-05-24 | Creación inicial del documento | Ingeniería Isaak |
+| 2026-05-25 | F1 Foundation entregada: memoria multi-turno + clarify-first + métricas baseline + golden harness (30 fixtures) | Ingeniería Isaak |
+| 2026-05-25 | F2 Tool-calling read entregada: 27 tools de lectura via Anthropic tool-use, registry unificado, tool loop helper | Ingeniería Isaak |
+| 2026-05-25 | F3 Multi-provider router entregada: classifier Haiku con tres rutas (clarify_direct/sonnet_no_tools/sonnet_with_tools), tool filtering por categoría | Ingeniería Isaak |
+| 2026-05-25 | F4a Judge model entregada: GPT-4o-mini gate sobre writes (4 tools Holded), allowWrites flag, hasWriteIntent en classifier | Ingeniería Isaak |
+| 2026-05-25 | F4b OCR entregada: GPT-4o vision para facturas, endpoint /api/isaak/ocr/invoice, parser defensivo | Ingeniería Isaak |
+| 2026-05-25 | F5 Streaming SSE entregada (backend only): /api/chat/stream con anthropic-stream parser, tool indicators, firstTokenMs | Ingeniería Isaak |
+| 2026-05-25 | F6a+b Long-term memory entregada: pgvector + tabla IsaakLongTermMemory + RAG retrieval inyectado en chat con aislamiento estricto por tenant | Ingeniería Isaak |
+| 2026-05-25 | F7 Feedback loop entregada: 👍 embebido, retrieve por similarity, few-shot block en system prompt | Ingeniería Isaak |
+| 2026-05-25 | F8a Sub-agents entregada: agente fiscal con system prompt especializado + tools restringidas + routing por keywords. Banking/gestion en F8b/F8c | Ingeniería Isaak |
 
 ---
 

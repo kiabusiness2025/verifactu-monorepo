@@ -1,0 +1,12 @@
+{
+  "id": "subagent-fiscal-retencion-02",
+  "category": "tool-use",
+  "description": "Pregunta de retenciones: el agente fiscal cita el modelo 111 y el plazo",
+  "query": "Soy autónomo y tengo trabajadores. ¿Qué modelo de retenciones presento cada trimestre?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["111"],
+    "minJudgeScore": 6
+  }
+}

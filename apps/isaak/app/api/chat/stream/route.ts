@@ -37,6 +37,11 @@ import {
 import { streamIsaakChat, type ChatStreamMetrics } from '@/app/lib/isaak-chat-stream';
 import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
 import { retrieveFewShotForChat } from '@/app/lib/isaak-few-shot';
+import {
+  getSubAgent,
+  pickSubAgent,
+  type SubAgentId,
+} from '@/app/lib/isaak-sub-agents';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -213,6 +218,7 @@ export async function POST(req: NextRequest) {
       fewShotInjected: fewShotResult.injected,
       fewShotLatencyMs: fewShotResult.latencyMs,
       fewShotTopSimilarity: fewShotResult.topSimilarity,
+      subAgent: subAgentId,
     }).catch((err) => {
       console.error('[Isaak Chat Stream] recordChatMetric failed', err);
     });
@@ -239,6 +245,13 @@ export async function POST(req: NextRequest) {
     });
   }
 
+  // F8: optionally route to a sub-agent for fiscal queries.
+  const subAgentId: SubAgentId | null = pickSubAgent({
+    message,
+    classifierCategories: classification.relevantCategories,
+    hasWriteIntent: classification.hasWriteIntent,
+  });
+
   // Decide tools
   let tools: ReturnType<typeof buildReadOnlyToolsForContext> = [];
   let routedTo: 'sonnet_no_tools' | 'sonnet_with_tools' = 'sonnet_no_tools';
@@ -246,8 +259,11 @@ export async function POST(req: NextRequest) {
 
   if (classification.needsTools && classification.relevantCategories.length > 0) {
     allowWrites = classification.hasWriteIntent;
+    const onlyCategories = subAgentId
+      ? getSubAgent(subAgentId).toolCategories
+      : classification.relevantCategories;
     const filtered = buildReadOnlyToolsForContext(authenticated.toolContext, {
-      only: classification.relevantCategories,
+      only: onlyCategories,
       allowWrites,
     });
     if (filtered.length > 0) {
@@ -256,18 +272,26 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const systemPrompt = subAgentId
+    ? `${getSubAgent(subAgentId).systemPrompt}${
+        ragResult.factsBlock ? `\n\n${ragResult.factsBlock.trim()}` : ''
+      }${
+        fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''
+      }`
+    : buildAuthenticatedSystemPrompt(authenticated.promptContext, {
+        factsBlock: ragResult.factsBlock,
+        fewShotBlock: fewShotResult.examplesBlock,
+      });
+
   const { stream, metricsPromise } = streamIsaakChat({
-    systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext, {
-      factsBlock: ragResult.factsBlock,
-      fewShotBlock: fewShotResult.examplesBlock,
-    }),
+    systemPrompt,
     history,
     userMessage: message,
     tools,
     context: authenticated.toolContext,
     model: modelConfig.model,
     allowWrites,
-    maxTokens: 1500,
+    maxTokens: subAgentId ? getSubAgent(subAgentId).maxOutputTokens : 1500,
   });
 
   // Fire-and-forget metrics + persistence after the stream finishes.

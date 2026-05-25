@@ -1972,6 +1972,9 @@ model IsaakChatMetric {
   fewShotLatencyMs     Int?   @map("few_shot_latency_ms")
   fewShotTopSimilarity Float? @map("few_shot_top_similarity")
 
+  // F8: which specialist sub-agent handled the message (null = orchestrator)
+  subAgent String? @map("sub_agent")
+
   errorCode String?  @map("error_code")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
