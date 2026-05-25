@@ -96,7 +96,10 @@ const REGISTRY: Record<SubAgentId, SubAgent> = {
     label: 'Agente fiscal',
     description: 'Especialista en IVA, IRPF, modelos AEAT y obligaciones fiscales.',
     systemPrompt: ISAAK_FISCAL_AGENT_PROMPT,
-    toolCategories: ['holded'],
+    // F9: 'ledger' grants access to the Isaak Ledger tools (create entry,
+    // import Holded). Fiscal sub-agent needs to register adjustments,
+    // tax payments, etc. into the ledger.
+    toolCategories: ['holded', 'ledger'],
     maxIterations: 8,
     maxOutputTokens: 1500,
     temperature: 0.3,
@@ -116,7 +119,9 @@ const REGISTRY: Record<SubAgentId, SubAgent> = {
     label: 'Agente de gestión',
     description: 'Especialista en operativa diaria: facturación, contactos, productos, calendario, email.',
     systemPrompt: ISAAK_GESTION_AGENT_PROMPT,
-    toolCategories: ['holded', 'google', 'microsoft'],
+    // F9: includes 'ledger' so gestion can trigger the Holded importer
+    // when onboarding a tenant or syncing manually.
+    toolCategories: ['holded', 'google', 'microsoft', 'ledger'],
     maxIterations: 10, // gestion can chain more tools (find contact → create invoice → send PDF)
     maxOutputTokens: 1400,
     temperature: 0.45,

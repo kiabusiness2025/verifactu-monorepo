@@ -19,6 +19,12 @@ import {
   executeMicrosoftTool,
   isMicrosoftToolName,
 } from './microsoft-tools';
+import {
+  LEDGER_CHAT_TOOLS,
+  executeLedgerTool,
+  isLedgerToolName,
+  type LedgerToolName,
+} from './isaak-ledger-tools';
 
 // F4: write actions allowed when allowWrites=true. Every write call goes
 // through the GPT-4o-mini judge before execution. The judge can allow,
@@ -29,6 +35,9 @@ const WRITE_TOOL_NAMES = new Set<string>([
   'holded_register_payment',
   'holded_create_contact',
   'holded_send_document',
+  // Isaak Ledger write (F9)
+  'isaak_ledger_create_entry',
+  'isaak_ledger_import_holded',
   // Google write (NOT enabled in F4 v1 — kept for visibility / future)
   // 'google_calendar_create_event', 'google_calendar_update_event',
   // 'google_calendar_delete_event', 'google_gmail_archive',
@@ -97,7 +106,7 @@ export type IsaakToolContext = {
   microsoftConnected: boolean;
 };
 
-export type ToolCategoryFilter = 'holded' | 'banking' | 'google' | 'microsoft';
+export type ToolCategoryFilter = 'holded' | 'banking' | 'google' | 'microsoft' | 'ledger';
 
 export function buildReadOnlyToolsForContext(
   ctx: IsaakToolContext,
@@ -127,6 +136,14 @@ export function buildReadOnlyToolsForContext(
   }
   if (include('microsoft') && ctx.microsoftConnected) {
     for (const t of MICROSOFT_CHAT_TOOLS) {
+      if (isAllowed(t.name)) out.push(toAITool(t));
+    }
+  }
+  // F9: Ledger tools are gated only by tenant auth (always available
+  // when the chat session is authenticated). isaak_ledger_import_holded
+  // surfaces a clean "holded_not_connected" error at runtime if no key.
+  if (include('ledger')) {
+    for (const t of LEDGER_CHAT_TOOLS) {
       if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
@@ -170,7 +187,17 @@ export async function executeIsaakTool(
 
   try {
     let result: unknown;
-    if (isBankingToolName(name)) {
+    if (isLedgerToolName(name)) {
+      result = await executeLedgerTool(
+        {
+          tenantId: ctx.tenantId,
+          userId: ctx.userId,
+          holdedApiKey: ctx.holdedApiKey ?? null,
+        },
+        name as LedgerToolName,
+        toolUse.input
+      );
+    } else if (isBankingToolName(name)) {
       result = await executeBankingTool(ctx.tenantId, name, toolUse.input);
     } else if (isGoogleToolName(name)) {
       result = await executeGoogleTool(ctx.tenantId, ctx.userId, name, toolUse.input);

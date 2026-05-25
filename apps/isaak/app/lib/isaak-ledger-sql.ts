@@ -165,6 +165,16 @@ export const SELECT_LATEST_ENTRY_SQL = `
   LIMIT 1
 `.trim();
 
+// Idempotency probe for the Holded importer. Returns one row if a ledger
+// entry already exists for this (tenant_id, holded_id) pair, zero rows
+// otherwise. tenant_id stays the first filter.
+export const EXISTS_BY_HOLDED_ID_SQL = `
+  SELECT 1
+  FROM isaak_ledger_entries
+  WHERE tenant_id = $1::uuid AND holded_id = $2
+  LIMIT 1
+`.trim();
+
 export const INSERT_ENTRY_SQL = `
   INSERT INTO isaak_ledger_entries (
     tenant_id, entry_date, doc_number, doc_type,

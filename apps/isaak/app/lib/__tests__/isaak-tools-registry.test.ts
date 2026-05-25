@@ -178,12 +178,55 @@ describe('buildReadOnlyToolsForContext', () => {
         microsoftConnected: true,
       })
     );
-    // 13 Holded + 6 banking + 4 google + 4 microsoft = 27
+    // 13 Holded + 6 banking + 4 google + 4 microsoft = 27 (ledger tools
+    // are all writes → not included when allowWrites=false default)
     expect(tools.length).toBe(27);
     // each tool exposes the Anthropic-compatible shape
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
       expect(typeof t.input_schema).toBe('object');
     }
+  });
+
+  describe('ledger (F9)', () => {
+    it('isWriteToolName flags ledger writes', () => {
+      expect(isWriteToolName('isaak_ledger_create_entry')).toBe(true);
+      expect(isWriteToolName('isaak_ledger_import_holded')).toBe(true);
+    });
+
+    it('does NOT include ledger tools without allowWrites (they are all writes)', () => {
+      const tools = buildReadOnlyToolsForContext(ctx(), { only: ['ledger'] });
+      expect(tools).toEqual([]);
+    });
+
+    it('includes ledger tools when allowWrites=true and only=["ledger"]', () => {
+      const tools = buildReadOnlyToolsForContext(ctx(), {
+        only: ['ledger'],
+        allowWrites: true,
+      });
+      const names = tools.map((t) => t.name).sort();
+      expect(names).toEqual(['isaak_ledger_create_entry', 'isaak_ledger_import_holded']);
+    });
+
+    it('ledger tools do not require any connection flag (gated only by auth)', () => {
+      // No flags set; ledger is internal infrastructure, always available.
+      const tools = buildReadOnlyToolsForContext(ctx(), {
+        only: ['ledger'],
+        allowWrites: true,
+      });
+      expect(tools.length).toBe(2);
+    });
+
+    it('combining ledger + holded gates work independently', () => {
+      const tools = buildReadOnlyToolsForContext(
+        ctx({ holdedConnected: true, holdedApiKey: 'sk' }),
+        { only: ['ledger', 'holded'], allowWrites: true }
+      );
+      const names = tools.map((t) => t.name);
+      expect(names).toContain('isaak_ledger_create_entry');
+      expect(names).toContain('isaak_ledger_import_holded');
+      expect(names).toContain('holded_create_invoice');
+      expect(names).toContain('holded_list_documents');
+    });
   });
 });
