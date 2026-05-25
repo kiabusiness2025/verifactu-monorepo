@@ -1976,6 +1976,11 @@ model IsaakChatMetric {
   // F8: which specialist sub-agent handled the message (null = orchestrator)
   subAgent String? @map("sub_agent")
 
+  // F11: Inspector AEAT preventivo (Capa 1, hardcoded rules)
+  inspectorRuns     Int @default(0) @map("inspector_runs")
+  inspectorBlocks   Int @default(0) @map("inspector_blocks")
+  inspectorWarnings Int @default(0) @map("inspector_warnings")
+
   errorCode String?  @map("error_code")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 

@@ -219,6 +219,9 @@ export async function POST(req: NextRequest) {
       fewShotLatencyMs: fewShotResult.latencyMs,
       fewShotTopSimilarity: fewShotResult.topSimilarity,
       subAgent: subAgentId,
+      inspectorRuns: input.metrics?.inspectorRuns ?? 0,
+      inspectorBlocks: input.metrics?.inspectorBlocks ?? 0,
+      inspectorWarnings: input.metrics?.inspectorWarnings ?? 0,
     }).catch((err) => {
       console.error('[Isaak Chat Stream] recordChatMetric failed', err);
     });

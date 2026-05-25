@@ -414,6 +414,9 @@ export async function POST(request: NextRequest) {
     let judgeInvocations = 0;
     let judgeBlocks = 0;
     let judgeLatencyMs: number | null = null;
+    let inspectorRuns = 0;
+    let inspectorBlocks = 0;
+    let inspectorWarnings = 0;
     let iterations = 0;
     let routedTo: 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback' =
       'fallback';
@@ -561,6 +564,9 @@ export async function POST(request: NextRequest) {
           judgeInvocations = loop.judgeInvocations;
           judgeBlocks = loop.judgeBlocks;
           judgeLatencyMs = loop.judgeTotalLatencyMs || null;
+          inspectorRuns = loop.inspectorRuns;
+          inspectorBlocks = loop.inspectorBlocks;
+          inspectorWarnings = loop.inspectorWarnings;
           iterations = loop.iterations;
           routedTo = 'sonnet_with_tools';
         }
@@ -652,6 +658,9 @@ export async function POST(request: NextRequest) {
         fewShotLatencyMs,
         fewShotTopSimilarity,
         subAgent,
+        inspectorRuns,
+        inspectorBlocks,
+        inspectorWarnings,
       }).catch((err) => {
         console.error('[Isaak Chat] recordChatMetric failed', err);
       });
