@@ -1,29 +1,27 @@
-// F11 Inspector AEAT — Capa 1 starter ruleset.
+// F11 Inspector AEAT — Capa 1 starter ruleset (con scoping de fase 2).
 //
-// Reglas codificadas desde BOE/LIVA/LIRPF/Reglamento Facturación. Son
-// reglas "de manual" — cubren errores típicos detectables con los
-// datos básicos de un asiento (importe, descripción, fecha, método de
-// pago). Las reglas "de trinchera" (las que solo se aprenden llevando
-// gestoría real) se añadirán encima en sucesivas iteraciones.
-//
-// Cada regla incluye:
-//   * id estable (R001..)
-//   * cita normativa (artículo + ley)
-//   * severity razonada (error sólo si la conducta está claramente
-//     prohibida o la presunción legal no admite prueba en contrario)
-//   * suggestedAction concreto cuando aporta valor
+// Reglas codificadas desde BOE/LIVA/LIRPF/Reglamento Facturación y
+// alineadas con el nuevo schema HaciendaRule:
+//   * appliesTo con dimensiones (action / taxpayerType / regime /
+//     territory / sector) — cuando una regla no restringe una
+//     dimensión, aplica universalmente
+//   * legalBasis array (law + article + url) en vez de citation plana
+//   * recommendation + evidenceRequired para que el LLM pueda dar
+//     pasos concretos al usuario
 //
 // Política de severidades:
-//   * error  → bloquea la operación (e.g. efectivo >1000€ Ley 7/2012)
-//   * warning → permite tras confirmación + aviso (e.g. atenciones
-//     a clientes — la regla general es no deducible pero hay
-//     excepciones que el contribuyente puede invocar)
-//   * info → educa, no bloquea (e.g. recordatorio plazo modelo 303)
+//   * error  → bloquea la operación (incumplimiento objetivo sin
+//     prueba en contrario)
+//   * warning → permite tras confirmación + aviso (presunción legal
+//     o caso típico que el usuario puede justificar)
+//   * info → educa, no bloquea
 
 import type {
   AeatRule,
+  LegalBasis,
   RuleContext,
   RuleEvaluation,
+  RuleScope,
 } from './inspector-aeat';
 import {
   decimalGT,
@@ -33,15 +31,33 @@ import {
 
 const NO_APPLY: RuleEvaluation = { applies: false };
 
+// Helper: scope universal por defecto. Reglas que aplican a todo
+// régimen / territorio / tipo de contribuyente solo declaran actions.
+function scopeFor(actions: RuleScope['actions']): RuleScope {
+  return { actions };
+}
+
+// URLs BOE canónicas usadas en las citas — centralizadas para que un
+// cambio del BOE no requiera tocar 30 reglas. Aliases via consts.
+const URL_LIVA = 'https://www.boe.es/buscar/act.php?id=BOE-A-1992-28740';
+const URL_LIRPF = 'https://www.boe.es/buscar/act.php?id=BOE-A-2006-20764';
+const URL_RD_FACT = 'https://www.boe.es/buscar/act.php?id=BOE-A-2012-14696';
+const URL_LEY_7_2012 = 'https://www.boe.es/buscar/act.php?id=BOE-A-2012-13416';
+const URL_RD_VERIFACTU = 'https://www.boe.es/buscar/act.php?id=BOE-A-2023-24840';
+const URL_RDL_15_2025 = 'https://www.boe.es/buscar/act.php?id=BOE-A-2025-15052';
+const URL_LIS = 'https://www.boe.es/buscar/act.php?id=BOE-A-2014-12328';
+const URL_LGT = 'https://www.boe.es/buscar/act.php?id=BOE-A-2003-23186';
+const URL_RGAT = 'https://www.boe.es/buscar/act.php?id=BOE-A-2007-15984';
+
 // ─── IVA deducibilidad ───────────────────────────────────────────────────
 
-// R001 Atenciones a clientes / hostelería NO deducibles (Art. 96.1.5 LIVA)
+// R001 Atenciones a clientes / hostelería NO deducibles (Art. 96 LIVA)
 const R001: AeatRule = {
   id: 'R001',
   category: 'iva_deducibilidad',
   description:
     'IVA de servicios de hostelería destinados a atenciones a clientes, asalariados o terceros: NO deducible.',
-  appliesTo: ['invoice_in', 'expense'],
+  appliesTo: scopeFor(['invoice_in', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
     const d = ctx.data.description ?? '';
@@ -55,10 +71,15 @@ const R001: AeatRule = {
       applies: true,
       severity: 'warning',
       message:
-        'El IVA de servicios de hostelería destinados a atenciones a clientes, asalariados o terceros NO es deducible. Excepción: hostelería como parte directa de la actividad económica del contribuyente (p. ej. comercial en visita justificada). Si no encaja en la excepción, regístralo como gasto sin IVA deducible.',
-      citation: 'Art. 96.Uno.5º LIVA',
+        'El IVA de servicios de hostelería destinados a atenciones a clientes, asalariados o terceros NO es deducible. Excepción: hostelería como parte directa de la actividad económica del contribuyente (p. ej. comercial en visita justificada).',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 96.Uno.5º', url: URL_LIVA },
+      ],
+      recommendation:
+        'Si no encaja en la excepción, regístralo como gasto sin IVA deducible. Si encaja, conserva justificación (visita comercial documentada, agenda con cliente, etc.).',
+      evidenceRequired: ['factura', 'visita comercial documentada'],
       suggestedAction:
-        '¿Esta comida está vinculada directamente al ejercicio de tu actividad (no es atención a cliente)? Si no estás seguro, regístralo sin deducir el IVA.',
+        '¿Esta comida está vinculada directamente al ejercicio de tu actividad?',
     };
   },
 };
@@ -68,24 +89,24 @@ const R002: AeatRule = {
   id: 'R002',
   category: 'iva_deducibilidad',
   description:
-    'IVA de gasolina/gasoil/diésel de vehículo turismo: presunción de afectación 50%. Solo deducible al 100% si se acredita afectación exclusiva al negocio.',
-  appliesTo: ['invoice_in', 'expense'],
+    'IVA de gasolina/gasoil/diésel de vehículo turismo: presunción de afectación 50%.',
+  appliesTo: scopeFor(['invoice_in', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
     const d = ctx.data.description ?? '';
     const triggers = ['gasolina', 'gasoil', 'gasoleo', 'gasóleo', 'diesel', 'diésel', 'combustible', 'repostaje'];
     if (!descriptionContainsAny(d, triggers)) return NO_APPLY;
-    // Si descripción menciona furgoneta/camión/industrial, no aplica la limitación.
     const exceptions = ['furgoneta', 'camion', 'camión', 'industrial', 'mixto adaptable', 'vehiculo industrial', 'vehículo industrial'];
     if (descriptionContainsAny(d, exceptions)) return NO_APPLY;
     return {
       applies: true,
       severity: 'warning',
       message:
-        'Combustible de vehículo turismo: la ley presume afectación del 50%, por lo que solo es deducible el 50% del IVA salvo que se acredite afectación exclusiva al negocio (vehículo comercial, taxi, autoescuela, alquiler, transporte de personas/mercancías).',
-      citation: 'Art. 95.Tres.2ª LIVA',
-      suggestedAction:
+        'Combustible de vehículo turismo: la ley presume afectación del 50%, por lo que solo es deducible el 50% del IVA salvo que se acredite afectación exclusiva al negocio.',
+      legalBasis: [{ law: 'LIVA', article: 'Art. 95.Tres.2ª', url: URL_LIVA }],
+      recommendation:
         '¿Es un vehículo turismo de uso mixto? Regístralo con IVA deducible al 50%. Si tienes prueba de afectación exclusiva, mantén el 100% y documenta la justificación.',
+      evidenceRequired: ['factura combustible', 'libro de viajes si aplica'],
     };
   },
 };
@@ -95,11 +116,10 @@ const R003: AeatRule = {
   id: 'R003',
   category: 'iva_deducibilidad',
   description: 'Adquisición de vehículo turismo: presunción de afectación 50% salvo prueba en contrario.',
-  appliesTo: ['invoice_in', 'expense'],
+  appliesTo: scopeFor(['invoice_in', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
     const d = ctx.data.description ?? '';
-    // Solo dispara si la descripción sugiere compra del vehículo (no combustible).
     const vehicleTriggers = ['turismo', 'automovil', 'automóvil', 'coche', 'vehiculo turismo', 'vehículo turismo'];
     const purchaseTriggers = ['compra', 'adquisicion', 'adquisición', 'leasing', 'renting', 'matriculacion', 'matriculación'];
     const fuelExclusion = ['gasolina', 'gasoil', 'combustible', 'repostaje'];
@@ -110,30 +130,35 @@ const R003: AeatRule = {
       applies: true,
       severity: 'warning',
       message:
-        'Adquisición de vehículo turismo: presunción legal de afectación al negocio del 50%. Solo cabe deducir el 100% del IVA si se acredita afectación exclusiva al negocio (taxi, autoescuela, alquiler, vehículos comerciales, transporte de mercancías/personas, agentes comerciales).',
-      citation: 'Art. 95.Tres LIVA',
+        'Adquisición de vehículo turismo: presunción legal de afectación al negocio del 50%. Solo cabe deducir el 100% del IVA si se acredita afectación exclusiva al negocio (taxi, autoescuela, alquiler, vehículos comerciales, agentes comerciales).',
+      legalBasis: [{ law: 'LIVA', article: 'Art. 95.Tres', url: URL_LIVA }],
+      recommendation:
+        'Documenta el uso del vehículo si pretendes deducir más del 50%. Conserva libro de viajes, kilometraje y justificación de actividad.',
     };
   },
 };
 
-// R004 Tipo de IVA fuera de los oficiales (0/4/10/21) — aviso
+// R004 Tipo de IVA fuera de los oficiales (0/4/5/10/21) — aviso
 const R004: AeatRule = {
   id: 'R004',
-  category: 'iva_deducibilidad',
-  description: 'Tipos de IVA reconocidos en España: 0%, 4%, 10%, 21%. Otros valores requieren revisión.',
-  appliesTo: ['invoice_in', 'invoice_out', 'expense'],
+  category: 'iva_repercutido',
+  description: 'Tipos de IVA reconocidos en España: 0%, 4%, 5%, 10%, 21%. Otros valores requieren revisión.',
+  appliesTo: scopeFor(['invoice_in', 'invoice_out', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
-    if (ctx.action === 'payroll' || ctx.action === 'tax_payment' || ctx.action === 'journal') return NO_APPLY;
+    if (ctx.action === 'payroll' || ctx.action === 'tax_payment' || ctx.action === 'journal' || ctx.action === 'profile_check') return NO_APPLY;
     const rateStr = ctx.data.vatRate;
     if (rateStr === null || rateStr === undefined || rateStr === '') return NO_APPLY;
     const rate = Number.parseFloat(rateStr);
-    const valid = [0, 4, 5, 10, 21]; // 5% se aplicó temporalmente en alimentos (2023-2024); marca info no error.
+    const valid = [0, 4, 5, 10, 21];
     if (valid.includes(rate)) return NO_APPLY;
     return {
       applies: true,
       severity: 'warning',
-      message: `El tipo de IVA "${rateStr}%" no coincide con los tipos generales españoles (0/4/10/21). Revisa la factura: puede ser un error de captura o un caso especial (intracomunitario, inversión sujeto pasivo, régimen especial).`,
-      citation: 'Art. 90 y 91 LIVA',
+      message: `El tipo de IVA "${rateStr}%" no coincide con los tipos generales españoles (0/4/5/10/21). Revisa: puede ser un error de captura o un caso especial (intracomunitario, ISP, IGIC si Canarias).`,
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 90', url: URL_LIVA },
+        { law: 'LIVA', article: 'Art. 91', url: URL_LIVA },
+      ],
     };
   },
 };
@@ -145,8 +170,8 @@ const R010: AeatRule = {
   id: 'R010',
   category: 'irpf_retenciones',
   description:
-    'Honorarios pagados a profesional persona física en estimación directa: retención obligatoria 15% (7% primeros 3 años).',
-  appliesTo: ['invoice_in', 'expense'],
+    'Honorarios pagados a profesional persona física: retención obligatoria 15% (7% primeros 3 años).',
+  appliesTo: scopeFor(['invoice_in', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
     const d = ctx.data.description ?? '';
@@ -161,10 +186,14 @@ const R010: AeatRule = {
       applies: true,
       severity: 'warning',
       message:
-        'Pago a profesional persona física: requiere retención IRPF del 15% (7% en los 3 primeros años de actividad del profesional). La retención la practica el pagador y se ingresa con el modelo 111 trimestral + resumen anual 190.',
-      citation: 'Art. 95 y 101 Reglamento IRPF (RD 439/2007)',
-      suggestedAction:
-        'Verifica que la factura del profesional incluye la retención y que se va a incluir en el próximo modelo 111. Si la factura no la trae, debes retener y comunicarlo al profesional.',
+        'Pago a profesional persona física: requiere retención IRPF del 15% (7% en los 3 primeros años de actividad). La retención la practica el pagador y se ingresa con el modelo 111 trimestral + resumen anual 190.',
+      legalBasis: [
+        { law: 'Reglamento IRPF (RD 439/2007)', article: 'Art. 95.1.a' },
+        { law: 'Reglamento IRPF', article: 'Art. 101.5' },
+      ],
+      recommendation:
+        'Verifica que la factura del profesional incluye la retención y se va a incluir en el próximo modelo 111. Si la factura no la trae, debes retener y comunicarlo al profesional.',
+      evidenceRequired: ['factura con retención visible', 'modelo 111'],
     };
   },
 };
@@ -175,7 +204,7 @@ const R011: AeatRule = {
   category: 'irpf_retenciones',
   description:
     'Alquiler de local de negocio a persona física: retención IRPF 19% (modelo 115).',
-  appliesTo: ['invoice_in', 'expense'],
+  appliesTo: scopeFor(['invoice_in', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_in' && ctx.action !== 'expense') return NO_APPLY;
     const d = ctx.data.description ?? '';
@@ -185,10 +214,14 @@ const R011: AeatRule = {
       applies: true,
       severity: 'warning',
       message:
-        'Alquiler de inmueble urbano destinado a actividad económica: si el arrendador es persona física, debe practicarse retención del 19% e ingresarla con el modelo 115 trimestral (resumen anual 180).',
-      citation: 'Art. 100.2 Reglamento IRPF',
-      suggestedAction:
-        '¿El arrendador es persona física? Si sí, retén el 19% del alquiler base. Excepciones: alquiler de vivienda y rendimientos derivados de sociedades.',
+        'Alquiler de inmueble urbano destinado a actividad económica: si el arrendador es persona física, debe practicarse retención del 19% e ingresarla con el modelo 115 trimestral (resumen anual 180). Excepciones: alquiler de vivienda y rendimientos de sociedades.',
+      legalBasis: [
+        { law: 'Reglamento IRPF', article: 'Art. 100.2' },
+        { law: 'Reglamento IRPF', article: 'Art. 75.3' },
+      ],
+      recommendation:
+        '¿El arrendador es persona física? Retén el 19% sobre la renta neta y declara en 115.',
+      evidenceRequired: ['contrato de arrendamiento', 'modelo 115'],
     };
   },
 };
@@ -198,7 +231,7 @@ const R012: AeatRule = {
   id: 'R012',
   category: 'irpf_retenciones',
   description: 'Reparto de dividendos: retención obligatoria 19%.',
-  appliesTo: ['journal', 'expense'],
+  appliesTo: scopeFor(['journal', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'journal' && ctx.action !== 'expense') return NO_APPLY;
     const d = (ctx.action === 'journal' ? ctx.data.description : ctx.data.description) ?? '';
@@ -208,22 +241,28 @@ const R012: AeatRule = {
       severity: 'warning',
       message:
         'Reparto de dividendos: el pagador debe practicar retención del 19% e ingresarla con el modelo 123 (resumen anual 193).',
-      citation: 'Art. 76 Reglamento IRPF',
+      legalBasis: [{ law: 'Reglamento IRPF', article: 'Art. 76' }],
     };
   },
 };
 
 // ─── Facturación electrónica / efectivo ──────────────────────────────────
 
-// R030 Pago en efectivo entre empresarios >1000€ prohibido (Ley 7/2012)
+// R030 Pago en efectivo entre empresarios >=1000€ prohibido
 const R030: AeatRule = {
   id: 'R030',
-  category: 'facturacion_electronica',
+  category: 'tesoreria',
   description:
     'Pago en efectivo de operaciones entre empresarios/profesionales: prohibido si igual o superior a 1.000€.',
-  appliesTo: ['invoice_in', 'invoice_out', 'expense'],
+  appliesTo: scopeFor(['invoice_in', 'invoice_out', 'expense']),
   check: (ctx: RuleContext): RuleEvaluation => {
-    if (ctx.action === 'payroll' || ctx.action === 'tax_payment' || ctx.action === 'journal') return NO_APPLY;
+    if (
+      ctx.action === 'payroll' ||
+      ctx.action === 'tax_payment' ||
+      ctx.action === 'journal' ||
+      ctx.action === 'profile_check'
+    )
+      return NO_APPLY;
     const data = ctx.data;
     if (data.paymentMethod !== 'cash') return NO_APPLY;
     if (!decimalGTE(data.amount, '1000')) return NO_APPLY;
@@ -231,10 +270,10 @@ const R030: AeatRule = {
       applies: true,
       severity: 'error',
       message:
-        'Pago en efectivo de 1.000€ o más entre empresarios/profesionales: prohibido por la Ley 7/2012 (umbral antes era 2.500€ y se redujo a 1.000€ con la Ley 11/2021). Sanción: multa del 25% del importe. Cambia el método de pago a transferencia, tarjeta u otro medio bancario.',
-      citation: 'Art. 7 Ley 7/2012 (modificado por Ley 11/2021)',
-      suggestedAction:
-        'Registra el pago como transferencia/tarjeta y conserva justificante bancario.',
+        'Pago en efectivo de 1.000€ o más entre empresarios/profesionales: prohibido por la Ley 7/2012 (umbral reducido desde 2.500€ por la Ley 11/2021). Sanción: multa del 25% del importe.',
+      legalBasis: [{ law: 'Ley 7/2012', article: 'Art. 7.Uno', url: URL_LEY_7_2012 }],
+      recommendation: 'Cambia el método de pago a transferencia, tarjeta u otro medio bancario.',
+      evidenceRequired: ['justificante bancario'],
     };
   },
 };
@@ -244,8 +283,8 @@ const R031: AeatRule = {
   id: 'R031',
   category: 'facturacion_electronica',
   description:
-    'Factura simplificada: importe máximo 400€ (3.000€ en sectores autorizados). Por encima, factura ordinaria.',
-  appliesTo: ['invoice_out'],
+    'Factura simplificada: importe máximo 400€ (3.000€ en sectores autorizados).',
+  appliesTo: scopeFor(['invoice_out']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_out') return NO_APPLY;
     const data = ctx.data;
@@ -255,39 +294,37 @@ const R031: AeatRule = {
       applies: true,
       severity: 'warning',
       message:
-        'Factura simplificada por importe superior a 400€: solo permitida en sectores específicos (hostelería, transporte de personas, peluquerías, aparcamientos, autopistas...) y hasta 3.000€ IVA incluido. Si no encaja en esos sectores debe emitirse factura ordinaria.',
-      citation: 'Art. 4 RD 1619/2012 (Reglamento de Facturación)',
-      suggestedAction:
+        'Factura simplificada por importe superior a 400€: solo permitida en sectores específicos (hostelería, transporte de personas, peluquerías, aparcamientos, autopistas) y hasta 3.000€ IVA incluido.',
+      legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 4', url: URL_RD_FACT }],
+      recommendation:
         'Verifica si tu actividad está en la lista del Art. 4. Si no, emite factura ordinaria con todos los datos del destinatario.',
     };
   },
 };
 
-// R032 Plazo de emisión de facturas — info al emitir con fecha pasada
+// R032 Plazo de emisión de facturas — info al emitir
 const R032: AeatRule = {
   id: 'R032',
   category: 'facturacion_electronica',
   description:
-    'Plazo emisión factura ordinaria: antes del día 16 del mes siguiente al devengo del IVA (a empresarios). A particulares: al hacer la operación.',
-  appliesTo: ['invoice_out'],
+    'Plazo emisión factura ordinaria: antes del día 16 del mes siguiente al devengo del IVA (a empresarios).',
+  appliesTo: scopeFor(['invoice_out']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_out') return NO_APPLY;
     return {
       applies: true,
       severity: 'info',
       message:
-        'Recuerda: si emites a otro empresario/profesional, la factura debe expedirse antes del día 16 del mes siguiente al devengo del IVA (la operación). Si emites a particular, en el momento.',
-      citation: 'Art. 11 RD 1619/2012',
+        'Recuerda: si emites a otro empresario/profesional, la factura debe expedirse antes del día 16 del mes siguiente al devengo del IVA. Si emites a particular, en el momento.',
+      legalBasis: [{ law: 'RD 1619/2012', article: 'Art. 11', url: URL_RD_FACT }],
     };
   },
 };
 
-// ─── Plazos de presentación (info contextual) ────────────────────────────
+// ─── Plazos de presentación (R020) ───────────────────────────────────────
 
 function daysUntilModelDeadline(model: string, period: string, now: Date): number | null {
-  // Modelo 303 / 130 / 111 / 115 trimestrales: día 20 del mes siguiente
-  // al trimestre. Excepción: T4 130 → día 30 enero.
-  const quarterly = ['303', '130', '111', '115'];
+  const quarterly = ['303', '130', '111', '115', '202'];
   if (quarterly.includes(model)) {
     const m = period.match(/^Q([1-4])-(\d{4})$/);
     if (!m) return null;
@@ -295,9 +332,9 @@ function daysUntilModelDeadline(model: string, period: string, now: Date): numbe
     const year = Number.parseInt(m[2]!, 10);
     let deadline: Date;
     if (model === '130' && q === 4) {
-      deadline = new Date(Date.UTC(year + 1, 0, 30)); // 30 enero
+      deadline = new Date(Date.UTC(year + 1, 0, 30));
     } else {
-      const nextMonth = q === 4 ? 0 : q * 3; // Q1->mes 3 (abril), Q2->6, Q3->9, Q4->12 (enero año sig.)
+      const nextMonth = q === 4 ? 0 : q * 3;
       const dlYear = q === 4 ? year + 1 : year;
       deadline = new Date(Date.UTC(dlYear, nextMonth, 20));
     }
@@ -307,13 +344,12 @@ function daysUntilModelDeadline(model: string, period: string, now: Date): numbe
   return null;
 }
 
-// R020 Plazo modelo trimestral próximo
 const R020: AeatRule = {
   id: 'R020',
   category: 'plazos_presentacion',
   description:
     'Aviso cuando faltan ≤7 días para la fecha límite de un modelo trimestral.',
-  appliesTo: ['tax_payment'],
+  appliesTo: scopeFor(['tax_payment']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'tax_payment') return NO_APPLY;
     const now = ctx.now ?? new Date();
@@ -323,9 +359,9 @@ const R020: AeatRule = {
       return {
         applies: true,
         severity: 'error',
-        message: `El plazo de presentación del modelo ${ctx.data.model} (${ctx.data.period}) ya ha vencido (hace ${-days} días). Si presentas fuera de plazo se aplican recargos: <3 meses 5%, 3-6m 10%, 6-12m 15%, >12m 20% + intereses.`,
-        citation: 'Art. 27 Ley 58/2003 (LGT) — Recargos por declaración extemporánea',
-        suggestedAction:
+        message: `El plazo de presentación del modelo ${ctx.data.model} (${ctx.data.period}) ya ha vencido (hace ${-days} días). Recargos: <3 meses 5%, 3-6m 10%, 6-12m 15%, >12m 20% + intereses.`,
+        legalBasis: [{ law: 'Ley 58/2003 (LGT)', article: 'Art. 27', url: URL_LGT }],
+        recommendation:
           'Presenta cuanto antes para minimizar recargo. Considera autoliquidación complementaria si ya presentaste algo previo.',
       };
     }
@@ -333,66 +369,163 @@ const R020: AeatRule = {
       return {
         applies: true,
         severity: 'warning',
-        message: `Quedan ${days} día(s) para el plazo del modelo ${ctx.data.model} (${ctx.data.period}). Prepara la presentación antes del vencimiento.`,
-        citation: 'Calendario fiscal AEAT',
+        message: `Quedan ${days} día(s) para el plazo del modelo ${ctx.data.model} (${ctx.data.period}).`,
+        legalBasis: [{ law: 'Calendario fiscal AEAT', article: '' }],
       };
     }
     return NO_APPLY;
   },
 };
 
-// ─── Verifactu / SII ─────────────────────────────────────────────────────
+// ─── Verifactu / SIF — fechas actualizadas RD-Ley 15/2025 ────────────────
 
-// R040 Obligación Verifactu desde 2026
-const R040: AeatRule = {
-  id: 'R040',
+// Fechas oficiales tras RD-Ley 15/2025:
+//   * Sujetos pasivos IS:  obligatorio desde 1 enero 2027
+//   * Resto obligados:     obligatorio desde 1 julio 2027
+const VERIFACTU_DEADLINE_IS = new Date(Date.UTC(2027, 0, 1));
+const VERIFACTU_DEADLINE_REST = new Date(Date.UTC(2027, 6, 1));
+
+// R040A — Empresa IS adapta SIF antes 01-01-2027
+const R040A: AeatRule = {
+  id: 'R040A',
   category: 'verifactu_obligaciones',
   description:
-    'Sistemas informáticos de facturación: deben cumplir el RD 1007/2023 (VERI*FACTU) desde 2026.',
-  appliesTo: ['invoice_out'],
+    'Entidades sujetas a IS deben adaptar su SIF al RD 1007/2023 antes del 1 enero 2027 (RD-Ley 15/2025).',
+  appliesTo: {
+    actions: ['invoice_out'],
+    taxpayerType: ['sl', 'sa', 'asociacion', 'fundacion'],
+  },
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_out') return NO_APPLY;
     const now = ctx.now ?? new Date();
-    if (now.getUTCFullYear() < 2026) return NO_APPLY;
+    const days = Math.ceil((VERIFACTU_DEADLINE_IS.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (days <= 0) {
+      return {
+        applies: true,
+        severity: 'error',
+        message:
+          'El plazo para que las entidades sujetas al Impuesto sobre Sociedades adapten su SIF a VERI*FACTU expiró el 1 de enero de 2027. Emitir facturas con software no conforme constituye infracción tipificada (LGT 201 bis).',
+        legalBasis: [
+          { law: 'RD 1007/2023', article: 'Disposición Final', url: URL_RD_VERIFACTU },
+          { law: 'RD-Ley 15/2025', article: 'Disposición transitoria', url: URL_RDL_15_2025 },
+        ],
+        recommendation:
+          'Actualiza inmediatamente al software conforme. Isaak emite registros de facturación firmados encadenados por hash, cumpliendo el requisito de inalterabilidad.',
+      };
+    }
+    if (days <= 90) {
+      return {
+        applies: true,
+        severity: 'warning',
+        message: `Quedan ${days} días para que tu SIF deba cumplir VERI*FACTU (sujetos IS, plazo 01-01-2027 por RD-Ley 15/2025).`,
+        legalBasis: [
+          { law: 'RD 1007/2023', url: URL_RD_VERIFACTU, article: '' },
+          { law: 'RD-Ley 15/2025', url: URL_RDL_15_2025, article: '' },
+        ],
+        recommendation: 'Planifica la migración a Isaak (conforme nativamente) antes del 1 enero 2027.',
+      };
+    }
     return {
       applies: true,
       severity: 'info',
       message:
-        'Recuerda: desde 2026 el software que emite facturas debe cumplir VERI*FACTU (RD 1007/2023). Isaak emite el registro de facturación firmado y lo encadena por hash, cumpliendo el requisito de inalterabilidad.',
-      citation: 'RD 1007/2023, Orden HAC/1177/2024',
+        'Recuerda: tu entidad (sujeta a IS) debe usar software VERI*FACTU desde el 1 de enero de 2027 (RD-Ley 15/2025). Isaak ya emite registros conformes.',
+      legalBasis: [
+        { law: 'RD 1007/2023', url: URL_RD_VERIFACTU, article: '' },
+        { law: 'RD-Ley 15/2025', url: URL_RDL_15_2025, article: '' },
+      ],
     };
   },
 };
 
-// R041 Conservación de facturas (Art. 165 LIVA + Art. 30 RD 1619/2012)
-const R041: AeatRule = {
-  id: 'R041',
-  category: 'facturacion_electronica',
-  description: 'Plazo legal de conservación de facturas: 4 años (IVA) / 6 años (contable / Código Comercio).',
-  appliesTo: ['invoice_in', 'invoice_out'],
+// R040B — Resto de obligados adapta SIF antes 01-07-2027
+const R040B: AeatRule = {
+  id: 'R040B',
+  category: 'verifactu_obligaciones',
+  description:
+    'Autónomos y resto de obligados deben adaptar su SIF al RD 1007/2023 antes del 1 julio 2027 (RD-Ley 15/2025).',
+  appliesTo: {
+    actions: ['invoice_out'],
+    taxpayerType: ['autonomo', 'comunidad_bienes'],
+  },
   check: (ctx: RuleContext): RuleEvaluation => {
-    // Solo info, dispara una vez por documento. No es alerta de cumplimiento.
+    if (ctx.action !== 'invoice_out') return NO_APPLY;
+    const now = ctx.now ?? new Date();
+    const days = Math.ceil((VERIFACTU_DEADLINE_REST.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (days <= 0) {
+      return {
+        applies: true,
+        severity: 'error',
+        message:
+          'El plazo para que autónomos y resto de obligados adapten su SIF a VERI*FACTU expiró el 1 de julio de 2027. Emitir facturas con software no conforme constituye infracción (LGT 201 bis).',
+        legalBasis: [
+          { law: 'RD 1007/2023', url: URL_RD_VERIFACTU, article: '' },
+          { law: 'RD-Ley 15/2025', url: URL_RDL_15_2025, article: '' },
+        ],
+        recommendation: 'Actualiza inmediatamente al software conforme.',
+      };
+    }
+    if (days <= 90) {
+      return {
+        applies: true,
+        severity: 'warning',
+        message: `Quedan ${days} días para que tu SIF deba cumplir VERI*FACTU (autónomos, plazo 01-07-2027).`,
+        legalBasis: [
+          { law: 'RD 1007/2023', url: URL_RD_VERIFACTU, article: '' },
+          { law: 'RD-Ley 15/2025', url: URL_RDL_15_2025, article: '' },
+        ],
+      };
+    }
     return {
       applies: true,
       severity: 'info',
       message:
-        'Conserva la factura y su justificante de pago al menos 4 años (a efectos de IVA, Art. 165 LIVA) y 6 años a efectos contables (Art. 30 Código de Comercio).',
-      citation: 'Art. 165 LIVA + Art. 30 Cdgo. Comercio + Art. 30 RD 1619/2012',
+        'Recuerda: como autónomo/comunidad de bienes debes usar software VERI*FACTU desde el 1 de julio de 2027 (RD-Ley 15/2025). Isaak ya emite registros conformes.',
+      legalBasis: [
+        { law: 'RD 1007/2023', url: URL_RD_VERIFACTU, article: '' },
+        { law: 'RD-Ley 15/2025', url: URL_RDL_15_2025, article: '' },
+      ],
+    };
+  },
+};
+
+// R041 Conservación facturas
+const R041: AeatRule = {
+  id: 'R041',
+  category: 'facturacion_electronica',
+  description: 'Plazo legal de conservación de facturas: 4 años (IVA) / 6 años (contable).',
+  appliesTo: scopeFor(['invoice_in', 'invoice_out']),
+  check: (): RuleEvaluation => {
+    return {
+      applies: true,
+      severity: 'info',
+      message:
+        'Conserva la factura y su justificante de pago al menos 4 años (IVA, Art. 165 LIVA) y 6 años a efectos contables (Art. 30 Código de Comercio).',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 165', url: URL_LIVA },
+        { law: 'Cdgo. Comercio', article: 'Art. 30' },
+        { law: 'RD 1619/2012', article: 'Art. 19', url: URL_RD_FACT },
+      ],
     };
   },
 };
 
 // ─── Operaciones vinculadas ──────────────────────────────────────────────
 
-// R050 Operaciones vinculadas (Art. 18 LIS) — alerta si counterparty parece socio
 const R050: AeatRule = {
   id: 'R050',
   category: 'operaciones_vinculadas',
   description:
-    'Operaciones con partes vinculadas (socio >25%, administrador, cónyuge, etc.): obligación de valoración a precio de mercado y documentación.',
-  appliesTo: ['invoice_in', 'invoice_out'],
+    'Operaciones con partes vinculadas: obligación de valoración a precio de mercado y documentación.',
+  appliesTo: scopeFor(['invoice_in', 'invoice_out']),
   check: (ctx: RuleContext): RuleEvaluation => {
-    if (ctx.action === 'payroll' || ctx.action === 'tax_payment' || ctx.action === 'journal') return NO_APPLY;
+    if (
+      ctx.action === 'payroll' ||
+      ctx.action === 'tax_payment' ||
+      ctx.action === 'journal' ||
+      ctx.action === 'profile_check'
+    )
+      return NO_APPLY;
     const data = ctx.data;
     const fullDesc = `${data.description ?? ''} ${data.counterpartyName ?? ''}`;
     if (!descriptionContainsAny(fullDesc, ['socio', 'administrador', 'administradora', 'vinculad'])) return NO_APPLY;
@@ -400,21 +533,24 @@ const R050: AeatRule = {
       applies: true,
       severity: 'warning',
       message:
-        'Operación con parte vinculada (socio/administrador/familiar): debe valorarse a precio de mercado y, según volumen, documentarse en el expediente de operaciones vinculadas. Umbral mínimo de documentación: 250.000€/año por persona o entidad vinculada (master file/local file si grupo).',
-      citation: 'Art. 18 LIS + Art. 13 a 16 Reglamento IS',
+        'Operación con parte vinculada (socio/administrador/familiar): debe valorarse a precio de mercado y, según volumen, documentarse. Umbral mínimo de documentación: 250.000€/año por persona o entidad vinculada.',
+      legalBasis: [
+        { law: 'LIS', article: 'Art. 18', url: URL_LIS },
+        { law: 'Reglamento IS', article: 'Arts. 13-16' },
+      ],
+      evidenceRequired: ['expediente operaciones vinculadas', 'valoración precio mercado'],
     };
   },
 };
 
-// ─── Régimen simplificado / módulos ──────────────────────────────────────
+// ─── Régimen especial recargo equivalencia ──────────────────────────────
 
-// R060 Recargo de equivalencia — info al emitir factura
 const R060: AeatRule = {
   id: 'R060',
   category: 'regimenes_especiales',
   description:
-    'Régimen especial del recargo de equivalencia: aplicable a comerciantes minoristas persona física (5,2% sobre el tipo general 21%).',
-  appliesTo: ['invoice_out'],
+    'Régimen especial del recargo de equivalencia: aplicable a comerciantes minoristas persona física.',
+  appliesTo: scopeFor(['invoice_out']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'invoice_out') return NO_APPLY;
     const d = ctx.data.description ?? '';
@@ -423,20 +559,22 @@ const R060: AeatRule = {
       applies: true,
       severity: 'info',
       message:
-        'Recargo de equivalencia: 5,2% si tipo general 21%, 1,4% si tipo 10%, 0,5% si tipo 4%. El proveedor lo repercute en factura y lo ingresa el proveedor (NO el minorista). El minorista en RE no presenta modelo 303.',
-      citation: 'Art. 154 LIVA + Art. 59 Reglamento IVA',
+        'Recargo de equivalencia: 5,2% si tipo general 21%, 1,4% si tipo 10%, 0,5% si tipo 4%. Lo repercute e ingresa el proveedor; el minorista en RE no presenta modelo 303.',
+      legalBasis: [
+        { law: 'LIVA', article: 'Art. 154', url: URL_LIVA },
+        { law: 'Reglamento IVA', article: 'Art. 59' },
+      ],
     };
   },
 };
 
-// ─── PGC / contabilidad ──────────────────────────────────────────────────
+// ─── PGC partida doble ──────────────────────────────────────────────────
 
-// R070 Asiento con debe ≠ haber (clásico) — solo aplica si ambos están
 const R070: AeatRule = {
   id: 'R070',
   category: 'contabilidad_pgc',
   description: 'Asiento contable: el cargo (debe) debe ser igual al abono (haber).',
-  appliesTo: ['journal'],
+  appliesTo: scopeFor(['journal']),
   check: (ctx: RuleContext): RuleEvaluation => {
     if (ctx.action !== 'journal') return NO_APPLY;
     const { accountDebit, accountCredit } = ctx.data;
@@ -445,9 +583,9 @@ const R070: AeatRule = {
         applies: true,
         severity: 'warning',
         message:
-          'Asiento contable incompleto: falta la cuenta de cargo (debe) o de abono (haber). Todo asiento de partida doble debe indicar ambas cuentas del PGC.',
-        citation: 'PGC 2007 — Principio de partida doble',
-        suggestedAction:
+          'Asiento contable incompleto: falta la cuenta de cargo (debe) o de abono (haber).',
+        legalBasis: [{ law: 'PGC 2007', article: 'Principio partida doble' }],
+        recommendation:
           'Indica las cuentas PGC implicadas (p.ej. 430 Clientes a 700 Venta de mercaderías).',
       };
     }
@@ -457,25 +595,37 @@ const R070: AeatRule = {
 
 // ─── Registro completo ───────────────────────────────────────────────────
 
+import { R000_PROFILE_CHECK } from './inspector-aeat-profile';
+
 export const AEAT_RULES: ReadonlyArray<AeatRule> = [
-  // IVA deducibilidad
+  R000_PROFILE_CHECK,
   R001, R002, R003, R004,
-  // IRPF retenciones
   R010, R011, R012,
-  // Plazos
   R020,
-  // Facturación / efectivo
   R030, R031, R032,
-  // Verifactu / conservación
-  R040, R041,
-  // Vinculadas
+  R040A, R040B,
+  R041,
   R050,
-  // Regímenes
   R060,
-  // PGC
   R070,
 ];
 
 export function findRuleById(id: string): AeatRule | undefined {
   return AEAT_RULES.find((r) => r.id === id);
 }
+
+// Re-export legal URLs so other modules (admin UI, docs) can reuse them
+// without duplicating constants.
+export const RULE_LEGAL_URLS = {
+  LIVA: URL_LIVA,
+  LIRPF: URL_LIRPF,
+  RD_FACTURACION: URL_RD_FACT,
+  LEY_7_2012: URL_LEY_7_2012,
+  RD_VERIFACTU: URL_RD_VERIFACTU,
+  RD_LEY_15_2025: URL_RDL_15_2025,
+  LIS: URL_LIS,
+  LGT: URL_LGT,
+  RGAT: URL_RGAT,
+} as const;
+
+export type { LegalBasis };

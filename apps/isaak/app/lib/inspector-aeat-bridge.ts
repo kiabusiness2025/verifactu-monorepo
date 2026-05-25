@@ -60,7 +60,10 @@ function holdedInvoiceTotals(items: HoldedInvoiceItem[]): {
   };
 }
 
-const LEDGER_TO_RULE_ACTION: Record<string, RuleContext['action'] | null> = {
+const LEDGER_TO_RULE_ACTION: Record<
+  string,
+  'invoice_in' | 'invoice_out' | 'expense' | 'payroll' | 'journal' | 'tax_payment' | null
+> = {
   invoice_in: 'invoice_in',
   invoice_out: 'invoice_out',
   expense: 'expense',

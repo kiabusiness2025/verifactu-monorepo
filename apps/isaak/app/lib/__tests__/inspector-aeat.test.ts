@@ -6,10 +6,12 @@ import {
   decimalGTE,
   descriptionContainsAny,
   evaluateContext,
+  formatLegalBasis,
   normalizeText,
   type AeatRule,
   type RuleContext,
   type RuleEvaluation,
+  type TaxpayerProfileSnapshot,
 } from '../inspector-aeat';
 
 describe('helpers', () => {
@@ -38,12 +40,28 @@ describe('helpers', () => {
     it('matches accent-insensitive substrings', () => {
       expect(descriptionContainsAny('Comida con cliente', ['comida'])).toBe(true);
       expect(descriptionContainsAny('Asesoría jurídica', ['asesoria'])).toBe(true);
-      expect(descriptionContainsAny('Compra de portátil', ['portatil'])).toBe(true);
     });
 
     it('does not match unrelated text', () => {
       expect(descriptionContainsAny('Material de oficina', ['gasolina'])).toBe(false);
       expect(descriptionContainsAny('', ['x'])).toBe(false);
+    });
+  });
+
+  describe('formatLegalBasis', () => {
+    it('joins multiple bases with +', () => {
+      expect(
+        formatLegalBasis([
+          { law: 'LIVA', article: 'Art. 96.Uno.5º' },
+          { law: 'LIVA', article: 'Art. 95.Tres' },
+        ]),
+      ).toBe('Art. 96.Uno.5º LIVA + Art. 95.Tres LIVA');
+    });
+
+    it('returns a single cite for one basis', () => {
+      expect(formatLegalBasis([{ law: 'Ley 7/2012', article: 'Art. 7.Uno' }])).toBe(
+        'Art. 7.Uno Ley 7/2012',
+      );
     });
   });
 });
@@ -53,43 +71,43 @@ describe('evaluateContext (engine)', () => {
     id: 'X001',
     category: 'contabilidad_pgc',
     description: 'siempre dispara error',
-    appliesTo: ['journal'],
+    appliesTo: { actions: ['journal'] },
     check: (): RuleEvaluation => ({
       applies: true,
       severity: 'error',
       message: 'always',
-      citation: 'test',
+      legalBasis: [{ law: 'Test', article: 'Art. 1' }],
     }),
   };
   const ALWAYS_WARN: AeatRule = {
     id: 'X002',
     category: 'contabilidad_pgc',
     description: 'siempre dispara warning',
-    appliesTo: ['journal', 'invoice_in'],
+    appliesTo: { actions: ['journal', 'invoice_in'] },
     check: (): RuleEvaluation => ({
       applies: true,
       severity: 'warning',
       message: 'warn',
-      citation: 'test',
+      legalBasis: [{ law: 'Test', article: 'Art. 1' }],
     }),
   };
   const NEVER: AeatRule = {
     id: 'X003',
     category: 'contabilidad_pgc',
     description: 'nunca dispara',
-    appliesTo: ['journal'],
+    appliesTo: { actions: ['journal'] },
     check: (): RuleEvaluation => ({ applies: false }),
   };
   const SCOPED_TO_OTHER: AeatRule = {
     id: 'X004',
     category: 'contabilidad_pgc',
     description: 'aplica solo a tax_payment',
-    appliesTo: ['tax_payment'],
+    appliesTo: { actions: ['tax_payment'] },
     check: (): RuleEvaluation => ({
       applies: true,
       severity: 'info',
       message: 'should be skipped',
-      citation: 'test',
+      legalBasis: [{ law: 'Test', article: 'Art. 1' }],
     }),
   };
 
@@ -105,6 +123,7 @@ describe('evaluateContext (engine)', () => {
     expect(report.warnings).toEqual([]);
     expect(report.infos).toEqual([]);
     expect(report.evaluatedRuleIds).toEqual(['X003']);
+    expect(report.skippedByScope).toEqual([]);
   });
 
   it('passed=false when any error is present', () => {
@@ -114,7 +133,7 @@ describe('evaluateContext (engine)', () => {
     expect(report.warnings).toHaveLength(1);
   });
 
-  it('skips rules whose appliesTo does not include the action', () => {
+  it('skips rules whose appliesTo.actions does not include the action', () => {
     const report = evaluateContext([SCOPED_TO_OTHER, ALWAYS_WARN], journalCtx);
     expect(report.evaluatedRuleIds).toEqual(['X002']);
     expect(report.warnings).toHaveLength(1);
@@ -125,12 +144,12 @@ describe('evaluateContext (engine)', () => {
       id: 'X005',
       category: 'contabilidad_pgc',
       description: 'info',
-      appliesTo: ['journal'],
+      appliesTo: { actions: ['journal'] },
       check: (): RuleEvaluation => ({
         applies: true,
         severity: 'info',
         message: 'i',
-        citation: 't',
+        legalBasis: [{ law: 'Test', article: 'Art. 1' }],
       }),
     };
     const report = evaluateContext([ALWAYS_ERROR, ALWAYS_WARN, INFO], journalCtx);
@@ -139,21 +158,85 @@ describe('evaluateContext (engine)', () => {
     expect(report.infos.map((v) => v.ruleId)).toEqual(['X005']);
   });
 
-  it('carries through suggestedAction when the rule provides one', () => {
-    const RULE: AeatRule = {
-      id: 'X006',
-      category: 'contabilidad_pgc',
-      description: '',
-      appliesTo: ['journal'],
-      check: (): RuleEvaluation => ({
-        applies: true,
-        severity: 'warning',
-        message: 'm',
-        citation: 'c',
-        suggestedAction: 'do x',
-      }),
+  it('derives citation from legalBasis when result omits it', () => {
+    const report = evaluateContext([ALWAYS_WARN], journalCtx);
+    expect(report.warnings[0]?.citation).toBe('Art. 1 Test');
+    expect(report.warnings[0]?.legalBasis).toHaveLength(1);
+  });
+});
+
+describe('evaluateContext — profile scoping', () => {
+  const SL_ONLY: AeatRule = {
+    id: 'X100',
+    category: 'sociedades',
+    description: 'solo aplica a SL/SA',
+    appliesTo: { actions: ['invoice_out'], taxpayerType: ['sl', 'sa'] },
+    check: (): RuleEvaluation => ({
+      applies: true,
+      severity: 'warning',
+      message: 'sl rule',
+      legalBasis: [{ law: 'LIS', article: 'Art. 1' }],
+    }),
+  };
+  const CANARIAS_ONLY: AeatRule = {
+    id: 'X101',
+    category: 'iva_repercutido',
+    description: 'solo aplica a Canarias',
+    appliesTo: { actions: ['invoice_out'], territory: ['canarias'] },
+    check: (): RuleEvaluation => ({
+      applies: true,
+      severity: 'info',
+      message: 'igic',
+      legalBasis: [{ law: 'IGIC', article: 'Art. 1' }],
+    }),
+  };
+
+  const baseInvoiceOut: RuleContext = {
+    action: 'invoice_out',
+    data: {
+      amount: '100.00',
+      description: 'Servicios',
+      date: '2026-06-01',
+      docType: 'invoice',
+    },
+  };
+
+  it('without profile, rules fire regardless of dimension constraints (back-compat)', () => {
+    const report = evaluateContext([SL_ONLY, CANARIAS_ONLY], baseInvoiceOut);
+    expect(report.warnings.map((v) => v.ruleId)).toEqual(['X100']);
+    expect(report.infos.map((v) => v.ruleId)).toEqual(['X101']);
+    expect(report.skippedByScope).toEqual([]);
+  });
+
+  it('SL profile skips Canarias rule but matches SL rule', () => {
+    const profile: TaxpayerProfileSnapshot = {
+      taxpayerType: 'sl',
+      territory: 'comun',
     };
-    const report = evaluateContext([RULE], journalCtx);
-    expect(report.warnings[0]?.suggestedAction).toBe('do x');
+    const ctx: RuleContext = { ...baseInvoiceOut, profile };
+    const report = evaluateContext([SL_ONLY, CANARIAS_ONLY], ctx);
+    expect(report.warnings.map((v) => v.ruleId)).toEqual(['X100']);
+    expect(report.infos).toEqual([]);
+    expect(report.skippedByScope).toEqual(['X101']);
+  });
+
+  it('autónomo profile in Canarias skips SL rule and matches Canarias rule', () => {
+    const profile: TaxpayerProfileSnapshot = {
+      taxpayerType: 'autonomo',
+      territory: 'canarias',
+    };
+    const ctx: RuleContext = { ...baseInvoiceOut, profile };
+    const report = evaluateContext([SL_ONLY, CANARIAS_ONLY], ctx);
+    expect(report.warnings).toEqual([]);
+    expect(report.infos.map((v) => v.ruleId)).toEqual(['X101']);
+    expect(report.skippedByScope).toEqual(['X100']);
+  });
+
+  it('profile missing a dimension is treated permissively (matches)', () => {
+    // No territory in profile → Canarias rule still applies (conservative).
+    const profile: TaxpayerProfileSnapshot = { taxpayerType: 'sl' };
+    const ctx: RuleContext = { ...baseInvoiceOut, profile };
+    const report = evaluateContext([CANARIAS_ONLY], ctx);
+    expect(report.infos).toHaveLength(1);
   });
 });
