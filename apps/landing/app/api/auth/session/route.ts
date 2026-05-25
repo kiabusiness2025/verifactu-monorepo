@@ -136,7 +136,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing idToken' }, { status: 400 });
     }
 
-    const { decoded, app } = await verifyIdTokenAcrossProjects(idToken);
+    let decoded: admin.auth.DecodedIdToken;
+    let app: admin.app.App;
+    try {
+      ({ decoded, app } = await verifyIdTokenAcrossProjects(idToken));
+    } catch {
+      return NextResponse.json({ error: 'Token inválido o expirado' }, { status: 401 });
+    }
 
     // Obtener información del usuario de Firebase
     const userRecord = await app.auth().getUser(decoded.uid);

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 3003",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",
