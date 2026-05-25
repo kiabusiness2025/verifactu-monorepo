@@ -1,9 +1,11 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-24 (sesión 4 — Sidebar + Integraciones UX)
-**Visión**: Isaak como agente fiscal y contable autónomo que conecta con datos reales del ERP, ejecuta acciones con confirmación, aprende de cada empresa y asesora en lenguaje llano.
+**Última actualización**: 2026-05-25 (cierre manifiesto F1-F8 + roadmap Robot Contable)
+**Visión**: Isaak como **Robot Contable** autónomo — el empresario opera SOLO a través de Isaak; Isaak es la fuente de verdad, el Inspector AEAT preventivo y el ejecutor fiscal.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
+> Para el manifesto técnico F1-F8 (completado) ver `docs/engineering/ISAAK_INTELLIGENCE.md`.
+> **Para el roadmap post-manifiesto F9-F20 + Track B institucional ver `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`** (fase activa).
 
 ---
 
@@ -338,3 +340,59 @@ ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 | ERP aggregator (P3-4-C) | Chift como capa única. `ChiftErpClient implements ErpClient` + 4 rutas API + `/chift` workspace. 🔄 Activación cuenta Chift pendiente.                                      |
 | Cron connector-health   | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23                          |
 | Open Banking EB         | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23 |
+
+---
+
+## Manifiesto F1-F8 — completado (2026-05-24)
+
+Inteligencia conversacional + tool-calling + multi-proveedor + sub-agentes operativos. Detalle por feature en `docs/engineering/ISAAK_INTELLIGENCE.md`.
+
+| Fase | Componente | PR |
+| ---- | ---------- | -- |
+| F1 | Memoria + clarify-first + métricas + harness golden | #119 |
+| F2 | Tool-calling read (27 tools Anthropic) | #121 |
+| F3 | Router multi-proveedor + Haiku classifier | #123 |
+| F4a | Judge GPT-4o-mini (gate writes Holded) | #125 |
+| F4b | Vision OCR GPT-4o (facturas) | #127 |
+| F5 | Streaming SSE (`/api/chat/stream`) | #129 |
+| F6 | Long-term memory + RAG (pgvector, tenant-isolated) | #131 |
+| F7 | Feedback loop (thumbs-up → embeddings → few-shot) | #131 |
+| F8 | Sub-agentes fiscal/banking/gestion | #133 |
+
+---
+
+## Roadmap Robot Contable — activo (Q2 2026 →)
+
+Detalle completo en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`.
+
+**Track A técnico (F9-F20):**
+
+| Fase | Componente | Estado |
+| ---- | ---------- | ------ |
+| **F9** | **Isaak Ledger nativo** (Postgres + hash chain inmutable) | 🚧 En curso |
+| F10 | Excel solo lectura (exceljs export automático) | ⏳ |
+| F11 | Inspector AEAT Capa 1 (80-100 reglas TypeScript) | ⏳ |
+| F12 | Inspector AEAT Capa 2 (sub-agente LLM contextual) | ⏳ |
+| F13 | Inspector AEAT Capa 3 (RAG sobre BOE + doctrina DGT) | ⏳ |
+| F14 | Consulta vinculante TEAR automática | ⏳ |
+| F15 | Telegram + WhatsApp ampliado | ⏳ |
+| F16 | Slack + Microsoft Teams | ⏳ |
+| F17 | Airtable + Notion + Trello | ⏳ |
+| F18 | Stripe Connect + GoCardless AIS | ⏳ |
+| F19 | HubSpot + Odoo | ⏳ |
+| F20 | Dropbox + Drive OCR | ⏳ |
+
+**Track B institucional (B1-B6):**
+
+| ID | Componente | Estado |
+| -- | ---------- | ------ |
+| B1 | Verifactu SOAP nativo desde Ledger (desacopla Holded) | ⏳ Depende F9 |
+| B2 | SII (Suministro Inmediato Información, RD 596/2016) | ⏳ |
+| B3 | Modelos 303/130/111/180/347 automáticos | ⏳ |
+| B4 | GTM: gestorías → autónomos sin gestoría → "sin asesor" | ⏳ |
+| B5 | Certificación AEAT / homologación software fiscal | ⏳ |
+| B6 | Robot Contable v1 (autonomía total) | ⏳ 2027 |
+
+**Estrategia económica:** bootstrap. No se requiere inversión externa para llegar a product-market fit. Inversión solo se evalúa post-certificación AEAT (+18-24 meses).
+
+**Descartados:** Salt Edge, Chift (costes elevados — reemplazados por Enable Banking + GoCardless AIS).
