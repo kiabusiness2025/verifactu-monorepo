@@ -36,6 +36,7 @@ import {
 } from '@/app/lib/isaak-chat-context';
 import { streamIsaakChat, type ChatStreamMetrics } from '@/app/lib/isaak-chat-stream';
 import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
+import { retrieveFewShotForChat } from '@/app/lib/isaak-few-shot';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -138,8 +139,8 @@ export async function POST(req: NextRequest) {
     }).catch(() => null);
   }
 
-  // F6b: classifier + RAG retrieval run in parallel.
-  const [classification, ragResult] = await Promise.all([
+  // F7: classifier + RAG facts + few-shot examples in parallel.
+  const [classification, ragResult, fewShotResult] = await Promise.all([
     classifyIntent({
       message,
       history,
@@ -151,6 +152,10 @@ export async function POST(req: NextRequest) {
       },
     }),
     retrieveFactsForChat({
+      tenantId: authenticated.session.tenantId,
+      queryText: message,
+    }),
+    retrieveFewShotForChat({
       tenantId: authenticated.session.tenantId,
       queryText: message,
     }),
@@ -205,6 +210,9 @@ export async function POST(req: NextRequest) {
       factsRetrieved: ragResult.factsRetrieved,
       ragLatencyMs: ragResult.latencyMs,
       ragTopSimilarity: ragResult.topSimilarity,
+      fewShotInjected: fewShotResult.injected,
+      fewShotLatencyMs: fewShotResult.latencyMs,
+      fewShotTopSimilarity: fewShotResult.topSimilarity,
     }).catch((err) => {
       console.error('[Isaak Chat Stream] recordChatMetric failed', err);
     });
@@ -251,6 +259,7 @@ export async function POST(req: NextRequest) {
   const { stream, metricsPromise } = streamIsaakChat({
     systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext, {
       factsBlock: ragResult.factsBlock,
+      fewShotBlock: fewShotResult.examplesBlock,
     }),
     history,
     userMessage: message,

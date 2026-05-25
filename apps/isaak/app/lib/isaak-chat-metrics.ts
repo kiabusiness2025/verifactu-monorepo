@@ -57,6 +57,10 @@ export type RecordChatMetricInput = {
   factsRetrieved?: number;
   ragLatencyMs?: number | null;
   ragTopSimilarity?: number | null;
+  // F7: few-shot dynamic examples
+  fewShotInjected?: number;
+  fewShotLatencyMs?: number | null;
+  fewShotTopSimilarity?: number | null;
   errorCode?: string | null;
 };
 
@@ -95,6 +99,9 @@ export async function recordChatMetric(input: RecordChatMetricInput): Promise<vo
       factsRetrieved: input.factsRetrieved ?? 0,
       ragLatencyMs: input.ragLatencyMs ?? null,
       ragTopSimilarity: input.ragTopSimilarity ?? null,
+      fewShotInjected: input.fewShotInjected ?? 0,
+      fewShotLatencyMs: input.fewShotLatencyMs ?? null,
+      fewShotTopSimilarity: input.fewShotTopSimilarity ?? null,
       errorCode: input.errorCode ?? null,
     },
   });

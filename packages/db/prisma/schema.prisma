@@ -1967,6 +1967,11 @@ model IsaakChatMetric {
   ragLatencyMs     Int?   @map("rag_latency_ms")
   ragTopSimilarity Float? @map("rag_top_similarity")
 
+  // F7: few-shot dynamic examples from positive feedback
+  fewShotInjected      Int    @default(0) @map("few_shot_injected")
+  fewShotLatencyMs     Int?   @map("few_shot_latency_ms")
+  fewShotTopSimilarity Float? @map("few_shot_top_similarity")
+
   errorCode String?  @map("error_code")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 

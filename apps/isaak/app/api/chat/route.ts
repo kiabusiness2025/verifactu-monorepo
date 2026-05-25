@@ -30,6 +30,7 @@ import {
 import { runIsaakToolLoop } from '@/app/lib/isaak-tool-loop';
 import { classifyIntent } from '@/app/lib/isaak-intent-classifier';
 import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
+import { retrieveFewShotForChat } from '@/app/lib/isaak-few-shot';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -277,7 +278,8 @@ async function getLLMResponse(
   history: AIMessage[],
   authenticatedContext: AuthenticatedChatContext | null,
   modelConfig: ModelConfig,
-  factsBlock?: string
+  factsBlock?: string,
+  fewShotBlock?: string
 ): Promise<LLMResult | null> {
   try {
     const messages: AIMessage[] = [...history, { role: 'user', content: message }];
@@ -286,7 +288,7 @@ async function getLLMResponse(
       provider: modelConfig.provider,
       model: modelConfig.model,
       instructions: authenticatedContext
-        ? buildAuthenticatedSystemPrompt(authenticatedContext, { factsBlock })
+        ? buildAuthenticatedSystemPrompt(authenticatedContext, { factsBlock, fewShotBlock })
         : buildPublicSystemPrompt(),
       messages,
       temperature: authenticatedContext ? 0.45 : 0.5,
@@ -418,11 +420,16 @@ export async function POST(request: NextRequest) {
     let factsRetrieved = 0;
     let ragLatencyMs: number | null = null;
     let ragTopSimilarity: number | null = null;
+    let fewShotBlock = '';
+    let fewShotInjected = 0;
+    let fewShotLatencyMs: number | null = null;
+    let fewShotTopSimilarity: number | null = null;
 
     if (authenticated && toolContext) {
-      // F6b: classifier + RAG retrieval run in parallel. They're independent
-      // so we want combined latency to be max(classifier, rag) not sum.
-      const [classification, ragResult] = await Promise.all([
+      // F7: classifier + RAG facts + few-shot examples all run in parallel.
+      // Three independent operations — Promise.all keeps the combined
+      // latency at max() instead of sum.
+      const [classification, ragResult, fewShotResult] = await Promise.all([
         classifyIntent({
           message,
           history,
@@ -437,12 +444,20 @@ export async function POST(request: NextRequest) {
           tenantId: authenticated.session.tenantId,
           queryText: message,
         }),
+        retrieveFewShotForChat({
+          tenantId: authenticated.session.tenantId,
+          queryText: message,
+        }),
       ]);
 
       factsBlock = ragResult.factsBlock;
       factsRetrieved = ragResult.factsRetrieved;
       ragLatencyMs = ragResult.latencyMs;
       ragTopSimilarity = ragResult.topSimilarity;
+      fewShotBlock = fewShotResult.examplesBlock;
+      fewShotInjected = fewShotResult.injected;
+      fewShotLatencyMs = fewShotResult.latencyMs;
+      fewShotTopSimilarity = fewShotResult.topSimilarity;
       classifierModel = classification.modelUsed;
       classifierLatencyMs = classification.latencyMs;
       ambiguityType = classification.ambiguityType;
@@ -477,6 +492,7 @@ export async function POST(request: NextRequest) {
           const loop = await runIsaakToolLoop({
             systemPrompt: buildAuthenticatedSystemPrompt(authenticated.promptContext, {
               factsBlock,
+              fewShotBlock,
             }),
             history,
             userMessage: message,
@@ -516,7 +532,8 @@ export async function POST(request: NextRequest) {
           history,
           authenticated.promptContext,
           modelConfig,
-          factsBlock
+          factsBlock,
+          fewShotBlock
         );
         if (result) routedTo = 'sonnet_no_tools';
       }
@@ -588,6 +605,9 @@ export async function POST(request: NextRequest) {
         factsRetrieved,
         ragLatencyMs,
         ragTopSimilarity,
+        fewShotInjected,
+        fewShotLatencyMs,
+        fewShotTopSimilarity,
       }).catch((err) => {
         console.error('[Isaak Chat] recordChatMetric failed', err);
       });
