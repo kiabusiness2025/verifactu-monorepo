@@ -1,0 +1,12 @@
+{
+  "id": "subagent-banking-balance-03",
+  "category": "tool-use",
+  "description": "Saldo bancario: el agente banking debe invocar banking_list_accounts y citar saldos reales",
+  "query": "¿Cuál es mi saldo actual en las cuentas conectadas?",
+  "context": { "authenticated": true, "holdedConnected": true, "bankConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "toolsUsed": ["banking_list_accounts"],
+    "minJudgeScore": 6
+  }
+}
