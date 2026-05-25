@@ -28,6 +28,7 @@ import {
 } from './isaak-ledger-holded-mapper';
 import { buildAuditSnapshotForTenant } from './isaak-audit-loader';
 import { runAudit } from './inspector-aeat-audit';
+import { REPORT_TYPES, reportFilename, type ReportType } from './isaak-excel-export';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -113,6 +114,35 @@ export const LEDGER_CHAT_TOOLS = [
         },
       },
       required: ['docTypes'],
+    },
+  },
+  {
+    name: 'isaak_export_ledger_excel',
+    description:
+      'Genera un Excel (.xlsx) solo-lectura desde el Isaak Ledger del tenant para el periodo indicado. Tipos soportados: libro_iva_emitidas, libro_iva_recibidas, libro_diario, modelo_303. NO modifica datos. Devuelve la URL de descarga para que el cliente lo abra; las celdas de datos quedan bloqueadas, las notas son editables.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        reportType: {
+          type: 'string',
+          enum: [...REPORT_TYPES],
+          description:
+            'Tipo de informe a generar. libro_iva_emitidas = libro de facturas emitidas (SII), libro_iva_recibidas = libro de facturas recibidas, libro_diario = libro diario contable (PGC 2007), modelo_303 = resumen IVA trimestral con detalle.',
+        },
+        from: {
+          type: 'string',
+          description: 'Fecha inicio en formato YYYY-MM-DD (inclusivo).',
+        },
+        to: {
+          type: 'string',
+          description: 'Fecha fin en formato YYYY-MM-DD (inclusivo).',
+        },
+        label: {
+          type: ['string', 'null'],
+          description: 'Etiqueta del periodo para la cabecera del Excel (ej. "T2 2026"). Opcional.',
+        },
+      },
+      required: ['reportType', 'from', 'to'],
     },
   },
   {
@@ -249,6 +279,46 @@ export async function executeLedgerTool(
         message: err instanceof Error ? err.message : String(err),
       };
     }
+  }
+
+  if (name === 'isaak_export_ledger_excel') {
+    const reportType = args.reportType as ReportType;
+    if (!REPORT_TYPES.includes(reportType)) {
+      return {
+        ok: false,
+        error: 'invalid_report_type',
+        message: `Tipo no soportado. Usa uno de: ${REPORT_TYPES.join(', ')}.`,
+      };
+    }
+    const from = String(args.from ?? '');
+    const to = String(args.to ?? '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return {
+        ok: false,
+        error: 'invalid_period',
+        message: 'from/to deben ser YYYY-MM-DD.',
+      };
+    }
+    if (to < from) {
+      return {
+        ok: false,
+        error: 'invalid_period',
+        message: 'to no puede ser anterior a from.',
+      };
+    }
+    const label = typeof args.label === 'string' ? args.label : undefined;
+    const params = new URLSearchParams({ reportType, from, to });
+    if (label) params.set('label', label);
+    const downloadUrl = `/api/isaak/export/excel?${params.toString()}`;
+    const filename = reportFilename(reportType, { from, to, label });
+    return {
+      ok: true,
+      reportType,
+      period: { from, to, label },
+      filename,
+      downloadUrl,
+      message: `Excel "${filename}" listo. Indica al usuario que pulse el enlace de descarga; el documento es solo lectura excepto la columna de notas.`,
+    };
   }
 
   if (name === 'isaak_audit_ledger') {
