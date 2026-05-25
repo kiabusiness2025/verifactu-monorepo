@@ -24,7 +24,11 @@ describe('buildReadOnlyToolsForContext', () => {
     // the audit read tool is always present.
     const tools = buildReadOnlyToolsForContext(ctx());
     const names = tools.map((t) => t.name);
-    expect(names.sort()).toEqual(['isaak_audit_ledger', 'isaak_export_ledger_excel']);
+    expect(names.sort()).toEqual([
+      'isaak_audit_ledger',
+      'isaak_export_ledger_excel',
+      'isaak_list_tax_returns',
+    ]);
   });
 
   it('excludes Holded tools if no apiKey, even when holdedConnected=true (only ledger reads remain)', () => {
@@ -34,6 +38,7 @@ describe('buildReadOnlyToolsForContext', () => {
     expect(tools.map((t) => t.name).sort()).toEqual([
       'isaak_audit_ledger',
       'isaak_export_ledger_excel',
+      'isaak_list_tax_returns',
     ]);
   });
 
@@ -186,9 +191,9 @@ describe('buildReadOnlyToolsForContext', () => {
         microsoftConnected: true,
       })
     );
-    // 13 Holded + 6 banking + 4 google + 4 microsoft + 2 ledger reads
-    // (audit + export) = 29 (ledger writes excluded sin allowWrites)
-    expect(tools.length).toBe(29);
+    // 13 Holded + 6 banking + 4 google + 4 microsoft + 3 ledger reads
+    // (audit + export + list_tax_returns) = 30 (writes excluded)
+    expect(tools.length).toBe(30);
     // each tool exposes the Anthropic-compatible shape
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
@@ -202,11 +207,12 @@ describe('buildReadOnlyToolsForContext', () => {
       expect(isWriteToolName('isaak_ledger_import_holded')).toBe(true);
     });
 
-    it('without allowWrites only exposes ledger READS (audit + export)', () => {
+    it('without allowWrites only exposes ledger READS (audit + export + list_tax_returns)', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), { only: ['ledger'] });
       expect(tools.map((t) => t.name).sort()).toEqual([
         'isaak_audit_ledger',
         'isaak_export_ledger_excel',
+        'isaak_list_tax_returns',
       ]);
     });
 
@@ -221,6 +227,8 @@ describe('buildReadOnlyToolsForContext', () => {
         'isaak_export_ledger_excel',
         'isaak_ledger_create_entry',
         'isaak_ledger_import_holded',
+        'isaak_list_tax_returns',
+        'isaak_record_tax_return',
       ]);
     });
 
@@ -229,7 +237,7 @@ describe('buildReadOnlyToolsForContext', () => {
         only: ['ledger'],
         allowWrites: true,
       });
-      expect(tools.length).toBe(4);
+      expect(tools.length).toBe(6);
     });
 
     it('combining ledger + holded gates work independently', () => {

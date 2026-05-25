@@ -572,6 +572,7 @@ model Tenant {
   isaakMemoryFacts              IsaakMemoryFact[]
   isaakLongTermMemory           IsaakLongTermMemory[]
   isaakLedgerEntries            IsaakLedgerEntry[]
+  isaakTaxReturns               IsaakTaxReturn[]
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -2654,4 +2655,59 @@ model IsaakLedgerEntry {
   @@index([tenantId, sourceSystem])
   @@index([tenantId, verifactuRef])
   @@map("isaak_ledger_entries")
+}
+
+// ==================== ISAAK TAX RETURNS (F11 fase 4) ====================
+//
+// Registro de modelos tributarios presentados (o en borrador) por el
+// tenant. Alimenta los cruces del Inspector AEAT (R086, R087, R100,
+// R101, R102, R106) — sin esta tabla, el snapshot mostraba
+// presentedModels=[] y las reglas no podían validar coherencia.
+//
+// status:
+//   * 'draft'     → calculado por Isaak pero no presentado
+//   * 'presented' → enviado a AEAT (sede electrónica), pendiente de
+//                   confirmación
+//   * 'accepted'  → AEAT ha confirmado la presentación
+//   * 'rejected'  → AEAT ha rechazado (con motivo en notes)
+//   * 'rectified' → reemplazado por una complementaria posterior
+//
+// period: formato 'Q1-2026', 'M03-2026' (mensual SII), 'A-2025' anual.
+
+model IsaakTaxReturn {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  model      String // '303' | '130' | '111' | '115' | '180' | '190' | '200' | '202' | '347' | '349' | '390' | '720' | '100'
+  period     String
+  fiscalYear Int    @map("fiscal_year")
+
+  status String @default("draft") // draft | presented | accepted | rejected | rectified
+
+  // Base / cuota declarada — semántica depende del modelo. Para R086
+  // (cruce 111) se compara con retentionsToProfessionals + Employees.
+  amountDeclared Decimal  @db.Decimal(14, 2) @map("amount_declared")
+  amountToPay    Decimal? @db.Decimal(14, 2) @map("amount_to_pay")
+  amountToRefund Decimal? @db.Decimal(14, 2) @map("amount_to_refund")
+
+  presentedAt     DateTime? @map("presented_at") @db.Timestamptz
+  dueDate         DateTime? @map("due_date") @db.Date
+  referenceNumber String?   @map("reference_number") // ID o csv AEAT
+  attachmentUrl   String?   @map("attachment_url") @db.Text // PDF justificante
+
+  notes     String? @db.Text
+  createdBy String  @map("created_by") // userId o 'isaak-auto'
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Un único registro vigente por (tenant, modelo, periodo).
+  // Las rectificativas se modelan cambiando status del previo a
+  // 'rectified' y creando uno nuevo con sufijo en notes/reference.
+  @@unique([tenantId, model, period])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@index([tenantId, fiscalYear])
+  @@map("isaak_tax_returns")
 }

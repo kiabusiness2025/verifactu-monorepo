@@ -87,14 +87,44 @@ export async function loadLedgerRowsForPeriod(
   }));
 }
 
-// Stub hasta que IsaakTaxReturn exista. Devuelve siempre []. Al
-// implementar la tabla, esta función pasa a leer modelos presentados.
+// F11 fase 4 — lee IsaakTaxReturn y devuelve los modelos presentados
+// cuyo período fiscal SOLAPA con el rango auditado. Solo se consideran
+// los marcados como 'presented' o 'accepted' (los borradores no
+// cuentan como "ya declarados" en los cruces).
 export async function loadTaxReturnsForPeriod(
-  _tenantId: string,
-  _periodFrom: string,
-  _periodTo: string
+  tenantId: string,
+  periodFrom: string,
+  periodTo: string
 ): Promise<TaxReturnRowForAudit[]> {
-  return [];
+  type Row = {
+    model: string;
+    period: string;
+    amountDeclared: unknown;
+    presentedAt: Date | null;
+  };
+  const rows = await prisma.$queryRawUnsafe<Row[]>(
+    `SELECT
+       model,
+       period,
+       amount_declared AS "amountDeclared",
+       presented_at    AS "presentedAt"
+     FROM isaak_tax_returns
+     WHERE tenant_id = $1::uuid
+       AND status IN ('presented', 'accepted')`,
+    tenantId
+  );
+  // Filtramos en aplicación por solapamiento del período del modelo
+  // con el rango auditado. La derivación es trivial (Q1-2026 → enero/marzo)
+  // y se reutiliza desde isaak-tax-returns para mantener una sola fuente.
+  const { periodOverlapsRange } = await import('./isaak-tax-returns');
+  return rows
+    .filter((r) => periodOverlapsRange(r.period, periodFrom, periodTo))
+    .map((r) => ({
+      model: r.model,
+      period: r.period,
+      amountDeclared: String(r.amountDeclared ?? '0'),
+      presentedAt: r.presentedAt ? r.presentedAt.toISOString() : null,
+    }));
 }
 
 export async function loadBankAccountSummaries(

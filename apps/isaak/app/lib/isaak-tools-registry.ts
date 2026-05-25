@@ -35,9 +35,10 @@ const WRITE_TOOL_NAMES = new Set<string>([
   'holded_register_payment',
   'holded_create_contact',
   'holded_send_document',
-  // Isaak Ledger write (F9)
+  // Isaak Ledger write (F9 / F11 fase 4)
   'isaak_ledger_create_entry',
   'isaak_ledger_import_holded',
+  'isaak_record_tax_return',
   // Google write (NOT enabled in F4 v1 — kept for visibility / future)
   // 'google_calendar_create_event', 'google_calendar_update_event',
   // 'google_calendar_delete_event', 'google_gmail_archive',
@@ -79,9 +80,10 @@ const READ_ONLY_NAMES = new Set<string>([
   'google_calendar_list_events',
   'google_gmail_scan_invoices',
   'google_drive_list_files',
-  // Isaak Ledger reads (F11 fase 3 / F10)
+  // Isaak Ledger reads (F11 fase 3 / F10 / fase 4)
   'isaak_audit_ledger',
   'isaak_export_ledger_excel',
+  'isaak_list_tax_returns',
   // Microsoft (read-only subset)
   'microsoft_check_connection',
   'microsoft_calendar_list_events',

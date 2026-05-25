@@ -69,10 +69,37 @@ describe('loadLedgerRowsForPeriod', () => {
   });
 });
 
-describe('loadTaxReturnsForPeriod (stub)', () => {
-  it('returns empty array (no IsaakTaxReturn table yet)', async () => {
+describe('loadTaxReturnsForPeriod', () => {
+  it('returns empty when no presented returns exist for the tenant', async () => {
+    mockedQueryRaw.mockResolvedValueOnce([]);
     const out = await loadTaxReturnsForPeriod(TENANT, '2026-05-01', '2026-05-31');
     expect(out).toEqual([]);
+    const sql = mockedQueryRaw.mock.calls[0]![0] as string;
+    expect(sql).toMatch(/FROM isaak_tax_returns/);
+    expect(sql).toMatch(/WHERE tenant_id = \$1::uuid/);
+    expect(sql).toMatch(/status IN \('presented', 'accepted'\)/);
+  });
+
+  it('filters returns that do not overlap the audited range', async () => {
+    mockedQueryRaw.mockResolvedValueOnce([
+      {
+        model: '303',
+        period: 'Q1-2026',
+        amountDeclared: '500.00',
+        presentedAt: new Date('2026-04-15T00:00:00Z'),
+      },
+      {
+        model: '303',
+        period: 'Q2-2026',
+        amountDeclared: '700.00',
+        presentedAt: new Date('2026-07-15T00:00:00Z'),
+      },
+    ]);
+    const out = await loadTaxReturnsForPeriod(TENANT, '2026-04-01', '2026-06-30');
+    // Only Q2-2026 overlaps; Q1-2026 is before the range.
+    expect(out).toHaveLength(1);
+    expect(out[0]?.model).toBe('303');
+    expect(out[0]?.period).toBe('Q2-2026');
   });
 });
 
@@ -124,8 +151,9 @@ describe('buildAuditSnapshotForTenant', () => {
   });
 
   it('runs all three loaders in parallel and aggregates into snapshot', async () => {
-    // Three calls expected: ledger rows, bank accounts, (taxReturns is the
-    // stub and returns synchronously without prisma).
+    // Three calls expected: ledger rows, tax returns, bank accounts.
+    // (Order isn't deterministic due to Promise.all but
+    // mockResolvedValueOnce stack queues by call order — match that.)
     mockedQueryRaw
       .mockResolvedValueOnce([
         // ledger row: factura emitida
@@ -139,6 +167,7 @@ describe('buildAuditSnapshotForTenant', () => {
           entryDate: new Date('2026-05-15T00:00:00Z'),
         },
       ])
+      .mockResolvedValueOnce([])
       .mockResolvedValueOnce([
         // bank account
         {

@@ -29,6 +29,14 @@ import {
 import { buildAuditSnapshotForTenant } from './isaak-audit-loader';
 import { runAudit } from './inspector-aeat-audit';
 import { REPORT_TYPES, reportFilename, type ReportType } from './isaak-excel-export';
+import {
+  TAX_RETURN_MODELS,
+  TAX_RETURN_STATUSES,
+  listTaxReturns,
+  upsertTaxReturn,
+  type TaxReturnModel,
+  type TaxReturnStatus,
+} from './isaak-tax-returns';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -143,6 +151,79 @@ export const LEDGER_CHAT_TOOLS = [
         },
       },
       required: ['reportType', 'from', 'to'],
+    },
+  },
+  {
+    name: 'isaak_list_tax_returns',
+    description:
+      'Lista los modelos tributarios registrados en Isaak (303, 130, 111, 115, etc.) para el ejercicio fiscal indicado. Útil para responder "qué he presentado en T2", "está el 111 ya enviado", etc. NO modifica datos.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        fiscalYear: {
+          type: 'number',
+          description: 'Año fiscal (p.ej. 2026). Opcional — si se omite, lista todos.',
+        },
+        model: {
+          type: 'string',
+          enum: [...TAX_RETURN_MODELS],
+          description: 'Modelo concreto a filtrar (opcional).',
+        },
+        status: {
+          type: 'string',
+          enum: [...TAX_RETURN_STATUSES],
+          description: 'Estado a filtrar (opcional). draft/presented/accepted/rejected/rectified.',
+        },
+      },
+    },
+  },
+  {
+    name: 'isaak_record_tax_return',
+    description:
+      'Registra (o actualiza si ya existe) una declaración tributaria en Isaak. Llamar SOLO cuando el usuario confirma que ha presentado un modelo a AEAT, indicando el importe declarado y la referencia. Si el modelo ya estaba registrado se actualiza (upsert por tenant+modelo+periodo).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        model: {
+          type: 'string',
+          enum: [...TAX_RETURN_MODELS],
+          description: 'Modelo tributario presentado.',
+        },
+        period: {
+          type: 'string',
+          description: 'Periodo en formato Q1-2026 (trimestral), M03-2026 (mensual SII), A-2025 (anual).',
+        },
+        amountDeclared: {
+          type: 'string',
+          description: 'Importe declarado (decimal en string, p.ej. "1234.56"). Para retenciones: total retenido; para IVA: cuota; para anuales: total declarado.',
+        },
+        status: {
+          type: 'string',
+          enum: [...TAX_RETURN_STATUSES],
+          description: 'Estado actual. presented=enviado a AEAT, accepted=confirmado, draft=borrador interno.',
+        },
+        amountToPay: {
+          type: ['string', 'null'],
+          description: 'Importe a ingresar (decimal en string). Opcional.',
+        },
+        amountToRefund: {
+          type: ['string', 'null'],
+          description: 'Importe a devolver (decimal en string). Opcional.',
+        },
+        referenceNumber: {
+          type: ['string', 'null'],
+          description: 'Número de referencia/CSV de AEAT. Opcional.',
+        },
+        presentedAt: {
+          type: ['string', 'null'],
+          description: 'Fecha de presentación en YYYY-MM-DD o ISO. Si status=presented y se omite, Isaak usa el momento actual.',
+        },
+        notes: {
+          type: ['string', 'null'],
+          description: 'Notas internas (causa de rectificación, motivo, etc.).',
+        },
+      },
+      required: ['model', 'period', 'amountDeclared'],
     },
   },
   {
@@ -319,6 +400,63 @@ export async function executeLedgerTool(
       downloadUrl,
       message: `Excel "${filename}" listo. Indica al usuario que pulse el enlace de descarga; el documento es solo lectura excepto la columna de notas.`,
     };
+  }
+
+  if (name === 'isaak_list_tax_returns') {
+    try {
+      const taxReturns = await listTaxReturns({
+        tenantId: ctx.tenantId,
+        fiscalYear: typeof args.fiscalYear === 'number' ? args.fiscalYear : undefined,
+        model: (args.model as TaxReturnModel) ?? undefined,
+        status: (args.status as TaxReturnStatus) ?? undefined,
+      });
+      return {
+        ok: true,
+        count: taxReturns.length,
+        taxReturns,
+        message: taxReturns.length
+          ? `Encontrados ${taxReturns.length} modelos.`
+          : 'No hay modelos registrados con esos filtros.',
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'list_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_record_tax_return') {
+    try {
+      const result = await upsertTaxReturn({
+        tenantId: ctx.tenantId,
+        model: args.model as TaxReturnModel,
+        period: String(args.period ?? ''),
+        status: (args.status as TaxReturnStatus | undefined) ?? 'presented',
+        amountDeclared: String(args.amountDeclared ?? ''),
+        amountToPay: (args.amountToPay as string | null | undefined) ?? null,
+        amountToRefund: (args.amountToRefund as string | null | undefined) ?? null,
+        presentedAt: (args.presentedAt as string | null | undefined) ?? null,
+        referenceNumber: (args.referenceNumber as string | null | undefined) ?? null,
+        notes: (args.notes as string | null | undefined) ?? null,
+        createdBy: ctx.userId,
+      });
+      return {
+        ok: true,
+        id: result.id,
+        isNew: result.isNew,
+        message: result.isNew
+          ? `Modelo ${args.model} ${args.period} registrado por importe ${args.amountDeclared}€.`
+          : `Modelo ${args.model} ${args.period} actualizado.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'record_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
   }
 
   if (name === 'isaak_audit_ledger') {
