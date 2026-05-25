@@ -868,6 +868,7 @@ ORDER BY calls DESC;
 | 2026-05-25 | F6a+b Long-term memory entregada: pgvector + tabla IsaakLongTermMemory + RAG retrieval inyectado en chat con aislamiento estricto por tenant | Ingeniería Isaak |
 | 2026-05-25 | F7 Feedback loop entregada: 👍 embebido, retrieve por similarity, few-shot block en system prompt | Ingeniería Isaak |
 | 2026-05-25 | F8a Sub-agents entregada: agente fiscal con system prompt especializado + tools restringidas + routing por keywords. Banking/gestion en F8b/F8c | Ingeniería Isaak |
+| 2026-05-25 | F8b+c Sub-agents completos: banking (tesorería/PSD2) + gestion (CRM/calendario/email). Routing por prioridad fiscal > banking > gestion. **Manifiesto 8/8 cerrado.** | Ingeniería Isaak |
 
 ---
 
