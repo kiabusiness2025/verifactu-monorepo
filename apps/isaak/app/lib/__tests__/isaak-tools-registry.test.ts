@@ -30,6 +30,7 @@ describe('buildReadOnlyToolsForContext', () => {
       'isaak_list_aeat_census_changes',
       'isaak_list_aeat_notifications',
       'isaak_list_tax_returns',
+      'isaak_summarize_aeat_inbox',
       'isaak_validate_vat_intracom',
     ]);
   });
@@ -44,6 +45,7 @@ describe('buildReadOnlyToolsForContext', () => {
       'isaak_list_aeat_census_changes',
       'isaak_list_aeat_notifications',
       'isaak_list_tax_returns',
+      'isaak_summarize_aeat_inbox',
       'isaak_validate_vat_intracom',
     ]);
   });
@@ -197,10 +199,11 @@ describe('buildReadOnlyToolsForContext', () => {
         microsoftConnected: true,
       })
     );
-    // 13 Holded + 6 banking + 4 google + 4 microsoft + 6 ledger reads
+    // 13 Holded + 6 banking + 4 google + 4 microsoft + 7 ledger reads
     // (audit + export + list_tax_returns + list_aeat_notifications +
-    // list_aeat_census_changes + validate_vat_intracom) = 33 (writes excluded)
-    expect(tools.length).toBe(33);
+    // list_aeat_census_changes + summarize_aeat_inbox + validate_vat_intracom)
+    // = 34 (writes excluded)
+    expect(tools.length).toBe(34);
     // each tool exposes the Anthropic-compatible shape
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
@@ -214,7 +217,7 @@ describe('buildReadOnlyToolsForContext', () => {
       expect(isWriteToolName('isaak_ledger_import_holded')).toBe(true);
     });
 
-    it('without allowWrites only exposes the 6 ledger READS', () => {
+    it('without allowWrites only exposes the 7 ledger READS', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), { only: ['ledger'] });
       expect(tools.map((t) => t.name).sort()).toEqual([
         'isaak_audit_ledger',
@@ -222,11 +225,12 @@ describe('buildReadOnlyToolsForContext', () => {
         'isaak_list_aeat_census_changes',
         'isaak_list_aeat_notifications',
         'isaak_list_tax_returns',
+        'isaak_summarize_aeat_inbox',
         'isaak_validate_vat_intracom',
       ]);
     });
 
-    it('with allowWrites=true and only=["ledger"] exposes 6 reads + 4 writes', () => {
+    it('with allowWrites=true and only=["ledger"] exposes 7 reads + 4 writes', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), {
         only: ['ledger'],
         allowWrites: true,
@@ -241,6 +245,7 @@ describe('buildReadOnlyToolsForContext', () => {
         'isaak_list_aeat_notifications',
         'isaak_list_tax_returns',
         'isaak_record_tax_return',
+        'isaak_summarize_aeat_inbox',
         'isaak_sync_aeat_sede',
         'isaak_validate_vat_intracom',
       ]);
@@ -251,7 +256,7 @@ describe('buildReadOnlyToolsForContext', () => {
         only: ['ledger'],
         allowWrites: true,
       });
-      expect(tools.length).toBe(10);
+      expect(tools.length).toBe(11);
     });
 
     it('combining ledger + holded gates work independently', () => {

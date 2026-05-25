@@ -87,6 +87,7 @@ const READ_ONLY_NAMES = new Set<string>([
   'isaak_list_tax_returns',
   'isaak_list_aeat_notifications',
   'isaak_list_aeat_census_changes',
+  'isaak_summarize_aeat_inbox',
   'isaak_validate_vat_intracom',
   // Microsoft (read-only subset)
   'microsoft_check_connection',

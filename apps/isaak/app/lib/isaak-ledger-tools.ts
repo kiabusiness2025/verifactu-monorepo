@@ -230,6 +230,20 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'isaak_summarize_aeat_inbox',
+    description:
+      'Genera un resumen IA de las notificaciones AEAT (DEH) recibidas en los últimos N días + cambios censales detectados. Útil cuando el usuario pregunta "qué ha pasado esta semana con mi AEAT" o "tengo algo pendiente". Devuelve texto en español listo para mostrar.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        days: {
+          type: 'number',
+          description: 'Ventana en días hacia atrás (default 7, máx 90).',
+        },
+      },
+    },
+  },
+  {
     name: 'isaak_validate_vat_intracom',
     description:
       'Valida un NIF-IVA intracomunitario contra el VIES de la Comisión Europea (Company Intelligence ViesAdapter). Útil ANTES de emitir factura B2B intracomunitaria exenta del Art. 25 LIVA. Si el VIES dice que NO es válido, la operación debe llevar IVA español al 21%, no exenta.',
@@ -516,6 +530,49 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'record_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_summarize_aeat_inbox') {
+    const days = Math.max(
+      1,
+      Math.min(90, typeof args.days === 'number' ? args.days : 7),
+    );
+    try {
+      // Lazy import: el módulo carga @verifactu/utils (callLLM) y romperíamos
+      // los unit tests del registry si lo importáramos arriba de forma
+      // estática (babel-jest no procesa la sintaxis TS de session.ts).
+      const { generateWeeklySummary } = await import('./aeat-weekly-summary');
+      const result = await generateWeeklySummary({
+        tenantId: ctx.tenantId,
+        windowDays: days,
+      });
+      if (!result.generated) {
+        return {
+          ok: true,
+          generated: false,
+          notificationsConsidered: result.notificationsConsidered,
+          censusChangesConsidered: result.censusChangesConsidered,
+          message:
+            result.notificationsConsidered === 0 && result.censusChangesConsidered === 0
+              ? `No hay notificaciones AEAT ni cambios censales en los últimos ${days} días.`
+              : 'Hay eventos pero no se ha podido generar el resumen IA. Revisa el buzón manualmente.',
+        };
+      }
+      return {
+        ok: true,
+        generated: true,
+        notificationsConsidered: result.notificationsConsidered,
+        censusChangesConsidered: result.censusChangesConsidered,
+        summary: result.summary,
+        message: `Resumen IA generado (${result.notificationsConsidered} notificaciones, ${result.censusChangesConsidered} cambios censales).`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'summary_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }

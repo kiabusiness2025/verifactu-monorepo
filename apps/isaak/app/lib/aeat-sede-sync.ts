@@ -28,6 +28,7 @@ import {
   type CensusChange,
   type NotificationSeverity,
 } from './aeat-sede-diff';
+import { parseJustificanteTitle } from './aeat-justificante-parser';
 import { createAlert } from './isaak-alert-service';
 
 export type AeatSyncResult = {
@@ -38,6 +39,7 @@ export type AeatSyncResult = {
     persisted: number;
     alertsCreated: number;
     criticalCount: number;
+    justificantesLinked: number;
   };
   census: {
     snapshotInserted: boolean;
@@ -59,6 +61,7 @@ async function syncNotifications(
       persisted: 0,
       alertsCreated: 0,
       criticalCount: 0,
+      justificantesLinked: 0,
       error: pull.error ?? 'unknown',
     };
   }
@@ -72,11 +75,12 @@ async function syncNotifications(
 
   let criticalCount = 0;
   let alertsCreated = 0;
+  let justificantesLinked = 0;
 
   for (const n of fresh) {
     const severity = classifyNotificationSeverity(n);
     if (severity === 'critical') criticalCount++;
-    await prisma.isaakAeatNotification.create({
+    const created = await prisma.isaakAeatNotification.create({
       data: {
         tenantId,
         externalId: n.id,
@@ -89,7 +93,18 @@ async function syncNotifications(
         alertSent: severity !== 'normal',
         alertSentAt: severity !== 'normal' ? new Date() : null,
       },
+      select: { id: true },
     });
+
+    // C-A3: si la notificación es un justificante de presentación,
+    // intenta enlazarla con el IsaakTaxReturn correspondiente.
+    const linked = await tryLinkJustificanteToTaxReturn({
+      tenantId,
+      notificationDbId: created.id,
+      notificationTitle: n.title,
+    });
+    if (linked) justificantesLinked++;
+
     if (severity !== 'normal') {
       try {
         await createAlert({
@@ -118,7 +133,50 @@ async function syncNotifications(
     persisted: fresh.length,
     alertsCreated,
     criticalCount,
+    justificantesLinked,
   };
+}
+
+// C-A3 — intenta enlazar una notificación tipo "Justificante de
+// presentación modelo X - YT YYYY" con el IsaakTaxReturn correspondiente,
+// actualizando attachmentUrl con la URL/identificador interno de la
+// notificación. Solo enlaza si confidence ∈ {high, medium} y no había
+// attachmentUrl previo.
+async function tryLinkJustificanteToTaxReturn(args: {
+  tenantId: string;
+  notificationDbId: string;
+  notificationTitle: string;
+}): Promise<boolean> {
+  const parsed = parseJustificanteTitle(args.notificationTitle);
+  if (!parsed || parsed.confidence === 'low') return false;
+
+  const taxReturn = await prisma.isaakTaxReturn.findUnique({
+    where: {
+      tenantId_model_period: {
+        tenantId: args.tenantId,
+        model: parsed.model,
+        period: parsed.period,
+      },
+    },
+    select: { id: true, attachmentUrl: true, status: true },
+  });
+  if (!taxReturn || taxReturn.attachmentUrl) return false;
+
+  // URL interna apuntando al endpoint que sirve el PDF del justificante.
+  // El endpoint real (sede AEAT) lo descargará bajo demanda usando el
+  // cert mTLS del tenant cuando se construya en una próxima fase.
+  const attachmentUrl = `/api/isaak/sede/notifications/${args.notificationDbId}/pdf`;
+
+  await prisma.isaakTaxReturn.update({
+    where: { id: taxReturn.id },
+    data: {
+      attachmentUrl,
+      // Si AEAT acepta = automáticamente status='accepted' cuando el
+      // tax return estaba en 'presented'.
+      status: taxReturn.status === 'presented' ? 'accepted' : taxReturn.status,
+    },
+  });
+  return true;
 }
 
 function parseAeatDate(s: string): Date {
@@ -273,6 +331,7 @@ export async function syncAeatSedeForTenant(
         persisted: 0,
         alertsCreated: 0,
         criticalCount: 0,
+        justificantesLinked: 0,
       };
     }),
     syncCensus(tenantId).catch((err) => {
@@ -292,6 +351,7 @@ export async function syncAeatSedeForTenant(
       persisted: notifResult.persisted,
       alertsCreated: notifResult.alertsCreated,
       criticalCount: notifResult.criticalCount,
+      justificantesLinked: notifResult.justificantesLinked,
     },
     census: {
       snapshotInserted: censusResult.snapshotInserted,

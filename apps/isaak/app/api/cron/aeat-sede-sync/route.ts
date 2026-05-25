@@ -49,6 +49,7 @@ export async function GET(req: NextRequest) {
       totalNew: 0,
       criticalCount: 0,
       alertsCreated: 0,
+      justificantesLinked: 0,
     },
     census: {
       snapshotsInserted: 0,
@@ -65,6 +66,7 @@ export async function GET(req: NextRequest) {
       summary.notifications.totalNew += r.notifications.persisted;
       summary.notifications.criticalCount += r.notifications.criticalCount;
       summary.notifications.alertsCreated += r.notifications.alertsCreated;
+      summary.notifications.justificantesLinked += r.notifications.justificantesLinked;
       if (r.census.snapshotInserted) summary.census.snapshotsInserted++;
       summary.census.changesDetected += r.census.changesDetected;
       summary.census.alertsCreated += r.census.alertsCreated;
