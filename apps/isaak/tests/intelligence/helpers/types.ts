@@ -3,7 +3,8 @@ export type GoldenCategory =
   | 'no-clarify'
   | 'no-hallucination'
   | 'multi-turn'
-  | 'tool-use';
+  | 'tool-use'
+  | 'sub-agent';
 
 export type GoldenTurn = {
   user: string;

@@ -24,6 +24,7 @@ export function loadAllFixtures(): GoldenFixture[] {
     'no-hallucination',
     'multi-turn',
     'tool-use',
+    'sub-agent',
   ];
   return categories.flatMap((cat) => loadFixturesByCategory(cat));
 }

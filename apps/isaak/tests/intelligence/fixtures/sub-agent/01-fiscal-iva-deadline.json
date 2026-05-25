@@ -1,0 +1,12 @@
+{
+  "id": "subagent-fiscal-iva-deadline-01",
+  "category": "tool-use",
+  "description": "Pregunta fiscal compleja: el agente fiscal debe responder citando el modelo 303 y el plazo exacto",
+  "query": "¿Cuándo termina el plazo para presentar el IVA del segundo trimestre y qué modelo uso?",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "responseContains": ["303", "20 de julio"],
+    "minJudgeScore": 7
+  }
+}
