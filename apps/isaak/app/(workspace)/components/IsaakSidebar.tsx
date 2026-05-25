@@ -80,6 +80,7 @@ const NAV_GROUPS = [
       { href: '/gastos', label: 'Gastos', icon: Receipt },
       { href: '/informes', label: 'Informes', icon: FileBarChart2 },
       { href: '/auditoria', label: 'Auditoría', icon: ShieldAlert },
+      { href: '/sede', label: 'Buzón AEAT', icon: Mail, badgeKind: 'aeat-pending' as const },
       { href: '/banking', label: 'Banking', icon: Landmark },
     ],
   },
@@ -174,6 +175,37 @@ export default function IsaakSidebar({
   const [loggingOut, setLoggingOut] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  // C-A — badge buzón AEAT: poll /api/isaak/sede/pending-count cada 5 min
+  const [aeatPending, setAeatPending] = useState<{ pending: number; critical: number }>(
+    { pending: 0, critical: 0 },
+  );
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/isaak/sede/pending-count', {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { pending?: number; critical?: number };
+        if (!cancelled) {
+          setAeatPending({
+            pending: data.pending ?? 0,
+            critical: data.critical ?? 0,
+          });
+        }
+      } catch {
+        // fail-silent — el badge no es crítico
+      }
+    };
+    void fetchCount();
+    const id = window.setInterval(fetchCount, 5 * 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem('isaak-sidebar-collapsed');
@@ -290,23 +322,61 @@ export default function IsaakSidebar({
                 )}
               </div>
             )}
-            {group.items.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                title={collapsed ? label : undefined}
-                className={`flex h-8 items-center rounded-lg text-[12px] font-medium transition ${
-                  collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
-                } ${
-                  isActive(href)
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-                }`}
-              >
-                <Icon size={15} />
-                {!collapsed && label}
-              </Link>
-            ))}
+            {group.items.map((item) => {
+              const { href, label, icon: Icon } = item;
+              const badgeKind = 'badgeKind' in item ? item.badgeKind : undefined;
+              const badgeCount =
+                badgeKind === 'aeat-pending' ? aeatPending.pending : 0;
+              const badgeUrgent =
+                badgeKind === 'aeat-pending' && aeatPending.critical > 0;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  title={
+                    collapsed
+                      ? badgeCount > 0
+                        ? `${label} · ${badgeCount} pendientes`
+                        : label
+                      : undefined
+                  }
+                  className={`flex h-8 items-center rounded-lg text-[12px] font-medium transition ${
+                    collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
+                  } ${
+                    isActive(href)
+                      ? 'bg-white/10 text-white'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  }`}
+                >
+                  <span className="relative inline-flex items-center justify-center">
+                    <Icon size={15} />
+                    {collapsed && badgeCount > 0 && (
+                      <span
+                        className={`absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[8px] font-bold text-white ${
+                          badgeUrgent ? 'bg-rose-500' : 'bg-blue-500'
+                        }`}
+                      >
+                        {badgeCount > 9 ? '9+' : badgeCount}
+                      </span>
+                    )}
+                  </span>
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1">{label}</span>
+                      {badgeCount > 0 && (
+                        <span
+                          className={`ml-auto inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1.5 text-[9px] font-bold text-white ${
+                            badgeUrgent ? 'bg-rose-500' : 'bg-blue-500'
+                          }`}
+                        >
+                          {badgeCount > 99 ? '99+' : badgeCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         ))}
       </nav>
