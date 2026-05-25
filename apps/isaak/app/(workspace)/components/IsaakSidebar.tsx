@@ -30,6 +30,7 @@ import {
   ShieldCheck,
   ShieldAlert,
   Sparkles,
+  IdCard,
   TrendingUp,
   UserCircle2,
   Users,
@@ -88,6 +89,7 @@ const NAV_GROUPS = [
     label: 'Empresa',
     items: [
       { href: '/contactos', label: 'Contactos', icon: Users },
+      { href: '/perfil-fiscal', label: 'Perfil fiscal', icon: IdCard },
       { href: '/equipo', label: 'Equipo', icon: Users2 },
       { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
       { href: '/fiscal', label: 'Fiscal', icon: ShieldCheck },
