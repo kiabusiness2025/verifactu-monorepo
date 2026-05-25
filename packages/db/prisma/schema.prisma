@@ -1924,6 +1924,48 @@ model IsaakLongTermMemory {
   @@map("isaak_long_term_memory")
 }
 
+// ==================== ISAAK: AEAT CORPUS (F13 — Inspector Capa 3 RAG) ====================
+//
+// Cuerpo de conocimiento fiscal compartido (Manual IRPF, Manual IVA,
+// INFORMA, BOE refundidos, FAQs sede AEAT) embebido en pgvector.
+// Es público: no se filtra por tenant_id (a diferencia de
+// isaak_long_term_memory, que es por-cliente y aislamiento estricto).
+//
+// Cada chunk lleva:
+//   * sourceId estable (Manual_IRPF_2026, Manual_IVA_2026, INFORMA_V0001, ...)
+//   * sourceType: 'manual_aeat' | 'boe' | 'informa' | 'sede_faq' | 'doctrina_dgt'
+//   * sourceUrl (URL canónica para citar al usuario)
+//   * articleRef (cita normativa, p.ej. "Art. 96.Uno.5º LIVA" o "BOE-A-...")
+//   * ingestedAt (cuándo se incorporó al corpus → permite mostrar
+//     "información válida a fecha X" al usuario)
+
+model IsaakAeatCorpus {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  sourceId   String @map("source_id")
+  sourceType String @map("source_type")
+  sourceUrl  String @map("source_url") @db.Text
+  articleRef String? @map("article_ref")
+
+  title      String? @db.Text
+  content    String  @db.Text
+  // pgvector column managed via raw migration; Unsupported() makes Prisma
+  // preserve it across migrate ops (same pattern as IsaakLongTermMemory).
+  embedding  Unsupported("vector(1536)")?
+
+  chunkIndex Int      @map("chunk_index")
+  tokenCount Int      @default(0) @map("token_count")
+
+  ingestedAt DateTime @default(now()) @map("ingested_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([sourceId, chunkIndex])
+  @@index([sourceType])
+  @@index([sourceId])
+  @@index([ingestedAt(sort: Desc)])
+  @@map("isaak_aeat_corpus")
+}
+
 // ==================== ISAAK: CHAT METRICS (F1) ====================
 
 model IsaakChatMetric {
