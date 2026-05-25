@@ -135,7 +135,7 @@ const CONNECTORS: Connector[] = [
     name: 'Tu software de gestión',
     tag: 'HotelGest · Inmovilla · Revo · Nubimed',
     icon: <Database className="h-5 w-5 text-[#2361d8]" />,
-    desc: 'Isaak obtiene datos de tu software habitual y los convierte en asesoramiento real. Sin cambiar de programa, sin exportar nada.',
+    desc: 'Isaak obtiene datos de tu software sectorial y los convierte en asesoramiento fiscal real. Sin cambiar de programa, sin exportar nada. Incluye Ficha Empresa automática con perfil fiscal y alertas de cumplimiento.',
     example: '¿Cuánto hemos facturado este mes y qué IVA tengo que declarar?',
   },
   {
@@ -216,7 +216,7 @@ const PRICE_TEASER = [
     id: 'starter',
     name: 'Starter',
     price: '19 €',
-    tagline: 'Holded conectado · Gestión financiera en tiempo real',
+    tagline: 'Software sectorial · Holded · Gestión financiera en tiempo real',
     cta: 'Empezar ahora',
     href: '/signup?plan=starter',
     highlight: false,
@@ -246,7 +246,7 @@ const PRICE_TEASER = [
 export const landingMetadata: Metadata = {
   title: 'Isaak | IA empresarial que libera el 80% de tu tiempo',
   description:
-    'Isaak es la IA que gestiona tu empresa en tiempo real. Conecta Holded, banca, Gmail y documentos para que el empresario dirija en lugar de administrar. Empieza gratis.',
+    'Isaak es la capa de inteligencia encima del software que ya usas: HotelGest, Revo, Nubimed, Holded. Gestión fiscal, alertas proactivas y CFO digital en un chat. Empieza gratis.',
 };
 
 export default function IsaakHomeLanding() {
@@ -859,7 +859,7 @@ export default function IsaakHomeLanding() {
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             description:
-              'IA empresarial que conecta Holded, banca, Gmail y documentos para que el empresario dirija en lugar de administrar.',
+              'Copiloto fiscal y contable de IA para la pyme española. Capa de inteligencia encima de HotelGest, Revo, Nubimed, Holded y banca. Gestión fiscal, alertas proactivas y CFO digital en un chat.',
             offers: {
               '@type': 'Offer',
               price: '0',

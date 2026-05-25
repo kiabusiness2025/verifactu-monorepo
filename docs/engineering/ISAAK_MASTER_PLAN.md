@@ -364,3 +364,50 @@ ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 | Chift           | ERPs genéricos  | Bloqueada                | ⏸️ Suspendida    |
 
 **Plan completo**: `docs/engineering/SECTOR_INTEGRATIONS_PLAN.md`
+
+---
+
+## ✅ Company Intelligence — Ficha Empresa (2026-05-25)
+
+Módulo TypeScript completo que construye perfiles fiscales-mercantiles automáticos de empresas a partir de datos del usuario y fuentes públicas oficiales. Se integra en el flujo de onboarding, el chat y el módulo de alertas de Isaak.
+
+**Doc completo**: `docs/isaak/COMPANY_INTELLIGENCE.md`
+
+### Arquitectura del módulo
+
+```
+company-intelligence-types.ts       — tipos: CompanyProfile, CompanyProfileInput, CompanyMatch…
+company-intelligence-normalizers.ts — normalizeLegalName, detectLegalForm, validateNifFormat (NIF/NIE/CIF con checksum)
+company-intelligence-scoring.ts     — scoreCompanyMatch() Jaro-Winkler + NIF/VAT + provincia (0–100)
+company-intelligence-sources.ts     — CompanyDataSourceAdapter + 5 adapters (UserProvided, BORME, VIES, GLEIF, PLACSP)
+company-intelligence-service.ts     — CompanyIntelligenceService.buildProfile() + inferencia contribuyente + obligaciones
+company-intelligence-rules.ts       — 9 reglas evaluables: C001-C007 + R040A/R040B
+__tests__/company-intelligence.test.ts — 88 tests unitarios (todos verdes)
+```
+
+### Principios de diseño
+
+- **Trazabilidad total**: cada dato guarda `source`, `retrievedAt`, `confidence` — nada sin provenance
+- **Sin scraping**: solo fuentes oficiales (BORME, VIES, GLEIF, PLACSP) y open data
+- **Adapters mockeables**: `fetchFn` inyectable → tests 100% sin red
+- **Inferencia prudente**: obligaciones fiscales son "probables", nunca definitivas
+
+### Reglas del motor
+
+| ID    | Severidad          | Condición                                              | Notas                        |
+| ----- | ------------------ | ------------------------------------------------------ | ---------------------------- |
+| C001  | ERROR              | Falta NIF                                              | —                            |
+| C002  | ERROR              | Formato NIF inválido (checksum)                        | Cubre NIF/NIE/CIF            |
+| C003  | WARNING            | Forma jurídica no identificada                         | —                            |
+| C004  | WARNING            | Régimen IVA no declarado                               | —                            |
+| C005  | WARNING            | Territorio fiscal no declarado                         | Afecta qué hacienda gestiona |
+| C006  | WARNING            | Match mercantil de baja confianza                      | —                            |
+| C007  | WARNING            | VAT intracomunitario inválido en VIES                  | —                            |
+| R040A | INFO/WARNING/ERROR | VeriFactu/SIF · Sociedades desde 2027-01-01            | Severidad progresiva         |
+| R040B | INFO/WARNING/ERROR | VeriFactu/SIF · Autónomos y entidades desde 2027-07-01 | Severidad progresiva         |
+
+### Tests
+
+- **88 tests** en `app/lib/__tests__/company-intelligence.test.ts`
+- **279 tests totales** tras la integración (base 191 + 88 nuevos), todos verdes
+- Cobertura completa: normalizers, scoring, adapters (mocked), service, rules

@@ -143,6 +143,23 @@ IsaakSiteChrome subtitle + footer fix · pricing AEAT section (Sede Electrónica
 
 ---
 
+### ✅ Company Intelligence — Ficha Empresa (2026-05-25)
+
+Módulo que construye automáticamente la ficha fiscal-mercantil de cada empresa cliente, combinando datos del usuario con fuentes oficiales (VIES, GLEIF, BORME, PLACSP).
+
+**Valor de producto:**
+
+- Onboarding sin fricción: Isaak infiere forma jurídica, tipo de contribuyente y régimen IVA desde el NIF y el nombre
+- Alertas automáticas cuando faltan datos críticos (NIF, territorio fiscal, régimen IVA)
+- Reglas VeriFactu/SIF (R040A/R040B) con cuenta atrás a 2027-01-01 para sociedades y 2027-07-01 para autónomos
+- Trazabilidad completa: cada dato tiene fuente, fecha de consulta y nivel de confianza
+- Integrado con el chat: Isaak usa el perfil para personalizar el asesoramiento fiscal por empresa
+
+**Ficheros**: `app/lib/company-intelligence-*.ts` (6 ficheros + 88 tests)  
+**Doc técnica**: `docs/isaak/COMPANY_INTELLIGENCE.md`
+
+---
+
 ### ✅ P3-1 Modo Asesoría (2026-05-19, commit 00d65830)
 
 - `AdvisorClient` Prisma model — alias, NIF, Holded API key cifrada AES-256-GCM, is_active, notas
