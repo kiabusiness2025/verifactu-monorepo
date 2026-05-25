@@ -1,0 +1,12 @@
+{
+  "id": "subagent-gestion-list-clients-05",
+  "category": "tool-use",
+  "description": "Listar clientes: el agente gestion debe invocar holded_list_contacts",
+  "query": "Muéstrame mis 10 clientes principales",
+  "context": { "authenticated": true, "holdedConnected": true },
+  "expected": {
+    "shouldClarify": false,
+    "toolsUsed": ["holded_list_contacts"],
+    "minJudgeScore": 6
+  }
+}

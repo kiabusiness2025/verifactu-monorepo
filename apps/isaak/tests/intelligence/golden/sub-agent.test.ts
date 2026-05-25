@@ -10,6 +10,21 @@ import { pickSubAgent } from '../../../app/lib/isaak-sub-agents';
 import { runIsaakSingleTurn } from '../helpers/run-isaak';
 import { isGoldenLiveMode } from '../helpers/llm-judge';
 
+// Expected sub-agent per fixture id prefix. Keeps the assertion explicit
+// without coupling the fixture JSON to a runtime field.
+const EXPECTED_AGENT_PREFIXES: Array<['fiscal' | 'banking' | 'gestion', string]> = [
+  ['fiscal', 'subagent-fiscal'],
+  ['banking', 'subagent-banking'],
+  ['gestion', 'subagent-gestion'],
+];
+
+function expectedAgentFor(id: string): 'fiscal' | 'banking' | 'gestion' | null {
+  for (const [agent, prefix] of EXPECTED_AGENT_PREFIXES) {
+    if (id.startsWith(prefix)) return agent;
+  }
+  return null;
+}
+
 describe('golden / sub-agent routing (offline)', () => {
   const fixtures = loadFixturesByCategory('sub-agent');
 
@@ -18,15 +33,19 @@ describe('golden / sub-agent routing (offline)', () => {
   });
 
   test.each(fixtures.map((f) => [f.id, f]))(
-    '%s routes to fiscal sub-agent',
+    '%s routes to the expected sub-agent',
     (_id, fixture) => {
       if (!fixture.query) throw new Error(`Fixture ${fixture.id} missing query`);
+      const expected = expectedAgentFor(fixture.id);
+      if (!expected) {
+        throw new Error(`Fixture ${fixture.id} has no expected sub-agent mapping`);
+      }
       const agent = pickSubAgent({
         message: fixture.query,
-        classifierCategories: ['holded'],
+        classifierCategories: ['holded', 'banking'],
         hasWriteIntent: false,
       });
-      expect(agent).toBe('fiscal');
+      expect(agent).toBe(expected);
     }
   );
 });

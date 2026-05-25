@@ -3,12 +3,14 @@
 // (Sonnet on the main /api/chat path) decides via classifier + intent rules
 // when to route to a sub-agent instead of answering directly.
 //
-// F8a ships the fiscal agent only. Banking and gestion agents follow the
-// same template and land in subsequent PRs.
+// F8a/b/c ship three specialists:
+//   - fiscal:  IVA, IRPF, AEAT models, Verifactu — uses Holded tools only
+//   - banking: cash, PSD2 balances, reconciliation — uses banking tools only
+//   - gestion: invoicing ops, contacts, calendar, mail — Holded + Google + Microsoft
 
 import type { ToolCategory } from './isaak-intent-classifier-parser';
 
-export type SubAgentId = 'fiscal';
+export type SubAgentId = 'fiscal' | 'banking' | 'gestion';
 
 export type SubAgent = {
   id: SubAgentId;
@@ -46,16 +48,78 @@ PLAZOS HABITUALES (memorízalos):
 
 Si la fecha actual indica que un plazo está próximo (<14 días) o vencido, MENCIÓNALO en la respuesta sin que pregunten.`;
 
+export const ISAAK_BANKING_AGENT_PROMPT = `Eres el agente bancario especializado de Isaak. Tu dominio: saldos en cuentas conectadas vía PSD2 (Enable Banking, Salt Edge), movimientos bancarios reales, tesorería operativa, previsión de caja a 30 días, conciliación entre transacciones bancarias y gastos contables.
+
+Cuando te invoquen, eres una versión más profunda y precisa de Isaak SOLO en estos temas. Para preguntas fuera de tu dominio (IVA/IRPF, ventas en ERP, calendario), dilo y sugiere que el usuario reformule.
+
+PRINCIPIOS (orden estricto):
+1. NO INVENTES SALDOS NI MOVIMIENTOS. Invoca SIEMPRE banking_list_accounts / banking_list_transactions / banking_get_cash_summary antes de citar cifras. Si no hay PSD2 conectado, dilo y propón conectar.
+2. CONTEXTO PSD2. Recuerda que las cuentas vienen de Enable Banking (default) o Salt Edge (fallback). Si la conexión está caducada o el banco corta acceso, avisa al usuario.
+3. ENTRY_REFERENCE como id de transacción. Los IDs internos de Salt Edge/Enable son volátiles entre sesiones — usa entry_reference cuando referencies una transacción concreta.
+4. PRECISIÓN MONETARIA. Cifras a 2 decimales con € al final (formato europeo: 1.234,56 €). Indica la divisa SOLO si NO es EUR.
+5. CONCILIACIÓN HONESTA. Cuando uses banking_get_reconciliation_status no propongas matching automático sin avisar — sugiere al usuario que revise antes de marcar como conciliado.
+
+ESTILO: español claro, profesional, vocabulario bancario y de tesorería (saldo disponible vs contable, abono/cargo, conciliación, runway, working capital).
+
+INSIGHTS HABITUALES que puedes ofrecer cuando aporten valor:
+- Concentración de ingresos: ¿cuántos clientes generaron el 80% de cobros últimos 90d?
+- Gap entre saldo bancario real y caja Holded: indica desincronización
+- Próximos pagos previstos vs liquidez: alerta si runway < 30 días
+- Suscripciones recurrentes detectadas (mismo importe + mismo proveedor + cadencia mensual)
+
+Si la pregunta entra en planificación financiera, refinanciación, gestión de circulante avanzada o productos derivados → recomienda asesor financiero o gestor.`;
+
+export const ISAAK_GESTION_AGENT_PROMPT = `Eres el agente de gestión operativa de Isaak. Tu dominio: facturación día a día (crear/enviar facturas, presupuestos, albaranes), gestión de contactos (clientes, proveedores), catálogo de productos y servicios, calendario (Google/Outlook), email (Gmail/Outlook), proyectos y equipo.
+
+Cuando te invoquen, eres la versión operativa de Isaak. Para preguntas fiscales profundas, deriva al agente fiscal mentalmente y responde solo el lado operativo. Para tesorería bancaria, deriva al agente bancario.
+
+PRINCIPIOS (orden estricto):
+1. NO INVENTES NOMBRES DE CLIENTE NI PRODUCTOS. Invoca holded_list_contacts / holded_list_products SIEMPRE antes de citar cualquier entidad. Si no hay coincidencia, di "no encontré".
+2. CONFIRMA ANTES DE ESCRIBIR. Para crear factura, registrar pago o enviar email, RESUME en una frase lo que vas a hacer y pide "sí, confirma" explícito. El judge GPT-4o-mini bloqueará writes sin confirmación de todas formas, pero el flujo natural es ofrecer un resumen primero.
+3. PERSONAS REALES. Cuando el usuario diga "mi cliente Acme" o "el proveedor X", busca primero en Holded para verificar que existe; si no, pregunta si quiere crearlo.
+4. CALENDARIO: Cuando ofrezcas crear un evento, indica zona horaria explícita (Europe/Madrid por defecto) y permite invitados.
+5. EMAILS: en redacción de emails a clientes, mantén tono profesional cercano, en castellano, sin emojis. Cita números de factura concretos si están en el contexto.
+
+ESTILO: español claro, cercano, accionable. Listas con guiones cuando hay múltiples pasos. Sin tecnicismos contables salvo que el usuario los pida.
+
+ATAJOS HABITUALES:
+- "Factura X a Y por Z €" → invoke holded_create_invoice tras confirmación con concepto explícito
+- "Recuérdale al cliente Y" → propón email con asunto y borrador; espera "sí" antes de holded_send_document
+- "¿Cuándo quedé con Z?" → busca en calendario por nombre + 30 días hacia adelante/atrás
+- "Mándame el PDF de la factura N" → holded_get_document + sugiere descarga
+
+Si la operación toca varios módulos (factura + email + calendario), descompón en pasos y pide confirmación entre fases.`;
+
 const REGISTRY: Record<SubAgentId, SubAgent> = {
   fiscal: {
     id: 'fiscal',
     label: 'Agente fiscal',
     description: 'Especialista en IVA, IRPF, modelos AEAT y obligaciones fiscales.',
     systemPrompt: ISAAK_FISCAL_AGENT_PROMPT,
-    toolCategories: ['holded'], // fiscal queries need Holded data (invoices, P&L, contacts)
+    toolCategories: ['holded'],
     maxIterations: 8,
     maxOutputTokens: 1500,
-    temperature: 0.3, // lower than the orchestrator — fiscal precision matters
+    temperature: 0.3,
+  },
+  banking: {
+    id: 'banking',
+    label: 'Agente bancario',
+    description: 'Especialista en tesorería, saldos PSD2, conciliación y previsión de caja.',
+    systemPrompt: ISAAK_BANKING_AGENT_PROMPT,
+    toolCategories: ['banking', 'holded'], // banking tools primary, holded for cross-checks
+    maxIterations: 8,
+    maxOutputTokens: 1300,
+    temperature: 0.35,
+  },
+  gestion: {
+    id: 'gestion',
+    label: 'Agente de gestión',
+    description: 'Especialista en operativa diaria: facturación, contactos, productos, calendario, email.',
+    systemPrompt: ISAAK_GESTION_AGENT_PROMPT,
+    toolCategories: ['holded', 'google', 'microsoft'],
+    maxIterations: 10, // gestion can chain more tools (find contact → create invoice → send PDF)
+    maxOutputTokens: 1400,
+    temperature: 0.45,
   },
 };
 
@@ -91,14 +155,60 @@ const FISCAL_KEYWORDS = [
   'autonomo', 'autónomo', 'pyme', 'sociedad limitada', 'patrimonial',
 ];
 
-const FISCAL_KEYWORD_SET = new Set(FISCAL_KEYWORDS.map((k) => k.toLowerCase()));
+const BANKING_KEYWORDS = [
+  // Money in bank
+  'saldo', 'saldos', 'cuenta bancaria', 'cuentas bancarias',
+  'banco', 'bancos', 'tesoreria', 'tesorería', 'liquidez',
+  // Movements
+  'movimiento bancario', 'movimientos bancarios', 'transaccion bancaria',
+  'transacción bancaria', 'extracto', 'extractos',
+  'transferencia', 'transferencias',
+  'cobro bancario', 'cobros bancarios', 'cargo',
+  // Reconciliation + forecast (verb + noun, with/without accent)
+  'conciliar', 'conciliacion', 'conciliación', 'reconciliar', 'reconciliación',
+  'prevision de caja', 'previsión de caja', 'cash flow', 'cashflow',
+  'flujo de caja', 'runway',
+  // PSD2
+  'psd2', 'open banking', 'enable banking', 'salt edge',
+];
 
-export function detectFiscalIntent(message: string): boolean {
-  const normalized = message.toLowerCase();
-  for (const kw of FISCAL_KEYWORD_SET) {
+const GESTION_KEYWORDS = [
+  // CRM
+  'cliente', 'clientes', 'proveedor', 'proveedores', 'contacto', 'contactos',
+  // Sales ops
+  'presupuesto', 'presupuestos', 'albaran', 'albarán', 'albaranes',
+  'pedido', 'pedidos',
+  // Catalog
+  'producto', 'productos', 'catalogo', 'catálogo', 'servicio', 'servicios',
+  // Calendar / mail
+  'calendario', 'agenda', 'reunion', 'reunión', 'cita',
+  'gmail', 'outlook', 'email', 'correo', 'bandeja',
+  // Project / team
+  'proyecto', 'proyectos', 'empleado', 'empleados', 'equipo',
+  'recuerda', 'recordatorio',
+];
+
+const FISCAL_KEYWORD_SET = new Set(FISCAL_KEYWORDS.map((k) => k.toLowerCase()));
+const BANKING_KEYWORD_SET = new Set(BANKING_KEYWORDS.map((k) => k.toLowerCase()));
+const GESTION_KEYWORD_SET = new Set(GESTION_KEYWORDS.map((k) => k.toLowerCase()));
+
+function matchesAny(normalized: string, set: Set<string>): boolean {
+  for (const kw of set) {
     if (normalized.includes(kw)) return true;
   }
   return false;
+}
+
+export function detectFiscalIntent(message: string): boolean {
+  return matchesAny(message.toLowerCase(), FISCAL_KEYWORD_SET);
+}
+
+export function detectBankingIntent(message: string): boolean {
+  return matchesAny(message.toLowerCase(), BANKING_KEYWORD_SET);
+}
+
+export function detectGestionIntent(message: string): boolean {
+  return matchesAny(message.toLowerCase(), GESTION_KEYWORD_SET);
 }
 
 export type RouteToSubAgentInput = {
@@ -108,10 +218,30 @@ export type RouteToSubAgentInput = {
 };
 
 // Returns the sub-agent ID to route to, or null for the default path.
-// F8a only routes reads to a sub-agent. Write intents stay on the
-// orchestrator path so the judge guardrail keeps applying as in F4.
+// Write intents stay on the orchestrator path so the judge guardrail
+// keeps applying as in F4 — except for gestion writes, which the
+// gestion agent is explicitly designed to handle (it knows to ask for
+// confirmation before invoking writes; the judge still gates execution).
+//
+// Priority order: fiscal > banking > gestion. Fiscal queries occasionally
+// mention 'cliente' (gestion keyword) but the fiscal interpretation wins;
+// banking before gestion because 'cliente' + 'pago' could be either
+// but bank-related queries are more sensitive to wrong routing.
 export function pickSubAgent(input: RouteToSubAgentInput): SubAgentId | null {
-  if (input.hasWriteIntent) return null;
-  if (!detectFiscalIntent(input.message)) return null;
-  return 'fiscal';
+  const msg = input.message.toLowerCase();
+
+  if (matchesAny(msg, FISCAL_KEYWORD_SET)) {
+    return input.hasWriteIntent ? null : 'fiscal';
+  }
+
+  if (matchesAny(msg, BANKING_KEYWORD_SET)) {
+    return input.hasWriteIntent ? null : 'banking';
+  }
+
+  if (matchesAny(msg, GESTION_KEYWORD_SET)) {
+    // gestion handles writes too — its prompt is built around the confirm flow
+    return 'gestion';
+  }
+
+  return null;
 }
