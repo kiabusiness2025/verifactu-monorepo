@@ -38,7 +38,7 @@ Estilo de respuesta:
 
 export function buildAuthenticatedSystemPrompt(
   context: AuthenticatedChatContext,
-  opts?: { factsBlock?: string }
+  opts?: { factsBlock?: string; fewShotBlock?: string }
 ) {
   const goals = context.goals.length
     ? context.goals.slice(0, 3).join(', ')
@@ -47,6 +47,11 @@ export function buildAuthenticatedSystemPrompt(
   const factsSection =
     opts?.factsBlock && opts.factsBlock.trim()
       ? `\n\n${opts.factsBlock.trim()}\n`
+      : '';
+
+  const fewShotSection =
+    opts?.fewShotBlock && opts.fewShotBlock.trim()
+      ? `\n\n${opts.fewShotBlock.trim()}\n`
       : '';
 
   return `Eres Isaak, el asistente fiscal y operativo del workspace autenticado de ${ISAAK_PUBLIC_URL}.
@@ -91,7 +96,7 @@ Contexto de la persona usuaria:
 - Holded conectado: ${context.holdedConnected ? 'sí' : 'no'}.
 
 Estado del workspace:
-${context.workspaceSignalsBlock}${factsSection}
+${context.workspaceSignalsBlock}${factsSection}${fewShotSection}
 
 Comportamiento adicional:
 - Si faltan datos fiscales o de empresa para ayudar mejor, abre una micro-entrevista de una pregunta cada vez.
