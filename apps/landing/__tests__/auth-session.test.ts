@@ -16,7 +16,8 @@
 
 // Mock firebase-admin antes de importar cualquier módulo que lo use.
 const mockVerifyIdToken = jest.fn();
-const mockAuth = jest.fn(() => ({ verifyIdToken: mockVerifyIdToken }));
+const mockGetUser = jest.fn();
+const mockAuth = jest.fn(() => ({ verifyIdToken: mockVerifyIdToken, getUser: mockGetUser }));
 const mockInitializeApp = jest.fn((config: unknown, name?: string) => ({
   name: name ?? '[DEFAULT]',
   auth: mockAuth,
@@ -47,7 +48,7 @@ jest.mock('@verifactu/db', () => ({
 
 // Mock utils de sesión.
 jest.mock('@verifactu/utils', () => ({
-  buildSessionCookieOptions: jest.fn(() => ({ httpOnly: true, maxAge: 28800 })),
+  buildSessionCookieOptions: jest.fn(() => ({ name: '__session', httpOnly: true, maxAge: 28800 })),
   readSessionSecret: jest.fn(() => 'test-secret'),
   signSessionToken: jest.fn(() => 'signed-token'),
 }));
@@ -78,7 +79,8 @@ describe('POST /api/auth/session', () => {
     // Variables de entorno mínimas para que el handler no lance en initFirebaseAdminApps.
     process.env.FIREBASE_ADMIN_PROJECT_ID = 'test-project';
     process.env.FIREBASE_ADMIN_CLIENT_EMAIL = 'test@test.iam.gserviceaccount.com';
-    process.env.FIREBASE_ADMIN_PRIVATE_KEY = '-----BEGIN PRIVATE KEY-----\\nFAKE\\n-----END PRIVATE KEY-----\\n';
+    process.env.FIREBASE_ADMIN_PRIVATE_KEY =
+      '-----BEGIN PRIVATE KEY-----\\nFAKE\\n-----END PRIVATE KEY-----\\n';
 
     // Importar después de setear mocks y env vars.
     const mod = await import('../app/api/auth/session/route');
@@ -109,6 +111,7 @@ describe('POST /api/auth/session', () => {
       email: 'test@example.com',
       name: 'Test User',
     });
+    mockGetUser.mockResolvedValue({ displayName: 'Test User' });
 
     const mockedUser = prisma.user as jest.Mocked<typeof prisma.user>;
     const mockedMembership = prisma.membership as jest.Mocked<typeof prisma.membership>;
