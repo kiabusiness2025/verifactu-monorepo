@@ -26,7 +26,7 @@ import {
   HOLDED_DOC_TYPES,
   type HoldedDocType,
 } from './isaak-ledger-holded-mapper';
-import { buildAuditSnapshotForTenant } from './isaak-audit-loader';
+import { loadAuditInputsForTenant } from './isaak-audit-loader';
 import { runAudit } from './inspector-aeat-audit';
 import { REPORT_TYPES, reportFilename, type ReportType } from './isaak-excel-export';
 import {
@@ -40,6 +40,14 @@ import {
 import { syncAeatSedeForTenant } from './aeat-sede-sync';
 import { prisma } from './prisma';
 import { ViesAdapter } from './company-intelligence-sources';
+import {
+  TAXPAYER_TYPES,
+  TERRITORIES,
+  VAT_REGIMES,
+  getTaxpayerProfile,
+  upsertTaxpayerProfile,
+  type TaxpayerProfileInput,
+} from './isaak-taxpayer-profile';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -227,6 +235,47 @@ export const LEDGER_CHAT_TOOLS = [
         },
       },
       required: ['model', 'period', 'amountDeclared'],
+    },
+  },
+  {
+    name: 'isaak_get_fiscal_profile',
+    description:
+      'Devuelve el perfil fiscal R000 del tenant (tipo de contribuyente, territorio, régimen IVA, sector, etc.) + completeness y campos pendientes. Útil para "qué tipo de empresa soy" o para saber si hace falta completar el wizard.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'isaak_set_fiscal_profile',
+    description:
+      'Actualiza el perfil fiscal R000 del tenant. Cuando el usuario indica explícitamente datos como "soy SL en Canarias con IGIC" o "tengo empleados", esta tool persiste el cambio. El Inspector AEAT usará el perfil actualizado en futuras auditorías.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        taxpayerType: {
+          type: ['string', 'null'],
+          enum: [...TAXPAYER_TYPES, null],
+          description: 'Tipo de contribuyente.',
+        },
+        territory: {
+          type: ['string', 'null'],
+          enum: [...TERRITORIES, null],
+          description: 'Territorio fiscal (común peninsular, Canarias=IGIC, foral País Vasco/Navarra, Ceuta/Melilla).',
+        },
+        vatRegime: {
+          type: ['string', 'null'],
+          enum: [...VAT_REGIMES, null],
+          description: 'Régimen de IVA.',
+        },
+        sector: { type: ['string', 'null'], description: 'Sector de actividad (hosteleria, consultoria, ecommerce, construccion, inmobiliario, transporte, formacion, sanidad, otros).' },
+        corporateTaxSubject: { type: ['boolean', 'null'] },
+        hasEmployees: { type: ['boolean', 'null'] },
+        hasRentWithholding: { type: ['boolean', 'null'] },
+        hasProfessionalInvoices: { type: ['boolean', 'null'] },
+        hasIntraEUOperations: { type: ['boolean', 'null'] },
+        hasRelatedParties: { type: ['boolean', 'null'] },
+        usesBillingSoftware: { type: ['boolean', 'null'] },
+        annualTurnover: { type: ['number', 'null'] },
+        notes: { type: ['string', 'null'] },
+      },
     },
   },
   {
@@ -535,6 +584,85 @@ export async function executeLedgerTool(
     }
   }
 
+  if (name === 'isaak_get_fiscal_profile') {
+    try {
+      const profile = await getTaxpayerProfile(ctx.tenantId);
+      const { evaluateProfile } = await import('./inspector-aeat-profile');
+      const snapshot = profile
+        ? {
+            taxpayerType: profile.taxpayerType,
+            territory: profile.territory,
+            vatRegime: profile.vatRegime,
+            sector: profile.sector,
+            corporateTaxSubject: profile.corporateTaxSubject,
+            hasEmployees: profile.hasEmployees,
+            hasRentWithholding: profile.hasRentWithholding,
+            hasProfessionalInvoices: profile.hasProfessionalInvoices,
+            hasIntraEUOperations: profile.hasIntraEUOperations,
+            hasRelatedParties: profile.hasRelatedParties,
+            usesBillingSoftware: profile.usesBillingSoftware,
+            annualTurnover: profile.annualTurnover
+              ? Number.parseFloat(profile.annualTurnover)
+              : null,
+          }
+        : null;
+      const report = evaluateProfile(snapshot);
+      return {
+        ok: true,
+        profile,
+        completeness: report.completeness,
+        gaps: report.gaps.map((g) => g.field),
+        message: profile
+          ? `Perfil fiscal: ${(report.completeness * 100).toFixed(0)}% completado.`
+          : 'Aún no has completado el perfil fiscal. Lanza el wizard R000 o usa isaak_set_fiscal_profile.',
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'get_profile_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_set_fiscal_profile') {
+    try {
+      const result = await upsertTaxpayerProfile({
+        tenantId: ctx.tenantId,
+        taxpayerType: args.taxpayerType as TaxpayerProfileInput['taxpayerType'],
+        territory: args.territory as TaxpayerProfileInput['territory'],
+        vatRegime: args.vatRegime as TaxpayerProfileInput['vatRegime'],
+        sector: (args.sector as string | null | undefined) ?? null,
+        corporateTaxSubject: (args.corporateTaxSubject as boolean | null | undefined) ?? null,
+        hasEmployees: (args.hasEmployees as boolean | null | undefined) ?? null,
+        hasRentWithholding: (args.hasRentWithholding as boolean | null | undefined) ?? null,
+        hasProfessionalInvoices: (args.hasProfessionalInvoices as boolean | null | undefined) ?? null,
+        hasIntraEUOperations: (args.hasIntraEUOperations as boolean | null | undefined) ?? null,
+        hasRelatedParties: (args.hasRelatedParties as boolean | null | undefined) ?? null,
+        usesBillingSoftware: (args.usesBillingSoftware as boolean | null | undefined) ?? null,
+        annualTurnover: (args.annualTurnover as number | null | undefined) ?? null,
+        notes: (args.notes as string | null | undefined) ?? null,
+        confirmedByUser: true,
+        confirmedBy: ctx.userId,
+        prefilledFromCi: false,
+      });
+      return {
+        ok: true,
+        id: result.id,
+        isNew: result.isNew,
+        message: result.isNew
+          ? 'Perfil fiscal creado. El Inspector AEAT lo usará en futuras auditorías.'
+          : 'Perfil fiscal actualizado.',
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'set_profile_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
   if (name === 'isaak_summarize_aeat_inbox') {
     const days = Math.max(
       1,
@@ -747,12 +875,12 @@ export async function executeLedgerTool(
     }
     const scope = (args.scope as 'monthly_close' | 'quarterly_close' | 'annual_close' | 'on_demand' | undefined) ?? 'on_demand';
     try {
-      const snapshot = await buildAuditSnapshotForTenant({
+      const { snapshot, profile } = await loadAuditInputsForTenant({
         tenantId: ctx.tenantId,
         periodFrom,
         periodTo,
       });
-      const report = runAudit({ scope, snapshot });
+      const report = runAudit({ scope, snapshot, profile });
       // Resumen compacto para que el LLM no tenga que parsear estructuras grandes.
       const summary = {
         period: { from: periodFrom, to: periodTo },

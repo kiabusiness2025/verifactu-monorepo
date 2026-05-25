@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { buildAuditSnapshotForTenant } from '@/app/lib/isaak-audit-loader';
+import { loadAuditInputsForTenant } from '@/app/lib/isaak-audit-loader';
 import { runAudit } from '@/app/lib/inspector-aeat-audit';
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -64,13 +64,13 @@ export async function POST(req: NextRequest) {
   const scope = scopeRaw as Scope;
 
   try {
-    const snapshot = await buildAuditSnapshotForTenant({
+    const { snapshot, profile } = await loadAuditInputsForTenant({
       tenantId: session.tenantId,
       periodFrom,
       periodTo,
     });
-    const report = runAudit({ scope, snapshot });
-    return NextResponse.json({ snapshot, report });
+    const report = runAudit({ scope, snapshot, profile });
+    return NextResponse.json({ snapshot, profile, report });
   } catch (err) {
     console.error('[Isaak Audit] failed', err);
     return NextResponse.json(

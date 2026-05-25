@@ -26,7 +26,9 @@ import {
 import type {
   AuditLedgerSnapshot,
   BankAccountSummary,
+  TaxpayerProfileSnapshot,
 } from './inspector-aeat';
+import { getTaxpayerProfileAsSnapshot } from './isaak-taxpayer-profile';
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -190,4 +192,21 @@ export async function buildAuditSnapshotForTenant(
     periodFrom: input.periodFrom,
     periodTo: input.periodTo,
   });
+}
+
+// I7 — orquestador que carga snapshot + perfil fiscal del tenant y los
+// devuelve listos para `runAudit({ snapshot, profile })`. Si el tenant
+// no tiene perfil R000 completado, devuelve profile=null y el engine
+// aplica reglas sin scope (back-compat con tenants pre-wizard).
+export async function loadAuditInputsForTenant(
+  input: BuildAuditSnapshotInput,
+): Promise<{
+  snapshot: AuditLedgerSnapshot;
+  profile: TaxpayerProfileSnapshot | null;
+}> {
+  const [snapshot, profile] = await Promise.all([
+    buildAuditSnapshotForTenant(input),
+    getTaxpayerProfileAsSnapshot(input.tenantId),
+  ]);
+  return { snapshot, profile };
 }

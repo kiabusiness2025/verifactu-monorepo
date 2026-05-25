@@ -16,7 +16,7 @@
 import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/app/lib/prisma';
-import { buildAuditSnapshotForTenant } from '@/app/lib/isaak-audit-loader';
+import { loadAuditInputsForTenant } from '@/app/lib/isaak-audit-loader';
 import { runAudit } from '@/app/lib/inspector-aeat-audit';
 import { createAlert } from '@/app/lib/isaak-alert-service';
 
@@ -74,12 +74,12 @@ export async function GET(req: NextRequest) {
 
   for (const { tenantId } of rows) {
     try {
-      const snapshot = await buildAuditSnapshotForTenant({
+      const { snapshot, profile } = await loadAuditInputsForTenant({
         tenantId,
         periodFrom,
         periodTo,
       });
-      const report = runAudit({ scope: 'monthly_close', snapshot });
+      const report = runAudit({ scope: 'monthly_close', snapshot, profile });
 
       if (report.errors.length > 0) summary.tenantsWithErrors++;
       if (report.warnings.length > 0) summary.tenantsWithWarnings++;

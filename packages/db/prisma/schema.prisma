@@ -576,6 +576,7 @@ model Tenant {
   isaakAeatNotifications        IsaakAeatNotification[]
   isaakAeatCensusSnapshots      IsaakAeatCensusSnapshot[]
   isaakAeatCensusChanges        IsaakAeatCensusChange[]
+  isaakTaxpayerProfile          IsaakTaxpayerProfile?
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -2816,4 +2817,54 @@ model IsaakAeatCensusChange {
   @@index([tenantId, createdAt(sort: Desc)])
   @@index([tenantId, alertSent])
   @@map("isaak_aeat_census_changes")
+}
+
+// ==================== ISAAK TAXPAYER PROFILE (I7 R000) ====================
+//
+// Perfil fiscal mínimo del contribuyente. Persistencia de la
+// TaxpayerProfileSnapshot que consume el Inspector AEAT — sin ella, las
+// reglas con scope (territorial/sectorial) no pueden filtrar y
+// aplicarse correctamente.
+//
+// Una sola fila por tenant. Se rellena vía el wizard R000 (UI) o vía
+// LLM tool isaak_set_fiscal_profile. Idempotente vía upsert.
+
+model IsaakTaxpayerProfile {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @unique @map("tenant_id") @db.Uuid
+
+  // Dimensiones del perfil (alineadas con TaxpayerProfileSnapshot)
+  taxpayerType  String? @map("taxpayer_type") // autonomo|sl|sa|comunidad_bienes|asociacion|fundacion
+  territory     String? // comun|canarias|pais_vasco|navarra|ceuta_melilla
+  vatRegime     String? @map("vat_regime") // general|recargo_equivalencia|criterio_caja|simplificado|prorrata|sii|exento
+  sector        String? // hosteleria|consultoria|ecommerce|construccion|inmobiliario|...
+
+  // Booleans inferibles del censo pero útiles para R000
+  corporateTaxSubject      Boolean? @map("corporate_tax_subject")
+  hasEmployees             Boolean? @map("has_employees")
+  hasRentWithholding       Boolean? @map("has_rent_withholding")
+  hasProfessionalInvoices  Boolean? @map("has_professional_invoices")
+  hasIntraEUOperations     Boolean? @map("has_intra_eu_operations")
+  hasRelatedParties        Boolean? @map("has_related_parties")
+  usesBillingSoftware      Boolean? @map("uses_billing_software")
+
+  annualTurnover Decimal? @map("annual_turnover") @db.Decimal(14, 2)
+
+  // Origen del prefill — para mostrar al usuario "este dato lo trajo
+  // Company Intelligence desde VIES" y permitirle corregirlo.
+  prefilledFromCi  Boolean   @default(false) @map("prefilled_from_ci")
+  prefilledAt      DateTime? @map("prefilled_at") @db.Timestamptz
+  confirmedByUser  Boolean   @default(false) @map("confirmed_by_user")
+  confirmedAt      DateTime? @map("confirmed_at") @db.Timestamptz
+  confirmedBy      String?   @map("confirmed_by") // userId del último confirm
+
+  // Notas libres (admin, observaciones del contable)
+  notes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("isaak_taxpayer_profiles")
 }

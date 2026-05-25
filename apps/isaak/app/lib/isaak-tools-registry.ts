@@ -39,6 +39,7 @@ const WRITE_TOOL_NAMES = new Set<string>([
   'isaak_ledger_create_entry',
   'isaak_ledger_import_holded',
   'isaak_record_tax_return',
+  'isaak_set_fiscal_profile',
   'isaak_sync_aeat_sede',
   // Google write (NOT enabled in F4 v1 — kept for visibility / future)
   // 'google_calendar_create_event', 'google_calendar_update_event',
@@ -89,6 +90,7 @@ const READ_ONLY_NAMES = new Set<string>([
   'isaak_list_aeat_census_changes',
   'isaak_summarize_aeat_inbox',
   'isaak_validate_vat_intracom',
+  'isaak_get_fiscal_profile',
   // Microsoft (read-only subset)
   'microsoft_check_connection',
   'microsoft_calendar_list_events',
