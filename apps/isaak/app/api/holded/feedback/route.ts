@@ -7,6 +7,7 @@ import { NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { toSettingsSession } from '@/app/lib/settings';
 import { prisma } from '@/app/lib/prisma';
+import { markFeedbackEligibleAsync } from '@/app/lib/isaak-few-shot';
 
 export const runtime = 'nodejs';
 
@@ -61,15 +62,30 @@ export async function POST(req: Request) {
     await prisma.$executeRawUnsafe(ENSURE_TABLE);
     await prisma.$executeRawUnsafe(ADD_TENANT_COLUMN);
 
-    await prisma.$executeRawUnsafe(
+    // F7: capture the inserted id so we can asynchronously embed the
+    // question for future few-shot retrieval. Returning id from the
+    // insert is cheap and keeps the operation atomic.
+    const rows = await prisma.$queryRawUnsafe<{ id: string }[]>(
       `INSERT INTO isaak_feedback (module_key, question, response, rating, tenant_id, context)
-       VALUES ('holded_chat', $1, $2, $3, $4::uuid, $5)`,
+       VALUES ('holded_chat', $1, $2, $3, $4::uuid, $5)
+       RETURNING id`,
       question,
       response,
       rating,
       session.tenantId,
       conversationId ? JSON.stringify({ conversationId }) : null
     );
+
+    if (rating === 'thumbs_up' && rows[0]?.id) {
+      // Fire-and-forget. If the embedding fails the row still exists; it
+      // just won't be eligible for few-shot retrieval until a backfill
+      // job (out of scope) regenerates the missing embeddings.
+      void markFeedbackEligibleAsync({
+        tenantId: session.tenantId,
+        feedbackId: rows[0].id,
+        question,
+      });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
