@@ -66,6 +66,13 @@ type MicrosoftStatus = {
   microsoftConfigured: boolean;
 };
 
+type SectorStatus = {
+  connected: boolean;
+  keyMasked: string | null;
+  connectedAt: string | null;
+  lastValidatedAt: string | null;
+};
+
 type GmailInvoiceCandidate = {
   id: string;
   threadId: string;
@@ -140,7 +147,7 @@ const INTEGRATIONS: IntegrationMeta[] = [
     category: 'sectorial',
     desc: 'TPV para restaurantes, bares y hostelería',
     logo: '🍽️',
-    available: false,
+    available: true,
   },
   {
     id: 'nubimed',
@@ -311,6 +318,145 @@ function StatusDot({ active, label }: { active: boolean; label: string }) {
       <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
       {label}
     </span>
+  );
+}
+
+function ApiKeyConnectorCard({
+  provider,
+  name,
+  logo,
+  desc,
+  docsHint,
+  status,
+  onRefresh,
+}: {
+  provider: string;
+  name: string;
+  logo: string;
+  desc: string;
+  docsHint?: string;
+  status: SectorStatus | null;
+  onRefresh: () => void;
+}) {
+  const [apiKey, setApiKey] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function connect(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/isaak/sector/${provider}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(d.error ?? `Error ${res.status}`);
+      }
+      setApiKey('');
+      onRefresh();
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : 'Error al conectar');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function disconnect() {
+    setDisconnecting(true);
+    setErr(null);
+    try {
+      await fetch(`/api/isaak/sector/${provider}/disconnect`, { method: 'DELETE' });
+      onRefresh();
+    } catch {
+      setErr('Error al desconectar');
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
+  const isConnected = status?.connected ?? false;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-xl">
+            {logo}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{name}</p>
+            <p className="text-xs text-slate-500">{desc}</p>
+          </div>
+        </div>
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+            isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+          }`}
+        >
+          {isConnected ? 'Conectado' : 'No conectado'}
+        </span>
+      </div>
+
+      <div className="px-5 py-4">
+        {isConnected ? (
+          <div className="space-y-3">
+            <div className="rounded-xl bg-slate-50 px-4 py-3">
+              <p className="text-xs text-slate-500">API Key</p>
+              <p className="mt-0.5 font-mono text-sm text-slate-800">
+                {status?.keyMasked ?? '••••••••'}
+              </p>
+              {status?.connectedAt && (
+                <p className="mt-1 text-xs text-slate-400">
+                  Conectado {new Date(status.connectedAt).toLocaleDateString('es-ES')}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => void disconnect()}
+              disabled={disconnecting}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 disabled:opacity-60"
+            >
+              {disconnecting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Unplug className="h-4 w-4" />
+              )}
+              Desconectar
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={(e) => void connect(e)} className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-600">API Key</label>
+              <input
+                required
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Pega aquí tu API key"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:border-[#2361d8] focus:outline-none"
+              />
+              {docsHint && <p className="mt-1 text-xs text-slate-400">{docsHint}</p>}
+            </div>
+            {err && <p className="text-xs text-rose-600">{err}</p>}
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f55c0] disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
+              Conectar
+            </button>
+          </form>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -1078,6 +1224,7 @@ export default function IntegrationsClient() {
   const [holdedStatus, setHoldedStatus] = useState<HoldedStatus | null>(null);
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(null);
   const [microsoftStatus, setMicrosoftStatus] = useState<MicrosoftStatus | null>(null);
+  const [sectorStatuses, setSectorStatuses] = useState<Record<string, SectorStatus>>({});
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -1086,10 +1233,12 @@ export default function IntegrationsClient() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [holdedRes, googleRes, msRes] = await Promise.allSettled([
+      const [holdedRes, googleRes, msRes, hotelgestRes, revoRes] = await Promise.allSettled([
         fetch('/api/settings/connections'),
         fetch('/api/isaak/google/status'),
         fetch('/api/isaak/microsoft/status'),
+        fetch('/api/isaak/sector/hotelgest/status'),
+        fetch('/api/isaak/sector/revo/status'),
       ]);
       if (holdedRes.status === 'fulfilled' && holdedRes.value.ok) {
         const d = (await holdedRes.value.json().catch(() => null)) as {
@@ -1105,6 +1254,19 @@ export default function IntegrationsClient() {
       if (msRes.status === 'fulfilled' && msRes.value.ok) {
         const d = (await msRes.value.json().catch(() => null)) as MicrosoftStatus | null;
         if (d) setMicrosoftStatus(d);
+      }
+      const sectorUpdates: Record<string, SectorStatus> = {};
+      for (const [provider, res] of [
+        ['hotelgest', hotelgestRes],
+        ['revo', revoRes],
+      ] as [string, PromiseSettledResult<Response>][]) {
+        if (res.status === 'fulfilled' && res.value.ok) {
+          const d = (await res.value.json().catch(() => null)) as SectorStatus | null;
+          if (d) sectorUpdates[provider] = d;
+        }
+      }
+      if (Object.keys(sectorUpdates).length > 0) {
+        setSectorStatuses((prev) => ({ ...prev, ...sectorUpdates }));
       }
     } finally {
       setLoading(false);
@@ -1192,11 +1354,28 @@ export default function IntegrationsClient() {
         return holdedStatus ? <HoldedCard key={item.id} status={holdedStatus} /> : null;
       case 'hotelgest':
         return (
-          <SoonCard
+          <ApiKeyConnectorCard
             key={item.id}
+            provider="hotelgest"
             name={item.name}
-            desc="Conecta tu cuenta HotelGest — disponible próximamente en este panel."
             logo={item.logo}
+            desc={item.desc}
+            docsHint="Encuéntrala en HotelGest → Configuración → Integraciones API"
+            status={sectorStatuses['hotelgest'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'revo':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="revo"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Token en Revo XEF → Configuración → Integraciones externas"
+            status={sectorStatuses['revo'] ?? null}
+            onRefresh={() => void loadAll()}
           />
         );
       case 'google-calendar':

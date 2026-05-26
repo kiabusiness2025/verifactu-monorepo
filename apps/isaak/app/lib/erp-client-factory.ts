@@ -41,7 +41,11 @@ export async function getErpClient(tenantId: string): Promise<ErpClient> {
         const { HotelgestErpClient } = await import('./hotelgest-erp-client');
         return new HotelgestErpClient(apiKey);
       }
-      // Inmovilla, Revo, Nubimed — stubs pending API docs
+      case 'revo': {
+        const { RevoErpClient } = await import('./revo-erp-client');
+        return new RevoErpClient(apiKey);
+      }
+      // Inmovilla, Nubimed, Loyverse, WooCommerce, Mindbody, PrestaShop — stubs pending API docs
       default:
         throw new Error(`Sector provider ${conn.provider} not yet implemented`);
     }
