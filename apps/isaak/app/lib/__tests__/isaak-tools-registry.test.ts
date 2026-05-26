@@ -211,6 +211,7 @@ describe('buildReadOnlyToolsForContext', () => {
     // summarize_aeat_inbox + validate_vat_intracom + inspector_search_aeat)
     // = 37 (writes excluded)
     expect(tools.length).toBe(37);
+    // Note: total ledger tools incl. writes = 17 (10 reads + 7 writes after C-B1.b)
     // each tool exposes the Anthropic-compatible shape
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
@@ -240,7 +241,7 @@ describe('buildReadOnlyToolsForContext', () => {
       ]);
     });
 
-    it('with allowWrites=true and only=["ledger"] exposes 10 reads + 6 writes', () => {
+    it('with allowWrites=true and only=["ledger"] exposes 10 reads + 7 writes', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), {
         only: ['ledger'],
         allowWrites: true,
@@ -260,6 +261,7 @@ describe('buildReadOnlyToolsForContext', () => {
         'isaak_list_tax_returns',
         'isaak_record_tax_return',
         'isaak_set_fiscal_profile',
+        'isaak_submit_303',
         'isaak_summarize_aeat_inbox',
         'isaak_sync_aeat_sede',
         'isaak_validate_vat_intracom',
@@ -271,7 +273,7 @@ describe('buildReadOnlyToolsForContext', () => {
         only: ['ledger'],
         allowWrites: true,
       });
-      expect(tools.length).toBe(16);
+      expect(tools.length).toBe(17);
     });
 
     it('combining ledger + holded gates work independently', () => {

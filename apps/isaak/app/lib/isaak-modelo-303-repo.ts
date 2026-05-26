@@ -14,6 +14,7 @@ import {
 import { getTaxpayerProfileAsSnapshot } from './isaak-taxpayer-profile';
 import type { Trimestre, Modelo303Result } from './fiscal-models';
 import { upsertTaxReturn } from './isaak-tax-returns';
+import { createSubmission, type CreateSubmissionResult } from './isaak-aeat-submission';
 
 export type Compute303ForTenantInput = {
   tenantId: string;
@@ -138,6 +139,128 @@ function skipResult(
     reason,
     ejercicio: input.ejercicio,
     periodo: input.periodo,
+  };
+}
+
+// ─── C-B1.b — Confirmar borrador → IsaakAeatSubmission ───────────────
+
+export type Submit303Input = {
+  tenantId: string;
+  ejercicio: number;
+  periodo: Trimestre;
+  submittedBy: string;
+  certFingerprint?: string | null;
+};
+
+export type Submit303Result =
+  | {
+      ok: true;
+      submissionId: string;
+      taxReturnId: string;
+      payloadHash: string;
+      result: Modelo303Result;
+    }
+  | {
+      ok: false;
+      error: string;
+      message: string;
+    };
+
+export async function submit303ForTenant(input: Submit303Input): Promise<Submit303Result> {
+  if (!input.tenantId) {
+    return { ok: false, error: 'invalid_input', message: 'tenantId required' };
+  }
+  if (!input.submittedBy?.trim()) {
+    return { ok: false, error: 'invalid_input', message: 'submittedBy required' };
+  }
+
+  // 1. Re-computar el borrador desde el Ledger actual (snapshot del momento
+  //    de la presentación). Si el ledger cambió desde que se guardó el
+  //    draft, el payload reflejará ese cambio — es lo correcto: lo que se
+  //    presenta debe ser lo que está en el libro AHORA.
+  const computed = await compute303ForTenant({
+    tenantId: input.tenantId,
+    ejercicio: input.ejercicio,
+    periodo: input.periodo,
+    persist: false,
+  });
+
+  if (!computed.ok) {
+    return {
+      ok: false,
+      error: 'compute_failed',
+      message: computed.error ?? 'No se pudo recomputar el 303.',
+    };
+  }
+  if (computed.output.skipped) {
+    return {
+      ok: false,
+      error: 'compute_skipped',
+      message: `No procede 303 para este tenant: ${computed.output.reason}`,
+    };
+  }
+
+  const period = `Q${input.periodo[0]}-${input.ejercicio}`;
+
+  // 2. Buscar el draft existente (debe estar persistido previamente vía
+  //    compute303ForTenant({persist:true})).
+  const existingDraft = await prisma.isaakTaxReturn.findUnique({
+    where: {
+      tenantId_model_period: {
+        tenantId: input.tenantId,
+        model: '303',
+        period,
+      },
+    },
+    select: { id: true, status: true },
+  });
+
+  if (!existingDraft) {
+    return {
+      ok: false,
+      error: 'no_draft',
+      message: `No existe un borrador 303 ${input.periodo} ${input.ejercicio} para este tenant. Computa primero el borrador con persist=true.`,
+    };
+  }
+
+  // 3. Crear submission + promover el draft a presented (transaccional).
+  const result = computed.output.result;
+  const submissionResult: CreateSubmissionResult = await createSubmission({
+    tenantId: input.tenantId,
+    model: '303',
+    period,
+    taxReturnId: existingDraft.id,
+    submittedBy: input.submittedBy.trim(),
+    certFingerprint: input.certFingerprint ?? null,
+    payload: {
+      model: '303',
+      ejercicio: result.ejercicio,
+      periodo: result.periodo,
+      totalDevengado: result.totalDevengado,
+      totalSoportado: result.totalSoportado,
+      resultado: result.resultado,
+      facturas: result.facturas,
+      compras: result.compras,
+      repercutidoPorTipo: result.repercutido,
+      soportadoPorTipo: result.soportado,
+      advertencias: result.advertencias,
+    },
+  });
+
+  if (!submissionResult.ok) {
+    return {
+      ok: false,
+      error: submissionResult.error,
+      message: submissionResult.message,
+    };
+  }
+
+  return {
+    ok: true,
+    submissionId: submissionResult.submissionId,
+    taxReturnId: existingDraft.id,
+    payloadHash: submissionResult.payloadHash,
+    result,
   };
 }
 

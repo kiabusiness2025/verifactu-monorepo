@@ -577,6 +577,7 @@ model Tenant {
   isaakAeatCensusSnapshots      IsaakAeatCensusSnapshot[]
   isaakAeatCensusChanges        IsaakAeatCensusChange[]
   isaakTaxpayerProfile          IsaakTaxpayerProfile?
+  isaakAeatSubmissions          IsaakAeatSubmission[]
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -2867,4 +2868,60 @@ model IsaakTaxpayerProfile {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("isaak_taxpayer_profiles")
+}
+
+// ==================== ISAAK AEAT SUBMISSION (C-B1) ====================
+//
+// Audit log inmutable de las presentaciones AEAT (modelo 303, 130, etc.)
+// realizadas o intentadas por Isaak. Existe legalmente para:
+//   * Demostrar quién confirmó qué (userId + timestamp + payloadHash)
+//   * Conservar el payload exacto enviado a AEAT
+//   * Trazar la respuesta de AEAT (referencia/CSV, errores)
+//   * Soportar la posterior cobertura RC profesional (C-C)
+//
+// status:
+//   * 'pending_aeat': usuario confirmó, esperando envío SOAP (C-B1.b state)
+//   * 'submitted':    SOAP send completado, esperando ACK AEAT
+//   * 'accepted':     AEAT confirmó (CSV en aeatReference)
+//   * 'rejected':     AEAT rechazó (motivo en errorMessage)
+//   * 'error':        fallo de transporte/firmado antes de llegar a AEAT
+//   * 'cancelled':    usuario abortó después de confirmar (rectificativa)
+
+model IsaakAeatSubmission {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  model  String
+  period String
+  // Link al borrador IsaakTaxReturn que originó la presentación.
+  taxReturnId String? @map("tax_return_id") @db.Uuid
+
+  status String @default("pending_aeat")
+
+  // Payload sometido (JSON canónico) + hash para audit-trail
+  payload     Json    @db.JsonB
+  payloadHash String  @map("payload_hash") @db.VarChar(64)
+
+  // Si se firmó con cert mTLS, fingerprint SHA-256 del cert usado
+  certFingerprint String? @map("cert_fingerprint") @db.VarChar(64)
+
+  // Respuesta AEAT (cuando llegue en C-B1.c)
+  aeatResponse  Json?   @map("aeat_response") @db.JsonB
+  aeatReference String? @map("aeat_reference") // CSV justificante AEAT
+
+  // Auditoría
+  submittedBy String   @map("submitted_by") // userId confirmador
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+  ackedAt     DateTime? @map("acked_at") @db.Timestamptz
+  errorMessage String? @map("error_message") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, model, period])
+  @@index([tenantId, submittedAt(sort: Desc)])
+  @@map("isaak_aeat_submissions")
 }

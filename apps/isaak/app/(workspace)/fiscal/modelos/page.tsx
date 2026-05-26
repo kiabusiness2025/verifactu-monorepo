@@ -239,6 +239,66 @@ function Modelo303Panel() {
   const [result, setResult] = useState<Modelo303Result | null>(null);
   const [apiError, setApiError] = useState<{ type: ApiError; message: string } | null>(null);
 
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex gap-3 items-start text-sm text-blue-900">
+        <Calculator size={16} className="mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <p className="font-semibold">Nuevo: Robot Contable</p>
+          <p className="text-xs mt-1 text-blue-700">
+            Borrador 303 calculado desde tu Isaak Ledger (libro fiscal interno), con flujo de
+            confirmación y audit-log inmutable.
+          </p>
+          <Link
+            href="/fiscal/modelos/303"
+            className="mt-2 inline-flex items-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            Probar el nuevo flujo
+          </Link>
+        </div>
+      </div>
+      <Modelo303LegacyPanel
+        ejercicio={ejercicio}
+        setEjercicio={setEjercicio}
+        periodo={periodo}
+        setPeriodo={setPeriodo}
+        loading={loading}
+        setLoading={setLoading}
+        result={result}
+        setResult={setResult}
+        apiError={apiError}
+        setApiError={setApiError}
+      />
+    </div>
+  );
+}
+
+type Modelo303PanelProps = {
+  ejercicio: number;
+  setEjercicio: (v: number) => void;
+  periodo: Trimestre;
+  setPeriodo: (v: Trimestre) => void;
+  loading: boolean;
+  setLoading: (v: boolean) => void;
+  result: Modelo303Result | null;
+  setResult: (v: Modelo303Result | null) => void;
+  apiError: { type: ApiError; message: string } | null;
+  setApiError: (v: { type: ApiError; message: string } | null) => void;
+};
+
+function Modelo303LegacyPanel({
+  ejercicio,
+  setEjercicio,
+  periodo,
+  setPeriodo,
+  loading,
+  setLoading,
+  result,
+  setResult,
+  apiError,
+  setApiError,
+}: Modelo303PanelProps) {
+
   async function calcular() {
     setLoading(true);
     setApiError(null);

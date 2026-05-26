@@ -316,6 +316,26 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'isaak_submit_303',
+    description:
+      'Registra como presentada (audit-log inmutable) la declaración 303 borrador del trimestre indicado. Crea un IsaakAeatSubmission con status="pending_aeat" y promueve el IsaakTaxReturn de draft a presented. NO envía SOAP a AEAT todavía (eso vive en C-B1.c). USA esta tool cuando el usuario diga "confirma y presenta el 303 del T2", "registra como presentado", o equivalente. Antes debe existir un borrador (llamar a isaak_compute_303_draft con persist=true).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: {
+          type: 'number',
+          description: 'Año fiscal completo (2020-2100). Ejemplo: 2026.',
+        },
+        periodo: {
+          type: 'string',
+          enum: ['1T', '2T', '3T', '4T'],
+          description: 'Trimestre del borrador a presentar.',
+        },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
     name: 'inspector_search_aeat',
     description:
       'Búsqueda semántica en el corpus AEAT/BOE de Isaak (manuales prácticos IRPF/IVA/Sociedades, BOE consolidados LIVA/LIRPF/LIS/LGT/Reglamentos, INFORMA DGT, FAQs sede). Devuelve los pasajes más relevantes con su URL canónica para citar. USA esta tool cuando el usuario pregunte sobre normativa fiscal y necesites apoyar la respuesta con cita.',
@@ -810,6 +830,58 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_303') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return {
+        ok: false,
+        error: 'invalid_ejercicio',
+        message: 'ejercicio debe ser un año entre 2020 y 2100.',
+      };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return {
+        ok: false,
+        error: 'invalid_periodo',
+        message: 'periodo debe ser 1T, 2T, 3T o 4T.',
+      };
+    }
+    if (!ctx.userId) {
+      return {
+        ok: false,
+        error: 'missing_user',
+        message: 'No se puede registrar una presentación sin un usuario identificado.',
+      };
+    }
+    try {
+      const { submit303ForTenant } = await import('./isaak-modelo-303-repo');
+      const result = await submit303ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        submittedBy: ctx.userId,
+      });
+      if (!result.ok) {
+        return { ok: false, error: result.error, message: result.message };
+      }
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        resultado: result.result.resultado,
+        message: `Modelo 303 ${result.result.periodo} ${result.result.ejercicio} registrado como presentado. Resultado: ${result.result.resultado.toFixed(2)}€ ${result.result.resultado > 0 ? 'a ingresar' : result.result.resultado < 0 ? 'a devolver/compensar' : 'a cero'}. El envío SOAP a AEAT está pendiente (C-B1.c).`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }
