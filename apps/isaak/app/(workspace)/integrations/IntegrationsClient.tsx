@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   Globe,
+  HelpCircle,
   Key,
   Landmark,
   LayoutGrid,
@@ -243,6 +244,14 @@ const INTEGRATIONS: IntegrationMeta[] = [
     category: 'banca',
     desc: 'Movimientos bancarios y conciliación automática PSD2',
     logo: '🏦',
+    available: true,
+  },
+  {
+    id: 'bancos-es',
+    name: 'Bancos españoles',
+    category: 'banca',
+    desc: 'BBVA, Santander, CaixaBank, ING, Sabadell, Bankinter y más de 50 bancos',
+    logo: '🏧',
     available: true,
   },
   {
@@ -503,6 +512,15 @@ function ApiKeyConnectorCard({
             </button>
           </form>
         )}
+      </div>
+      <div className="border-t border-slate-100 px-5 py-2.5">
+        <Link
+          href={`/integrations/ayuda/${provider}`}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 transition hover:text-[#2361d8]"
+        >
+          <HelpCircle size={11} />
+          ¿Cómo obtengo mi API key? →
+        </Link>
       </div>
     </div>
   );
@@ -899,6 +917,92 @@ function MicrosoftCard({ status }: { status: MicrosoftStatus }) {
           {scopeLabels.length > 0 && <> · {scopeLabels.join(', ')}</>}
         </div>
       )}
+    </div>
+  );
+}
+
+type Aspsp = { name: string; country: string; logo?: string };
+
+function BankingInstitutionsCard() {
+  const [banks, setBanks] = useState<Aspsp[]>([]);
+  const [loadingBanks, setLoadingBanks] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/isaak/banking/eb/aspsps?country=ES')
+      .then((r) => r.json())
+      .catch(() => ({ aspsps: [] }))
+      .then((d: { aspsps?: Aspsp[] }) => {
+        setBanks(d.aspsps ?? []);
+        setLoadingBanks(false);
+      })
+      .catch(() => setLoadingBanks(false));
+  }, []);
+
+  const displayed = showAll ? banks : banks.slice(0, 18);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+            <Landmark size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold text-slate-900">Bancos españoles</span>
+              {!loadingBanks && banks.length > 0 && (
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  {banks.length} disponibles
+                </span>
+              )}
+            </div>
+            <div className="text-[12px] text-slate-500">
+              Conecta tu banco vía Open Banking PSD2 · Enable Banking
+            </div>
+          </div>
+        </div>
+        <Link
+          href="/banking"
+          className="shrink-0 rounded-lg bg-[#2361d8] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#1d55c2]"
+        >
+          Conectar banco
+        </Link>
+      </div>
+      <div className="border-t border-slate-100 px-5 py-3">
+        {loadingBanks ? (
+          <div className="flex items-center gap-2 py-2 text-[12px] text-slate-400">
+            <Loader2 size={13} className="animate-spin" />
+            Cargando bancos disponibles…
+          </div>
+        ) : banks.length === 0 ? (
+          <p className="py-1 text-[12px] text-slate-400">No se pudo cargar la lista de bancos.</p>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {displayed.map((bank) => (
+                <Link
+                  key={bank.name}
+                  href="/banking"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition hover:border-[#2361d8]/30 hover:bg-[#2361d8]/5 hover:text-[#2361d8]"
+                >
+                  <Landmark size={11} className="text-slate-400" />
+                  {bank.name}
+                </Link>
+              ))}
+            </div>
+            {!showAll && banks.length > 18 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="text-[11px] font-semibold text-[#2361d8] hover:underline"
+              >
+                Ver los {banks.length - 18} restantes →
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1624,6 +1728,8 @@ export default function IntegrationsClient() {
         return microsoftStatus ? <MicrosoftCard key={item.id} status={microsoftStatus} /> : null;
       case 'banking':
         return <BankingCard key={item.id} />;
+      case 'bancos-es':
+        return <BankingInstitutionsCard key={item.id} />;
       case 'whatsapp':
         return <WhatsAppCard key={item.id} />;
       default:
