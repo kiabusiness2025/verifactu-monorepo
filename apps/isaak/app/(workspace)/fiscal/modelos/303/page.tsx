@@ -227,10 +227,36 @@ export default function Modelo303LedgerPage() {
           <p className="text-xs text-green-700">
             Resultado: <strong>{eur(submitResult.resultado ?? 0)}</strong>
           </p>
-          <p className="text-xs text-green-600/80 mt-2">
-            El envío SOAP a AEAT con certificado mTLS se hará en una iteración posterior (C-B1.c).
-            El audit-log queda inmutable y ya consta como presentado en tu libro fiscal.
-          </p>
+          <div className="mt-3 pt-3 border-t border-green-200 space-y-2">
+            <p className="text-xs text-green-700 font-semibold">
+              Envío automático a AEAT (C-B1.c)
+            </p>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!submitResult.submissionId) return;
+                const res = await fetch('/api/isaak/modelos/303/send', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ submissionId: submitResult.submissionId }),
+                });
+                const json = await res.json();
+                alert(
+                  res.ok
+                    ? `OK — ${json.message}. El worker procesará en cuanto esté disponible.`
+                    : `Error: ${json.message ?? json.error}`,
+                );
+              }}
+              className="inline-flex items-center gap-2 rounded-lg bg-green-700 text-white px-3 py-1.5 text-xs font-semibold hover:bg-green-800"
+            >
+              <Send size={13} /> Marcar para envío automático a AEAT
+            </button>
+            <p className="text-[10px] text-green-700/70">
+              La submission queda en cola. El worker headless (Playwright) la enviará
+              a AEAT en su próxima corrida. Si el worker no está deployado, descarga
+              el .303 abajo y súbelo manualmente a la sede.
+            </p>
+          </div>
         </div>
       )}
 
