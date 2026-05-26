@@ -257,9 +257,57 @@ const INTEGRATIONS: IntegrationMeta[] = [
     id: 'stripe',
     name: 'Stripe',
     category: 'pagos',
-    desc: 'Pagos, clientes y suscripciones',
+    desc: 'Pagos online, suscripciones y facturación',
     logo: '💳',
-    available: false,
+    available: true,
+  },
+  {
+    id: 'redsys',
+    name: 'Redsys',
+    category: 'pagos',
+    desc: 'Gateway bancario español · Bizum · SEPA · 90% del e-commerce ES',
+    logo: '🏧',
+    available: true,
+  },
+  {
+    id: 'gocardless',
+    name: 'GoCardless',
+    category: 'pagos',
+    desc: 'Débito directo SEPA · mandatos · cobros recurrentes',
+    logo: '🔄',
+    available: true,
+  },
+  {
+    id: 'paypal',
+    name: 'PayPal',
+    category: 'pagos',
+    desc: 'Pagos online · facturas · monedero digital',
+    logo: '🅿️',
+    available: true,
+  },
+  {
+    id: 'mollie',
+    name: 'Mollie',
+    category: 'pagos',
+    desc: 'Pagos europeos · Bizum · iDEAL · SEPA · suscripciones',
+    logo: '💶',
+    available: true,
+  },
+  {
+    id: 'sumup',
+    name: 'SumUp',
+    category: 'pagos',
+    desc: 'TPV físico y online · cobros presenciales para pymes',
+    logo: '📲',
+    available: true,
+  },
+  {
+    id: 'paylands',
+    name: 'Paylands',
+    category: 'pagos',
+    desc: 'Gateway español con Bizum nativo · métodos de pago locales',
+    logo: '🌐',
+    available: true,
   },
 ];
 
@@ -1243,6 +1291,13 @@ export default function IntegrationsClient() {
         fetch('/api/isaak/sector/woocommerce/status'),
         fetch('/api/isaak/sector/prestashop/status'),
         fetch('/api/isaak/sector/mindbody/status'),
+        fetch('/api/isaak/sector/stripe/status'),
+        fetch('/api/isaak/sector/redsys/status'),
+        fetch('/api/isaak/sector/gocardless/status'),
+        fetch('/api/isaak/sector/paypal/status'),
+        fetch('/api/isaak/sector/mollie/status'),
+        fetch('/api/isaak/sector/sumup/status'),
+        fetch('/api/isaak/sector/paylands/status'),
       ]);
       if (holdedRes.status === 'fulfilled' && holdedRes.value.ok) {
         const d = (await holdedRes.value.json().catch(() => null)) as {
@@ -1266,6 +1321,13 @@ export default function IntegrationsClient() {
         'woocommerce',
         'prestashop',
         'mindbody',
+        'stripe',
+        'redsys',
+        'gocardless',
+        'paypal',
+        'mollie',
+        'sumup',
+        'paylands',
       ];
       const sectorUpdates: Record<string, SectorStatus> = {};
       for (const [i, res] of sectorRes.entries()) {
@@ -1436,6 +1498,97 @@ export default function IntegrationsClient() {
             desc={item.desc}
             docsHint="API key en Mindbody → Integrations → API Management"
             status={sectorStatuses['mindbody'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'stripe':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="stripe"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Secret key (sk_live_…) en Stripe → Developers → API keys"
+            status={sectorStatuses['stripe'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'redsys':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="redsys"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Merchant code + clave secreta del portal de tu banco o Redsys Sermepa"
+            status={sectorStatuses['redsys'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'gocardless':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="gocardless"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Access token en GoCardless Dashboard → Developers → API keys"
+            status={sectorStatuses['gocardless'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'paypal':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="paypal"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Client ID:Secret separados por «:» — PayPal Developer → My Apps & Credentials"
+            status={sectorStatuses['paypal'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'mollie':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="mollie"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key (live_…) en Mollie Dashboard → Developers → API keys"
+            status={sectorStatuses['mollie'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'sumup':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="sumup"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Access token en SumUp Developer Portal → API keys"
+            status={sectorStatuses['sumup'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'paylands':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="paylands"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en Paylands Dashboard → Configuración → API"
+            status={sectorStatuses['paylands'] ?? null}
             onRefresh={() => void loadAll()}
           />
         );

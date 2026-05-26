@@ -5,6 +5,7 @@ import { decryptHoldedSecret, encryptHoldedSecret, maskSecret } from './holded-i
 import { prisma } from './prisma';
 
 export const SECTOR_PROVIDERS = [
+  // Software sectorial
   'hotelgest',
   'revo',
   'inmovilla',
@@ -16,6 +17,14 @@ export const SECTOR_PROVIDERS = [
   'teamup',
   'gesden',
   'glofox',
+  // Plataformas de pago
+  'stripe',
+  'redsys',
+  'gocardless',
+  'paypal',
+  'mollie',
+  'sumup',
+  'paylands',
 ] as const;
 
 export type SectorProvider = (typeof SECTOR_PROVIDERS)[number];
