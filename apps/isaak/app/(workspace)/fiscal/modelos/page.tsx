@@ -746,6 +746,35 @@ export default function ModelosPage() {
       {tab === '303' && <Modelo303Panel />}
       {tab === '130' && <Modelo130Panel />}
       {tab === '390' && <Modelo390Panel />}
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+          Más modelos (Robot Contable, desde el Ledger)
+        </p>
+        <div className="grid sm:grid-cols-3 gap-3">
+          <Link
+            href="/fiscal/modelos/111"
+            className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
+          >
+            <p className="text-sm font-semibold text-slate-800">Mod. 111</p>
+            <p className="text-xs text-slate-500 mt-0.5">Retenciones IRPF trimestrales</p>
+          </Link>
+          <Link
+            href="/fiscal/modelos/349"
+            className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
+          >
+            <p className="text-sm font-semibold text-slate-800">Mod. 349</p>
+            <p className="text-xs text-slate-500 mt-0.5">Operaciones intracom UE</p>
+          </Link>
+          <Link
+            href="/fiscal/modelos/347"
+            className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
+          >
+            <p className="text-sm font-semibold text-slate-800">Mod. 347</p>
+            <p className="text-xs text-slate-500 mt-0.5">Anual operaciones &gt; €3.005,06</p>
+          </Link>
+        </div>
+      </div>
     </div>
   );
 }

@@ -396,6 +396,85 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'isaak_compute_111_draft',
+    description:
+      'Calcula un borrador del modelo 111 (retenciones IRPF practicadas a trabajadores y profesionales) desde el Isaak Ledger del tenant. Trimestral. Detecta retenciones implícitas en payroll (bruto vs líquido) y en facturas de profesionales (15%). USA cuando el usuario pida "borrador 111", "retenciones IRPF trimestrales" o equivalente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number', description: 'Año fiscal (2020-2100).' },
+        periodo: { type: 'string', enum: ['1T', '2T', '3T', '4T'] },
+        persist: { type: 'boolean', description: 'Guarda como IsaakTaxReturn draft.' },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
+    name: 'isaak_submit_111',
+    description:
+      'Registra como presentado el borrador 111 del trimestre. Crea audit-log inmutable y promueve el draft a presented. Antes debe existir el borrador.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+        periodo: { type: 'string', enum: ['1T', '2T', '3T', '4T'] },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
+    name: 'isaak_compute_349_draft',
+    description:
+      'Calcula un borrador del modelo 349 (resumen recapitulativo de operaciones intracomunitarias) desde el Isaak Ledger. Trimestral. Detecta operaciones UE (NIF con prefijo país ≠ ES, IVA 0%) y las clasifica en claves E (entregas), A (adquisiciones), S (servicios prestados), I (servicios recibidos). Devuelve la lista por contraparte.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+        periodo: { type: 'string', enum: ['1T', '2T', '3T', '4T'] },
+        persist: { type: 'boolean' },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
+    name: 'isaak_submit_349',
+    description:
+      'Registra como presentado el borrador 349 del trimestre. Audit-log inmutable. Antes debe existir el borrador.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+        periodo: { type: 'string', enum: ['1T', '2T', '3T', '4T'] },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
+    name: 'isaak_compute_347_draft',
+    description:
+      'Calcula un borrador del modelo 347 (declaración anual operaciones con terceros > €3005.06). Por cada contraparte (cliente o proveedor) cuya suma anual de operaciones supere el umbral, lista el desglose trimestral. Excluye operaciones intracom (van al 349) y operaciones con retención (van al 190/180). Anual, no trimestral.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number', description: 'Año fiscal completo a declarar.' },
+        persist: { type: 'boolean' },
+      },
+      required: ['ejercicio'],
+    },
+  },
+  {
+    name: 'isaak_submit_347',
+    description:
+      'Registra como presentado el borrador 347 del ejercicio. Audit-log inmutable. Antes debe existir el borrador.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+      },
+      required: ['ejercicio'],
+    },
+  },
+  {
     name: 'inspector_search_aeat',
     description:
       'Búsqueda semántica en el corpus AEAT/BOE de Isaak (manuales prácticos IRPF/IVA/Sociedades, BOE consolidados LIVA/LIRPF/LIS/LGT/Reglamentos, INFORMA DGT, FAQs sede). Devuelve los pasajes más relevantes con su URL canónica para citar. USA esta tool cuando el usuario pregunte sobre normativa fiscal y necesites apoyar la respuesta con cita.',
@@ -1057,6 +1136,270 @@ export async function executeLedgerTool(
         payloadHash: result.payloadHash,
         resultado: result.result.resultado,
         message: `Modelo 130 ${result.result.periodo} ${result.result.ejercicio} registrado como presentado. Resultado: ${result.result.resultado.toFixed(2)}€ ${result.result.resultado > 0 ? 'a ingresar' : 'a cero'}. El envío SOAP a AEAT está pendiente.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_111_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return { ok: false, error: 'invalid_periodo', message: 'periodo inválido.' };
+    }
+    try {
+      const { compute111ForTenant } = await import('./isaak-modelo-111-repo');
+      const result = await compute111ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return {
+          ok: true,
+          skipped: true,
+          reason: result.output.reason,
+          message: `Cálculo no realizado: ${result.output.reason}`,
+        };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        periodo: r.periodo,
+        trabajadores: r.trabajadores,
+        profesionales: r.profesionales,
+        totalBases: r.totalBases,
+        totalRetenciones: r.totalRetenciones,
+        resultado: r.resultado,
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 111 ${r.periodo} ${r.ejercicio} computado y guardado. Total retenciones: ${r.totalRetenciones.toFixed(2)}€.`
+          : `Borrador 111 ${r.periodo} ${r.ejercicio} computado (no guardado). Total retenciones: ${r.totalRetenciones.toFixed(2)}€.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_111') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return { ok: false, error: 'invalid_periodo', message: 'periodo inválido.' };
+    }
+    if (!ctx.userId) {
+      return { ok: false, error: 'missing_user', message: 'Falta usuario identificado.' };
+    }
+    try {
+      const { submit111ForTenant } = await import('./isaak-modelo-111-repo');
+      const result = await submit111ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        submittedBy: ctx.userId,
+      });
+      if (!result.ok) return { ok: false, error: result.error, message: result.message };
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        resultado: result.result.resultado,
+        message: `Modelo 111 ${result.result.periodo} ${result.result.ejercicio} registrado como presentado. Retenciones a ingresar: ${result.result.resultado.toFixed(2)}€.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_349_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return { ok: false, error: 'invalid_periodo', message: 'periodo inválido.' };
+    }
+    try {
+      const { compute349ForTenant } = await import('./isaak-modelo-349-repo');
+      const result = await compute349ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return {
+          ok: true,
+          skipped: true,
+          reason: result.output.reason,
+          message: `Cálculo no realizado: ${result.output.reason}`,
+        };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        periodo: r.periodo,
+        lineas: r.lineas,
+        totalEntregas: r.totalEntregas,
+        totalAdquisiciones: r.totalAdquisiciones,
+        totalOperaciones: r.totalOperaciones,
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 349 ${r.periodo} ${r.ejercicio} computado y guardado. ${r.lineas.length} líneas (${r.totalOperaciones} operaciones).`
+          : `Borrador 349 ${r.periodo} ${r.ejercicio} computado (no guardado). ${r.lineas.length} líneas.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_349') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return { ok: false, error: 'invalid_periodo', message: 'periodo inválido.' };
+    }
+    if (!ctx.userId) {
+      return { ok: false, error: 'missing_user', message: 'Falta usuario identificado.' };
+    }
+    try {
+      const { submit349ForTenant } = await import('./isaak-modelo-349-repo');
+      const result = await submit349ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        submittedBy: ctx.userId,
+      });
+      if (!result.ok) return { ok: false, error: result.error, message: result.message };
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        totalEntregas: result.result.totalEntregas,
+        totalAdquisiciones: result.result.totalAdquisiciones,
+        message: `Modelo 349 ${result.result.periodo} ${result.result.ejercicio} registrado como presentado.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_347_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    try {
+      const { compute347ForTenant } = await import('./isaak-modelo-347-repo');
+      const result = await compute347ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return {
+          ok: true,
+          skipped: true,
+          reason: result.output.reason,
+          message: `Cálculo no realizado: ${result.output.reason}`,
+        };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        umbral: r.umbral,
+        lineasClientes: r.lineasClientes,
+        lineasProveedores: r.lineasProveedores,
+        totalDeclaradoClientes: r.totalDeclaradoClientes,
+        totalDeclaradoProveedores: r.totalDeclaradoProveedores,
+        contrapartesExcluidasPorUmbral: r.contrapartesExcluidasPorUmbral,
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 347 ${r.ejercicio} computado y guardado. Clientes: ${r.lineasClientes.length}, proveedores: ${r.lineasProveedores.length}.`
+          : `Borrador 347 ${r.ejercicio} computado (no guardado). Clientes: ${r.lineasClientes.length}, proveedores: ${r.lineasProveedores.length}.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_347') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    if (!ctx.userId) {
+      return { ok: false, error: 'missing_user', message: 'Falta usuario identificado.' };
+    }
+    try {
+      const { submit347ForTenant } = await import('./isaak-modelo-347-repo');
+      const result = await submit347ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        submittedBy: ctx.userId,
+      });
+      if (!result.ok) return { ok: false, error: result.error, message: result.message };
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        lineasClientes: result.result.lineasClientes.length,
+        lineasProveedores: result.result.lineasProveedores.length,
+        message: `Modelo 347 ${result.result.ejercicio} registrado como presentado. ${result.result.lineasClientes.length} clientes + ${result.result.lineasProveedores.length} proveedores.`,
       };
     } catch (err) {
       return {
