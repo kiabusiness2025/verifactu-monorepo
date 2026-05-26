@@ -336,26 +336,67 @@ export default function Modelo303LedgerPage() {
           </div>
 
           {isDraftPersisted ? (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 space-y-3">
-              <p className="text-sm text-blue-900">
-                Borrador guardado en tu libro fiscal como <code>IsaakTaxReturn (status=draft)</code>.
-                Cuando confirmes la presentación, se creará un registro inmutable en el audit-log
-                (<code>IsaakAeatSubmission</code>) y el borrador pasará a estado{' '}
-                <code>presented</code>.
-              </p>
-              <button
-                type="button"
-                onClick={submitDraft}
-                disabled={loadingSubmit}
-                className="flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loadingSubmit ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                Confirmar y registrar como presentado
-              </button>
-              <p className="text-xs text-blue-700/80">
-                El envío real a AEAT (SOAP mTLS) se hará en una iteración posterior. De momento esto
-                solo registra la presentación en el audit-log interno.
-              </p>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 space-y-3">
+                <p className="text-sm text-blue-900">
+                  Borrador guardado en tu libro fiscal como <code>IsaakTaxReturn (status=draft)</code>.
+                  Cuando confirmes la presentación, se creará un registro inmutable en el audit-log
+                  (<code>IsaakAeatSubmission</code>) y el borrador pasará a estado{' '}
+                  <code>presented</code>.
+                </p>
+                <button
+                  type="button"
+                  onClick={submitDraft}
+                  disabled={loadingSubmit}
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loadingSubmit ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  Confirmar y registrar como presentado
+                </button>
+                <p className="text-xs text-blue-700/80">
+                  El envío real a AEAT (SOAP mTLS) se hará en una iteración posterior. De momento
+                  esto solo registra la presentación en el audit-log interno.
+                </p>
+              </div>
+              <div className="rounded-xl border border-slate-200 bg-white p-5 space-y-2">
+                <p className="text-sm font-semibold text-slate-800">
+                  Descargar fichero AEAT (.303 BOE)
+                </p>
+                <p className="text-xs text-slate-500">
+                  Genera el fichero en formato oficial AEAT (ISO-8859-15, 2024-10) para subirlo
+                  manualmente a la sede electrónica vía &quot;Presentación por fichero&quot;.
+                </p>
+                <a
+                  href={`/api/isaak/modelos/303/export`}
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    const res = await fetch('/api/isaak/modelos/303/export', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ ejercicio, periodo }),
+                    });
+                    if (!res.ok) {
+                      const txt = await res.text();
+                      setError(`Export falló: ${txt}`);
+                      return;
+                    }
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download =
+                      res.headers
+                        .get('Content-Disposition')
+                        ?.match(/filename="([^"]+)"/)?.[1] ?? '303.txt';
+                    link.click();
+                    URL.revokeObjectURL(url);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <FileText size={15} />
+                  Descargar .303
+                </a>
+              </div>
             </div>
           ) : (
             <p className="text-xs text-slate-500 text-center">
