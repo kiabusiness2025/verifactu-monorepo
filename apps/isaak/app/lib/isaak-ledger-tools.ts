@@ -336,6 +336,66 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'isaak_compute_130_draft',
+    description:
+      'Calcula un borrador del modelo 130 (pago fraccionado IRPF para autónomos en estimación directa) desde el Isaak Ledger del tenant. El cálculo es acumulado del año natural hasta fin del trimestre indicado. Opcionalmente lo persiste como IsaakTaxReturn con status="draft". USA esta tool cuando el usuario pida "calcula mi 130 del T2" o "borrador IRPF trimestral autónomo". Devuelve ingresos, gastos, rendimiento neto, cuota (20%), retenciones, pagos previos y resultado a ingresar. NO procede para sociedades (modelo 202).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: {
+          type: 'number',
+          description: 'Año fiscal completo (2020-2100). Ejemplo: 2026.',
+        },
+        periodo: {
+          type: 'string',
+          enum: ['1T', '2T', '3T', '4T'],
+          description: 'Trimestre. El cálculo es acumulado desde 1 enero hasta fin de este trimestre.',
+        },
+        retencionesAcumuladas: {
+          type: ['number', 'null'],
+          description: 'Retenciones IRPF acumuladas del ejercicio (p.ej. retenciones del 15% en facturas profesionales). Opcional; si se omite, se asume 0.',
+        },
+        ingresosACuenta: {
+          type: ['number', 'null'],
+          description: 'Pagos fraccionados previos del 130 en el mismo año. Si se omite, Isaak intenta auto-detectarlos desde tax_payment del Ledger.',
+        },
+        persist: {
+          type: 'boolean',
+          description: 'Si true, guarda como IsaakTaxReturn draft (idempotente vía upsert). Default false: solo computa.',
+        },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
+    name: 'isaak_submit_130',
+    description:
+      'Registra como presentada (audit-log inmutable) la declaración 130 borrador del trimestre. Crea un IsaakAeatSubmission con status="pending_aeat" y promueve el IsaakTaxReturn de draft a presented. NO envía SOAP a AEAT todavía. USA esta tool cuando el usuario confirma explícitamente que quiere presentar el 130. Antes debe existir un borrador.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: {
+          type: 'number',
+          description: 'Año fiscal completo (2020-2100).',
+        },
+        periodo: {
+          type: 'string',
+          enum: ['1T', '2T', '3T', '4T'],
+          description: 'Trimestre del borrador a presentar.',
+        },
+        retencionesAcumuladas: {
+          type: ['number', 'null'],
+          description: 'Retenciones acumuladas (opcional).',
+        },
+        ingresosACuenta: {
+          type: ['number', 'null'],
+          description: 'Pagos previos del 130 (opcional, auto-detección si se omite).',
+        },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
     name: 'inspector_search_aeat',
     description:
       'Búsqueda semántica en el corpus AEAT/BOE de Isaak (manuales prácticos IRPF/IVA/Sociedades, BOE consolidados LIVA/LIRPF/LIS/LGT/Reglamentos, INFORMA DGT, FAQs sede). Devuelve los pasajes más relevantes con su URL canónica para citar. USA esta tool cuando el usuario pregunte sobre normativa fiscal y necesites apoyar la respuesta con cita.',
@@ -877,6 +937,126 @@ export async function executeLedgerTool(
         payloadHash: result.payloadHash,
         resultado: result.result.resultado,
         message: `Modelo 303 ${result.result.periodo} ${result.result.ejercicio} registrado como presentado. Resultado: ${result.result.resultado.toFixed(2)}€ ${result.result.resultado > 0 ? 'a ingresar' : result.result.resultado < 0 ? 'a devolver/compensar' : 'a cero'}. El envío SOAP a AEAT está pendiente (C-B1.c).`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_130_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return {
+        ok: false,
+        error: 'invalid_ejercicio',
+        message: 'ejercicio debe ser un año entre 2020 y 2100.',
+      };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return {
+        ok: false,
+        error: 'invalid_periodo',
+        message: 'periodo debe ser 1T, 2T, 3T o 4T.',
+      };
+    }
+    try {
+      const { compute130ForTenant } = await import('./isaak-modelo-130-repo');
+      const result = await compute130ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        retencionesAcumuladas:
+          typeof args.retencionesAcumuladas === 'number' ? args.retencionesAcumuladas : undefined,
+        ingresosACuenta:
+          typeof args.ingresosACuenta === 'number' ? args.ingresosACuenta : undefined,
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return {
+          ok: true,
+          skipped: true,
+          reason: result.output.reason,
+          message:
+            result.output.reason === 'no_aplica_no_autonomo'
+              ? 'No procede 130: este tenant no es autónomo (las sociedades presentan modelo 202).'
+              : `Cálculo no realizado: ${result.output.reason}`,
+        };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        periodo: r.periodo,
+        summary: {
+          ingresosAcumulados: r.ingresosAcumulados,
+          gastosAcumulados: r.gastosAcumulados,
+          rendimientoNeto: r.rendimientoNeto,
+          cuotaPrevia: r.cuotaPrevia,
+          retencionesAcumuladas: r.retencionesAcumuladas,
+          ingresosACuenta: r.ingresosACuenta,
+          resultado: r.resultado,
+        },
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 130 ${r.periodo} ${r.ejercicio} computado y guardado. Resultado: ${r.resultado.toFixed(2)}€ ${r.resultado > 0 ? 'a ingresar' : 'a cero'}.`
+          : `Borrador 130 ${r.periodo} ${r.ejercicio} computado (no guardado). Resultado: ${r.resultado.toFixed(2)}€.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_130') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return { ok: false, error: 'invalid_periodo', message: 'periodo inválido.' };
+    }
+    if (!ctx.userId) {
+      return {
+        ok: false,
+        error: 'missing_user',
+        message: 'No se puede registrar una presentación sin un usuario identificado.',
+      };
+    }
+    try {
+      const { submit130ForTenant } = await import('./isaak-modelo-130-repo');
+      const result = await submit130ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        submittedBy: ctx.userId,
+        retencionesAcumuladas:
+          typeof args.retencionesAcumuladas === 'number' ? args.retencionesAcumuladas : undefined,
+        ingresosACuenta:
+          typeof args.ingresosACuenta === 'number' ? args.ingresosACuenta : undefined,
+      });
+      if (!result.ok) {
+        return { ok: false, error: result.error, message: result.message };
+      }
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        resultado: result.result.resultado,
+        message: `Modelo 130 ${result.result.periodo} ${result.result.ejercicio} registrado como presentado. Resultado: ${result.result.resultado.toFixed(2)}€ ${result.result.resultado > 0 ? 'a ingresar' : 'a cero'}. El envío SOAP a AEAT está pendiente.`,
       };
     } catch (err) {
       return {

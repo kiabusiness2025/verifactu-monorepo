@@ -415,6 +415,30 @@ function Modelo303LegacyPanel({
 // ─── Modelo 130 ───────────────────────────────────────────────────────────────
 
 function Modelo130Panel() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex gap-3 items-start text-sm text-blue-900">
+        <Calculator size={16} className="mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <p className="font-semibold">Nuevo: Robot Contable</p>
+          <p className="text-xs mt-1 text-blue-700">
+            Borrador 130 calculado desde tu Isaak Ledger (libro fiscal interno), con flujo de
+            confirmación y audit-log inmutable.
+          </p>
+          <Link
+            href="/fiscal/modelos/130"
+            className="mt-2 inline-flex items-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            Probar el nuevo flujo
+          </Link>
+        </div>
+      </div>
+      <Modelo130LegacyPanel />
+    </div>
+  );
+}
+
+function Modelo130LegacyPanel() {
   const [ejercicio, setEjercicio] = useState(CURRENT_YEAR);
   const [periodo, setPeriodo] = useState<Trimestre>('1T');
   const [retenciones, setRetenciones] = useState('');
