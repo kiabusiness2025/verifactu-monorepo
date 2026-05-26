@@ -171,7 +171,7 @@ const INTEGRATIONS: IntegrationMeta[] = [
     category: 'sectorial',
     desc: 'Gestión de gimnasios, spas y centros de wellness',
     logo: '🏋️',
-    available: false,
+    available: true,
   },
   {
     id: 'loyverse',
@@ -179,7 +179,7 @@ const INTEGRATIONS: IntegrationMeta[] = [
     category: 'sectorial',
     desc: 'TPV en la nube para tiendas y comercio minorista',
     logo: '🏪',
-    available: false,
+    available: true,
   },
   {
     id: 'woocommerce',
@@ -187,7 +187,7 @@ const INTEGRATIONS: IntegrationMeta[] = [
     category: 'sectorial',
     desc: 'E-commerce en WordPress — la plataforma más usada en España',
     logo: '🛍️',
-    available: false,
+    available: true,
   },
   {
     id: 'prestashop',
@@ -195,7 +195,7 @@ const INTEGRATIONS: IntegrationMeta[] = [
     category: 'sectorial',
     desc: 'E-commerce — tiendas online con API pública',
     logo: '🛒',
-    available: false,
+    available: true,
   },
   {
     id: 'teamup',
@@ -1233,12 +1233,16 @@ export default function IntegrationsClient() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [holdedRes, googleRes, msRes, hotelgestRes, revoRes] = await Promise.allSettled([
+      const [holdedRes, googleRes, msRes, ...sectorRes] = await Promise.allSettled([
         fetch('/api/settings/connections'),
         fetch('/api/isaak/google/status'),
         fetch('/api/isaak/microsoft/status'),
         fetch('/api/isaak/sector/hotelgest/status'),
         fetch('/api/isaak/sector/revo/status'),
+        fetch('/api/isaak/sector/loyverse/status'),
+        fetch('/api/isaak/sector/woocommerce/status'),
+        fetch('/api/isaak/sector/prestashop/status'),
+        fetch('/api/isaak/sector/mindbody/status'),
       ]);
       if (holdedRes.status === 'fulfilled' && holdedRes.value.ok) {
         const d = (await holdedRes.value.json().catch(() => null)) as {
@@ -1255,14 +1259,19 @@ export default function IntegrationsClient() {
         const d = (await msRes.value.json().catch(() => null)) as MicrosoftStatus | null;
         if (d) setMicrosoftStatus(d);
       }
+      const sectorProviders = [
+        'hotelgest',
+        'revo',
+        'loyverse',
+        'woocommerce',
+        'prestashop',
+        'mindbody',
+      ];
       const sectorUpdates: Record<string, SectorStatus> = {};
-      for (const [provider, res] of [
-        ['hotelgest', hotelgestRes],
-        ['revo', revoRes],
-      ] as [string, PromiseSettledResult<Response>][]) {
+      for (const [i, res] of sectorRes.entries()) {
         if (res.status === 'fulfilled' && res.value.ok) {
           const d = (await res.value.json().catch(() => null)) as SectorStatus | null;
-          if (d) sectorUpdates[provider] = d;
+          if (d) sectorUpdates[sectorProviders[i]!] = d;
         }
       }
       if (Object.keys(sectorUpdates).length > 0) {
@@ -1375,6 +1384,58 @@ export default function IntegrationsClient() {
             desc={item.desc}
             docsHint="Token en Revo XEF → Configuración → Integraciones externas"
             status={sectorStatuses['revo'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'loyverse':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="loyverse"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Token en Loyverse → Configuración → Acceso API"
+            status={sectorStatuses['loyverse'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'woocommerce':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="woocommerce"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Consumer Key:Secret separados por «:» — WooCommerce → Ajustes → API avanzada"
+            status={sectorStatuses['woocommerce'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'prestashop':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="prestashop"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en PrestaShop → Parámetros avanzados → Servicio web"
+            status={sectorStatuses['prestashop'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'mindbody':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="mindbody"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en Mindbody → Integrations → API Management"
+            status={sectorStatuses['mindbody'] ?? null}
             onRefresh={() => void loadAll()}
           />
         );
