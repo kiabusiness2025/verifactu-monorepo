@@ -54,33 +54,43 @@ const sectorConnectors = [
     external: false,
   },
   {
-    icon: Building2,
-    status: 'Próximo',
-    statusColor: 'bg-amber-100 text-amber-800',
-    title: 'Inmovilla — Inmobiliarias',
-    body: 'La gestión de tu agencia inmobiliaria conectada con Isaak. Operaciones, comisiones, retenciones IRPF y arrendamientos en un solo chat. El estándar de facto en España.',
-    cta: 'Apuntarse a beta',
-    href: '/contacto',
-    external: false,
-  },
-  {
     icon: UtensilsCrossed,
     status: 'Próximo',
     statusColor: 'bg-amber-100 text-amber-800',
     title: 'Revo XEF — Restaurantes',
     body: 'Tu TPV Revo conectado con Isaak. Cierres diarios, IVA reducido al 10%, desglose por servicio y modelo 303 trimestral automático. Para restaurantes, bares y hostelería.',
-    cta: 'Apuntarse a beta',
-    href: '/contacto',
+    cta: 'Solicitar acceso beta',
+    href: '/integraciones/solicitar',
     external: false,
   },
   {
     icon: Stethoscope,
     status: 'Próximo',
     statusColor: 'bg-amber-100 text-amber-800',
-    title: 'Nubimed — Clínicas y dentistas',
-    body: 'Gestión fiscal de tu clínica desde Isaak. Servicios sanitarios exentos vs 21% IVA, retenciones a profesionales y facturación a pacientes — con el desglose correcto para Hacienda.',
-    cta: 'Apuntarse a beta',
-    href: '/contacto',
+    title: 'Gesden — Clínicas dental',
+    body: 'El software dental líder en España conectado con Isaak. Servicios exentos de IVA, retenciones a odontólogos y facturación a pacientes — desglose correcto para Hacienda automáticamente.',
+    cta: 'Solicitar acceso beta',
+    href: '/integraciones/solicitar',
+    external: false,
+  },
+  {
+    icon: Building2,
+    status: 'Próximo',
+    statusColor: 'bg-amber-100 text-amber-800',
+    title: 'Inmovilla — Inmobiliarias',
+    body: 'La gestión de tu agencia inmobiliaria conectada con Isaak. Operaciones, comisiones, retenciones IRPF y arrendamientos en un solo chat. El estándar de facto en España.',
+    cta: 'Solicitar acceso beta',
+    href: '/integraciones/solicitar',
+    external: false,
+  },
+  {
+    icon: Stethoscope,
+    status: 'Próximo',
+    statusColor: 'bg-amber-100 text-amber-800',
+    title: 'Nubimed / Mindbody — Salud y bienestar',
+    body: 'Clínicas médicas, dentales y gimnasios conectados con Isaak. Gestión fiscal sectorial, servicios exentos vs gravados, y control de ingresos por profesional.',
+    cta: 'Solicitar acceso beta',
+    href: '/integraciones/solicitar',
     external: false,
   },
   {
@@ -117,10 +127,10 @@ const sectorConnectors = [
     icon: Zap,
     status: 'Próximo',
     statusColor: 'bg-slate-100 text-slate-600',
-    title: 'TeamUp · Loyverse · RepairShopr',
-    body: 'Gimnasios, comercio/retail y talleres mecánicos. El ecosistema sectorial de Isaak crece trimestre a trimestre según la demanda real de los usuarios.',
+    title: 'Loyverse · PrestaShop · TeamUp',
+    body: 'Retail, e-commerce y centros deportivos. Loyverse para tiendas, PrestaShop para tiendas online, TeamUp y Glofox para gimnasios y boxing. API pública disponible en todos.',
     cta: 'Solicitar integración',
-    href: '/contacto',
+    href: '/integraciones/solicitar',
     external: false,
   },
   {
@@ -130,19 +140,23 @@ const sectorConnectors = [
     title: 'Tu sector no está en la lista',
     body: 'Si tu software de gestión tiene API, podemos integrarlo. Cuéntanos qué usas y añadimos tu sector al roadmap. Las mejores integraciones nacen de una necesidad real.',
     cta: 'Solicitar integración',
-    href: '/contacto',
+    href: '/integraciones/solicitar',
     external: false,
   },
 ];
 
 const sectorList = [
   { name: 'HotelGest', sector: 'Hoteles', status: '✓ Activo' },
-  { name: 'Inmovilla', sector: 'Inmobiliarias', status: 'Q3 2026' },
   { name: 'Revo XEF', sector: 'Restaurantes', status: 'Q3 2026' },
+  { name: 'Gesden', sector: 'Clínicas dental', status: 'Q3 2026' },
+  { name: 'Inmovilla', sector: 'Inmobiliarias', status: 'Q3 2026' },
   { name: 'Nubimed', sector: 'Clínicas / Dental', status: 'Q3 2026' },
+  { name: 'Mindbody', sector: 'Gimnasios / wellness', status: 'Q4 2026' },
+  { name: 'ClinicCloud', sector: 'Clínicas médicas', status: 'Q4 2026' },
+  { name: 'Loyverse', sector: 'Comercio / Retail', status: 'Q4 2026' },
+  { name: 'PrestaShop', sector: 'E-commerce', status: 'Q1 2027' },
   { name: 'TeamUp', sector: 'Gimnasios', status: 'Q4 2026' },
-  { name: 'Loyverse POS', sector: 'Comercio / Retail', status: 'Q4 2026' },
-  { name: 'RepairShopr', sector: 'Talleres mecánicos', status: 'Q4 2026' },
+  { name: 'RepairShopr', sector: 'Talleres mecánicos', status: 'Q1 2027' },
 ];
 
 export default function IntegracionesPage() {
@@ -182,7 +196,7 @@ export default function IntegracionesPage() {
                 <ArrowRight className="h-4 w-4" />
               </a>
               <Link
-                href="/contacto"
+                href="/integraciones/solicitar"
                 className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
               >
                 Solicitar mi sector
@@ -372,7 +386,7 @@ export default function IntegracionesPage() {
             </p>
             <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <Link
-                href="/contacto"
+                href="/integraciones/solicitar"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-8 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
               >
                 Solicitar integración
