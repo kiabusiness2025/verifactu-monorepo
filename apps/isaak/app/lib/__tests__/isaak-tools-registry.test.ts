@@ -240,7 +240,7 @@ describe('buildReadOnlyToolsForContext', () => {
       ]);
     });
 
-    it('with allowWrites=true and only=["ledger"] exposes 10 reads + 5 writes', () => {
+    it('with allowWrites=true and only=["ledger"] exposes 10 reads + 6 writes', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), {
         only: ['ledger'],
         allowWrites: true,
@@ -249,6 +249,7 @@ describe('buildReadOnlyToolsForContext', () => {
       expect(names).toEqual([
         'inspector_search_aeat',
         'isaak_audit_ledger',
+        'isaak_compute_303_draft',
         'isaak_export_ledger_excel',
         'isaak_get_fiscal_profile',
         'isaak_ledger_create_entry',
@@ -270,7 +271,7 @@ describe('buildReadOnlyToolsForContext', () => {
         only: ['ledger'],
         allowWrites: true,
       });
-      expect(tools.length).toBe(15);
+      expect(tools.length).toBe(16);
     });
 
     it('combining ledger + holded gates work independently', () => {

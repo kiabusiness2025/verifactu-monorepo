@@ -292,6 +292,30 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'isaak_compute_303_draft',
+    description:
+      'Calcula un borrador del modelo 303 (IVA trimestral) desde el Isaak Ledger del tenant. Opcionalmente lo persiste como IsaakTaxReturn con status="draft". Devuelve devengado por tipo, soportado por tipo, resultado y advertencias. USA esta tool cuando el usuario pida "calcula mi 303 del T2" o "borrador IVA Q1 2026". NO envía a AEAT; sólo computa y guarda borrador.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: {
+          type: 'number',
+          description: 'Año fiscal completo (2020-2100). Ejemplo: 2026.',
+        },
+        periodo: {
+          type: 'string',
+          enum: ['1T', '2T', '3T', '4T'],
+          description: 'Trimestre. 1T=enero-marzo, 2T=abril-junio, 3T=julio-septiembre, 4T=octubre-diciembre.',
+        },
+        persist: {
+          type: 'boolean',
+          description: 'Si true, guarda como IsaakTaxReturn draft (idempotente vía upsert). Default false: solo computa.',
+        },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
     name: 'inspector_search_aeat',
     description:
       'Búsqueda semántica en el corpus AEAT/BOE de Isaak (manuales prácticos IRPF/IVA/Sociedades, BOE consolidados LIVA/LIRPF/LIS/LGT/Reglamentos, INFORMA DGT, FAQs sede). Devuelve los pasajes más relevantes con su URL canónica para citar. USA esta tool cuando el usuario pregunte sobre normativa fiscal y necesites apoyar la respuesta con cita.',
@@ -714,6 +738,78 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'set_profile_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_303_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return {
+        ok: false,
+        error: 'invalid_ejercicio',
+        message: 'ejercicio debe ser un año entre 2020 y 2100.',
+      };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return {
+        ok: false,
+        error: 'invalid_periodo',
+        message: 'periodo debe ser 1T, 2T, 3T o 4T.',
+      };
+    }
+    try {
+      const { compute303ForTenant } = await import('./isaak-modelo-303-repo');
+      const result = await compute303ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return {
+          ok: true,
+          skipped: true,
+          reason: result.output.reason,
+          message:
+            result.output.reason === 'régimen_recargo_equivalencia'
+              ? 'No procede 303: el tenant está en régimen especial de recargo de equivalencia (el proveedor ingresa el IVA, el minorista NO presenta 303).'
+              : result.output.reason === 'régimen_exento_iva'
+                ? 'No procede 303: el tenant está en régimen exento de IVA.'
+                : `Cálculo no realizado: ${result.output.reason}`,
+        };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        periodo: r.periodo,
+        summary: {
+          totalDevengado: r.totalDevengado,
+          totalSoportado: r.totalSoportado,
+          resultado: r.resultado,
+          esAIngresar: r.resultado > 0,
+          esADevolver: r.resultado < 0,
+          facturas: r.facturas,
+          compras: r.compras,
+        },
+        repercutidoPorTipo: r.repercutido,
+        soportadoPorTipo: r.soportado,
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 303 ${r.periodo} ${r.ejercicio} computado y guardado. Resultado: ${r.resultado.toFixed(2)}€ ${r.resultado > 0 ? 'a ingresar' : r.resultado < 0 ? 'a devolver/compensar' : 'a cero'}.`
+          : `Borrador 303 ${r.periodo} ${r.ejercicio} computado (no guardado). Resultado: ${r.resultado.toFixed(2)}€.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }
