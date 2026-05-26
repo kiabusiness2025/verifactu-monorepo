@@ -25,6 +25,10 @@ export const SECTOR_PROVIDERS = [
   'mollie',
   'sumup',
   'paylands',
+  // CRM
+  'hubspot',
+  'salesforce',
+  'pipedrive',
 ] as const;
 
 export type SectorProvider = (typeof SECTOR_PROVIDERS)[number];

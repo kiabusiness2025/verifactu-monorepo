@@ -412,4 +412,97 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
     ],
     docsUrl: 'https://docs.paylands.com/en/reference/',
   },
+
+  hubspot: {
+    name: 'HubSpot',
+    logo: '🟠',
+    category: 'CRM',
+    tagline: 'Conecta HubSpot para que Isaak acceda a tus contactos, deals y empresas del CRM.',
+    apiKeySteps: [
+      'Inicia sesión en app.hubspot.com.',
+      'Ve a Settings (icono ⚙️) → Integrations → Private Apps.',
+      'Haz clic en "Create a private app".',
+      'Dale un nombre (ej. "Isaak") y una descripción.',
+      'En la pestaña "Scopes", activa lectura en: crm.objects.contacts, crm.objects.deals, crm.objects.companies.',
+      'Haz clic en "Create app" y confirma.',
+      'Copia el Access Token generado y pégalo en Isaak.',
+    ],
+    whatIsaakSyncs: [
+      'Contactos del CRM',
+      'Deals (oportunidades de venta)',
+      'Empresas',
+      'Estado del pipeline de ventas',
+    ],
+    faq: [
+      {
+        q: '¿Qué diferencia hay entre un Private App y una API key de HubSpot?',
+        a: 'HubSpot deprecó las API keys en favor de Private Apps. Los Private Apps son más seguros porque tienen scopes granulares y puedes revocarlos sin afectar a otras integraciones.',
+      },
+      {
+        q: '¿Puedo limitar a qué datos accede Isaak?',
+        a: 'Sí. Al crear el Private App, solo activa los scopes de lectura que necesitas. Isaak nunca escribe en tu CRM.',
+      },
+    ],
+    docsUrl: 'https://developers.hubspot.com/docs/api/private-apps',
+  },
+
+  salesforce: {
+    name: 'Salesforce',
+    logo: '☁️',
+    category: 'CRM',
+    tagline: 'Conecta Salesforce para acceder a tus contactos, oportunidades y cuentas.',
+    apiKeySteps: [
+      'Inicia sesión en tu organización de Salesforce.',
+      'Ve a Setup → App Manager → New Connected App.',
+      'Activa "Enable OAuth Settings" y añade los scopes: api, refresh_token.',
+      'Guarda la app y espera unos minutos a que se active.',
+      'En Consumer Details copia el Consumer Key y Consumer Secret.',
+      'Obtén un access token vía OAuth usando el flujo de username-password o JWT.',
+      'Pega el access token en Isaak.',
+    ],
+    whatIsaakSyncs: [
+      'Contactos (Contacts)',
+      'Oportunidades de venta (Opportunities)',
+      'Cuentas (Accounts)',
+      'Pipeline de ventas',
+    ],
+    faq: [
+      {
+        q: '¿Funciona con Salesforce Essentials, Professional y Enterprise?',
+        a: 'Sí. El acceso a la API REST está disponible en todos los planes de Salesforce, aunque los permisos de usuario deben incluir "API Enabled".',
+      },
+      {
+        q: '¿El access token expira?',
+        a: 'Sí. Salesforce expira los tokens tras un periodo de inactividad. Si la conexión se interrumpe, vuelve a conectar desde la pantalla de integraciones.',
+      },
+    ],
+    docsUrl: 'https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/',
+  },
+
+  pipedrive: {
+    name: 'Pipedrive',
+    logo: '🔵',
+    category: 'CRM',
+    tagline: 'Conecta Pipedrive para que Isaak acceda a tu pipeline de ventas, deals y contactos.',
+    apiKeySteps: [
+      'Inicia sesión en app.pipedrive.com.',
+      'Haz clic en tu avatar (esquina superior derecha) → Personal preferences.',
+      'Ve a la pestaña "API".',
+      'Copia el "Your personal API token".',
+      'Pégalo en Isaak.',
+    ],
+    whatIsaakSyncs: [
+      'Deals (negocios) y su estado en el pipeline',
+      'Contactos (Persons)',
+      'Organizaciones',
+      'Actividades y seguimiento',
+    ],
+    faq: [
+      {
+        q: '¿El API token de Pipedrive tiene permisos de escritura?',
+        a: 'El token personal tiene los mismos permisos que tu usuario. Isaak solo usa endpoints de lectura, pero si prefieres mayor control, crea un usuario de solo lectura en Pipedrive y usa su token.',
+      },
+    ],
+    docsUrl: 'https://developers.pipedrive.com/docs/api/v1',
+  },
 };

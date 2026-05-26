@@ -30,6 +30,7 @@ import {
   Sparkles,
   Trash2,
   Unplug,
+  Users,
   Wallet,
   Webhook,
   Zap,
@@ -96,7 +97,8 @@ type CategoryKey =
   | 'microsoft'
   | 'banca'
   | 'comunicacion'
-  | 'pagos';
+  | 'pagos'
+  | 'crm';
 
 const CATEGORIES: { key: CategoryKey; label: string; icon: React.ElementType }[] = [
   { key: 'all', label: 'Todos', icon: LayoutGrid },
@@ -106,6 +108,7 @@ const CATEGORIES: { key: CategoryKey; label: string; icon: React.ElementType }[]
   { key: 'banca', label: 'Banca', icon: Landmark },
   { key: 'comunicacion', label: 'Comunicación', icon: MessageCircle },
   { key: 'pagos', label: 'Pagos', icon: Wallet },
+  { key: 'crm', label: 'CRM', icon: Users },
 ];
 
 type IntegrationMeta = {
@@ -318,6 +321,30 @@ const INTEGRATIONS: IntegrationMeta[] = [
     logo: '🌐',
     available: true,
   },
+  {
+    id: 'hubspot',
+    name: 'HubSpot',
+    category: 'crm',
+    desc: 'CRM de ventas, marketing y servicio al cliente',
+    logo: '🟠',
+    available: true,
+  },
+  {
+    id: 'salesforce',
+    name: 'Salesforce',
+    category: 'crm',
+    desc: 'CRM empresarial · Sales Cloud · Service Cloud',
+    logo: '☁️',
+    available: true,
+  },
+  {
+    id: 'pipedrive',
+    name: 'Pipedrive',
+    category: 'crm',
+    desc: 'CRM visual orientado a ventas · pipeline y deals',
+    logo: '🔵',
+    available: true,
+  },
 ];
 
 const CATEGORY_SECTION_LABELS: Record<Exclude<CategoryKey, 'all'>, string> = {
@@ -327,6 +354,7 @@ const CATEGORY_SECTION_LABELS: Record<Exclude<CategoryKey, 'all'>, string> = {
   banca: 'Banca',
   comunicacion: 'Comunicación',
   pagos: 'Pagos',
+  crm: 'CRM',
 };
 
 const SCOPE_OPTIONS = [
@@ -1402,6 +1430,9 @@ export default function IntegrationsClient() {
         fetch('/api/isaak/sector/mollie/status'),
         fetch('/api/isaak/sector/sumup/status'),
         fetch('/api/isaak/sector/paylands/status'),
+        fetch('/api/isaak/sector/hubspot/status'),
+        fetch('/api/isaak/sector/salesforce/status'),
+        fetch('/api/isaak/sector/pipedrive/status'),
       ]);
       if (holdedRes.status === 'fulfilled' && holdedRes.value.ok) {
         const d = (await holdedRes.value.json().catch(() => null)) as {
@@ -1432,6 +1463,9 @@ export default function IntegrationsClient() {
         'mollie',
         'sumup',
         'paylands',
+        'hubspot',
+        'salesforce',
+        'pipedrive',
       ];
       const sectorUpdates: Record<string, SectorStatus> = {};
       for (const [i, res] of sectorRes.entries()) {
@@ -1502,6 +1536,7 @@ export default function IntegrationsClient() {
       'banca',
       'comunicacion',
       'pagos',
+      'crm',
     ];
     return cats.filter((cat) => {
       if (activeCategory !== 'all' && activeCategory !== cat) return false;
@@ -1732,6 +1767,45 @@ export default function IntegrationsClient() {
         return <BankingInstitutionsCard key={item.id} />;
       case 'whatsapp':
         return <WhatsAppCard key={item.id} />;
+      case 'hubspot':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="hubspot"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Private App access token en HubSpot → Settings → Integrations → Private Apps"
+            status={sectorStatuses['hubspot'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'salesforce':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="salesforce"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Connected App OAuth token — Salesforce → Setup → App Manager"
+            status={sectorStatuses['salesforce'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'pipedrive':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="pipedrive"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API token en Pipedrive → Settings → Personal preferences → API"
+            status={sectorStatuses['pipedrive'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
       default:
         return null;
     }
