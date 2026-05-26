@@ -150,10 +150,10 @@ describe('buildAuditSnapshotForTenant', () => {
     ).rejects.toThrow(/tenantId/);
   });
 
-  it('runs all three loaders in parallel and aggregates into snapshot', async () => {
-    // Three calls expected: ledger rows, tax returns, bank accounts.
-    // (Order isn't deterministic due to Promise.all but
-    // mockResolvedValueOnce stack queues by call order — match that.)
+  it('runs all four loaders in parallel and aggregates into snapshot', async () => {
+    // Four queries expected: ledger rows, tax returns, bank accounts,
+    // account balances (L4-L5). Order matches Promise.all in
+    // buildAuditSnapshotForTenant.
     mockedQueryRaw
       .mockResolvedValueOnce([
         // ledger row: factura emitida
@@ -177,6 +177,11 @@ describe('buildAuditSnapshotForTenant', () => {
           balance: '500.00',
           lastReconciliationDate: null,
         },
+      ])
+      .mockResolvedValueOnce([
+        // account balances: caja con 500€ + cuenta 555 con 250€
+        { account: '570', balance: '500.00', totalDebits: '500.00', totalCredits: '0.00' },
+        { account: '555', balance: '250.00', totalDebits: '250.00', totalCredits: '0.00' },
       ]);
 
     const snap = await buildAuditSnapshotForTenant({
@@ -188,8 +193,9 @@ describe('buildAuditSnapshotForTenant', () => {
     expect(snap.bankAccounts).toHaveLength(1);
     expect(snap.periodFrom).toBe('2026-05-01');
     expect(snap.periodTo).toBe('2026-05-31');
-    // Stubs por ahora 0
-    expect(snap.cashBalance).toBe('0.00');
+    // L4-L5: cashBalance ahora viene del agregado real
+    expect(snap.cashBalance).toBe('500.00');
+    expect(snap.pendingAccountsBalance).toBe('250.00');
     expect(snap.presentedModels).toEqual([]);
   });
 });

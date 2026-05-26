@@ -29,6 +29,8 @@ import type {
   TaxpayerProfileSnapshot,
 } from './inspector-aeat';
 import { getTaxpayerProfileAsSnapshot } from './isaak-taxpayer-profile';
+import { computeAccountBalances } from './isaak-ledger-balances-repo';
+import { aggregateBalancesForAudit } from './isaak-ledger-balances';
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -175,18 +177,24 @@ export async function buildAuditSnapshotForTenant(
   assertIsoDate('periodFrom', input.periodFrom);
   assertIsoDate('periodTo', input.periodTo);
 
-  const [ledgerRows, taxReturns, bankAccounts] = await Promise.all([
+  const [ledgerRows, taxReturns, bankAccounts, accountBalances] = await Promise.all([
     loadLedgerRowsForPeriod(input.tenantId, input.periodFrom, input.periodTo),
     loadTaxReturnsForPeriod(input.tenantId, input.periodFrom, input.periodTo),
     loadBankAccountSummaries(input.tenantId),
+    // L4-L5: saldos por cuenta PGC computados desde el ledger hasta
+    // `periodTo` (inclusive). Reemplaza los stubs en 0.00 con datos
+    // reales para R128/R129.
+    computeAccountBalances({ tenantId: input.tenantId, periodEnd: input.periodTo }),
   ]);
+
+  const balanceAggregates = aggregateBalancesForAudit(accountBalances);
 
   return aggregateLedgerSnapshot({
     ledgerRows,
     taxReturns,
-    cashBalance: '0.00',
-    partnersBalance: '0.00',
-    pendingAccountsBalance: '0.00',
+    cashBalance: balanceAggregates.cashBalance,
+    partnersBalance: balanceAggregates.partnersBalance,
+    pendingAccountsBalance: balanceAggregates.pendingAccountsBalance,
     bankAccounts,
     unaccountedInvoicesInWithVat: 0,
     periodFrom: input.periodFrom,

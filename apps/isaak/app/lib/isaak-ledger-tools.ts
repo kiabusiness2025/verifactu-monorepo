@@ -48,6 +48,8 @@ import {
   upsertTaxpayerProfile,
   type TaxpayerProfileInput,
 } from './isaak-taxpayer-profile';
+import { computeAccountBalances } from './isaak-ledger-balances-repo';
+import { aggregateBalancesForAudit } from './isaak-ledger-balances';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -95,6 +97,16 @@ export const LEDGER_CHAT_TOOLS = [
         vatAmount: {
           type: ['string', 'null'],
           description: 'Cuota de IVA como decimal en string (opcional).',
+        },
+        accountDebit: {
+          type: ['string', 'null'],
+          description:
+            'Código PGC de la cuenta cargada (debe). Ejemplos: 430 Clientes, 600 Compras, 570 Caja, 572 Bancos, 551 Socios. Opcional pero necesario para que el Inspector calcule saldos de caja/socios/cuenta 555 (R128/R129).',
+        },
+        accountCredit: {
+          type: ['string', 'null'],
+          description:
+            'Código PGC de la cuenta abonada (haber). Ejemplos: 700 Ventas, 400 Proveedores, 477 IVA repercutido, 472 IVA soportado. Opcional. La partida doble exige cargo (debe) + abono (haber) por el mismo importe.',
         },
         sourceSystem: {
           type: 'string',
@@ -279,6 +291,25 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'isaak_ledger_get_balances',
+    description:
+      'Devuelve los saldos por cuenta PGC del Isaak Ledger del tenant a fecha (o hasta hoy si se omite). Útil para responder "cuánto tengo en caja", "saldo cuenta socios", "qué cuentas tienen movimiento". Devuelve también agregados (caja, socios, partidas pendientes, bancos PGC) que el Inspector consume para R128/R129.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        periodEnd: {
+          type: ['string', 'null'],
+          description: 'Fecha tope inclusiva en YYYY-MM-DD. Si se omite, computa hasta el último asiento.',
+        },
+        onlyKind: {
+          type: ['string', 'null'],
+          enum: ['cash', 'bank', 'partner', 'pending', 'other', null],
+          description: 'Filtra solo cuentas de un tipo. Opcional.',
+        },
+      },
+    },
+  },
+  {
     name: 'isaak_summarize_aeat_inbox',
     description:
       'Genera un resumen IA de las notificaciones AEAT (DEH) recibidas en los últimos N días + cambios censales detectados. Útil cuando el usuario pregunta "qué ha pasado esta semana con mi AEAT" o "tengo algo pendiente". Devuelve texto en español listo para mostrar.',
@@ -422,8 +453,8 @@ export async function executeLedgerTool(
         taxBase: (args.taxBase as string | null | undefined) ?? null,
         vatRate: (args.vatRate as string | null | undefined) ?? null,
         vatAmount: (args.vatAmount as string | null | undefined) ?? null,
-        accountDebit: null,
-        accountCredit: null,
+        accountDebit: (args.accountDebit as string | null | undefined) ?? null,
+        accountCredit: (args.accountCredit as string | null | undefined) ?? null,
         description: String(args.description ?? ''),
         sourceSystem,
         holdedId: null,
@@ -658,6 +689,51 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'set_profile_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_ledger_get_balances') {
+    const periodEnd = (args.periodEnd as string | null | undefined) ?? null;
+    if (periodEnd && !/^\d{4}-\d{2}-\d{2}$/.test(periodEnd)) {
+      return {
+        ok: false,
+        error: 'invalid_period',
+        message: 'periodEnd debe ser YYYY-MM-DD.',
+      };
+    }
+    const onlyKind = args.onlyKind as string | null | undefined;
+    try {
+      const balances = await computeAccountBalances({
+        tenantId: ctx.tenantId,
+        periodEnd,
+      });
+      const filtered = onlyKind
+        ? balances.filter((b) => b.kind === onlyKind)
+        : balances;
+      const aggregates = aggregateBalancesForAudit(balances);
+      return {
+        ok: true,
+        count: filtered.length,
+        periodEnd: periodEnd ?? null,
+        aggregates,
+        balances: filtered.map((b) => ({
+          account: b.account,
+          kind: b.kind,
+          balance: b.balance,
+          totalDebits: b.totalDebits,
+          totalCredits: b.totalCredits,
+        })),
+        message:
+          balances.length === 0
+            ? 'No hay asientos con cuentas PGC informadas todavía. Los saldos aparecerán cuando crees asientos con accountDebit/accountCredit.'
+            : `${balances.length} cuentas con movimiento. Caja: ${aggregates.cashBalance}€ · Socios: ${aggregates.partnersBalance}€ · Cuenta 555: ${aggregates.pendingAccountsBalance}€.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'balances_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }
