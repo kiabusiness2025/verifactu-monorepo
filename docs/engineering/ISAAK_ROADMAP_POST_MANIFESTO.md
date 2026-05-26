@@ -604,9 +604,12 @@ A medida que el roadmap evoluciona, las features F9-F20 originales se reorganiza
 | I3 | Endpoint `/api/isaak/audit` + tool `isaak_audit_ledger` + cron mensual | ✅ | F11 fase 3 — `254b0296` |
 | I4a | `IsaakTaxReturn` schema + endpoints + tools + audit wiring | ✅ | F11 fase 4a — `ddd27a99` |
 | I4b | 6 reglas sectoriales/territoriales (51 totales) | ✅ | F11 fase 4b — `13c2be1f` |
+| I5a | Bridge CI → Inspector (R017/R035 con VIES + tool `isaak_validate_vat_intracom`) | ✅ | F11 fase 5a — `db6db6f6` |
+| I7-back | `IsaakTaxpayerProfile` schema + service + audit wiring + tools `isaak_get/set_fiscal_profile` | ✅ | I7 backend — `1ab252e8` |
+| I7-ui | Wizard 3 pasos `/perfil-fiscal` con prefill `CompanyIntelligenceService` | ✅ | I7 wizard — `540cf2bd` |
 | I5 | Más reglas sectoriales (hostelería caja, transporte 100%, coworking) | ⏳ |
 | I6 | Reglas de trinchera del fundador (30+ casos reales de gestoría) | ⏳ |
-| I7 | UI wizard de perfil fiscal R000 (gating del Inspector) | ⏳ |
+| I8 | UI integrada `/contactos` con `buildProfile()` auto-fill | ⏳ |
 
 ## Módulo F — Inspector LLM contextual (Capa 2)
 
@@ -679,17 +682,22 @@ Extiende lo ya operativo (Verifactu mTLS + sede census/notif) en 3 fases con rie
 | C-0.4 | `/api/isaak/sede/census` (lectura censo) | ✅ | `aeat-sede.ts` |
 | C-0.5 | `/api/isaak/sede/notifications` (lectura básica) | ✅ | `aeat-sede.ts` |
 
-### C-A — Lectura ampliada (riesgo BAJO, valor inmediato)
+### C-A — Lectura ampliada (riesgo BAJO, valor inmediato) — ✅ CERRADA
 
-| ID | Tarea | Estado |
-| -- | ----- | ------ |
-| C-A1 | Buzón DEH (Dirección Electrónica Habilitada): pull notificaciones + push al cliente | ⏳ |
-| C-A2 | Censo 036/037 con diff detection (domicilio fiscal, IAE, obligaciones) | ⏳ |
-| C-A3 | Descarga de justificantes PDF de modelos presentados (auto-adjuntar a `IsaakTaxReturn.attachmentUrl`) | ⏳ |
-| C-A4 | Buzón AEAT con resumen IA semanal (qué llegó, gravedad, plazo si aplica) | ⏳ |
-| C-A5 | Cron diario para C-A1 + C-A2 con dedupe de notificaciones | ⏳ |
+| ID | Tarea | Estado | Commits |
+| -- | ----- | ------ | ------- |
+| C-A1 | Buzón DEH: pull notificaciones + dedupe + push al cliente | ✅ | `e6f71d41` |
+| C-A2 | Censo 036/037 con diff detection (domicilio, IAE, obligaciones) | ✅ | `e6f71d41` |
+| C-A3 | Justificantes parser + auto-link a `IsaakTaxReturn.attachmentUrl` | ✅ | `428ae492` |
+| C-A4 | Resumen IA semanal del buzón (cron lunes 08:00 UTC) + tool LLM | ✅ | `428ae492` |
+| C-A5 | Cron diario `/api/cron/aeat-sede-sync` (06:00 UTC) | ✅ | `e6f71d41` |
+| UI | Badge sidebar dinámico + panel `/sede` con cambios censales y filtros | ✅ | `3fda6e1c` |
 
-**Coste estimado:** ~5 días. **Riesgo:** mínimo (solo lectura).
+**Tools LLM expuestos:** `isaak_sync_aeat_sede`, `isaak_list_aeat_notifications`, `isaak_list_aeat_census_changes`, `isaak_summarize_aeat_inbox`.
+
+**Stubs documentados (a sustituir cuando se pruebe con cert real):**
+- Descarga del PDF físico del justificante: el parser ya genera la URL `/api/isaak/sede/notifications/<id>/pdf` y el campo `pdf_stored_at` está listo; falta wire al endpoint AEAT real con mTLS.
+- `buzón AEAT con resumen IA semanal` ya operativo con GPT-4o-mini; coste ~€0.001 por tenant/semana.
 
 ### C-B — Borrador asistido + presentación con confirmación (riesgo MEDIO, valor alto)
 
@@ -746,11 +754,21 @@ R1 ✅ ─→ R2-R3 ⏳ ─→ F12 (Inspector Capa 2) ─→ F14 (TEAR)
 M1-M2 🚧 ─→ M7 tool LLM ─→ refuerzo Inspector R035 ─→ wizard contacts UI
 ```
 
-## Secuencia recomendada Q3 2026
+## Secuencia recomendada Q3 2026 — actualizada 2026-05-27
 
-1. **Cierre Módulo M (Mercantil)** — ya en marcha por el equipo, integrar M7+M8 con Inspector
-2. **C-A1 a C-A5** — lectura sede ampliada, riesgo bajo, valor inmediato para piloto
-3. **L4-L5** — separación cuentas PGC, desbloquea R128/R129 con datos reales
-4. **I7** — UI wizard R000 perfil fiscal para silenciar warnings genéricos y activar scoping sectorial/territorial
-5. **R2a + R3** — primer ingester PDF (Manual IRPF AEAT) + tool `inspector_search_aeat`
-6. **C-B1** — borrador asistido del 303 (cierra ciclo "Robot Contable supervisado")
+**Cerrado en esta tanda:**
+- ✅ Módulo M Mercantil (equipo) — Company Intelligence operativo con 5 adapters + 88 tests
+- ✅ C-A completo (A1/A2/A3/A4/A5) + UI badge sidebar + panel `/sede` con cambios censales
+- ✅ Bridge CI → Inspector (R017/R035 con VIES real)
+- ✅ I7 wizard R000 — UI 3 pasos en `/perfil-fiscal` con prefill `CompanyIntelligenceService`
+- ✅ Audit wiring: endpoint, cron mensual y tool LLM pasan el perfil fiscal al motor
+
+**Próximo orden (cierra el ciclo Robot Contable supervisado):**
+
+1. **L4-L5 cuentas PGC** — separar `accountDebit`/`accountCredit` por entrada del Ledger, persistir saldo agregado por cuenta. Migración Prisma + helpers de balance + wire al `aggregateLedgerSnapshot`. Desbloquea R128 (cuenta 555), R129 (caja negativa) y R130 (bancos sin conciliar) con datos reales en lugar de stubs en 0.
+2. **R2a + R3 RAG ingester** — primer ingester PDF (Manual IRPF AEAT 2026) + tool LLM `inspector_search_aeat(query, source?)`. Activa Inspector Capa 3 (citas vivas BOE).
+3. **C-B1 borrador 303** — cálculo desde Ledger → UI revisión → confirmación → envío SOAP AEAT + `IsaakAeatSubmission` audit log. Cierra el "Robot Contable supervisado" (cliente confirma, Isaak presenta).
+4. **F12 Inspector LLM Capa 2** — sub-agente `inspector` con prompt fiscal especializado para preguntas que superan reglas hardcodeadas.
+5. **C-B2/B3** — borradores 130/111/115/349/347.
+6. **Reglas sectoriales I5** + **trinchera del fundador I6** — paralelo al desarrollo de C-B.
+7. **C-C presentación automática** + **B5 certificación AEAT** — solo tras 3-6 meses con C-B en producción + RC profesional contratada.

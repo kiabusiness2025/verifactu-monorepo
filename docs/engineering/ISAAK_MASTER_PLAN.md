@@ -450,14 +450,19 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 | Módulo | Componente | Estado |
 | ------ | ---------- | ------ |
 | **L — Ledger nativo** | F9: schema + hash chain + repo + importer Holded | ✅ Operativo |
+| **L4-L5** | Separación cuentas PGC + saldos por cuenta (caja 570, socios 551/552, partidas 555) | ⏳ Pendiente — desbloquea R128/R129 con datos reales |
 | **E — Excel export** | F10: 4 informes solo lectura + UI `/auditoria` | ✅ Operativo |
 | **I — Inspector AEAT** | F11 fases 1-4: 51 reglas + R000 perfil + auditoría + cron mensual | ✅ Operativo |
+| **I — Inspector AEAT** | F11 fase 5a: Bridge CI → R017/R035 con VIES real | ✅ Operativo |
 | **CI — Company Intelligence** | Ficha empresa desde fuentes oficiales: 9 reglas C001-C007 + R040A/R040B | ✅ Operativo |
+| **R000 Wizard** | I7: UI 3 pasos + prefill CI + persistencia IsaakTaxpayerProfile + audit scope | ✅ Operativo |
 | **R — RAG corpus** | F13 fase 1: scaffolding (schema + chunker + sources) | ✅ Fase 1 cerrada |
 | **R — RAG corpus** | F13 fase 2: ingester PDF/BOE + tool `inspector_search_aeat` | ⏳ |
 | **C — Cert digital AEAT** | C-0: Verifactu mTLS + Sede census/notif lectura | ✅ Operativo |
-| **C — Cert digital AEAT** | C-A1/A2/A5: persistencia DEH + diff censo + cron diario + 3 tools LLM | ✅ Operativo |
-| **C — Cert digital AEAT** | C-A3 (justificantes PDF) + C-A4 (resumen IA semanal) | ⏳ |
+| **C — Cert digital AEAT** | C-A1/A2/A5: persistencia DEH + diff censo + cron diario + tools LLM | ✅ Operativo |
+| **C — Cert digital AEAT** | C-A3: justificantes auto-link a IsaakTaxReturn (parser + sync) | ✅ Operativo |
+| **C — Cert digital AEAT** | C-A4: resumen IA semanal del buzón (cron lunes 08:00 UTC) | ✅ Operativo |
+| **C — Cert digital AEAT** | UI: badge sidebar + panel `/sede` con cambios censales | ✅ Operativo |
 | **C — Cert digital AEAT** | C-B: borrador asistido (presentación 303 con confirmación) | ⏳ |
 | **C — Cert digital AEAT** | C-C: presentación automática (cron + veto-window + RC profesional) | ⏳ |
 | **Sectoriales** | HotelGest (sprint), Inmovilla/Revo/Nubimed P1, TeamUp/Loyverse/RepairShopr P2 | 🔄 |
@@ -482,12 +487,36 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 
 **Estrategia económica:** bootstrap. No se requiere inversión externa para llegar a product-market fit. Inversión solo se evalúa post-certificación AEAT (+18-24 meses).
 
-**Métricas técnicas (2026-05-26):** 51 reglas Inspector AEAT (módulo I) + 9 reglas Company Intelligence (módulo CI) = **60 reglas activas** · 435 tests rama Inspector + 88 tests CI · type-check limpio · UI `/auditoria` operativa · cron sede diario + cron auditoría mensual.
+**Métricas técnicas (2026-05-27):**
+- 51 reglas Inspector AEAT (módulo I) + 9 reglas Company Intelligence (módulo CI) = **60 reglas activas**
+- 562 tests unitarios verdes · 28 suites · type-check limpio
+- 35 tools LLM (cuando todas las integraciones están conectadas) — incluye 8 reads + 5 writes ledger/AEAT
+- 3 crons Vercel operativos: `audit-monthly` (día 1, 03:00), `aeat-sede-sync` (diario 06:00), `aeat-weekly-summary` (lunes 08:00)
+- UI activas: `/auditoria` (51 reglas + descargas Excel), `/sede` (buzón + cambios censales), `/perfil-fiscal` (wizard R000 con prefill CI)
+- Badge sidebar dinámico para notificaciones pendientes AEAT
+
+### Próximos pasos — orden recomendado
+
+**P1 (cierra el ciclo Robot Contable supervisado)**
+1. **L4-L5 cuentas PGC** — separar `accountDebit`/`accountCredit` por entrada del Ledger; computar saldos reales por cuenta (570 caja, 551/552 socios, 555 partidas). Desbloquea R128/R129/R130 con datos reales en lugar de stubs.
+2. **R2a + R3 RAG ingester** — primer ingester PDF (Manual IRPF AEAT) + tool LLM `inspector_search_aeat`. Activa Inspector Capa 3 con citas vivas BOE.
+
+**P2 (presentación AEAT con red de seguridad)**
+3. **C-B1 borrador 303** — cálculo desde Ledger → UI revisión → confirmación → envío SOAP AEAT + `IsaakAeatSubmission` audit log.
+4. **F12 Inspector LLM Capa 2** — sub-agente `inspector` con prompt fiscal especializado para preguntas que superan reglas hardcodeadas.
+
+**P3 (sectoriales + canales)**
+5. HotelGest sprint en curso → cerrar e iterar con piloto.
+6. Telegram bot (F15) + integraciones gratis P1/P2 cuando haya tracción.
+
+**P4 (presentación automática + certificación)**
+7. C-C cron 303 con veto-window 48h (requiere RC profesional + audit log).
+8. B5 certificación AEAT.
 
 ### Próximos pasos de unificación CI ↔ Inspector AEAT
 
-- **Convergencia R040A/R040B**: ambas líneas tienen reglas con el mismo ID pero objetivos distintos. Mantener separadas por ahora (CI = perfil empresa, I = transacciones); revaluar fusión cuando se cierre el wizard R000.
-- **Bridge CI → Inspector R035**: usar `CompanyIntelligenceService.buildProfile()` antes de aceptar factura B2B con NIF → valida vía VIES automáticamente. Convierte R035 de "warning" a "error con NIF corregido sugerido".
-- **Bridge CI → Inspector R017**: validar NIF-IVA intracomunitario vía ViesAdapter antes de permitir factura exenta intracom.
-- **UI integrada**: `/contactos` debe llamar a `buildProfile()` al crear un proveedor/cliente para autocompletar y prevenir errores de captura.
-- **Onboarding R000**: el wizard de perfil fiscal puede arrancar con `buildProfile(NIF del tenant)` y pre-rellenar el formulario; el usuario solo confirma o ajusta.
+- **Convergencia R040A/R040B**: ambas líneas tienen reglas con el mismo ID pero objetivos distintos. Mantener separadas por ahora (CI = perfil empresa, I = transacciones); revaluar fusión cuando se cierre el wizard R000. ✅ Wizard ya cerrado en I7 — pendiente revaluación post-piloto.
+- **Bridge CI → Inspector R035**: ✅ Implementado en F11 fase 5a. R035 fail-closed si VIES rechaza el NIF B2B.
+- **Bridge CI → Inspector R017**: ✅ Implementado en F11 fase 5a. R017 pasa de warning a error si VIES dice no válido.
+- **UI integrada en /contactos**: ⏳ Pendiente. Cuando se cree contacto, llamar `buildProfile()` para auto-fill + diff visual.
+- **Onboarding R000**: ✅ Wizard en `/perfil-fiscal` con prefill CI. Pendiente: enlazar al onboarding inicial del tenant.
