@@ -705,6 +705,23 @@ function Modelo390Panel() {
   );
 }
 
+// ─── Quick-link card ─────────────────────────────────────────────────────────
+
+function ModelLink({ href, titulo, sub }: { href: string; titulo: string; sub: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40 block"
+    >
+      <p className="text-sm font-semibold text-slate-800">{titulo}</p>
+      <p
+        className="text-xs text-slate-500 mt-0.5"
+        dangerouslySetInnerHTML={{ __html: sub }}
+      />
+    </Link>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const TAB_LABEL: Record<ActiveTab, string> = {
@@ -747,32 +764,26 @@ export default function ModelosPage() {
       {tab === '130' && <Modelo130Panel />}
       {tab === '390' && <Modelo390Panel />}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
-          Más modelos (Robot Contable, desde el Ledger)
-        </p>
-        <div className="grid sm:grid-cols-3 gap-3">
-          <Link
-            href="/fiscal/modelos/111"
-            className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
-          >
-            <p className="text-sm font-semibold text-slate-800">Mod. 111</p>
-            <p className="text-xs text-slate-500 mt-0.5">Retenciones IRPF trimestrales</p>
-          </Link>
-          <Link
-            href="/fiscal/modelos/349"
-            className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
-          >
-            <p className="text-sm font-semibold text-slate-800">Mod. 349</p>
-            <p className="text-xs text-slate-500 mt-0.5">Operaciones intracom UE</p>
-          </Link>
-          <Link
-            href="/fiscal/modelos/347"
-            className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40"
-          >
-            <p className="text-sm font-semibold text-slate-800">Mod. 347</p>
-            <p className="text-xs text-slate-500 mt-0.5">Anual operaciones &gt; €3.005,06</p>
-          </Link>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+            Más modelos trimestrales (Robot Contable)
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <ModelLink href="/fiscal/modelos/111" titulo="Mod. 111" sub="Retenciones IRPF trab./prof." />
+            <ModelLink href="/fiscal/modelos/115" titulo="Mod. 115" sub="Retenciones arrendamientos" />
+            <ModelLink href="/fiscal/modelos/349" titulo="Mod. 349" sub="Operaciones intracom UE" />
+          </div>
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+            Resúmenes anuales (Robot Contable)
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <ModelLink href="/fiscal/modelos/347" titulo="Mod. 347" sub="Anual operaciones &gt; €3.005,06" />
+            <ModelLink href="/fiscal/modelos/180" titulo="Mod. 180" sub="Resumen anual 115" />
+            <ModelLink href="/fiscal/modelos/190" titulo="Mod. 190" sub="Resumen anual 111" />
+          </div>
         </div>
       </div>
     </div>

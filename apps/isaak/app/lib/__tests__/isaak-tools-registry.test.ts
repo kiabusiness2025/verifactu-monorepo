@@ -211,7 +211,7 @@ describe('buildReadOnlyToolsForContext', () => {
     // summarize_aeat_inbox + validate_vat_intracom + inspector_search_aeat)
     // = 37 (writes excluded)
     expect(tools.length).toBe(37);
-    // Note: total ledger tools incl. writes = 25 (10 reads + 15 writes after C-B3+B4+B5)
+    // Note: total ledger tools incl. writes = 31 (10 reads + 21 writes after C-B6+B7+B8)
     // each tool exposes the Anthropic-compatible shape
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
@@ -241,7 +241,7 @@ describe('buildReadOnlyToolsForContext', () => {
       ]);
     });
 
-    it('with allowWrites=true and only=["ledger"] exposes 10 reads + 15 writes', () => {
+    it('with allowWrites=true and only=["ledger"] exposes 10 reads + 21 writes', () => {
       const tools = buildReadOnlyToolsForContext(ctx(), {
         only: ['ledger'],
         allowWrites: true,
@@ -251,7 +251,10 @@ describe('buildReadOnlyToolsForContext', () => {
         'inspector_search_aeat',
         'isaak_audit_ledger',
         'isaak_compute_111_draft',
+        'isaak_compute_115_draft',
         'isaak_compute_130_draft',
+        'isaak_compute_180_draft',
+        'isaak_compute_190_draft',
         'isaak_compute_303_draft',
         'isaak_compute_347_draft',
         'isaak_compute_349_draft',
@@ -266,7 +269,10 @@ describe('buildReadOnlyToolsForContext', () => {
         'isaak_record_tax_return',
         'isaak_set_fiscal_profile',
         'isaak_submit_111',
+        'isaak_submit_115',
         'isaak_submit_130',
+        'isaak_submit_180',
+        'isaak_submit_190',
         'isaak_submit_303',
         'isaak_submit_347',
         'isaak_submit_349',
@@ -281,7 +287,7 @@ describe('buildReadOnlyToolsForContext', () => {
         only: ['ledger'],
         allowWrites: true,
       });
-      expect(tools.length).toBe(25);
+      expect(tools.length).toBe(31);
     });
 
     it('combining ledger + holded gates work independently', () => {

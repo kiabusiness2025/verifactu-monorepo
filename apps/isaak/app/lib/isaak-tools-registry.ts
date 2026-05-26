@@ -51,6 +51,12 @@ const WRITE_TOOL_NAMES = new Set<string>([
   'isaak_submit_349',
   'isaak_compute_347_draft',
   'isaak_submit_347',
+  'isaak_compute_115_draft',
+  'isaak_submit_115',
+  'isaak_compute_180_draft',
+  'isaak_submit_180',
+  'isaak_compute_190_draft',
+  'isaak_submit_190',
   // Google write (NOT enabled in F4 v1 — kept for visibility / future)
   // 'google_calendar_create_event', 'google_calendar_update_event',
   // 'google_calendar_delete_event', 'google_gmail_archive',

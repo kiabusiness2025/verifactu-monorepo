@@ -475,6 +475,79 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'isaak_compute_115_draft',
+    description:
+      'Calcula un borrador del modelo 115 (retenciones IRPF en arrendamientos urbanos). Trimestral. Detecta facturas de alquiler (cuenta PGC 621 o descripción con "alquiler"/"arrendamiento"/"local comercial") y deriva la retención del 19% de la diferencia entre bruto y amount pagado.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+        periodo: { type: 'string', enum: ['1T', '2T', '3T', '4T'] },
+        persist: { type: 'boolean' },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
+    name: 'isaak_submit_115',
+    description:
+      'Registra como presentado el borrador 115 del trimestre. Audit-log inmutable. Antes debe existir el borrador.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+        periodo: { type: 'string', enum: ['1T', '2T', '3T', '4T'] },
+      },
+      required: ['ejercicio', 'periodo'],
+    },
+  },
+  {
+    name: 'isaak_compute_180_draft',
+    description:
+      'Calcula el borrador del modelo 180 (resumen anual de retenciones en arrendamientos). Anual. Lista cada arrendador con base anual, retenciones anuales y número de operaciones. Es el rollup del 115.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+        persist: { type: 'boolean' },
+      },
+      required: ['ejercicio'],
+    },
+  },
+  {
+    name: 'isaak_submit_180',
+    description:
+      'Registra como presentado el borrador 180 del ejercicio. Audit-log inmutable.',
+    input_schema: {
+      type: 'object',
+      properties: { ejercicio: { type: 'number' } },
+      required: ['ejercicio'],
+    },
+  },
+  {
+    name: 'isaak_compute_190_draft',
+    description:
+      'Calcula el borrador del modelo 190 (resumen anual de retenciones rendimientos trabajo y actividades profesionales). Anual. Clasifica cada perceptor en clave A (trabajadores) o G (profesionales). Es el rollup del 111.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        ejercicio: { type: 'number' },
+        persist: { type: 'boolean' },
+      },
+      required: ['ejercicio'],
+    },
+  },
+  {
+    name: 'isaak_submit_190',
+    description:
+      'Registra como presentado el borrador 190 del ejercicio. Audit-log inmutable.',
+    input_schema: {
+      type: 'object',
+      properties: { ejercicio: { type: 'number' } },
+      required: ['ejercicio'],
+    },
+  },
+  {
     name: 'inspector_search_aeat',
     description:
       'Búsqueda semántica en el corpus AEAT/BOE de Isaak (manuales prácticos IRPF/IVA/Sociedades, BOE consolidados LIVA/LIRPF/LIS/LGT/Reglamentos, INFORMA DGT, FAQs sede). Devuelve los pasajes más relevantes con su URL canónica para citar. USA esta tool cuando el usuario pregunte sobre normativa fiscal y necesites apoyar la respuesta con cita.',
@@ -1400,6 +1473,243 @@ export async function executeLedgerTool(
         lineasClientes: result.result.lineasClientes.length,
         lineasProveedores: result.result.lineasProveedores.length,
         message: `Modelo 347 ${result.result.ejercicio} registrado como presentado. ${result.result.lineasClientes.length} clientes + ${result.result.lineasProveedores.length} proveedores.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_115_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return { ok: false, error: 'invalid_periodo', message: 'periodo inválido.' };
+    }
+    try {
+      const { compute115ForTenant } = await import('./isaak-modelo-115-repo');
+      const result = await compute115ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return { ok: true, skipped: true, reason: result.output.reason };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        periodo: r.periodo,
+        arrendadores: r.arrendadores,
+        basesRetenciones: r.basesRetenciones,
+        importeRetenciones: r.importeRetenciones,
+        resultado: r.resultado,
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 115 ${r.periodo} ${r.ejercicio} guardado. Retenciones: ${r.importeRetenciones.toFixed(2)}€.`
+          : `Borrador 115 ${r.periodo} ${r.ejercicio} computado (no guardado). Retenciones: ${r.importeRetenciones.toFixed(2)}€.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_115') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    const periodo = String(args.periodo ?? '').toUpperCase();
+    if (!['1T', '2T', '3T', '4T'].includes(periodo)) {
+      return { ok: false, error: 'invalid_periodo', message: 'periodo inválido.' };
+    }
+    if (!ctx.userId) {
+      return { ok: false, error: 'missing_user', message: 'Falta usuario identificado.' };
+    }
+    try {
+      const { submit115ForTenant } = await import('./isaak-modelo-115-repo');
+      const result = await submit115ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        periodo: periodo as '1T' | '2T' | '3T' | '4T',
+        submittedBy: ctx.userId,
+      });
+      if (!result.ok) return { ok: false, error: result.error, message: result.message };
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        resultado: result.result.resultado,
+        message: `Modelo 115 ${result.result.periodo} ${result.result.ejercicio} registrado. Retenciones a ingresar: ${result.result.resultado.toFixed(2)}€.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_180_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    try {
+      const { compute180ForTenant } = await import('./isaak-modelo-180-repo');
+      const result = await compute180ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return { ok: true, skipped: true, reason: result.output.reason };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        lineas: r.lineas,
+        totalBase: r.totalBase,
+        totalRetenciones: r.totalRetenciones,
+        perceptores: r.perceptores,
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 180 ${r.ejercicio} guardado. ${r.perceptores} arrendadores, total retenciones ${r.totalRetenciones.toFixed(2)}€.`
+          : `Borrador 180 ${r.ejercicio} computado (no guardado). ${r.perceptores} arrendadores.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_180') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    if (!ctx.userId) {
+      return { ok: false, error: 'missing_user', message: 'Falta usuario identificado.' };
+    }
+    try {
+      const { submit180ForTenant } = await import('./isaak-modelo-180-repo');
+      const result = await submit180ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        submittedBy: ctx.userId,
+      });
+      if (!result.ok) return { ok: false, error: result.error, message: result.message };
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        perceptores: result.result.perceptores,
+        totalRetenciones: result.result.totalRetenciones,
+        message: `Modelo 180 ${result.result.ejercicio} registrado. ${result.result.perceptores} arrendadores.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'submit_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_compute_190_draft') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    try {
+      const { compute190ForTenant } = await import('./isaak-modelo-190-repo');
+      const result = await compute190ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        persist: args.persist === true,
+        createdBy: ctx.userId,
+      });
+      if (result.output.skipped) {
+        return { ok: true, skipped: true, reason: result.output.reason };
+      }
+      const r = result.output.result;
+      return {
+        ok: true,
+        skipped: false,
+        ejercicio: r.ejercicio,
+        lineas: r.lineas,
+        totalBase: r.totalBase,
+        totalRetenciones: r.totalRetenciones,
+        perceptoresTrabajadores: r.perceptoresTrabajadores,
+        perceptoresProfesionales: r.perceptoresProfesionales,
+        advertencias: r.advertencias,
+        taxReturnId: result.taxReturnId ?? null,
+        persistedAsDraft: result.persistedAsDraft === true,
+        message: result.persistedAsDraft
+          ? `Borrador 190 ${r.ejercicio} guardado. ${r.perceptoresTrabajadores} trabajadores + ${r.perceptoresProfesionales} profesionales, total retenciones ${r.totalRetenciones.toFixed(2)}€.`
+          : `Borrador 190 ${r.ejercicio} computado (no guardado).`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'compute_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_submit_190') {
+    const ejercicio = typeof args.ejercicio === 'number' ? args.ejercicio : NaN;
+    if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
+      return { ok: false, error: 'invalid_ejercicio', message: 'ejercicio inválido.' };
+    }
+    if (!ctx.userId) {
+      return { ok: false, error: 'missing_user', message: 'Falta usuario identificado.' };
+    }
+    try {
+      const { submit190ForTenant } = await import('./isaak-modelo-190-repo');
+      const result = await submit190ForTenant({
+        tenantId: ctx.tenantId,
+        ejercicio,
+        submittedBy: ctx.userId,
+      });
+      if (!result.ok) return { ok: false, error: result.error, message: result.message };
+      return {
+        ok: true,
+        submissionId: result.submissionId,
+        taxReturnId: result.taxReturnId,
+        payloadHash: result.payloadHash,
+        perceptoresTrabajadores: result.result.perceptoresTrabajadores,
+        perceptoresProfesionales: result.result.perceptoresProfesionales,
+        totalRetenciones: result.result.totalRetenciones,
+        message: `Modelo 190 ${result.result.ejercicio} registrado. ${result.result.perceptoresTrabajadores} trabajadores + ${result.result.perceptoresProfesionales} profesionales.`,
       };
     } catch (err) {
       return {
