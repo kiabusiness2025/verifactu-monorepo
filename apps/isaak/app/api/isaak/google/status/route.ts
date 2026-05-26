@@ -20,7 +20,8 @@ export async function GET() {
     .catch(() => null);
 
   const hasGmailScope = token?.scopes
-    ? token.scopes.includes('https://www.googleapis.com/auth/gmail.readonly')
+    ? token.scopes.includes('https://www.googleapis.com/auth/gmail.modify') ||
+      token.scopes.includes('https://www.googleapis.com/auth/gmail.readonly')
     : false;
   const hasDrive = token?.scopes ? hasDriveScope(token.scopes) : false;
 
