@@ -50,6 +50,7 @@ import {
 } from './isaak-taxpayer-profile';
 import { computeAccountBalances } from './isaak-ledger-balances-repo';
 import { aggregateBalancesForAudit } from './isaak-ledger-balances';
+import { AEAT_SOURCES, type AeatSourceType } from './aeat-corpus-sources';
 
 export const LEDGER_CHAT_TOOLS = [
   {
@@ -288,6 +289,30 @@ export const LEDGER_CHAT_TOOLS = [
         annualTurnover: { type: ['number', 'null'] },
         notes: { type: ['string', 'null'] },
       },
+    },
+  },
+  {
+    name: 'inspector_search_aeat',
+    description:
+      'Búsqueda semántica en el corpus AEAT/BOE de Isaak (manuales prácticos IRPF/IVA/Sociedades, BOE consolidados LIVA/LIRPF/LIS/LGT/Reglamentos, INFORMA DGT, FAQs sede). Devuelve los pasajes más relevantes con su URL canónica para citar. USA esta tool cuando el usuario pregunte sobre normativa fiscal y necesites apoyar la respuesta con cita.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Pregunta o concepto fiscal en lenguaje natural. Ejemplo: "deducibilidad IVA gasolina vehículo turismo".',
+        },
+        sourceTypes: {
+          type: 'array',
+          items: { type: 'string', enum: ['manual_aeat', 'boe', 'informa', 'sede_faq', 'doctrina_dgt'] },
+          description: 'Filtra por tipo de fuente. Opcional. Útil para buscar solo en BOE o solo en manuales.',
+        },
+        topK: {
+          type: 'number',
+          description: 'Máximo de pasajes a devolver (1-20, default 5).',
+        },
+      },
+      required: ['query'],
     },
   },
   {
@@ -689,6 +714,54 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'set_profile_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'inspector_search_aeat') {
+    const query = String(args.query ?? '').trim();
+    if (!query) {
+      return {
+        ok: false,
+        error: 'invalid_query',
+        message: 'query es obligatorio (pregunta o concepto fiscal).',
+      };
+    }
+    const sourceTypes = Array.isArray(args.sourceTypes)
+      ? (args.sourceTypes as AeatSourceType[])
+      : undefined;
+    const topK = typeof args.topK === 'number' ? args.topK : undefined;
+    try {
+      const { searchAeatCorpus } = await import('./aeat-corpus-search');
+      const hits = await searchAeatCorpus({ query, sourceTypes, topK });
+      if (hits.length === 0) {
+        return {
+          ok: true,
+          count: 0,
+          hits: [],
+          message:
+            'El corpus AEAT no contiene pasajes relevantes para tu consulta. Si la base aún no se ha ingestado, contacta con el admin del sistema.',
+        };
+      }
+      return {
+        ok: true,
+        count: hits.length,
+        hits: hits.map((h) => ({
+          source: h.sourceId,
+          articleRef: h.articleRef,
+          title: h.title,
+          url: h.sourceUrl,
+          content: h.content,
+          similarity: Number(h.similarity.toFixed(3)),
+          ingestedAt: h.ingestedAt,
+        })),
+        message: `Encontrados ${hits.length} pasajes relevantes. Cita siempre la URL canónica y la referencia normativa (Art. X LIVA) en la respuesta.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'search_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }
