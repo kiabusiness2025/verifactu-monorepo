@@ -65,7 +65,9 @@ export function parseSpecCsv(csv: string): SpecLine[] {
     return i;
   };
   const cId = idx('id');
-  const cSub = idx('export_config_id:id');
+  const cSub = header.includes('export_config_id:id')
+    ? idx('export_config_id:id')
+    : idx('export_config_id/id');
   const cSeq = idx('sequence');
   const cName = idx('name');
   const cType = idx('export_type');
@@ -123,7 +125,13 @@ export function extractFieldName(expression: string | null): string | null {
   if (casilla) return `casilla_${casilla[1]}`;
   // Path simple: ${object.foo.bar.baz} → 'foo.bar.baz'
   const dotted = /^\$\{object\.([a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*)*)\}$/i.exec(expression);
-  if (dotted) return dotted[1] ?? null;
+  if (dotted) {
+    // Normalizamos: OCA usa `report_id.foo` cuando el campo está en el
+    // report parent (típico en líneas tipo partner). Strippeamos el
+    // prefijo para que nuestros contexts puedan usar el nombre canónico.
+    const path = dotted[1] ?? '';
+    return path.startsWith('report_id.') ? path.slice('report_id.'.length) : path;
+  }
   return null;
 }
 

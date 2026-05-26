@@ -15,6 +15,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { Trimestre } from '@/app/lib/fiscal-models';
 import type { Modelo115Result } from '@/app/lib/isaak-modelo-115-ledger';
+import { DownloadFichero } from '../_components/DownloadFichero';
 
 type DraftResponse = {
   ok: boolean;
@@ -223,19 +224,22 @@ export default function Modelo115Page() {
           </div>
 
           {isDraftPersisted ? (
-            <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 space-y-3">
-              <p className="text-sm text-blue-900">
-                Borrador guardado. Confirma para registrar en el audit-log.
-              </p>
-              <button
-                type="button"
-                onClick={submitDraft}
-                disabled={loadingSubmit}
-                className="flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loadingSubmit ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
-                Confirmar y registrar como presentado
-              </button>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-5 space-y-3">
+                <p className="text-sm text-blue-900">
+                  Borrador guardado. Confirma para registrar en el audit-log.
+                </p>
+                <button
+                  type="button"
+                  onClick={submitDraft}
+                  disabled={loadingSubmit}
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 text-white px-4 py-2 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {loadingSubmit ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
+                  Confirmar y registrar como presentado
+                </button>
+              </div>
+              <DownloadFichero modelo="115" body={{ ejercicio, periodo }} />
             </div>
           ) : (
             <p className="text-xs text-slate-500 text-center">
