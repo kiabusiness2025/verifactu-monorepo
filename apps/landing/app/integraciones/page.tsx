@@ -6,9 +6,11 @@ import {
   Building2,
   CheckCircle2,
   Code2,
+  Dumbbell,
   Hotel,
   MessageSquare,
   Puzzle,
+  ShoppingCart,
   Sparkles,
   Stethoscope,
   UtensilsCrossed,
@@ -20,13 +22,13 @@ import { Container, Footer } from '../lib/home/ui';
 import { getIsaakUrl } from '../lib/urls';
 
 export const metadata: Metadata = {
-  title: 'Integraciones sectoriales | Isaak',
+  title: 'Integraciones | Isaak',
   description:
-    'Isaak obtiene los datos de tu software habitual — HotelGest, Revo XEF, Nubimed, Inmovilla — y los convierte en asesoramiento fiscal y de negocio en tiempo real.',
+    'Isaak conecta con Holded, Revo XEF, Loyverse, WooCommerce, Mindbody, PrestaShop y tu software sectorial. Una API key — inteligencia fiscal en tiempo real.',
   openGraph: {
-    title: 'Integraciones sectoriales | Isaak',
+    title: 'Integraciones | Isaak',
     description:
-      'Isaak conecta con el software de gestión de tu sector — hoteles, clínicas, restaurantes, inmobiliarias y más.',
+      'Holded, Revo XEF, Loyverse, WooCommerce, Mindbody, PrestaShop y más. Isaak se convierte en la inteligencia fiscal encima del software que ya usas.',
     type: 'website',
     locale: 'es_ES',
     url: 'https://verifactu.business/integraciones',
@@ -43,6 +45,17 @@ const navLinks = [
 ];
 
 const sectorConnectors = [
+  // ── Activas ────────────────────────────────────────────────────────────────
+  {
+    icon: Hotel,
+    status: 'Disponible',
+    statusColor: 'bg-emerald-100 text-emerald-800',
+    title: 'Holded',
+    body: 'El ERP de referencia para pymes españolas conectado con Isaak. Facturación, CRM, contabilidad y gastos — Isaak convierte tus datos en asesoramiento fiscal proactivo.',
+    cta: 'Conectar Holded',
+    href: 'https://isaak.verifactu.business/integrations',
+    external: true,
+  },
   {
     icon: Hotel,
     status: 'Disponible',
@@ -53,46 +66,58 @@ const sectorConnectors = [
     href: '/integraciones/hotelgest',
     external: false,
   },
+  // ── API pública — en desarrollo ────────────────────────────────────────────
   {
     icon: UtensilsCrossed,
-    status: 'Próximo',
-    statusColor: 'bg-amber-100 text-amber-800',
+    status: 'En desarrollo',
+    statusColor: 'bg-blue-100 text-blue-800',
     title: 'Revo XEF — Restaurantes',
     body: 'Tu TPV Revo conectado con Isaak. Cierres diarios, IVA reducido al 10%, desglose por servicio y modelo 303 trimestral automático. Para restaurantes, bares y hostelería.',
-    cta: 'Solicitar acceso beta',
+    cta: 'Apuntarse a beta',
     href: '/integraciones/solicitar',
     external: false,
   },
   {
-    icon: Stethoscope,
-    status: 'Próximo',
-    statusColor: 'bg-amber-100 text-amber-800',
-    title: 'Gesden — Clínicas dental',
-    body: 'El software dental líder en España conectado con Isaak. Servicios exentos de IVA, retenciones a odontólogos y facturación a pacientes — desglose correcto para Hacienda automáticamente.',
-    cta: 'Solicitar acceso beta',
+    icon: Zap,
+    status: 'En desarrollo',
+    statusColor: 'bg-blue-100 text-blue-800',
+    title: 'Loyverse — Retail y TPV',
+    body: 'El TPV en la nube para tiendas y comercios. Ventas, inventario, empleados e IVA repercutido — Isaak prepara tu modelo 303 desde los datos reales de caja.',
+    cta: 'Apuntarse a beta',
     href: '/integraciones/solicitar',
     external: false,
   },
   {
-    icon: Building2,
-    status: 'Próximo',
-    statusColor: 'bg-amber-100 text-amber-800',
-    title: 'Inmovilla — Inmobiliarias',
-    body: 'La gestión de tu agencia inmobiliaria conectada con Isaak. Operaciones, comisiones, retenciones IRPF y arrendamientos en un solo chat. El estándar de facto en España.',
-    cta: 'Solicitar acceso beta',
+    icon: ShoppingCart,
+    status: 'En desarrollo',
+    statusColor: 'bg-blue-100 text-blue-800',
+    title: 'WooCommerce — Tiendas online',
+    body: 'La plataforma e-commerce más usada en España conectada con Isaak. Ventas online, devoluciones, IVA intracomunitario y facturación electrónica automática.',
+    cta: 'Apuntarse a beta',
     href: '/integraciones/solicitar',
     external: false,
   },
   {
-    icon: Stethoscope,
-    status: 'Próximo',
-    statusColor: 'bg-amber-100 text-amber-800',
-    title: 'Nubimed / Mindbody — Salud y bienestar',
-    body: 'Clínicas médicas, dentales y gimnasios conectados con Isaak. Gestión fiscal sectorial, servicios exentos vs gravados, y control de ingresos por profesional.',
-    cta: 'Solicitar acceso beta',
+    icon: Dumbbell,
+    status: 'En desarrollo',
+    statusColor: 'bg-blue-100 text-blue-800',
+    title: 'Mindbody — Gimnasios y wellness',
+    body: 'Centros deportivos, spas y estudios de yoga conectados con Isaak. Membresías, reservas de clases e IVA de servicios deportivos — todo en el modelo 303 trimestral.',
+    cta: 'Apuntarse a beta',
     href: '/integraciones/solicitar',
     external: false,
   },
+  {
+    icon: ShoppingCart,
+    status: 'En desarrollo',
+    statusColor: 'bg-blue-100 text-blue-800',
+    title: 'PrestaShop — E-commerce',
+    body: 'La plataforma e-commerce de referencia en España. Pedidos, devoluciones, múltiples tipos de IVA y gestión de marketplaces — Isaak calcula tu posición fiscal en tiempo real.',
+    cta: 'Apuntarse a beta',
+    href: '/integraciones/solicitar',
+    external: false,
+  },
+  // ── Canales y plataformas ──────────────────────────────────────────────────
   {
     icon: Bot,
     status: 'Disponible',
@@ -123,12 +148,13 @@ const sectorConnectors = [
     href: 'https://isaak.verifactu.business',
     external: true,
   },
+  // ── Próximos ───────────────────────────────────────────────────────────────
   {
-    icon: Zap,
+    icon: Stethoscope,
     status: 'Próximo',
     statusColor: 'bg-slate-100 text-slate-600',
-    title: 'Loyverse · PrestaShop · TeamUp',
-    body: 'Retail, e-commerce y centros deportivos. Loyverse para tiendas, PrestaShop para tiendas online, TeamUp y Glofox para gimnasios y boxing. API pública disponible en todos.',
+    title: 'Gesden · Nubimed · Inmovilla',
+    body: 'Clínicas dentales, centros médicos e inmobiliarias. Acuerdos de partner en curso — en cuanto tengamos acceso a sus APIs, será lo primero en el roadmap.',
     cta: 'Solicitar integración',
     href: '/integraciones/solicitar',
     external: false,
@@ -146,17 +172,17 @@ const sectorConnectors = [
 ];
 
 const sectorList = [
+  { name: 'Holded', sector: 'ERP / Contabilidad', status: '✓ Activo' },
   { name: 'HotelGest', sector: 'Hoteles', status: '✓ Activo' },
-  { name: 'Revo XEF', sector: 'Restaurantes', status: 'Q3 2026' },
-  { name: 'Gesden', sector: 'Clínicas dental', status: 'Q3 2026' },
-  { name: 'Inmovilla', sector: 'Inmobiliarias', status: 'Q3 2026' },
-  { name: 'Nubimed', sector: 'Clínicas / Dental', status: 'Q3 2026' },
-  { name: 'Mindbody', sector: 'Gimnasios / wellness', status: 'Q4 2026' },
-  { name: 'ClinicCloud', sector: 'Clínicas médicas', status: 'Q4 2026' },
-  { name: 'Loyverse', sector: 'Comercio / Retail', status: 'Q4 2026' },
-  { name: 'PrestaShop', sector: 'E-commerce', status: 'Q1 2027' },
-  { name: 'TeamUp', sector: 'Gimnasios', status: 'Q4 2026' },
-  { name: 'RepairShopr', sector: 'Talleres mecánicos', status: 'Q1 2027' },
+  { name: 'Revo XEF', sector: 'Restaurantes', status: '⚙ En desarrollo' },
+  { name: 'Loyverse', sector: 'Retail / TPV', status: '⚙ En desarrollo' },
+  { name: 'WooCommerce', sector: 'E-commerce', status: '⚙ En desarrollo' },
+  { name: 'Mindbody', sector: 'Gimnasios / wellness', status: '⚙ En desarrollo' },
+  { name: 'PrestaShop', sector: 'E-commerce', status: '⚙ En desarrollo' },
+  { name: 'Gesden', sector: 'Clínicas dental', status: 'Próximo' },
+  { name: 'Inmovilla', sector: 'Inmobiliarias', status: 'Próximo' },
+  { name: 'Nubimed', sector: 'Clínicas / Dental', status: 'Próximo' },
+  { name: 'Glofox', sector: 'Gimnasios / boxing', status: 'Próximo' },
 ];
 
 export default function IntegracionesPage() {
@@ -231,7 +257,9 @@ export default function IntegracionesPage() {
                         className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                           s.status.startsWith('✓')
                             ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-slate-100 text-slate-500'
+                            : s.status.startsWith('⚙')
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-slate-100 text-slate-500'
                         }`}
                       >
                         {s.status}

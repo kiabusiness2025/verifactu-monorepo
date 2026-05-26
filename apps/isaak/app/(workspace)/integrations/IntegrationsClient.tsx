@@ -167,6 +167,22 @@ const INTEGRATIONS: IntegrationMeta[] = [
     available: false,
   },
   {
+    id: 'loyverse',
+    name: 'Loyverse',
+    category: 'sectorial',
+    desc: 'TPV en la nube para tiendas y comercio minorista',
+    logo: '🏪',
+    available: false,
+  },
+  {
+    id: 'woocommerce',
+    name: 'WooCommerce',
+    category: 'sectorial',
+    desc: 'E-commerce en WordPress — la plataforma más usada en España',
+    logo: '🛍️',
+    available: false,
+  },
+  {
     id: 'prestashop',
     name: 'PrestaShop',
     category: 'sectorial',
