@@ -29,6 +29,13 @@ export const SECTOR_PROVIDERS = [
   'hubspot',
   'salesforce',
   'pipedrive',
+  // Logística
+  'correos',
+  'mrw',
+  'seur',
+  'gls',
+  'dhl',
+  'sendcloud',
 ] as const;
 
 export type SectorProvider = (typeof SECTOR_PROVIDERS)[number];

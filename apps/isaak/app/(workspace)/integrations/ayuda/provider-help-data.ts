@@ -479,6 +479,174 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
     docsUrl: 'https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/',
   },
 
+  sendcloud: {
+    name: 'Sendcloud',
+    logo: '📦',
+    category: 'Logística (agregador)',
+    tagline:
+      'Conecta Sendcloud para gestionar envíos de todos tus transportistas desde un solo lugar.',
+    apiKeySteps: [
+      'Inicia sesión en app.sendcloud.com.',
+      'Ve a Settings → Integrations → Sendcloud API.',
+      'Haz clic en "Add integration" o selecciona una integración existente.',
+      'Copia el "Public key" (API key) y el "Secret key".',
+      'En Isaak, pégalos con el formato: PublicKey:SecretKey',
+    ],
+    whatIsaakSyncs: [
+      'Envíos y paquetes de todos tus transportistas',
+      'Estado de entrega en tiempo real',
+      'Historial de expediciones',
+      'Transportistas activos (Correos, SEUR, MRW, GLS, DHL…)',
+    ],
+    faq: [
+      {
+        q: '¿Qué transportistas puedo gestionar desde Sendcloud?',
+        a: 'Sendcloud integra más de 80 transportistas, incluyendo Correos Express, SEUR, MRW, GLS, DHL, UPS, FedEx y muchos más. Con una sola integración accedes a todos.',
+      },
+      {
+        q: '¿Funciona con mi tienda WooCommerce o PrestaShop?',
+        a: 'Sí. Sendcloud tiene conectores nativos con WooCommerce, PrestaShop, Shopify y más. Si ya usas Sendcloud en tu tienda, conecta aquí para ver tus métricas de envío en Isaak.',
+      },
+    ],
+    docsUrl: 'https://docs.sendcloud.com/api/v2/',
+  },
+
+  correos: {
+    name: 'Correos Express',
+    logo: '🟡',
+    category: 'Mensajería exprés',
+    tagline: 'Conecta Correos Express para hacer seguimiento de tus envíos nacionales.',
+    apiKeySteps: [
+      'Accede al Portal de Desarrolladores de Correos Express.',
+      'Si no tienes cuenta de desarrollador, contacta con tu gestor comercial de Correos Express.',
+      'Solicita acceso a la API REST de seguimiento.',
+      'Recibirás un API key y las credenciales de acceso.',
+      'Pégalos en Isaak en el formato que te indiquen.',
+    ],
+    whatIsaakSyncs: [
+      'Envíos y expediciones',
+      'Estado de entrega',
+      'Historial de paquetes',
+      'Incidencias y devoluciones',
+    ],
+    faq: [
+      {
+        q: '¿Necesito un contrato de empresa con Correos Express?',
+        a: 'Sí. El acceso a la API de Correos Express requiere un contrato de empresa activo. Contacta con tu delegación comercial.',
+      },
+    ],
+    docsUrl: 'https://www.correosexpress.com/web/correosexpress/envios/herramientas-soporte',
+  },
+
+  seur: {
+    name: 'SEUR',
+    logo: '🔴',
+    category: 'Paquetería urgente',
+    tagline: 'Conecta SEUR para acceder a tus envíos y seguimiento de paquetes.',
+    apiKeySteps: [
+      'Inicia sesión en Mi SEUR (miseur.seur.com).',
+      'Ve a Herramientas → Integraciones.',
+      'Solicita o copia tu clave de acceso API.',
+      'Necesitarás también tu número de cliente SEUR.',
+      'Pégalos en Isaak en el formato: ApiKey:NumeroCliente',
+    ],
+    whatIsaakSyncs: [
+      'Envíos realizados y en tránsito',
+      'Estado de entregas',
+      'Historial de expediciones',
+      'Devoluciones',
+    ],
+    faq: [
+      {
+        q: '¿SEUR tiene API pública o requiere contrato?',
+        a: 'SEUR ofrece acceso API a sus clientes de empresa. Necesitas un número de cliente activo. Contacta con SEUR para solicitar las credenciales de integración.',
+      },
+    ],
+    docsUrl: 'https://www.seur.com/es/clientes/integracion-api.shtml',
+  },
+
+  mrw: {
+    name: 'MRW',
+    logo: '🟢',
+    category: 'Mensajería exprés',
+    tagline: 'Conecta MRW para gestionar y hacer seguimiento de tus envíos nacionales.',
+    apiKeySteps: [
+      'Contacta con tu delegación MRW local o con el soporte técnico de MRW.',
+      'Solicita las credenciales de acceso al Web Service de MRW.',
+      'Recibirás un código de franquicia, código de suscriptor y contraseña.',
+      'En Isaak, pégalos en el formato: CodigoFranquicia:CodigoSuscriptor:Contraseña',
+    ],
+    whatIsaakSyncs: [
+      'Envíos y albaranes',
+      'Estado de entrega',
+      'Historial de expediciones',
+      'Incidencias y devoluciones',
+    ],
+    faq: [
+      {
+        q: '¿La API de MRW es pública?',
+        a: 'No. MRW solo proporciona acceso API a sus clientes de empresa con contrato activo. Debes solicitarlo a través de tu delegación MRW.',
+      },
+    ],
+    docsUrl: 'https://www.mrw.es/clientes/herramientas/api-web-service/',
+  },
+
+  gls: {
+    name: 'GLS Spain',
+    logo: '🔵',
+    category: 'Paquetería nacional e internacional',
+    tagline: 'Conecta GLS para acceder a envíos nacionales e internacionales vía su red europea.',
+    apiKeySteps: [
+      'Contacta con GLS Spain para solicitar acceso al WebConnect API.',
+      'GLS te proporcionará un usuario y contraseña para el entorno de producción.',
+      'Pégalos en Isaak en el formato: Usuario:Contraseña',
+    ],
+    whatIsaakSyncs: [
+      'Envíos y paquetes',
+      'Estado de seguimiento',
+      'Historial de expediciones',
+      'Entregas nacionales e internacionales',
+    ],
+    faq: [
+      {
+        q: '¿GLS tiene una API pública para desarrolladores?',
+        a: 'GLS proporciona acceso API (WebConnect) a sus clientes de empresa. Debes solicitarlo directamente a GLS Spain.',
+      },
+    ],
+    docsUrl: 'https://gls-group.eu/ES/es/herramientas-y-servicios/herramientas-de-integracion',
+  },
+
+  dhl: {
+    name: 'DHL Express',
+    logo: '🟡',
+    category: 'Envíos internacionales',
+    tagline: 'Conecta DHL Express para gestionar envíos internacionales y hacer seguimiento.',
+    apiKeySteps: [
+      'Ve a developer.dhl.com e inicia sesión o crea una cuenta.',
+      'En "My Apps", haz clic en "Create App".',
+      'Selecciona los productos que necesitas (ej. Shipment Tracking, eCommerce).',
+      'Una vez aprobada la app, copia tu "API Key".',
+      'Pégala en Isaak.',
+    ],
+    whatIsaakSyncs: [
+      'Envíos internacionales',
+      'Estado de seguimiento en tiempo real',
+      'Estimaciones de entrega',
+      'Historial de expediciones',
+    ],
+    faq: [
+      {
+        q: '¿El portal de desarrolladores de DHL es gratuito?',
+        a: 'Sí. Puedes registrarte en developer.dhl.com y acceder a la API de seguimiento de forma gratuita. Algunos productos adicionales requieren contrato de empresa.',
+      },
+      {
+        q: '¿DHL Express sirve para envíos nacionales en España?',
+        a: 'DHL Express opera en España para envíos nacionales, pero su punto fuerte es el envío internacional. Para paquetería nacional pura considera SEUR o MRW.',
+      },
+    ],
+    docsUrl: 'https://developer.dhl.com/api-reference/dhl-express',
+  },
+
   pipedrive: {
     name: 'Pipedrive',
     logo: '🔵',

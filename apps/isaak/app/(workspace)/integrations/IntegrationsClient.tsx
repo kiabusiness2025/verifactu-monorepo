@@ -29,6 +29,7 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  Truck,
   Unplug,
   Users,
   Wallet,
@@ -98,7 +99,8 @@ type CategoryKey =
   | 'banca'
   | 'comunicacion'
   | 'pagos'
-  | 'crm';
+  | 'crm'
+  | 'logistica';
 
 const CATEGORIES: { key: CategoryKey; label: string; icon: React.ElementType }[] = [
   { key: 'all', label: 'Todos', icon: LayoutGrid },
@@ -109,6 +111,7 @@ const CATEGORIES: { key: CategoryKey; label: string; icon: React.ElementType }[]
   { key: 'comunicacion', label: 'Comunicación', icon: MessageCircle },
   { key: 'pagos', label: 'Pagos', icon: Wallet },
   { key: 'crm', label: 'CRM', icon: Users },
+  { key: 'logistica', label: 'Logística', icon: Truck },
 ];
 
 type IntegrationMeta = {
@@ -345,6 +348,54 @@ const INTEGRATIONS: IntegrationMeta[] = [
     logo: '🔵',
     available: true,
   },
+  {
+    id: 'sendcloud',
+    name: 'Sendcloud',
+    category: 'logistica',
+    desc: 'Agregador multi-transportista · Correos, SEUR, MRW, GLS, DHL y más',
+    logo: '📦',
+    available: true,
+  },
+  {
+    id: 'correos',
+    name: 'Correos Express',
+    category: 'logistica',
+    desc: 'Envíos exprés nacionales · líder en España',
+    logo: '🟡',
+    available: true,
+  },
+  {
+    id: 'seur',
+    name: 'SEUR',
+    category: 'logistica',
+    desc: 'Paquetería urgente · entregas en 24h · DPD Group',
+    logo: '🔴',
+    available: true,
+  },
+  {
+    id: 'mrw',
+    name: 'MRW',
+    category: 'logistica',
+    desc: 'Mensajería exprés nacional · cobertura 99% España',
+    logo: '🟢',
+    available: true,
+  },
+  {
+    id: 'gls',
+    name: 'GLS Spain',
+    category: 'logistica',
+    desc: 'Paquetería nacional e internacional · red europea',
+    logo: '🔵',
+    available: true,
+  },
+  {
+    id: 'dhl',
+    name: 'DHL Express',
+    category: 'logistica',
+    desc: 'Envíos internacionales exprés · presencia en 220+ países',
+    logo: '🟡',
+    available: true,
+  },
 ];
 
 const CATEGORY_SECTION_LABELS: Record<Exclude<CategoryKey, 'all'>, string> = {
@@ -355,6 +406,7 @@ const CATEGORY_SECTION_LABELS: Record<Exclude<CategoryKey, 'all'>, string> = {
   comunicacion: 'Comunicación',
   pagos: 'Pagos',
   crm: 'CRM',
+  logistica: 'Logística',
 };
 
 const SCOPE_OPTIONS = [
@@ -1433,6 +1485,12 @@ export default function IntegrationsClient() {
         fetch('/api/isaak/sector/hubspot/status'),
         fetch('/api/isaak/sector/salesforce/status'),
         fetch('/api/isaak/sector/pipedrive/status'),
+        fetch('/api/isaak/sector/correos/status'),
+        fetch('/api/isaak/sector/mrw/status'),
+        fetch('/api/isaak/sector/seur/status'),
+        fetch('/api/isaak/sector/gls/status'),
+        fetch('/api/isaak/sector/dhl/status'),
+        fetch('/api/isaak/sector/sendcloud/status'),
       ]);
       if (holdedRes.status === 'fulfilled' && holdedRes.value.ok) {
         const d = (await holdedRes.value.json().catch(() => null)) as {
@@ -1466,6 +1524,12 @@ export default function IntegrationsClient() {
         'hubspot',
         'salesforce',
         'pipedrive',
+        'correos',
+        'mrw',
+        'seur',
+        'gls',
+        'dhl',
+        'sendcloud',
       ];
       const sectorUpdates: Record<string, SectorStatus> = {};
       for (const [i, res] of sectorRes.entries()) {
@@ -1537,6 +1601,7 @@ export default function IntegrationsClient() {
       'comunicacion',
       'pagos',
       'crm',
+      'logistica',
     ];
     return cats.filter((cat) => {
       if (activeCategory !== 'all' && activeCategory !== cat) return false;
@@ -1803,6 +1868,84 @@ export default function IntegrationsClient() {
             desc={item.desc}
             docsHint="API token en Pipedrive → Settings → Personal preferences → API"
             status={sectorStatuses['pipedrive'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'sendcloud':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="sendcloud"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key:Secret separados por «:» — Sendcloud → Settings → Integrations → API"
+            status={sectorStatuses['sendcloud'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'correos':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="correos"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en el Portal de Desarrolladores de Correos Express"
+            status={sectorStatuses['correos'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'seur':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="seur"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en SEUR → Mi SEUR → Integraciones"
+            status={sectorStatuses['seur'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'mrw':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="mrw"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Código de franquicia + suscriptor + contraseña API — contacta con tu delegación MRW"
+            status={sectorStatuses['mrw'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'gls':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="gls"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Usuario + contraseña WebConnect — contacta con GLS para activar el acceso API"
+            status={sectorStatuses['gls'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'dhl':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="dhl"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en developer.dhl.com → My Apps → Credentials"
+            status={sectorStatuses['dhl'] ?? null}
             onRefresh={() => void loadAll()}
           />
         );
