@@ -4,15 +4,20 @@ import { useState } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
+  BookOpen,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ExternalLink,
   Info,
   Loader2,
   Play,
   ShieldAlert,
   ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { ExcelDownloadButton } from '../components/ExcelDownloadButton';
+import { buildInspectorQueryFromViolation } from '@/app/lib/inspector-query-builder';
 
 type LegalBasis = { law: string; article: string; url?: string };
 type Violation = {
@@ -114,12 +119,53 @@ function formatEur(s: string): string {
   return n.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' });
 }
 
+type InspectorInlineResult = {
+  answer: string;
+  citations: Array<{
+    index: number;
+    articleRef: string | null;
+    title: string | null;
+    sourceUrl: string;
+    snippet: string;
+  }>;
+};
+
 function ViolationCard({ v }: { v: Violation }) {
   const palette = {
     error: { bg: 'bg-red-50', border: 'border-red-200', text: 'text-red-900', tag: 'bg-red-600' },
     warning: { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-900', tag: 'bg-amber-500' },
     info: { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-900', tag: 'bg-blue-500' },
   }[v.severity];
+
+  const [expanded, setExpanded] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<InspectorInlineResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function askInspector() {
+    setExpanded(true);
+    if (result || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/isaak/inspector/consult', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: buildInspectorQueryFromViolation(v) }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setError(json.message ?? json.error ?? 'Inspector no pudo responder.');
+        return;
+      }
+      setResult({ answer: json.answer, citations: json.citations ?? [] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error de conexión.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className={`${palette.bg} ${palette.border} border rounded-lg p-4`}>
       <div className="flex items-start justify-between gap-3">
@@ -160,6 +206,73 @@ function ViolationCard({ v }: { v: Violation }) {
               <span className="text-slate-500">{v.citation}</span>
             )}
           </div>
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={expanded ? () => setExpanded(false) : askInspector}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-violet-700 hover:text-violet-900"
+            >
+              <Sparkles className="h-3 w-3" />
+              {expanded ? (
+                <>
+                  Ocultar Inspector <ChevronUp className="h-3 w-3" />
+                </>
+              ) : (
+                <>
+                  Consultar al Inspector <ChevronDown className="h-3 w-3" />
+                </>
+              )}
+            </button>
+          </div>
+          {expanded && (
+            <div className="mt-3 bg-white border border-violet-200 rounded-lg p-3">
+              {loading && (
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Inspector consultando corpus AEAT/BOE...
+                </div>
+              )}
+              {error && (
+                <div className="text-sm text-red-700 flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                  {error}
+                </div>
+              )}
+              {result && (
+                <div className="space-y-3">
+                  <div className="text-sm text-slate-700 whitespace-pre-wrap">
+                    {result.answer}
+                  </div>
+                  {result.citations.length > 0 && (
+                    <div className="border-t border-slate-200 pt-2">
+                      <p className="text-xs font-semibold text-slate-500 mb-2 uppercase tracking-wide">
+                        <BookOpen className="h-3 w-3 inline mr-1" />
+                        Fuentes
+                      </p>
+                      <ol className="space-y-1.5">
+                        {result.citations.map((c) => (
+                          <li key={c.index} className="text-xs text-slate-600">
+                            <span className="font-mono font-bold text-violet-700">[{c.index}]</span>{' '}
+                            <span className="font-semibold">
+                              {c.articleRef ?? c.title ?? 'Fuente'}
+                            </span>
+                            <a
+                              href={c.sourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-1 text-violet-600 hover:underline inline-flex items-center gap-0.5"
+                            >
+                              Ver BOE <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
