@@ -175,7 +175,8 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
       'Haz clic en "Añadir nueva clave".',
       'Pon una descripción (ej. "Isaak") y activa los permisos GET en Customers, Orders, Products.',
       'Guarda y copia la clave generada.',
-      'Pégala en Isaak.',
+      'En Isaak, pega las credenciales con el formato: https://mitienda.com::CLAVE_API',
+      'Ejemplo: https://shop.ejemplo.com::ABCDEF1234567890ABCDEF1234567890',
     ],
     whatIsaakSyncs: [
       'Pedidos y estados',
@@ -187,6 +188,14 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
       {
         q: '¿Qué versión de PrestaShop es compatible?',
         a: 'PrestaShop 1.7 o superior con el módulo Webservice activado.',
+      },
+      {
+        q: '¿Por qué necesito incluir la URL de mi tienda?',
+        a: 'PrestaShop es self-hosted — cada tienda tiene su propia URL. Isaak necesita saber a qué servidor conectarse. Usa siempre HTTPS.',
+      },
+      {
+        q: '¿Qué permisos necesita la clave?',
+        a: 'Solo permisos GET en Orders, Customers y Products. Isaak nunca modifica datos de tu tienda.',
       },
     ],
     docsUrl: 'https://devdocs.prestashop-project.org/8/webservice/',
