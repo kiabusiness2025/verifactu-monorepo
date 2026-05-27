@@ -3,11 +3,8 @@ import {
   Bot,
   CheckCircle2,
   ChevronRight,
-  GraduationCap,
-  Layers,
   MessageCircleMore,
   PlayCircle,
-  Settings2,
   ShieldCheck,
   Sparkles,
   Users,
@@ -58,24 +55,6 @@ const whyItems = [
     icon: Users,
     title: 'Soporte real incluido',
     desc: 'Chat de soporte disponible en cualquier página. Y si necesitas ayuda humana, el equipo de Verifactu Business responde por email en horario laboral.',
-  },
-];
-
-const serviceItems = [
-  {
-    icon: Settings2,
-    title: 'Onboarding de Holded',
-    desc: 'Configuración guiada de tu cuenta de Holded. Empiezas a usarlo bien desde el primer día, sin atascos.',
-  },
-  {
-    icon: Layers,
-    title: 'Migración de datos',
-    desc: 'Migración de ejercicios fiscales completos, inventario y productos desde tu software actual a Holded.',
-  },
-  {
-    icon: GraduationCap,
-    title: 'Formación personalizada',
-    desc: 'Sesiones adaptadas a tu equipo y al uso real que hacéis de Holded en tu empresa.',
   },
 ];
 
@@ -424,45 +403,6 @@ export default function HoldedHomePage() {
                 </div>
                 <h3 className="mt-4 text-base font-bold text-slate-950">{title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── SERVICIOS ── */}
-      <section className="border-y border-slate-200/80 bg-[linear-gradient(135deg,#fff7f7_0%,#ffffff_55%,#f6fbff_100%)] py-14 sm:py-20">
-        <div className="mx-auto max-w-6xl px-4">
-          <div className="max-w-2xl">
-            <SectionPill icon={GraduationCap}>Servicios para Holded</SectionPill>
-            <h2 className="mt-5 text-3xl font-bold tracking-tight text-slate-950 sm:text-[2.5rem]">
-              Más allá del conector.
-            </h2>
-            <p className="mt-4 text-base leading-8 text-slate-600">
-              Si estás empezando con Holded, migrando desde otro software o necesitas sacarle más
-              partido, te ayudamos.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-5 md:grid-cols-3">
-            {serviceItems.map(({ icon: Icon, title, desc }) => (
-              <div
-                key={title}
-                className="flex flex-col rounded-[1.75rem] border border-slate-200 bg-white p-6 shadow-sm"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff5460]/10">
-                  <Icon className="h-5 w-5 text-[#ff5460]" />
-                </div>
-                <h3 className="mt-4 text-base font-bold text-slate-950">{title}</h3>
-                <p className="mt-2 flex-1 text-sm leading-6 text-slate-600">{desc}</p>
-                <div className="mt-5">
-                  <Link
-                    href="/contacto"
-                    className="inline-flex items-center gap-1 text-sm font-semibold text-[#ff5460] transition hover:underline"
-                  >
-                    Más información <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
-                </div>
               </div>
             ))}
           </div>
