@@ -5,90 +5,111 @@ import { getHoldedDirectPanelData } from '@/lib/holdedDirectAdmin';
 import { formatDateTime } from '@/src/lib/formatters';
 import Link from 'next/link';
 
-type HealthService = { ok: boolean; latencyMs?: number; error?: string; missing?: string[] };
-type HealthResponse = {
+// ── Platform health types ─────────────────────────────────────────────────────
+
+type AppCheck = {
+  name: string;
+  url: string;
   ok: boolean;
-  timestamp: string;
-  sha: string;
-  services: { database: HealthService; config: HealthService };
+  status: number | null;
+  latencyMs: number | null;
+  sha?: string;
+  error?: string;
 };
 
-async function fetchAppHealth(): Promise<HealthResponse | null> {
+async function checkUrl(name: string, url: string): Promise<AppCheck> {
+  const start = Date.now();
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_ISAAK_URL ?? 'https://isaak.verifactu.business'}/api/health`,
-      { next: { revalidate: 60 }, signal: AbortSignal.timeout(5000) }
-    );
-    return (await res.json()) as HealthResponse;
-  } catch {
-    return null;
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(5000),
+      next: { revalidate: 60 },
+    });
+    const latencyMs = Date.now() - start;
+    let sha: string | undefined;
+    try {
+      const body = (await res.clone().json()) as { sha?: string };
+      sha = body.sha;
+    } catch {
+      // not JSON — ignore
+    }
+    return { name, url, ok: res.ok, status: res.status, latencyMs, sha };
+  } catch (err) {
+    return {
+      name,
+      url,
+      ok: false,
+      status: null,
+      latencyMs: Date.now() - start,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }
 
-function StatusDot({ ok }: { ok: boolean }) {
-  return (
-    <span className={`inline-block h-2 w-2 rounded-full ${ok ? 'bg-emerald-500' : 'bg-red-500'}`} />
-  );
+async function fetchPlatformHealth(): Promise<AppCheck[]> {
+  const ISAAK_URL = process.env.NEXT_PUBLIC_ISAAK_URL ?? 'https://isaak.verifactu.business';
+  const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://app.verifactu.business';
+
+  return Promise.all([
+    checkUrl('Isaak', `${ISAAK_URL}/api/health`),
+    checkUrl('Landing', 'https://verifactu.business/api/health'),
+    checkUrl('Holded site', 'https://holded.verifactu.business/api/health'),
+    checkUrl(
+      'Claude MCP',
+      'https://claude.verifactu.business/.well-known/oauth-authorization-server'
+    ),
+    checkUrl('ChatGPT conector', `${APP_URL}/api/health`),
+  ]);
 }
 
-function SystemStatusWidget({ health }: { health: HealthResponse | null }) {
-  if (!health) {
-    return (
-      <section className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3">
-        <p className="text-xs font-semibold text-red-800">⚠️ Isaak app — sin respuesta</p>
-        <p className="mt-0.5 text-xs text-red-600">
-          No se pudo conectar a <code>isaak.verifactu.business/api/health</code>
-        </p>
-      </section>
-    );
-  }
+// ── Platform status widget ────────────────────────────────────────────────────
 
-  const services = [
-    { label: 'Base de datos', data: health.services.database },
-    { label: 'Configuración', data: health.services.config },
-  ];
+function PlatformStatusWidget({ apps }: { apps: AppCheck[] }) {
+  const allOk = apps.every((a) => a.ok);
+  const downCount = apps.filter((a) => !a.ok).length;
 
   return (
-    <section
-      className={`rounded-2xl border px-5 py-3 ${
-        health.ok ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <p className={`text-xs font-semibold ${health.ok ? 'text-emerald-800' : 'text-red-800'}`}>
-          {health.ok ? '✅ Isaak app — todos los servicios operativos' : '🚨 Isaak app — degradada'}
+    <section className="rounded-2xl border border-slate-200 bg-white shadow-soft">
+      <div
+        className={`flex items-center justify-between rounded-t-2xl border-b px-5 py-3 ${
+          allOk ? 'border-emerald-100 bg-emerald-50' : 'border-red-100 bg-red-50'
+        }`}
+      >
+        <p className={`text-xs font-semibold ${allOk ? 'text-emerald-800' : 'text-red-800'}`}>
+          {allOk
+            ? '✅ Plataforma operativa — todas las apps responden'
+            : `🚨 ${downCount} app${downCount > 1 ? 's' : ''} sin respuesta`}
         </p>
         <span className="text-xs text-slate-400">
-          SHA {health.sha} · {new Date(health.timestamp).toLocaleTimeString('es-ES')}
+          {new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
-      {!health.ok && (
-        <ul className="mt-2 space-y-1">
-          {services
-            .filter((s) => !s.data.ok)
-            .map((s) => (
-              <li key={s.label} className="flex items-center gap-2 text-xs text-red-700">
-                <StatusDot ok={false} />
-                <span>
-                  <strong>{s.label}</strong>
-                  {s.data.error ? ` — ${s.data.error}` : ''}
-                  {s.data.missing?.length ? ` — faltan vars: ${s.data.missing.join(', ')}` : ''}
-                </span>
-              </li>
-            ))}
-        </ul>
-      )}
-      {health.ok && (
-        <div className="mt-1.5 flex gap-4">
-          {services.map((s) => (
-            <span key={s.label} className="flex items-center gap-1.5 text-xs text-emerald-700">
-              <StatusDot ok={s.data.ok} />
-              {s.label}
-              {s.data.latencyMs !== undefined ? ` (${s.data.latencyMs}ms)` : ''}
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-3 lg:grid-cols-5">
+        {apps.map((app) => (
+          <div key={app.name} className="px-4 py-3">
+            <div className="flex items-center gap-1.5">
+              <span
+                className={`h-2 w-2 shrink-0 rounded-full ${app.ok ? 'bg-emerald-500' : 'bg-red-500'}`}
+              />
+              <span className="truncate text-xs font-semibold text-slate-800">{app.name}</span>
+            </div>
+            <p className={`mt-1 text-[11px] ${app.ok ? 'text-emerald-700' : 'text-red-600'}`}>
+              {app.ok
+                ? app.latencyMs !== null
+                  ? `${app.latencyMs} ms`
+                  : 'OK'
+                : app.error?.includes('timeout') || app.error?.includes('Timeout')
+                  ? 'Timeout'
+                  : app.status
+                    ? `HTTP ${app.status}`
+                    : 'Sin respuesta'}
+            </p>
+            {app.sha && <p className="mt-0.5 font-mono text-[10px] text-slate-400">{app.sha}</p>}
+            {!app.ok && app.error && !app.error.includes('timeout') && (
+              <p className="mt-0.5 line-clamp-1 text-[10px] text-red-400">{app.error}</p>
+            )}
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -140,7 +161,7 @@ function MetricCard({
 }
 
 export default async function AdminPanelPage() {
-  const [data, pendingDemos, connectorsStatus, activityStats, refreshedAt, appHealth] =
+  const [data, pendingDemos, connectorsStatus, activityStats, refreshedAt, platformApps] =
     await Promise.all([
       getHoldedDirectPanelData({
         userLimit: 0,
@@ -189,7 +210,7 @@ export default async function AdminPanelPage() {
           }[]
       ),
       Promise.resolve(new Date().toISOString()),
-      fetchAppHealth(),
+      fetchPlatformHealth(),
     ]);
 
   const { summary } = data;
@@ -201,6 +222,7 @@ export default async function AdminPanelPage() {
     queries_today: 0,
     dormant: 0,
   };
+  const platformDown = platformApps.filter((a) => !a.ok).length;
 
   return (
     <main className="space-y-5 px-4 py-5 sm:px-6 lg:px-8">
@@ -224,7 +246,8 @@ export default async function AdminPanelPage() {
         summary.duplicateEmailUsers > 0 ||
         pendingDemos > 0 ||
         errConnectors > 0 ||
-        activity.dormant > 0) && (
+        activity.dormant > 0 ||
+        platformDown > 0) && (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3">
           <p className="text-xs font-semibold text-amber-800">Atención requerida</p>
           <ul className="mt-1 space-y-0.5 text-xs text-amber-700">
@@ -270,12 +293,18 @@ export default async function AdminPanelPage() {
                 con email duplicado
               </li>
             )}
+            {platformDown > 0 && (
+              <li>
+                — {platformDown} app{platformDown > 1 ? 's' : ''} de la plataforma sin respuesta{' '}
+                (ver estado abajo)
+              </li>
+            )}
           </ul>
         </section>
       )}
 
-      {/* Estado del sistema Isaak */}
-      <SystemStatusWidget health={appHealth} />
+      {/* Estado de la plataforma — todas las apps */}
+      <PlatformStatusWidget apps={platformApps} />
 
       {/* Widget visual de conectores — hero del panel */}
       <ConnectorsPanelWidget />
