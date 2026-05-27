@@ -37,7 +37,16 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('x-gcbd-signature') ?? '';
   const rawBody = await request.text();
 
-  if (signature && !verifyGcbdWebhook(rawBody, signature)) {
+  // SEC C2 (2026): la firma es OBLIGATORIA. Anteriormente la verificación
+  // se saltaba si la cabecera no llegaba, permitiendo a un atacante
+  // enviar payloads falsos y corromper conciliaciones bancarias.
+  if (!signature) {
+    return NextResponse.json(
+      { error: 'Falta la cabecera x-gcbd-signature.' },
+      { status: 401 },
+    );
+  }
+  if (!verifyGcbdWebhook(rawBody, signature)) {
     return NextResponse.json({ error: 'Firma inválida.' }, { status: 401 });
   }
 
