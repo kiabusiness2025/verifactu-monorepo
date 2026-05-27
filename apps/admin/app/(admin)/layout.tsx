@@ -3,7 +3,10 @@
 import { AppShell } from '@verifactu/ui';
 import type { NavItem } from '@verifactu/ui';
 import InstallPwaButton from '@/components/pwa/InstallPwaButton';
+import { ExternalLink, User } from 'lucide-react';
 import { usePathname } from 'next/navigation';
+
+const ISAAK_URL = process.env.NEXT_PUBLIC_ISAAK_URL ?? 'https://isaak.verifactu.business';
 import { useEffect, useMemo, useState } from 'react';
 import { navAdmin } from '../../src/navAdmin';
 
@@ -75,7 +78,22 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="truncate text-xs text-slate-500">Gestión interna del producto</div>
         </div>
       }
-      headerRight={<InstallPwaButton />}
+      headerRight={
+        <div className="flex items-center gap-2">
+          <a
+            href={`${ISAAK_URL}/chat`}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Abrir Isaak como usuario"
+            className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            <User size={12} />
+            <span className="hidden sm:inline">Ver como usuario</span>
+            <ExternalLink size={10} className="text-slate-400" />
+          </a>
+          <InstallPwaButton />
+        </div>
+      }
     >
       {children}
     </AppShell>

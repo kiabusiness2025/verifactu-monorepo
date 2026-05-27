@@ -54,6 +54,11 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     initials: getInitials(session.name),
   };
 
+  const adminDomain = process.env.ADMIN_ALLOWED_DOMAIN ?? 'verifactu.business';
+  const adminPanelUrl = user.email.endsWith(`@${adminDomain}`)
+    ? (process.env.NEXT_PUBLIC_ADMIN_SITE_URL ?? 'https://admin.verifactu.business')
+    : undefined;
+
   const planInfo = {
     name: billing?.name ?? 'Free',
     code: billing?.code ?? 'free',
@@ -83,6 +88,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
         planInfo={planInfo}
         holdedConnected={holdedConnected}
         whitelabel={whitelabel}
+        adminPanelUrl={adminPanelUrl}
       />
       <main className="relative flex flex-1 overflow-hidden bg-white">
         <div className="flex flex-1 flex-col overflow-hidden">

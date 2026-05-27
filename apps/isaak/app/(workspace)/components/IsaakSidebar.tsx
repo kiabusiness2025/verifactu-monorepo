@@ -172,12 +172,14 @@ export default function IsaakSidebar({
   planInfo,
   holdedConnected,
   whitelabel,
+  adminPanelUrl,
 }: {
   user: UserInfo;
   conversations: ConversationItem[];
   planInfo: PlanInfo;
   holdedConnected: boolean;
   whitelabel?: WhitelabelConfig | null;
+  adminPanelUrl?: string;
 }) {
   const brandColor = whitelabel?.enabled
     ? (whitelabel.primaryColor ?? DEFAULT_BRAND)
@@ -481,6 +483,21 @@ export default function IsaakSidebar({
         </div>
       )}
 
+      {/* ── Admin shortcut (collapsed mode) ─────────────── */}
+      {collapsed && adminPanelUrl && (
+        <div className="px-1.5 pb-1">
+          <a
+            href={adminPanelUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Panel de administración"
+            className="flex h-7 w-full items-center justify-center rounded-lg text-amber-500 transition hover:bg-white/5 hover:text-amber-400"
+          >
+            <ShieldCheck size={14} />
+          </a>
+        </div>
+      )}
+
       {/* ── Profile / Account area ───────────────────────── */}
       <div
         className={`relative border-t border-white/5 p-2 ${collapsed ? 'px-1.5' : ''}`}
@@ -532,6 +549,26 @@ export default function IsaakSidebar({
                 </Link>
               ))}
             </div>
+
+            {/* Admin switcher — solo visible para @verifactu.business */}
+            {adminPanelUrl && (
+              <div className="border-b border-white/5 py-1">
+                <div className="px-4 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-widest text-amber-600/70">
+                  Modo admin
+                </div>
+                <a
+                  href={adminPanelUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setProfileOpen(false)}
+                  className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-amber-400 transition hover:bg-white/5 hover:text-amber-300"
+                >
+                  <ShieldCheck size={13} className="shrink-0" />
+                  Panel de administración
+                  <ExternalLink size={10} className="ml-auto text-slate-600" />
+                </a>
+              </div>
+            )}
 
             {/* Help + logout */}
             <div className="py-1">
