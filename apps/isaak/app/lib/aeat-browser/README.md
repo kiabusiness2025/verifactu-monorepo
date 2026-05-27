@@ -49,6 +49,13 @@ gestoría colaboradora con AEAT) es navegador automatizado.
    `browser.newContext()`. Requiere Playwright ≥ 1.46.
 5. **Solo modelo 303** en v1. Los otros modelos siguen el mismo patrón
    pero requieren un nuevo adapter (mismo concepto, distinta página).
+6. **Pilot: 1 sola instancia del worker** — el lock optimista por
+   `status='submitting'` previene doble envío entre workers, pero el
+   sweep de stale (30 min) podría falsear un worker REAL muy lento.
+   Mientras no añadamos heartbeat, mantén UN solo proceso activo del
+   worker durante el pilot. Cuando escalemos: añadir heartbeat que toque
+   `updatedAt` cada 60s desde dentro del flow, y/o monitorización
+   alerta si una submission queda en `submitting` > 30 min.
 
 ## Cómo deployar el worker
 

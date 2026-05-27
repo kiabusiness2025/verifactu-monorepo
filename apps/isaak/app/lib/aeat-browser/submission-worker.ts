@@ -130,9 +130,19 @@ export async function processPendingSubmissions(
   };
 
   // Stale recovery: si un worker crasheó dejando submissions en
-  // 'submitting' hace >10 min, las consideramos liberadas y las
+  // 'submitting' hace >30 min, las consideramos liberadas y las
   // re-promovemos a 'pending_aeat'. Esto evita bloqueos eternos.
-  const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 min
+  //
+  // 30 min se eligió tras analizar la race condition: si una submission
+  // legítima tarda más que el threshold (ej. AEAT lento, retries de
+  // Playwright, captcha), el sweep podría "rescatarla" mientras el
+  // worker original sigue procesando → doble envío a AEAT. Para mitigar:
+  //   * threshold conservador (30 min cubre el 99% de submissions normales)
+  //   * recomendación operacional: 1 sola instancia del worker durante
+  //     pilot, hasta que añadamos heartbeat real (ver TODO en README)
+  //   * monitor alerta si una submission queda en 'submitting' > 30 min
+  //     (indica crash, no slow path razonable)
+  const STALE_THRESHOLD_MS = 30 * 60 * 1000;
   const staleCutoff = new Date(Date.now() - STALE_THRESHOLD_MS);
   await prisma.isaakAeatSubmission.updateMany({
     where: { status: 'submitting', updatedAt: { lt: staleCutoff } },
