@@ -2,10 +2,9 @@ import type { MetadataRoute } from 'next';
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: 'Holded Admin',
-    short_name: 'Holded Admin',
-    description:
-      'Panel interno para observar usuarios, tenants y actividad operativa del canal Holded.',
+    name: 'Verifactu Admin',
+    short_name: 'Verifactu Admin',
+    description: 'Panel interno para observar usuarios, tenants y actividad operativa de Verifactu.',
     start_url: '/panel',
     scope: '/',
     display: 'standalone',

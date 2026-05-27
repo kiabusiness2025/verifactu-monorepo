@@ -29,6 +29,7 @@ import {
   Plus,
   Receipt,
   ShieldAlert,
+  ShieldCheck,
   Sparkles,
   IdCard,
   TrendingUp,
