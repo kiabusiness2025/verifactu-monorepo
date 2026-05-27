@@ -19,8 +19,6 @@
     "@fullcalendar/list": "^6.1.15",
     "@fullcalendar/react": "^6.1.15",
     "@fullcalendar/timegrid": "^6.1.15",
-    "@genkit-ai/core": "^1.27.0",
-    "@genkit-ai/firebase": "^1.27.0",
     "@prisma/client": "5.22.0",
     "@react-jvectormap/core": "^1.0.4",
     "@react-jvectormap/world": "^1.1.2",

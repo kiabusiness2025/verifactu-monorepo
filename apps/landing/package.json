@@ -9,10 +9,6 @@
     "start": "next start -p 8080"
   },
   "dependencies": {
-    "@genkit-ai/ai": "^1.27.0",
-    "@genkit-ai/core": "^1.27.0",
-    "@genkit-ai/firebase": "^1.27.0",
-    "@genkit-ai/googleai": "^1.27.0",
     "@google/generative-ai": "^0.24.1",
     "@scalar/api-reference-react": "^0.9.41",
     "@stripe/stripe-js": "^4.1.0",
