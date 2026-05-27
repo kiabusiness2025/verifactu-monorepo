@@ -13,8 +13,10 @@ import {
   ChevronRight,
   ChevronUp,
   CreditCard,
+  Database,
   ExternalLink,
   FileBarChart2,
+  FileText,
   Landmark,
   LifeBuoy,
   LogOut,
@@ -26,8 +28,6 @@ import {
   Plug,
   Plus,
   Receipt,
-  Shield,
-  ShieldCheck,
   ShieldAlert,
   Sparkles,
   IdCard,
@@ -67,6 +67,9 @@ type WhitelabelConfig = {
 };
 
 // ── Navigation groups (sidebar) ────────────────────────────────────────────
+// Reorganización 2026-05: agrupamos por dominio del usuario, no por
+// implementación interna. Fiscal y Canales antes estaban dispersos entre
+// sidebar y profile popover, causando confusión.
 const NAV_GROUPS = [
   {
     items: [
@@ -79,40 +82,49 @@ const NAV_GROUPS = [
     items: [
       { href: '/ventas', label: 'Ventas', icon: TrendingUp },
       { href: '/gastos', label: 'Gastos', icon: Receipt },
-      { href: '/informes', label: 'Informes', icon: FileBarChart2 },
-      { href: '/auditoria', label: 'Auditoría', icon: ShieldAlert },
-      { href: '/sede', label: 'Buzón AEAT', icon: Mail, badgeKind: 'aeat-pending' as const },
       { href: '/banking', label: 'Banking', icon: Landmark },
+      { href: '/informes', label: 'Informes', icon: FileBarChart2 },
     ],
   },
   {
-    label: 'Empresa',
+    label: 'Fiscal',
+    items: [
+      { href: '/fiscal/modelos', label: 'Modelos AEAT', icon: FileText },
+      { href: '/auditoria', label: 'Auditoría', icon: ShieldAlert },
+      { href: '/inspector', label: 'Inspector AEAT', icon: Sparkles },
+      { href: '/sede', label: 'Buzón AEAT', icon: Mail, badgeKind: 'aeat-pending' as const },
+      { href: '/perfil-fiscal', label: 'Perfil fiscal', icon: IdCard },
+    ],
+  },
+  {
+    label: 'Canales',
+    items: [
+      { href: '/mail', label: 'Mail', icon: Mail },
+      { href: '/calendario', label: 'Calendario', icon: CalendarDays },
+      { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
+      { href: '/microsoft', label: 'Microsoft 365', icon: Monitor },
+    ],
+  },
+  {
+    label: 'Equipo',
     items: [
       { href: '/contactos', label: 'Contactos', icon: Users },
-      { href: '/perfil-fiscal', label: 'Perfil fiscal', icon: IdCard },
       { href: '/equipo', label: 'Equipo', icon: Users2 },
-      { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
-      { href: '/fiscal', label: 'Fiscal', icon: ShieldCheck },
     ],
   },
 ] as const;
 
-// ── Profile popover — Configuración ───────────────────────────────────────
-const PROFILE_CONFIG = [
+// ── Profile popover ────────────────────────────────────────────────────────
+// Solo CONFIGURACIÓN del usuario y de la cuenta. Las páginas operativas
+// (modelos, canales, inspector) viven en la sidebar principal.
+const PROFILE_MENU = [
   { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
   { href: '/settings?section=isaak', label: 'Personalizar Isaak', icon: Sparkles },
   { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
-] as const;
-
-// ── Profile popover — Integraciones y herramientas ────────────────────────
-const PROFILE_TOOLS = [
   { href: '/integrations', label: 'Integraciones', icon: Plug },
-  { href: '/microsoft', label: 'Microsoft 365', icon: Monitor },
-  { href: '/mail', label: 'Gmail Facturas', icon: Mail },
-  { href: '/calendario', label: 'Calendario', icon: CalendarDays },
   { href: '/advisor', label: 'Modo Asesoría', icon: Briefcase },
-  { href: '/sede', label: 'Sede Electrónica', icon: Shield },
+  { href: '/sede-corpus', label: 'Corpus AEAT (admin)', icon: Database },
 ] as const;
 
 function formatRelativeDate(value: Date | string) {
@@ -462,30 +474,12 @@ export default function IsaakSidebar({
               </Link>
             </div>
 
-            {/* Configuración */}
+            {/* Configuración + integraciones (setup) — todo en un solo grupo */}
             <div className="border-b border-white/5 py-1">
               <div className="px-4 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-widest text-slate-600">
                 Configuración
               </div>
-              {PROFILE_CONFIG.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-slate-300 transition hover:bg-white/5 hover:text-white"
-                >
-                  <Icon size={13} className="shrink-0 text-slate-500" />
-                  {label}
-                </Link>
-              ))}
-            </div>
-
-            {/* Integraciones y herramientas */}
-            <div className="border-b border-white/5 py-1">
-              <div className="px-4 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-widest text-slate-600">
-                Integraciones y herramientas
-              </div>
-              {PROFILE_TOOLS.map(({ href, label, icon: Icon }) => (
+              {PROFILE_MENU.map(({ href, label, icon: Icon }) => (
                 <Link
                   key={href}
                   href={href}
