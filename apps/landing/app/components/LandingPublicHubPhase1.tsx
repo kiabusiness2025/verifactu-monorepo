@@ -1,24 +1,25 @@
 import {
   ArrowRight,
+  Bot,
   Building2,
   CheckCircle2,
-  FileSpreadsheet,
+  ChefHat,
   Landmark,
-  Link2,
   ShieldCheck,
   Sparkles,
   Users,
+  Utensils,
 } from 'lucide-react';
 import Link from 'next/link';
 import Header from './Header';
 import { Container, Footer } from '../lib/home/ui';
 
-const HOLDed_CONNECTORS_URL = 'https://holded.verifactu.business/conectores';
 const ISAAK_URL = 'https://isaak.verifactu.business';
 
 const navLinks = [
   { label: 'Isaak', href: ISAAK_URL },
-  { label: 'Conectores', href: '/conectores' },
+  { label: 'Integraciones', href: '/integraciones' },
+  { label: 'Asesorías', href: '/asesorias' },
   { label: 'Precios', href: '/precios' },
   { label: 'Contacto', href: '/contacto' },
 ];
@@ -26,56 +27,69 @@ const navLinks = [
 const pillars = [
   {
     title: 'Cumplimiento VeriFactu',
-    body: 'Conexion AEAT, trazabilidad, exportables, evidencia y preparacion para Ley Antifraude sin convertir todo el producto en solo software VeriFactu.',
+    body: 'Registro AEAT, firma garantizada y trazabilidad completa. Preparado para la Ley Antifraude sin que tengas que gestionar nada manualmente.',
     icon: ShieldCheck,
   },
   {
-    title: 'Isaak como orquestador',
-    body: 'Isaak no sustituye tu ERP. Lo convierte en algo que puedes entender, preguntar y controlar con contexto fiscal y operativo.',
+    title: 'Tu IA fiscal y contable',
+    body: 'Isaak entiende tu negocio. Pregunta en español, obtén respuestas con datos reales: IVA estimado, ingresos, gastos, alertas fiscales y modelos AEAT.',
     icon: Sparkles,
   },
   {
-    title: 'Modo Excel / in-house',
-    body: 'Empieza con Excels, documentos, facturas y exportaciones. Isaak ayuda a ordenar, interpretar y convertirlo en siguientes pasos.',
-    icon: FileSpreadsheet,
+    title: 'Tu software sectorial, conectado',
+    body: 'HotelGest, Revo XEF, WooCommerce, Salesforce, Mindbody y más. Isaak lee tu operativa directamente y la convierte en contabilidad inteligente.',
+    icon: Bot,
   },
   {
-    title: 'Modo conectado',
-    body: 'Holded conectado hoy. Sage, A3ERP, Odoo, Xero, Cegid y más de 40 ERPs compatibles próximamente. Bancos, CRM, Drive y APIs — todo accesible desde Isaak.',
-    icon: Link2,
+    title: 'Open Banking',
+    body: 'Tus cuentas bancarias en tiempo real. Conciliación automática con facturas, IVA estimado siempre actualizado.',
+    icon: Landmark,
   },
 ];
 
 const audienceCards = [
-  'Autónomos y microempresas que necesitan empezar por orden y cumplimiento.',
-  'PYMEs que quieren conectar fiscalidad, datos y operaciones.',
-  'Asesorías que necesitan clientes más ordenados y menos persecución documental.',
+  {
+    icon: ChefHat,
+    label: 'Hostelería y restauración',
+    body: 'Conecta tu TPV (Revo XEF, Loyverse) y ten la contabilidad al día sin tocar ningún ERP.',
+  },
+  {
+    icon: Building2,
+    label: 'Hoteles y alojamientos',
+    body: 'HotelGest conectado. Reservas, ingresos y pagos convertidos en fiscalidad automática.',
+  },
+  {
+    icon: Utensils,
+    label: 'Comercio y e-commerce',
+    body: 'WooCommerce, PrestaShop y marketplaces. Facturas, IVA y cierres de caja listos para la AEAT.',
+  },
+  {
+    icon: Users,
+    label: 'Asesorías y gestorías',
+    body: 'Gestiona múltiples clientes desde un único panel. Modo asesoría con contexto de empresa por cliente.',
+  },
 ];
 
 const ECOSYSTEM_CARDS = [
   {
     icon: ShieldCheck,
-    title: 'Cumplimiento VeriFactu',
-    desc: 'AEAT, trazabilidad y Ley Antifraude. Registro de facturas con firma garantizada.',
-    badge: null,
+    title: 'VeriFactu · AEAT',
+    desc: 'Registro de facturas con firma garantizada. Cumplimiento Ley Antifraude sin esfuerzo.',
   },
   {
     icon: Sparkles,
-    title: 'Isaak — IA empresarial',
-    desc: 'Pregunta en español, obtén respuestas con datos reales. Tu empresa disponible 24/7.',
-    badge: null,
+    title: 'IA Fiscal y Contable',
+    desc: 'Pregunta en español, obtén respuestas con datos reales. IVA, modelos y alertas incluidas.',
   },
   {
-    icon: Link2,
-    title: 'Conectores ERP',
-    desc: 'Holded conectado hoy. Sage, A3ERP, Odoo, Xero y +40 ERPs compatibles próximamente.',
-    badge: null,
+    icon: Bot,
+    title: 'Integraciones sectoriales',
+    desc: 'Hoteles, restaurantes, comercio, clínicas, CRM. Tu software de sector ya conectado.',
   },
   {
     icon: Landmark,
     title: 'Open Banking',
-    desc: 'Movimientos bancarios en tiempo real. Conciliación automática con facturas.',
-    badge: null,
+    desc: 'Movimientos bancarios en tiempo real. Conciliación automática con tus facturas.',
   },
 ];
 
@@ -94,11 +108,12 @@ export default function LandingPublicHubPhase1() {
                 Verifactu Business
               </div>
               <h1 className="mt-6 max-w-2xl text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl sm:leading-[1.06]">
-                Tu empresa, conectada. Tus impuestos, bajo control. Tu IA, siempre disponible.
+                El copiloto fiscal y contable para tu negocio. Sin ERP de por medio.
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-                verifactu.business reúne cumplimiento AEAT, gestión empresarial con IA e integración
-                con tu ERP en un solo ecosistema. Empieza gratis hoy.
+                Isaak conecta con el software que ya usas en tu sector, automatiza tu contabilidad,
+                cumple con la AEAT y responde tus preguntas en español — sin instalar ni aprender
+                ningún programa de contabilidad.
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2 text-sm text-slate-500">
@@ -112,7 +127,7 @@ export default function LandingPublicHubPhase1() {
                 </span>
                 <span className="flex items-center gap-1.5">
                   <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  Holded conectado hoy
+                  VeriFactu y AEAT incluidos
                 </span>
               </div>
 
@@ -125,10 +140,10 @@ export default function LandingPublicHubPhase1() {
                   <ArrowRight className="h-4 w-4" />
                 </a>
                 <Link
-                  href="/demo"
+                  href="/integraciones"
                   className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
                 >
-                  Solicitar demo
+                  Ver integraciones
                 </Link>
                 <Link
                   href="/asesorias"
@@ -141,7 +156,7 @@ export default function LandingPublicHubPhase1() {
 
             {/* Right: Ecosystem cards */}
             <div className="space-y-3">
-              {ECOSYSTEM_CARDS.map(({ icon: Icon, title, desc, badge }) => (
+              {ECOSYSTEM_CARDS.map(({ icon: Icon, title, desc }) => (
                 <div
                   key={title}
                   className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-[#2361d8]/20 hover:shadow-md"
@@ -150,14 +165,7 @@ export default function LandingPublicHubPhase1() {
                     <Icon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#011c67]">{title}</span>
-                      {badge && (
-                        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 ring-1 ring-amber-200">
-                          {badge}
-                        </span>
-                      )}
-                    </div>
+                    <span className="font-semibold text-[#011c67]">{title}</span>
                     <div className="mt-0.5 text-sm leading-6 text-slate-500">{desc}</div>
                   </div>
                 </div>
@@ -171,7 +179,7 @@ export default function LandingPublicHubPhase1() {
                   </span>
                 </div>
                 <div className="mt-0.5 text-xs text-emerald-600">
-                  Sin tarjeta · Listo en 2 minutos · +40 ERPs conectados
+                  Sin tarjeta · Listo en 2 minutos · Cumplimiento AEAT incluido
                 </div>
               </div>
             </div>
@@ -184,10 +192,10 @@ export default function LandingPublicHubPhase1() {
         <Container>
           <div className="max-w-3xl">
             <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-              Cuatro pilares del ecosistema
+              Todo en uno
             </div>
             <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Cumple, entiende y conecta tu negocio desde un único ecosistema.
+              Fiscalidad, contabilidad e inteligencia sectorial. Sin programas intermedios.
             </h2>
           </div>
 
@@ -210,10 +218,10 @@ export default function LandingPublicHubPhase1() {
           </div>
           <div className="mt-6 text-center">
             <Link
-              href="/conectores"
+              href="/integraciones"
               className="text-sm font-semibold text-[#2361d8] hover:underline"
             >
-              Ver todos los conectores disponibles →
+              Ver todas las integraciones disponibles →
             </Link>
           </div>
         </Container>
@@ -222,87 +230,79 @@ export default function LandingPublicHubPhase1() {
       {/* ── PARA QUIÉN ───────────────────────────────────────────────────── */}
       <section className="border-y border-slate-200 bg-slate-50/70 py-16 sm:py-20">
         <Container>
-          <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-                Para asesorías y empresas reales
-              </div>
-              <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-                Una plataforma para unir fiscalidad, datos, Excel, ERP y asesoría.
-              </h2>
-              <p className="mt-4 text-base leading-8 text-slate-600">
-                No todas las empresas empiezan por una integración. Algunas llegan con Excel, otras
-                con Holded y otras con información dispersa. La plataforma está pensada para ordenar
-                esa realidad sin forzar una migración total desde el primer día.
-              </p>
-              <div className="mt-6 rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
-                <div className="flex items-center gap-3 text-sm font-semibold text-slate-900">
-                  <Landmark className="h-5 w-5 text-[#2361d8]" />
-                  Isaak como capa conversacional empresarial
-                </div>
-                <p className="mt-3 text-sm leading-7 text-slate-600">
-                  Isaak ayuda a entender y operar el negocio. No es otro ERP y no es otro software
-                  de facturacion. Es una capa conversacional empresarial para conectar herramientas
-                  existentes y hacerlas comprensibles.
-                </p>
-                <a
-                  href={ISAAK_URL}
-                  className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8] hover:underline"
-                >
-                  Ver Isaak como orquestador
-                  <ArrowRight className="h-4 w-4" />
-                </a>
-              </div>
+          <div className="mb-10 max-w-2xl">
+            <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+              Diseñado para cada sector
             </div>
+            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+              Tu sector ya tiene su integración. Isaak hace el resto.
+            </h2>
+            <p className="mt-4 text-base leading-8 text-slate-600">
+              No necesitas cambiar de software ni aprender contabilidad. Conecta el programa que ya
+              usas cada día y deja que Isaak gestione la parte fiscal, contable y tributaria por ti.
+            </p>
+          </div>
 
-            <div className="grid gap-4 sm:grid-cols-3">
-              {audienceCards.map((copy, index) => (
-                <article
-                  key={copy}
-                  className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2361d8]/10 text-[#2361d8]">
-                    {index === 0 ? (
-                      <Building2 className="h-5 w-5" />
-                    ) : index === 1 ? (
-                      <Link2 className="h-5 w-5" />
-                    ) : (
-                      <Users className="h-5 w-5" />
-                    )}
-                  </div>
-                  <p className="mt-4 text-sm leading-7 text-slate-600">{copy}</p>
-                </article>
-              ))}
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {audienceCards.map(({ icon: Icon, label, body }) => (
+              <article
+                key={label}
+                className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#2361d8]/10 text-[#2361d8]">
+                  <Icon className="h-5 w-5" />
+                </div>
+                <h3 className="mt-4 text-sm font-semibold text-slate-900">{label}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{body}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              href="/integraciones"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#2361d8] hover:underline"
+            >
+              Ver el catálogo completo de integraciones
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </Container>
       </section>
 
-      {/* ── HOLDED CTA ───────────────────────────────────────────────────── */}
+      {/* ── CTA FINAL ────────────────────────────────────────────────────── */}
       <section className="py-16 sm:py-20">
         <Container>
           <div className="rounded-[2rem] border border-slate-200 bg-[#011c67] px-6 py-8 text-white shadow-sm sm:px-10 sm:py-10">
             <div className="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-[0.16em] text-blue-200">
-                  Conector ERP disponible hoy
+                  Empieza hoy — gratis
                 </div>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                  ¿Usas Holded? Conecta en 2 minutos.
+                  Deja de perder tiempo con la contabilidad.
                 </h2>
                 <p className="mt-4 max-w-3xl text-sm leading-7 text-blue-100 sm:text-base">
-                  Isaak lee tu empresa directamente desde Holded: facturas, clientes, contabilidad y
-                  proyectos. Pregunta en español, obtén respuestas con datos reales. Sage, A3ERP,
-                  Odoo, Xero y más ERPs compatibles próximamente.
+                  Isaak hace tu fiscalidad y contabilidad desde el primer día. Sin ERP, sin
+                  formación, sin papeles. Solo pregunta y Isaak te responde con datos reales de tu
+                  negocio.
                 </p>
               </div>
-              <a
-                href={HOLDed_CONNECTORS_URL}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#011c67] transition hover:bg-slate-100"
-              >
-                Conectar Holded
-                <ArrowRight className="h-4 w-4" />
-              </a>
+              <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+                <a
+                  href={ISAAK_URL}
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-white px-6 py-3 text-sm font-semibold text-[#011c67] transition hover:bg-slate-100"
+                >
+                  Empezar gratis
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+                <Link
+                  href="/integraciones"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/20 bg-white/10 px-6 py-3 text-sm font-semibold text-white transition hover:bg-white/20"
+                >
+                  Ver integraciones
+                </Link>
+              </div>
             </div>
           </div>
         </Container>
