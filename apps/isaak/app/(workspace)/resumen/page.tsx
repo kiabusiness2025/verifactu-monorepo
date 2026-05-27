@@ -301,7 +301,7 @@ async function DashboardContent() {
             icon: TrendingUp,
             label: 'Facturado este mes',
             value: '—',
-            sub: 'Conecta Holded para ver datos',
+            sub: 'Conecta tu ERP para ver datos',
             color: 'text-[#2361d8]',
             bg: 'bg-[#2361d8]/10',
           },

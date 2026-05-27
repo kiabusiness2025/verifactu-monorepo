@@ -155,7 +155,7 @@ export default function InformesClient({ year: initYear }: { year: number }) {
         ) : noHolded ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
             <p className="text-sm text-slate-500">
-              Conecta tu cuenta de Holded para ver la cuenta de resultados en tiempo real.
+              Conecta tu ERP para ver la cuenta de resultados en tiempo real.
             </p>
             <a
               href="/settings/connections"

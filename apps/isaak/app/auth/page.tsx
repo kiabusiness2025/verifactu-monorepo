@@ -5,7 +5,7 @@ import { buildIsaakAuthUrl, ISAAK_PUBLIC_URL } from '@/app/lib/isaak-navigation'
 
 export const metadata = {
   title: 'Acceder — Isaak',
-  description: 'Conecta tu cuenta para empezar a usar Isaak.',
+  description: 'Inicia sesión en Isaak, tu copiloto fiscal inteligente.',
 };
 
 export default function AuthPage() {
@@ -28,16 +28,16 @@ export default function AuthPage() {
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight text-white">Isaak</h1>
-            <p className="mt-1 text-sm text-slate-400">Asistente fiscal inteligente</p>
+            <p className="mt-1 text-sm text-slate-400">Tu copiloto fiscal inteligente</p>
           </div>
         </div>
 
         {/* Card */}
         <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-          <h2 className="text-base font-semibold text-white">Conecta tu cuenta</h2>
+          <h2 className="text-base font-semibold text-white">Inicia sesión</h2>
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Isaak se conecta con tu contabilidad para darte respuestas con datos reales. Necesitas
-            una cuenta activa para continuar.
+            Accede para usar tu copiloto fiscal. Si es tu primera vez, crearemos la cuenta
+            automáticamente.
           </p>
 
           <Link
@@ -45,7 +45,7 @@ export default function AuthPage() {
             className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-4 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1d55c2]"
           >
             <Sparkles className="h-4 w-4" />
-            Acceder a Isaak
+            Entrar a Isaak
           </Link>
 
           <p className="mt-4 text-center text-xs text-slate-600">

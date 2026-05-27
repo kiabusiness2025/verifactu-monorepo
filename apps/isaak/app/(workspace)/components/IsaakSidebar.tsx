@@ -221,10 +221,22 @@ export default function IsaakSidebar({
     };
   }, []);
 
+  // Sidebar collapse policy (Claude.ai style):
+  // 1. Si el usuario ha tocado el toggle (preferencia explícita), respetar
+  //    siempre (localStorage 'isaak-sidebar-collapsed').
+  // 2. Si NO hay preferencia explícita y la ruta es /chat/* → auto-colapsar
+  //    para dar más espacio al chat (patrón Claude.ai).
+  // 3. Si NO hay preferencia explícita y NO estamos en chat → expandida.
+  const isChatRoute = !!pathname && (pathname === '/chat' || pathname.startsWith('/chat/'));
   useEffect(() => {
     const stored = localStorage.getItem('isaak-sidebar-collapsed');
-    if (stored === 'true') setCollapsed(true);
-  }, []);
+    if (stored === 'true' || stored === 'false') {
+      setCollapsed(stored === 'true');
+      return;
+    }
+    // No preferencia explícita → autoaplicar política según ruta
+    setCollapsed(isChatRoute);
+  }, [isChatRoute]);
 
   useEffect(() => {
     if (!profileOpen) return;
@@ -272,8 +284,14 @@ export default function IsaakSidebar({
           collapsed ? 'justify-center px-2' : 'justify-between px-3'
         }`}
       >
-        <div className="flex items-center gap-2.5">
-          <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg">
+        {collapsed ? (
+          // Modo colapsado: logo es el toggle (click expande la sidebar)
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            title="Abrir menú"
+            className="group relative h-7 w-7 shrink-0 overflow-hidden rounded-lg transition hover:opacity-80"
+          >
             {whitelabel?.enabled && whitelabel.logoUrl ? (
               <img
                 src={whitelabel.logoUrl}
@@ -290,20 +308,43 @@ export default function IsaakSidebar({
                 priority
               />
             )}
-          </div>
-          {!collapsed && (
-            <span className="text-[14px] font-bold tracking-tight text-white">{appName}</span>
-          )}
-        </div>
-        {!collapsed && (
-          <button
-            type="button"
-            onClick={toggleCollapsed}
-            title="Plegar menú"
-            className="rounded-md p-1 text-slate-600 transition hover:bg-white/5 hover:text-slate-400"
-          >
-            <ChevronLeft size={13} />
+            {/* Indicador visual de expand al hover */}
+            <span className="absolute inset-0 flex items-center justify-center bg-slate-900/70 opacity-0 transition group-hover:opacity-100">
+              <ChevronRight size={13} className="text-white" />
+            </span>
           </button>
+        ) : (
+          <>
+            <div className="flex items-center gap-2.5">
+              <div className="relative h-7 w-7 shrink-0 overflow-hidden rounded-lg">
+                {whitelabel?.enabled && whitelabel.logoUrl ? (
+                  <img
+                    src={whitelabel.logoUrl}
+                    alt={appName}
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <Image
+                    src="/Personalidad/isaak-avatar-2.png"
+                    alt="Isaak"
+                    fill
+                    sizes="28px"
+                    className="object-cover"
+                    priority
+                  />
+                )}
+              </div>
+              <span className="text-[14px] font-bold tracking-tight text-white">{appName}</span>
+            </div>
+            <button
+              type="button"
+              onClick={toggleCollapsed}
+              title="Plegar menú"
+              className="rounded-md p-1 text-slate-600 transition hover:bg-white/5 hover:text-slate-400"
+            >
+              <ChevronLeft size={13} />
+            </button>
+          </>
         )}
       </div>
 
