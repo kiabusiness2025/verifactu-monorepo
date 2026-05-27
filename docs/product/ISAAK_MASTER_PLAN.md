@@ -303,3 +303,41 @@ Usuario en ChatGPT/Claude → conecta Holded → usa conector gratis
 | `docs/product/CONNECTOR_ACQUISITION_FUNNEL_PLAN_2026.md`         | Estrategia funnel conector → Isaak                      |
 | `docs/engineering/ADMIN_PANEL_CONNECTORS_AUDIT_AND_PLAN_2026.md` | Auditoría y plan del panel de administración            |
 | `docs/openai-submission/WEB_MOBILE_REVIEW_CHECKLIST.md`          | Checklist QA manual para resubmisión OpenAI             |
+
+---
+
+## Developer Portal — propuesta de valor para devs externos
+
+Isaak no es solo un producto final; es también una **plataforma API** para devs que quieren
+integrar facturación VeriFactu, contabilidad y MCP en sus propias aplicaciones.
+
+**Audiencias objetivo**:
+
+- **Software vertical** (gestores hoteleros, ERPs sectoriales) que quiere ofrecer VeriFactu a sus
+  clientes sin construir el SOAP AEAT desde cero.
+- **Asesorías técnicas** que automatizan flujos contables sobre sus tenants.
+- **Agentes IA** (Claude, ChatGPT, n8n, Make) que necesitan datos fiscales en tiempo real.
+
+**Stack documental público** (`verifactu.business/developers`):
+
+| URL | Contenido | Estado |
+|-----|-----------|--------|
+| `/developers` | Hub: quickstart, endpoints, MCP, Inspector | ✅ Operativo |
+| `/developers/api` | Referencia interactiva OpenAPI 3.1 con Scalar | ✅ **2026-05-27** |
+| `/developers/errors` | Códigos HTTP + error.code + retry guide | ✅ **2026-05-27** |
+| `/developers/rate-limits` | Política por plan + headers + backoff | ✅ **2026-05-27** |
+| `/developers/webhooks` | 9 eventos + firma HMAC + reintentos (beta cerrada) | ✅ **2026-05-27** |
+| `/developers/guides/*` | Recetario por caso de uso | ⏳ Roadmap |
+| `/developers/changelog` | API changelog público | ⏳ Roadmap |
+
+**Modelo comercial**:
+
+- API keys gratuitas en cualquier plan. Rate limits escalan con el plan del tenant.
+- Plan Business: rate limit alto + webhooks + SLA.
+- Plan Partner (futuro): revenue share para integradores que traen volumen.
+
+**Métricas de éxito**:
+
+- Time-to-first-call para developer externo: < 5 min desde landing → API key → curl funcionando.
+- % de integraciones que usan SDK vs curl directo (target SDK: >40% una vez publicado).
+- Volumen tools/call MCP / mes (proxy de adopción del protocolo).
