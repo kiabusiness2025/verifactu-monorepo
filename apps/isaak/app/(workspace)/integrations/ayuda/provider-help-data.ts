@@ -209,9 +209,10 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
     apiKeySteps: [
       'Inicia sesión en Mindbody Business.',
       'Ve al menú superior → Integrations → API Management.',
-      'Solicita o copia tu API key de acceso.',
-      'Necesitarás también tu Site ID (número de tu negocio en Mindbody).',
-      'En Isaak, pega la API key en el formato: APIKey:SiteID',
+      'Solicita o copia tu API key de acceso (requiere plan Elevate o superior).',
+      'Necesitarás también: tu Site ID (número negativo para sandbox, positivo para producción), y usuario/contraseña de staff con permisos de propietario.',
+      'En Isaak, pega las credenciales con el formato: APIKey::SiteID::Usuario::Contraseña',
+      'Ejemplo: abc123::12345::propietario@gym.com::MiContraseña',
     ],
     whatIsaakSyncs: [
       'Reservas y clases',
