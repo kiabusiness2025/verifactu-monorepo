@@ -239,6 +239,66 @@ function Modelo303Panel() {
   const [result, setResult] = useState<Modelo303Result | null>(null);
   const [apiError, setApiError] = useState<{ type: ApiError; message: string } | null>(null);
 
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex gap-3 items-start text-sm text-blue-900">
+        <Calculator size={16} className="mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <p className="font-semibold">Nuevo: Robot Contable</p>
+          <p className="text-xs mt-1 text-blue-700">
+            Borrador 303 calculado desde tu Isaak Ledger (libro fiscal interno), con flujo de
+            confirmación y audit-log inmutable.
+          </p>
+          <Link
+            href="/fiscal/modelos/303"
+            className="mt-2 inline-flex items-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            Probar el nuevo flujo
+          </Link>
+        </div>
+      </div>
+      <Modelo303LegacyPanel
+        ejercicio={ejercicio}
+        setEjercicio={setEjercicio}
+        periodo={periodo}
+        setPeriodo={setPeriodo}
+        loading={loading}
+        setLoading={setLoading}
+        result={result}
+        setResult={setResult}
+        apiError={apiError}
+        setApiError={setApiError}
+      />
+    </div>
+  );
+}
+
+type Modelo303PanelProps = {
+  ejercicio: number;
+  setEjercicio: (v: number) => void;
+  periodo: Trimestre;
+  setPeriodo: (v: Trimestre) => void;
+  loading: boolean;
+  setLoading: (v: boolean) => void;
+  result: Modelo303Result | null;
+  setResult: (v: Modelo303Result | null) => void;
+  apiError: { type: ApiError; message: string } | null;
+  setApiError: (v: { type: ApiError; message: string } | null) => void;
+};
+
+function Modelo303LegacyPanel({
+  ejercicio,
+  setEjercicio,
+  periodo,
+  setPeriodo,
+  loading,
+  setLoading,
+  result,
+  setResult,
+  apiError,
+  setApiError,
+}: Modelo303PanelProps) {
+
   async function calcular() {
     setLoading(true);
     setApiError(null);
@@ -355,6 +415,30 @@ function Modelo303Panel() {
 // ─── Modelo 130 ───────────────────────────────────────────────────────────────
 
 function Modelo130Panel() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 flex gap-3 items-start text-sm text-blue-900">
+        <Calculator size={16} className="mt-0.5 shrink-0" />
+        <div className="flex-1">
+          <p className="font-semibold">Nuevo: Robot Contable</p>
+          <p className="text-xs mt-1 text-blue-700">
+            Borrador 130 calculado desde tu Isaak Ledger (libro fiscal interno), con flujo de
+            confirmación y audit-log inmutable.
+          </p>
+          <Link
+            href="/fiscal/modelos/130"
+            className="mt-2 inline-flex items-center gap-1 rounded bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
+          >
+            Probar el nuevo flujo
+          </Link>
+        </div>
+      </div>
+      <Modelo130LegacyPanel />
+    </div>
+  );
+}
+
+function Modelo130LegacyPanel() {
   const [ejercicio, setEjercicio] = useState(CURRENT_YEAR);
   const [periodo, setPeriodo] = useState<Trimestre>('1T');
   const [retenciones, setRetenciones] = useState('');
@@ -621,6 +705,23 @@ function Modelo390Panel() {
   );
 }
 
+// ─── Quick-link card ─────────────────────────────────────────────────────────
+
+function ModelLink({ href, titulo, sub }: { href: string; titulo: string; sub: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40 block"
+    >
+      <p className="text-sm font-semibold text-slate-800">{titulo}</p>
+      <p
+        className="text-xs text-slate-500 mt-0.5"
+        dangerouslySetInnerHTML={{ __html: sub }}
+      />
+    </Link>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const TAB_LABEL: Record<ActiveTab, string> = {
@@ -662,6 +763,29 @@ export default function ModelosPage() {
       {tab === '303' && <Modelo303Panel />}
       {tab === '130' && <Modelo130Panel />}
       {tab === '390' && <Modelo390Panel />}
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-5 space-y-4">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+            Más modelos trimestrales (Robot Contable)
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <ModelLink href="/fiscal/modelos/111" titulo="Mod. 111" sub="Retenciones IRPF trab./prof." />
+            <ModelLink href="/fiscal/modelos/115" titulo="Mod. 115" sub="Retenciones arrendamientos" />
+            <ModelLink href="/fiscal/modelos/349" titulo="Mod. 349" sub="Operaciones intracom UE" />
+          </div>
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">
+            Resúmenes anuales (Robot Contable)
+          </p>
+          <div className="grid sm:grid-cols-3 gap-3">
+            <ModelLink href="/fiscal/modelos/347" titulo="Mod. 347" sub="Anual operaciones &gt; €3.005,06" />
+            <ModelLink href="/fiscal/modelos/180" titulo="Mod. 180" sub="Resumen anual 115" />
+            <ModelLink href="/fiscal/modelos/190" titulo="Mod. 190" sub="Resumen anual 111" />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

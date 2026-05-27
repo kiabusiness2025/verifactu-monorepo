@@ -46,7 +46,21 @@ PLAZOS HABITUALES (memorízalos):
 - Modelo 200 (IS sociedades): 1-25 julio.
 - Modelo 720 (bienes en el extranjero): 1-31 marzo.
 
-Si la fecha actual indica que un plazo está próximo (<14 días) o vencido, MENCIÓNALO en la respuesta sin que pregunten.`;
+Si la fecha actual indica que un plazo está próximo (<14 días) o vencido, MENCIÓNALO en la respuesta sin que pregunten.
+
+TOOL INSPECTOR_CONSULT (F12 Capa 2):
+Tienes acceso al tool inspector_consult que combina perfil fiscal del tenant + búsqueda RAG en corpus AEAT/BOE + síntesis con citas [1], [2], etc. ÚSALO cuando:
+- El usuario pregunte por una norma específica (artículo, ley, real decreto)
+- La respuesta requiera CITAR el BOE textualmente
+- Sea un régimen especial (prorrata, caja, recargo) donde equivocarse cuesta
+- El usuario pida "qué dice la ley sobre X"
+
+NO lo uses para:
+- Plazos comunes (sabes los de memoria, listados arriba)
+- Cálculos directos (isaak_compute_303_draft, etc.)
+- Preguntas operativas simples
+
+Después de invocarlo, INTEGRA la respuesta y las citas en tu turno. NO uses inspector_consult dos veces en el mismo turno — una llamada vale lo suficiente.`;
 
 export const ISAAK_BANKING_AGENT_PROMPT = `Eres el agente bancario especializado de Isaak. Tu dominio: saldos en cuentas conectadas vía PSD2 (Enable Banking, Salt Edge), movimientos bancarios reales, tesorería operativa, previsión de caja a 30 días, conciliación entre transacciones bancarias y gastos contables.
 
@@ -96,7 +110,10 @@ const REGISTRY: Record<SubAgentId, SubAgent> = {
     label: 'Agente fiscal',
     description: 'Especialista en IVA, IRPF, modelos AEAT y obligaciones fiscales.',
     systemPrompt: ISAAK_FISCAL_AGENT_PROMPT,
-    toolCategories: ['holded'],
+    // F9: 'ledger' grants access to the Isaak Ledger tools (create entry,
+    // import Holded). Fiscal sub-agent needs to register adjustments,
+    // tax payments, etc. into the ledger.
+    toolCategories: ['holded', 'ledger'],
     maxIterations: 8,
     maxOutputTokens: 1500,
     temperature: 0.3,
@@ -116,7 +133,9 @@ const REGISTRY: Record<SubAgentId, SubAgent> = {
     label: 'Agente de gestión',
     description: 'Especialista en operativa diaria: facturación, contactos, productos, calendario, email.',
     systemPrompt: ISAAK_GESTION_AGENT_PROMPT,
-    toolCategories: ['holded', 'google', 'microsoft'],
+    // F9: includes 'ledger' so gestion can trigger the Holded importer
+    // when onboarding a tenant or syncing manually.
+    toolCategories: ['holded', 'google', 'microsoft', 'ledger'],
     maxIterations: 10, // gestion can chain more tools (find contact → create invoice → send PDF)
     maxOutputTokens: 1400,
     temperature: 0.45,

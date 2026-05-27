@@ -29,6 +29,12 @@ import {
   type IsaakToolContext,
 } from './isaak-tools-registry';
 import { judgeWriteAction } from './isaak-judge';
+import { evaluateContext } from './inspector-aeat';
+import { AEAT_RULES } from './inspector-aeat-rules';
+import {
+  isInspectableWriteTool,
+  toolUseToRuleContext,
+} from './inspector-aeat-bridge';
 
 const DEFAULT_MAX_ITERATIONS = 8;
 
@@ -56,6 +62,10 @@ export type ChatStreamMetrics = {
   judgeInvocations: number;
   judgeBlocks: number;
   judgeTotalLatencyMs: number;
+  // F11 fase 2: Inspector AEAT preventivo
+  inspectorRuns: number;
+  inspectorBlocks: number;
+  inspectorWarnings: number;
   iterations: number;
   stopReason: string;
   isFallback: boolean;
@@ -97,6 +107,9 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
     judgeInvocations: 0,
     judgeBlocks: 0,
     judgeTotalLatencyMs: 0,
+    inspectorRuns: 0,
+    inspectorBlocks: 0,
+    inspectorWarnings: 0,
     iterations: 0,
     stopReason: '',
     isFallback: false,
@@ -236,7 +249,7 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
             if (isWrite) metrics.writeToolNames.push(tu.name);
             metrics.toolNames.push(tu.name);
 
-            let resultContent: string;
+            let resultContent: string = '';
             let isError = false;
 
             if (isWrite) {
@@ -262,9 +275,62 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
                 });
                 isError = true;
               } else {
-                const exec = await executeIsaakTool(tu, input.context, { allowWrites: true });
-                resultContent = exec.content;
-                isError = exec.isError;
+                // F11 fase 2: Inspector AEAT runs after judge approval,
+                // before execution. Errors block; warnings/infos are
+                // appended to the tool result so the LLM surfaces them.
+                let blockedByInspector = false;
+                let inspectorAugmentation:
+                  | { warnings: unknown[]; infos: unknown[] }
+                  | null = null;
+                if (isInspectableWriteTool(tu.name)) {
+                  const ruleCtx = toolUseToRuleContext({
+                    toolName: tu.name,
+                    toolInput: tu.input,
+                  });
+                  if (ruleCtx) {
+                    const report = evaluateContext(AEAT_RULES, ruleCtx);
+                    metrics.inspectorRuns += 1;
+                    metrics.inspectorWarnings += report.warnings.length;
+                    if (!report.passed) {
+                      metrics.inspectorBlocks += 1;
+                      blockedByInspector = true;
+                      resultContent = JSON.stringify({
+                        error: 'inspector_blocked',
+                        verdict: 'block',
+                        errors: report.errors,
+                        warnings: report.warnings,
+                        infos: report.infos,
+                        message:
+                          'Inspector AEAT detectó problemas que bloquean esta acción. Explica al usuario los errores citados, pídele que corrija los datos y vuelve a intentarlo.',
+                      });
+                      isError = true;
+                    } else if (
+                      report.warnings.length > 0 ||
+                      report.infos.length > 0
+                    ) {
+                      inspectorAugmentation = {
+                        warnings: report.warnings,
+                        infos: report.infos,
+                      };
+                    }
+                  }
+                }
+                if (!blockedByInspector) {
+                  const exec = await executeIsaakTool(tu, input.context, { allowWrites: true });
+                  resultContent = exec.content;
+                  isError = exec.isError;
+                  if (inspectorAugmentation) {
+                    try {
+                      const parsed = JSON.parse(resultContent);
+                      resultContent = JSON.stringify({
+                        ...parsed,
+                        inspector: inspectorAugmentation,
+                      });
+                    } catch {
+                      // Non-JSON tool result; keep as-is.
+                    }
+                  }
+                }
               }
             } else {
               const exec = await executeIsaakTool(tu, input.context);

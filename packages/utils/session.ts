@@ -148,9 +148,14 @@ function resolveSecure(url: string, secureEnv?: string | null) {
 
 function resolveSameSite(sameSiteEnv?: string | null): SessionSameSite {
   const normalized = sameSiteEnv?.toLowerCase();
-  if (normalized === 'strict' || normalized === 'none') return normalized;
-  // Default to "none" to ensure cookie is sent across subdomains
-  // (verifactu.business ↔ app.verifactu.business) during top-level redirects.
-  // Can be overridden via SESSION_COOKIE_SAMESITE env.
-  return 'none';
+  if (normalized === 'strict' || normalized === 'lax' || normalized === 'none') {
+    return normalized;
+  }
+  // SEC C3 (2026): default cambió de 'none' a 'lax' para mitigar CSRF.
+  // El uso entre subdominios (verifactu.business ↔ app.verifactu.business)
+  // se resuelve con cookie `Domain=.verifactu.business` + 'lax' que sigue
+  // enviándola en navegaciones top-level. Solo si el flujo requiere
+  // cross-site real (ej. iframes de tercero), setear SESSION_COOKIE_SAMESITE=none
+  // explícitamente y añadir tokens anti-CSRF adicionales.
+  return 'lax';
 }

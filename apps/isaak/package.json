@@ -17,6 +17,7 @@
     "@verifactu/auth": "file:../../packages/auth",
     "@verifactu/integrations": "file:../../packages/integrations",
     "@verifactu/utils": "file:../../packages/utils",
+    "exceljs": "^4.4.0",
     "franc-min": "^6.2.0",
     "genkit": "^1.31.0",
     "jose": "^6.1.3",

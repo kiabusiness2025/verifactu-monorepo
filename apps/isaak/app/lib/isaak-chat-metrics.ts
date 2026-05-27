@@ -63,6 +63,10 @@ export type RecordChatMetricInput = {
   fewShotTopSimilarity?: number | null;
   // F8: specialist sub-agent
   subAgent?: string | null;
+  // F11: Inspector AEAT preventivo (Capa 1)
+  inspectorRuns?: number;
+  inspectorBlocks?: number;
+  inspectorWarnings?: number;
   errorCode?: string | null;
 };
 
@@ -105,6 +109,9 @@ export async function recordChatMetric(input: RecordChatMetricInput): Promise<vo
       fewShotLatencyMs: input.fewShotLatencyMs ?? null,
       fewShotTopSimilarity: input.fewShotTopSimilarity ?? null,
       subAgent: input.subAgent ?? null,
+      inspectorRuns: input.inspectorRuns ?? 0,
+      inspectorBlocks: input.inspectorBlocks ?? 0,
+      inspectorWarnings: input.inspectorWarnings ?? 0,
       errorCode: input.errorCode ?? null,
     },
   });

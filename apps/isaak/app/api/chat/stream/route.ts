@@ -42,6 +42,10 @@ import {
   pickSubAgent,
   type SubAgentId,
 } from '@/app/lib/isaak-sub-agents';
+import {
+  isWriteTokenEnforced,
+  verifyWriteToken,
+} from '@/app/lib/isaak-write-token';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -100,6 +104,13 @@ export async function POST(req: NextRequest) {
     body && typeof body === 'object' && typeof (body as Record<string, unknown>).conversationId === 'string'
       ? ((body as { conversationId: string }).conversationId.trim() || null)
       : null;
+  // SEC C5: token de autorización de escrituras (opcional). Sin token
+  // válido, allowWrites se fuerza a false aunque el classifier diga lo
+  // contrario.
+  const writeToken =
+    body && typeof body === 'object' && typeof (body as Record<string, unknown>).writeToken === 'string'
+      ? (body as { writeToken: string }).writeToken.trim()
+      : '';
 
   if (!message) {
     return singleEventResponse('error', { message: 'empty_message' });
@@ -219,6 +230,9 @@ export async function POST(req: NextRequest) {
       fewShotLatencyMs: fewShotResult.latencyMs,
       fewShotTopSimilarity: fewShotResult.topSimilarity,
       subAgent: subAgentId,
+      inspectorRuns: input.metrics?.inspectorRuns ?? 0,
+      inspectorBlocks: input.metrics?.inspectorBlocks ?? 0,
+      inspectorWarnings: input.metrics?.inspectorWarnings ?? 0,
     }).catch((err) => {
       console.error('[Isaak Chat Stream] recordChatMetric failed', err);
     });
@@ -257,11 +271,56 @@ export async function POST(req: NextRequest) {
   let routedTo: 'sonnet_no_tools' | 'sonnet_with_tools' = 'sonnet_no_tools';
   let allowWrites = false;
 
-  if (classification.needsTools && classification.relevantCategories.length > 0) {
-    allowWrites = classification.hasWriteIntent;
+  // F12: en main chat (no sub-agent) siempre añadimos las tools de
+  // ledger (incluyen inspector_consult e inspector_search_aeat) aunque
+  // el classifier diga needsTools=false. El LLM decide si invocarlas.
+  // Esto permite que consultas informativas fiscales se beneficien
+  // del Inspector (citas BOE) sin requerir cambios al classifier.
+  const wantsTools =
+    (classification.needsTools && classification.relevantCategories.length > 0) ||
+    !subAgentId;
+  if (wantsTools) {
+    // SEC C5 (2026): allowWrites NO se decide únicamente por el LLM
+    // classifier. Para que se habilite hace falta que el cliente
+    // adjunte un writeToken HMAC válido. Si se quiere endurecer la
+    // política a producción, setear ISAAK_WRITES_REQUIRE_TOKEN=true:
+    //   * con la flag: writes solo con token válido (cero confianza
+    //     en el classifier para autorización)
+    //   * sin la flag: comportamiento legacy (classifier decide) +
+    //     warn por console.warn para detectar invocaciones en log
+    const classifierSaysWrite = classification.hasWriteIntent;
+    let tokenValid = false;
+    const sessUserId = authenticated.session.userId;
+    const sessTenantId = authenticated.session.tenantId;
+    if (writeToken && sessUserId && sessTenantId) {
+      const v = verifyWriteToken(writeToken, {
+        userId: sessUserId,
+        tenantId: sessTenantId,
+      });
+      tokenValid = v.ok;
+    }
+    if (isWriteTokenEnforced()) {
+      allowWrites = tokenValid;
+      if (classifierSaysWrite && !tokenValid) {
+        console.warn('[chat/stream] write intent suprimido: token ausente o inválido', {
+          userId: authenticated.session.userId,
+          hasToken: Boolean(writeToken),
+        });
+      }
+    } else {
+      allowWrites = classifierSaysWrite;
+      if (classifierSaysWrite && !tokenValid) {
+        console.warn('[chat/stream] write intent SIN token (legacy mode)', {
+          userId: authenticated.session.userId,
+        });
+      }
+    }
+    const mainCategories = classification.relevantCategories.includes('ledger')
+      ? classification.relevantCategories
+      : ([...classification.relevantCategories, 'ledger'] as typeof classification.relevantCategories);
     const onlyCategories = subAgentId
       ? getSubAgent(subAgentId).toolCategories
-      : classification.relevantCategories;
+      : mainCategories;
     const filtered = buildReadOnlyToolsForContext(authenticated.toolContext, {
       only: onlyCategories,
       allowWrites,

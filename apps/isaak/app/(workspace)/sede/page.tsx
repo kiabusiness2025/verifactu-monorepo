@@ -408,7 +408,130 @@ export default function SedeElectronicaPage() {
               </div>
             </div>
           )}
+
+          {/* C-A2 — Cambios censales detectados por el cron diario */}
+          <CensusChangesPanel />
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Panel de cambios censales recientes ────────────────────────────────
+
+type CensusChangeRow = {
+  id: string;
+  field: string;
+  changeType: 'added' | 'removed' | 'modified';
+  oldValue: string | null;
+  newValue: string | null;
+  alertSent: boolean;
+  detectedAt: string;
+};
+
+function fmtField(field: string): string {
+  return field
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, (s) => s.toUpperCase())
+    .trim();
+}
+
+function CensusChangesPanel() {
+  const [changes, setChanges] = useState<CensusChangeRow[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [days, setDays] = useState<30 | 90 | 365>(90);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    fetch(`/api/isaak/sede/census-changes?days=${days}`, { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : { changes: [] }))
+      .then((data: { changes?: CensusChangeRow[] }) => {
+        if (!cancelled) setChanges(data.changes ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setChanges([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [days]);
+
+  return (
+    <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Bell className="h-4 w-4 text-blue-600" />
+          <h3 className="text-[13px] font-semibold text-slate-800">
+            Cambios censales detectados
+          </h3>
+        </div>
+        <div className="flex gap-1 text-[11px]">
+          {[30, 90, 365].map((d) => (
+            <button
+              key={d}
+              onClick={() => setDays(d as 30 | 90 | 365)}
+              className={`rounded px-2 py-0.5 ${
+                days === d
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {d === 30 ? '30d' : d === 90 ? '90d' : '1 año'}
+            </button>
+          ))}
+        </div>
+      </div>
+      {loading && (
+        <p className="flex items-center gap-2 text-[12px] text-slate-500">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          Cargando cambios…
+        </p>
+      )}
+      {!loading && changes !== null && changes.length === 0 && (
+        <p className="text-[12px] text-slate-500">
+          No se han detectado cambios censales en los últimos {days === 365 ? '12 meses' : `${days} días`}.
+        </p>
+      )}
+      {!loading && changes && changes.length > 0 && (
+        <ul className="space-y-2">
+          {changes.map((c) => {
+            const color =
+              c.changeType === 'added'
+                ? 'border-emerald-200 bg-emerald-50'
+                : c.changeType === 'removed'
+                  ? 'border-rose-200 bg-rose-50'
+                  : 'border-amber-200 bg-amber-50';
+            const symbol =
+              c.changeType === 'added' ? '+' : c.changeType === 'removed' ? '−' : '~';
+            return (
+              <li key={c.id} className={`rounded-lg border p-3 text-[12px] ${color}`}>
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="font-semibold text-slate-800">
+                    {symbol} {fmtField(c.field)}
+                  </span>
+                  <span className="text-[10px] text-slate-500">
+                    {new Date(c.detectedAt).toLocaleDateString('es-ES')}
+                  </span>
+                </div>
+                {c.changeType === 'modified' ? (
+                  <p className="text-slate-700">
+                    <span className="line-through text-slate-400">{c.oldValue ?? '—'}</span>
+                    {' → '}
+                    <span className="font-medium">{c.newValue ?? '—'}</span>
+                  </p>
+                ) : c.changeType === 'added' ? (
+                  <p className="text-slate-700">añadido: <span className="font-medium">{c.newValue ?? '—'}</span></p>
+                ) : (
+                  <p className="text-slate-700">eliminado: <span className="font-medium">{c.oldValue ?? '—'}</span></p>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       )}
     </div>
   );

@@ -13,6 +13,12 @@ import {
   type IsaakToolContext,
 } from './isaak-tools-registry';
 import { judgeWriteAction, type JudgeResult } from './isaak-judge';
+import { evaluateContext, type InspectionReport } from './inspector-aeat';
+import { AEAT_RULES } from './inspector-aeat-rules';
+import {
+  isInspectableWriteTool,
+  toolUseToRuleContext,
+} from './inspector-aeat-bridge';
 
 const DEFAULT_MAX_ITERATIONS = 8;
 
@@ -40,6 +46,10 @@ export type ToolLoopResult = {
   judgeInvocations: number;
   judgeBlocks: number;
   judgeTotalLatencyMs: number;
+  // F11 fase 2: Inspector AEAT metrics
+  inspectorRuns: number;
+  inspectorBlocks: number; // writes blocked by Inspector errors
+  inspectorWarnings: number; // total warning-rule violations across all writes
   iterations: number;
   totalLatencyMs: number;
   totalUsage: { inputTokens: number; outputTokens: number };
@@ -57,6 +67,7 @@ async function judgeAndExecute(
   toolName: string;
   isWrite: boolean;
   judge?: JudgeResult;
+  inspector?: InspectionReport;
 }> {
   // Reads bypass the judge entirely — they don't mutate state.
   if (!isWriteToolName(tu.name)) {
@@ -109,18 +120,77 @@ async function judgeAndExecute(
     };
   }
 
-  // Allowed write: execute.
+  // F11 fase 2: Inspector AEAT runs AFTER the judge (authorization) and
+  // BEFORE execute (content correctness). Errors block; warnings/infos
+  // are surfaced to the LLM in the tool result so it can transcribe them
+  // to the user. The Inspector is deterministic and offline → no extra
+  // latency budget worries.
+  let inspector: InspectionReport | undefined;
+  if (isInspectableWriteTool(tu.name)) {
+    const ruleCtx = toolUseToRuleContext({
+      toolName: tu.name,
+      toolInput: tu.input,
+    });
+    if (ruleCtx) {
+      inspector = evaluateContext(AEAT_RULES, ruleCtx);
+      if (!inspector.passed) {
+        return {
+          block: {
+            type: 'tool_result',
+            tool_use_id: tu.id,
+            content: JSON.stringify({
+              error: 'inspector_blocked',
+              verdict: 'block',
+              errors: inspector.errors,
+              warnings: inspector.warnings,
+              infos: inspector.infos,
+              message:
+                'Inspector AEAT detectó problemas que bloquean esta acción. Explica al usuario los errores citados, pídele que corrija los datos y vuelve a intentarlo.',
+            }),
+            is_error: true,
+          },
+          toolName: tu.name,
+          isWrite: true,
+          judge,
+          inspector,
+        };
+      }
+    }
+  }
+
+  // Allowed write + Inspector OK: execute.
   const exec = await executeIsaakTool(tu, ctx, { allowWrites: true });
+
+  // If the Inspector raised warnings/infos, augment the tool result so
+  // the LLM has visibility and can surface the citations to the user.
+  let content = exec.content;
+  if (inspector && (inspector.warnings.length > 0 || inspector.infos.length > 0)) {
+    try {
+      const parsed = JSON.parse(content);
+      const augmented = {
+        ...parsed,
+        inspector: {
+          warnings: inspector.warnings,
+          infos: inspector.infos,
+        },
+      };
+      content = JSON.stringify(augmented);
+    } catch {
+      // Tool returned non-JSON content; keep original.
+    }
+  }
+
   return {
     block: {
       type: 'tool_result',
       tool_use_id: exec.toolUseId,
-      content: exec.content,
+      content,
       is_error: exec.isError,
     },
     toolName: exec.toolName,
     isWrite: true,
     judge,
+    inspector,
   };
 }
 
@@ -133,6 +203,9 @@ export async function runIsaakToolLoop(input: ToolLoopInput): Promise<ToolLoopRe
   let judgeInvocations = 0;
   let judgeBlocks = 0;
   let judgeTotalLatencyMs = 0;
+  let inspectorRuns = 0;
+  let inspectorBlocks = 0;
+  let inspectorWarnings = 0;
   let finalProvider: AIProvider = input.provider ?? 'anthropic';
   let finalModel = input.model;
   let isFallback = false;
@@ -154,6 +227,9 @@ export async function runIsaakToolLoop(input: ToolLoopInput): Promise<ToolLoopRe
     judgeInvocations,
     judgeBlocks,
     judgeTotalLatencyMs,
+    inspectorRuns,
+    inspectorBlocks,
+    inspectorWarnings,
     iterations: 0,
     totalLatencyMs: Date.now() - start,
     totalUsage,
@@ -230,6 +306,11 @@ export async function runIsaakToolLoop(input: ToolLoopInput): Promise<ToolLoopRe
         judgeInvocations += 1;
         judgeTotalLatencyMs += exec.judge.latencyMs;
         if (exec.judge.verdict !== 'allow') judgeBlocks += 1;
+      }
+      if (exec.inspector) {
+        inspectorRuns += 1;
+        if (!exec.inspector.passed) inspectorBlocks += 1;
+        inspectorWarnings += exec.inspector.warnings.length;
       }
       resultBlocks.push(exec.block);
     }

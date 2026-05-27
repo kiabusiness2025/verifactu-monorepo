@@ -91,25 +91,39 @@ export async function getHoldedSession() {
         select: { id: true, email: true, name: true, isBlocked: true },
       });
 
-  try {
-    await prisma.membership.upsert({
-      where: {
-        tenantId_userId: {
-          tenantId: payload.tenantId,
-          userId: user.id,
-        },
-      },
-      update: {
-        status: 'active',
-      },
-      create: {
+  // SEC C1 (2026): NUNCA crear membership como side-effect de leer la
+  // cookie. Anteriormente este path hacía `upsert` con role='owner' si
+  // no había membership, lo que permitía a un atacante con un JWT
+  // firmado para un tenantId ajeno volverse owner. Las memberships se
+  // crean SOLO en flujos explícitos:
+  //   * signup en apps/landing (crea tenant + owner)
+  //   * /api/team/members + /api/team/accept (invitaciones)
+  // Aquí solo reactivamos memberships ya existentes (caso: invitación
+  // ya aceptada + el usuario volvió a logarse vía cross-domain handoff).
+  const existingMembership = await prisma.membership.findUnique({
+    where: {
+      tenantId_userId: {
         tenantId: payload.tenantId,
         userId: user.id,
-        role: 'owner',
-        status: 'active',
       },
-    });
+    },
+    select: { id: true, status: true },
+  });
 
+  if (!existingMembership) {
+    // No hay membership en este tenant. NO se crea automáticamente.
+    // El payload puede traer un tenantId fantasma. Devolvemos session
+    // sin tenantId efectivo para que la UI fuerce signup/invitación.
+    return null;
+  }
+
+  try {
+    if (existingMembership.status !== 'active') {
+      await prisma.membership.update({
+        where: { id: existingMembership.id },
+        data: { status: 'active' },
+      });
+    }
     await prisma.userPreference.upsert({
       where: { userId: user.id },
       update: { preferredTenantId: payload.tenantId },
@@ -119,7 +133,8 @@ export async function getHoldedSession() {
       },
     });
   } catch {
-    // best effort alignment for cross-domain handoff into Isaak
+    // best effort: la sesión sigue siendo válida aunque falle el upsert
+    // de userPreference (la cookie ya autoriza al tenant).
   }
 
   return {

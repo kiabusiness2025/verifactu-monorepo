@@ -19,15 +19,22 @@ export async function POST(request: NextRequest) {
   const signature = request.headers.get('Signature') ?? '';
   const rawBody = await request.text();
 
-  // v6: verificación RSA-SHA256 con clave pública de Salt Edge
-  // El string firmado es: "callback_url|post_body"
-  if (signature) {
-    const callbackUrl =
-      process.env.SALTEDGE_CALLBACK_URL ??
-      `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/isaak/banking/saltedge/webhook`;
-    if (!verifySaltEdgeWebhook(callbackUrl, rawBody, signature)) {
-      return NextResponse.json({ error: 'Firma inválida.' }, { status: 401 });
-    }
+  // v6: verificación RSA-SHA256 con clave pública de Salt Edge.
+  // El string firmado es: "callback_url|post_body".
+  // SEC C2 (2026): la firma es OBLIGATORIA. Anteriormente se aceptaban
+  // peticiones sin cabecera Signature, lo que permitía a un atacante
+  // enviar payloads falsos y corromper conciliaciones bancarias.
+  if (!signature) {
+    return NextResponse.json(
+      { error: 'Falta la cabecera Signature.' },
+      { status: 401 },
+    );
+  }
+  const callbackUrl =
+    process.env.SALTEDGE_CALLBACK_URL ??
+    `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/isaak/banking/saltedge/webhook`;
+  if (!verifySaltEdgeWebhook(callbackUrl, rawBody, signature)) {
+    return NextResponse.json({ error: 'Firma inválida.' }, { status: 401 });
   }
 
   let payload: SEWebhookPayload;

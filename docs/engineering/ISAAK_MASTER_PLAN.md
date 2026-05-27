@@ -1,9 +1,11 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-24 (sesión 4 — Sidebar + Integraciones UX)
-**Visión**: Isaak como agente fiscal y contable autónomo que conecta con datos reales del ERP, ejecuta acciones con confirmación, aprende de cada empresa y asesora en lenguaje llano.
+**Última actualización**: 2026-05-26 (cierre F11 fase 4 + apertura módulos Mercantil y Sede AEAT)
+**Visión**: Isaak como **Robot Contable** autónomo — el empresario opera SOLO a través de Isaak; Isaak es la fuente de verdad, el Inspector AEAT preventivo y el ejecutor fiscal.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
+> Para el manifesto técnico F1-F8 (completado) ver `docs/engineering/ISAAK_INTELLIGENCE.md`.
+> **Para el roadmap post-manifiesto detallado por módulos ver `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`** (fase activa).
 
 ---
 
@@ -339,6 +341,7 @@ ENABLE_BANKING_PRIVATE_KEY      — clave RSA 4096 PKCS8 PEM, base64-encoded
 | Cron connector-health         | Vercel crons usan GET; route solo tenía POST → 405. Añadido GET handler. ✅ 2026-05-21. Extendido con EB session expiry en sesión 3. ✅ 2026-05-23                                                            |
 | Open Banking EB               | Enable Banking AIS como proveedor PSD2 principal (reemplaza GCBD). JWT RS256 con keypair propio. CSRF via UUID state. `expiresAt` por sesión PSD2 (~90-180d). ✅ 2026-05-23                                   |
 | **Integraciones sectoriales** | **Nuevo eje estratégico (2026-05-25)**: Isaak conecta con software de gestión sectorial (HotelGest, Inmovilla, Revo, Nubimed…) en lugar de ERPs genéricos. Ver `docs/engineering/SECTOR_INTEGRATIONS_PLAN.md` |
+| **Company Intelligence**      | **Activo (2026-05-25)**: módulo de ficha empresa desde fuentes oficiales (BORME, VIES, GLEIF, PLACSP). 9 reglas C001-C007 + R040A/R040B. Adapters mockeables. Ver `docs/isaak/COMPANY_INTELLIGENCE.md`        |
 
 ---
 
@@ -385,6 +388,13 @@ company-intelligence-rules.ts       — 9 reglas evaluables: C001-C007 + R040A/R
 __tests__/company-intelligence.test.ts — 88 tests unitarios (todos verdes)
 ```
 
+**Convivencia con Inspector AEAT (F11)**: este módulo aporta **reglas sobre el perfil de empresa** (C001-C007). El Inspector AEAT (51 reglas, módulo I) aporta **reglas sobre transacciones y acciones**. Los IDs R040A/R040B coinciden de nombre pero aplican en momentos distintos:
+
+- En Company Intelligence: al construir/actualizar la ficha de empresa (severity progresiva por fecha).
+- En Inspector AEAT: al emitir factura (`invoice_out` action) con scope por `taxpayerType`.
+
+Mantener separados por ahora; revaluar fusión cuando se cierre el wizard R000 de perfil fiscal.
+
 ### Principios de diseño
 
 - **Trazabilidad total**: cada dato guarda `source`, `retrievedAt`, `confidence` — nada sin provenance
@@ -408,6 +418,105 @@ __tests__/company-intelligence.test.ts — 88 tests unitarios (todos verdes)
 
 ### Tests
 
-- **88 tests** en `app/lib/__tests__/company-intelligence.test.ts`
-- **279 tests totales** tras la integración (base 191 + 88 nuevos), todos verdes
+- **88 tests** en `app/lib/__tests__/company-intelligence.test.ts` (incluidos en la suite global)
 - Cobertura completa: normalizers, scoring, adapters (mocked), service, rules
+
+---
+
+## Manifiesto F1-F8 — completado (2026-05-24)
+
+Inteligencia conversacional + tool-calling + multi-proveedor + sub-agentes operativos. Detalle por feature en `docs/engineering/ISAAK_INTELLIGENCE.md`.
+
+| Fase | Componente | PR |
+| ---- | ---------- | -- |
+| F1 | Memoria + clarify-first + métricas + harness golden | #119 |
+| F2 | Tool-calling read (27 tools Anthropic) | #121 |
+| F3 | Router multi-proveedor + Haiku classifier | #123 |
+| F4a | Judge GPT-4o-mini (gate writes Holded) | #125 |
+| F4b | Vision OCR GPT-4o (facturas) | #127 |
+| F5 | Streaming SSE (`/api/chat/stream`) | #129 |
+| F6 | Long-term memory + RAG (pgvector, tenant-isolated) | #131 |
+| F7 | Feedback loop (thumbs-up → embeddings → few-shot) | #131 |
+| F8 | Sub-agentes fiscal/banking/gestion | #133 |
+
+---
+
+## Roadmap Robot Contable — activo (Q2 2026 →)
+
+Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`.
+
+### Resumen por módulos
+
+| Módulo | Componente | Estado |
+| ------ | ---------- | ------ |
+| **L — Ledger nativo** | F9: schema + hash chain + repo + importer Holded | ✅ Operativo |
+| **L4-L5** | Separación cuentas PGC + saldos por cuenta (caja 570, socios 551/552, partidas 555) | ⏳ Pendiente — desbloquea R128/R129 con datos reales |
+| **E — Excel export** | F10: 4 informes solo lectura + UI `/auditoria` | ✅ Operativo |
+| **I — Inspector AEAT** | F11 fases 1-4: 51 reglas + R000 perfil + auditoría + cron mensual | ✅ Operativo |
+| **I — Inspector AEAT** | F11 fase 5a: Bridge CI → R017/R035 con VIES real | ✅ Operativo |
+| **CI — Company Intelligence** | Ficha empresa desde fuentes oficiales: 9 reglas C001-C007 + R040A/R040B | ✅ Operativo |
+| **R000 Wizard** | I7: UI 3 pasos + prefill CI + persistencia IsaakTaxpayerProfile + audit scope | ✅ Operativo |
+| **R — RAG corpus** | F13 fase 1: scaffolding (schema + chunker + sources) | ✅ Fase 1 cerrada |
+| **R — RAG corpus** | F13 fase 2: ingester PDF/BOE + tool `inspector_search_aeat` | ⏳ |
+| **C — Cert digital AEAT** | C-0: Verifactu mTLS + Sede census/notif lectura | ✅ Operativo |
+| **C — Cert digital AEAT** | C-A1/A2/A5: persistencia DEH + diff censo + cron diario + tools LLM | ✅ Operativo |
+| **C — Cert digital AEAT** | C-A3: justificantes auto-link a IsaakTaxReturn (parser + sync) | ✅ Operativo |
+| **C — Cert digital AEAT** | C-A4: resumen IA semanal del buzón (cron lunes 08:00 UTC) | ✅ Operativo |
+| **C — Cert digital AEAT** | UI: badge sidebar + panel `/sede` con cambios censales | ✅ Operativo |
+| **C — Cert digital AEAT** | C-B: borrador asistido (presentación 303 con confirmación) | ⏳ |
+| **C — Cert digital AEAT** | C-C: presentación automática (cron + veto-window + RC profesional) | ⏳ |
+| **Sectoriales** | HotelGest (sprint), Inmovilla/Revo/Nubimed P1, TeamUp/Loyverse/RepairShopr P2 | 🔄 |
+| **F — Inspector LLM Capa 2** | F12: sub-agente inspector contextual con prompt especializado | ⏳ |
+| **TEAR** | F14: consulta vinculante DGT automática | ⏳ |
+| **Canales** | F15-F16: Telegram + WhatsApp ampliado + Slack + Teams | ⏳ |
+| **Gestión externa** | F17: Airtable + Notion + Trello | ⏳ |
+| **Cobros** | F18: Stripe Connect + GoCardless AIS | ⏳ |
+| **ERP/CRM** | F19: HubSpot + Odoo | ⏳ |
+| **Documentos** | F20: Dropbox + Drive OCR ampliación | ⏳ |
+
+### Track B institucional
+
+| ID | Componente | Estado |
+| -- | ---------- | ------ |
+| B1 | Verifactu SOAP nativo desde Ledger (desacopla Holded) | ⏳ Depende L4 |
+| B2 | SII (Suministro Inmediato Información, RD 596/2016) | ⏳ |
+| B3 | Modelos 303/130/111/180/347 automáticos (cierre con C-B/C) | ⏳ |
+| B4 | GTM: gestorías + sectoriales → autónomos sin gestoría → "sin asesor" | ⏳ |
+| B5 | Certificación AEAT / homologación software fiscal | ⏳ |
+| B6 | Robot Contable v1 (autonomía total) | ⏳ 2027 |
+
+**Estrategia económica:** bootstrap. No se requiere inversión externa para llegar a product-market fit. Inversión solo se evalúa post-certificación AEAT (+18-24 meses).
+
+**Métricas técnicas (2026-05-27):**
+- 51 reglas Inspector AEAT (módulo I) + 9 reglas Company Intelligence (módulo CI) = **60 reglas activas**
+- 562 tests unitarios verdes · 28 suites · type-check limpio
+- 35 tools LLM (cuando todas las integraciones están conectadas) — incluye 8 reads + 5 writes ledger/AEAT
+- 3 crons Vercel operativos: `audit-monthly` (día 1, 03:00), `aeat-sede-sync` (diario 06:00), `aeat-weekly-summary` (lunes 08:00)
+- UI activas: `/auditoria` (51 reglas + descargas Excel), `/sede` (buzón + cambios censales), `/perfil-fiscal` (wizard R000 con prefill CI)
+- Badge sidebar dinámico para notificaciones pendientes AEAT
+
+### Próximos pasos — orden recomendado
+
+**P1 (cierra el ciclo Robot Contable supervisado)**
+1. **L4-L5 cuentas PGC** — separar `accountDebit`/`accountCredit` por entrada del Ledger; computar saldos reales por cuenta (570 caja, 551/552 socios, 555 partidas). Desbloquea R128/R129/R130 con datos reales en lugar de stubs.
+2. **R2a + R3 RAG ingester** — primer ingester PDF (Manual IRPF AEAT) + tool LLM `inspector_search_aeat`. Activa Inspector Capa 3 con citas vivas BOE.
+
+**P2 (presentación AEAT con red de seguridad)**
+3. **C-B1 borrador 303** — cálculo desde Ledger → UI revisión → confirmación → envío SOAP AEAT + `IsaakAeatSubmission` audit log.
+4. **F12 Inspector LLM Capa 2** — sub-agente `inspector` con prompt fiscal especializado para preguntas que superan reglas hardcodeadas.
+
+**P3 (sectoriales + canales)**
+5. HotelGest sprint en curso → cerrar e iterar con piloto.
+6. Telegram bot (F15) + integraciones gratis P1/P2 cuando haya tracción.
+
+**P4 (presentación automática + certificación)**
+7. C-C cron 303 con veto-window 48h (requiere RC profesional + audit log).
+8. B5 certificación AEAT.
+
+### Próximos pasos de unificación CI ↔ Inspector AEAT
+
+- **Convergencia R040A/R040B**: ambas líneas tienen reglas con el mismo ID pero objetivos distintos. Mantener separadas por ahora (CI = perfil empresa, I = transacciones); revaluar fusión cuando se cierre el wizard R000. ✅ Wizard ya cerrado en I7 — pendiente revaluación post-piloto.
+- **Bridge CI → Inspector R035**: ✅ Implementado en F11 fase 5a. R035 fail-closed si VIES rechaza el NIF B2B.
+- **Bridge CI → Inspector R017**: ✅ Implementado en F11 fase 5a. R017 pasa de warning a error si VIES dice no válido.
+- **UI integrada en /contactos**: ⏳ Pendiente. Cuando se cree contacto, llamar `buildProfile()` para auto-fill + diff visual.
+- **Onboarding R000**: ✅ Wizard en `/perfil-fiscal` con prefill CI. Pendiente: enlazar al onboarding inicial del tenant.

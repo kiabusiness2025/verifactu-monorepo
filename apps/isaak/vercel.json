@@ -34,6 +34,22 @@
       "schedule": "0 10 * * *"
     },
     {
+      "path": "/api/cron/audit-monthly",
+      "schedule": "0 3 1 * *"
+    },
+    {
+      "path": "/api/cron/aeat-sede-sync",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/aeat-weekly-summary",
+      "schedule": "0 8 * * 1"
+    },
+    {
+      "path": "/api/cron/aeat-corpus-reingest",
+      "schedule": "0 4 1 1,4,7,10 *"
+    },
+    {
       "path": "/api/cron/app-health",
       "schedule": "*/30 * * * *"
     }

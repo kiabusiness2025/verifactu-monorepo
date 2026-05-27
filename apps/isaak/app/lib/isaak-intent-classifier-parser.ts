@@ -3,7 +3,10 @@
 // breaks babel-jest's TS transform on packages/utils/session.ts).
 
 export type AmbiguityType = 'period' | 'entity' | 'intent' | 'amount' | 'none';
-export type ToolCategory = 'holded' | 'banking' | 'google' | 'microsoft';
+// 'ledger' is the F9 Isaak Ledger namespace (internal contable store).
+// The Haiku classifier never returns 'ledger' (its prompt only knows the
+// 4 connector categories); sub-agents opt in to ledger tools directly.
+export type ToolCategory = 'holded' | 'banking' | 'google' | 'microsoft' | 'ledger';
 
 export type ClassificationResult = {
   ambiguous: boolean;
@@ -31,6 +34,7 @@ const VALID_CATEGORIES: ReadonlySet<ToolCategory> = new Set([
   'banking',
   'google',
   'microsoft',
+  'ledger',
 ]);
 
 export function emptyClassificationResult(

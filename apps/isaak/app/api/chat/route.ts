@@ -36,6 +36,10 @@ import {
   pickSubAgent,
   type SubAgentId,
 } from '@/app/lib/isaak-sub-agents';
+import {
+  isWriteTokenEnforced,
+  verifyWriteToken,
+} from '@/app/lib/isaak-write-token';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -332,6 +336,8 @@ export async function POST(request: NextRequest) {
     const message = typeof body?.message === 'string' ? body.message.trim() : '';
     const requestedConversationId =
       typeof body?.conversationId === 'string' ? body.conversationId.trim() : '';
+    // SEC C5: token de autorización de escrituras (opcional, gated).
+    const writeToken = typeof body?.writeToken === 'string' ? body.writeToken.trim() : '';
 
     if (!message) {
       return NextResponse.json({ error: 'El mensaje no puede estar vacío.' }, { status: 400 });
@@ -414,6 +420,9 @@ export async function POST(request: NextRequest) {
     let judgeInvocations = 0;
     let judgeBlocks = 0;
     let judgeLatencyMs: number | null = null;
+    let inspectorRuns = 0;
+    let inspectorBlocks = 0;
+    let inspectorWarnings = 0;
     let iterations = 0;
     let routedTo: 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback' =
       'fallback';
@@ -495,10 +504,38 @@ export async function POST(request: NextRequest) {
           hasWriteIntent: classification.hasWriteIntent,
         });
 
-        // Filter tools to the subset the classifier marked as relevant.
-        // F4: if the classifier detected write intent, include write tools too
-        // (the judge model will gate each write attempt before execution).
-        const allowWrites = classification.hasWriteIntent;
+        // SEC C5 (2026): allowWrites NO se decide únicamente por el LLM
+        // classifier. Para que se habilite hace falta que el cliente
+        // adjunte un writeToken HMAC válido (emitido por
+        // POST /api/chat/write-token tras toggle UI explícito).
+        // ISAAK_WRITES_REQUIRE_TOKEN=true → enforcement estricto.
+        // ISAAK_WRITES_REQUIRE_TOKEN=false → legacy (classifier decide) + warn.
+        const classifierSaysWrite = classification.hasWriteIntent;
+        let tokenValid = false;
+        if (writeToken && authenticated.session.userId && authenticated.session.tenantId) {
+          const v = verifyWriteToken(writeToken, {
+            userId: authenticated.session.userId,
+            tenantId: authenticated.session.tenantId,
+          });
+          tokenValid = v.ok;
+        }
+        let allowWrites: boolean;
+        if (isWriteTokenEnforced()) {
+          allowWrites = tokenValid;
+          if (classifierSaysWrite && !tokenValid) {
+            console.warn('[chat] write intent suprimido: token ausente o inválido', {
+              userId: authenticated.session.userId,
+              hasToken: Boolean(writeToken),
+            });
+          }
+        } else {
+          allowWrites = classifierSaysWrite;
+          if (classifierSaysWrite && !tokenValid) {
+            console.warn('[chat] write intent SIN token (legacy mode)', {
+              userId: authenticated.session.userId,
+            });
+          }
+        }
 
         let agentSystemPrompt: string;
         let agentToolCategories = classification.relevantCategories;
@@ -522,6 +559,14 @@ export async function POST(request: NextRequest) {
             factsBlock,
             fewShotBlock,
           });
+          // F12: en main chat (no sub-agent) siempre añadimos 'ledger' a
+          // las categorías para que el LLM tenga acceso a inspector_consult
+          // y otras tools internas (no requieren conexión externa). El
+          // classifier no las contempla porque solo conoce categorías de
+          // conectores externos.
+          if (!agentToolCategories.includes('ledger')) {
+            agentToolCategories = [...agentToolCategories, 'ledger'];
+          }
         }
 
         const filteredTools = buildReadOnlyToolsForContext(toolContext, {
@@ -561,6 +606,9 @@ export async function POST(request: NextRequest) {
           judgeInvocations = loop.judgeInvocations;
           judgeBlocks = loop.judgeBlocks;
           judgeLatencyMs = loop.judgeTotalLatencyMs || null;
+          inspectorRuns = loop.inspectorRuns;
+          inspectorBlocks = loop.inspectorBlocks;
+          inspectorWarnings = loop.inspectorWarnings;
           iterations = loop.iterations;
           routedTo = 'sonnet_with_tools';
         }
@@ -652,6 +700,9 @@ export async function POST(request: NextRequest) {
         fewShotLatencyMs,
         fewShotTopSimilarity,
         subAgent,
+        inspectorRuns,
+        inspectorBlocks,
+        inspectorWarnings,
       }).catch((err) => {
         console.error('[Isaak Chat] recordChatMetric failed', err);
       });

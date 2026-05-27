@@ -571,6 +571,13 @@ model Tenant {
   isaakPushPreferences          IsaakPushPreferences[]
   isaakMemoryFacts              IsaakMemoryFact[]
   isaakLongTermMemory           IsaakLongTermMemory[]
+  isaakLedgerEntries            IsaakLedgerEntry[]
+  isaakTaxReturns               IsaakTaxReturn[]
+  isaakAeatNotifications        IsaakAeatNotification[]
+  isaakAeatCensusSnapshots      IsaakAeatCensusSnapshot[]
+  isaakAeatCensusChanges        IsaakAeatCensusChange[]
+  isaakTaxpayerProfile          IsaakTaxpayerProfile?
+  isaakAeatSubmissions          IsaakAeatSubmission[]
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -1923,6 +1930,48 @@ model IsaakLongTermMemory {
   @@map("isaak_long_term_memory")
 }
 
+// ==================== ISAAK: AEAT CORPUS (F13 — Inspector Capa 3 RAG) ====================
+//
+// Cuerpo de conocimiento fiscal compartido (Manual IRPF, Manual IVA,
+// INFORMA, BOE refundidos, FAQs sede AEAT) embebido en pgvector.
+// Es público: no se filtra por tenant_id (a diferencia de
+// isaak_long_term_memory, que es por-cliente y aislamiento estricto).
+//
+// Cada chunk lleva:
+//   * sourceId estable (Manual_IRPF_2026, Manual_IVA_2026, INFORMA_V0001, ...)
+//   * sourceType: 'manual_aeat' | 'boe' | 'informa' | 'sede_faq' | 'doctrina_dgt'
+//   * sourceUrl (URL canónica para citar al usuario)
+//   * articleRef (cita normativa, p.ej. "Art. 96.Uno.5º LIVA" o "BOE-A-...")
+//   * ingestedAt (cuándo se incorporó al corpus → permite mostrar
+//     "información válida a fecha X" al usuario)
+
+model IsaakAeatCorpus {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  sourceId   String @map("source_id")
+  sourceType String @map("source_type")
+  sourceUrl  String @map("source_url") @db.Text
+  articleRef String? @map("article_ref")
+
+  title      String? @db.Text
+  content    String  @db.Text
+  // pgvector column managed via raw migration; Unsupported() makes Prisma
+  // preserve it across migrate ops (same pattern as IsaakLongTermMemory).
+  embedding  Unsupported("vector(1536)")?
+
+  chunkIndex Int      @map("chunk_index")
+  tokenCount Int      @default(0) @map("token_count")
+
+  ingestedAt DateTime @default(now()) @map("ingested_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([sourceId, chunkIndex])
+  @@index([sourceType])
+  @@index([sourceId])
+  @@index([ingestedAt(sort: Desc)])
+  @@map("isaak_aeat_corpus")
+}
+
 // ==================== ISAAK: CHAT METRICS (F1) ====================
 
 model IsaakChatMetric {
@@ -1974,6 +2023,11 @@ model IsaakChatMetric {
 
   // F8: which specialist sub-agent handled the message (null = orchestrator)
   subAgent String? @map("sub_agent")
+
+  // F11: Inspector AEAT preventivo (Capa 1, hardcoded rules)
+  inspectorRuns     Int @default(0) @map("inspector_runs")
+  inspectorBlocks   Int @default(0) @map("inspector_blocks")
+  inspectorWarnings Int @default(0) @map("inspector_warnings")
 
   errorCode String?  @map("error_code")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -2544,4 +2598,330 @@ model MarketingCampaign {
 
   @@index([createdAt(sort: Desc)])
   @@map("marketing_campaigns")
+}
+
+// ==================== ISAAK LEDGER (F9) ====================
+// Libro mayor interno de Isaak. Fuente de verdad contable.
+// Cada asiento se encadena por hash al anterior del mismo tenant
+// (chronological order via createdAt + id) garantizando audit trail
+// inmutable equivalente al requerido por Verifactu y SII.
+//
+// tenantId SIEMPRE primer filtro en queries (aislamiento estricto,
+// igual que IsaakLongTermMemory).
+
+model IsaakLedgerEntry {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  entryDate DateTime @map("entry_date") @db.Date
+  docNumber String?  @map("doc_number")
+  docType   String   @map("doc_type") // 'invoice_in' | 'invoice_out' | 'expense' | 'payroll' | 'journal' | 'tax_payment'
+
+  counterpartyNif  String? @map("counterparty_nif")
+  counterpartyName String? @map("counterparty_name")
+
+  amount    Decimal  @db.Decimal(14, 2)
+  currency  String   @default("EUR") @db.VarChar(3)
+  taxBase   Decimal? @map("tax_base") @db.Decimal(14, 2)
+  vatRate   Decimal? @map("vat_rate") @db.Decimal(5, 2)
+  vatAmount Decimal? @map("vat_amount") @db.Decimal(14, 2)
+
+  accountDebit  String? @map("account_debit") // PGC 2007
+  accountCredit String? @map("account_credit")
+
+  description   String  @db.Text
+  attachmentUrl String? @map("attachment_url") @db.Text
+
+  sourceSystem String  @map("source_system") // 'holded' | 'manual' | 'ocr' | 'banking' | 'isaak_auto'
+  holdedId     String? @map("holded_id")
+
+  // Hash chain (cadena inmutable de audit trail)
+  hash     String  @db.VarChar(64) // SHA-256 hex
+  prevHash String? @map("prev_hash") @db.VarChar(64)
+  sequence BigInt  @default(autoincrement()) // orden incremental por tenant (via partial unique)
+
+  // Estado fiscal
+  verifactuRef String?   @map("verifactu_ref")
+  verifactuAt  DateTime? @map("verifactu_at") @db.Timestamptz
+  sii          Boolean   @default(false)
+  siiSentAt    DateTime? @map("sii_sent_at") @db.Timestamptz
+
+  // Auditoría
+  createdBy String   @map("created_by") // userId o 'isaak-auto'
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, hash])
+  @@index([tenantId, entryDate(sort: Desc)])
+  @@index([tenantId, docType, entryDate])
+  @@index([tenantId, sequence(sort: Desc)])
+  @@index([tenantId, sourceSystem])
+  @@index([tenantId, verifactuRef])
+  @@map("isaak_ledger_entries")
+}
+
+// ==================== ISAAK TAX RETURNS (F11 fase 4) ====================
+//
+// Registro de modelos tributarios presentados (o en borrador) por el
+// tenant. Alimenta los cruces del Inspector AEAT (R086, R087, R100,
+// R101, R102, R106) — sin esta tabla, el snapshot mostraba
+// presentedModels=[] y las reglas no podían validar coherencia.
+//
+// status:
+//   * 'draft'     → calculado por Isaak pero no presentado
+//   * 'presented' → enviado a AEAT (sede electrónica), pendiente de
+//                   confirmación
+//   * 'accepted'  → AEAT ha confirmado la presentación
+//   * 'rejected'  → AEAT ha rechazado (con motivo en notes)
+//   * 'rectified' → reemplazado por una complementaria posterior
+//
+// period: formato 'Q1-2026', 'M03-2026' (mensual SII), 'A-2025' anual.
+
+model IsaakTaxReturn {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  model      String // '303' | '130' | '111' | '115' | '180' | '190' | '200' | '202' | '347' | '349' | '390' | '720' | '100'
+  period     String
+  fiscalYear Int    @map("fiscal_year")
+
+  status String @default("draft") // draft | presented | accepted | rejected | rectified
+
+  // Base / cuota declarada — semántica depende del modelo. Para R086
+  // (cruce 111) se compara con retentionsToProfessionals + Employees.
+  amountDeclared Decimal  @db.Decimal(14, 2) @map("amount_declared")
+  amountToPay    Decimal? @db.Decimal(14, 2) @map("amount_to_pay")
+  amountToRefund Decimal? @db.Decimal(14, 2) @map("amount_to_refund")
+
+  presentedAt     DateTime? @map("presented_at") @db.Timestamptz
+  dueDate         DateTime? @map("due_date") @db.Date
+  referenceNumber String?   @map("reference_number") // ID o csv AEAT
+  attachmentUrl   String?   @map("attachment_url") @db.Text // PDF justificante
+
+  notes     String? @db.Text
+  createdBy String  @map("created_by") // userId o 'isaak-auto'
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Un único registro vigente por (tenant, modelo, periodo).
+  // Las rectificativas se modelan cambiando status del previo a
+  // 'rectified' y creando uno nuevo con sufijo en notes/reference.
+  @@unique([tenantId, model, period])
+  @@index([tenantId, status])
+  @@index([tenantId, dueDate])
+  @@index([tenantId, fiscalYear])
+  @@map("isaak_tax_returns")
+}
+
+// ==================== ISAAK AEAT SEDE — C-A (lectura ampliada) ====================
+//
+// Persistencia de notificaciones AEAT (DEH) y snapshots del censo
+// 036/037 para detectar cambios. Sin estas tablas, cada consulta a la
+// sede AEAT haría un round-trip; con persistencia podemos:
+//   * deduplicar notificaciones que el cron pulla a diario
+//   * detectar cambios censales (domicilio, IAE, obligaciones)
+//   * adjuntar justificantes PDF a IsaakTaxReturn al descargarlos
+//   * disparar alertas push solo cuando llega algo NUEVO
+
+model IsaakAeatNotification {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // ID externo asignado por AEAT — único por (tenant, externalId)
+  externalId String @map("external_id")
+
+  title     String
+  emisor    String
+  tipo      String // tipo notificación AEAT (ej. 'comunicacion', 'requerimiento')
+  estado    String // 'pendiente' | 'leida' | 'expirada' | 'archivada'
+
+  notificationDate DateTime  @map("notification_date") @db.Timestamptz
+  receivedAt       DateTime  @default(now()) @map("received_at") @db.Timestamptz
+  acknowledgedAt   DateTime? @map("acknowledged_at") @db.Timestamptz
+  expiresAt        DateTime? @map("expires_at") @db.Timestamptz
+
+  // Si la notificación tiene un PDF adjunto y se ha descargado.
+  pdfUrl       String? @map("pdf_url") @db.Text
+  pdfStoredAt  DateTime? @map("pdf_stored_at") @db.Timestamptz
+
+  // Si la notificación causó una alerta in-app o email
+  alertSent    Boolean @default(false) @map("alert_sent")
+  alertSentAt  DateTime? @map("alert_sent_at") @db.Timestamptz
+
+  // Raw payload de AEAT para auditoría (opcional)
+  rawXml       String? @map("raw_xml") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, externalId])
+  @@index([tenantId, estado])
+  @@index([tenantId, notificationDate(sort: Desc)])
+  @@index([tenantId, alertSent])
+  @@map("isaak_aeat_notifications")
+}
+
+// Snapshot del censo 036/037 — guardamos en JSON para diff posterior
+// y conservamos histórico. El cron compara el último snapshot con el
+// pull del día y crea una IsaakAeatCensusChange por cada diferencia.
+model IsaakAeatCensusSnapshot {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Censo capturado como objeto: nombre, domicilio fiscal, IAE,
+  // obligaciones, fecha de alta, etc. — todo lo que AEAT devuelva.
+  data Json
+
+  // Hash del JSON canónico para dedupe rápido (no insertamos si el
+  // contenido es idéntico al snapshot anterior).
+  contentHash String @map("content_hash") @db.VarChar(64)
+
+  capturedAt DateTime @default(now()) @map("captured_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, capturedAt(sort: Desc)])
+  @@map("isaak_aeat_census_snapshots")
+}
+
+// Cambios censales detectados al comparar dos snapshots consecutivos.
+// Util para que Isaak avise al cliente: "han cambiado tu domicilio
+// fiscal", "tu IAE ya no aparece en el censo", etc.
+model IsaakAeatCensusChange {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  // Campo censal afectado: 'domicilio_fiscal' | 'iae' | 'obligaciones' |
+  // 'nombre' | 'modelo_036' | 'baja' ...
+  field       String
+  changeType  String @map("change_type") // 'added' | 'removed' | 'modified'
+  oldValue    String? @map("old_value") @db.Text
+  newValue    String? @map("new_value") @db.Text
+
+  // Referencias a los snapshots que produjeron el diff
+  previousSnapshotId String? @map("previous_snapshot_id") @db.Uuid
+  currentSnapshotId  String  @map("current_snapshot_id") @db.Uuid
+
+  alertSent   Boolean @default(false) @map("alert_sent")
+  alertSentAt DateTime? @map("alert_sent_at") @db.Timestamptz
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@index([tenantId, alertSent])
+  @@map("isaak_aeat_census_changes")
+}
+
+// ==================== ISAAK TAXPAYER PROFILE (I7 R000) ====================
+//
+// Perfil fiscal mínimo del contribuyente. Persistencia de la
+// TaxpayerProfileSnapshot que consume el Inspector AEAT — sin ella, las
+// reglas con scope (territorial/sectorial) no pueden filtrar y
+// aplicarse correctamente.
+//
+// Una sola fila por tenant. Se rellena vía el wizard R000 (UI) o vía
+// LLM tool isaak_set_fiscal_profile. Idempotente vía upsert.
+
+model IsaakTaxpayerProfile {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @unique @map("tenant_id") @db.Uuid
+
+  // Dimensiones del perfil (alineadas con TaxpayerProfileSnapshot)
+  taxpayerType  String? @map("taxpayer_type") // autonomo|sl|sa|comunidad_bienes|asociacion|fundacion
+  territory     String? // comun|canarias|pais_vasco|navarra|ceuta_melilla
+  vatRegime     String? @map("vat_regime") // general|recargo_equivalencia|criterio_caja|simplificado|prorrata|sii|exento
+  sector        String? // hosteleria|consultoria|ecommerce|construccion|inmobiliario|...
+
+  // Booleans inferibles del censo pero útiles para R000
+  corporateTaxSubject      Boolean? @map("corporate_tax_subject")
+  hasEmployees             Boolean? @map("has_employees")
+  hasRentWithholding       Boolean? @map("has_rent_withholding")
+  hasProfessionalInvoices  Boolean? @map("has_professional_invoices")
+  hasIntraEUOperations     Boolean? @map("has_intra_eu_operations")
+  hasRelatedParties        Boolean? @map("has_related_parties")
+  usesBillingSoftware      Boolean? @map("uses_billing_software")
+
+  annualTurnover Decimal? @map("annual_turnover") @db.Decimal(14, 2)
+
+  // Origen del prefill — para mostrar al usuario "este dato lo trajo
+  // Company Intelligence desde VIES" y permitirle corregirlo.
+  prefilledFromCi  Boolean   @default(false) @map("prefilled_from_ci")
+  prefilledAt      DateTime? @map("prefilled_at") @db.Timestamptz
+  confirmedByUser  Boolean   @default(false) @map("confirmed_by_user")
+  confirmedAt      DateTime? @map("confirmed_at") @db.Timestamptz
+  confirmedBy      String?   @map("confirmed_by") // userId del último confirm
+
+  // Notas libres (admin, observaciones del contable)
+  notes String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("isaak_taxpayer_profiles")
+}
+
+// ==================== ISAAK AEAT SUBMISSION (C-B1) ====================
+//
+// Audit log inmutable de las presentaciones AEAT (modelo 303, 130, etc.)
+// realizadas o intentadas por Isaak. Existe legalmente para:
+//   * Demostrar quién confirmó qué (userId + timestamp + payloadHash)
+//   * Conservar el payload exacto enviado a AEAT
+//   * Trazar la respuesta de AEAT (referencia/CSV, errores)
+//   * Soportar la posterior cobertura RC profesional (C-C)
+//
+// status:
+//   * 'pending_aeat': usuario confirmó, esperando envío SOAP (C-B1.b state)
+//   * 'submitted':    SOAP send completado, esperando ACK AEAT
+//   * 'accepted':     AEAT confirmó (CSV en aeatReference)
+//   * 'rejected':     AEAT rechazó (motivo en errorMessage)
+//   * 'error':        fallo de transporte/firmado antes de llegar a AEAT
+//   * 'cancelled':    usuario abortó después de confirmar (rectificativa)
+
+model IsaakAeatSubmission {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  model  String
+  period String
+  // Link al borrador IsaakTaxReturn que originó la presentación.
+  taxReturnId String? @map("tax_return_id") @db.Uuid
+
+  status String @default("pending_aeat")
+
+  // Payload sometido (JSON canónico) + hash para audit-trail
+  payload     Json    @db.JsonB
+  payloadHash String  @map("payload_hash") @db.VarChar(64)
+
+  // Si se firmó con cert mTLS, fingerprint SHA-256 del cert usado
+  certFingerprint String? @map("cert_fingerprint") @db.VarChar(64)
+
+  // Respuesta AEAT (cuando llegue en C-B1.c)
+  aeatResponse  Json?   @map("aeat_response") @db.JsonB
+  aeatReference String? @map("aeat_reference") // CSV justificante AEAT
+
+  // Auditoría
+  submittedBy String   @map("submitted_by") // userId confirmador
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+  ackedAt     DateTime? @map("acked_at") @db.Timestamptz
+  errorMessage String? @map("error_message") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([tenantId, model, period])
+  @@index([tenantId, submittedAt(sort: Desc)])
+  @@map("isaak_aeat_submissions")
 }

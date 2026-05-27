@@ -7,11 +7,19 @@
  * Only admin or owner roles can invite members.
  */
 
-import { randomBytes } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import { NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
 import { sendTeamInviteEmail } from '@/app/lib/communications/team-invite-email';
+
+// SEC C4 (2026): el token de invitación se guarda HASHEADO en DB para
+// que una filtración no exponga tokens válidos. Lookup por hash (no
+// scan completo). TTL reducido de 7 días a 48 horas. Single-use
+// garantizado al activar.
+function hashInviteToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
 
 export const runtime = 'nodejs';
 
@@ -176,9 +184,12 @@ export async function POST(request: Request) {
     );
   }
 
-  // Generate invite token (32 bytes = 64 hex chars)
+  // Generate invite token (32 bytes = 64 hex chars). El raw token se
+  // envía por email; en DB guardamos solo su hash SHA-256.
   const token = randomBytes(32).toString('hex');
-  const tokenExpiresAt = new Date(Date.now() + 7 * 86_400_000).toISOString();
+  const tokenHash = hashInviteToken(token);
+  // SEC C4: TTL reducido de 7 días a 48 horas.
+  const tokenExpiresAt = new Date(Date.now() + 48 * 3_600_000).toISOString();
 
   const membership = await prisma.membership.upsert({
     where: {
@@ -189,7 +200,7 @@ export async function POST(request: Request) {
       status: 'invited',
       invitedBy: session.userId,
       confirmedAt: null,
-      metadataJson: { inviteToken: token, inviteTokenExpiresAt: tokenExpiresAt },
+      metadataJson: { inviteTokenHash: tokenHash, inviteTokenExpiresAt: tokenExpiresAt },
     },
     create: {
       tenantId: session.tenantId,
@@ -197,7 +208,7 @@ export async function POST(request: Request) {
       role,
       status: 'invited',
       invitedBy: session.userId,
-      metadataJson: { inviteToken: token, inviteTokenExpiresAt: tokenExpiresAt },
+      metadataJson: { inviteTokenHash: tokenHash, inviteTokenExpiresAt: tokenExpiresAt },
     },
   });
 

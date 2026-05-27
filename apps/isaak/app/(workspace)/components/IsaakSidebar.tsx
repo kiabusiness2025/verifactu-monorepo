@@ -13,8 +13,10 @@ import {
   ChevronRight,
   ChevronUp,
   CreditCard,
+  Database,
   ExternalLink,
   FileBarChart2,
+  FileText,
   Landmark,
   LifeBuoy,
   LogOut,
@@ -26,9 +28,9 @@ import {
   Plug,
   Plus,
   Receipt,
-  Shield,
-  ShieldCheck,
+  ShieldAlert,
   Sparkles,
+  IdCard,
   TrendingUp,
   UserCircle2,
   Users,
@@ -65,6 +67,9 @@ type WhitelabelConfig = {
 };
 
 // ── Navigation groups (sidebar) ────────────────────────────────────────────
+// Reorganización 2026-05: agrupamos por dominio del usuario, no por
+// implementación interna. Fiscal y Canales antes estaban dispersos entre
+// sidebar y profile popover, causando confusión.
 const NAV_GROUPS = [
   {
     items: [
@@ -77,37 +82,49 @@ const NAV_GROUPS = [
     items: [
       { href: '/ventas', label: 'Ventas', icon: TrendingUp },
       { href: '/gastos', label: 'Gastos', icon: Receipt },
-      { href: '/informes', label: 'Informes', icon: FileBarChart2 },
       { href: '/banking', label: 'Banking', icon: Landmark },
+      { href: '/informes', label: 'Informes', icon: FileBarChart2 },
     ],
   },
   {
-    label: 'Empresa',
+    label: 'Fiscal',
+    items: [
+      { href: '/fiscal/modelos', label: 'Modelos AEAT', icon: FileText },
+      { href: '/auditoria', label: 'Auditoría', icon: ShieldAlert },
+      { href: '/inspector', label: 'Inspector AEAT', icon: Sparkles },
+      { href: '/sede', label: 'Buzón AEAT', icon: Mail, badgeKind: 'aeat-pending' as const },
+      { href: '/perfil-fiscal', label: 'Perfil fiscal', icon: IdCard },
+    ],
+  },
+  {
+    label: 'Canales',
+    items: [
+      { href: '/mail', label: 'Mail', icon: Mail },
+      { href: '/calendario', label: 'Calendario', icon: CalendarDays },
+      { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
+      { href: '/microsoft', label: 'Microsoft 365', icon: Monitor },
+    ],
+  },
+  {
+    label: 'Equipo',
     items: [
       { href: '/contactos', label: 'Contactos', icon: Users },
       { href: '/equipo', label: 'Equipo', icon: Users2 },
-      { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle },
-      { href: '/fiscal', label: 'Fiscal', icon: ShieldCheck },
     ],
   },
 ] as const;
 
-// ── Profile popover — Configuración ───────────────────────────────────────
-const PROFILE_CONFIG = [
+// ── Profile popover ────────────────────────────────────────────────────────
+// Solo CONFIGURACIÓN del usuario y de la cuenta. Las páginas operativas
+// (modelos, canales, inspector) viven en la sidebar principal.
+const PROFILE_MENU = [
   { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
   { href: '/settings?section=isaak', label: 'Personalizar Isaak', icon: Sparkles },
   { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
-] as const;
-
-// ── Profile popover — Integraciones y herramientas ────────────────────────
-const PROFILE_TOOLS = [
   { href: '/integrations', label: 'Integraciones', icon: Plug },
-  { href: '/microsoft', label: 'Microsoft 365', icon: Monitor },
-  { href: '/mail', label: 'Gmail Facturas', icon: Mail },
-  { href: '/calendario', label: 'Calendario', icon: CalendarDays },
   { href: '/advisor', label: 'Modo Asesoría', icon: Briefcase },
-  { href: '/sede', label: 'Sede Electrónica', icon: Shield },
+  { href: '/sede-corpus', label: 'Corpus AEAT (admin)', icon: Database },
 ] as const;
 
 function formatRelativeDate(value: Date | string) {
@@ -172,6 +189,37 @@ export default function IsaakSidebar({
   const [loggingOut, setLoggingOut] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+
+  // C-A — badge buzón AEAT: poll /api/isaak/sede/pending-count cada 5 min
+  const [aeatPending, setAeatPending] = useState<{ pending: number; critical: number }>(
+    { pending: 0, critical: 0 },
+  );
+  useEffect(() => {
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch('/api/isaak/sede/pending-count', {
+          credentials: 'include',
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { pending?: number; critical?: number };
+        if (!cancelled) {
+          setAeatPending({
+            pending: data.pending ?? 0,
+            critical: data.critical ?? 0,
+          });
+        }
+      } catch {
+        // fail-silent — el badge no es crítico
+      }
+    };
+    void fetchCount();
+    const id = window.setInterval(fetchCount, 5 * 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem('isaak-sidebar-collapsed');
@@ -288,23 +336,61 @@ export default function IsaakSidebar({
                 )}
               </div>
             )}
-            {group.items.map(({ href, label, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                title={collapsed ? label : undefined}
-                className={`flex h-8 items-center rounded-lg text-[12px] font-medium transition ${
-                  collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
-                } ${
-                  isActive(href)
-                    ? 'bg-white/10 text-white'
-                    : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
-                }`}
-              >
-                <Icon size={15} />
-                {!collapsed && label}
-              </Link>
-            ))}
+            {group.items.map((item) => {
+              const { href, label, icon: Icon } = item;
+              const badgeKind = 'badgeKind' in item ? item.badgeKind : undefined;
+              const badgeCount =
+                badgeKind === 'aeat-pending' ? aeatPending.pending : 0;
+              const badgeUrgent =
+                badgeKind === 'aeat-pending' && aeatPending.critical > 0;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  title={
+                    collapsed
+                      ? badgeCount > 0
+                        ? `${label} · ${badgeCount} pendientes`
+                        : label
+                      : undefined
+                  }
+                  className={`flex h-8 items-center rounded-lg text-[12px] font-medium transition ${
+                    collapsed ? 'justify-center px-0' : 'gap-2.5 px-2.5'
+                  } ${
+                    isActive(href)
+                      ? 'bg-white/10 text-white'
+                      : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  }`}
+                >
+                  <span className="relative inline-flex items-center justify-center">
+                    <Icon size={15} />
+                    {collapsed && badgeCount > 0 && (
+                      <span
+                        className={`absolute -right-1.5 -top-1.5 flex h-3.5 min-w-[14px] items-center justify-center rounded-full px-1 text-[8px] font-bold text-white ${
+                          badgeUrgent ? 'bg-rose-500' : 'bg-blue-500'
+                        }`}
+                      >
+                        {badgeCount > 9 ? '9+' : badgeCount}
+                      </span>
+                    )}
+                  </span>
+                  {!collapsed && (
+                    <>
+                      <span className="flex-1">{label}</span>
+                      {badgeCount > 0 && (
+                        <span
+                          className={`ml-auto inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1.5 text-[9px] font-bold text-white ${
+                            badgeUrgent ? 'bg-rose-500' : 'bg-blue-500'
+                          }`}
+                        >
+                          {badgeCount > 99 ? '99+' : badgeCount}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         ))}
       </nav>
@@ -388,30 +474,12 @@ export default function IsaakSidebar({
               </Link>
             </div>
 
-            {/* Configuración */}
+            {/* Configuración + integraciones (setup) — todo en un solo grupo */}
             <div className="border-b border-white/5 py-1">
               <div className="px-4 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-widest text-slate-600">
                 Configuración
               </div>
-              {PROFILE_CONFIG.map(({ href, label, icon: Icon }) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2.5 px-4 py-1.5 text-[12px] text-slate-300 transition hover:bg-white/5 hover:text-white"
-                >
-                  <Icon size={13} className="shrink-0 text-slate-500" />
-                  {label}
-                </Link>
-              ))}
-            </div>
-
-            {/* Integraciones y herramientas */}
-            <div className="border-b border-white/5 py-1">
-              <div className="px-4 pb-1 pt-2 text-[9px] font-semibold uppercase tracking-widest text-slate-600">
-                Integraciones y herramientas
-              </div>
-              {PROFILE_TOOLS.map(({ href, label, icon: Icon }) => (
+              {PROFILE_MENU.map(({ href, label, icon: Icon }) => (
                 <Link
                   key={href}
                   href={href}
