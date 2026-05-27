@@ -29,9 +29,12 @@ export const metadata: Metadata = {
   description,
   metadataBase: new URL('https://verifactu.business'),
   icons: {
-    icon: [{ url: '/Isaak/isaak-avatar-verifactu.png', type: 'image/png' }],
-    shortcut: ['/Isaak/isaak-avatar-verifactu.png'],
-    apple: [{ url: '/Isaak/isaak-avatar-verifactu.png', type: 'image/png' }],
+    icon: [
+      { url: '/brand/app-icon-192.png', type: 'image/png' },
+      { url: '/brand/app-icon-512.png', type: 'image/png' },
+    ],
+    shortcut: ['/brand/app-icon-192.png'],
+    apple: [{ url: '/brand/app-icon-192.png', type: 'image/png' }],
   },
   manifest: '/manifest.webmanifest',
   appleWebApp: {
