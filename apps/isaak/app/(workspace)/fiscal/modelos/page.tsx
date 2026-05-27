@@ -224,7 +224,7 @@ function ResultBadge({ value }: { value: number }) {
 function Disclaimer() {
   return (
     <p className="text-xs text-slate-400 text-center">
-      Borrador estimado a partir de los datos de Holded · No es una declaración oficial · Verifica
+      Borrador estimado a partir de tus datos contables · No es una declaración oficial · Verifica
       con tu asesor antes de presentar
     </p>
   );
@@ -738,7 +738,7 @@ export default function ModelosPage() {
       <div>
         <h1 className="text-xl font-semibold text-slate-900">Modelos AEAT</h1>
         <p className="text-sm text-slate-500 mt-1">
-          Borradores pre-rellenados con tus datos de Holded. Revisa y ajusta antes de presentar.
+          Borradores pre-rellenados desde tu contabilidad. Revisa y ajusta antes de presentar.
         </p>
       </div>
 

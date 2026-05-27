@@ -158,7 +158,7 @@ export default function FiscalAlertsPage() {
           <div>
             <p className="text-[13px] font-semibold text-blue-900">Modelos AEAT — Borradores</p>
             <p className="text-[11px] text-blue-700 mt-0.5">
-              303 · 130 · 390 pre-rellenados con tus datos de Holded
+              303 · 130 · 390 pre-rellenados desde tus datos contables
             </p>
           </div>
           <ChevronDown size={16} className="rotate-[-90deg] text-blue-500 shrink-0" />
