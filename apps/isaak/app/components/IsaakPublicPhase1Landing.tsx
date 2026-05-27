@@ -263,10 +263,11 @@ export default function IsaakPublicPhase1Landing() {
           </div>
           <div className="mt-10 rounded-[2rem] border border-slate-200 bg-[#011c67] p-8 text-white shadow-sm">
             <h2 className="text-2xl font-semibold">
-              Conecta Holded y futuros sistemas sin convertir a Isaak en un plugin.
+              Conecta tu ERP, bancos y herramientas sin convertir a Isaak en un plugin.
             </h2>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-blue-100">
-              Holded es el primer ecosistema conectado. El hub vertical vive en un dominio separado
+              Isaak orquesta varios ecosistemas conectados: ERPs (Holded), banca (Enable Banking,
+              Salt Edge), Google, Microsoft 365 y AEAT. Cada hub vertical vive en su propio dominio
               para proteger el flujo publico minimo del conector y mantener a Isaak como producto
               orquestador principal.
             </p>

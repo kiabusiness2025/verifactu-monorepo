@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Isaak | Conectores y modo conectado',
   description:
-    'Modo conectado para trabajar con Holded y futuras herramientas empresariales sin convertir a Isaak en un ERP ni en un plugin aislado.',
+    'Modo conectado para trabajar con tu ERP, bancos, CRM y herramientas empresariales sin convertir a Isaak en un ERP ni en un plugin aislado.',
 };
 
 export default function IsaakConnectorsPage() {
@@ -17,15 +17,15 @@ export default function IsaakConnectorsPage() {
           Conecta herramientas empresariales sin convertir a Isaak en otro ERP.
         </h1>
         <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
-          Holded es el primer ecosistema conectado. Despues vendran bancos, CRM, ecommerce y otras
-          fuentes. Isaak usa conectores para interpretar y operar sobre informacion existente con
-          permisos y trazabilidad.
+          Isaak conecta ERPs, bancos (Enable Banking, Salt Edge), Google, Microsoft 365, WhatsApp y
+          la AEAT. Holded es uno de los conectores. Isaak usa conectores para interpretar y operar
+          sobre informacion existente con permisos y trazabilidad.
         </p>
         <a
           href="https://holded.verifactu.business/conectores"
           className="mt-8 inline-flex items-center justify-center rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white hover:bg-[#1f55c0]"
         >
-          Ver conectores Holded
+          Ver catalogo de conectores
         </a>
       </div>
     </main>

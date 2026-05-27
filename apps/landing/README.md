@@ -1,4 +1,4 @@
-# VeriFactu Business — Landing Pública
+# Verifactu Business — Landing Pública
 
 Landing oficial de **verifactu.business**, desplegada en **Vercel** y construida con **Next.js (App Router)**.
 

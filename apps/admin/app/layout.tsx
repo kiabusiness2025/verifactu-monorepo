@@ -6,14 +6,13 @@ import PwaRegistration from '@/components/pwa/PwaRegistration';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Holded Admin',
-  description:
-    'Panel interno para observar usuarios, tenants y actividad operativa del canal Holded.',
-  applicationName: 'Holded Admin',
+  title: 'Verifactu Admin',
+  description: 'Panel interno para observar usuarios, tenants y actividad operativa de Verifactu.',
+  applicationName: 'Verifactu Admin',
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    title: 'Holded Admin',
+    title: 'Verifactu Admin',
     statusBarStyle: 'default',
   },
   icons: {
