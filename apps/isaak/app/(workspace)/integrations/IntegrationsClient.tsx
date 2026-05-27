@@ -14,6 +14,7 @@ import {
   Eye,
   EyeOff,
   Globe,
+  HelpCircle,
   Key,
   Landmark,
   LayoutGrid,
@@ -28,7 +29,9 @@ import {
   ShieldCheck,
   Sparkles,
   Trash2,
+  Truck,
   Unplug,
+  Users,
   Wallet,
   Webhook,
   Zap,
@@ -66,6 +69,13 @@ type MicrosoftStatus = {
   microsoftConfigured: boolean;
 };
 
+type SectorStatus = {
+  connected: boolean;
+  keyMasked: string | null;
+  connectedAt: string | null;
+  lastValidatedAt: string | null;
+};
+
 type GmailInvoiceCandidate = {
   id: string;
   threadId: string;
@@ -88,7 +98,9 @@ type CategoryKey =
   | 'microsoft'
   | 'banca'
   | 'comunicacion'
-  | 'pagos';
+  | 'pagos'
+  | 'crm'
+  | 'logistica';
 
 const CATEGORIES: { key: CategoryKey; label: string; icon: React.ElementType }[] = [
   { key: 'all', label: 'Todos', icon: LayoutGrid },
@@ -98,6 +110,8 @@ const CATEGORIES: { key: CategoryKey; label: string; icon: React.ElementType }[]
   { key: 'banca', label: 'Banca', icon: Landmark },
   { key: 'comunicacion', label: 'Comunicación', icon: MessageCircle },
   { key: 'pagos', label: 'Pagos', icon: Wallet },
+  { key: 'crm', label: 'CRM', icon: Users },
+  { key: 'logistica', label: 'Logística', icon: Truck },
 ];
 
 type IntegrationMeta = {
@@ -140,7 +154,7 @@ const INTEGRATIONS: IntegrationMeta[] = [
     category: 'sectorial',
     desc: 'TPV para restaurantes, bares y hostelería',
     logo: '🍽️',
-    available: false,
+    available: true,
   },
   {
     id: 'nubimed',
@@ -149,6 +163,46 @@ const INTEGRATIONS: IntegrationMeta[] = [
     desc: 'Gestión de clínicas dentales y médicas',
     logo: '🏥',
     available: false,
+  },
+  {
+    id: 'gesden',
+    name: 'Gesden',
+    category: 'sectorial',
+    desc: 'Software dental líder en España — clínicas y odontólogos',
+    logo: '🦷',
+    available: false,
+  },
+  {
+    id: 'mindbody',
+    name: 'Mindbody',
+    category: 'sectorial',
+    desc: 'Gestión de gimnasios, spas y centros de wellness',
+    logo: '🏋️',
+    available: true,
+  },
+  {
+    id: 'loyverse',
+    name: 'Loyverse',
+    category: 'sectorial',
+    desc: 'TPV en la nube para tiendas y comercio minorista',
+    logo: '🏪',
+    available: true,
+  },
+  {
+    id: 'woocommerce',
+    name: 'WooCommerce',
+    category: 'sectorial',
+    desc: 'E-commerce en WordPress — la plataforma más usada en España',
+    logo: '🛍️',
+    available: true,
+  },
+  {
+    id: 'prestashop',
+    name: 'PrestaShop',
+    category: 'sectorial',
+    desc: 'E-commerce — tiendas online con API pública',
+    logo: '🛒',
+    available: true,
   },
   {
     id: 'teamup',
@@ -199,6 +253,14 @@ const INTEGRATIONS: IntegrationMeta[] = [
     available: true,
   },
   {
+    id: 'bancos-es',
+    name: 'Bancos españoles',
+    category: 'banca',
+    desc: 'BBVA, Santander, CaixaBank, ING, Sabadell, Bankinter y más de 50 bancos',
+    logo: '🏧',
+    available: true,
+  },
+  {
     id: 'whatsapp',
     name: 'WhatsApp Business',
     category: 'comunicacion',
@@ -210,9 +272,129 @@ const INTEGRATIONS: IntegrationMeta[] = [
     id: 'stripe',
     name: 'Stripe',
     category: 'pagos',
-    desc: 'Pagos, clientes y suscripciones',
+    desc: 'Pagos online, suscripciones y facturación',
     logo: '💳',
-    available: false,
+    available: true,
+  },
+  {
+    id: 'redsys',
+    name: 'Redsys',
+    category: 'pagos',
+    desc: 'Gateway bancario español · Bizum · SEPA · 90% del e-commerce ES',
+    logo: '🏧',
+    available: true,
+  },
+  {
+    id: 'gocardless',
+    name: 'GoCardless',
+    category: 'pagos',
+    desc: 'Débito directo SEPA · mandatos · cobros recurrentes',
+    logo: '🔄',
+    available: true,
+  },
+  {
+    id: 'paypal',
+    name: 'PayPal',
+    category: 'pagos',
+    desc: 'Pagos online · facturas · monedero digital',
+    logo: '🅿️',
+    available: true,
+  },
+  {
+    id: 'mollie',
+    name: 'Mollie',
+    category: 'pagos',
+    desc: 'Pagos europeos · Bizum · iDEAL · SEPA · suscripciones',
+    logo: '💶',
+    available: true,
+  },
+  {
+    id: 'sumup',
+    name: 'SumUp',
+    category: 'pagos',
+    desc: 'TPV físico y online · cobros presenciales para pymes',
+    logo: '📲',
+    available: true,
+  },
+  {
+    id: 'paylands',
+    name: 'Paylands',
+    category: 'pagos',
+    desc: 'Gateway español con Bizum nativo · métodos de pago locales',
+    logo: '🌐',
+    available: true,
+  },
+  {
+    id: 'hubspot',
+    name: 'HubSpot',
+    category: 'crm',
+    desc: 'CRM de ventas, marketing y servicio al cliente',
+    logo: '🟠',
+    available: true,
+  },
+  {
+    id: 'salesforce',
+    name: 'Salesforce',
+    category: 'crm',
+    desc: 'CRM empresarial · Sales Cloud · Service Cloud',
+    logo: '☁️',
+    available: true,
+  },
+  {
+    id: 'pipedrive',
+    name: 'Pipedrive',
+    category: 'crm',
+    desc: 'CRM visual orientado a ventas · pipeline y deals',
+    logo: '🔵',
+    available: true,
+  },
+  {
+    id: 'sendcloud',
+    name: 'Sendcloud',
+    category: 'logistica',
+    desc: 'Agregador multi-transportista · Correos, SEUR, MRW, GLS, DHL y más',
+    logo: '📦',
+    available: true,
+  },
+  {
+    id: 'correos',
+    name: 'Correos Express',
+    category: 'logistica',
+    desc: 'Envíos exprés nacionales · líder en España',
+    logo: '🟡',
+    available: true,
+  },
+  {
+    id: 'seur',
+    name: 'SEUR',
+    category: 'logistica',
+    desc: 'Paquetería urgente · entregas en 24h · DPD Group',
+    logo: '🔴',
+    available: true,
+  },
+  {
+    id: 'mrw',
+    name: 'MRW',
+    category: 'logistica',
+    desc: 'Mensajería exprés nacional · cobertura 99% España',
+    logo: '🟢',
+    available: true,
+  },
+  {
+    id: 'gls',
+    name: 'GLS Spain',
+    category: 'logistica',
+    desc: 'Paquetería nacional e internacional · red europea',
+    logo: '🔵',
+    available: true,
+  },
+  {
+    id: 'dhl',
+    name: 'DHL Express',
+    category: 'logistica',
+    desc: 'Envíos internacionales exprés · presencia en 220+ países',
+    logo: '🟡',
+    available: true,
   },
 ];
 
@@ -223,6 +405,8 @@ const CATEGORY_SECTION_LABELS: Record<Exclude<CategoryKey, 'all'>, string> = {
   banca: 'Banca',
   comunicacion: 'Comunicación',
   pagos: 'Pagos',
+  crm: 'CRM',
+  logistica: 'Logística',
 };
 
 const SCOPE_OPTIONS = [
@@ -271,6 +455,154 @@ function StatusDot({ active, label }: { active: boolean; label: string }) {
       <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-emerald-500' : 'bg-slate-400'}`} />
       {label}
     </span>
+  );
+}
+
+function ApiKeyConnectorCard({
+  provider,
+  name,
+  logo,
+  desc,
+  docsHint,
+  status,
+  onRefresh,
+}: {
+  provider: string;
+  name: string;
+  logo: string;
+  desc: string;
+  docsHint?: string;
+  status: SectorStatus | null;
+  onRefresh: () => void;
+}) {
+  const [apiKey, setApiKey] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [disconnecting, setDisconnecting] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function connect(e: React.FormEvent) {
+    e.preventDefault();
+    setSaving(true);
+    setErr(null);
+    try {
+      const res = await fetch(`/api/isaak/sector/${provider}/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey }),
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(d.error ?? `Error ${res.status}`);
+      }
+      setApiKey('');
+      onRefresh();
+    } catch (e2) {
+      setErr(e2 instanceof Error ? e2.message : 'Error al conectar');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function disconnect() {
+    setDisconnecting(true);
+    setErr(null);
+    try {
+      await fetch(`/api/isaak/sector/${provider}/disconnect`, { method: 'DELETE' });
+      onRefresh();
+    } catch {
+      setErr('Error al desconectar');
+    } finally {
+      setDisconnecting(false);
+    }
+  }
+
+  const isConnected = status?.connected ?? false;
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-50 text-xl">
+            {logo}
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{name}</p>
+            <p className="text-xs text-slate-500">{desc}</p>
+          </div>
+        </div>
+        <span
+          className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
+            isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+          }`}
+        >
+          {isConnected ? 'Conectado' : 'No conectado'}
+        </span>
+      </div>
+
+      <div className="px-5 py-4">
+        {isConnected ? (
+          <div className="space-y-3">
+            <div className="rounded-xl bg-slate-50 px-4 py-3">
+              <p className="text-xs text-slate-500">API Key</p>
+              <p className="mt-0.5 font-mono text-sm text-slate-800">
+                {status?.keyMasked ?? '••••••••'}
+              </p>
+              {status?.connectedAt && (
+                <p className="mt-1 text-xs text-slate-400">
+                  Conectado {new Date(status.connectedAt).toLocaleDateString('es-ES')}
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => void disconnect()}
+              disabled={disconnecting}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100 disabled:opacity-60"
+            >
+              {disconnecting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Unplug className="h-4 w-4" />
+              )}
+              Desconectar
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={(e) => void connect(e)} className="space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-600">API Key</label>
+              <input
+                required
+                type="password"
+                value={apiKey}
+                onChange={(e) => setApiKey(e.target.value)}
+                placeholder="Pega aquí tu API key"
+                className="mt-1.5 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm placeholder-slate-400 focus:border-[#2361d8] focus:outline-none"
+              />
+              {docsHint && <p className="mt-1 text-xs text-slate-400">{docsHint}</p>}
+            </div>
+            {err && <p className="text-xs text-rose-600">{err}</p>}
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1f55c0] disabled:opacity-60"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
+              Conectar
+            </button>
+          </form>
+        )}
+      </div>
+      <div className="border-t border-slate-100 px-5 py-2.5">
+        <Link
+          href={`/integrations/ayuda/${provider}`}
+          className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400 transition hover:text-[#2361d8]"
+        >
+          <HelpCircle size={11} />
+          ¿Cómo obtengo mi API key? →
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -669,6 +1001,92 @@ function MicrosoftCard({ status }: { status: MicrosoftStatus }) {
   );
 }
 
+type Aspsp = { name: string; country: string; logo?: string };
+
+function BankingInstitutionsCard() {
+  const [banks, setBanks] = useState<Aspsp[]>([]);
+  const [loadingBanks, setLoadingBanks] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/isaak/banking/eb/aspsps?country=ES')
+      .then((r) => r.json())
+      .catch(() => ({ aspsps: [] }))
+      .then((d: { aspsps?: Aspsp[] }) => {
+        setBanks(d.aspsps ?? []);
+        setLoadingBanks(false);
+      })
+      .catch(() => setLoadingBanks(false));
+  }, []);
+
+  const displayed = showAll ? banks : banks.slice(0, 18);
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="flex items-start justify-between gap-4 px-5 py-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50">
+            <Landmark size={18} className="text-emerald-600" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[14px] font-semibold text-slate-900">Bancos españoles</span>
+              {!loadingBanks && banks.length > 0 && (
+                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">
+                  {banks.length} disponibles
+                </span>
+              )}
+            </div>
+            <div className="text-[12px] text-slate-500">
+              Conecta tu banco vía Open Banking PSD2 · Enable Banking
+            </div>
+          </div>
+        </div>
+        <Link
+          href="/banking"
+          className="shrink-0 rounded-lg bg-[#2361d8] px-3 py-1.5 text-[12px] font-semibold text-white transition hover:bg-[#1d55c2]"
+        >
+          Conectar banco
+        </Link>
+      </div>
+      <div className="border-t border-slate-100 px-5 py-3">
+        {loadingBanks ? (
+          <div className="flex items-center gap-2 py-2 text-[12px] text-slate-400">
+            <Loader2 size={13} className="animate-spin" />
+            Cargando bancos disponibles…
+          </div>
+        ) : banks.length === 0 ? (
+          <p className="py-1 text-[12px] text-slate-400">No se pudo cargar la lista de bancos.</p>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-2">
+              {displayed.map((bank) => (
+                <Link
+                  key={bank.name}
+                  href="/banking"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-100 bg-slate-50 px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition hover:border-[#2361d8]/30 hover:bg-[#2361d8]/5 hover:text-[#2361d8]"
+                >
+                  <Landmark size={11} className="text-slate-400" />
+                  {bank.name}
+                </Link>
+              ))}
+            </div>
+            {!showAll && banks.length > 18 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="text-[11px] font-semibold text-[#2361d8] hover:underline"
+              >
+                Ver los {banks.length - 18} restantes →
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function BankingCard() {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -1038,6 +1456,7 @@ export default function IntegrationsClient() {
   const [holdedStatus, setHoldedStatus] = useState<HoldedStatus | null>(null);
   const [googleStatus, setGoogleStatus] = useState<GoogleStatus | null>(null);
   const [microsoftStatus, setMicrosoftStatus] = useState<MicrosoftStatus | null>(null);
+  const [sectorStatuses, setSectorStatuses] = useState<Record<string, SectorStatus>>({});
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
@@ -1046,10 +1465,32 @@ export default function IntegrationsClient() {
   const loadAll = useCallback(async () => {
     setLoading(true);
     try {
-      const [holdedRes, googleRes, msRes] = await Promise.allSettled([
+      const [holdedRes, googleRes, msRes, ...sectorRes] = await Promise.allSettled([
         fetch('/api/settings/connections'),
         fetch('/api/isaak/google/status'),
         fetch('/api/isaak/microsoft/status'),
+        fetch('/api/isaak/sector/hotelgest/status'),
+        fetch('/api/isaak/sector/revo/status'),
+        fetch('/api/isaak/sector/loyverse/status'),
+        fetch('/api/isaak/sector/woocommerce/status'),
+        fetch('/api/isaak/sector/prestashop/status'),
+        fetch('/api/isaak/sector/mindbody/status'),
+        fetch('/api/isaak/sector/stripe/status'),
+        fetch('/api/isaak/sector/redsys/status'),
+        fetch('/api/isaak/sector/gocardless/status'),
+        fetch('/api/isaak/sector/paypal/status'),
+        fetch('/api/isaak/sector/mollie/status'),
+        fetch('/api/isaak/sector/sumup/status'),
+        fetch('/api/isaak/sector/paylands/status'),
+        fetch('/api/isaak/sector/hubspot/status'),
+        fetch('/api/isaak/sector/salesforce/status'),
+        fetch('/api/isaak/sector/pipedrive/status'),
+        fetch('/api/isaak/sector/correos/status'),
+        fetch('/api/isaak/sector/mrw/status'),
+        fetch('/api/isaak/sector/seur/status'),
+        fetch('/api/isaak/sector/gls/status'),
+        fetch('/api/isaak/sector/dhl/status'),
+        fetch('/api/isaak/sector/sendcloud/status'),
       ]);
       if (holdedRes.status === 'fulfilled' && holdedRes.value.ok) {
         const d = (await holdedRes.value.json().catch(() => null)) as {
@@ -1065,6 +1506,40 @@ export default function IntegrationsClient() {
       if (msRes.status === 'fulfilled' && msRes.value.ok) {
         const d = (await msRes.value.json().catch(() => null)) as MicrosoftStatus | null;
         if (d) setMicrosoftStatus(d);
+      }
+      const sectorProviders = [
+        'hotelgest',
+        'revo',
+        'loyverse',
+        'woocommerce',
+        'prestashop',
+        'mindbody',
+        'stripe',
+        'redsys',
+        'gocardless',
+        'paypal',
+        'mollie',
+        'sumup',
+        'paylands',
+        'hubspot',
+        'salesforce',
+        'pipedrive',
+        'correos',
+        'mrw',
+        'seur',
+        'gls',
+        'dhl',
+        'sendcloud',
+      ];
+      const sectorUpdates: Record<string, SectorStatus> = {};
+      for (const [i, res] of sectorRes.entries()) {
+        if (res.status === 'fulfilled' && res.value.ok) {
+          const d = (await res.value.json().catch(() => null)) as SectorStatus | null;
+          if (d) sectorUpdates[sectorProviders[i]!] = d;
+        }
+      }
+      if (Object.keys(sectorUpdates).length > 0) {
+        setSectorStatuses((prev) => ({ ...prev, ...sectorUpdates }));
       }
     } finally {
       setLoading(false);
@@ -1125,6 +1600,8 @@ export default function IntegrationsClient() {
       'banca',
       'comunicacion',
       'pagos',
+      'crm',
+      'logistica',
     ];
     return cats.filter((cat) => {
       if (activeCategory !== 'all' && activeCategory !== cat) return false;
@@ -1152,11 +1629,171 @@ export default function IntegrationsClient() {
         return holdedStatus ? <HoldedCard key={item.id} status={holdedStatus} /> : null;
       case 'hotelgest':
         return (
-          <SoonCard
+          <ApiKeyConnectorCard
             key={item.id}
+            provider="hotelgest"
             name={item.name}
-            desc="Conecta tu cuenta HotelGest — disponible próximamente en este panel."
             logo={item.logo}
+            desc={item.desc}
+            docsHint="Encuéntrala en HotelGest → Configuración → Integraciones API"
+            status={sectorStatuses['hotelgest'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'revo':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="revo"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Token en Revo XEF → Configuración → Integraciones externas"
+            status={sectorStatuses['revo'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'loyverse':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="loyverse"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Token en Loyverse → Configuración → Acceso API"
+            status={sectorStatuses['loyverse'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'woocommerce':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="woocommerce"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="URL tienda::ConsumerKey::ConsumerSecret — WooCommerce → Ajustes → Avanzado → API REST"
+            status={sectorStatuses['woocommerce'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'prestashop':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="prestashop"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en PrestaShop → Parámetros avanzados → Servicio web"
+            status={sectorStatuses['prestashop'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'mindbody':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="mindbody"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en Mindbody → Integrations → API Management"
+            status={sectorStatuses['mindbody'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'stripe':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="stripe"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Secret key (sk_live_…) en Stripe → Developers → API keys"
+            status={sectorStatuses['stripe'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'redsys':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="redsys"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Merchant code + clave secreta del portal de tu banco o Redsys Sermepa"
+            status={sectorStatuses['redsys'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'gocardless':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="gocardless"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Access token en GoCardless Dashboard → Developers → API keys"
+            status={sectorStatuses['gocardless'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'paypal':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="paypal"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Client ID:Secret separados por «:» — PayPal Developer → My Apps & Credentials"
+            status={sectorStatuses['paypal'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'mollie':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="mollie"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key (live_…) en Mollie Dashboard → Developers → API keys"
+            status={sectorStatuses['mollie'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'sumup':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="sumup"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Access token en SumUp Developer Portal → API keys"
+            status={sectorStatuses['sumup'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'paylands':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="paylands"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en Paylands Dashboard → Configuración → API"
+            status={sectorStatuses['paylands'] ?? null}
+            onRefresh={() => void loadAll()}
           />
         );
       case 'google-calendar':
@@ -1191,8 +1828,127 @@ export default function IntegrationsClient() {
         return microsoftStatus ? <MicrosoftCard key={item.id} status={microsoftStatus} /> : null;
       case 'banking':
         return <BankingCard key={item.id} />;
+      case 'bancos-es':
+        return <BankingInstitutionsCard key={item.id} />;
       case 'whatsapp':
         return <WhatsAppCard key={item.id} />;
+      case 'hubspot':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="hubspot"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Private App access token en HubSpot → Settings → Integrations → Private Apps"
+            status={sectorStatuses['hubspot'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'salesforce':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="salesforce"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Connected App OAuth token — Salesforce → Setup → App Manager"
+            status={sectorStatuses['salesforce'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'pipedrive':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="pipedrive"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API token en Pipedrive → Settings → Personal preferences → API"
+            status={sectorStatuses['pipedrive'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'sendcloud':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="sendcloud"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key:Secret separados por «:» — Sendcloud → Settings → Integrations → API"
+            status={sectorStatuses['sendcloud'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'correos':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="correos"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en el Portal de Desarrolladores de Correos Express"
+            status={sectorStatuses['correos'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'seur':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="seur"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en SEUR → Mi SEUR → Integraciones"
+            status={sectorStatuses['seur'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'mrw':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="mrw"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Código de franquicia + suscriptor + contraseña API — contacta con tu delegación MRW"
+            status={sectorStatuses['mrw'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'gls':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="gls"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="Usuario + contraseña WebConnect — contacta con GLS para activar el acceso API"
+            status={sectorStatuses['gls'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
+      case 'dhl':
+        return (
+          <ApiKeyConnectorCard
+            key={item.id}
+            provider="dhl"
+            name={item.name}
+            logo={item.logo}
+            desc={item.desc}
+            docsHint="API key en developer.dhl.com → My Apps → Credentials"
+            status={sectorStatuses['dhl'] ?? null}
+            onRefresh={() => void loadAll()}
+          />
+        );
       default:
         return null;
     }

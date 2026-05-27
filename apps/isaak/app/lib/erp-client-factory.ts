@@ -1,5 +1,5 @@
 // Factory: returns the right ErpClient for a tenant based on their active ExternalConnection.
-// Supported providers: Holded (direct API), sector-specific software (HotelGest, Inmovilla, Revo, Nubimed…)
+// Supported providers: Holded (direct API), sector-specific software (HotelGest, Revo, Loyverse, WooCommerce, PrestaShop, Mindbody, Inmovilla, Nubimed…)
 
 import { decryptHoldedSecret, getHoldedConnection } from './holded-integration';
 import { HoldedErpClient } from './holded-erp-client';
@@ -15,7 +15,16 @@ export class ErpNotConnectedError extends Error {
   }
 }
 
-const SECTOR_PROVIDERS = ['hotelgest', 'inmovilla', 'revo', 'nubimed'] as const;
+const SECTOR_PROVIDERS = [
+  'hotelgest',
+  'revo',
+  'loyverse',
+  'woocommerce',
+  'prestashop',
+  'mindbody',
+  'inmovilla',
+  'nubimed',
+] as const;
 
 export async function getErpClient(tenantId: string): Promise<ErpClient> {
   // 1. Holded (legacy — existing clients)
@@ -41,7 +50,27 @@ export async function getErpClient(tenantId: string): Promise<ErpClient> {
         const { HotelgestErpClient } = await import('./hotelgest-erp-client');
         return new HotelgestErpClient(apiKey);
       }
-      // Inmovilla, Revo, Nubimed — stubs pending API docs
+      case 'revo': {
+        const { RevoErpClient } = await import('./revo-erp-client');
+        return new RevoErpClient(apiKey);
+      }
+      case 'loyverse': {
+        const { LoyverseErpClient } = await import('./loyverse-erp-client');
+        return new LoyverseErpClient(apiKey);
+      }
+      case 'woocommerce': {
+        const { WooCommerceErpClient } = await import('./woocommerce-erp-client');
+        return new WooCommerceErpClient(apiKey);
+      }
+      case 'prestashop': {
+        const { PrestaShopErpClient } = await import('./prestashop-erp-client');
+        return new PrestaShopErpClient(apiKey);
+      }
+      case 'mindbody': {
+        const { MindbodyErpClient } = await import('./mindbody-erp-client');
+        return new MindbodyErpClient(apiKey);
+      }
+      // Inmovilla, Nubimed — stubs pending API docs
       default:
         throw new Error(`Sector provider ${conn.provider} not yet implemented`);
     }

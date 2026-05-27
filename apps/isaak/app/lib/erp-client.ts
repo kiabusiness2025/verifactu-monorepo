@@ -8,7 +8,11 @@ export type ErpProvider =
   | 'hotelgest'
   | 'inmovilla'
   | 'revo'
-  | 'nubimed';
+  | 'nubimed'
+  | 'loyverse'
+  | 'woocommerce'
+  | 'prestashop'
+  | 'mindbody';
 
 export interface ErpInvoiceLine {
   description: string;
