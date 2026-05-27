@@ -26,7 +26,7 @@ jest.mock('@verifactu/auth', () => ({
 jest.mock('@/app/lib/prisma', () => ({
   prisma: {
     user: { findFirst: jest.fn(), update: jest.fn(), create: jest.fn() },
-    membership: { updateMany: jest.fn(), findUnique: jest.fn() },
+    membership: { update: jest.fn(), findUnique: jest.fn() },
     userPreference: { findUnique: jest.fn(), upsert: jest.fn() },
   },
 }));
@@ -36,7 +36,8 @@ import { prisma } from '@/app/lib/prisma';
 import { getHoldedSession } from '../holded-session';
 
 type UserMock = jest.MockedFunction<typeof prisma.user.findFirst>;
-type UpdateManyMock = jest.MockedFunction<typeof prisma.membership.updateMany>;
+type MembershipUpdateMock = jest.MockedFunction<typeof prisma.membership.update>;
+type MembershipFindMock = jest.MockedFunction<typeof prisma.membership.findUnique>;
 type PrefMock = jest.MockedFunction<typeof prisma.userPreference.findUnique>;
 
 const mockUserFind = prisma.user.findFirst as unknown as UserMock;
@@ -46,7 +47,8 @@ const mockUserUpdate = prisma.user.update as unknown as jest.MockedFunction<
 const mockUserCreate = prisma.user.create as unknown as jest.MockedFunction<
   typeof prisma.user.create
 >;
-const mockUpdateMany = prisma.membership.updateMany as unknown as UpdateManyMock;
+const mockMembershipUpdate = prisma.membership.update as unknown as MembershipUpdateMock;
+const mockMembershipFind = prisma.membership.findUnique as unknown as MembershipFindMock;
 const mockPrefFind = prisma.userPreference.findUnique as unknown as PrefMock;
 const mockPrefUpsert = prisma.userPreference.upsert as unknown as jest.MockedFunction<
   typeof prisma.userPreference.upsert
@@ -69,7 +71,7 @@ const EXISTING_USER = {
 beforeEach(() => {
   jest.clearAllMocks();
   (cookies as jest.Mock).mockResolvedValue(cookieStoreMock);
-  mockUpdateMany.mockResolvedValue({ count: 0 });
+  mockMembershipUpdate.mockResolvedValue({} as never);
   mockPrefUpsert.mockResolvedValue({} as never);
 });
 
@@ -99,7 +101,7 @@ describe('path 1 — resolveSharedTenantSession finds user directly', () => {
       email: 'user@example.com',
       name: 'Ana',
     });
-    mockPrefFind.mockResolvedValue({ preferredTenantId: 'tenant-preferred' });
+    mockPrefFind.mockResolvedValue({ preferredTenantId: 'tenant-preferred' } as never);
     (prisma.membership.findUnique as jest.Mock).mockResolvedValue({ status: 'active' });
 
     const session = await getHoldedSession();
@@ -114,7 +116,7 @@ describe('path 1 — resolveSharedTenantSession finds user directly', () => {
       email: 'user@example.com',
       name: 'Ana',
     });
-    mockPrefFind.mockResolvedValue({ preferredTenantId: 'tenant-preferred' });
+    mockPrefFind.mockResolvedValue({ preferredTenantId: 'tenant-preferred' } as never);
     (prisma.membership.findUnique as jest.Mock).mockResolvedValue({ status: 'invited' });
 
     const session = await getHoldedSession();
@@ -129,7 +131,7 @@ describe('path 1 — resolveSharedTenantSession finds user directly', () => {
       email: 'user@example.com',
       name: 'Ana',
     });
-    mockPrefFind.mockResolvedValue({ preferredTenantId: 'tenant-preferred' });
+    mockPrefFind.mockResolvedValue({ preferredTenantId: 'tenant-preferred' } as never);
     (prisma.membership.findUnique as jest.Mock).mockResolvedValue(null);
 
     const session = await getHoldedSession();
@@ -151,7 +153,7 @@ describe('blocked user', () => {
   it('returns null when user.isBlocked is true (path 2)', async () => {
     resolveSharedTenantSessionMock.mockResolvedValue(null);
     getSharedSessionPayloadMock.mockResolvedValue(VALID_PAYLOAD);
-    mockUserFind.mockResolvedValue({ ...EXISTING_USER, isBlocked: true });
+    mockUserFind.mockResolvedValue({ ...EXISTING_USER, isBlocked: true } as never);
 
     const session = await getHoldedSession();
     expect(session).toBeNull();
@@ -164,6 +166,9 @@ describe('path 2 — cross-domain handoff via raw payload', () => {
   beforeEach(() => {
     resolveSharedTenantSessionMock.mockResolvedValue(null);
     getSharedSessionPayloadMock.mockResolvedValue(VALID_PAYLOAD);
+    // Default: la membership existe y está activa (no requiere transición).
+    // El código devuelve null si findUnique devuelve null (C1: no auto-create).
+    mockMembershipFind.mockResolvedValue({ id: 'membership-1', status: 'active' } as never);
   });
 
   it('returns null when payload is missing', async () => {
@@ -185,8 +190,8 @@ describe('path 2 — cross-domain handoff via raw payload', () => {
   });
 
   it('updates existing user and returns session', async () => {
-    mockUserFind.mockResolvedValue(EXISTING_USER);
-    mockUserUpdate.mockResolvedValue(EXISTING_USER);
+    mockUserFind.mockResolvedValue(EXISTING_USER as never);
+    mockUserUpdate.mockResolvedValue(EXISTING_USER as never);
 
     const session = await getHoldedSession();
     expect(mockUserUpdate).toHaveBeenCalledWith(
@@ -201,7 +206,7 @@ describe('path 2 — cross-domain handoff via raw payload', () => {
 
   it('creates new user when no existing user found', async () => {
     mockUserFind.mockResolvedValue(null);
-    mockUserCreate.mockResolvedValue(EXISTING_USER);
+    mockUserCreate.mockResolvedValue(EXISTING_USER as never);
 
     const session = await getHoldedSession();
     expect(mockUserCreate).toHaveBeenCalledWith(
@@ -219,43 +224,43 @@ describe('C1 invariant — no auto-membership creation', () => {
   beforeEach(() => {
     resolveSharedTenantSessionMock.mockResolvedValue(null);
     getSharedSessionPayloadMock.mockResolvedValue(VALID_PAYLOAD);
-    mockUserFind.mockResolvedValue(EXISTING_USER);
-    mockUserUpdate.mockResolvedValue(EXISTING_USER);
+    mockUserFind.mockResolvedValue(EXISTING_USER as never);
+    mockUserUpdate.mockResolvedValue(EXISTING_USER as never);
+    // Default para C1: membership existe pero INACTIVA → debe activarse via update
+    mockMembershipFind.mockResolvedValue({ id: 'membership-1', status: 'invited' } as never);
   });
 
-  it('calls updateMany (not upsert/create) to reactivate membership', async () => {
+  it('calls update (not upsert/create) to reactivate inactive membership', async () => {
     await getHoldedSession();
-    expect(mockUpdateMany).toHaveBeenCalledWith(
+    expect(mockMembershipUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({
-          tenantId: 'tenant-abc',
-          userId: 'user-id-1',
-        }),
+        where: { id: 'membership-1' },
         data: { status: 'active' },
       })
     );
   });
 
-  it('never calls membership.create or membership.upsert', async () => {
+  it('never exposes membership.create or membership.upsert in the prisma mock', async () => {
     await getHoldedSession();
-    expect(prisma.membership.upsert).toBeUndefined();
-    expect((prisma.membership as Record<string, unknown>).create).toBeUndefined();
+    expect((prisma.membership as unknown as Record<string, unknown>).upsert).toBeUndefined();
+    expect((prisma.membership as unknown as Record<string, unknown>).create).toBeUndefined();
   });
 
-  it('updateMany targets only inactive memberships (status: {not: active})', async () => {
+  it('skips update when membership is already active', async () => {
+    mockMembershipFind.mockResolvedValue({ id: 'membership-1', status: 'active' } as never);
     await getHoldedSession();
-    const call = mockUpdateMany.mock.calls[0][0];
-    expect(call.where).toEqual(expect.objectContaining({ status: { not: 'active' } }));
+    expect(mockMembershipUpdate).not.toHaveBeenCalled();
   });
 
-  it('still returns a session even if updateMany finds no rows to update', async () => {
-    mockUpdateMany.mockResolvedValue({ count: 0 });
+  it('returns null when no membership exists (C1: no auto-create)', async () => {
+    mockMembershipFind.mockResolvedValue(null);
     const session = await getHoldedSession();
-    expect(session?.userId).toBe('user-id-1');
+    expect(session).toBeNull();
+    expect(mockMembershipUpdate).not.toHaveBeenCalled();
   });
 
-  it('still returns a session even if updateMany throws', async () => {
-    mockUpdateMany.mockRejectedValue(new Error('DB error'));
+  it('still returns a session even if update throws', async () => {
+    mockMembershipUpdate.mockRejectedValue(new Error('DB error'));
     const session = await getHoldedSession();
     expect(session?.userId).toBe('user-id-1');
   });
@@ -271,7 +276,7 @@ describe('user name normalization', () => {
   });
 
   it('uses payload.name when present', async () => {
-    mockUserCreate.mockResolvedValue({ ...EXISTING_USER, name: 'Ana García' });
+    mockUserCreate.mockResolvedValue({ ...EXISTING_USER, name: 'Ana García' } as never);
     await getHoldedSession();
     const createCall = mockUserCreate.mock.calls[0][0];
     expect(createCall.data.name).toBe('Ana García');
@@ -279,7 +284,7 @@ describe('user name normalization', () => {
 
   it('falls back to email prefix when payload has no name', async () => {
     getSharedSessionPayloadMock.mockResolvedValue({ ...VALID_PAYLOAD, name: undefined });
-    mockUserCreate.mockResolvedValue({ ...EXISTING_USER, name: 'user' });
+    mockUserCreate.mockResolvedValue({ ...EXISTING_USER, name: 'user' } as never);
     await getHoldedSession();
     const createCall = mockUserCreate.mock.calls[0][0];
     expect(createCall.data.name).toBe('user');
@@ -288,8 +293,8 @@ describe('user name normalization', () => {
   it('falls back to existing user name when payload.name is empty', async () => {
     resolveSharedTenantSessionMock.mockResolvedValue(null);
     getSharedSessionPayloadMock.mockResolvedValue({ ...VALID_PAYLOAD, name: '  ' });
-    mockUserFind.mockResolvedValue({ ...EXISTING_USER, name: 'Existing Name' });
-    mockUserUpdate.mockResolvedValue({ ...EXISTING_USER, name: 'Existing Name' });
+    mockUserFind.mockResolvedValue({ ...EXISTING_USER, name: 'Existing Name' } as never);
+    mockUserUpdate.mockResolvedValue({ ...EXISTING_USER, name: 'Existing Name' } as never);
     await getHoldedSession();
     const updateCall = mockUserUpdate.mock.calls[0][0];
     expect(updateCall.data.name).toBe('Existing Name');

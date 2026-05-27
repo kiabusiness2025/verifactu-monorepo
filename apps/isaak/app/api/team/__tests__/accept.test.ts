@@ -68,6 +68,10 @@ function makeRequest(token = TOKEN) {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  // clearAllMocks NO resetea la queue de mockResolvedValueOnce, así que los
+  // describes hijos que añaden mockResolvedValueOnce dejan residuos entre
+  // tests. Reseteamos findFirst explícitamente.
+  (prisma.membership.findFirst as jest.Mock).mockReset();
   buildIsaakAuthUrlMock.mockReturnValue(`${ISAAK}/auth?source=team_invite_accept`);
   (prisma.membership.update as jest.Mock).mockResolvedValue({});
   (prisma.membership.delete as jest.Mock).mockResolvedValue({});
@@ -124,9 +128,16 @@ describe('token lookup', () => {
     getSessionMock.mockResolvedValue(SESSION);
     (prisma.membership.findFirst as jest.Mock).mockResolvedValue(null);
     await GET(makeRequest());
-    const call = (prisma.membership.findFirst as jest.Mock).mock.calls[0][0];
-    // Must use JSON path query, not scan all memberships
-    expect(call.where).toEqual(
+    const calls = (prisma.membership.findFirst as jest.Mock).mock.calls;
+    // SEC C4: lookup primario por hash SHA-256 del token (no full scan)
+    expect(calls[0][0].where).toEqual(
+      expect.objectContaining({
+        status: 'invited',
+        metadataJson: { path: ['inviteTokenHash'], equals: expect.any(String) },
+      })
+    );
+    // Fallback legacy: invitaciones pre-C4 con inviteToken raw
+    expect(calls[1][0].where).toEqual(
       expect.objectContaining({
         status: 'invited',
         metadataJson: { path: ['inviteToken'], equals: TOKEN },
