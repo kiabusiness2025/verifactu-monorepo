@@ -37,6 +37,7 @@ export function hashPayload(payload: unknown): string {
 
 export type SubmissionStatus =
   | 'pending_aeat'
+  | 'submitting' // worker procesándola activamente (lock real)
   | 'submitted'
   | 'accepted'
   | 'rejected'
@@ -126,14 +127,15 @@ export async function createSubmission(
   }
 
   // Dedupe defensiva: si ya hay una submission del mismo payloadHash
-  // en estado pending_aeat/submitted/accepted, no creamos otra.
+  // en estado pending_aeat/submitting/submitted/accepted, no creamos otra.
+  // ('submitting' añadido en C-B1.c fix R4: worker procesándola)
   const existing = await prisma.isaakAeatSubmission.findFirst({
     where: {
       tenantId: input.tenantId,
       model: input.model,
       period: input.period,
       payloadHash,
-      status: { in: ['pending_aeat', 'submitted', 'accepted'] },
+      status: { in: ['pending_aeat', 'submitting', 'submitted', 'accepted'] },
     },
     select: { id: true, status: true },
   });

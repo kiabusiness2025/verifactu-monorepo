@@ -129,6 +129,16 @@ export async function processPendingSubmissions(
     details: [],
   };
 
+  // Stale recovery: si un worker crasheó dejando submissions en
+  // 'submitting' hace >10 min, las consideramos liberadas y las
+  // re-promovemos a 'pending_aeat'. Esto evita bloqueos eternos.
+  const STALE_THRESHOLD_MS = 10 * 60 * 1000; // 10 min
+  const staleCutoff = new Date(Date.now() - STALE_THRESHOLD_MS);
+  await prisma.isaakAeatSubmission.updateMany({
+    where: { status: 'submitting', updatedAt: { lt: staleCutoff } },
+    data: { status: 'pending_aeat' },
+  });
+
   const pending = await prisma.isaakAeatSubmission.findMany({
     where: { status: 'pending_aeat', model: '303' },
     orderBy: { submittedAt: 'asc' },
@@ -137,16 +147,15 @@ export async function processPendingSubmissions(
 
   for (const sub of pending) {
     result.processed++;
-    // R4 audit pre-merge: ANTES marcábamos status='submitted' aquí, lo
-    // que dejaba submissions en estado "presentado" sin haberse enviado
-    // realmente — si el worker crasheaba entre este update y persistResult,
-    // la submission quedaba en 'submitted' sin CSV ni aeatResponse,
-    // irrecuperable. Ahora usamos updateMany con WHERE optimista para
-    // que solo procesemos la submission si nadie más la ha cogido,
-    // SIN cambiar status hasta que tengamos respuesta real de AEAT.
+    // R4 audit (segunda pasada): lock REAL transicionando status a
+    // 'submitting'. Dos workers que lleguen a la misma submission solo
+    // uno gana el updateMany (el WHERE incluye status='pending_aeat',
+    // que solo es cierto hasta el primer update exitoso). El otro
+    // recibe count=0 y skipea. Tras procesar, persistResult/markError
+    // transiciona el status final (accepted/rejected/error).
     const lockResult = await prisma.isaakAeatSubmission.updateMany({
       where: { id: sub.id, status: 'pending_aeat' },
-      data: { updatedAt: new Date() }, // refresh timestamp para detectar workers stale
+      data: { status: 'submitting' },
     });
     if (lockResult.count === 0) {
       // Otro worker ya la cogió; skip silenciosamente
