@@ -19,6 +19,7 @@
 //   - GitHub Actions cron (para baja frecuencia)
 //   - Máquina local del usuario (para el pilot inicial)
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '../prisma';
 import {
   submitModelo303,
@@ -136,11 +137,21 @@ export async function processPendingSubmissions(
 
   for (const sub of pending) {
     result.processed++;
-    // Marca como submitting para evitar doble-procesado si otro worker corre
-    await prisma.isaakAeatSubmission.update({
-      where: { id: sub.id },
-      data: { status: 'submitted' as never },
+    // R4 audit pre-merge: ANTES marcábamos status='submitted' aquí, lo
+    // que dejaba submissions en estado "presentado" sin haberse enviado
+    // realmente — si el worker crasheaba entre este update y persistResult,
+    // la submission quedaba en 'submitted' sin CSV ni aeatResponse,
+    // irrecuperable. Ahora usamos updateMany con WHERE optimista para
+    // que solo procesemos la submission si nadie más la ha cogido,
+    // SIN cambiar status hasta que tengamos respuesta real de AEAT.
+    const lockResult = await prisma.isaakAeatSubmission.updateMany({
+      where: { id: sub.id, status: 'pending_aeat' },
+      data: { updatedAt: new Date() }, // refresh timestamp para detectar workers stale
     });
+    if (lockResult.count === 0) {
+      // Otro worker ya la cogió; skip silenciosamente
+      continue;
+    }
 
     try {
       const cert = await loadTenantCertPem(sub.tenantId);
@@ -212,7 +223,10 @@ async function persistResult(
       data: {
         status: 'accepted',
         aeatReference: result.csvJustificante,
-        aeatResponse: { snippet: result.aeatResponseSnippet, submittedAt: result.submittedAt.toISOString() } as never,
+        aeatResponse: {
+          snippet: result.aeatResponseSnippet,
+          submittedAt: result.submittedAt.toISOString(),
+        } as Prisma.InputJsonValue,
         ackedAt: result.submittedAt,
       },
     });
@@ -226,7 +240,7 @@ async function persistResult(
           snippet: result.aeatResponseSnippet,
           errorCode: result.errorCode,
           submittedAt: result.submittedAt.toISOString(),
-        } as never,
+        } as Prisma.InputJsonValue,
         ackedAt: result.submittedAt,
       },
     });

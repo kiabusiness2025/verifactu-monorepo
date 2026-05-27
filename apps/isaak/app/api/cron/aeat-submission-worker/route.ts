@@ -1,27 +1,40 @@
 // Cron endpoint que dispara el worker de envío AEAT.
 //
-// Vercel cron config (vercel.json):
-//   { "path": "/api/cron/aeat-submission-worker", "schedule": "*/15 * * * *" }
+// IMPORTANTE: este endpoint NO está registrado en vercel.json a propósito.
+// Vercel serverless no puede correr Playwright (~300MB binarios).
+// El worker debe correr en un host con disco persistente:
+//   * Cloud Run / Fly.io / Render workers
+//   * GitHub Actions cron (.github/workflows/aeat-submission-worker.yml)
+//   * Máquina local del usuario (pilot inicial)
 //
-// PERO: Vercel serverless no puede correr Playwright. Este endpoint
-// solo es útil si:
-//   (a) Estamos en modo MOCK (tests/desarrollo)
-//   (b) Hemos hecho una deploy a Cloud Run/Fly/Render con Playwright
+// El path /api/cron/aeat-submission-worker existe como interfaz HTTP
+// que el worker externo puede invocar (con CRON_SECRET) para procesar
+// el batch pendiente. Gated por AEAT_SUBMISSION_WORKER_ENABLED=true.
 //
-// En producción real, este endpoint debería redirigir el procesamiento
-// al worker externo (HTTP call) o usar una cola (Redis, etc.). Para v1
-// queda como punto de entrada del worker.
+// Ver apps/isaak/app/lib/aeat-browser/README.md para opciones de deploy.
 
+import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 min (Vercel pro)
 
+// Auth pattern unificada con el resto de crons: si CRON_SECRET no está
+// configurado, el endpoint queda CERRADO (no abierto). timingSafeEqual
+// para evitar timing attacks.
+function authorizeCron(req: NextRequest) {
+  const secret = process.env.CRON_SECRET?.trim();
+  if (!secret) return false;
+  const token = req.headers.get('authorization') ?? '';
+  const expected = `Bearer ${secret}`;
+  if (token.length !== expected.length) return false;
+  return timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+}
+
 export async function GET(req: NextRequest) {
-  // Auth: Vercel cron usa header User-Agent específico, o un secret.
-  const auth = req.headers.get('authorization');
-  const expected = process.env.CRON_SECRET;
-  if (expected && auth !== `Bearer ${expected}`) {
+  // Auth: Bearer CRON_SECRET. Si falta el env, el endpoint queda
+  // cerrado (return false) — corregido R3 audit pre-merge.
+  if (!authorizeCron(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 

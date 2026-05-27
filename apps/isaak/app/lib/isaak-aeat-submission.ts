@@ -13,6 +13,7 @@
 // El envío SOAP real a AEAT vive en C-B1.c.
 
 import { createHash } from 'node:crypto';
+import { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 
 // ─── Helpers puros (testeables) ────────────────────────────────────────
@@ -154,7 +155,7 @@ export async function createSubmission(
           period: input.period,
           taxReturnId: input.taxReturnId ?? null,
           status: 'pending_aeat',
-          payload: input.payload as never,
+          payload: input.payload as Prisma.InputJsonValue,
           payloadHash,
           certFingerprint: input.certFingerprint ?? null,
           submittedBy: input.submittedBy.trim(),
