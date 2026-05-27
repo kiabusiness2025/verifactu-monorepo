@@ -260,11 +260,22 @@ export async function POST(req: NextRequest) {
   let routedTo: 'sonnet_no_tools' | 'sonnet_with_tools' = 'sonnet_no_tools';
   let allowWrites = false;
 
-  if (classification.needsTools && classification.relevantCategories.length > 0) {
+  // F12: en main chat (no sub-agent) siempre añadimos las tools de
+  // ledger (incluyen inspector_consult e inspector_search_aeat) aunque
+  // el classifier diga needsTools=false. El LLM decide si invocarlas.
+  // Esto permite que consultas informativas fiscales se beneficien
+  // del Inspector (citas BOE) sin requerir cambios al classifier.
+  const wantsTools =
+    (classification.needsTools && classification.relevantCategories.length > 0) ||
+    !subAgentId;
+  if (wantsTools) {
     allowWrites = classification.hasWriteIntent;
+    const mainCategories = classification.relevantCategories.includes('ledger')
+      ? classification.relevantCategories
+      : ([...classification.relevantCategories, 'ledger'] as typeof classification.relevantCategories);
     const onlyCategories = subAgentId
       ? getSubAgent(subAgentId).toolCategories
-      : classification.relevantCategories;
+      : mainCategories;
     const filtered = buildReadOnlyToolsForContext(authenticated.toolContext, {
       only: onlyCategories,
       allowWrites,

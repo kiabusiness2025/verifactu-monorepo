@@ -525,6 +525,14 @@ export async function POST(request: NextRequest) {
             factsBlock,
             fewShotBlock,
           });
+          // F12: en main chat (no sub-agent) siempre añadimos 'ledger' a
+          // las categorías para que el LLM tenga acceso a inspector_consult
+          // y otras tools internas (no requieren conexión externa). El
+          // classifier no las contempla porque solo conoce categorías de
+          // conectores externos.
+          if (!agentToolCategories.includes('ledger')) {
+            agentToolCategories = [...agentToolCategories, 'ledger'];
+          }
         }
 
         const filteredTools = buildReadOnlyToolsForContext(toolContext, {
