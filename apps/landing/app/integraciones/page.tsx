@@ -9,6 +9,7 @@ import {
   CreditCard,
   Dumbbell,
   Hotel,
+  Landmark,
   MessageSquare,
   Package,
   Puzzle,
@@ -27,7 +28,7 @@ import { getIsaakUrl } from '../lib/urls';
 export const metadata: Metadata = {
   title: 'Integraciones | Isaak',
   description:
-    'Isaak conecta con más de 20 plataformas: ERPs sectoriales, pasarelas de pago, CRMs y logística. Una API key — inteligencia fiscal y contable en tiempo real.',
+    'Isaak conecta con más de 30 plataformas: ERPs sectoriales, banca PSD2, pasarelas de pago, CRMs y logística. Una API key — inteligencia fiscal y contable en tiempo real.',
   openGraph: {
     title: 'Integraciones | Isaak',
     description:
@@ -218,6 +219,57 @@ const crmConnectors = [
   },
 ];
 
+const bankingConnectors = [
+  {
+    title: 'BBVA',
+    body: 'El mayor banco español por activos. Cuentas corrientes, saldos en tiempo real y movimientos sincronizados con Isaak vía PSD2. Conciliación bancaria automática.',
+    status: 'Disponible',
+    statusColor: 'bg-emerald-100 text-emerald-800',
+    href: 'https://isaak.verifactu.business/banking',
+    external: true,
+  },
+  {
+    title: 'Santander',
+    body: 'Banco internacional con presencia global. Cuentas de empresa y particular conectadas con Isaak para conciliación automática de cobros y pagos.',
+    status: 'Disponible',
+    statusColor: 'bg-emerald-100 text-emerald-800',
+    href: 'https://isaak.verifactu.business/banking',
+    external: true,
+  },
+  {
+    title: 'CaixaBank',
+    body: 'La mayor caja de ahorros española. Movimientos de cuenta, recibos domiciliados y préstamos integrados con la contabilidad de Isaak en tiempo real.',
+    status: 'Disponible',
+    statusColor: 'bg-emerald-100 text-emerald-800',
+    href: 'https://isaak.verifactu.business/banking',
+    external: true,
+  },
+  {
+    title: 'ING España',
+    body: 'El banco digital de referencia para autónomos y pymes. Cuenta Nómina, Cuenta Negocio y movimientos sincronizados automáticamente con Isaak.',
+    status: 'Disponible',
+    statusColor: 'bg-emerald-100 text-emerald-800',
+    href: 'https://isaak.verifactu.business/banking',
+    external: true,
+  },
+  {
+    title: 'Sabadell · Bankinter · Unicaja',
+    body: 'Banco Sabadell, Bankinter y Unicaja disponibles vía Open Banking PSD2. Conecta cualquiera de los tres desde Isaak con una sola autorización.',
+    status: 'Disponible',
+    statusColor: 'bg-emerald-100 text-emerald-800',
+    href: 'https://isaak.verifactu.business/banking',
+    external: true,
+  },
+  {
+    title: '+30 bancos españoles y europeos',
+    body: 'Kutxabank, Ibercaja, Abanca, Cajamar, Revolut, N26, Wise y más. Todos vía Enable Banking (PSD2 AIS). Si tu banco tiene open banking, Isaak puede conectarse.',
+    status: 'Disponible',
+    statusColor: 'bg-emerald-100 text-emerald-800',
+    href: 'https://isaak.verifactu.business/banking',
+    external: true,
+  },
+];
+
 const logisticsConnectors = [
   {
     title: 'Sendcloud',
@@ -308,6 +360,15 @@ const roadmapRows = [
   { name: 'Paylands', sector: 'Pagos', status: '✓ Disponible' },
   { name: 'GoCardless', sector: 'Pagos (débito directo)', status: '✓ Disponible' },
   { name: 'SumUp', sector: 'Pagos (TPV físico)', status: '✓ Disponible' },
+  // Banca
+  { name: 'BBVA', sector: 'Open Banking', status: '✓ Disponible' },
+  { name: 'Santander', sector: 'Open Banking', status: '✓ Disponible' },
+  { name: 'CaixaBank', sector: 'Open Banking', status: '✓ Disponible' },
+  { name: 'ING España', sector: 'Open Banking', status: '✓ Disponible' },
+  { name: 'Sabadell', sector: 'Open Banking', status: '✓ Disponible' },
+  { name: 'Bankinter', sector: 'Open Banking', status: '✓ Disponible' },
+  { name: 'Unicaja · Kutxabank · Ibercaja', sector: 'Open Banking', status: '✓ Disponible' },
+  { name: 'Revolut · N26 · Wise', sector: 'Open Banking (banca digital)', status: '✓ Disponible' },
   // CRM
   { name: 'HubSpot', sector: 'CRM', status: '✓ Disponible' },
   { name: 'Salesforce', sector: 'CRM', status: '✓ Disponible' },
@@ -411,7 +472,7 @@ export default function IntegracionesPage() {
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-[#2361d8]/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
               <Sparkles className="h-3.5 w-3.5" />
-              +20 integraciones disponibles
+              +30 integraciones disponibles
             </div>
             <h1 className="mt-6 text-4xl font-bold tracking-tight text-[#011c67] sm:text-6xl sm:leading-[1.04]">
               La capa de inteligencia
@@ -541,6 +602,23 @@ export default function IntegracionesPage() {
                 {...c}
                 cta={c.status === 'Disponible' ? 'Conectar ahora' : 'Solicitar integración'}
               />
+            ))}
+          </div>
+        </Container>
+      </section>
+
+      {/* Open Banking */}
+      <section className="border-b border-slate-100 bg-slate-50/50 py-14">
+        <Container>
+          <SectionHeader
+            icon={Landmark}
+            label="Open Banking PSD2"
+            title="Tus cuentas bancarias, dentro de Isaak"
+            description="BBVA, Santander, CaixaBank, ING y más de 30 bancos españoles y europeos vía Enable Banking. Saldos en tiempo real, movimientos sincronizados y conciliación bancaria automática."
+          />
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {bankingConnectors.map((c) => (
+              <ConnectorCard key={c.title} {...c} cta="Conectar banco" />
             ))}
           </div>
         </Container>
