@@ -26,7 +26,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: 'Isaak — Libera el 80% de tu tiempo de gestión empresarial',
   description:
-    'Isaak es la IA protagonista que conecta Holded, bancos, documentos y correo para que el empresario dirija sin gestionar. 99% menos errores. Disponible 24/7.',
+    'Isaak es la IA protagonista que conecta tu ERP, bancos, documentos y correo para que el empresario dirija sin gestionar. 99% menos errores. Disponible 24/7.',
   alternates: {
     canonical: '/',
   },
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     'IA empresarial',
     'automatización gestión',
     'orquestador empresarial',
-    'holded IA',
+    'copiloto fiscal IA',
     'contabilidad automática',
     'asesor fiscal inteligente',
   ],
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Isaak — Libera el 80% de tu tiempo de gestión empresarial',
     description:
-      'La IA que conecta Holded, bancos, documentos y correo. 99% menos errores. 24/7. El empresario dirige, no gestiona.',
+      'La IA que conecta tu ERP, bancos, documentos y correo. 99% menos errores. 24/7. El empresario dirige, no gestiona.',
     url: siteUrl,
     siteName: 'Isaak',
     images: [{ url: avatarPath, width: 512, height: 512, alt: 'Avatar de Isaak' }],

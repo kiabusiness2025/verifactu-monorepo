@@ -97,21 +97,20 @@ function PlanRequiredBanner() {
   );
 }
 
-function HoldedNotConnectedBanner() {
+function ErpNotConnectedBanner() {
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 flex gap-4 items-start">
       <Plug size={20} className="shrink-0 text-amber-500 mt-0.5" />
       <div className="flex-1">
-        <p className="font-semibold text-amber-900 text-sm">Holded no conectado</p>
+        <p className="font-semibold text-amber-900 text-sm">ERP no conectado</p>
         <p className="text-xs text-amber-700 mt-1">
-          Los modelos se calculan a partir de tus facturas en Holded. Conecta tu cuenta para
-          continuar.
+          Los modelos se calculan a partir de tus facturas. Conecta tu ERP para continuar.
         </p>
         <Link
           href="/settings?section=integrations"
           className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white hover:bg-amber-700"
         >
-          Conectar Holded <ExternalLink size={12} />
+          Conectar tu ERP <ExternalLink size={12} />
         </Link>
       </div>
     </div>
@@ -129,7 +128,7 @@ function GenericErrorBanner({ message }: { message: string }) {
 
 function ErrorBanner({ type, message }: { type: ApiError; message: string }) {
   if (type === 'plan_required') return <PlanRequiredBanner />;
-  if (type === 'no_holded') return <HoldedNotConnectedBanner />;
+  if (type === 'no_holded') return <ErpNotConnectedBanner />;
   return <GenericErrorBanner message={message} />;
 }
 

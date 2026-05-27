@@ -529,7 +529,7 @@ export default function ResumenPage() {
       <div className="border-b border-slate-100 bg-[#fafbff] px-5 py-4">
         <h1 className="text-[16px] font-semibold text-[#011c67]">Resumen de tu empresa</h1>
         <p className="text-[12px] text-slate-500">
-          Estado general · datos en tiempo real desde Holded
+          Estado general · datos en tiempo real desde tu ERP
         </p>
       </div>
 
