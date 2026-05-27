@@ -1,0 +1,779 @@
+openapi: '3.1.0'
+
+info:
+  title: Isaak Platform API
+  version: '1.0.0'
+  description: |
+    API REST de Isaak Platform para facturación VeriFactu, gestión empresarial y auditoría.
+    Accesible desde cualquier aplicación con una API key (`isk_live_*` / `isk_test_*`)
+    o desde el dashboard con sesión autenticada.
+
+    **Base URL:** `https://app.verifactu.business/api/v1`
+
+    ## Autenticación
+
+    ### API Key (partners / integraciones)
+    ```
+    Authorization: Bearer isk_live_<token>
+    Authorization: Bearer isk_test_<token>
+    ```
+    Las API keys se generan en el dashboard en **Ajustes → API Keys**.
+    Cada key tiene scopes asignados en el momento de creación.
+
+    ### Sesión de dashboard (cookie)
+    Para llamadas desde el dashboard del tenant.
+    Se envía automáticamente por el navegador via cookie `__session`.
+
+    ## Scopes
+
+    | Scope | Descripción |
+    |-------|-------------|
+    | `isaak.company.read` | Leer contexto de empresa |
+    | `isaak.invoices.read` | Listar y leer facturas |
+    | `isaak.invoices.write` | Crear borradores de factura |
+    | `isaak.verifactu.validate` | Validar factura (sin enviar) |
+    | `isaak.verifactu.submit` | Emitir factura a AEAT |
+    | `isaak.fiscal.read` | Leer resumen fiscal |
+    | `isaak.audit.read` | Leer log de auditoría |
+    | `isaak.keys.manage` | Gestionar API keys propias |
+
+  contact:
+    name: Equipo Isaak
+    url: https://verifactu.business/contacto
+
+servers:
+  - url: https://app.verifactu.business/api/v1
+    description: Producción
+
+security:
+  - BearerApiKey: []
+
+# ─── Paths ─────────────────────────────────────────────────────────────────────
+
+paths:
+  /companies/current:
+    get:
+      summary: Obtener contexto de la empresa activa
+      description: Devuelve nombre, NIF, plan, conexiones activas y KPIs básicos del tenant autenticado.
+      operationId: getCompanyCurrent
+      tags: [company]
+      security:
+        - BearerApiKey: [isaak.company.read]
+        - SessionCookie: [isaak.company.read]
+      responses:
+        '200':
+          description: Contexto de empresa
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CompanyContext'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /invoices:
+    get:
+      summary: Listar facturas
+      description: Devuelve facturas emitidas del tenant con paginación y filtros opcionales.
+      operationId: listInvoices
+      tags: [invoices]
+      security:
+        - BearerApiKey: [isaak.invoices.read]
+        - SessionCookie: [isaak.invoices.read]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1, minimum: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, minimum: 1, maximum: 100 }
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, issued, paid, cancelled, all]
+        - name: from
+          in: query
+          description: Fecha inicio YYYY-MM-DD
+          schema: { type: string, format: date }
+        - name: to
+          in: query
+          description: Fecha fin YYYY-MM-DD
+          schema: { type: string, format: date }
+        - name: customer
+          in: query
+          description: Filtro por nombre o NIF del cliente
+          schema: { type: string }
+      responses:
+        '200':
+          description: Lista paginada de facturas
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkListEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvoiceSummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      summary: Crear borrador de factura
+      description: |
+        Crea un borrador de factura. No la envía a AEAT.
+        Para emitirla usa `POST /invoices/{id}/issue`.
+      operationId: createInvoiceDraft
+      tags: [invoices]
+      security:
+        - BearerApiKey: [isaak.invoices.write]
+        - SessionCookie: [isaak.invoices.write]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateInvoiceDraftRequest'
+      responses:
+        '201':
+          description: Borrador creado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /invoices/{id}:
+    get:
+      summary: Obtener factura
+      description: Devuelve el detalle completo de una factura incluyendo estado VeriFactu.
+      operationId: getInvoice
+      tags: [invoices]
+      security:
+        - BearerApiKey: [isaak.invoices.read]
+        - SessionCookie: [isaak.invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceId'
+      responses:
+        '200':
+          description: Detalle de factura
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices/{id}/validate:
+    post:
+      summary: Validar factura para VeriFactu
+      description: |
+        Valida los datos de una factura borrador antes de enviarla a AEAT.
+        No envía nada. Devuelve errores de validación si los hay.
+      operationId: validateInvoice
+      tags: [invoices, verifactu]
+      security:
+        - BearerApiKey: [isaak.verifactu.validate]
+        - SessionCookie: [isaak.verifactu.validate]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceId'
+      responses:
+        '200':
+          description: Resultado de validación
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ValidationResult'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices/{id}/issue:
+    post:
+      summary: Emitir factura a VeriFactu (AEAT)
+      description: |
+        Registra la factura ante AEAT mediante VeriFactu.
+        **Operación irreversible.**
+
+        Implementa confirmación de 2 pasos:
+
+        **Paso 1** — Llamada sin body (o body vacío):
+        - Responde `202` con `confirmationToken` (TTL 5 min) y un preview de los datos.
+
+        **Paso 2** — Llamada con `{ confirmationToken }`:
+        - Ejecuta el registro real ante AEAT.
+        - Responde `200` con el resultado.
+      operationId: issueInvoice
+      tags: [invoices, verifactu]
+      security:
+        - BearerApiKey: [isaak.verifactu.submit]
+        - SessionCookie: [isaak.verifactu.submit]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceId'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueInvoiceRequest'
+      responses:
+        '200':
+          description: Factura emitida ante AEAT
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/IssueInvoiceResult'
+        '202':
+          description: Confirmación requerida — devuelve preview y confirmationToken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfirmationRequired'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices/{id}/verifactu-status:
+    get:
+      summary: Estado VeriFactu de una factura
+      description: Devuelve el estado de registro de la factura en VeriFactu.
+      operationId: getInvoiceVerifactuStatus
+      tags: [invoices, verifactu]
+      security:
+        - BearerApiKey: [isaak.invoices.read]
+        - SessionCookie: [isaak.invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceId'
+      responses:
+        '200':
+          description: Estado VeriFactu
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VerifactuStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /invoices/{id}/pdf:
+    get:
+      summary: Descargar PDF de factura
+      description: Genera y devuelve el PDF de la factura con QR AEAT.
+      operationId: getInvoicePdf
+      tags: [invoices]
+      security:
+        - BearerApiKey: [isaak.invoices.read]
+        - SessionCookie: [isaak.invoices.read]
+      parameters:
+        - $ref: '#/components/parameters/InvoiceId'
+      responses:
+        '200':
+          description: PDF generado
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /audit/events:
+    get:
+      summary: Log de auditoría
+      description: Devuelve el historial de operaciones del tenant con paginación y filtros.
+      operationId: listAuditEvents
+      tags: [audit]
+      security:
+        - BearerApiKey: [isaak.audit.read]
+        - SessionCookie: [isaak.audit.read]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20, maximum: 100 }
+        - name: from
+          in: query
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          schema: { type: string, format: date-time }
+        - name: channel
+          in: query
+          description: 'dashboard | chatgpt | api | mcp'
+          schema: { type: string }
+        - name: action
+          in: query
+          description: Filtro por nombre de herramienta o acción
+          schema: { type: string }
+      responses:
+        '200':
+          description: Log de auditoría paginado
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkListEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AuditEvent'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /keys:
+    get:
+      summary: Listar API keys del tenant
+      description: |
+        Devuelve las API keys del tenant autenticado.
+        Solo accesible desde sesión de dashboard; las API keys no pueden listar otras API keys.
+      operationId: listApiKeys
+      tags: [keys]
+      security:
+        - SessionCookie: [isaak.keys.manage]
+      responses:
+        '200':
+          description: Lista de API keys
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkListEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ApiKeySummary'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      summary: Crear API key
+      description: |
+        Crea una nueva API key para el tenant.
+        **La key completa se devuelve una única vez** en la respuesta de creación.
+        Guárdala inmediatamente — no se puede recuperar después.
+      operationId: createApiKey
+      tags: [keys]
+      security:
+        - SessionCookie: [isaak.keys.manage]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApiKeyRequest'
+      responses:
+        '201':
+          description: API key creada (incluye la key completa, solo esta vez)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/OkEnvelope'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ApiKeyCreated'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /keys/{id}:
+    delete:
+      summary: Revocar API key
+      description: Revoca una API key. La operación es irreversible.
+      operationId: deleteApiKey
+      tags: [keys]
+      security:
+        - SessionCookie: [isaak.keys.manage]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: API key revocada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OkEnvelope'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+# ─── Components ────────────────────────────────────────────────────────────────
+
+components:
+  securitySchemes:
+    BearerApiKey:
+      type: http
+      scheme: bearer
+      description: API key en formato `isk_live_*` o `isk_test_*`
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: __session
+      description: Cookie de sesión del dashboard (JWT firmado)
+
+  parameters:
+    InvoiceId:
+      name: id
+      in: path
+      required: true
+      description: ID interno de la factura
+      schema: { type: string }
+
+  responses:
+    Unauthorized:
+      description: Token ausente o inválido
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    Forbidden:
+      description: Scope insuficiente
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    ValidationError:
+      description: Datos de entrada inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+    TooManyRequests:
+      description: Rate limit superado
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorEnvelope'
+
+  schemas:
+    OkEnvelope:
+      type: object
+      required: [ok, data]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        requestId:
+          type: string
+        tenantId:
+          type: string
+        data:
+          type: object
+
+    OkListEnvelope:
+      type: object
+      required: [ok, data, pagination]
+      properties:
+        ok:
+          type: boolean
+          example: true
+        requestId:
+          type: string
+        tenantId:
+          type: string
+        data:
+          type: array
+          items: {}
+        pagination:
+          type: object
+          properties:
+            page: { type: integer }
+            limit: { type: integer }
+            total: { type: integer }
+
+    ErrorEnvelope:
+      type: object
+      required: [ok, error]
+      properties:
+        ok:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            code: { type: string }
+            message: { type: string }
+        requestId:
+          type: string
+
+    ConfirmationRequired:
+      type: object
+      required: [requiresConfirmation, confirmationToken, preview]
+      properties:
+        requiresConfirmation: { type: boolean, example: true }
+        confirmationToken: { type: string }
+        expiresAt: { type: string, format: date-time }
+        preview: { type: object }
+
+    CompanyContext:
+      type: object
+      properties:
+        tenantId: { type: string }
+        name: { type: string }
+        nif: { type: string }
+        plan: { type: string }
+        connections:
+          type: array
+          items:
+            type: object
+            properties:
+              provider: { type: string }
+              status: { type: string }
+        kpis:
+          type: object
+          properties:
+            invoicesThisMonth: { type: integer }
+            pendingVeriFactu: { type: integer }
+
+    InvoiceSummary:
+      type: object
+      properties:
+        id: { type: string }
+        number: { type: string }
+        status: { type: string, enum: [draft, issued, paid, cancelled] }
+        customerName: { type: string }
+        customerNif: { type: string }
+        issueDate: { type: string, format: date }
+        totalAmount: { type: number }
+        currency: { type: string, example: EUR }
+        verifactuStatus: { type: string, nullable: true }
+
+    InvoiceDetail:
+      allOf:
+        - $ref: '#/components/schemas/InvoiceSummary'
+        - type: object
+          properties:
+            description: { type: string }
+            amountNet: { type: number }
+            taxRate: { type: number }
+            taxAmount: { type: number }
+            lines:
+              type: array
+              items:
+                type: object
+                properties:
+                  description: { type: string }
+                  quantity: { type: number }
+                  unitPrice: { type: number }
+                  taxRate: { type: number }
+                  total: { type: number }
+            verifactuHash: { type: string, nullable: true }
+            verifactuQrUrl: { type: string, nullable: true }
+            createdAt: { type: string, format: date-time }
+            updatedAt: { type: string, format: date-time }
+
+    CreateInvoiceDraftRequest:
+      type: object
+      required: [customerName, description, amountNet, taxRate]
+      properties:
+        customerName: { type: string }
+        customerNif: { type: string }
+        description: { type: string }
+        amountNet: { type: number, minimum: 0 }
+        taxRate:
+          type: number
+          description: '0.21 para 21%, 0.10 para 10%, 0 para exento'
+          example: 0.21
+        issueDate:
+          type: string
+          format: date
+          description: Por defecto hoy si se omite
+        lines:
+          type: array
+          items:
+            type: object
+            properties:
+              description: { type: string }
+              quantity: { type: number }
+              unitPrice: { type: number }
+              taxRate: { type: number }
+
+    IssueInvoiceRequest:
+      type: object
+      properties:
+        confirmationToken:
+          type: string
+          description: Token del paso 1. Si se omite, se inicia el flujo de confirmación.
+
+    IssueInvoiceResult:
+      type: object
+      properties:
+        invoiceId: { type: string }
+        number: { type: string }
+        verifactuHash: { type: string }
+        aeatResponse: { type: object }
+        issuedAt: { type: string, format: date-time }
+
+    ValidationResult:
+      type: object
+      properties:
+        valid: { type: boolean }
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+
+    VerifactuStatus:
+      type: object
+      properties:
+        invoiceId: { type: string }
+        status:
+          type: string
+          enum: [not_submitted, pending, accepted, rejected, error]
+        hash: { type: string, nullable: true }
+        submittedAt: { type: string, format: date-time, nullable: true }
+        aeatCode: { type: string, nullable: true }
+        aeatMessage: { type: string, nullable: true }
+
+    AuditEvent:
+      type: object
+      properties:
+        id: { type: string }
+        tenantId: { type: string }
+        channel: { type: string }
+        toolOrAction: { type: string }
+        status: { type: integer }
+        riskLevel: { type: string, enum: [low, medium, high] }
+        confirmationRequired: { type: boolean }
+        requestId: { type: string }
+        createdAt: { type: string, format: date-time }
+
+    ApiKeySummary:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        keyPrefix: { type: string, example: 'isk_live_abc1...' }
+        scopes: { type: array, items: { type: string } }
+        environment: { type: string, enum: [live, test] }
+        lastUsedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    CreateApiKeyRequest:
+      type: object
+      required: [name, scopes]
+      properties:
+        name: { type: string, maxLength: 80 }
+        scopes:
+          type: array
+          items: { type: string }
+          example:
+            - isaak.invoices.read
+            - isaak.invoices.write
+        environment:
+          type: string
+          enum: [live, test]
+          default: live
+
+    ApiKeyCreated:
+      allOf:
+        - $ref: '#/components/schemas/ApiKeySummary'
+        - type: object
+          required: [key]
+          properties:
+            key:
+              type: string
+              description: La API key completa. Se muestra UNA SOLA VEZ.
+              example: 'isk_live_abc123...'
+
+tags:
+  - name: company
+    description: Contexto de la empresa activa
+  - name: invoices
+    description: Gestión de facturas y emisión VeriFactu
+  - name: verifactu
+    description: Operaciones específicas de VeriFactu y AEAT
+  - name: audit
+    description: Log de auditoría
+  - name: keys
+    description: Gestión de API keys

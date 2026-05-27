@@ -269,9 +269,9 @@ export default function DevelopersPage() {
               {
                 icon: <Terminal className="h-5 w-5 text-[#2361d8]" />,
                 title: 'REST API',
-                body: '10 endpoints REST. Autenticación Bearer. Respuestas JSON consistentes. Compatible con cualquier lenguaje.',
-                href: '#endpoints',
-                cta: 'Ver endpoints',
+                body: '10 endpoints REST. Referencia interactiva con OpenAPI 3.1 — prueba peticiones directamente desde el navegador.',
+                href: '/developers/api',
+                cta: 'Abrir referencia',
               },
               {
                 icon: <MessageSquare className="h-5 w-5 text-[#2361d8]" />,
@@ -403,6 +403,96 @@ export default function DevelopersPage() {
               </a>{' '}
               para ver todos los parámetros disponibles.
             </p>
+          </div>
+        </Container>
+      </section>
+
+      {/* ── Documentación detallada ─────────────────────────────────────────── */}
+      <section id="docs-hub" className="border-t border-slate-100 bg-slate-50/50 py-14">
+        <Container>
+          <div className="max-w-5xl">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+              <BookOpen className="h-4 w-4" />
+              Documentación detallada
+            </div>
+            <h2 className="mt-4 text-2xl font-bold text-[#011c67] sm:text-3xl">
+              Referencia, errores, límites y eventos
+            </h2>
+            <p className="mt-3 text-slate-600">
+              Todo lo que necesitas para construir integraciones robustas con Isaak. La referencia
+              interactiva te deja ejecutar peticiones reales; las páginas dedicadas profundizan en
+              casos límite.
+            </p>
+
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              <Link
+                href="/developers/api"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#2361d8]/30 hover:shadow-md"
+              >
+                <div className="text-xs font-semibold uppercase tracking-widest text-[#2361d8]">
+                  Interactivo
+                </div>
+                <h3 className="mt-2 text-lg font-semibold text-[#011c67]">API Reference</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  OpenAPI 3.1 renderizado con Scalar. Esquemas, ejemplos por lenguaje, peticiones
+                  ejecutables con tu propia API key.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[#2361d8] group-hover:underline">
+                  Abrir referencia <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+
+              <Link
+                href="/developers/errors"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#2361d8]/30 hover:shadow-md"
+              >
+                <div className="text-xs font-semibold uppercase tracking-widest text-amber-700">
+                  Referencia
+                </div>
+                <h3 className="mt-2 text-lg font-semibold text-[#011c67]">Error codes</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Códigos HTTP, error.code de aplicación, formato del envelope y guía de retry con
+                  backoff exponencial.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[#2361d8] group-hover:underline">
+                  Ver códigos <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+
+              <Link
+                href="/developers/rate-limits"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#2361d8]/30 hover:shadow-md"
+              >
+                <div className="text-xs font-semibold uppercase tracking-widest text-[#2361d8]">
+                  Política
+                </div>
+                <h3 className="mt-2 text-lg font-semibold text-[#011c67]">Rate limits</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Límites por plan y por familia de endpoint. Headers de inspección. Recetario de
+                  burst y fairness.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[#2361d8] group-hover:underline">
+                  Ver política <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+
+              <Link
+                href="/developers/webhooks"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#2361d8]/30 hover:shadow-md"
+              >
+                <div className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+                  Beta cerrada
+                </div>
+                <h3 className="mt-2 text-lg font-semibold text-[#011c67]">Webhooks</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Eventos en tiempo real: factura emitida, validación AEAT, certificado a caducar.
+                  Firmas HMAC, reintentos, dead-letter.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[#2361d8] group-hover:underline">
+                  Ver eventos <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+            </div>
           </div>
         </Container>
       </section>

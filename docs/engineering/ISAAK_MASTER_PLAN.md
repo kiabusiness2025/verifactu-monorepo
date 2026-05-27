@@ -520,3 +520,44 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 - **Bridge CI → Inspector R017**: ✅ Implementado en F11 fase 5a. R017 pasa de warning a error si VIES dice no válido.
 - **UI integrada en /contactos**: ⏳ Pendiente. Cuando se cree contacto, llamar `buildProfile()` para auto-fill + diff visual.
 - **Onboarding R000**: ✅ Wizard en `/perfil-fiscal` con prefill CI. Pendiente: enlazar al onboarding inicial del tenant.
+
+---
+
+## Track D — Developer Portal y API pública
+
+**Objetivo**: que un developer externo pueda integrar con Isaak Platform en menos de 1 hora.
+
+### Estado actual (2026-05-27)
+
+| Componente | Estado | Ubicación |
+| ---------- | ------ | --------- |
+| OpenAPI 3.1 spec | ✅ | `docs/isaak/ISAAK_API_V1_OPENAPI.yaml` (10 endpoints REST, 8 scopes) |
+| Página developer hub | ✅ | `apps/landing/app/developers/page.tsx` + `apps/isaak/app/developers/page.tsx` |
+| API keys management | ✅ | Settings → API keys (`isk_live_*` / `isk_test_*`) |
+| MCP server spec | ✅ | `docs/engineering/isaak-platform/ISAAK_MCP_SERVER_SPEC_2026.md` (9 tools Isaak) |
+| Compliance docs MCP | ✅ | `docs/openai-submission/` + `docs/anthropic-submission/` |
+| **Swagger UI interactivo** | ✅ **2026-05-27** | `/developers/api` con Scalar (OpenAPI 3.1 ejecutable) |
+| **Error codes reference** | ✅ **2026-05-27** | `/developers/errors` (HTTP + error.code de aplicación + retry guide) |
+| **Rate limits policy** | ✅ **2026-05-27** | `/developers/rate-limits` (límites por plan, headers, backoff) |
+| **Webhook spec (beta cerrada)** | ✅ **2026-05-27** | `/developers/webhooks` (9 eventos, firma HMAC, reintentos) |
+
+### Pendiente (orden recomendado)
+
+| Prioridad | Tarea | Notas |
+| --------- | ----- | ----- |
+| D1 | Implementar emisor real de webhooks | Hoy es solo docs. Build cola con dead-letter + reintentos según spec. |
+| D2 | SDK TypeScript (`@verifactu/isaak-sdk`) | Auto-generado desde OpenAPI con `openapi-typescript-fetch`. Publicar en npm. |
+| D3 | Postman/Bruno collection | Generar desde OpenAPI con `openapi-to-postmanv2`. Hostar en `/developers/postman`. |
+| D4 | Guías por caso de uso | `/developers/guides/{emitir-verifactu, conectar-erp, importar-banking, oauth-flow}`. MDX. |
+| D5 | API changelog público | `/developers/changelog` con breaking changes anotados. Versionar en spec. |
+| D6 | Idempotency-Key header | Implementar en el servidor para todos los POST de escritura. Documentado en errors page. |
+| D7 | SDK Python | Caso de uso secundario. Auto-gen desde OpenAPI con `openapi-python-client`. |
+| D8 | Status page público | `status.verifactu.business` con histórico de incidencias y uptime AEAT. |
+
+### Convenciones para el API
+
+- **Envelope estándar**: `{ ok, data, meta: { requestId, timestamp } }` en 2xx, `{ ok: false, error: { code, message }, requestId }` en !2xx.
+- **Versionado**: prefijo `/api/v1` en URL. Breaking changes solo en `/api/v2`. Soporte mínimo 12 meses tras deprecation.
+- **Idempotencia**: header `Idempotency-Key` opcional en POST/PATCH. TTL 24h.
+- **Trazas**: cada respuesta incluye `meta.requestId` (o `error.requestId`). Logs internos correlacionables.
+- **Confirmation flow**: acciones AEAT requieren 2 POST — primero devuelve `confirmationToken` (TTL 5min), segundo confirma con ese token.
