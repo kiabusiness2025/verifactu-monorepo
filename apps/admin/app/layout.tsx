@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   icons: {
     apple: '/apple-touch-icon.png',
     icon: [
-      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/android-chrome-192x192.png', type: 'image/png' },
+      { url: '/android-chrome-512x512.png', type: 'image/png' },
     ],
   },
 };

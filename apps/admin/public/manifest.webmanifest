@@ -1,0 +1,14 @@
+{
+  "name": "Verifactu Admin",
+  "short_name": "Admin",
+  "description": "Panel de administración Verifactu Business.",
+  "start_url": "/panel",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "icons": [
+    { "src": "/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

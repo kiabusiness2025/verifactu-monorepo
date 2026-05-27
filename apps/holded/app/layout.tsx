@@ -13,11 +13,8 @@ export const metadata: Metadata = {
   description:
     'Hub vertical de conectores Holded dentro de Verifactu Business. Documentacion, privacidad, DPA y soporte para ChatGPT y Claude.',
   icons: {
-    icon: [
-      { url: '/Holded/Corporativo/Holded logo.svg', type: 'image/svg+xml' },
-      { url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' },
-    ],
-    shortcut: ['/Holded/Corporativo/Holded logo.svg'],
+    icon: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
+    shortcut: ['/brand/holded/holded-diamond-logo.png'],
     apple: [{ url: '/brand/holded/holded-diamond-logo.png', type: 'image/png' }],
   },
   openGraph: {
