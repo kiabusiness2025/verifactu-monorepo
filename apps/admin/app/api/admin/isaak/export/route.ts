@@ -4,8 +4,8 @@
  */
 
 import { requireAdmin } from '@/lib/adminAuth';
+import ExcelJS from 'exceljs';
 import { NextRequest, NextResponse } from 'next/server';
-import * as XLSX from 'xlsx';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,26 +22,29 @@ export async function POST(req: NextRequest) {
 
     const { filename = 'isaak-export', headers = [], rows = [] } = body;
 
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Datos');
+
+    // Header row
+    worksheet.addRow(headers);
+    const headerRow = worksheet.getRow(1);
+    headerRow.font = { bold: true };
+
+    // Data rows
+    rows.forEach((row) => worksheet.addRow(row));
 
     // Auto-width columns based on content
-    const colWidths = headers.map((h, i) => {
+    headers.forEach((h, i) => {
       const maxLen = Math.max(String(h).length, ...rows.map((r) => String(r[i] ?? '').length));
-      return { wch: Math.min(Math.max(maxLen + 2, 10), 50) };
+      worksheet.getColumn(i + 1).width = Math.min(Math.max(maxLen + 2, 10), 50);
     });
-    ws['!cols'] = colWidths;
 
-    XLSX.utils.book_append_sheet(wb, ws, 'Datos');
-
-    const raw = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
-    const blob = new Blob([raw as BlobPart], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
+    const buffer = await workbook.xlsx.writeBuffer();
     const safeFilename = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
 
-    return new NextResponse(blob, {
+    return new NextResponse(buffer as BlobPart, {
       headers: {
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${safeFilename}"`,
       },
     });
