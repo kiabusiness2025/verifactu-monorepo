@@ -32,6 +32,10 @@
     {
       "path": "/api/cron/onboarding-nudge",
       "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/app-health",
+      "schedule": "*/30 * * * *"
     }
   ]
 }

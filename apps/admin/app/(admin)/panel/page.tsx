@@ -5,6 +5,94 @@ import { getHoldedDirectPanelData } from '@/lib/holdedDirectAdmin';
 import { formatDateTime } from '@/src/lib/formatters';
 import Link from 'next/link';
 
+type HealthService = { ok: boolean; latencyMs?: number; error?: string; missing?: string[] };
+type HealthResponse = {
+  ok: boolean;
+  timestamp: string;
+  sha: string;
+  services: { database: HealthService; config: HealthService };
+};
+
+async function fetchAppHealth(): Promise<HealthResponse | null> {
+  try {
+    const res = await fetch(
+      `${process.env.NEXT_PUBLIC_ISAAK_URL ?? 'https://isaak.verifactu.business'}/api/health`,
+      { next: { revalidate: 60 }, signal: AbortSignal.timeout(5000) }
+    );
+    return (await res.json()) as HealthResponse;
+  } catch {
+    return null;
+  }
+}
+
+function StatusDot({ ok }: { ok: boolean }) {
+  return (
+    <span className={`inline-block h-2 w-2 rounded-full ${ok ? 'bg-emerald-500' : 'bg-red-500'}`} />
+  );
+}
+
+function SystemStatusWidget({ health }: { health: HealthResponse | null }) {
+  if (!health) {
+    return (
+      <section className="rounded-2xl border border-red-200 bg-red-50 px-5 py-3">
+        <p className="text-xs font-semibold text-red-800">⚠️ Isaak app — sin respuesta</p>
+        <p className="mt-0.5 text-xs text-red-600">
+          No se pudo conectar a <code>isaak.verifactu.business/api/health</code>
+        </p>
+      </section>
+    );
+  }
+
+  const services = [
+    { label: 'Base de datos', data: health.services.database },
+    { label: 'Configuración', data: health.services.config },
+  ];
+
+  return (
+    <section
+      className={`rounded-2xl border px-5 py-3 ${
+        health.ok ? 'border-emerald-200 bg-emerald-50' : 'border-red-200 bg-red-50'
+      }`}
+    >
+      <div className="flex items-center justify-between">
+        <p className={`text-xs font-semibold ${health.ok ? 'text-emerald-800' : 'text-red-800'}`}>
+          {health.ok ? '✅ Isaak app — todos los servicios operativos' : '🚨 Isaak app — degradada'}
+        </p>
+        <span className="text-xs text-slate-400">
+          SHA {health.sha} · {new Date(health.timestamp).toLocaleTimeString('es-ES')}
+        </span>
+      </div>
+      {!health.ok && (
+        <ul className="mt-2 space-y-1">
+          {services
+            .filter((s) => !s.data.ok)
+            .map((s) => (
+              <li key={s.label} className="flex items-center gap-2 text-xs text-red-700">
+                <StatusDot ok={false} />
+                <span>
+                  <strong>{s.label}</strong>
+                  {s.data.error ? ` — ${s.data.error}` : ''}
+                  {s.data.missing?.length ? ` — faltan vars: ${s.data.missing.join(', ')}` : ''}
+                </span>
+              </li>
+            ))}
+        </ul>
+      )}
+      {health.ok && (
+        <div className="mt-1.5 flex gap-4">
+          {services.map((s) => (
+            <span key={s.label} className="flex items-center gap-1.5 text-xs text-emerald-700">
+              <StatusDot ok={s.data.ok} />
+              {s.label}
+              {s.data.latencyMs !== undefined ? ` (${s.data.latencyMs}ms)` : ''}
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export const dynamic = 'force-dynamic';
 
 function MetricCard({
@@ -52,23 +140,24 @@ function MetricCard({
 }
 
 export default async function AdminPanelPage() {
-  const [data, pendingDemos, connectorsStatus, activityStats, refreshedAt] = await Promise.all([
-    getHoldedDirectPanelData({
-      userLimit: 0,
-      tenantLimit: 0,
-      conversationLimit: 0,
-      sessionLimit: 0,
-    }),
-    prisma.demoRequest.count({ where: { status: 'PENDING' } }).catch(() => 0),
-    query<{ status: string; count: number }>(
-      `SELECT connection_status AS status, COUNT(*)::int AS count
+  const [data, pendingDemos, connectorsStatus, activityStats, refreshedAt, appHealth] =
+    await Promise.all([
+      getHoldedDirectPanelData({
+        userLimit: 0,
+        tenantLimit: 0,
+        conversationLimit: 0,
+        sessionLimit: 0,
+      }),
+      prisma.demoRequest.count({ where: { status: 'PENDING' } }).catch(() => 0),
+      query<{ status: string; count: number }>(
+        `SELECT connection_status AS status, COUNT(*)::int AS count
        FROM external_connections
        WHERE provider = 'holded'
        GROUP BY connection_status`,
-      []
-    ).catch(() => [] as { status: string; count: number }[]),
-    query<{ active_30d: number; active_7d: number; queries_today: number; dormant: number }>(
-      `SELECT
+        []
+      ).catch(() => [] as { status: string; count: number }[]),
+      query<{ active_30d: number; active_7d: number; queries_today: number; dormant: number }>(
+        `SELECT
         COUNT(DISTINCT CASE WHEN al.created_at >= NOW() - INTERVAL '30 days' THEN ec.tenant_id END)::int AS active_30d,
         COUNT(DISTINCT CASE WHEN al.created_at >= NOW() - INTERVAL '7 days'  THEN ec.tenant_id END)::int AS active_7d,
         COUNT(*)         FILTER (WHERE al.created_at >= NOW() - INTERVAL '24 hours')::int         AS queries_today,
@@ -89,18 +178,19 @@ export default async function AdminPanelPage() {
        JOIN holded_mcp_personal_access_tokens pat ON pat.id = al.pat_id
        JOIN external_connections ec ON ec.id = pat.connection_id
        WHERE al.event = 'used'`,
-      []
-    ).catch(
-      () =>
-        [{ active_30d: 0, active_7d: 0, queries_today: 0, dormant: 0 }] as {
-          active_30d: number;
-          active_7d: number;
-          queries_today: number;
-          dormant: number;
-        }[]
-    ),
-    Promise.resolve(new Date().toISOString()),
-  ]);
+        []
+      ).catch(
+        () =>
+          [{ active_30d: 0, active_7d: 0, queries_today: 0, dormant: 0 }] as {
+            active_30d: number;
+            active_7d: number;
+            queries_today: number;
+            dormant: number;
+          }[]
+      ),
+      Promise.resolve(new Date().toISOString()),
+      fetchAppHealth(),
+    ]);
 
   const { summary } = data;
   const statusMap = Object.fromEntries(connectorsStatus.map((r) => [r.status, r.count]));
@@ -183,6 +273,9 @@ export default async function AdminPanelPage() {
           </ul>
         </section>
       )}
+
+      {/* Estado del sistema Isaak */}
+      <SystemStatusWidget health={appHealth} />
 
       {/* Widget visual de conectores — hero del panel */}
       <ConnectorsPanelWidget />
