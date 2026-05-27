@@ -468,11 +468,12 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
     apiKeySteps: [
       'Inicia sesión en tu organización de Salesforce.',
       'Ve a Setup → App Manager → New Connected App.',
-      'Activa "Enable OAuth Settings" y añade los scopes: api, refresh_token.',
-      'Guarda la app y espera unos minutos a que se active.',
-      'En Consumer Details copia el Consumer Key y Consumer Secret.',
-      'Obtén un access token vía OAuth usando el flujo de username-password o JWT.',
-      'Pega el access token en Isaak.',
+      'Activa "Enable OAuth Settings" y añade los scopes: api, full.',
+      'En "OAuth settings", activa también "Enable for Device Flow" para permitir el flujo password.',
+      'Guarda la app y espera 2-10 minutos a que se active.',
+      'En Consumer Details copia el Consumer Key (Client ID) y Consumer Secret.',
+      'Necesitarás también la URL de tu instancia (ej. https://empresa.my.salesforce.com) y tu usuario/contraseña + token de seguridad de Salesforce.',
+      'En Isaak, pega las credenciales con el formato: https://empresa.my.salesforce.com::ConsumerKey::ConsumerSecret::usuario@empresa.com::ContraseñaTokenSeguridad',
     ],
     whatIsaakSyncs: [
       'Contactos (Contacts)',
@@ -486,8 +487,12 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
         a: 'Sí. El acceso a la API REST está disponible en todos los planes de Salesforce, aunque los permisos de usuario deben incluir "API Enabled".',
       },
       {
-        q: '¿El access token expira?',
-        a: 'Sí. Salesforce expira los tokens tras un periodo de inactividad. Si la conexión se interrumpe, vuelve a conectar desde la pantalla de integraciones.',
+        q: '¿Qué es el token de seguridad de Salesforce?',
+        a: 'Es un código adicional que Salesforce añade a la contraseña en el flujo de autenticación. Lo encuentras en Setup → My Personal Information → Reset My Security Token. Concaténalo directamente a tu contraseña sin espacio.',
+      },
+      {
+        q: '¿Qué URL de instancia debo usar?',
+        a: 'Si tienes My Domain activado, usa https://empresa.my.salesforce.com. Si no, usa https://login.salesforce.com (producción) o https://test.salesforce.com (sandbox).',
       },
     ],
     docsUrl: 'https://developer.salesforce.com/docs/atlas.en-us.api_rest.meta/api_rest/',
