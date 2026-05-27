@@ -137,23 +137,27 @@ export const PROVIDER_HELP: Record<string, ProviderHelp> = {
       'Haz clic en "Añadir clave".',
       'Pon una descripción (ej. "Isaak"), selecciona el usuario y en Permisos elige "Lectura".',
       'Haz clic en "Generar clave API".',
-      'Copia el Consumer Key y el Consumer Secret.',
-      'En Isaak, pégalos juntos con el formato: ConsumerKey:ConsumerSecret',
+      'Copia el Consumer Key (ck_…) y el Consumer Secret (cs_…).',
+      'En Isaak, pega los tres datos en este formato exacto (separados por ::): https://tutienda.com::ck_xxx::cs_yyy',
     ],
     whatIsaakSyncs: [
-      'Pedidos y estados',
+      'Pedidos y estados (pendiente, procesando, completado…)',
       'Clientes registrados',
       'Productos y variaciones',
       'Ingresos y métricas de tienda',
     ],
     faq: [
       {
-        q: '¿Por qué tengo que pegar Consumer Key y Secret juntos?',
-        a: 'WooCommerce usa autenticación Basic (usuario:contraseña). Isaak los combina internamente — tú solo los pegas una vez.',
+        q: '¿Por qué necesito incluir la URL de mi tienda?',
+        a: 'WooCommerce es una plataforma self-hosted — cada tienda tiene su propia URL. Isaak necesita saber a qué dominio conectarse junto con las claves de autenticación.',
       },
       {
         q: '¿Funciona con WooCommerce alojado en cualquier hosting?',
-        a: 'Sí, siempre que la tienda tenga SSL (HTTPS) y la API REST de WooCommerce esté activada.',
+        a: 'Sí, siempre que la tienda tenga SSL (HTTPS) y la API REST de WooCommerce esté activada en WooCommerce → Ajustes → Avanzado → API REST.',
+      },
+      {
+        q: '¿Qué permisos necesita la clave?',
+        a: 'Solo "Lectura". Isaak nunca modifica pedidos ni datos de tu tienda.',
       },
     ],
     docsUrl: 'https://woocommerce.github.io/woocommerce-rest-api-docs/',

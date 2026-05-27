@@ -1674,7 +1674,7 @@ export default function IntegrationsClient() {
             name={item.name}
             logo={item.logo}
             desc={item.desc}
-            docsHint="Consumer Key:Secret separados por «:» — WooCommerce → Ajustes → API avanzada"
+            docsHint="URL tienda::ConsumerKey::ConsumerSecret — WooCommerce → Ajustes → Avanzado → API REST"
             status={sectorStatuses['woocommerce'] ?? null}
             onRefresh={() => void loadAll()}
           />
