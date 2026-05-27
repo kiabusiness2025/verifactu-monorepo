@@ -81,7 +81,7 @@ export default function EquipoClient() {
           href="/settings/connections"
           className="rounded-lg bg-[#2361d8] px-4 py-2 text-sm font-medium text-white hover:bg-[#1a4fc4]"
         >
-          Conectar Holded
+          Conectar tu ERP
         </a>
       </div>
     );
@@ -126,7 +126,7 @@ export default function EquipoClient() {
           employees.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 py-20">
               <Users2 size={32} className="text-slate-200" />
-              <p className="text-sm text-slate-400">Sin empleados en Holded.</p>
+              <p className="text-sm text-slate-400">Sin empleados registrados.</p>
             </div>
           ) : (
             <table className="w-full text-sm">
@@ -176,7 +176,7 @@ export default function EquipoClient() {
         ) : projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-20">
             <Briefcase size={32} className="text-slate-200" />
-            <p className="text-sm text-slate-400">Sin proyectos en Holded.</p>
+            <p className="text-sm text-slate-400">Sin proyectos registrados.</p>
           </div>
         ) : (
           <table className="w-full text-sm">

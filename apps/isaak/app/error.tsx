@@ -28,8 +28,8 @@ export default function IsaakErrorPage({ error, reset }: Props) {
                 Isaak no ha podido abrir esta pantalla, pero tu acceso sigue a salvo
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">
-                Puede ser una incidencia temporal del servidor o un paso a medias entre Holded e
-                Isaak. Reintenta y deberias poder continuar sin perder tu contexto.
+                Puede ser una incidencia temporal del servidor o un paso a medias en el acceso.
+                Reintenta y deberias poder continuar sin perder tu contexto.
               </p>
 
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
@@ -65,7 +65,7 @@ export default function IsaakErrorPage({ error, reset }: Props) {
                 </div>
                 <ul className="mt-4 space-y-3 text-sm leading-6 text-slate-600">
                   <li>1. Pulsa reintentar. Muchas incidencias se resuelven en segundos.</li>
-                  <li>2. Si estabas entrando desde Holded, repite el ultimo paso del acceso.</li>
+                  <li>2. Si estabas entrando desde un conector, repite el ultimo paso del acceso.</li>
                   <li>3. Si el problema persiste, escribenos a soporte@verifactu.business.</li>
                 </ul>
                 {error.digest ? (

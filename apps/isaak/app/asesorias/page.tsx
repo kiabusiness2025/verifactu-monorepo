@@ -4,7 +4,7 @@ import Link from 'next/link';
 export const metadata: Metadata = {
   title: 'Isaak | Asesorias',
   description:
-    'Isaak ayuda a asesorias a preparar resumentes, alertas y proximos pasos sobre clientes que trabajan con Excel, Holded y documentacion dispersa.',
+    'Isaak ayuda a asesorias a preparar resumentes, alertas y proximos pasos sobre clientes que trabajan con Excel, su ERP y documentacion dispersa.',
 };
 
 export default function IsaakAdvisorPage() {
@@ -19,7 +19,7 @@ export default function IsaakAdvisorPage() {
         </h1>
         <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-600">
           Isaak ayuda a convertir datos dispersos en resumentes, alertas y proximos pasos para la
-          asesoria. Trabaja con clientes que operan con Excel, con Holded o con documentacion
+          asesoria. Trabaja con clientes que operan con Excel, con su ERP o con documentacion
           dispersa.
         </p>
         <div className="mt-10 flex flex-col gap-3 sm:flex-row">

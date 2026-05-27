@@ -157,7 +157,7 @@ export default function IsaakPublicPhase1Landing() {
                     Modo conectado / API
                   </div>
                   <p className="mt-3 text-sm leading-7 text-slate-600">
-                    Para empresas que ya usan Holded, bancos, CRM o ecommerce. Isaak lee, cruza y
+                    Para empresas que ya usan ERP, bancos, CRM o ecommerce. Isaak lee, cruza y
                     ayuda a ejecutar tareas con permisos configurados.
                   </p>
                 </article>

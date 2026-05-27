@@ -234,7 +234,7 @@ export default function IsaakLandingClient() {
       >
         <p className="mb-5 text-sm text-slate-500">
           Habla con Isaak sin registrarte. Aquí verás su tono y criterio. Para datos reales conecta
-          tu Holded.
+          tu ERP.
         </p>
         <IsaakPublicChat />
       </Modal>
@@ -410,8 +410,8 @@ export default function IsaakLandingClient() {
               Conecta donde ya trabajas
             </h2>
             <p className="mt-3 text-base text-slate-600">
-              Isaak está disponible en Claude, ChatGPT y su propio workspace con integración nativa
-              de Holded.
+              Isaak está disponible en Claude, ChatGPT y su propio workspace con conectores nativos
+              a tu ERP y banca.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
@@ -544,13 +544,13 @@ export default function IsaakLandingClient() {
           </p>
         </div>
 
-        {/* ── Holded capabilities ── */}
+        {/* ── ERP capabilities ── */}
         <div className="mx-auto mt-6 max-w-5xl rounded-2xl border border-[#2361d8]/20 bg-[#2361d8]/5 p-6 shadow-sm">
           <h2 className="text-lg font-semibold text-[#011c67]">
-            Capacidades reales hoy con Holded
+            Capacidades reales hoy con tu ERP conectado
           </h2>
           <p className="mt-3 text-sm leading-6 text-slate-700">
-            Estas son capacidades ya disponibles en producción cuando conectas Holded.
+            Estas son capacidades ya disponibles en producción cuando conectas tu ERP.
           </p>
           <ul className="mt-4 space-y-2 text-sm leading-6 text-slate-700">
             <li className="flex items-start gap-2">

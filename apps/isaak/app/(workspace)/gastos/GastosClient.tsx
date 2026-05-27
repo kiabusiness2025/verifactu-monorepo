@@ -145,7 +145,7 @@ function UploadPanel({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
         {step === 'done' && (
           <div className="flex flex-col items-center gap-3 py-10">
             <CheckCircle2 size={32} className="text-emerald-500" />
-            <p className="text-sm font-medium text-emerald-700">Gasto registrado en Holded</p>
+            <p className="text-sm font-medium text-emerald-700">Gasto registrado en tu ERP</p>
           </div>
         )}
 
@@ -230,7 +230,7 @@ function UploadPanel({ onClose, onSuccess }: { onClose: () => void; onSuccess: (
                 className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#2361d8] py-2 text-sm font-semibold text-white hover:bg-[#1f55c0] disabled:opacity-60"
               >
                 {step === 'saving' ? <Loader2 size={14} className="animate-spin" /> : null}
-                Registrar en Holded
+                Registrar en mi ERP
               </button>
             </div>
           </div>
@@ -401,15 +401,16 @@ export default function GastosClient() {
           <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50">
             <Plug size={24} className="text-amber-500" />
           </div>
-          <p className="text-[16px] font-semibold text-[#011c67]">Holded no conectado</p>
+          <p className="text-[16px] font-semibold text-[#011c67]">ERP no conectado</p>
           <p className="mt-2 text-[13px] leading-relaxed text-slate-500">
-            Los gastos se cargan desde Holded. Conecta tu cuenta para ver tus compras y proveedores.
+            Los gastos se cargan desde tu ERP. Conecta tu contabilidad para ver tus compras y
+            proveedores.
           </p>
           <Link
             href="/settings?section=integrations"
             className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#1f55c0]"
           >
-            Conectar Holded
+            Conectar tu ERP
           </Link>
         </div>
       </div>

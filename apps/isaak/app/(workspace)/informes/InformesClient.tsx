@@ -161,7 +161,7 @@ export default function InformesClient({ year: initYear }: { year: number }) {
               href="/settings/connections"
               className="rounded-lg bg-[#2361d8] px-4 py-2 text-sm font-medium text-white hover:bg-[#1a4fc4]"
             >
-              Conectar Holded
+              Conectar tu ERP
             </a>
           </div>
         ) : !s ? (

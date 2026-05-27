@@ -124,7 +124,7 @@ export default function MailPage() {
           Gmail — Facturas de proveedores
         </h1>
         <p className="text-[12px] text-slate-500">
-          Detecta emails con facturas adjuntas y procésalos directamente como gasto en Holded
+          Detecta emails con facturas adjuntas y procésalos directamente como gasto en tu ERP
         </p>
       </div>
 

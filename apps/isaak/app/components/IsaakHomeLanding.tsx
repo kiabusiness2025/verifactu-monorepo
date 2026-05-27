@@ -216,7 +216,7 @@ const PRICE_TEASER = [
     id: 'starter',
     name: 'Starter',
     price: '19 €',
-    tagline: 'Software sectorial · Holded · Gestión financiera en tiempo real',
+    tagline: 'Software sectorial · ERP conectado · Gestión financiera en tiempo real',
     cta: 'Empezar ahora',
     href: '/signup?plan=starter',
     highlight: false,
@@ -246,7 +246,7 @@ const PRICE_TEASER = [
 export const landingMetadata: Metadata = {
   title: 'Isaak | IA empresarial que libera el 80% de tu tiempo',
   description:
-    'Isaak es la capa de inteligencia encima del software que ya usas: HotelGest, Revo, Nubimed, Holded. Gestión fiscal, alertas proactivas y CFO digital en un chat. Empieza gratis.',
+    'Isaak es la capa de inteligencia encima del software que ya usas: HotelGest, Revo, Nubimed, tu ERP. Gestión fiscal, alertas proactivas y CFO digital en un chat. Empieza gratis.',
 };
 
 export default function IsaakHomeLanding() {
@@ -719,7 +719,7 @@ export default function IsaakHomeLanding() {
                 {[
                   { value: '-80%', label: 'Tiempo en consultas recurrentes' },
                   { value: '6+', label: 'Clientes gestionados con Isaak' },
-                  { value: '100%', label: 'Acceso a datos Holded + API' },
+                  { value: '100%', label: 'Acceso a datos del ERP + API' },
                   { value: '1ª', label: 'Asesoría beta tester en España' },
                 ].map(({ value, label }) => (
                   <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-5">
@@ -859,7 +859,7 @@ export default function IsaakHomeLanding() {
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web',
             description:
-              'Copiloto fiscal y contable de IA para la pyme española. Capa de inteligencia encima de HotelGest, Revo, Nubimed, Holded y banca. Gestión fiscal, alertas proactivas y CFO digital en un chat.',
+              'Copiloto fiscal y contable de IA para la pyme española. Capa de inteligencia encima de HotelGest, Revo, Nubimed, tu ERP y banca. Gestión fiscal, alertas proactivas y CFO digital en un chat.',
             offers: {
               '@type': 'Offer',
               price: '0',
