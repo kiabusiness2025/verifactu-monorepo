@@ -54,21 +54,17 @@ export default async function ChatPage() {
           clientCompanyName={activeAdvisorClient.companyName}
         />
       )}
-      <div className="border-b border-slate-100 bg-[#fafbff] px-5 py-4">
-        <h1 className="text-[16px] font-semibold text-[#011c67]">Chat con Isaak</h1>
-        <p className="text-[12px] text-slate-500">
-          {activeAdvisorClient
-            ? `Modo asesoría — consultando datos de ${activeAdvisorClient.companyName || activeAdvisorClient.alias}`
-            : 'Pregunta lo que necesites sobre tu negocio'}
-        </p>
-      </div>
       <div className="flex-1 overflow-hidden">
         <IsaakChatSection
           context="default"
           userName={session?.name ?? null}
           holdedConnected={holdedConnected || !!activeAdvisorClient}
           isFreePlan={isFreePlan}
-          welcomeSubtitle="Pregúntame por ventas, gastos, cobros, proyectos o cualquier duda sobre tu negocio."
+          welcomeSubtitle={
+            activeAdvisorClient
+              ? `Modo asesoría — consultando datos de ${activeAdvisorClient.companyName || activeAdvisorClient.alias}`
+              : 'Pregúntame por ventas, gastos, cobros, IVA o cualquier duda fiscal.'
+          }
         />
       </div>
     </div>

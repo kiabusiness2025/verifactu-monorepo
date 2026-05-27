@@ -11,9 +11,7 @@ import {
   Mic,
   MicOff,
   Paperclip,
-  Plus,
   SendHorizonal,
-  Sparkles,
   ThumbsDown,
   ThumbsUp,
   Volume2,
@@ -236,7 +234,7 @@ function ChatInput({
         </div>
       )}
       <form
-        className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+        className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white px-3.5 py-2.5 shadow-sm focus-within:border-slate-300 focus-within:shadow-md transition"
         onSubmit={(e) => {
           e.preventDefault();
           onSubmit();
@@ -295,55 +293,17 @@ function ChatInput({
                 : placeholder
           }
           rows={1}
-          className="flex-1 resize-none bg-transparent text-[14px] leading-6 text-slate-900 outline-none placeholder:text-slate-400"
+          className="flex-1 resize-none bg-transparent py-1.5 text-[15px] leading-6 text-slate-900 outline-none placeholder:text-slate-400"
         />
         <button
           type="submit"
           disabled={loading || (!input.trim() && !selectedFile)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#2361d8] text-white transition hover:bg-[#1d55c2] disabled:cursor-not-allowed disabled:bg-slate-200"
+          aria-label="Enviar mensaje"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-900 text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
         >
           {loading ? <Loader2 size={14} className="animate-spin" /> : <SendHorizonal size={14} />}
         </button>
       </form>
-    </div>
-  );
-}
-
-// ── IntegrationBar ─────────────────────────────────────────────────────────────
-function IntegrationBar({ holdedConnected }: { holdedConnected: boolean }) {
-  return (
-    <div className="flex items-center gap-2 flex-wrap">
-      <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">
-        Conexiones
-      </span>
-      {holdedConnected ? (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[12px] font-medium text-slate-700 shadow-sm">
-          <span className="h-1.5 w-1.5 rounded-full bg-[#ff5460]" />
-          Holded
-          <span className="text-[10px] text-emerald-600">✓</span>
-        </span>
-      ) : (
-        <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-[11px] text-slate-400">
-          Holded
-          <span className="opacity-70">· no conectado</span>
-        </span>
-      )}
-      <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-[11px] text-slate-400">
-        Excel
-        <span className="opacity-70">· próximamente</span>
-      </span>
-      <span className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-200 px-2.5 py-1 text-[11px] text-slate-400">
-        Google
-        <span className="opacity-70">· próximamente</span>
-      </span>
-      <button
-        type="button"
-        title="Más integraciones próximamente"
-        className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 px-2.5 py-1 text-[11px] text-slate-400 transition hover:border-slate-400 hover:text-slate-600"
-      >
-        <Plus size={10} />
-        Añadir
-      </button>
     </div>
   );
 }
@@ -609,20 +569,22 @@ export default function IsaakChatSection({
     }
   };
 
-  // ── Empty state ────────────────────────────────────────────────────────────
+  // ── Welcome screen (Claude-style, sin IntegrationBar) ─────────────────────
   if (messages.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center px-5 py-8">
-        <div className="w-full max-w-xl">
-          <div className="mb-5 flex flex-col items-center text-center">
-            <p className="text-[18px] font-bold tracking-tight text-[#011c67]">
+      <div className="flex h-full flex-col overflow-y-auto">
+        <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-6 py-10">
+          {/* Saludo grande, centrado, claude-style */}
+          <div className="mb-8 text-center">
+            <p className="text-[28px] font-semibold tracking-tight text-slate-900 sm:text-[32px]">
               {welcomeTitle ?? buildWelcomeTitle(userName)}
             </p>
-            <p className="mt-1 text-[13px] text-slate-500">
-              {welcomeSubtitle ?? 'Tu asistente fiscal inteligente. Pregúntame lo que necesites.'}
-            </p>
+            {welcomeSubtitle && (
+              <p className="mt-2 text-[15px] text-slate-500">{welcomeSubtitle}</p>
+            )}
           </div>
 
+          {/* Composer arriba */}
           {quotaHit ? (
             <QuotaHitBanner quotaHit={quotaHit} />
           ) : (
@@ -656,13 +618,14 @@ export default function IsaakChatSection({
             </>
           )}
 
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
+          {/* Chips de sugerencias */}
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
             {chips.map((chip) => (
               <button
                 key={chip}
                 type="button"
                 onClick={() => void sendMessage(chip)}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[13px] text-slate-600 shadow-sm transition hover:border-[#2361d8]/40 hover:bg-blue-50 hover:text-[#2361d8]"
+                className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-[13px] text-slate-600 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
               >
                 {chip}
               </button>
@@ -671,39 +634,37 @@ export default function IsaakChatSection({
               <button
                 type="button"
                 onClick={() => router.push('/integrations')}
-                className="rounded-full border border-[#2361d8]/30 bg-[#edf4ff] px-3 py-1.5 text-[13px] font-medium text-[#2361d8] shadow-sm transition hover:border-[#2361d8]/50 hover:bg-[#e2edff]"
+                className="rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-[13px] font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
               >
-                Conectar Holded
+                Conectar Holded →
               </button>
             )}
           </div>
-
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
-            <IntegrationBar holdedConnected={holdedConnected} />
-          </div>
         </div>
-        <p className="mt-8 text-[11px] text-slate-400">
+        <p className="pb-4 text-center text-[11px] text-slate-400">
           Isaak puede cometer errores. Verifica información financiera importante.
         </p>
       </div>
     );
   }
 
-  // ── Chat active ────────────────────────────────────────────────────────────
+  // ── Chat active (Claude-style: sin burbujas excesivas, ancho 3xl) ─────────
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto px-5 py-4">
-        <div className="mx-auto max-w-2xl space-y-4">
+      <div className="flex-1 overflow-y-auto">
+        <div className="mx-auto max-w-3xl space-y-8 px-6 py-8">
           {messages.map((msg) =>
             msg.role === 'user' ? (
+              // Usuario: texto plano alineado derecha con fondo sutil
               <div key={msg.id} className="flex justify-end">
-                <div className="max-w-[80%] rounded-2xl bg-[#2361d8] px-4 py-3 text-[14px] leading-relaxed text-white shadow-md">
+                <div className="max-w-[85%] rounded-2xl bg-slate-100 px-4 py-2.5 text-[15px] leading-relaxed text-slate-900">
                   {msg.content}
                 </div>
               </div>
             ) : (
-              <div key={msg.id} className="flex items-start gap-3">
-                <div className="relative mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200">
+              // Assistant: SIN burbuja, solo texto fluyendo con avatar pequeño
+              <div key={msg.id} className="group relative flex items-start gap-3">
+                <div className="relative mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <Image
                     src="/Personalidad/isaak-avatar-verifactu.png"
                     alt="Isaak"
@@ -712,58 +673,58 @@ export default function IsaakChatSection({
                     className="object-cover"
                   />
                 </div>
-                <div className="group relative max-w-[85%]">
-                  <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3">
+                <div className="min-w-0 flex-1 pt-0.5">
+                  <div className="text-[15px] leading-7 text-slate-800">
                     <IsaakMarkdown text={msg.content} />
                   </div>
-                  {/* Thumbs feedback */}
-                  <div className="absolute -bottom-2 left-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
+                  {/* Acciones al hover */}
+                  <div className="mt-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
                     <button
                       type="button"
                       onClick={() => void sendFeedback(msg.id, 'thumbs_up', messages)}
                       title="Buena respuesta"
                       disabled={!!ratings[msg.id]}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
+                      className={`flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-default ${
                         ratings[msg.id] === 'thumbs_up'
-                          ? 'border-emerald-300 text-emerald-600'
-                          : 'border-slate-200 text-slate-400 hover:border-emerald-300 hover:text-emerald-600'
+                          ? 'text-emerald-600 bg-emerald-50'
+                          : 'text-slate-400 hover:bg-slate-100 hover:text-emerald-600'
                       }`}
                     >
-                      <ThumbsUp size={10} />
+                      <ThumbsUp size={13} />
                     </button>
                     <button
                       type="button"
                       onClick={() => void sendFeedback(msg.id, 'thumbs_down', messages)}
                       title="Mejorable"
                       disabled={!!ratings[msg.id]}
-                      className={`flex h-6 w-6 items-center justify-center rounded-full border bg-white shadow-sm transition disabled:cursor-default ${
+                      className={`flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-default ${
                         ratings[msg.id] === 'thumbs_down'
-                          ? 'border-rose-300 text-rose-500'
-                          : 'border-slate-200 text-slate-400 hover:border-rose-300 hover:text-rose-500'
+                          ? 'text-rose-500 bg-rose-50'
+                          : 'text-slate-400 hover:bg-slate-100 hover:text-rose-500'
                       }`}
                     >
-                      <ThumbsDown size={10} />
+                      <ThumbsDown size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => speakMessage(msg.id, msg.content)}
+                      title={speakingId === msg.id ? 'Detener' : 'Escuchar respuesta'}
+                      className={`flex h-7 w-7 items-center justify-center rounded-md transition ${
+                        speakingId === msg.id
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                      }`}
+                    >
+                      {speakingId === msg.id ? <VolumeX size={13} /> : <Volume2 size={13} />}
                     </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => speakMessage(msg.id, msg.content)}
-                    title={speakingId === msg.id ? 'Detener' : 'Escuchar respuesta'}
-                    className={`absolute -bottom-2 right-2 flex h-6 w-6 items-center justify-center rounded-full border border-slate-200 bg-white shadow-sm transition opacity-0 group-hover:opacity-100 ${
-                      speakingId === msg.id
-                        ? 'text-[#2361d8]'
-                        : 'text-slate-400 hover:text-slate-700'
-                    }`}
-                  >
-                    {speakingId === msg.id ? <VolumeX size={11} /> : <Volume2 size={11} />}
-                  </button>
                 </div>
               </div>
-            )
+            ),
           )}
           {loading && (
             <div className="flex items-start gap-3">
-              <div className="relative mt-1 h-7 w-7 shrink-0 overflow-hidden rounded-full border border-slate-200">
+              <div className="relative mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
                 <Image
                   src="/Personalidad/isaak-avatar-verifactu.png"
                   alt="Isaak"
@@ -772,8 +733,16 @@ export default function IsaakChatSection({
                   className="object-cover"
                 />
               </div>
-              <div className="rounded-2xl bg-[#f5f9ff] px-4 py-3">
-                <Loader2 size={14} className="animate-spin text-[#2361d8]" />
+              <div className="flex items-center gap-1.5 pt-2 text-slate-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400" />
+                <span
+                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+                  style={{ animationDelay: '150ms' }}
+                />
+                <span
+                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+                  style={{ animationDelay: '300ms' }}
+                />
               </div>
             </div>
           )}
@@ -781,45 +750,47 @@ export default function IsaakChatSection({
         </div>
       </div>
 
-      <div className="border-t border-slate-100 px-5 py-3">
-        {quotaHit ? (
-          <QuotaHitBanner quotaHit={quotaHit} />
-        ) : (
-          <>
-            {isFreePlan && !upgradeBannerDismissed && (
-              <div className="mb-2">
-                <UpgradeBanner onDismiss={() => setUpgradeBannerDismissed(true)} />
+      {/* Composer sticky con backdrop blur */}
+      <div className="border-t border-slate-100 bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto max-w-3xl px-6 py-3">
+          {quotaHit ? (
+            <QuotaHitBanner quotaHit={quotaHit} />
+          ) : (
+            <>
+              {isFreePlan && !upgradeBannerDismissed && (
+                <div className="mb-2">
+                  <UpgradeBanner onDismiss={() => setUpgradeBannerDismissed(true)} />
+                </div>
+              )}
+              {error && (
+                <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
+                  {error}
+                </div>
+              )}
+              <ChatInput
+                input={input}
+                loading={loading}
+                onChange={setInput}
+                onSubmit={() =>
+                  selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
+                }
+                onKeyDown={handleKeyDown}
+                onFileSelect={setSelectedFile}
+                selectedFile={selectedFile}
+                onClearFile={() => setSelectedFile(null)}
+                onMicClick={toggleMic}
+                isListening={isListening}
+                inputRef={inputRef}
+              />
+              <div className="mt-1.5 flex items-center justify-between gap-2">
+                <p className="text-[11px] text-slate-400">
+                  Isaak puede cometer errores. Verifica información financiera importante.
+                </p>
+                <EscalationButton messages={messages} />
               </div>
-            )}
-            {error && (
-              <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
-                {error}
-              </div>
-            )}
-            <ChatInput
-              input={input}
-              loading={loading}
-              onChange={setInput}
-              onSubmit={() =>
-                selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
-              }
-              onKeyDown={handleKeyDown}
-              onFileSelect={setSelectedFile}
-              selectedFile={selectedFile}
-              onClearFile={() => setSelectedFile(null)}
-              onMicClick={toggleMic}
-              isListening={isListening}
-              inputRef={inputRef}
-            />
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-              <IntegrationBar holdedConnected={holdedConnected} />
-              <EscalationButton messages={messages} />
-            </div>
-          </>
-        )}
-        <p className="mt-2 text-center text-[11px] text-slate-400">
-          Isaak puede cometer errores. Verifica información financiera importante.
-        </p>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

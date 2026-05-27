@@ -26,8 +26,9 @@ export default async function ConversationPage({ params }: Props) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="border-b border-slate-100 bg-white px-5 py-4">
-        <h1 className="truncate text-[15px] font-semibold text-slate-900">
+      {/* Header minimalista — solo título de conversación, alineado al ancho del chat */}
+      <div className="border-b border-slate-100 bg-white px-6 py-3">
+        <h1 className="mx-auto max-w-3xl truncate text-[14px] font-medium text-slate-700">
           {conversation.title ?? 'Conversación'}
         </h1>
       </div>
