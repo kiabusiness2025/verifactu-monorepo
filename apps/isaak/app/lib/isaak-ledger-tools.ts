@@ -572,6 +572,25 @@ export const LEDGER_CHAT_TOOLS = [
     },
   },
   {
+    name: 'inspector_consult',
+    description:
+      'F12 — Inspector AEAT Capa 2. Sub-agente fiscal contextual. USA esta tool cuando el usuario haga una pregunta fiscal compleja que requiera CITAS específicas al BOE/normativa: regímenes especiales, prorrata, IRPF complejo, deducibilidad concreta, plazos legales, operaciones intracom. Internamente combina perfil fiscal del tenant + búsqueda RAG en corpus AEAT + síntesis LLM con citas [1], [2], etc. Devuelve respuesta enriquecida con fuentes BOE. NO la uses para preguntas operativas simples (esas las responde el chat directamente).',
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: 'Pregunta fiscal en lenguaje natural. Ej: "¿Cuándo aplico prorrata especial?", "¿Qué retención IRPF para un alquiler de local?", "¿El IVA de la gasolina es deducible al 100%?".',
+        },
+        topK: {
+          type: 'number',
+          description: 'Máximo de pasajes BOE a usar como contexto (1-20, default 5).',
+        },
+      },
+      required: ['query'],
+    },
+  },
+  {
     name: 'isaak_ledger_get_balances',
     description:
       'Devuelve los saldos por cuenta PGC del Isaak Ledger del tenant a fecha (o hasta hoy si se omite). Útil para responder "cuánto tengo en caja", "saldo cuenta socios", "qué cuentas tienen movimiento". Devuelve también agregados (caja, socios, partidas pendientes, bancos PGC) que el Inspector consume para R128/R129.',
@@ -1763,6 +1782,55 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'search_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'inspector_consult') {
+    const query = String(args.query ?? '').trim();
+    if (!query) {
+      return {
+        ok: false,
+        error: 'invalid_query',
+        message: 'query es obligatorio (pregunta fiscal en lenguaje natural).',
+      };
+    }
+    const topK = typeof args.topK === 'number' ? args.topK : undefined;
+    try {
+      const { consultInspector } = await import('./inspector-capa-2');
+      const result = await consultInspector({
+        tenantId: ctx.tenantId,
+        query,
+        topK,
+      });
+      if (!result.ok) {
+        return {
+          ok: false,
+          error: result.error,
+          message: result.message,
+        };
+      }
+      return {
+        ok: true,
+        answer: result.answer,
+        citations: result.citations.map((c) => ({
+          index: c.index,
+          articleRef: c.articleRef,
+          title: c.title,
+          sourceUrl: c.sourceUrl,
+          snippet: c.snippet,
+        })),
+        profile: result.profile,
+        corpusHits: result.corpusHits,
+        model: result.model,
+        latencyMs: result.latencyMs,
+        message: `Inspector Capa 2 respondió con ${result.citations.length} citas BOE. Modelo: ${result.model}.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'consult_failed',
         message: err instanceof Error ? err.message : String(err),
       };
     }
