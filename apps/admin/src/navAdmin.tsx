@@ -1,17 +1,19 @@
 import {
+  Bot,
   Building2,
   FileText,
+  HeadphonesIcon,
   LayoutDashboard,
   Megaphone,
   MessageSquare,
+  Package,
   Plug,
+  ShoppingCart,
   Users,
+  Zap,
 } from 'lucide-react';
 
-// Secciones activas — orientadas a gestión de conectores (plan S0)
-// Secciones ocultas (pendientes de implementar): Pedidos, Fulfillment, Soporte,
-// Isaak, Catálogo, Métricas, Reuniones, Inversores, Documentación.
-// Marketing se reactiva en Sprint S5.
+// Secciones pendientes (placeholder aún): Métricas, Reuniones, Inversores, Documentación.
 export const navAdmin = [
   { label: 'Panel', href: '/panel', icon: <LayoutDashboard className="h-4 w-4" /> },
   {
@@ -29,5 +31,30 @@ export const navAdmin = [
     href: '/whatsapp',
     icon: <MessageSquare className="h-4 w-4" />,
     match: (p: string) => p.startsWith('/whatsapp'),
+  },
+  { label: 'Catálogo', href: '/catalog', icon: <Package className="h-4 w-4" /> },
+  {
+    label: 'Pedidos',
+    href: '/orders',
+    icon: <ShoppingCart className="h-4 w-4" />,
+    match: (p: string) => p.startsWith('/orders'),
+  },
+  {
+    label: 'Fulfillment',
+    href: '/fulfillment',
+    icon: <Zap className="h-4 w-4" />,
+    match: (p: string) => p.startsWith('/fulfillment'),
+  },
+  {
+    label: 'Soporte',
+    href: '/tickets',
+    icon: <HeadphonesIcon className="h-4 w-4" />,
+    match: (p: string) => p.startsWith('/tickets') || p.startsWith('/support-sessions'),
+  },
+  {
+    label: 'Isaak',
+    href: '/isaak',
+    icon: <Bot className="h-4 w-4" />,
+    match: (p: string) => p.startsWith('/isaak'),
   },
 ];
