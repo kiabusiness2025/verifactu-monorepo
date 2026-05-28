@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { submit190ForTenant } from '@/app/lib/isaak-modelo-190-repo';
+import { emitWebhookEvent } from '@/app/lib/isaak-webhook-emitter';
 
 export const runtime = 'nodejs';
 
@@ -33,8 +34,17 @@ export async function POST(req: NextRequest) {
         : result.error === 'duplicate_submission' || result.error === 'tax_return_not_in_draft'
           ? 409
           : 400;
-    return NextResponse.json({ error: result.error, message: result.message }, { status: httpStatus });
+    return NextResponse.json(
+      { error: result.error, message: result.message },
+      { status: httpStatus }
+    );
   }
+  void emitWebhookEvent(session.tenantId, 'tax_return.submitted', {
+    model: '190',
+    submissionId: result.submissionId,
+    payloadHash: result.payloadHash,
+  }).catch((e) => console.error('[webhook] modelo 190 submit', e));
+
   return NextResponse.json({
     ok: true,
     submissionId: result.submissionId,

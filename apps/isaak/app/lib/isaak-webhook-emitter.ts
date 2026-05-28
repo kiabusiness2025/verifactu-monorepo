@@ -18,6 +18,7 @@
 //   X-Isaak-Signature: sha256=<hmac-hex>   (HMAC-SHA256 of `${timestamp}.${body}`)
 
 import { createHmac, randomUUID } from 'crypto';
+import { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 
 // ─── Event catalogue ──────────────────────────────────────────────────────────
@@ -122,7 +123,7 @@ export async function emitWebhookEvent(
     id: randomUUID(),
     event: eventType,
     timestamp: new Date().toISOString(),
-    data,
+    data: data as Prisma.InputJsonValue,
   };
 
   let delivered = 0;

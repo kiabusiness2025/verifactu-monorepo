@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { submit130ForTenant } from '@/app/lib/isaak-modelo-130-repo';
+import { emitWebhookEvent } from '@/app/lib/isaak-webhook-emitter';
 import type { Trimestre } from '@/app/lib/fiscal-models';
 
 export const runtime = 'nodejs';
@@ -31,7 +32,7 @@ export async function POST(req: NextRequest) {
   if (!Number.isFinite(ejercicio) || ejercicio < 2020 || ejercicio > 2100) {
     return NextResponse.json(
       { error: 'invalid_ejercicio', message: 'ejercicio debe ser un año entre 2020 y 2100' },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -39,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!VALID_TRIMS.has(periodo)) {
     return NextResponse.json(
       { error: 'invalid_periodo', allowed: ['1T', '2T', '3T', '4T'] },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -50,8 +51,7 @@ export async function POST(req: NextRequest) {
     submittedBy: session.userId,
     retencionesAcumuladas:
       typeof body.retencionesAcumuladas === 'number' ? body.retencionesAcumuladas : undefined,
-    ingresosACuenta:
-      typeof body.ingresosACuenta === 'number' ? body.ingresosACuenta : undefined,
+    ingresosACuenta: typeof body.ingresosACuenta === 'number' ? body.ingresosACuenta : undefined,
   });
 
   if (!result.ok) {
@@ -63,9 +63,15 @@ export async function POST(req: NextRequest) {
           : 400;
     return NextResponse.json(
       { error: result.error, message: result.message },
-      { status: httpStatus },
+      { status: httpStatus }
     );
   }
+
+  void emitWebhookEvent(session.tenantId, 'tax_return.submitted', {
+    model: '130',
+    submissionId: result.submissionId,
+    payloadHash: result.payloadHash,
+  }).catch((e) => console.error('[webhook] modelo 130 submit', e));
 
   return NextResponse.json({
     ok: true,

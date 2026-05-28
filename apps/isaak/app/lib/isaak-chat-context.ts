@@ -78,7 +78,18 @@ export async function loadAuthenticatedChatContext(): Promise<IsaakAuthenticated
     context: businessContext,
   }).catch(() => null);
 
-  const [bankAccountCount, googleToken, microsoftToken] = await Promise.all([
+  const SECTOR_PROVIDERS = [
+    'hotelgest',
+    'revo',
+    'loyverse',
+    'woocommerce',
+    'prestashop',
+    'mindbody',
+    'inmovilla',
+    'nubimed',
+  ] as const;
+
+  const [bankAccountCount, googleToken, microsoftToken, sectorCount] = await Promise.all([
     prisma.seAccount
       .count({ where: { tenantId: session.tenantId, status: 'active' } })
       .catch(() => 0),
@@ -94,6 +105,15 @@ export async function loadAuthenticatedChatContext(): Promise<IsaakAuthenticated
         select: { id: true },
       })
       .catch(() => null),
+    prisma.externalConnection
+      .count({
+        where: {
+          tenantId: session.tenantId,
+          provider: { in: [...SECTOR_PROVIDERS] },
+          connectionStatus: 'connected',
+        },
+      })
+      .catch(() => 0),
   ]);
 
   const holdedApiKey = businessContext?.holded?.connection?.apiKey ?? null;
@@ -113,6 +133,7 @@ export async function loadAuthenticatedChatContext(): Promise<IsaakAuthenticated
       bankConnected: bankAccountCount > 0,
       googleConnected: Boolean(googleToken),
       microsoftConnected: Boolean(microsoftToken),
+      sectorConnected: sectorCount > 0,
     },
     promptContext: {
       tenantId: session.tenantId,

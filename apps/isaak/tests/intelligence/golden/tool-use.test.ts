@@ -17,7 +17,10 @@ import { isGoldenLiveMode } from '../helpers/llm-judge';
 const liveMode = isGoldenLiveMode();
 const describeIf = liveMode ? describe : describe.skip;
 
-function contextFor(authCtx: { holdedConnected?: boolean; bankConnected?: boolean }): IsaakToolContext {
+function contextFor(authCtx: {
+  holdedConnected?: boolean;
+  bankConnected?: boolean;
+}): IsaakToolContext {
   return {
     tenantId: 'test-tenant',
     userId: 'test-user',
@@ -26,6 +29,7 @@ function contextFor(authCtx: { holdedConnected?: boolean; bankConnected?: boolea
     bankConnected: Boolean(authCtx.bankConnected),
     googleConnected: false,
     microsoftConnected: false,
+    sectorConnected: false,
   };
 }
 
