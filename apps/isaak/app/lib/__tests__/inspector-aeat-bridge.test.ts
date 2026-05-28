@@ -6,7 +6,7 @@ import {
 
 describe('isInspectableWriteTool', () => {
   it('returns true for tools the bridge covers', () => {
-    expect(isInspectableWriteTool('holded_create_invoice')).toBe(true);
+    expect(isInspectableWriteTool('holded_create_invoice_draft')).toBe(true);
     expect(isInspectableWriteTool('isaak_ledger_create_entry')).toBe(true);
   });
 
@@ -22,10 +22,10 @@ describe('isInspectableWriteTool', () => {
   });
 });
 
-describe('toolUseToRuleContext — holded_create_invoice', () => {
+describe('toolUseToRuleContext — holded_create_invoice_draft', () => {
   it('aggregates items into amount/vatBase/vatAmount and firstTaxRate', () => {
     const ctx = toolUseToRuleContext({
-      toolName: 'holded_create_invoice',
+      toolName: 'holded_create_invoice_draft',
       toolInput: {
         contactId: 'c-1',
         items: [
@@ -50,7 +50,7 @@ describe('toolUseToRuleContext — holded_create_invoice', () => {
   it('returns null when no items are present', () => {
     expect(
       toolUseToRuleContext({
-        toolName: 'holded_create_invoice',
+        toolName: 'holded_create_invoice_draft',
         toolInput: { contactId: 'c-1', items: [] },
       }),
     ).toBeNull();
@@ -58,7 +58,7 @@ describe('toolUseToRuleContext — holded_create_invoice', () => {
 
   it('falls back to notes if no item names', () => {
     const ctx = toolUseToRuleContext({
-      toolName: 'holded_create_invoice',
+      toolName: 'holded_create_invoice_draft',
       toolInput: {
         contactId: 'c-1',
         items: [{ units: 1, subtotal: 100, tax: 21 }],
@@ -71,7 +71,7 @@ describe('toolUseToRuleContext — holded_create_invoice', () => {
 
   it('falls back to today when date is invalid', () => {
     const ctx = toolUseToRuleContext({
-      toolName: 'holded_create_invoice',
+      toolName: 'holded_create_invoice_draft',
       toolInput: {
         contactId: 'c-1',
         items: [{ name: 'x', units: 1, subtotal: 100, tax: 21 }],

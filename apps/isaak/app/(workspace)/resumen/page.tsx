@@ -18,6 +18,7 @@ import {
   loadIsaakWorkspaceSignals,
   type IsaakVerifactuSignal,
 } from '@/app/lib/isaak-workspace-signals';
+import { isV1Launch } from '@/app/lib/feature-flags';
 import { prisma } from '@/app/lib/prisma';
 import ResumenChart, { type MonthlyPoint } from './components/ResumenChart';
 import CashFlowChart, { type CashFlowPoint } from './components/CashFlowChart';
@@ -334,26 +335,37 @@ async function DashboardContent() {
   const hasChart =
     chartData.length > 0 && chartData.some((d) => d.sales > 0 || (d.expenses ?? 0) > 0);
 
+  // V1 LAUNCH: vista minimal. Solo el grid de 4 KPIs cards. Cash forecast,
+  // cash flow, banking warnings y los gráficos vuelven en V2+.
+  // Ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md.
+  const kpiGrid = (
+    <div className="grid grid-cols-2 gap-3 px-5 py-4 xl:grid-cols-4">
+      {displayKpis.map(({ icon: Icon, label, value, sub, color, bg }) => (
+        <div key={label} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div
+            className={`mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}
+          >
+            <Icon size={16} className={color} />
+          </div>
+          <p className="text-[11px] font-medium text-slate-500">{label}</p>
+          <p
+            className={`mt-0.5 text-lg font-bold ${value === '—' ? 'text-slate-300' : 'text-slate-800'}`}
+          >
+            {value}
+          </p>
+          <p className="mt-1 text-[11px] text-slate-400">{sub}</p>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (isV1Launch()) {
+    return kpiGrid;
+  }
+
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 px-5 py-4 xl:grid-cols-4">
-        {displayKpis.map(({ icon: Icon, label, value, sub, color, bg }) => (
-          <div key={label} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-            <div
-              className={`mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}
-            >
-              <Icon size={16} className={color} />
-            </div>
-            <p className="text-[11px] font-medium text-slate-500">{label}</p>
-            <p
-              className={`mt-0.5 text-lg font-bold ${value === '—' ? 'text-slate-300' : 'text-slate-800'}`}
-            >
-              {value}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-400">{sub}</p>
-          </div>
-        ))}
-      </div>
+      {kpiGrid}
 
       {/* ── Cash Forecast Widget ─────────────────────────────────────────── */}
       {cashForecast ? (
