@@ -15,6 +15,23 @@ import {
   isSectorToolName,
   type SectorToolName,
 } from './sector-tools';
+import { emitWebhookEvent, type IsaakWebhookEventType } from './isaak-webhook-emitter';
+
+// Mapping: write tool name → webhook event type emitted on success.
+const WRITE_TOOL_WEBHOOK_MAP: Partial<Record<string, IsaakWebhookEventType>> = {
+  holded_create_invoice: 'invoice.created',
+  holded_send_document: 'invoice.sent',
+  holded_register_payment: 'payment.registered',
+  isaak_submit_303: 'tax_return.submitted',
+  isaak_submit_130: 'tax_return.submitted',
+  isaak_submit_111: 'tax_return.submitted',
+  isaak_submit_115: 'tax_return.submitted',
+  isaak_submit_180: 'tax_return.submitted',
+  isaak_submit_190: 'tax_return.submitted',
+  isaak_submit_347: 'tax_return.submitted',
+  isaak_submit_349: 'tax_return.submitted',
+  isaak_record_tax_return: 'tax_return.submitted',
+};
 
 // F4: write actions allowed when allowWrites=true. Every write call goes
 // through the GPT-4o-mini judge before execution. The judge can allow,
@@ -247,6 +264,17 @@ export async function executeIsaakTool(
       result = await executeHoldedTool(ctx.holdedApiKey, name as HoldedToolName, toolUse.input);
     } else {
       result = { error: 'holded_not_connected', message: 'No Holded API key in context.' };
+    }
+
+    // D1: fire webhook event for successful writes (fire-and-forget — never blocks the response).
+    const webhookEvent = WRITE_TOOL_WEBHOOK_MAP[name];
+    if (webhookEvent) {
+      const r = result as Record<string, unknown>;
+      if (r.ok === true || r.success === true) {
+        void emitWebhookEvent(ctx.tenantId, webhookEvent, { toolName: name, ...r }).catch((e) =>
+          console.error('[webhook] emitWebhookEvent failed', e)
+        );
+      }
     }
 
     return {

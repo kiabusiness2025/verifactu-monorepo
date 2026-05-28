@@ -70,7 +70,14 @@ export async function getErpClient(tenantId: string): Promise<ErpClient> {
         const { MindbodyErpClient } = await import('./mindbody-erp-client');
         return new MindbodyErpClient(apiKey);
       }
-      // Inmovilla, Nubimed — stubs pending API docs
+      case 'inmovilla': {
+        const { InmovillaErpClient } = await import('./inmovilla-erp-client');
+        return new InmovillaErpClient(apiKey);
+      }
+      case 'nubimed': {
+        const { NubimedErpClient } = await import('./nubimed-erp-client');
+        return new NubimedErpClient(apiKey);
+      }
       default:
         throw new Error(`Sector provider ${conn.provider} not yet implemented`);
     }
