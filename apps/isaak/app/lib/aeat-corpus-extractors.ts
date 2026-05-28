@@ -1,4 +1,4 @@
-// R2 — Extractores de texto puros para el ingester RAG.
+﻿// R2 — Extractores de texto puros para el ingester RAG.
 //
 // Reciben el blob bruto de una fuente AEAT/BOE y devuelven texto plano
 // listo para chunkear. Diseño inyectable: el ingester acepta un
@@ -42,7 +42,7 @@ export function extractTextFromHtml(html: string): ExtractTextResult {
   s = decodeHtmlEntities(s);
 
   // Normaliza espacios pero conserva saltos de línea como párrafos
-  s = s.replace(/[ \t ]+/g, ' ');
+  s = s.replace(/[ \t]+/g, ' ');
   s = s.replace(/\n[ \t]+/g, '\n');
   s = s.replace(/[ \t]+\n/g, '\n');
   s = s.replace(/\n{3,}/g, '\n\n');
@@ -65,15 +65,11 @@ function decodeHtmlEntities(s: string): string {
     .replace(/&apos;/g, "'")
     .replace(/&#(\d+);/g, (_, d: string) => {
       const code = Number.parseInt(d, 10);
-      return Number.isFinite(code) && code > 0 && code < 0x110000
-        ? String.fromCodePoint(code)
-        : '';
+      return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : '';
     })
     .replace(/&#x([0-9a-f]+);/gi, (_, h: string) => {
       const code = Number.parseInt(h, 16);
-      return Number.isFinite(code) && code > 0 && code < 0x110000
-        ? String.fromCodePoint(code)
-        : '';
+      return Number.isFinite(code) && code > 0 && code < 0x110000 ? String.fromCodePoint(code) : '';
     });
 }
 
@@ -87,8 +83,29 @@ export type PdfTextExtractor = (buffer: Uint8Array) => Promise<ExtractTextResult
 export function makeNoopPdfExtractor(): PdfTextExtractor {
   return async () => {
     throw new Error(
-      'pdf_extractor_not_configured: instala pdf-parse y pásalo al ingester con `{ pdfExtractor: pdfParseAdapter }`.',
+      'pdf_extractor_not_configured: instala pdf-parse y pásalo al ingester con `{ pdfExtractor: makePdfParseAdapter() }`.'
     );
+  };
+}
+
+// Real adapter backed by pdf-parse. Lazy-loaded so tests that import this
+// module don't pull in the library (and its test-file side-effects) unless
+// they actually call the returned function.
+export function makePdfParseAdapter(): PdfTextExtractor {
+  return async (buffer: Uint8Array) => {
+    // pdf-parse is a CJS module; dynamic import gives us the default export.
+    const pdfParse = (await import('pdf-parse')).default as (
+      buf: Buffer
+    ) => Promise<{ text: string; numpages: number; info: Record<string, unknown> }>;
+    const result = await pdfParse(Buffer.from(buffer));
+    const title =
+      typeof result.info?.Title === 'string' && result.info.Title.trim()
+        ? result.info.Title.trim()
+        : undefined;
+    return {
+      text: result.text,
+      meta: { title, pageCount: result.numpages, contentLength: result.text.length },
+    };
   };
 }
 

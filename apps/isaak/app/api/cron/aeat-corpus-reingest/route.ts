@@ -37,17 +37,19 @@ export async function GET(req: NextRequest) {
 
   try {
     const { ingestAllSources } = await import('@/app/lib/aeat-corpus-ingester');
+    const { makePdfParseAdapter } = await import('@/app/lib/aeat-corpus-extractors');
 
     // Por defecto solo BOE consolidados + INFORMA + sede FAQs (todo HTML
     // estable). Los manuales en PDF requieren extractor configurado.
     const pdfEnabled = process.env.CORPUS_PDF_EXTRACTOR_ENABLED === '1';
     const sourceTypes = pdfEnabled
-      ? undefined // todos
+      ? undefined // todos (incluye manual_aeat PDFs)
       : (['boe', 'informa', 'sede_faq', 'doctrina_dgt'] as const);
 
     const result = await ingestAllSources({
       sourceTypes: sourceTypes as never,
       replaceAll: true, // chunking puede cambiar entre versiones
+      pdfExtractor: pdfEnabled ? makePdfParseAdapter() : undefined,
     });
 
     return NextResponse.json({

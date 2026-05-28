@@ -1,12 +1,15 @@
 import {
   extractTextFromHtml,
   makeNoopPdfExtractor,
+  makePdfParseAdapter,
   normalizeExtractedText,
 } from '../aeat-corpus-extractors';
 
 describe('extractTextFromHtml', () => {
   it('captures <title> as meta', () => {
-    const out = extractTextFromHtml('<html><head><title>LIVA Art. 96</title></head><body><p>x</p></body></html>');
+    const out = extractTextFromHtml(
+      '<html><head><title>LIVA Art. 96</title></head><body><p>x</p></body></html>'
+    );
     expect(out.meta?.title).toBe('LIVA Art. 96');
   });
 
@@ -58,12 +61,7 @@ describe('normalizeExtractedText', () => {
   });
 
   it('strips page headers/footers', () => {
-    const input = [
-      'Artículo 96',
-      'No deducibles',
-      'Página 23',
-      'continúa el texto',
-    ].join('\n');
+    const input = ['Artículo 96', 'No deducibles', 'Página 23', 'continúa el texto'].join('\n');
     const out = normalizeExtractedText(input);
     expect(out).not.toMatch(/^Página 23$/m);
     expect(out).toContain('continúa el texto');
@@ -88,7 +86,14 @@ describe('makeNoopPdfExtractor', () => {
   it('throws an informative error when invoked', async () => {
     const extractor = makeNoopPdfExtractor();
     await expect(extractor(new Uint8Array([1, 2, 3]))).rejects.toThrow(
-      /pdf_extractor_not_configured/,
+      /pdf_extractor_not_configured/
     );
+  });
+});
+
+describe('makePdfParseAdapter', () => {
+  it('returns a function (the adapter itself is not invoked in unit tests)', () => {
+    const adapter = makePdfParseAdapter();
+    expect(typeof adapter).toBe('function');
   });
 });
