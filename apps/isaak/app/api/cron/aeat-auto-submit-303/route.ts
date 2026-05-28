@@ -14,11 +14,7 @@ import { timingSafeEqual, randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import { prisma } from '@/app/lib/prisma';
-import {
-  compute303ForTenant,
-  submit303ForTenant,
-  buildNotesFromResult,
-} from '@/app/lib/isaak-modelo-303-repo';
+import { compute303ForTenant, submit303ForTenant } from '@/app/lib/isaak-modelo-303-repo';
 import type { Trimestre } from '@/app/lib/fiscal-models';
 
 export const runtime = 'nodejs';
