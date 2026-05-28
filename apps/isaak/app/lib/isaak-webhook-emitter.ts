@@ -138,7 +138,10 @@ export async function emitWebhookEvent(
           endpointId: ep.id,
           tenantId,
           eventType,
-          payload: payloadBase,
+          // Cast: payloadBase.data tiene tipo `unknown` (input genérico de
+          // la función). Prisma rechaza unknown en columnas JSON aunque en
+          // runtime acepta cualquier JSON-serializable. Safe cast.
+          payload: payloadBase as unknown as Prisma.InputJsonValue,
           status: 'pending',
           attempts: 0,
         },
