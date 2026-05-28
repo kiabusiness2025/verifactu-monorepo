@@ -52,6 +52,10 @@
     {
       "path": "/api/cron/app-health",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/webhooks-dispatch",
+      "schedule": "* * * * *"
     }
   ]
 }

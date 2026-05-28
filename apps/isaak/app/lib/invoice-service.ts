@@ -1,5 +1,6 @@
 import { createHash } from 'crypto';
 import { prisma } from './prisma';
+import { enqueueWebhookDelivery } from './webhooks';
 
 export type CreateInvoiceInput = {
   tenantId: string;
@@ -176,6 +177,38 @@ export async function issueIsaakInvoice(invoiceId: string, tenantId: string): Pr
       verifactuLastError: aeatError?.slice(0, 1000) ?? null,
     } as never,
   });
+
+  // Outbound webhooks — best effort. The invoice is already issued; webhook
+  // failures must NOT propagate to the caller. We only fire when AEAT
+  // accepted the registration (not when status is 'rejected').
+  if (verifactuStatus !== 'rejected') {
+    try {
+      await enqueueWebhookDelivery({
+        tenantId,
+        eventType: 'invoice.issued',
+        data: {
+          invoiceId: invoice.id,
+          number: invoice.number,
+          amount: amountGross,
+          amountNet,
+          amountTax,
+          currency: 'EUR',
+          customerName: invoice.customerName,
+          customerNif: invoice.customerNif,
+          issueDate: invoice.issueDate.toISOString().slice(0, 10),
+          verifactuHash,
+          verifactuCsv,
+          verifactuStatus,
+        },
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[invoice-service] enqueueWebhookDelivery(invoice.issued) failed',
+        err instanceof Error ? err.message : err
+      );
+    }
+  }
 
   return { ok: true, verifactuStatus, verifactuHash, verifactuCsv };
 }

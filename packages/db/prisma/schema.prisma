@@ -599,6 +599,7 @@ model Tenant {
   holdedMcpPersonalAccessTokens HoldedMcpPersonalAccessToken[]
   holdedMcpPatAuditLogs         HoldedMcpPatAuditLog[]
   isaakWebhookEndpoints         IsaakWebhookEndpoint[]
+  isaakWebhookDeliveries        IsaakWebhookDelivery[]
   isaakProposedActions          IsaakProposedAction[]
   gcMandates                    GcMandate[]
   gcPayments                    GcPayment[]
@@ -2468,10 +2469,42 @@ model IsaakWebhookEndpoint {
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant                 @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveries IsaakWebhookDelivery[]
 
   @@index([tenantId])
   @@map("isaak_webhook_endpoints")
+}
+
+/// Outbound webhook delivery attempt to a customer-registered endpoint.
+/// One row per (event × endpoint). The dispatcher cron processes rows in
+/// status='pending' with nextAttemptAt <= now, retries on failure with
+/// exponential backoff, and gives up after 6 attempts (status='dead').
+model IsaakWebhookDelivery {
+  id               String    @id @default(cuid())
+  tenantId         String    @map("tenant_id") @db.Uuid
+  endpointId       String    @map("endpoint_id")
+  /// Event type, e.g. "invoice.issued"
+  eventType        String    @map("event_type")
+  /// Stable event identifier surfaced to the client in payload.id. Format: evt_<ts>_<rand8>
+  eventId          String    @map("event_id")
+  payload          Json
+  /// "pending" | "delivered" | "failed" | "dead"
+  status           String
+  attempts         Int       @default(0)
+  nextAttemptAt    DateTime? @map("next_attempt_at") @db.Timestamptz
+  lastError        String?   @map("last_error")
+  lastStatusCode   Int?      @map("last_status_code")
+  lastResponseBody String?   @map("last_response_body") @db.VarChar(1024)
+  deliveredAt      DateTime? @map("delivered_at") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  endpoint IsaakWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([status, nextAttemptAt])
+  @@index([tenantId, eventType])
+  @@map("isaak_webhook_deliveries")
 }
 
 /// Personal Access Token for the Holded MCP connector.
