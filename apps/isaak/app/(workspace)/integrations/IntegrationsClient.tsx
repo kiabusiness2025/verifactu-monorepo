@@ -36,6 +36,7 @@ import {
   Webhook,
   Zap,
 } from 'lucide-react';
+import { ISAAK_V1_LAUNCH } from '@/app/lib/feature-flags';
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -1615,6 +1616,9 @@ export default function IntegrationsClient() {
   }, [activeCategory, q]);
 
   function itemVisible(item: IntegrationMeta) {
+    // V1 LAUNCH: solo Holded. El resto se reactiva quitando el flag o pasando a V2.
+    // Ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md.
+    if (ISAAK_V1_LAUNCH && item.id !== 'holded') return false;
     if (!q) return true;
     return item.name.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q);
   }

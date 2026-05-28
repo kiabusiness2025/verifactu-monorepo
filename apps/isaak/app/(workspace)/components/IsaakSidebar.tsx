@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   Briefcase,
   BarChart3,
+  Bell,
   Building2,
   CalendarDays,
   ChevronLeft,
@@ -37,6 +38,7 @@ import {
   Users,
   Users2,
 } from 'lucide-react';
+import { ISAAK_V1_LAUNCH } from '@/app/lib/feature-flags';
 
 type ConversationItem = {
   id: string;
@@ -71,7 +73,12 @@ type WhitelabelConfig = {
 // Reorganización 2026-05: agrupamos por dominio del usuario, no por
 // implementación interna. Fiscal y Canales antes estaban dispersos entre
 // sidebar y profile popover, causando confusión.
-const NAV_GROUPS = [
+//
+// V1 LAUNCH (2026-05-28): bajo flag ISAAK_V1_LAUNCH la nav se colapsa
+// a 4 entradas únicas (Chat / Resumen / Alertas / Ajustes en el popover)
+// para reducir la superficie al MVP Holded. El resto del código vive
+// intacto y se reactivará en V2+. Ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md
+const NAV_GROUPS_FULL = [
   {
     items: [
       { href: '/chat', label: 'Chat', icon: MessageSquare },
@@ -115,10 +122,22 @@ const NAV_GROUPS = [
   },
 ] as const;
 
+const NAV_GROUPS_V1 = [
+  {
+    items: [
+      { href: '/chat', label: 'Chat', icon: MessageSquare },
+      { href: '/resumen', label: 'Resumen', icon: BarChart3 },
+      { href: '/alertas', label: 'Alertas', icon: Bell },
+    ],
+  },
+] as const;
+
+const NAV_GROUPS = ISAAK_V1_LAUNCH ? NAV_GROUPS_V1 : NAV_GROUPS_FULL;
+
 // ── Profile popover ────────────────────────────────────────────────────────
 // Solo CONFIGURACIÓN del usuario y de la cuenta. Las páginas operativas
 // (modelos, canales, inspector) viven en la sidebar principal.
-const PROFILE_MENU = [
+const PROFILE_MENU_FULL = [
   { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
   { href: '/settings?section=isaak', label: 'Personalizar Isaak', icon: Sparkles },
@@ -127,6 +146,15 @@ const PROFILE_MENU = [
   { href: '/advisor', label: 'Modo Asesoría', icon: Briefcase },
   { href: '/sede-corpus', label: 'Corpus AEAT (admin)', icon: Database },
 ] as const;
+
+const PROFILE_MENU_V1 = [
+  { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
+  { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
+  { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
+  { href: '/integrations', label: 'Integración Holded', icon: Plug },
+] as const;
+
+const PROFILE_MENU = ISAAK_V1_LAUNCH ? PROFILE_MENU_V1 : PROFILE_MENU_FULL;
 
 function formatRelativeDate(value: Date | string) {
   try {
