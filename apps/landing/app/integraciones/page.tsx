@@ -57,9 +57,9 @@ const erpConnectors = [
     statusColor: 'bg-emerald-100 text-emerald-800',
     title: 'Holded',
     body: 'El ERP de referencia para pymes españolas. Facturación, CRM, contabilidad y gastos — Isaak convierte tus datos en asesoramiento fiscal proactivo.',
-    cta: 'Conectar Holded',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    cta: 'Cómo conectar',
+    href: '/integraciones/ayuda/holded',
+    external: false,
   },
   {
     icon: Hotel,
@@ -77,9 +77,9 @@ const erpConnectors = [
     statusColor: 'bg-emerald-100 text-emerald-800',
     title: 'Revo XEF — Restaurantes',
     body: 'Tu TPV Revo conectado con Isaak. Cierres diarios, IVA reducido al 10%, desglose por servicio y modelo 303 trimestral automático.',
-    cta: 'Conectar ahora',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    cta: 'Cómo conectar',
+    href: '/integraciones/ayuda/revo-xef',
+    external: false,
   },
   {
     icon: Zap,
@@ -87,9 +87,9 @@ const erpConnectors = [
     statusColor: 'bg-emerald-100 text-emerald-800',
     title: 'Loyverse — Retail y TPV',
     body: 'El TPV en la nube para tiendas y comercios. Ventas, inventario, empleados e IVA repercutido — Isaak prepara tu modelo 303 desde los datos reales de caja.',
-    cta: 'Conectar ahora',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    cta: 'Cómo conectar',
+    href: '/integraciones/ayuda/loyverse',
+    external: false,
   },
   {
     icon: ShoppingCart,
@@ -97,9 +97,9 @@ const erpConnectors = [
     statusColor: 'bg-emerald-100 text-emerald-800',
     title: 'WooCommerce — Tiendas online',
     body: 'La plataforma e-commerce más usada en España. Ventas online, devoluciones, IVA intracomunitario y facturación electrónica automática.',
-    cta: 'Conectar ahora',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    cta: 'Cómo conectar',
+    href: '/integraciones/ayuda/woocommerce',
+    external: false,
   },
   {
     icon: ShoppingCart,
@@ -107,9 +107,9 @@ const erpConnectors = [
     statusColor: 'bg-emerald-100 text-emerald-800',
     title: 'PrestaShop — E-commerce',
     body: 'La plataforma e-commerce de referencia en España. Pedidos, devoluciones, múltiples tipos de IVA y gestión de marketplaces — Isaak calcula tu posición fiscal en tiempo real.',
-    cta: 'Conectar ahora',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    cta: 'Cómo conectar',
+    href: '/integraciones/ayuda/prestashop',
+    external: false,
   },
   {
     icon: Dumbbell,
@@ -117,9 +117,9 @@ const erpConnectors = [
     statusColor: 'bg-emerald-100 text-emerald-800',
     title: 'Mindbody — Gimnasios y wellness',
     body: 'Centros deportivos, spas y estudios de yoga. Membresías, reservas de clases e IVA de servicios deportivos — todo en el modelo 303 trimestral.',
-    cta: 'Conectar ahora',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    cta: 'Cómo conectar',
+    href: '/integraciones/ayuda/mindbody',
+    external: false,
   },
   {
     icon: Stethoscope,
@@ -139,56 +139,56 @@ const paymentConnectors = [
     body: 'Pagos online, suscripciones y marketplaces. Isaak consolida tus cobros de Stripe con el resto de tu contabilidad y prepara el IVA repercutido.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/stripe',
+    external: false,
   },
   {
     title: 'Mollie',
     body: 'La pasarela europea de pagos por excelencia. Cobros, reembolsos y liquidaciones — Isaak los convierte en asientos contables listos para tu modelo 303.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/mollie',
+    external: false,
   },
   {
     title: 'PayPal',
     body: 'Cobros en PayPal integrados con tu fiscalidad española. Isaak calcula el IVA de tus ventas internacionales y gestiona las diferencias de cambio.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/paypal',
+    external: false,
   },
   {
     title: 'Redsys',
     body: 'El gateway bancario español que procesa el 90% del e-commerce en España. Bizum, tarjeta y SEPA con IVA desglosado automáticamente.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/redsys',
+    external: false,
   },
   {
     title: 'Paylands',
     body: 'Gateway español con Bizum nativo. Transacciones, liquidaciones y cálculo de IVA en tiempo real para negocios que operan en España.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/paylands',
+    external: false,
   },
   {
     title: 'GoCardless',
     body: 'Cobros recurrentes por domiciliación bancaria SEPA. Isaak reconcilia tus mandatos, gestiona los impagos y cuadra con tu contabilidad.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/gocardless',
+    external: false,
   },
   {
     title: 'SumUp',
     body: 'TPV físico para cobros presenciales. Ventas, propinas y reembolsos — Isaak cruza tus cobros de SumUp con el cierre de caja diario.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/sumup',
+    external: false,
   },
 ];
 
@@ -198,24 +198,24 @@ const crmConnectors = [
     body: 'Tu pipeline de ventas conectado con la fiscalidad real. Isaak cruzará cada deal cerrado con su factura, IVA y asiento contable correspondiente.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/hubspot',
+    external: false,
   },
   {
     title: 'Salesforce',
     body: 'Oportunidades, cuentas y contactos de Salesforce integrados con Isaak. Isaak convierte tu pipeline en previsión fiscal trimestral automática.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/salesforce',
+    external: false,
   },
   {
     title: 'Pipedrive',
     body: 'El CRM más usado por los equipos de ventas europeos. Deals, contactos y organizaciones — Isaak convierte tu pipeline en visibilidad fiscal en tiempo real.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/pipedrive',
+    external: false,
   },
 ];
 
@@ -225,48 +225,48 @@ const bankingConnectors = [
     body: 'El mayor banco español por activos. Cuentas corrientes, saldos en tiempo real y movimientos sincronizados con Isaak vía PSD2. Conciliación bancaria automática.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/banking',
-    external: true,
+    href: '/integraciones/ayuda/open-banking',
+    external: false,
   },
   {
     title: 'Santander',
     body: 'Banco internacional con presencia global. Cuentas de empresa y particular conectadas con Isaak para conciliación automática de cobros y pagos.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/banking',
-    external: true,
+    href: '/integraciones/ayuda/open-banking',
+    external: false,
   },
   {
     title: 'CaixaBank',
     body: 'La mayor caja de ahorros española. Movimientos de cuenta, recibos domiciliados y préstamos integrados con la contabilidad de Isaak en tiempo real.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/banking',
-    external: true,
+    href: '/integraciones/ayuda/open-banking',
+    external: false,
   },
   {
     title: 'ING España',
     body: 'El banco digital de referencia para autónomos y pymes. Cuenta Nómina, Cuenta Negocio y movimientos sincronizados automáticamente con Isaak.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/banking',
-    external: true,
+    href: '/integraciones/ayuda/open-banking',
+    external: false,
   },
   {
     title: 'Sabadell · Bankinter · Unicaja',
     body: 'Banco Sabadell, Bankinter y Unicaja disponibles vía Open Banking PSD2. Conecta cualquiera de los tres desde Isaak con una sola autorización.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/banking',
-    external: true,
+    href: '/integraciones/ayuda/open-banking',
+    external: false,
   },
   {
     title: '+30 bancos españoles y europeos',
     body: 'Kutxabank, Ibercaja, Abanca, Cajamar, Revolut, N26, Wise y más. Todos vía Enable Banking (PSD2 AIS). Si tu banco tiene open banking, Isaak puede conectarse.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/banking',
-    external: true,
+    href: '/integraciones/ayuda/open-banking',
+    external: false,
   },
 ];
 
@@ -276,8 +276,8 @@ const logisticsConnectors = [
     body: 'El agregador de transportistas líder en Europa. Envíos, devoluciones y costes logísticos de todos tus carriers desde una sola integración.',
     status: 'Disponible',
     statusColor: 'bg-emerald-100 text-emerald-800',
-    href: 'https://isaak.verifactu.business/integrations',
-    external: true,
+    href: '/integraciones/ayuda/sendcloud',
+    external: false,
   },
   {
     title: 'DHL Express · SEUR · MRW · GLS',
@@ -579,7 +579,13 @@ export default function IntegracionesPage() {
               <ConnectorCard
                 key={c.title}
                 {...c}
-                cta={c.status === 'Disponible' ? 'Conectar ahora' : 'Solicitar integración'}
+                cta={
+                  c.external
+                    ? 'Conectar ahora'
+                    : c.status === 'Disponible'
+                      ? 'Cómo conectar'
+                      : 'Solicitar integración'
+                }
               />
             ))}
           </div>
@@ -600,7 +606,13 @@ export default function IntegracionesPage() {
               <ConnectorCard
                 key={c.title}
                 {...c}
-                cta={c.status === 'Disponible' ? 'Conectar ahora' : 'Solicitar integración'}
+                cta={
+                  c.external
+                    ? 'Conectar ahora'
+                    : c.status === 'Disponible'
+                      ? 'Cómo conectar'
+                      : 'Solicitar integración'
+                }
               />
             ))}
           </div>
@@ -618,7 +630,7 @@ export default function IntegracionesPage() {
           />
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {bankingConnectors.map((c) => (
-              <ConnectorCard key={c.title} {...c} cta="Conectar banco" />
+              <ConnectorCard key={c.title} {...c} cta="Cómo conectar" />
             ))}
           </div>
         </Container>
@@ -638,7 +650,13 @@ export default function IntegracionesPage() {
               <ConnectorCard
                 key={c.title}
                 {...c}
-                cta={c.status === 'Disponible' ? 'Conectar ahora' : 'Solicitar integración'}
+                cta={
+                  c.external
+                    ? 'Conectar ahora'
+                    : c.status === 'Disponible'
+                      ? 'Cómo conectar'
+                      : 'Solicitar integración'
+                }
               />
             ))}
           </div>
