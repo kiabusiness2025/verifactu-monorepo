@@ -41,9 +41,7 @@ const HOLDED_TO_LEDGER_DOC_TYPE: Record<HoldedDocType, LedgerDocType | null> = {
   purchaseorder: null,
 };
 
-export function ledgerDocTypeForHolded(
-  holdedDocType: HoldedDocType
-): LedgerDocType | null {
+export function ledgerDocTypeForHolded(holdedDocType: HoldedDocType): LedgerDocType | null {
   return HOLDED_TO_LEDGER_DOC_TYPE[holdedDocType];
 }
 
@@ -90,9 +88,7 @@ export type HoldedDocLike = {
   notes?: unknown;
 };
 
-export type MapResult =
-  | { ok: true; input: AppendEntryInput }
-  | { ok: false; reason: string };
+export type MapResult = { ok: true; input: AppendEntryInput } | { ok: false; reason: string };
 
 export function mapHoldedDocToAppendInput(args: {
   doc: HoldedDocLike;
@@ -125,9 +121,11 @@ export function mapHoldedDocToAppendInput(args: {
   const taxBase = toDecimalString(doc.subtotal);
   const vatAmount = toDecimalString(doc.tax);
 
-  const contactObj = (doc.contact ?? null) as
-    | { id?: unknown; name?: unknown; vatnumber?: unknown }
-    | null;
+  const contactObj = (doc.contact ?? null) as {
+    id?: unknown;
+    name?: unknown;
+    vatnumber?: unknown;
+  } | null;
   const counterpartyName =
     (contactObj?.name ? String(contactObj.name).trim() : '') ||
     (typeof doc.contactName === 'string' ? doc.contactName.trim() : '') ||
@@ -151,6 +149,27 @@ export function mapHoldedDocToAppendInput(args: {
 
   const sourceSystem: LedgerSourceSystem = 'holded';
 
+  // PGC 2007 inference — conservative defaults. The actual account
+  // depends on the product/service category, which Holded doesn't
+  // expose at the document level. Use these as starting points:
+  //   invoice     → 430 Clientes / 700 Ventas mercaderías
+  //   salesreceipt→ 572 Bancos   / 700 (cobro en el acto)
+  //   creditnote  → 700          / 430 (abono al cliente, reverso)
+  //   purchase    → 600 Compras  / 400 Proveedores
+  //   purchaserefund → 400       / 600 (devolución, reverso)
+  const PGC_BY_HOLDED_DOC: Record<HoldedDocType, { debit: string; credit: string } | null> = {
+    invoice: { debit: '430', credit: '700' },
+    salesreceipt: { debit: '572', credit: '700' },
+    creditnote: { debit: '700', credit: '430' },
+    purchase: { debit: '600', credit: '400' },
+    purchaserefund: { debit: '400', credit: '600' },
+    // Non-fiscal — never reach this path (filtered above).
+    estimate: null,
+    proforma: null,
+    purchaseorder: null,
+  };
+  const pgc = PGC_BY_HOLDED_DOC[holdedDocType];
+
   return {
     ok: true,
     input: {
@@ -165,8 +184,8 @@ export function mapHoldedDocToAppendInput(args: {
       taxBase,
       vatRate: null, // Holded returns total tax amount, not the rate.
       vatAmount,
-      accountDebit: null, // PGC mapping out of scope at import time.
-      accountCredit: null,
+      accountDebit: pgc?.debit ?? null,
+      accountCredit: pgc?.credit ?? null,
       description,
       sourceSystem,
       holdedId,

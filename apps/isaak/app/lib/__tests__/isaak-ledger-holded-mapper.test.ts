@@ -106,9 +106,12 @@ describe('mapHoldedDocToAppendInput', () => {
     expect(result.input.sourceSystem).toBe('holded');
     expect(result.input.holdedId).toBe('h-abc123');
     expect(result.input.currency).toBe('EUR');
+    // PGC inference: invoice → 430 Clientes / 700 Ventas
+    expect(result.input.accountDebit).toBe('430');
+    expect(result.input.accountCredit).toBe('700');
   });
 
-  it('maps a purchase to invoice_in', () => {
+  it('maps a purchase to invoice_in with PGC 600/400', () => {
     const result = mapHoldedDocToAppendInput({
       doc: holdedDoc({ _id: 'h-pur-1' }),
       holdedDocType: 'purchase',
@@ -116,7 +119,32 @@ describe('mapHoldedDocToAppendInput', () => {
       createdBy: 'isaak-auto',
     });
     expect(result.ok).toBe(true);
-    if (result.ok) expect(result.input.docType).toBe('invoice_in');
+    if (!result.ok) return;
+    expect(result.input.docType).toBe('invoice_in');
+    expect(result.input.accountDebit).toBe('600');
+    expect(result.input.accountCredit).toBe('400');
+  });
+
+  it('PGC inference — all fiscal doc types', () => {
+    const cases: Array<[import('../isaak-ledger-holded-mapper').HoldedDocType, string, string]> = [
+      ['invoice', '430', '700'],
+      ['salesreceipt', '572', '700'],
+      ['creditnote', '700', '430'],
+      ['purchase', '600', '400'],
+      ['purchaserefund', '400', '600'],
+    ];
+    for (const [docType, debit, credit] of cases) {
+      const r = mapHoldedDocToAppendInput({
+        doc: holdedDoc({ _id: `h-${docType}` }),
+        holdedDocType: docType,
+        tenantId: TENANT,
+        createdBy: 'isaak-auto',
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) continue;
+      expect(r.input.accountDebit).toBe(debit);
+      expect(r.input.accountCredit).toBe(credit);
+    }
   });
 
   it('rejects non-fiscal doc types (estimate)', () => {
