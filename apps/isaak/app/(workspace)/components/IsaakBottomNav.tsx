@@ -2,15 +2,28 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BarChart3, MessageSquare, Receipt, Settings, TrendingUp } from 'lucide-react';
+import { BarChart3, Bell, MessageSquare, Receipt, Settings, TrendingUp } from 'lucide-react';
+import { ISAAK_V1_LAUNCH } from '@/app/lib/feature-flags';
 
-const NAV_ITEMS = [
+// V1 LAUNCH (2026-05-28): bottom nav móvil colapsado para alinear con
+// sidebar reducido. Ventas/Gastos vuelven en V2+ cuando expongamos
+// contabilidad completa. Ver feature-flags.ts.
+const NAV_ITEMS_FULL = [
   { href: '/chat', label: 'Chat', icon: MessageSquare },
   { href: '/resumen', label: 'Resumen', icon: BarChart3 },
   { href: '/ventas', label: 'Ventas', icon: TrendingUp },
   { href: '/gastos', label: 'Gastos', icon: Receipt },
   { href: '/settings', label: 'Ajustes', icon: Settings },
 ];
+
+const NAV_ITEMS_V1 = [
+  { href: '/chat', label: 'Chat', icon: MessageSquare },
+  { href: '/resumen', label: 'Resumen', icon: BarChart3 },
+  { href: '/alertas', label: 'Alertas', icon: Bell },
+  { href: '/settings', label: 'Ajustes', icon: Settings },
+];
+
+const NAV_ITEMS = ISAAK_V1_LAUNCH ? NAV_ITEMS_V1 : NAV_ITEMS_FULL;
 
 export default function IsaakBottomNav() {
   const pathname = usePathname();
