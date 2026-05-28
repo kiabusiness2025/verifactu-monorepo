@@ -90,7 +90,8 @@ export function toolUseToRuleContext(args: {
   const now = args.now ?? new Date();
   const input = (args.toolInput ?? {}) as Record<string, unknown>;
 
-  if (args.toolName === 'holded_create_invoice') {
+  // V1 LAUNCH: el tool se renombró a holded_create_invoice_draft.
+  if (args.toolName === 'holded_create_invoice_draft') {
     const items = Array.isArray(input.items)
       ? (input.items as HoldedInvoiceItem[])
       : [];
@@ -203,5 +204,5 @@ export const INSPECTOR_SKIPPED_TOOLS = new Set<string>([
 
 export function isInspectableWriteTool(toolName: string): boolean {
   if (INSPECTOR_SKIPPED_TOOLS.has(toolName)) return false;
-  return toolName === 'holded_create_invoice' || toolName === 'isaak_ledger_create_entry';
+  return toolName === 'holded_create_invoice_draft' || toolName === 'isaak_ledger_create_entry';
 }

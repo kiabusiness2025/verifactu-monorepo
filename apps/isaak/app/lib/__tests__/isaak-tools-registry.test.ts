@@ -72,7 +72,7 @@ describe('buildReadOnlyToolsForContext', () => {
       ctx({ holdedConnected: true, holdedApiKey: 'sk-test' })
     );
     const names = tools.map((t) => t.name);
-    expect(names).not.toContain('holded_create_invoice');
+    expect(names).not.toContain('holded_create_invoice_draft');
     expect(names).not.toContain('holded_register_payment');
     expect(names).not.toContain('holded_create_contact');
     expect(names).not.toContain('holded_send_document');
@@ -149,7 +149,7 @@ describe('buildReadOnlyToolsForContext', () => {
 
   describe('writes (F4)', () => {
     it('isWriteToolName flags Holded write tools', () => {
-      expect(isWriteToolName('holded_create_invoice')).toBe(true);
+      expect(isWriteToolName('holded_create_invoice_draft')).toBe(true);
       expect(isWriteToolName('holded_register_payment')).toBe(true);
       expect(isWriteToolName('holded_create_contact')).toBe(true);
       expect(isWriteToolName('holded_send_document')).toBe(true);
@@ -166,7 +166,7 @@ describe('buildReadOnlyToolsForContext', () => {
         ctx({ holdedConnected: true, holdedApiKey: 'sk' })
       );
       const names = tools.map((t) => t.name);
-      expect(names).not.toContain('holded_create_invoice');
+      expect(names).not.toContain('holded_create_invoice_draft');
       expect(names).not.toContain('holded_register_payment');
     });
 
@@ -176,7 +176,7 @@ describe('buildReadOnlyToolsForContext', () => {
         { allowWrites: true }
       );
       const names = tools.map((t) => t.name);
-      expect(names).toContain('holded_create_invoice');
+      expect(names).toContain('holded_create_invoice_draft');
       expect(names).toContain('holded_register_payment');
       expect(names).toContain('holded_create_contact');
       expect(names).toContain('holded_send_document');
@@ -319,7 +319,7 @@ describe('buildReadOnlyToolsForContext', () => {
       const names = tools.map((t) => t.name);
       expect(names).toContain('isaak_ledger_create_entry');
       expect(names).toContain('isaak_ledger_import_holded');
-      expect(names).toContain('holded_create_invoice');
+      expect(names).toContain('holded_create_invoice_draft');
       expect(names).toContain('holded_list_documents');
     });
   });

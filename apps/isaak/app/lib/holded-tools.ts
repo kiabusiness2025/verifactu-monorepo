@@ -2,23 +2,38 @@ import {
   holdedGetChartOfAccounts,
   holdedGetContact,
   holdedGetDocument,
+  holdedGetDocumentPdf,
   holdedGetJournal,
   holdedGetPnL,
   holdedGetVerifactuStatus,
   holdedListContacts,
   holdedListDocuments,
   holdedListEmployees,
+  holdedListNumberingSeries,
   holdedListPayments,
   holdedListProducts,
   holdedListProjects,
+  holdedListTaxes,
   holdedListTreasuryAccounts,
   holdedSendDocument,
-  holdedCreateInvoice,
+  holdedCreateInvoiceDraft,
   holdedRegisterPayment,
   holdedCreateContact,
 } from './holded-api';
 
-// Anthropic tool definitions for Isaak chat — 14 tools (10 lectura + 4 nuevas)
+// Anthropic tool definitions for Isaak chat.
+//
+// V1 LAUNCH (2026-05-28): 20 tools, todas centradas en invoicing + contabilidad.
+// CRM funnels, leads, stock, warehouses, time-records, project tasks quedan
+// fuera del MVP a propósito para no saturar el contexto del LLM.
+//
+// Cambios respecto a la versión previa:
+//   - holded_create_invoice → holded_create_invoice_draft (fuerza approveDoc=false)
+//   - + holded_list_taxes
+//   - + holded_list_numbering_series
+//   - + holded_get_document_pdf
+//
+// Ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md.
 export const HOLDED_CHAT_TOOLS = [
   {
     name: 'holded_list_documents',
@@ -104,7 +119,8 @@ export const HOLDED_CHAT_TOOLS = [
   },
   {
     name: 'holded_get_journal',
-    description: 'Devuelve asientos contables del libro diario de Holded en un rango de fechas.',
+    description:
+      'Devuelve asientos contables del libro diario (daily book) de Holded en un rango de fechas. Si el usuario pregunta por "libro diario", "diario contable" o "asientos del mes" responde con esta tool.',
     input_schema: {
       type: 'object',
       properties: {
@@ -198,9 +214,9 @@ export const HOLDED_CHAT_TOOLS = [
     },
   },
   {
-    name: 'holded_create_invoice',
+    name: 'holded_create_invoice_draft',
     description:
-      'Crea una factura de venta en Holded. IMPORTANTE: antes de ejecutar, muestra al usuario el resumen (cliente, líneas, importe total con IVA) y espera su confirmación explícita. Si no sabes el contactId, usa holded_list_contacts primero para buscarlo.',
+      'Crea una factura de venta en Holded en estado BORRADOR. El servidor fuerza approveDoc=false para que NUNCA se emita ni se firme automáticamente: el usuario debe aprobarla manualmente en Holded antes de que tenga efectos legales (Verifactu / AEAT). Antes de ejecutar, muestra al usuario el resumen (cliente, líneas, importe total con IVA) y espera su confirmación. Si no sabes el contactId, usa holded_list_contacts primero. Si necesitas el impuesto correcto del cliente, usa holded_list_taxes.',
     input_schema: {
       type: 'object',
       properties: {
@@ -235,6 +251,34 @@ export const HOLDED_CHAT_TOOLS = [
         },
       },
       required: ['contactId', 'items', 'confirmed'],
+    },
+  },
+  {
+    name: 'holded_list_taxes',
+    description:
+      'Lista los tipos de impuesto (IVA, IRPF, retenciones) configurados en el ERP del usuario. Úsalo cuando vayas a crear una factura y necesites saber qué porcentajes y nombres usar, o cuando el usuario pregunte qué impuestos aplica.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'holded_list_numbering_series',
+    description:
+      'Lista las series de numeración configuradas para facturas y presupuestos. Útil cuando el usuario emite documentos en varias series correlativas distintas (por sociedad, por delegación, etc.). Si la lista viene vacía, Holded usa una serie por defecto automáticamente.',
+    input_schema: { type: 'object', properties: {} },
+  },
+  {
+    name: 'holded_get_document_pdf',
+    description:
+      'Devuelve el PDF de un documento de Holded (factura, presupuesto, abono) codificado en base64. Úsalo cuando el usuario te pida descargar o ver una factura concreta. Si el documentId no existe devuelve un error legible.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        docType: {
+          type: 'string',
+          enum: ['invoice', 'salesreceipt', 'creditnote', 'estimate', 'purchase', 'purchaseorder'],
+        },
+        documentId: { type: 'string', description: 'ID del documento en Holded.' },
+      },
+      required: ['docType', 'documentId'],
     },
   },
   {
@@ -428,12 +472,12 @@ export async function executeHoldedTool(
         });
       }
 
-      case 'holded_create_invoice': {
+      case 'holded_create_invoice_draft': {
         if (!input.confirmed) {
           return {
             error: 'confirmation_required',
             message:
-              'Esta acción requiere confirmación explícita. Muestra al usuario el resumen de la factura (cliente, líneas, total con IVA) y espera que confirme antes de proceder.',
+              'Esta acción requiere confirmación explícita. Muestra al usuario el resumen de la factura (cliente, líneas, total con IVA) y espera que confirme antes de proceder. La factura quedará en BORRADOR en Holded — el usuario la aprueba allí.',
           };
         }
         const contactId = String(input.contactId ?? '');
@@ -456,7 +500,7 @@ export async function executeHoldedTool(
         const dateUnix = input.date
           ? Math.floor(new Date(String(input.date)).getTime() / 1000)
           : Math.floor(Date.now() / 1000);
-        const result = await holdedCreateInvoice(apiKey, {
+        const result = await holdedCreateInvoiceDraft(apiKey, {
           contactId,
           date: dateUnix,
           notes: typeof input.notes === 'string' ? input.notes : undefined,
@@ -467,8 +511,39 @@ export async function executeHoldedTool(
           success: true,
           id: result.id,
           docNumber: result.docNumber,
-          message: `Factura ${result.docNumber ?? result.id} creada correctamente en Holded.`,
+          message: `Borrador de factura ${result.docNumber ?? result.id} creado en Holded. Apruébalo desde Holded para que tenga efectos legales (Verifactu / AEAT).`,
         };
+      }
+      case 'holded_list_taxes': {
+        const data = await holdedListTaxes(apiKey);
+        return { taxes: data };
+      }
+      case 'holded_list_numbering_series': {
+        const series = await holdedListNumberingSeries(apiKey);
+        if (series.length === 0) {
+          return {
+            series: [],
+            note: 'No hay series configuradas en Holded. Al crear documentos se usará la serie por defecto.',
+          };
+        }
+        return { series };
+      }
+      case 'holded_get_document_pdf': {
+        const docType = String(input.docType ?? 'invoice');
+        const documentId = String(input.documentId ?? '');
+        if (!documentId) {
+          return { error: 'invalid_input', message: 'Se requiere documentId.' };
+        }
+        try {
+          const { base64, bytes } = await holdedGetDocumentPdf(apiKey, docType, documentId);
+          return { base64, bytes, mimeType: 'application/pdf' };
+        } catch (err) {
+          const msg = err instanceof Error ? err.message : String(err);
+          if (msg.includes('404')) {
+            return { error: 'not_found', message: `Documento ${docType}/${documentId} no encontrado.` };
+          }
+          throw err;
+        }
       }
 
       case 'holded_register_payment': {

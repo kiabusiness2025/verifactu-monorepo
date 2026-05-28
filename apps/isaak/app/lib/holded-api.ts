@@ -526,3 +526,101 @@ export async function holdedCreateContact(
     raw,
   };
 }
+
+// ─── V1 LAUNCH (2026-05-28) — tools nuevas ────────────────────────────────────
+//
+// Las siguientes funciones complementan el catálogo de tools para el lanzamiento
+// V1 (ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md). Cubren los huecos de
+// invoicing + contabilidad que necesitamos exponer al chat con Holded.
+
+/** Lista de impuestos (IVA, IRPF) configurados en el ERP. */
+export async function holdedListTaxes(apiKey: string) {
+  const raw = await holdedFetch(apiKey, '/api/invoicing/v1/taxes');
+  return Array.isArray(raw) ? raw : [];
+}
+
+/** Series de numeración para facturas y presupuestos. */
+export async function holdedListNumberingSeries(apiKey: string) {
+  // El endpoint base /numberingseries devuelve HTML; usamos los específicos
+  // por tipo, que sí devuelven JSON. Si Holded no tiene series configuradas
+  // usará la default automáticamente al crear documentos.
+  const [invoiceSeries, estimateSeries] = await Promise.all([
+    holdedFetch(apiKey, '/api/invoicing/v1/numberingseries/invoice').catch(() => []),
+    holdedFetch(apiKey, '/api/invoicing/v1/numberingseries/estimate').catch(() => []),
+  ]);
+  return [
+    ...(Array.isArray(invoiceSeries) ? invoiceSeries : []),
+    ...(Array.isArray(estimateSeries) ? estimateSeries : []),
+  ];
+}
+
+/**
+ * Devuelve el PDF de un documento Holded codificado en base64. Lo devolvemos
+ * como string para que la tool del chat pueda pasarlo directamente al modelo
+ * como `type: 'document'` content block.
+ */
+export async function holdedGetDocumentPdf(
+  apiKey: string,
+  docType: string,
+  documentId: string
+): Promise<{ base64: string; bytes: number }> {
+  const url = `${HOLDED_BASE}/api/invoicing/v1/documents/${docType}/${documentId}/pdf`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), HOLDED_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        key: apiKey,
+        Accept: 'application/pdf,application/octet-stream,*/*',
+        'Accept-Encoding': 'identity',
+      },
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new Error(`Holded API ${res.status} at /documents/${docType}/${documentId}/pdf`);
+    }
+    const buf = Buffer.from(await res.arrayBuffer());
+    return { base64: buf.toString('base64'), bytes: buf.byteLength };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Crea una factura en estado borrador (approveDoc: false). El usuario revisa
+ * y aprueba manualmente en Holded — Isaak NO emite a AEAT directamente.
+ * V1 reemplaza a holdedCreateInvoice como acción por defecto del chat.
+ */
+export async function holdedCreateInvoiceDraft(
+  apiKey: string,
+  params: CreateInvoiceParams
+): Promise<{ id: string; docNumber?: string; raw: unknown }> {
+  const payload: Record<string, unknown> = {
+    contactId: params.contactId,
+    date: params.date ?? Math.floor(Date.now() / 1000),
+    notes: params.notes ?? '',
+    currency: params.currency ?? 'EUR',
+    items: params.items.map((item) => ({
+      name: item.name,
+      units: item.units,
+      subtotal: item.subtotal,
+      tax: item.tax ?? 21,
+    })),
+    // approveDoc: false fuerza el documento a borrador a nivel de wire. NUNCA
+    // mover esta línea: si alguna llamada del modelo añadiera approveDoc:true
+    // por error, esto la sobrescribe.
+    approveDoc: false,
+  };
+
+  const raw = (await holdedPost(
+    apiKey,
+    '/api/invoicing/v1/documents/invoice',
+    payload
+  )) as Record<string, unknown>;
+
+  return {
+    id: String(raw?.id ?? raw?.docId ?? ''),
+    docNumber: raw?.docNumber as string | undefined,
+    raw,
+  };
+}

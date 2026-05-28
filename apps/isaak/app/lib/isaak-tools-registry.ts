@@ -38,7 +38,8 @@ const WRITE_TOOL_WEBHOOK_MAP: Partial<Record<string, IsaakWebhookEventType>> = {
 // block, or require user confirmation. Reads stay always-on for F2/F3.
 const WRITE_TOOL_NAMES = new Set<string>([
   // Holded write
-  'holded_create_invoice',
+  // V1 LAUNCH: create_invoice → create_invoice_draft (no emite, queda borrador).
+  'holded_create_invoice_draft',
   'holded_register_payment',
   'holded_create_contact',
   'holded_send_document',
