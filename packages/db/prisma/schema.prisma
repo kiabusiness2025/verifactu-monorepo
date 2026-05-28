@@ -578,6 +578,7 @@ model Tenant {
   isaakAeatCensusChanges        IsaakAeatCensusChange[]
   isaakTaxpayerProfile          IsaakTaxpayerProfile?
   isaakAeatSubmissions          IsaakAeatSubmission[]
+  isaakAutoSubmit303Queue       IsaakAutoSubmit303Queue[]
   isaakOnboardingProfiles       IsaakOnboardingProfile[]
   usageEvents                   UsageEvent[]
   demoOnboardings               UserOnboarding[]
@@ -2886,12 +2887,55 @@ model IsaakTaxpayerProfile {
   // Notas libres (admin, observaciones del contable)
   notes String? @db.Text
 
+  // C-C — Presentación automática 303 con veto-window de 48h.
+  autoSubmit303 Boolean @default(false) @map("auto_submit_303")
+
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@map("isaak_taxpayer_profiles")
+}
+
+// ==================== ISAAK AUTO-SUBMIT 303 QUEUE (C-C) ====================
+//
+// Cola de presentaciones automáticas del 303 con veto-window de 48h.
+// Ciclo de vida: pending_veto → vetoed (usuario canceló) | submitted | submit_failed.
+// Una entrada por (tenant, ejercicio, periodo). El cron diario:
+//   Pass A: crea la entrada + envía email con link de veto (D-5 antes del plazo).
+//   Pass B: auto-presenta si vetoExpiresAt < now y status='pending_veto'.
+
+model IsaakAutoSubmit303Queue {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId String @map("tenant_id") @db.Uuid
+
+  ejercicio Int
+  periodo   String // '1T' | '2T' | '3T' | '4T'
+  dueDate   DateTime @map("due_date") @db.Date
+
+  status String @default("pending_veto")
+  // pending_veto | vetoed | submitted | submit_failed
+
+  vetoToken     String    @unique @map("veto_token")
+  vetoExpiresAt DateTime  @map("veto_expires_at") @db.Timestamptz
+  vetoedAt      DateTime? @map("vetoed_at") @db.Timestamptz
+
+  draftJson   Json?    @map("draft_json") // snapshot borrador (amounts) para el email
+  emailSentAt DateTime? @map("email_sent_at") @db.Timestamptz
+
+  submittedAt  DateTime? @map("submitted_at") @db.Timestamptz
+  submissionId String?   @map("submission_id") @db.Uuid
+  errorMessage String?   @map("error_message") @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, ejercicio, periodo])
+  @@index([status, vetoExpiresAt])
+  @@map("isaak_auto_submit_303_queue")
 }
 
 // ==================== ISAAK AEAT SUBMISSION (C-B1) ====================

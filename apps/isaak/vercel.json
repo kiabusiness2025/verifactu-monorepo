@@ -56,6 +56,10 @@
     {
       "path": "/api/cron/webhook-retry",
       "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/aeat-auto-submit-303",
+      "schedule": "0 8 * * *"
     }
   ]
 }
