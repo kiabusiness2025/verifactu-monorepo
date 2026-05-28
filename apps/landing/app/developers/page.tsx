@@ -426,6 +426,23 @@ export default function DevelopersPage() {
 
             <div className="mt-8 grid gap-4 sm:grid-cols-2">
               <Link
+                href="/developers/guides"
+                className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#2361d8]/30 hover:shadow-md"
+              >
+                <div className="text-xs font-semibold uppercase tracking-widest text-emerald-700">
+                  Tutoriales
+                </div>
+                <h3 className="mt-2 text-lg font-semibold text-[#011c67]">Guías paso a paso</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  Primera factura via cURL, webhooks con HMAC, conectar Holded, MCP en Claude
+                  Desktop. Código real, copy-paste.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-[#2361d8] group-hover:underline">
+                  Abrir guías <ArrowRight className="h-3.5 w-3.5" />
+                </span>
+              </Link>
+
+              <Link
                 href="/developers/api"
                 className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:border-[#2361d8]/30 hover:shadow-md"
               >
