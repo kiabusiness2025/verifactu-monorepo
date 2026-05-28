@@ -52,6 +52,10 @@
     {
       "path": "/api/cron/app-health",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/webhook-retry",
+      "schedule": "*/5 * * * *"
     }
   ]
 }

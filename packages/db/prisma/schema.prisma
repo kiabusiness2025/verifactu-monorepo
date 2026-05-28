@@ -2468,10 +2468,34 @@ model IsaakWebhookEndpoint {
   active    Boolean  @default(true)
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  deliveries IsaakWebhookDelivery[]
 
   @@index([tenantId])
   @@map("isaak_webhook_endpoints")
+}
+
+model IsaakWebhookDelivery {
+  id             String    @id @default(cuid())
+  endpointId     String    @map("endpoint_id")
+  tenantId       String    @map("tenant_id") @db.Uuid
+  eventType      String    @map("event_type")
+  payload        Json
+  /// pending | delivered | failed | dead
+  status         String    @default("pending")
+  attempts       Int       @default(0)
+  nextRetryAt    DateTime? @map("next_retry_at") @db.Timestamptz
+  lastStatusCode Int?      @map("last_status_code")
+  lastError      String?   @map("last_error")
+  deliveredAt    DateTime? @map("delivered_at") @db.Timestamptz
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  endpoint IsaakWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status, nextRetryAt])
+  @@index([endpointId])
+  @@map("isaak_webhook_deliveries")
 }
 
 /// Personal Access Token for the Holded MCP connector.
