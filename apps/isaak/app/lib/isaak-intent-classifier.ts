@@ -32,19 +32,22 @@ export type ClassifierContext = {
   bankConnected: boolean;
   googleConnected: boolean;
   microsoftConnected: boolean;
+  sectorConnected?: boolean;
 };
 
 const CLASSIFIER_MODEL = 'claude-haiku-4-5-20251001';
 
 function buildClassifierPrompt(ctx: ClassifierContext): string {
-  const integrations = [
-    ctx.holdedConnected ? 'Holded (ERP)' : null,
-    ctx.bankConnected ? 'banca PSD2' : null,
-    ctx.googleConnected ? 'Google' : null,
-    ctx.microsoftConnected ? 'Microsoft 365' : null,
-  ]
-    .filter(Boolean)
-    .join(', ') || 'ninguna';
+  const integrations =
+    [
+      ctx.holdedConnected ? 'Holded (ERP)' : null,
+      ctx.bankConnected ? 'banca PSD2' : null,
+      ctx.googleConnected ? 'Google' : null,
+      ctx.microsoftConnected ? 'Microsoft 365' : null,
+      ctx.sectorConnected ? 'software sectorial (PMS/POS/ERP)' : null,
+    ]
+      .filter(Boolean)
+      .join(', ') || 'ninguna';
 
   return `Eres el clasificador de intent de Isaak. Tu única función es analizar el último mensaje del usuario en una conversación de copiloto fiscal y clasificarlo.
 
@@ -99,10 +102,7 @@ export async function classifyIntent(input: ClassifyIntentInput): Promise<Classi
       provider: 'anthropic',
       model: CLASSIFIER_MODEL,
       instructions: buildClassifierPrompt(input.context),
-      messages: [
-        ...recentHistory,
-        { role: 'user', content: input.message },
-      ],
+      messages: [...recentHistory, { role: 'user', content: input.message }],
       temperature: 0,
       maxOutputTokens: 250,
       feature: 'isaak_intent_classifier',
@@ -113,8 +113,7 @@ export async function classifyIntent(input: ClassifyIntentInput): Promise<Classi
     return parseClassifierJson(result.text, result.model, latencyMs);
   } catch (error) {
     const latencyMs = Date.now() - start;
-    const reason =
-      error instanceof AIError ? `${error.kind}:${error.provider}` : 'unknown_error';
+    const reason = error instanceof AIError ? `${error.kind}:${error.provider}` : 'unknown_error';
     console.error('[isaak-intent-classifier] failed', { reason, latencyMs });
     return emptyClassificationResult(reason, CLASSIFIER_MODEL, latencyMs);
   }

@@ -13,6 +13,7 @@ function ctx(overrides: Partial<IsaakToolContext> = {}): IsaakToolContext {
     bankConnected: false,
     googleConnected: false,
     microsoftConnected: false,
+    sectorConnected: false,
     ...overrides,
   };
 }
@@ -40,9 +41,7 @@ describe('buildReadOnlyToolsForContext', () => {
   });
 
   it('excludes Holded tools if no apiKey, even when holdedConnected=true (only ledger reads remain)', () => {
-    const tools = buildReadOnlyToolsForContext(
-      ctx({ holdedConnected: true, holdedApiKey: null })
-    );
+    const tools = buildReadOnlyToolsForContext(ctx({ holdedConnected: true, holdedApiKey: null }));
     expect(tools.map((t) => t.name).sort()).toEqual([
       'inspector_consult',
       'inspector_search_aeat',
@@ -205,21 +204,38 @@ describe('buildReadOnlyToolsForContext', () => {
         bankConnected: true,
         googleConnected: true,
         microsoftConnected: true,
+        sectorConnected: true,
       })
     );
-    // 13 Holded + 6 banking + 4 google + 4 microsoft + 11 ledger reads
-    // (audit + export + get_fiscal_profile + ledger_get_balances +
-    // list_tax_returns + list_aeat_notifications + list_aeat_census_changes +
-    // summarize_aeat_inbox + validate_vat_intracom + inspector_search_aeat
-    // + inspector_consult [F12])
-    // = 38 (writes excluded)
-    expect(tools.length).toBe(38);
-    // Note: total ledger tools incl. writes = 32 (11 reads + 21 writes after F12)
-    // each tool exposes the Anthropic-compatible shape
+    // 13 Holded + 6 banking + 4 google + 4 microsoft + 11 ledger reads + 5 sector
+    // = 43 (writes excluded)
+    expect(tools.length).toBe(43);
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
       expect(typeof t.input_schema).toBe('object');
     }
+  });
+
+  describe('sector (software sectorial)', () => {
+    it('exposes 5 sector tools when sectorConnected=true', () => {
+      const tools = buildReadOnlyToolsForContext(ctx({ sectorConnected: true }), {
+        only: ['sector'],
+      });
+      expect(tools.map((t) => t.name).sort()).toEqual([
+        'sector_check_connection',
+        'sector_get_snapshot',
+        'sector_list_contacts',
+        'sector_list_invoices',
+        'sector_list_products',
+      ]);
+    });
+
+    it('exposes no sector tools when sectorConnected=false', () => {
+      const tools = buildReadOnlyToolsForContext(ctx({ sectorConnected: false }), {
+        only: ['sector'],
+      });
+      expect(tools).toHaveLength(0);
+    });
   });
 
   describe('ledger (F9)', () => {

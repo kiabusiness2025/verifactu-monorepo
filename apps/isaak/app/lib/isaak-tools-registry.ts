@@ -1,30 +1,20 @@
 import type { AITool, AIToolUse } from '@verifactu/utils';
-import {
-  HOLDED_CHAT_TOOLS,
-  executeHoldedTool,
-  type HoldedToolName,
-} from './holded-tools';
-import {
-  BANKING_CHAT_TOOLS,
-  executeBankingTool,
-  isBankingToolName,
-} from './banking-tools';
-import {
-  GOOGLE_CHAT_TOOLS,
-  executeGoogleTool,
-  isGoogleToolName,
-} from './google-tools';
-import {
-  MICROSOFT_CHAT_TOOLS,
-  executeMicrosoftTool,
-  isMicrosoftToolName,
-} from './microsoft-tools';
+import { HOLDED_CHAT_TOOLS, executeHoldedTool, type HoldedToolName } from './holded-tools';
+import { BANKING_CHAT_TOOLS, executeBankingTool, isBankingToolName } from './banking-tools';
+import { GOOGLE_CHAT_TOOLS, executeGoogleTool, isGoogleToolName } from './google-tools';
+import { MICROSOFT_CHAT_TOOLS, executeMicrosoftTool, isMicrosoftToolName } from './microsoft-tools';
 import {
   LEDGER_CHAT_TOOLS,
   executeLedgerTool,
   isLedgerToolName,
   type LedgerToolName,
 } from './isaak-ledger-tools';
+import {
+  SECTOR_CHAT_TOOLS,
+  executeSectorTool,
+  isSectorToolName,
+  type SectorToolName,
+} from './sector-tools';
 
 // F4: write actions allowed when allowWrites=true. Every write call goes
 // through the GPT-4o-mini judge before execution. The judge can allow,
@@ -115,6 +105,12 @@ const READ_ONLY_NAMES = new Set<string>([
   'microsoft_calendar_list_events',
   'microsoft_mail_scan_invoices',
   'microsoft_drive_list_files',
+  // Sector software (HotelGest, Loyverse, Revo XEF, WooCommerce, etc.)
+  'sector_check_connection',
+  'sector_get_snapshot',
+  'sector_list_invoices',
+  'sector_list_contacts',
+  'sector_list_products',
 ]);
 
 type AnthropicToolDef = {
@@ -135,9 +131,16 @@ export type IsaakToolContext = {
   bankConnected: boolean;
   googleConnected: boolean;
   microsoftConnected: boolean;
+  sectorConnected: boolean;
 };
 
-export type ToolCategoryFilter = 'holded' | 'banking' | 'google' | 'microsoft' | 'ledger';
+export type ToolCategoryFilter =
+  | 'holded'
+  | 'banking'
+  | 'google'
+  | 'microsoft'
+  | 'ledger'
+  | 'sector';
 
 export function buildReadOnlyToolsForContext(
   ctx: IsaakToolContext,
@@ -178,6 +181,11 @@ export function buildReadOnlyToolsForContext(
       if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
+  if (include('sector') && ctx.sectorConnected) {
+    for (const t of SECTOR_CHAT_TOOLS) {
+      if (isAllowed(t.name)) out.push(toAITool(t));
+    }
+  }
 
   return out;
 }
@@ -198,8 +206,7 @@ export async function executeIsaakTool(
   const name = toolUse.name;
   const start = Date.now();
   const allowWrites = options?.allowWrites === true;
-  const isAllowed =
-    READ_ONLY_NAMES.has(name) || (allowWrites && WRITE_TOOL_NAMES.has(name));
+  const isAllowed = READ_ONLY_NAMES.has(name) || (allowWrites && WRITE_TOOL_NAMES.has(name));
 
   if (!isAllowed) {
     return {
@@ -218,7 +225,9 @@ export async function executeIsaakTool(
 
   try {
     let result: unknown;
-    if (isLedgerToolName(name)) {
+    if (isSectorToolName(name)) {
+      result = await executeSectorTool(ctx.tenantId, name as SectorToolName, toolUse.input);
+    } else if (isLedgerToolName(name)) {
       result = await executeLedgerTool(
         {
           tenantId: ctx.tenantId,
@@ -235,11 +244,7 @@ export async function executeIsaakTool(
     } else if (isMicrosoftToolName(name)) {
       result = await executeMicrosoftTool(ctx.tenantId, ctx.userId, name, toolUse.input);
     } else if (ctx.holdedApiKey) {
-      result = await executeHoldedTool(
-        ctx.holdedApiKey,
-        name as HoldedToolName,
-        toolUse.input
-      );
+      result = await executeHoldedTool(ctx.holdedApiKey, name as HoldedToolName, toolUse.input);
     } else {
       result = { error: 'holded_not_connected', message: 'No Holded API key in context.' };
     }

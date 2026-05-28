@@ -18,16 +18,9 @@ import {
   listRecentConversationMessages,
 } from '@/app/lib/holded-chat';
 import { checkIsaakChatQuota } from '@/app/lib/isaak-quota';
-import {
-  detectClarificationResponse,
-  recordChatMetric,
-} from '@/app/lib/isaak-chat-metrics';
-import {
-  buildAuthenticatedSystemPrompt,
-} from '@/app/lib/isaak-chat-prompts';
-import {
-  buildReadOnlyToolsForContext,
-} from '@/app/lib/isaak-tools-registry';
+import { detectClarificationResponse, recordChatMetric } from '@/app/lib/isaak-chat-metrics';
+import { buildAuthenticatedSystemPrompt } from '@/app/lib/isaak-chat-prompts';
+import { buildReadOnlyToolsForContext } from '@/app/lib/isaak-tools-registry';
 import { classifyIntent } from '@/app/lib/isaak-intent-classifier';
 import {
   loadAuthenticatedChatContext,
@@ -37,15 +30,8 @@ import {
 import { streamIsaakChat, type ChatStreamMetrics } from '@/app/lib/isaak-chat-stream';
 import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
 import { retrieveFewShotForChat } from '@/app/lib/isaak-few-shot';
-import {
-  getSubAgent,
-  pickSubAgent,
-  type SubAgentId,
-} from '@/app/lib/isaak-sub-agents';
-import {
-  isWriteTokenEnforced,
-  verifyWriteToken,
-} from '@/app/lib/isaak-write-token';
+import { getSubAgent, pickSubAgent, type SubAgentId } from '@/app/lib/isaak-sub-agents';
+import { isWriteTokenEnforced, verifyWriteToken } from '@/app/lib/isaak-write-token';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -71,7 +57,9 @@ function clarifyStreamResponse(input: {
   const enc = new TextEncoder();
   const body = new ReadableStream<Uint8Array>({
     start(controller) {
-      controller.enqueue(enc.encode(`event: text-delta\ndata: ${JSON.stringify({ delta: input.text })}\n\n`));
+      controller.enqueue(
+        enc.encode(`event: text-delta\ndata: ${JSON.stringify({ delta: input.text })}\n\n`)
+      );
       controller.enqueue(
         enc.encode(
           `event: done\ndata: ${JSON.stringify({
@@ -97,18 +85,24 @@ export async function POST(req: NextRequest) {
     return singleEventResponse('error', { message: 'invalid_json' });
   }
   const message =
-    body && typeof body === 'object' && typeof (body as Record<string, unknown>).message === 'string'
+    body &&
+    typeof body === 'object' &&
+    typeof (body as Record<string, unknown>).message === 'string'
       ? (body as { message: string }).message.trim()
       : '';
   const requestedConversationId =
-    body && typeof body === 'object' && typeof (body as Record<string, unknown>).conversationId === 'string'
-      ? ((body as { conversationId: string }).conversationId.trim() || null)
+    body &&
+    typeof body === 'object' &&
+    typeof (body as Record<string, unknown>).conversationId === 'string'
+      ? (body as { conversationId: string }).conversationId.trim() || null
       : null;
   // SEC C5: token de autorización de escrituras (opcional). Sin token
   // válido, allowWrites se fuerza a false aunque el classifier diga lo
   // contrario.
   const writeToken =
-    body && typeof body === 'object' && typeof (body as Record<string, unknown>).writeToken === 'string'
+    body &&
+    typeof body === 'object' &&
+    typeof (body as Record<string, unknown>).writeToken === 'string'
       ? (body as { writeToken: string }).writeToken.trim()
       : '';
 
@@ -165,6 +159,7 @@ export async function POST(req: NextRequest) {
         bankConnected: authenticated.toolContext.bankConnected,
         googleConnected: authenticated.toolContext.googleConnected,
         microsoftConnected: authenticated.toolContext.microsoftConnected,
+        sectorConnected: authenticated.toolContext.sectorConnected,
       },
     }),
     retrieveFactsForChat({
@@ -277,8 +272,7 @@ export async function POST(req: NextRequest) {
   // Esto permite que consultas informativas fiscales se beneficien
   // del Inspector (citas BOE) sin requerir cambios al classifier.
   const wantsTools =
-    (classification.needsTools && classification.relevantCategories.length > 0) ||
-    !subAgentId;
+    (classification.needsTools && classification.relevantCategories.length > 0) || !subAgentId;
   if (wantsTools) {
     // SEC C5 (2026): allowWrites NO se decide únicamente por el LLM
     // classifier. Para que se habilite hace falta que el cliente
@@ -317,10 +311,11 @@ export async function POST(req: NextRequest) {
     }
     const mainCategories = classification.relevantCategories.includes('ledger')
       ? classification.relevantCategories
-      : ([...classification.relevantCategories, 'ledger'] as typeof classification.relevantCategories);
-    const onlyCategories = subAgentId
-      ? getSubAgent(subAgentId).toolCategories
-      : mainCategories;
+      : ([
+          ...classification.relevantCategories,
+          'ledger',
+        ] as typeof classification.relevantCategories);
+    const onlyCategories = subAgentId ? getSubAgent(subAgentId).toolCategories : mainCategories;
     const filtered = buildReadOnlyToolsForContext(authenticated.toolContext, {
       only: onlyCategories,
       allowWrites,
@@ -334,9 +329,7 @@ export async function POST(req: NextRequest) {
   const systemPrompt = subAgentId
     ? `${getSubAgent(subAgentId).systemPrompt}${
         ragResult.factsBlock ? `\n\n${ragResult.factsBlock.trim()}` : ''
-      }${
-        fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''
-      }`
+      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}`
     : buildAuthenticatedSystemPrompt(authenticated.promptContext, {
         factsBlock: ragResult.factsBlock,
         fewShotBlock: fewShotResult.examplesBlock,

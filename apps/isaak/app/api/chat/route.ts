@@ -14,10 +14,7 @@ import {
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
 import { checkIsaakChatQuota, checkPublicChatQuota } from '@/app/lib/isaak-quota';
-import {
-  detectClarificationResponse,
-  recordChatMetric,
-} from '@/app/lib/isaak-chat-metrics';
+import { detectClarificationResponse, recordChatMetric } from '@/app/lib/isaak-chat-metrics';
 import {
   buildAuthenticatedSystemPrompt,
   buildPublicSystemPrompt,
@@ -27,19 +24,13 @@ import {
   buildReadOnlyToolsForContext,
   type IsaakToolContext,
 } from '@/app/lib/isaak-tools-registry';
+import { hasSectorErpConnected } from '@/app/lib/sector-tools';
 import { runIsaakToolLoop } from '@/app/lib/isaak-tool-loop';
 import { classifyIntent } from '@/app/lib/isaak-intent-classifier';
 import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
 import { retrieveFewShotForChat } from '@/app/lib/isaak-few-shot';
-import {
-  getSubAgent,
-  pickSubAgent,
-  type SubAgentId,
-} from '@/app/lib/isaak-sub-agents';
-import {
-  isWriteTokenEnforced,
-  verifyWriteToken,
-} from '@/app/lib/isaak-write-token';
+import { getSubAgent, pickSubAgent, type SubAgentId } from '@/app/lib/isaak-sub-agents';
+import { isWriteTokenEnforced, verifyWriteToken } from '@/app/lib/isaak-write-token';
 
 const SHORT_MEMORY_TURNS = 8;
 
@@ -200,7 +191,7 @@ async function loadAuthenticatedChatContext() {
     context: businessContext,
   }).catch(() => null);
 
-  const [bankAccountCount, googleToken, microsoftToken] = await Promise.all([
+  const [bankAccountCount, googleToken, microsoftToken, sectorConnected] = await Promise.all([
     prisma.seAccount
       .count({ where: { tenantId: session.tenantId, status: 'active' } })
       .catch(() => 0),
@@ -216,6 +207,7 @@ async function loadAuthenticatedChatContext() {
         select: { id: true },
       })
       .catch(() => null),
+    hasSectorErpConnected(session.tenantId).catch(() => false),
   ]);
 
   const holdedApiKey = businessContext?.holded?.connection?.apiKey ?? null;
@@ -235,6 +227,7 @@ async function loadAuthenticatedChatContext() {
       bankConnected: bankAccountCount > 0,
       googleConnected: Boolean(googleToken),
       microsoftConnected: Boolean(microsoftToken),
+      sectorConnected,
     } satisfies IsaakToolContext,
     promptContext: {
       tenantId: session.tenantId,
@@ -453,6 +446,7 @@ export async function POST(request: NextRequest) {
             bankConnected: toolContext.bankConnected,
             googleConnected: toolContext.googleConnected,
             microsoftConnected: toolContext.microsoftConnected,
+            sectorConnected: toolContext.sectorConnected,
           },
         }),
         retrieveFactsForChat({
