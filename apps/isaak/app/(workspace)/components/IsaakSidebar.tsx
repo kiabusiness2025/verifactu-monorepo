@@ -151,7 +151,8 @@ const PROFILE_MENU_V1 = [
   { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
   { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
-  { href: '/integrations', label: 'Integración Holded', icon: Plug },
+  { href: '/integration-holded', label: 'Integración Holded', icon: Plug },
+  { href: '/ayuda', label: 'Centro de ayuda', icon: LifeBuoy },
 ] as const;
 
 const PROFILE_MENU = ISAAK_V1_LAUNCH ? PROFILE_MENU_V1 : PROFILE_MENU_FULL;
