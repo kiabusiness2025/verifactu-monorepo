@@ -1,0 +1,68 @@
+name: AEAT Submission Worker
+
+# Runs every 15 minutes to process pending modelo 303 submissions queued in DB.
+# Requires AEAT_SUBMISSION_WORKER_ENABLED=true in the workflow env / repo secret,
+# otherwise the cli.ts exits immediately (safe by default).
+#
+# Required secrets (set in GitHub repo Settings → Secrets → Actions):
+#   DATABASE_URL            — Postgres production connection string
+#   CERT_MASTER_KEY         — AES-256 hex key for decrypting tenant P12 certs
+#
+# Optional secrets / vars:
+#   AEAT_ENVIRONMENT        — 'pre' (default) or 'prod'
+#   AEAT_WORKER_BATCH_SIZE  — max submissions per run (default: 5)
+#   AEAT_SUBMISSION_WORKER_ENABLED — must be 'true' to actually run
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'AEAT environment'
+        required: false
+        default: 'pre'
+        type: choice
+        options:
+          - pre
+          - prod
+      batch_size:
+        description: 'Max submissions to process'
+        required: false
+        default: '5'
+
+jobs:
+  process-submissions:
+    name: Process pending AEAT submissions
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: npx playwright install chromium --with-deps
+        working-directory: apps/isaak
+
+      - name: Run AEAT submission worker
+        run: pnpm tsx apps/isaak/app/lib/aeat-browser/cli.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CERT_MASTER_KEY: ${{ secrets.CERT_MASTER_KEY }}
+          AEAT_SUBMISSION_WORKER_ENABLED: ${{ secrets.AEAT_SUBMISSION_WORKER_ENABLED || 'false' }}
+          AEAT_ENVIRONMENT: ${{ github.event.inputs.environment || vars.AEAT_ENVIRONMENT || 'pre' }}
+          AEAT_WORKER_BATCH_SIZE: ${{ github.event.inputs.batch_size || vars.AEAT_WORKER_BATCH_SIZE || '5' }}
+          PRISMA_DATABASE_URL: ${{ secrets.DATABASE_URL }}
