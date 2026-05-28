@@ -220,14 +220,22 @@ function formatCardBrand(brand: string | null | undefined) {
   return brand.charAt(0).toUpperCase() + brand.slice(1);
 }
 
-function readDefaultPriceId() {
-  const priceId = process.env.STRIPE_PRICE_ISAAK_MONTHLY?.trim() ?? '';
+function readPriceId(cadence: 'monthly' | 'annual' = 'monthly') {
+  const envVar = cadence === 'annual' ? 'STRIPE_PRICE_ISAAK_ANNUAL' : 'STRIPE_PRICE_ISAAK_MONTHLY';
+  const priceId = process.env[envVar]?.trim() ?? '';
   if (!priceId && process.env.NODE_ENV === 'production') {
-    console.warn(
-      '[isaak/billing] STRIPE_PRICE_ISAAK_MONTHLY is not set — checkout will be unavailable'
-    );
+    console.warn(`[isaak/billing] ${envVar} is not set — checkout will be unavailable`);
   }
   return priceId;
+}
+
+// V1 LAUNCH (2026-05-28): el plan Pro arranca con 14 días de trial sin tarjeta.
+// Si el flag está OFF, el checkout sigue cobrando inmediatamente como antes.
+// Ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md.
+const ISAAK_PRO_TRIAL_DAYS = 14;
+
+function readDefaultPriceId() {
+  return readPriceId('monthly');
 }
 
 export function getSettingsReturnUrl(section: string) {
@@ -537,12 +545,23 @@ export async function createBillingCheckoutUrl(params: {
   customerEmail?: string | null;
   successUrl: string;
   cancelUrl: string;
+  /** 'monthly' | 'annual'. Default: 'monthly'. */
+  cadence?: 'monthly' | 'annual';
+  /**
+   * Si true (default en V1 launch), arranca con 14 días de trial SIN tarjeta
+   * — el cliente NO necesita método de pago para empezar.
+   */
+  withTrial?: boolean;
 }) {
-  const price = readDefaultPriceId();
+  const cadence = params.cadence ?? 'monthly';
+  const price = readPriceId(cadence);
 
   if (!process.env.STRIPE_SECRET_KEY || !price) {
     return null;
   }
+
+  const v1 = process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH === 'true';
+  const withTrial = params.withTrial ?? v1;
 
   const session = await stripeClient.checkout.sessions.create({
     mode: 'subscription',
@@ -557,6 +576,14 @@ export async function createBillingCheckoutUrl(params: {
     allow_promotion_codes: true,
     success_url: params.successUrl,
     cancel_url: params.cancelUrl,
+    ...(withTrial
+      ? {
+          subscription_data: { trial_period_days: ISAAK_PRO_TRIAL_DAYS },
+          // 'if_required' permite empezar el trial sin tarjeta. Stripe pedirá
+          // método de pago automáticamente cuando termine el trial.
+          payment_method_collection: 'if_required' as const,
+        }
+      : {}),
   });
 
   return session.url || null;
