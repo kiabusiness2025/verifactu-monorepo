@@ -83,3 +83,6 @@ env-audit.txt
 .tmp-video/
 **/__MACOSX/
 scripts/video-pipeline/output/
+
+# Claude Code session artifacts (worktrees efímeros, settings locales)
+.claude/
