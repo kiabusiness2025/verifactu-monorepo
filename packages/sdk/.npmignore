@@ -1,0 +1,10 @@
+src/
+__tests__/
+tsconfig.json
+tsup.config.ts
+jest.config.cjs
+.eslintrc*
+*.tsbuildinfo
+node_modules/
+coverage/
+.turbo/
