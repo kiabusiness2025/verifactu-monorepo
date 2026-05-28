@@ -12,7 +12,10 @@
 CREATE TABLE "isaak_webhook_deliveries" (
     "id" TEXT NOT NULL,
     "tenant_id" UUID NOT NULL,
-    "endpoint_id" TEXT NOT NULL,
+    -- Nullable + SET NULL: deleting an endpoint preserves the delivery rows
+    -- for audit/history. The dispatcher detects endpoint=NULL and marks the
+    -- row as dead with lastError='endpoint_deleted'.
+    "endpoint_id" TEXT,
     "event_type" TEXT NOT NULL,
     "event_id" TEXT NOT NULL,
     "payload" JSONB NOT NULL,
@@ -42,4 +45,4 @@ ALTER TABLE "isaak_webhook_deliveries"
 ALTER TABLE "isaak_webhook_deliveries"
     ADD CONSTRAINT "isaak_webhook_deliveries_endpoint_id_fkey"
     FOREIGN KEY ("endpoint_id") REFERENCES "isaak_webhook_endpoints"("id")
-    ON DELETE CASCADE ON UPDATE CASCADE;
+    ON DELETE SET NULL ON UPDATE CASCADE;

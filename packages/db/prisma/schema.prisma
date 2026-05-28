@@ -2483,7 +2483,10 @@ model IsaakWebhookEndpoint {
 model IsaakWebhookDelivery {
   id               String    @id @default(cuid())
   tenantId         String    @map("tenant_id") @db.Uuid
-  endpointId       String    @map("endpoint_id")
+  /// Nullable + SetNull: if the customer deletes the endpoint, we keep the
+  /// delivery rows for audit/history. The dispatcher will then mark them
+  /// dead with lastError='endpoint_deleted'.
+  endpointId       String?   @map("endpoint_id")
   /// Event type, e.g. "invoice.issued"
   eventType        String    @map("event_type")
   /// Stable event identifier surfaced to the client in payload.id. Format: evt_<ts>_<rand8>
@@ -2499,8 +2502,8 @@ model IsaakWebhookDelivery {
   deliveredAt      DateTime? @map("delivered_at") @db.Timestamptz
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
-  tenant   Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  endpoint IsaakWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  tenant   Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  endpoint IsaakWebhookEndpoint? @relation(fields: [endpointId], references: [id], onDelete: SetNull)
 
   @@index([status, nextAttemptAt])
   @@index([tenantId, eventType])

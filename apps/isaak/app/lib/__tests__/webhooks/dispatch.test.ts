@@ -13,12 +13,14 @@
  */
 const findManyMock = jest.fn();
 const updateMock = jest.fn();
+const updateManyMock = jest.fn();
 
 jest.mock('@/app/lib/prisma', () => ({
   prisma: {
     isaakWebhookDelivery: {
       findMany: (...args: unknown[]) => findManyMock(...args),
       update: (...args: unknown[]) => updateMock(...args),
+      updateMany: (...args: unknown[]) => updateManyMock(...args),
     },
   },
 }));
@@ -59,6 +61,9 @@ beforeEach(() => {
   findManyMock.mockReset();
   updateMock.mockReset();
   updateMock.mockResolvedValue({});
+  updateManyMock.mockReset();
+  // Default: claim succeeds (CAS matched the row exactly as we read it).
+  updateManyMock.mockResolvedValue({ count: 1 });
   fetchMock = jest.fn() as FetchMock;
   global.fetch = fetchMock as unknown as typeof global.fetch;
 });
@@ -91,15 +96,33 @@ describe('dispatchPendingDeliveries — success path', () => {
     const summary = await dispatchPendingDeliveries({ batchSize: 50 });
 
     expect(summary).toEqual({ processed: 1, delivered: 1, failed: 0, dead: 0 });
+    // One atomic claim (updateMany with CAS) + one final result (update).
+    expect(updateManyMock).toHaveBeenCalledTimes(1);
     expect(updateMock).toHaveBeenCalledTimes(1);
+
+    const claim = updateManyMock.mock.calls[0][0];
+    expect(claim.where).toMatchObject({ id: 'del_1', status: 'pending', attempts: 0 });
+    expect(claim.data.attempts).toBe(1);
+    expect(claim.data.nextAttemptAt).toBeInstanceOf(Date);
 
     const call = updateMock.mock.calls[0][0];
     expect(call.where).toEqual({ id: 'del_1' });
     expect(call.data.status).toBe('delivered');
-    expect(call.data.attempts).toBe(1);
+    expect(call.data.attempts).toBeUndefined(); // already bumped in claim
     expect(call.data.deliveredAt).toBeInstanceOf(Date);
     expect(call.data.lastStatusCode).toBe(200);
     expect(call.data.nextAttemptAt).toBeNull();
+  });
+
+  test('concurrent dispatcher already claimed row → updateMany.count=0, no fetch, no final update', async () => {
+    findManyMock.mockResolvedValue([deliveryRow()]);
+    updateManyMock.mockResolvedValueOnce({ count: 0 }); // someone else won the CAS
+
+    const summary = await dispatchPendingDeliveries();
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(summary).toEqual({ processed: 1, delivered: 0, failed: 0, dead: 0 });
   });
 
   test('sends signed headers; signature verifies with the endpoint secret', async () => {
@@ -135,9 +158,13 @@ describe('dispatchPendingDeliveries — retry path', () => {
     const summary = await dispatchPendingDeliveries();
 
     expect(summary).toEqual({ processed: 1, delivered: 0, failed: 1, dead: 0 });
+
+    // Claim bumped attempts to 1
+    expect(updateManyMock.mock.calls[0][0].data.attempts).toBe(1);
+
     const data = updateMock.mock.calls[0][0].data;
     expect(data.status).toBe('pending');
-    expect(data.attempts).toBe(1);
+    expect(data.attempts).toBeUndefined(); // claim already did it
     expect(data.lastStatusCode).toBe(500);
     expect(data.lastError).toBe('http_500');
     expect(data.nextAttemptAt).toBeInstanceOf(Date);
@@ -155,9 +182,9 @@ describe('dispatchPendingDeliveries — retry path', () => {
     const summary = await dispatchPendingDeliveries();
 
     expect(summary.failed).toBe(1);
+    expect(updateManyMock.mock.calls[0][0].data.attempts).toBe(2);
     const data = updateMock.mock.calls[0][0].data;
     expect(data.status).toBe('pending');
-    expect(data.attempts).toBe(2);
     expect(data.lastError).toBe('socket hang up');
     expect(data.lastStatusCode).toBeNull();
   });
@@ -169,26 +196,28 @@ describe('dispatchPendingDeliveries — retry path', () => {
     const summary = await dispatchPendingDeliveries();
 
     expect(summary).toEqual({ processed: 1, delivered: 0, failed: 0, dead: 1 });
+    // Claim brings attempts up to MAX
+    expect(updateManyMock.mock.calls[0][0].data.attempts).toBe(MAX_ATTEMPTS);
     const data = updateMock.mock.calls[0][0].data;
     expect(data.status).toBe('dead');
-    expect(data.attempts).toBe(MAX_ATTEMPTS);
     expect(data.nextAttemptAt).toBeNull();
   });
 });
 
 describe('dispatchPendingDeliveries — endpoint hygiene', () => {
-  test('endpoint deleted (null) → mark dead without firing fetch', async () => {
+  test('endpoint deleted (null) → mark dead atomically without firing fetch', async () => {
     findManyMock.mockResolvedValue([deliveryRow({ endpoint: null })]);
 
     const summary = await dispatchPendingDeliveries();
 
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled(); // terminal claim is updateMany
     expect(summary.dead).toBe(1);
-    expect(updateMock.mock.calls[0][0].data.status).toBe('dead');
-    expect(updateMock.mock.calls[0][0].data.lastError).toBe('endpoint_deleted');
+    expect(updateManyMock.mock.calls[0][0].data.status).toBe('dead');
+    expect(updateManyMock.mock.calls[0][0].data.lastError).toBe('endpoint_deleted');
   });
 
-  test('endpoint inactive → mark dead without firing fetch', async () => {
+  test('endpoint inactive → mark dead atomically without firing fetch', async () => {
     findManyMock.mockResolvedValue([
       deliveryRow({ endpoint: { url: 'https://x', secret: 's', active: false } }),
     ]);
@@ -197,6 +226,15 @@ describe('dispatchPendingDeliveries — endpoint hygiene', () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(summary.dead).toBe(1);
-    expect(updateMock.mock.calls[0][0].data.lastError).toBe('endpoint_inactive');
+    expect(updateManyMock.mock.calls[0][0].data.lastError).toBe('endpoint_inactive');
+  });
+
+  test('endpoint deleted but another dispatcher already moved row → no double-count', async () => {
+    findManyMock.mockResolvedValue([deliveryRow({ endpoint: null })]);
+    updateManyMock.mockResolvedValueOnce({ count: 0 }); // terminal CAS lost
+
+    const summary = await dispatchPendingDeliveries();
+
+    expect(summary).toEqual({ processed: 1, delivered: 0, failed: 0, dead: 0 });
   });
 });

@@ -22,6 +22,14 @@ import { signPayload } from './signer';
 export const MAX_ATTEMPTS = 6;
 export const FETCH_TIMEOUT_MS = 5000;
 
+/**
+ * Lease length for an in-flight claim. If a dispatcher crashes between
+ * claiming a row and writing the final result, the row stays in 'pending'
+ * but with nextAttemptAt = now + LEASE_MS. Once the lease expires another
+ * dispatcher will retry it. Must be > FETCH_TIMEOUT_MS by a safe margin.
+ */
+export const DISPATCHER_LEASE_MS = 120_000;
+
 /** Seconds to wait before the next retry, indexed by *new* attempt number (1..6). */
 const BACKOFF_SECONDS = [60, 300, 1800, 7200, 43_200, 86_400];
 
@@ -78,22 +86,38 @@ export async function dispatchPendingDeliveries(
   };
 
   for (const row of rows) {
-    // Endpoint was deleted or deactivated after the delivery was queued.
-    // Mark as dead so we don't keep retrying.
+    // Endpoint was deleted (FK SET NULL) or deactivated after the delivery
+    // was queued. Mark as dead so we don't keep retrying. We still claim
+    // atomically so two concurrent dispatchers don't double-count this row.
     if (!row.endpoint || row.endpoint.active === false) {
-      await prisma.isaakWebhookDelivery.update({
-        where: { id: row.id },
+      const terminalClaim = await prisma.isaakWebhookDelivery.updateMany({
+        where: { id: row.id, status: 'pending', attempts: row.attempts },
         data: {
           status: 'dead',
-          lastError: !row.endpoint
-            ? 'endpoint_deleted'
-            : 'endpoint_inactive',
+          lastError: !row.endpoint ? 'endpoint_deleted' : 'endpoint_inactive',
           nextAttemptAt: null,
         },
       });
-      summary.dead++;
+      if (terminalClaim.count > 0) summary.dead++;
       continue;
     }
+
+    // ATOMIC CLAIM (CAS): increment `attempts` only if the row is still
+    // pending with the attempts value we saw. If another dispatcher already
+    // bumped it, count is 0 and we skip — they own this row.
+    //
+    // The lease (nextAttemptAt = now + DISPATCHER_LEASE_MS) protects against
+    // dispatcher crashes mid-flight: after the lease expires the row becomes
+    // visible to the next dispatcher again, even if we never wrote a result.
+    const claimedAttempts = row.attempts + 1;
+    const claim = await prisma.isaakWebhookDelivery.updateMany({
+      where: { id: row.id, status: 'pending', attempts: row.attempts },
+      data: {
+        attempts: claimedAttempts,
+        nextAttemptAt: new Date(Date.now() + DISPATCHER_LEASE_MS),
+      },
+    });
+    if (claim.count === 0) continue;
 
     const body = JSON.stringify(row.payload);
     const timestamp = Math.floor(Date.now() / 1000).toString();
@@ -132,12 +156,13 @@ export async function dispatchPendingDeliveries(
 
     const succeeded = statusCode !== null && statusCode >= 200 && statusCode < 300;
 
+    // attempts has already been incremented to claimedAttempts in the CAS
+    // claim above — do not increment it again in any branch below.
     if (succeeded) {
       await prisma.isaakWebhookDelivery.update({
         where: { id: row.id },
         data: {
           status: 'delivered',
-          attempts: row.attempts + 1,
           deliveredAt: new Date(),
           lastStatusCode: statusCode,
           lastResponseBody: responseBody,
@@ -149,15 +174,13 @@ export async function dispatchPendingDeliveries(
       continue;
     }
 
-    const newAttempts = row.attempts + 1;
     const lastError = (networkError ?? `http_${statusCode ?? 'unknown'}`).slice(0, 1000);
 
-    if (newAttempts >= MAX_ATTEMPTS) {
+    if (claimedAttempts >= MAX_ATTEMPTS) {
       await prisma.isaakWebhookDelivery.update({
         where: { id: row.id },
         data: {
           status: 'dead',
-          attempts: newAttempts,
           lastError,
           lastStatusCode: statusCode,
           lastResponseBody: responseBody,
@@ -168,13 +191,12 @@ export async function dispatchPendingDeliveries(
       continue;
     }
 
-    const nextAttemptAt = new Date(Date.now() + backoffSeconds(newAttempts) * 1000);
+    const nextAttemptAt = new Date(Date.now() + backoffSeconds(claimedAttempts) * 1000);
 
     await prisma.isaakWebhookDelivery.update({
       where: { id: row.id },
       data: {
         status: 'pending',
-        attempts: newAttempts,
         lastError,
         lastStatusCode: statusCode,
         lastResponseBody: responseBody,
