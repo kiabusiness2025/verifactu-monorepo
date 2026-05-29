@@ -7,4 +7,7 @@
 //
 // Ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md.
 
-export const ISAAK_V1_LAUNCH = process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH === 'true';
+// Defensivo: trim+lowercase para tolerar trailing newline/whitespace en la
+// env var (Vercel UI a veces conserva el Enter al final).
+export const ISAAK_V1_LAUNCH =
+  (process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH ?? '').trim().toLowerCase() === 'true';

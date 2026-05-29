@@ -10,12 +10,22 @@
  * Para activar: setear NEXT_PUBLIC_ISAAK_V1_LAUNCH=true en Vercel.
  * Es NEXT_PUBLIC_ porque los componentes que lo leen (sidebar, bottom nav)
  * son client components.
+ *
+ * Defensivo: hacemos `.trim().toLowerCase()` porque las env vars pegadas
+ * en Vercel UI pueden traer un trailing newline o whitespace (causa típica
+ * de 2026-05-29: el flag estaba en "true\n" y la comparación con "true"
+ * fallaba).
  */
 
-export const ISAAK_V1_LAUNCH = process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH === 'true';
-
-/** Helper para guardar el flag desde server-side (env del runtime SSR). */
-export function isV1Launch(): boolean {
-  return process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH === 'true';
+function readFlag(): boolean {
+  const raw = process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH;
+  if (!raw) return false;
+  return raw.trim().toLowerCase() === 'true';
 }
-// V1 launch triggered 2026-05-29T10:51:39Z
+
+export const ISAAK_V1_LAUNCH = readFlag();
+
+/** Helper para leer el flag desde server-side (env del runtime SSR). */
+export function isV1Launch(): boolean {
+  return readFlag();
+}
