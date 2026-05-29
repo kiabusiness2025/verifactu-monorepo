@@ -45,10 +45,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Detecta versión de pnpm desde `packageManager` en package.json
+      # (evita conflicto con la versión fijada en el monorepo).
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 10.27.0
           run_install: false
 
       - name: Setup Node
@@ -57,8 +58,10 @@ jobs:
           node-version: 20
           cache: 'pnpm'
 
+      # --no-frozen-lockfile porque main puede tener commits que avancen el
+      # lock antes de que el bot pueda actualizarlo (igual que Vercel).
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Generate Prisma client
         run: pnpm --filter @verifactu/db exec prisma generate
