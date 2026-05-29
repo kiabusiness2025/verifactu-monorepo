@@ -22,86 +22,49 @@ type Plan = {
   footnote?: string;
 };
 
+// V1 LAUNCH (2026-05): planes simplificados a Free + Pro. Los legacy
+// (Starter / Pro 49 / Business 149) quedan archivados en Stripe — clientes
+// existentes mantienen su plan hasta cancelar. Ver docs/product/
+// ISAAK_LAUNCH_V1_2026-05-28.md.
 const PLANS: Plan[] = [
   {
     id: 'free',
     name: 'Free',
-    tagline: 'Gratis para siempre. Preguntas ilimitadas sobre tu negocio.',
+    tagline: 'Chat ilimitado para preguntas fiscales y contables. Sin tarjeta.',
     price: '0 €',
     priceSuffix: '/ mes',
     highlight: 'free',
     features: [
-      'Consultas ilimitadas con Isaak en español',
-      'Chat fiscal y contable — IVA, IRPF, trámites AEAT',
-      'Crea y descarga facturas manuales',
-      'Sube documentos y facturas para que Isaak los analice',
-      'Plantillas de factura con tu logo y colores',
+      'Chat ilimitado en español',
+      'Corpus completo de Agencia Tributaria',
       'IA incluida — sin cuenta de Claude ni ChatGPT',
+      'Sin tarjeta · Para siempre',
+      'Sin Holded conectado',
     ],
     ctaLabel: 'Empezar gratis',
-    ctaHref: '/auth',
+    ctaHref: '/signup',
     footnote: 'Sin tarjeta. Sin fecha límite.',
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
-    tagline: 'Conecta Holded y trabaja con tus datos reales.',
-    price: '19 €',
-    priceSuffix: '/ mes',
-    annualNote: '15 €/mes facturado anual',
-    features: [
-      'Todo lo de Free',
-      'Holded conectado — ventas, gastos, cobros en tiempo real',
-      'Dashboard con tus KPIs: facturado, gastos, IVA estimado',
-      'Historial de conversaciones (90 días)',
-      'IA incluida — sin suscripción adicional',
-    ],
-    ctaLabel: 'Empezar trial 14 días',
-    ctaHref: '/signup?plan=starter',
-    footnote: 'Trial 14 días sin tarjeta.',
   },
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Memoria, archivos, Google y modo de ejecución.',
-    price: '49 €',
+    tagline: 'Tu Holded conectado. Datos reales en tiempo real.',
+    price: '29 €',
     priceSuffix: '/ mes',
-    annualNote: '39 €/mes facturado anual',
+    annualNote: '🎁 290 € / año (2 meses gratis)',
     highlight: 'recommended',
     features: [
-      'Todo lo de Starter, mensajes ilimitados',
-      'Subida de facturas y tickets con OCR automático',
-      'Google Calendar, Gmail y Drive conectados',
-      'Alertas fiscales proactivas (IVA, IRPF, Verifactu)',
-      'Voz: dicta a Isaak, escucha las respuestas',
-      'Push notifications',
-      'Historial de conversaciones (1 año)',
-      'IA incluida — Claude Sonnet, sin suscripción adicional',
+      'Todo lo del plan Free',
+      'Tu Holded conectado · 20 tools de lectura + borradores',
+      'Dashboard con KPIs: facturado, gastos, IVA estimado, próx. vencimiento',
+      'Alertas fiscales D-15/7/3/1 antes de cada vencimiento AEAT',
+      'Soporte por email',
+      'IA incluida — Claude Sonnet + GPT-4o fallback',
+      'Trial 14 días sin tarjeta',
     ],
-    ctaLabel: 'Empezar trial 14 días',
+    ctaLabel: 'Probar 14 días gratis',
     ctaHref: '/signup?plan=pro',
-    footnote: 'Trial 14 días sin tarjeta.',
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    tagline: 'Multi-usuario, modelos AEAT y banca conectada.',
-    price: '149 €',
-    priceSuffix: '/ mes',
-    annualNote: '119 €/mes facturado anual',
-    features: [
-      'Todo lo de Pro',
-      'Hasta 10 usuarios por workspace',
-      'Open Banking — movimientos bancarios en tiempo real',
-      'Modelos AEAT preconfigurados (303, 130, 390) — próximamente',
-      'Multi-ERP: Sage, A3 — próximamente',
-      'Historial ilimitado',
-      'Soporte prioritario · SLA 99,9%',
-      'IA incluida — Claude Sonnet + GPT-4o opcional',
-    ],
-    ctaLabel: 'Hablar con ventas',
-    ctaHref: '/support',
-    footnote: 'Facturación anual disponible. IVA no incluido.',
+    footnote: 'Trial 14 días sin tarjeta · Cancela cuando quieras · IVA no incluido',
   },
 ];
 
@@ -124,7 +87,7 @@ const FAQ = [
   },
   {
     q: '¿Hay descuento si pago anual?',
-    a: 'Sí. La facturación anual aplica un descuento del 20% (equivalente a más de 2 meses gratis). Disponible en Starter, Pro y Business.',
+    a: 'Sí. El plan Pro anual son 290 € en lugar de 348 € — 2 meses gratis (descuento equivalente al 17 %).',
   },
   {
     q: '¿Qué pasa con mis datos si cancelo?',
@@ -159,7 +122,7 @@ export default function IsaakPricingPage() {
       {/* Plans */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4">
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
             {PLANS.map((plan) => {
               const isRecommended = plan.highlight === 'recommended';
               const isFree = plan.highlight === 'free';
@@ -196,9 +159,9 @@ export default function IsaakPricingPage() {
                       )}
                     </div>
                     {plan.annualNote && (
-                      <p className="mt-1 text-[11px] text-emerald-600 font-medium">
+                      <div className="mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
                         {plan.annualNote}
-                      </p>
+                      </div>
                     )}
                   </div>
 
@@ -368,7 +331,8 @@ export default function IsaakPricingPage() {
           <h2 className="text-2xl font-semibold sm:text-3xl">¿No sabes por dónde empezar?</h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-blue-100">
             Empieza con el plan Free — es gratis para siempre. Si en algún momento necesitas Holded
-            conectado o mensajes ilimitados, el salto a Starter o Pro es inmediato.
+            conectado y alertas fiscales, el salto a Pro son 29 € al mes con 14 días de prueba sin
+            tarjeta.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
