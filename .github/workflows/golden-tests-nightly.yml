@@ -1,0 +1,132 @@
+name: Golden Tests — Nightly
+
+# Corre la suite "golden" de Isaak (~41 tests E2E contra Anthropic Claude)
+# cada noche a las 03:00 UTC. Si algo regresa, abre un issue automáticamente.
+#
+# También se puede disparar manualmente desde la pestaña Actions del repo.
+#
+# Required secrets (Settings → Secrets and variables → Actions):
+#   ANTHROPIC_API_KEY_TESTS   — API key de Anthropic, separada de la de prod
+#                               (~$1.50/run, sugerencia: poner budget cap mensual)
+#
+# Optional secrets:
+#   OPENAI_API_KEY_TESTS      — para el LLM judge (gpt-4o-mini)
+#   ISAAK_GOLDEN_MODEL        — override modelo Anthropic (default: claude-sonnet-4-6)
+
+on:
+  schedule:
+    # 03:00 UTC = 04:00 / 05:00 hora peninsular según horario verano/invierno
+    - cron: '0 3 * * *'
+  workflow_dispatch:
+    inputs:
+      category:
+        description: 'Categoría a correr (vacío = todas)'
+        type: choice
+        required: false
+        default: ''
+        options:
+          - ''
+          - 'tool-use'
+          - 'clarify'
+          - 'no-hallucination'
+          - 'multi-turn'
+          - 'sub-agent'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  golden:
+    name: Run golden suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @verifactu/db exec prisma generate
+
+      - name: Run golden tests
+        id: tests
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_TESTS }}
+          ISAAK_GOLDEN_LIVE: '1'
+          ISAAK_GOLDEN_MODEL: ${{ vars.ISAAK_GOLDEN_MODEL || '' }}
+          CATEGORY: ${{ inputs.category || '' }}
+        run: |
+          cd apps/isaak
+          if [ -n "$CATEGORY" ]; then
+            echo "Running category: $CATEGORY"
+            npx jest --config jest.config.mjs "tests/intelligence/golden/${CATEGORY}.test.ts" \
+              2>&1 | tee /tmp/golden-output.log
+          else
+            echo "Running full suite"
+            npx jest --config jest.config.mjs tests/intelligence/golden/ \
+              2>&1 | tee /tmp/golden-output.log
+          fi
+
+      - name: Upload test log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-output-${{ github.run_id }}
+          path: /tmp/golden-output.log
+          retention-days: 14
+
+      - name: Open issue if tests failed
+        if: failure() && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let log = '';
+            try {
+              log = fs.readFileSync('/tmp/golden-output.log', 'utf8');
+              // Capture failure summary — last ~80 lines should include the Jest summary
+              log = log.split('\n').slice(-80).join('\n');
+            } catch (e) {
+              log = `(no log file)`;
+            }
+            const date = new Date().toISOString().slice(0, 10);
+            const title = `Golden tests regressed — ${date}`;
+            const body = [
+              `Nightly golden tests fallaron en \`${context.sha.slice(0, 8)}\`.`,
+              ``,
+              `**Workflow run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              ``,
+              `<details><summary>Últimas líneas del log</summary>`,
+              ``,
+              '```',
+              log,
+              '```',
+              ``,
+              `</details>`,
+              ``,
+              `Investigar antes del próximo release V1.x / V2.0.`,
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['golden-tests', 'regression'],
+            });
