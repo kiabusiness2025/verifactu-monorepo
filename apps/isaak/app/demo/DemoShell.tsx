@@ -4,7 +4,7 @@ import { ArrowRight, FlaskConical, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import IsaakChatSection from '@/app/(workspace)/components/IsaakChatSection';
-import { DEMO_COMPANY_NAME, DEMO_DAILY_LIMIT } from '@/app/lib/isaak-demo-context';
+import { DEMO_COMPANY_NAME, DEMO_DAILY_LIMIT } from '@/app/lib/isaak-demo-constants';
 
 export default function DemoShell({
   userName,

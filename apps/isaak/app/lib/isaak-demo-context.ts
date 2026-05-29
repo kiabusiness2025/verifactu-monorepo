@@ -10,9 +10,10 @@
 import { prisma } from './prisma';
 import { getHoldedSession } from './holded-session';
 import type { IsaakAuthenticatedChat } from './isaak-chat-context';
+import { DEMO_COMPANY_NAME, DEMO_DAILY_LIMIT } from './isaak-demo-constants';
 
-export const DEMO_COMPANY_NAME = 'Nova Gestión S.L.';
-export const DEMO_DAILY_LIMIT = 20;
+// Re-export para no romper imports server-side existentes.
+export { DEMO_COMPANY_NAME, DEMO_DAILY_LIMIT };
 
 // ── Quota demo ────────────────────────────────────────────────────────────────
 
