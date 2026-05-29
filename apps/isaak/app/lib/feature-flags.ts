@@ -18,3 +18,4 @@ export const ISAAK_V1_LAUNCH = process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH === 'true
 export function isV1Launch(): boolean {
   return process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH === 'true';
 }
+// V1 launch triggered 2026-05-29T10:51:39Z
