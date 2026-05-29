@@ -67,7 +67,9 @@ jobs:
         run: pnpm --filter @verifactu/db exec prisma generate
 
       # Diagnóstico: verifica que el secret está disponible (no imprime el
-      # valor — solo confirma longitud y prefijo).
+      # valor — solo confirma longitud, prefijo y si tiene whitespace al
+      # final que se cuele al header HTTP (causa típica de 401 invalid
+      # x-api-key cuando la key se pegó desde Windows con \r\n).
       - name: Check secrets and env
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS }}
@@ -78,9 +80,50 @@ jobs:
             echo "Add it in repo Settings → Secrets and variables → Actions."
             exit 1
           fi
-          echo "ANTHROPIC_API_KEY length: ${#ANTHROPIC_API_KEY}"
-          echo "ANTHROPIC_API_KEY prefix: ${ANTHROPIC_API_KEY:0:7}***"
+          echo "ANTHROPIC_API_KEY length (raw): ${#ANTHROPIC_API_KEY}"
+          echo "ANTHROPIC_API_KEY prefix: ${ANTHROPIC_API_KEY:0:8}***"
+          TRIMMED=$(printf '%s' "$ANTHROPIC_API_KEY" | tr -d '[:space:]')
+          echo "ANTHROPIC_API_KEY length (trimmed): ${#TRIMMED}"
+          if [ "${#ANTHROPIC_API_KEY}" != "${#TRIMMED}" ]; then
+            echo "::warning::La key tenía whitespace ($((${#ANTHROPIC_API_KEY} - ${#TRIMMED})) chars). Esto es probablemente la causa del 401."
+          fi
           echo "ISAAK_GOLDEN_LIVE: $ISAAK_GOLDEN_LIVE"
+
+      # Sanity check: probar la key contra Anthropic con curl ANTES de Jest.
+      # Si esto falla, el problema es de la key/cuenta — no del código.
+      - name: Sanity check Anthropic API
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS }}
+        run: |
+          KEY=$(printf '%s' "$ANTHROPIC_API_KEY" | tr -d '[:space:]')
+          echo "Probando contra Anthropic con haiku-4-5 (1 token)…"
+          RESP=$(curl -s -w "\n%{http_code}" https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d '{"model":"claude-haiku-4-5-20251001","max_tokens":4,"messages":[{"role":"user","content":"hi"}]}')
+          BODY=$(echo "$RESP" | head -n -1)
+          CODE=$(echo "$RESP" | tail -n 1)
+          echo "HTTP $CODE"
+          # Censurar el contenido del mensaje (puede salir 1 palabra del modelo
+          # — no aporta nada al diagnóstico). Imprimir solo type/error.
+          echo "$BODY" | python3 -c "
+          import sys, json
+          try:
+              d = json.loads(sys.stdin.read())
+              if 'type' in d:
+                  if d.get('type') == 'error':
+                      print('ERROR:', d.get('error',{}).get('type'), '-', d.get('error',{}).get('message','')[:120])
+                  else:
+                      print('OK type=' + d.get('type','?') + ', model=' + d.get('model','?'))
+          except Exception as e:
+              print('Parse error:', e)
+          "
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Anthropic devolvió $CODE. La key no es válida o la cuenta no tiene billing activo."
+            exit 1
+          fi
+          echo "::notice::API key válida. Procediendo a los golden tests."
 
       # Debug: imprime env vars relevantes ANTES de Jest para confirmar que
       # Jest las verá. Solo length de la API key — no el valor.

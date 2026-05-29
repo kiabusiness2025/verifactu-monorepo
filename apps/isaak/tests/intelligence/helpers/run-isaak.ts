@@ -39,16 +39,19 @@ function buildContextForFixture(context: GoldenContext | undefined): Authenticat
 }
 
 function getApiKey(): string {
-  const key =
+  const raw =
     process.env.ANTHROPIC_API_KEY ||
     process.env.ISAAK_ANTHROPIC_API_KEY ||
     process.env.ANTHROPIC_API_KEY_DEV;
-  if (!key) {
+  if (!raw) {
     throw new Error(
       'Missing ANTHROPIC_API_KEY for golden tests. Set ISAAK_GOLDEN_LIVE=1 only with an API key available.'
     );
   }
-  return key;
+  // Trim defensivo: secrets pegados desde Windows o emails pueden traer
+  // \r, \n, espacios o BOM al final. Esos chars se cuelan al header HTTP
+  // y Anthropic devuelve 401 invalid x-api-key.
+  return raw.trim();
 }
 
 async function callAnthropic(input: {
