@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import PricingSectionV1 from './PricingSectionV1';
 
 export const isaakLandingV1Metadata: Metadata = {
   title: 'Isaak — Asistente fiscal y contable para Holded',
@@ -51,39 +52,8 @@ const BENEFITS = [
   },
 ];
 
-const PRICING = [
-  {
-    name: 'Free',
-    price: '0 €',
-    priceSub: 'siempre gratis',
-    description: 'Chat con corpus AEAT. Sin tu Holded conectado, sin tools de lectura.',
-    features: [
-      'Chat ilimitado (10 mensajes/h)',
-      'Corpus completo de AEAT',
-      'Sin necesidad de tarjeta',
-      'Sin Holded conectado',
-    ],
-    cta: { label: 'Empezar gratis', href: SIGNUP_URL },
-    highlight: false,
-  },
-  {
-    name: 'Pro',
-    price: '29 €',
-    priceSub: 'al mes · IVA no incluido',
-    annualBadge: '🎁 Pago anual: 2 meses gratis (290 € / año)',
-    description: 'Todo lo que un autónomo o pyme necesita para que Holded vuele.',
-    features: [
-      'Todo lo del plan Free',
-      'Tu Holded conectado',
-      '20 tools: lectura + crear borradores',
-      'Alertas AEAT D-15/7/3/1 por email',
-      'Soporte por email',
-      'Trial 14 días sin tarjeta — sin compromiso',
-    ],
-    cta: { label: 'Probar 14 días gratis', href: SIGNUP_URL + '?plan=pro' },
-    highlight: true,
-  },
-];
+// PRICING data ahora vive en PricingSectionV1.tsx (cliente, con toggle
+// mensual/anual). Se mantiene esta nota como referencia.
 
 const FAQ = [
   {
@@ -269,75 +239,7 @@ export default function IsaakHomeLandingV1() {
       </section>
 
       {/* ── PRICING ──────────────────────────────────────────────────────── */}
-      <section id="pricing" className="py-16">
-        <div className="mx-auto max-w-5xl px-5">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
-              Precios sin sorpresas
-            </h2>
-            <p className="mt-3 text-base text-slate-600">
-              Dos planes. Cambia o cancela cuando quieras desde tu panel.
-            </p>
-          </div>
-
-          <div className="mt-12 grid gap-6 sm:grid-cols-2">
-            {PRICING.map((p) => (
-              <div
-                key={p.name}
-                className={`flex flex-col rounded-3xl border-2 p-7 shadow-sm ${
-                  p.highlight
-                    ? 'border-[#2361d8] bg-[linear-gradient(135deg,#f0f5ff_0%,#ffffff_100%)]'
-                    : 'border-slate-200 bg-white'
-                }`}
-              >
-                <div className="flex items-baseline justify-between">
-                  <h3 className="text-2xl font-bold text-[#011c67]">{p.name}</h3>
-                  {p.highlight && (
-                    <span className="inline-block rounded-full bg-[#2361d8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white">
-                      Recomendado
-                    </span>
-                  )}
-                </div>
-                <div className="mt-3">
-                  <span className="text-4xl font-bold text-[#011c67]">{p.price}</span>
-                  <span className="ml-2 text-sm text-slate-500">{p.priceSub}</span>
-                </div>
-                {'annualBadge' in p && p.annualBadge && (
-                  <div className="mt-2.5 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                    {p.annualBadge}
-                  </div>
-                )}
-                <p className="mt-3 text-sm text-slate-600">{p.description}</p>
-
-                <ul className="mt-6 space-y-2">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-slate-700">
-                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={p.cta.href}
-                  className={`mt-7 inline-flex items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold shadow-sm transition ${
-                    p.highlight
-                      ? 'bg-[#2361d8] text-white hover:bg-[#1f55c0]'
-                      : 'border border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
-                  }`}
-                >
-                  {p.cta.label}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          <p className="mt-6 text-center text-xs text-slate-500">
-            Sin permanencia · Cancela cuando quieras desde tu panel · IVA no incluido
-          </p>
-        </div>
-      </section>
+      <PricingSectionV1 />
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section id="faq" className="bg-slate-50 py-16">
