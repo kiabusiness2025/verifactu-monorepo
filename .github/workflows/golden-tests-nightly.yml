@@ -66,6 +66,22 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter @verifactu/db exec prisma generate
 
+      # Diagnóstico: verifica que el secret está disponible (no imprime el
+      # valor — solo confirma longitud y prefijo).
+      - name: Check secrets and env
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS }}
+          ISAAK_GOLDEN_LIVE: '1'
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY_TESTS secret is empty or not set."
+            echo "Add it in repo Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "ANTHROPIC_API_KEY length: ${#ANTHROPIC_API_KEY}"
+          echo "ANTHROPIC_API_KEY prefix: ${ANTHROPIC_API_KEY:0:7}***"
+          echo "ISAAK_GOLDEN_LIVE: $ISAAK_GOLDEN_LIVE"
+
       - name: Run golden tests
         id: tests
         env:
@@ -78,11 +94,11 @@ jobs:
           cd apps/isaak
           if [ -n "$CATEGORY" ]; then
             echo "Running category: $CATEGORY"
-            npx jest --config jest.config.mjs "tests/intelligence/golden/${CATEGORY}.test.ts" \
+            npx jest --config jest.config.mjs "tests/intelligence/golden/${CATEGORY}.test.ts" --verbose \
               2>&1 | tee /tmp/golden-output.log
           else
             echo "Running full suite"
-            npx jest --config jest.config.mjs tests/intelligence/golden/ \
+            npx jest --config jest.config.mjs tests/intelligence/golden/ --verbose \
               2>&1 | tee /tmp/golden-output.log
           fi
 
