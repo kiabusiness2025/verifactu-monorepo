@@ -35,6 +35,21 @@ export type TgChat = {
   first_name?: string;
 };
 
+export type TgOrderInfo = {
+  name?: string;
+  phone_number?: string;
+  email?: string;
+};
+
+export type TgSuccessfulPayment = {
+  currency: string;
+  total_amount: number;
+  invoice_payload: string;
+  telegram_payment_charge_id: string;
+  provider_payment_charge_id: string;
+  order_info?: TgOrderInfo;
+};
+
 export type TgMessage = {
   message_id: number;
   from?: TgUser;
@@ -44,6 +59,7 @@ export type TgMessage = {
   photo?: unknown[];
   document?: { file_id: string; file_name?: string; mime_type?: string };
   caption?: string;
+  successful_payment?: TgSuccessfulPayment;
 };
 
 export type TgCallbackQuery = {
@@ -53,10 +69,20 @@ export type TgCallbackQuery = {
   data?: string;
 };
 
+export type TgPreCheckoutQuery = {
+  id: string;
+  from: TgUser;
+  currency: string;
+  total_amount: number;
+  invoice_payload: string;
+  order_info?: TgOrderInfo;
+};
+
 export type TgUpdate = {
   update_id: number;
   message?: TgMessage;
   callback_query?: TgCallbackQuery;
+  pre_checkout_query?: TgPreCheckoutQuery;
 };
 
 // ── Tipos de respuesta ────────────────────────────────────────────────────────
@@ -116,9 +142,47 @@ export async function setTelegramWebhook(webhookUrl: string): Promise<void> {
   await tgPost('setWebhook', {
     url: webhookUrl,
     secret_token: process.env.TELEGRAM_WEBHOOK_SECRET?.trim() ?? '',
-    allowed_updates: ['message', 'callback_query'],
+    allowed_updates: ['message', 'callback_query', 'pre_checkout_query'],
     drop_pending_updates: true,
   });
+}
+
+export async function sendTelegramInvoice(
+  chatId: number,
+  opts: {
+    title: string;
+    description: string;
+    payload: string;
+    amountCents: number;
+    currency?: string;
+    needEmail?: boolean;
+    needName?: boolean;
+    photoUrl?: string;
+  }
+): Promise<void> {
+  const providerToken = process.env.TELEGRAM_PAYMENT_PROVIDER_TOKEN?.trim() ?? '';
+  await tgPost('sendInvoice', {
+    chat_id: chatId,
+    title: opts.title,
+    description: opts.description,
+    payload: opts.payload,
+    provider_token: providerToken,
+    currency: opts.currency ?? 'EUR',
+    prices: [{ label: opts.title, amount: opts.amountCents }],
+    need_email: opts.needEmail ?? true,
+    need_name: opts.needName ?? true,
+    ...(opts.photoUrl ? { photo_url: opts.photoUrl } : {}),
+  });
+}
+
+export async function answerPreCheckoutQuery(
+  queryId: string,
+  ok: boolean,
+  errorMessage?: string
+): Promise<void> {
+  const body: Record<string, unknown> = { pre_checkout_query_id: queryId, ok };
+  if (!ok && errorMessage) body.error_message = errorMessage;
+  await tgPost('answerPreCheckoutQuery', body);
 }
 
 // ── Helpers de formato ────────────────────────────────────────────────────────

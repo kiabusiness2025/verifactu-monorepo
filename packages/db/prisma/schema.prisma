@@ -594,6 +594,7 @@ model Tenant {
   telegramChats                 TelegramChat[]
   telegramMessages              TelegramMessage[]
   telegramLinkTokens            TelegramLinkToken[]
+  telegramPayments              TelegramPayment[]
   customIntegrationRequests     CustomIntegrationRequest[]
   connectionRecipients          ConnectionRecipient[]
   accessRequests                AccessRequest[]
@@ -1170,8 +1171,9 @@ model TelegramChat {
   createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  tenant   Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  tenant   Tenant?            @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   messages TelegramMessage[]
+  payments TelegramPayment[]
 
   @@index([tenantId])
   @@map("telegram_chats")
@@ -1210,6 +1212,28 @@ model TelegramLinkToken {
 
   @@index([tenantId])
   @@map("telegram_link_tokens")
+}
+
+model TelegramPayment {
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatDbId         String    @map("chat_db_id") @db.Uuid
+  tenantId         String?   @map("tenant_id") @db.Uuid
+  planCode         String    @map("plan_code")
+  amountCents      Int       @map("amount_cents")
+  currency         String    @default("EUR")
+  telegramChargeId String    @unique @map("telegram_charge_id")
+  providerChargeId String?   @map("provider_charge_id")
+  orderEmail       String?   @map("order_email")
+  orderName        String?   @map("order_name")
+  paidAt           DateTime  @default(now()) @map("paid_at") @db.Timestamptz
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
+
+  chat   TelegramChat @relation(fields: [chatDbId], references: [id], onDelete: Cascade)
+  tenant Tenant?      @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([chatDbId])
+  @@index([tenantId])
+  @@map("telegram_payments")
 }
 
 model CustomIntegrationRequest {

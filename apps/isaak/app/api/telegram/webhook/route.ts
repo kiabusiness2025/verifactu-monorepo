@@ -22,12 +22,14 @@ import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
 import { prisma } from '@/app/lib/prisma';
 import {
   answerCallbackQuery,
+  answerPreCheckoutQuery,
   consumeTelegramLinkToken,
   findTenantIdByChatId,
   linkChatToTenant,
   loadTelegramHistory,
   markdownToTgHtml,
   saveTelegramMessage,
+  sendTelegramInvoice,
   sendTelegramText,
   truncateForTelegram,
   upsertTelegramChat,
@@ -43,6 +45,35 @@ import {
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// ── Planes de suscripción ─────────────────────────────────────────────────────
+
+const ISAAK_PLANS = [
+  {
+    code: 'starter',
+    label: 'Starter',
+    emoji: '🥉',
+    priceEur: 19,
+    amountCents: 1900,
+    description: '100 consultas/mes · 1 ERP · Dashboard KPI básico',
+  },
+  {
+    code: 'pyme',
+    label: 'Pyme',
+    emoji: '⭐',
+    priceEur: 49,
+    amountCents: 4900,
+    description: 'Consultas ilimitadas · Google/Microsoft · Facturas VeriFactu',
+  },
+  {
+    code: 'empresa',
+    label: 'Empresa',
+    emoji: '🏢',
+    priceEur: 149,
+    amountCents: 14900,
+    description: 'Multi-usuario · 3 ERPs · Notificaciones fiscales avanzadas',
+  },
+] as const;
 
 // ── Menús inline ─────────────────────────────────────────────────────────────
 
@@ -67,7 +98,7 @@ const MENU_GENERAL: TgInlineKeyboard = [
     { text: '🏢 Autónomo vs empresa', callback_data: 'menu_tipo' },
     { text: '🔗 Vincular cuenta', callback_data: 'menu_vincular' },
   ],
-  [{ text: '💳 Ver planes', url: ISAAK_URLS.pricing }],
+  [{ text: '💳 Ver planes', callback_data: 'menu_planes' }],
 ];
 
 const CALLBACK_QUERIES: Record<string, string> = {
@@ -122,10 +153,14 @@ async function processUpdate(rawBody: string): Promise<void> {
       payload: { username: from?.username, firstName: from?.first_name },
     });
 
-    if (text.startsWith('/start')) {
+    if (msg.successful_payment) {
+      await handleSuccessfulPayment(tgChatId, chatDbId, tenantId, msg.successful_payment);
+    } else if (text.startsWith('/start')) {
       await handleStart(tgChatId, chatDbId, tenantId, text, from?.first_name ?? null);
-    } else if (text === '/menu' || text === '/menu@IsaakBot') {
+    } else if (text === '/menu' || text === '/menu@IsaakFiscalBot') {
       await handleMenu(tgChatId, chatDbId, tenantId, from?.first_name ?? null);
+    } else if (text === '/planes' || text === '/planes@IsaakFiscalBot') {
+      await handlePlanes(tgChatId, chatDbId, tenantId);
     } else if (text === '/ayuda' || text === '/help') {
       await handleHelp(tgChatId, chatDbId, tenantId);
     } else if (text === '/desvincular') {
@@ -141,6 +176,10 @@ async function processUpdate(rawBody: string): Promise<void> {
     }
   }
 
+  if (update.pre_checkout_query) {
+    await handlePreCheckoutQuery(update.pre_checkout_query);
+  }
+
   if (update.callback_query) {
     const cq = update.callback_query;
     await answerCallbackQuery(cq.id);
@@ -151,6 +190,17 @@ async function processUpdate(rawBody: string): Promise<void> {
     });
     const tenantId = await findTenantIdByChatId(tgChatId);
     const data = cq.data ?? '';
+
+    if (data === 'menu_planes') {
+      await handlePlanes(tgChatId, chatDbId, tenantId);
+      return;
+    }
+
+    if (data.startsWith('plan_')) {
+      const planCode = data.slice(5);
+      await handlePlanSelect(tgChatId, chatDbId, tenantId, planCode);
+      return;
+    }
 
     if (data === 'menu_vincular') {
       const appUrl =
@@ -241,6 +291,7 @@ async function handleHelp(
     '',
     '/start — Saludo y menú principal',
     '/menu — Menú de opciones',
+    '/planes — Ver planes y suscribirse',
     '/ayuda — Este mensaje',
     '/desvincular — Desconectar tu cuenta de Isaak',
     '',
@@ -273,6 +324,175 @@ async function handleUnlink(
     '✅ Cuenta desvinculada. Ya no tengo acceso a tus datos de Isaak desde este chat. Puedes volver a vincularla cuando quieras con /start <enlace>.';
   await sendTelegramText(tgChatId, reply);
   await saveOutbound(chatDbId, null, reply);
+}
+
+// ── Pagos Telegram ────────────────────────────────────────────────────────────
+
+async function handlePlanes(
+  tgChatId: number,
+  chatDbId: string,
+  tenantId: string | null
+): Promise<void> {
+  const lines = [
+    '<b>💳 Planes de Isaak</b>',
+    '',
+    'Elige el plan que mejor se adapte a tu negocio:',
+    '',
+    ...ISAAK_PLANS.map(
+      (p) => `${p.emoji} <b>${p.label} — ${p.priceEur} €/mes</b>\n${p.description}`
+    ),
+  ];
+  const keyboard: TgInlineKeyboard = [
+    ISAAK_PLANS.map((p) => ({
+      text: `${p.emoji} ${p.label} ${p.priceEur}€`,
+      callback_data: `plan_${p.code}`,
+    })),
+  ];
+  const reply = lines.join('\n');
+  await sendTelegramText(tgChatId, reply, keyboard);
+  await saveOutbound(chatDbId, tenantId, '[planes]');
+}
+
+async function handlePlanSelect(
+  tgChatId: number,
+  chatDbId: string,
+  tenantId: string | null,
+  planCode: string
+): Promise<void> {
+  const plan = ISAAK_PLANS.find((p) => p.code === planCode);
+  if (!plan) return;
+
+  const notice = tenantId
+    ? `Vas a suscribirte al plan <b>${plan.label}</b> (${plan.priceEur} €/mes).`
+    : `Vas a suscribirte al plan <b>${plan.label}</b> (${plan.priceEur} €/mes).\n\n⚠️ Vincula tu cuenta de Isaak antes o después del pago para activar el plan.`;
+
+  await sendTelegramText(tgChatId, notice);
+
+  await sendTelegramInvoice(tgChatId, {
+    title: `Isaak ${plan.label}`,
+    description: plan.description,
+    payload: `plan:${plan.code}`,
+    amountCents: plan.amountCents,
+    currency: 'EUR',
+    needEmail: true,
+    needName: true,
+  });
+  await saveOutbound(chatDbId, tenantId, `[invoice:${plan.code}]`);
+}
+
+async function handlePreCheckoutQuery(
+  pcq: NonNullable<TgUpdate['pre_checkout_query']>
+): Promise<void> {
+  // Debe responder en < 10 segundos
+  try {
+    const planCode = pcq.invoice_payload.replace('plan:', '');
+    const plan = ISAAK_PLANS.find((p) => p.code === planCode);
+    if (!plan) {
+      await answerPreCheckoutQuery(
+        pcq.id,
+        false,
+        'Plan no reconocido. Escribe /planes para ver los disponibles.'
+      );
+      return;
+    }
+    // Verificar que no tiene ya ese plan activo
+    const chat = await prisma.telegramChat.findUnique({
+      where: { chatId: BigInt(pcq.from.id) },
+      select: { tenantId: true },
+    });
+    if (chat?.tenantId) {
+      const sub = await prisma.tenantSubscription.findFirst({
+        where: { tenantId: chat.tenantId, status: 'active' },
+        include: { plan: { select: { code: true } } },
+        orderBy: { createdAt: 'desc' },
+      });
+      if (sub?.plan?.code === planCode) {
+        await answerPreCheckoutQuery(
+          pcq.id,
+          false,
+          `Ya tienes el plan ${plan.label} activo. Escribe /menu para ver tus opciones.`
+        );
+        return;
+      }
+    }
+    await answerPreCheckoutQuery(pcq.id, true);
+  } catch {
+    await answerPreCheckoutQuery(pcq.id, true);
+  }
+}
+
+async function handleSuccessfulPayment(
+  tgChatId: number,
+  chatDbId: string,
+  tenantId: string | null,
+  payment: NonNullable<import('@/app/lib/telegram').TgMessage['successful_payment']>
+): Promise<void> {
+  const planCode = payment.invoice_payload.replace('plan:', '');
+  const plan = ISAAK_PLANS.find((p) => p.code === planCode);
+
+  // 1. Guardar el pago en DB (cast a any hasta que prisma generate se ejecute en build)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (prisma as any).telegramPayment.create({
+    data: {
+      chatDbId,
+      tenantId,
+      planCode,
+      amountCents: payment.total_amount,
+      currency: payment.currency,
+      telegramChargeId: payment.telegram_payment_charge_id,
+      providerChargeId: payment.provider_payment_charge_id || null,
+      orderEmail: payment.order_info?.email ?? null,
+      orderName: payment.order_info?.name ?? null,
+    },
+  });
+
+  // 2. Activar suscripción si el chat está vinculado a un tenant
+  if (tenantId && plan) {
+    try {
+      const dbPlan = await prisma.plan.findFirst({ where: { code: planCode } });
+      if (dbPlan) {
+        const now = new Date();
+        const periodEnd = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+        const existing = await prisma.tenantSubscription.findFirst({
+          where: { tenantId },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (existing) {
+          await prisma.tenantSubscription.update({
+            where: { id: existing.id },
+            data: {
+              planId: dbPlan.id,
+              status: 'active',
+              currentPeriodStart: now,
+              currentPeriodEnd: periodEnd,
+              cancelAtPeriodEnd: false,
+            },
+          });
+        } else {
+          await prisma.tenantSubscription.create({
+            data: {
+              tenantId,
+              planId: dbPlan.id,
+              status: 'active',
+              currentPeriodStart: now,
+              currentPeriodEnd: periodEnd,
+            },
+          });
+        }
+      }
+    } catch {
+      // No bloquear la confirmación por errores de DB
+    }
+  }
+
+  // 3. Confirmar al usuario
+  const planLabel = plan ? `${plan.emoji} <b>${plan.label}</b>` : `<b>${planCode}</b>`;
+  const activated = tenantId
+    ? '\n\n✅ Tu suscripción está activa en Isaak.'
+    : '\n\n🔗 Vincula tu cuenta en Isaak → Ajustes → Telegram para activar el plan.';
+  const reply = `✅ <b>¡Pago recibido!</b>\n\nPlan: ${planLabel}\nImporte: ${(payment.total_amount / 100).toFixed(2)} ${payment.currency}\nReferencia: <code>${payment.telegram_payment_charge_id.slice(-12)}</code>${activated}`;
+  await sendTelegramText(tgChatId, reply, tenantId ? MENU_CONNECTED : MENU_GENERAL);
+  await saveOutbound(chatDbId, tenantId, `[payment_ok:${planCode}]`);
 }
 
 // ── Pipeline ─────────────────────────────────────────────────────────────────
