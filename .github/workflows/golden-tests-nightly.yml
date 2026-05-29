@@ -82,6 +82,17 @@ jobs:
           echo "ANTHROPIC_API_KEY prefix: ${ANTHROPIC_API_KEY:0:7}***"
           echo "ISAAK_GOLDEN_LIVE: $ISAAK_GOLDEN_LIVE"
 
+      # Debug: imprime env vars relevantes ANTES de Jest para confirmar que
+      # Jest las verá. Solo length de la API key — no el valor.
+      - name: Debug Jest env
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS }}
+          ISAAK_GOLDEN_LIVE: '1'
+        run: |
+          echo "ISAAK_GOLDEN_LIVE=$ISAAK_GOLDEN_LIVE"
+          echo "ANTHROPIC_API_KEY.length=${#ANTHROPIC_API_KEY}"
+          node -e "console.log('Node sees: ISAAK_GOLDEN_LIVE=' + JSON.stringify(process.env.ISAAK_GOLDEN_LIVE) + ' | ANTHROPIC_API_KEY.length=' + (process.env.ANTHROPIC_API_KEY || '').length);"
+
       - name: Run golden tests
         id: tests
         env:
@@ -90,20 +101,23 @@ jobs:
           ISAAK_GOLDEN_LIVE: '1'
           ISAAK_GOLDEN_MODEL: ${{ vars.ISAAK_GOLDEN_MODEL || '' }}
           CATEGORY: ${{ inputs.category || '' }}
+        # Sin `tee` — el output va directo a GitHub Actions logs (visible en
+        # la UI sin descargar artifact). Si una alternancia con `tee` fuera
+        # necesaria, usar `set -o pipefail` para no enmascarar exit code.
         run: |
           cd apps/isaak
           if [ -n "$CATEGORY" ]; then
             echo "Running category: $CATEGORY"
-            npx jest --config jest.config.mjs "tests/intelligence/golden/${CATEGORY}.test.ts" --verbose \
-              2>&1 | tee /tmp/golden-output.log
+            npx jest --config jest.config.mjs "tests/intelligence/golden/${CATEGORY}.test.ts" --verbose --no-coverage
           else
             echo "Running full suite"
-            npx jest --config jest.config.mjs tests/intelligence/golden/ --verbose \
-              2>&1 | tee /tmp/golden-output.log
+            npx jest --config jest.config.mjs tests/intelligence/golden/ --verbose --no-coverage
           fi
 
+      # Artifact opcional — el log ahora va a stdout de Actions; el artifact
+      # solo se sube si hubo log en /tmp (compatibilidad con la versión previa).
       - name: Upload test log
-        if: always()
+        if: always() && hashFiles('/tmp/golden-output.log') != ''
         uses: actions/upload-artifact@v4
         with:
           name: golden-output-${{ github.run_id }}
