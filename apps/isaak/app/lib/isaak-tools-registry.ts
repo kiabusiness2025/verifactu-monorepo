@@ -109,6 +109,9 @@ const READ_ONLY_NAMES = new Set<string>([
   // Isaak Ledger reads (F11 fase 3 / F10 / fase 4 / C-A / fase 5)
   'isaak_audit_ledger',
   'isaak_export_ledger_excel',
+  'isaak_generate_visual_report',
+  'isaak_export_pdf',
+  'isaak_export_word',
   'isaak_list_tax_returns',
   'isaak_list_aeat_notifications',
   'isaak_list_aeat_census_changes',

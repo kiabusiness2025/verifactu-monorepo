@@ -23,18 +23,11 @@ import type {
   AIToolResultBlock,
   AITool,
 } from '@verifactu/utils';
-import {
-  executeIsaakTool,
-  isWriteToolName,
-  type IsaakToolContext,
-} from './isaak-tools-registry';
+import { executeIsaakTool, isWriteToolName, type IsaakToolContext } from './isaak-tools-registry';
 import { judgeWriteAction } from './isaak-judge';
 import { evaluateContext } from './inspector-aeat';
 import { AEAT_RULES } from './inspector-aeat-rules';
-import {
-  isInspectableWriteTool,
-  toolUseToRuleContext,
-} from './inspector-aeat-bridge';
+import { isInspectableWriteTool, toolUseToRuleContext } from './inspector-aeat-bridge';
 
 const DEFAULT_MAX_ITERATIONS = 8;
 
@@ -162,8 +155,7 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
               temperature: input.temperature ?? 0.45,
             });
           } catch (err) {
-            const msg =
-              err instanceof AIError ? `${err.kind}: ${err.message}` : String(err);
+            const msg = err instanceof AIError ? `${err.kind}: ${err.message}` : String(err);
             emitError(msg);
             finish('error');
             return;
@@ -190,9 +182,7 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
               controller.enqueue(sseChunk('text-delta', { delta: value.text }));
             } else if (value.type === 'tool_use_start') {
               pending.set(value.id, { id: value.id, name: value.name, jsonChunks: [] });
-              controller.enqueue(
-                sseChunk('tool-use-start', { id: value.id, name: value.name })
-              );
+              controller.enqueue(sseChunk('tool-use-start', { id: value.id, name: value.name }));
             } else if (value.type === 'input_json_delta') {
               const entry = pending.get(value.toolUseId);
               if (entry) entry.jsonChunks.push(value.partialJson);
@@ -267,9 +257,10 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
                 metrics.judgeBlocks += 1;
                 resultContent = JSON.stringify({
                   error: 'judge_blocked',
-                  verdict: judge.verdict === 'allow' && !allowWrites
-                    ? 'writes_disabled_in_session'
-                    : judge.verdict,
+                  verdict:
+                    judge.verdict === 'allow' && !allowWrites
+                      ? 'writes_disabled_in_session'
+                      : judge.verdict,
                   reasoning: judge.reasoning,
                   blockers: judge.blockers,
                 });
@@ -279,9 +270,7 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
                 // before execution. Errors block; warnings/infos are
                 // appended to the tool result so the LLM surfaces them.
                 let blockedByInspector = false;
-                let inspectorAugmentation:
-                  | { warnings: unknown[]; infos: unknown[] }
-                  | null = null;
+                let inspectorAugmentation: { warnings: unknown[]; infos: unknown[] } | null = null;
                 if (isInspectableWriteTool(tu.name)) {
                   const ruleCtx = toolUseToRuleContext({
                     toolName: tu.name,
@@ -304,10 +293,7 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
                           'Inspector AEAT detectó problemas que bloquean esta acción. Explica al usuario los errores citados, pídele que corrija los datos y vuelve a intentarlo.',
                       });
                       isError = true;
-                    } else if (
-                      report.warnings.length > 0 ||
-                      report.infos.length > 0
-                    ) {
+                    } else if (report.warnings.length > 0 || report.infos.length > 0) {
                       inspectorAugmentation = {
                         warnings: report.warnings,
                         infos: report.infos,
@@ -338,9 +324,18 @@ export function streamIsaakChat(input: ChatStreamInput): StreamRunResult {
               isError = exec.isError;
             }
 
-            controller.enqueue(
-              sseChunk('tool-use-result', { id: tu.id, name: tu.name, isError })
-            );
+            controller.enqueue(sseChunk('tool-use-result', { id: tu.id, name: tu.name, isError }));
+            // Emit artifact event if tool returned one
+            if (!isError) {
+              try {
+                const parsed = JSON.parse(resultContent) as Record<string, unknown>;
+                if (parsed?.artifact && typeof parsed.artifact === 'object') {
+                  controller.enqueue(sseChunk('artifact', parsed.artifact as object));
+                }
+              } catch {
+                // Not JSON — no artifact
+              }
+            }
             resultBlocks.push({
               type: 'tool_result',
               tool_use_id: tu.id,

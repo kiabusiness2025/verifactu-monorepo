@@ -21,6 +21,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import IsaakMarkdown from './IsaakMarkdown';
+import type { IsaakArtifact } from '@/app/lib/isaak-artifact';
+import IsaakArtifactPanel from './IsaakArtifactPanel';
 
 // ── Speech API minimal types ──────────────────────────────────────────────────
 interface ISpeechRecognitionResult {
@@ -57,7 +59,12 @@ function getSpeechRecognition(): ISpeechRecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
-type Message = { id: string; role: 'user' | 'assistant'; content: string };
+type Message = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  artifact?: IsaakArtifact;
+};
 type QuotaHitState = { message: string; resetsAt: string | null; ctaUrl: string };
 
 function QuotaHitBanner({ quotaHit }: { quotaHit: QuotaHitState }) {
@@ -357,6 +364,7 @@ export default function IsaakChatSection({
   const [isListening, setIsListening] = useState(false);
   const [speakingId, setSpeakingId] = useState<string | null>(null);
   const [ratings, setRatings] = useState<Record<string, 'thumbs_up' | 'thumbs_down'>>({});
+  const [activeArtifact, setActiveArtifact] = useState<IsaakArtifact | null>(null);
   const [quotaHit, setQuotaHit] = useState<QuotaHitState | null>(null);
   const [upgradeBannerDismissed, setUpgradeBannerDismissed] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -463,56 +471,130 @@ export default function IsaakChatSection({
     : QUICK_CHIPS_NO_HOLDED;
 
   const sendMessage = async (text: string) => {
-    // If a file is pending and the user submits, handle as file upload
     if (selectedFile && !text.trim()) {
       await uploadFile(selectedFile);
       return;
     }
     const trimmed = text.trim();
     if (!trimmed || loading) return;
-    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, role: 'user', content: trimmed }]);
+
+    const userMsgId = `u-${Date.now()}`;
+    const assistantMsgId = `a-${Date.now()}`;
+    setMessages((prev) => [...prev, { id: userMsgId, role: 'user', content: trimmed }]);
     setInput('');
     setLoading(true);
     setError(null);
     setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+
     try {
-      const endpoint = holdedConnected ? '/api/holded/chat' : '/api/chat';
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/chat/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed, conversationId }),
       });
-      const data = (await res.json().catch(() => null)) as {
-        ok?: boolean;
-        reply?: string;
-        response?: string;
-        error?: string;
-        message?: string;
-        resetsAt?: string;
-        ctaUrl?: string;
-        conversation?: { id: string; title: string };
-      } | null;
-      if (res.status === 429 && data?.error === 'daily_limit_reached') {
-        setQuotaHit({
-          message: data.message ?? 'Has alcanzado el límite diario.',
-          resetsAt: data.resetsAt ?? null,
-          ctaUrl: data.ctaUrl ?? '/pricing',
-        });
-        return;
+
+      if (!res.ok || !res.body) {
+        const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+        if (res.status === 429) {
+          setQuotaHit({
+            message: String(data?.message ?? 'Has alcanzado el límite diario.'),
+            resetsAt: (data?.resetsAt as string | null) ?? null,
+            ctaUrl: '/pricing',
+          });
+          return;
+        }
+        throw new Error(String(data?.message ?? 'Error al conectar con Isaak.'));
       }
-      const assistantReply = data?.reply ?? data?.response;
-      const nextConversationId = data?.conversation?.id;
-      if (!res.ok || !assistantReply) throw new Error(data?.error ?? 'Sin respuesta');
-      if (nextConversationId && !conversationId) {
-        setConversationId(nextConversationId);
-        router.refresh();
-      } else if (nextConversationId) {
-        setConversationId(nextConversationId);
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      let currentEvent = '';
+      let currentText = '';
+      let msgAdded = false;
+      let pendingArtifact: IsaakArtifact | null = null;
+
+      const flush = () => {
+        const lines = buf.split('\n');
+        buf = lines.pop() ?? '';
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            currentEvent = line.slice(7).trim();
+          } else if (line.startsWith('data: ')) {
+            let parsed: Record<string, unknown>;
+            try {
+              parsed = JSON.parse(line.slice(6)) as Record<string, unknown>;
+            } catch {
+              currentEvent = '';
+              continue;
+            }
+
+            if (currentEvent === 'conversation') {
+              const cid = parsed.id as string | null;
+              if (cid && !conversationId) {
+                setConversationId(cid);
+                router.refresh();
+              } else if (cid) {
+                setConversationId(cid);
+              }
+            } else if (currentEvent === 'text-delta') {
+              currentText += String(parsed.delta ?? '');
+              if (!msgAdded) {
+                setMessages((prev) => [
+                  ...prev,
+                  { id: assistantMsgId, role: 'assistant', content: currentText },
+                ]);
+                msgAdded = true;
+              } else {
+                setMessages((prev) =>
+                  prev.map((m) => (m.id === assistantMsgId ? { ...m, content: currentText } : m))
+                );
+              }
+              setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 10);
+            } else if (currentEvent === 'artifact') {
+              pendingArtifact = parsed as unknown as IsaakArtifact;
+              setActiveArtifact(pendingArtifact);
+            } else if (currentEvent === 'error') {
+              const code = parsed.code as string | undefined;
+              if (code === 'daily_limit_reached') {
+                setQuotaHit({
+                  message: String(parsed.message ?? 'Has alcanzado el límite diario.'),
+                  resetsAt: (parsed.resetsAt as string | null) ?? null,
+                  ctaUrl: '/pricing',
+                });
+              } else {
+                setError(String(parsed.message ?? 'Error al conectar con Isaak.'));
+              }
+            } else if (currentEvent === 'done') {
+              if (pendingArtifact) {
+                setMessages((prev) =>
+                  prev.map((m) =>
+                    m.id === assistantMsgId ? { ...m, artifact: pendingArtifact! } : m
+                  )
+                );
+              }
+              if (!msgAdded && currentText) {
+                setMessages((prev) => [
+                  ...prev,
+                  { id: assistantMsgId, role: 'assistant', content: currentText },
+                ]);
+              }
+            }
+            currentEvent = '';
+          }
+        }
+      };
+
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          flush();
+          break;
+        }
+        buf += dec.decode(value, { stream: true });
+        flush();
       }
-      setMessages((prev) => [
-        ...prev,
-        { id: `a-${Date.now()}`, role: 'assistant', content: assistantReply },
-      ]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al conectar con Isaak.');
     } finally {
@@ -648,27 +730,91 @@ export default function IsaakChatSection({
     );
   }
 
-  // ── Chat active (Claude-style: sin burbujas excesivas, ancho 3xl) ─────────
+  // ── Chat active (split view when artifact is open) ───────────────────────
   return (
-    <div className="flex h-full flex-col">
-      {/* Banner persistente: conectar Holded. Solo si el usuario aún no lo
+    <div className={`flex h-full overflow-hidden ${activeArtifact ? 'flex-row' : 'flex-col'}`}>
+      {/* Chat column — narrows when artifact panel is open */}
+      <div
+        className={`flex flex-col min-w-0 ${activeArtifact ? 'w-[42%] border-r border-slate-100' : 'flex-1'}`}
+      >
+        {/* Banner persistente: conectar Holded. Solo si el usuario aún no lo
           tiene conectado. Cierre dismissible via localStorage para no ser
           intrusivo en sesiones avanzadas. */}
-      {!holdedConnected && <HoldedCtaBanner />}
+        {!holdedConnected && <HoldedCtaBanner />}
 
-      <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-3xl space-y-8 px-6 py-8">
-          {messages.map((msg) =>
-            msg.role === 'user' ? (
-              // Usuario: texto plano alineado derecha con fondo sutil
-              <div key={msg.id} className="flex justify-end">
-                <div className="max-w-[85%] rounded-2xl bg-slate-100 px-4 py-2.5 text-[15px] leading-relaxed text-slate-900">
-                  {msg.content}
+        <div className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-3xl space-y-8 px-6 py-8">
+            {messages.map((msg) =>
+              msg.role === 'user' ? (
+                // Usuario: texto plano alineado derecha con fondo sutil
+                <div key={msg.id} className="flex justify-end">
+                  <div className="max-w-[85%] rounded-2xl bg-slate-100 px-4 py-2.5 text-[15px] leading-relaxed text-slate-900">
+                    {msg.content}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              // Assistant: SIN burbuja, solo texto fluyendo con avatar pequeño
-              <div key={msg.id} className="group relative flex items-start gap-3">
+              ) : (
+                // Assistant: SIN burbuja, solo texto fluyendo con avatar pequeño
+                <div key={msg.id} className="group relative flex items-start gap-3">
+                  <div className="relative mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                    <Image
+                      src="/Personalidad/isaak-avatar-verifactu.png"
+                      alt="Isaak"
+                      fill
+                      sizes="28px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1 pt-0.5">
+                    <div className="text-[15px] leading-7 text-slate-800">
+                      <IsaakMarkdown text={msg.content} />
+                    </div>
+                    {/* Acciones al hover */}
+                    <div className="mt-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={() => void sendFeedback(msg.id, 'thumbs_up', messages)}
+                        title="Buena respuesta"
+                        disabled={!!ratings[msg.id]}
+                        className={`flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-default ${
+                          ratings[msg.id] === 'thumbs_up'
+                            ? 'text-emerald-600 bg-emerald-50'
+                            : 'text-slate-400 hover:bg-slate-100 hover:text-emerald-600'
+                        }`}
+                      >
+                        <ThumbsUp size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void sendFeedback(msg.id, 'thumbs_down', messages)}
+                        title="Mejorable"
+                        disabled={!!ratings[msg.id]}
+                        className={`flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-default ${
+                          ratings[msg.id] === 'thumbs_down'
+                            ? 'text-rose-500 bg-rose-50'
+                            : 'text-slate-400 hover:bg-slate-100 hover:text-rose-500'
+                        }`}
+                      >
+                        <ThumbsDown size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => speakMessage(msg.id, msg.content)}
+                        title={speakingId === msg.id ? 'Detener' : 'Escuchar respuesta'}
+                        className={`flex h-7 w-7 items-center justify-center rounded-md transition ${
+                          speakingId === msg.id
+                            ? 'text-blue-600 bg-blue-50'
+                            : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
+                        }`}
+                      >
+                        {speakingId === msg.id ? <VolumeX size={13} /> : <Volume2 size={13} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+            {loading && (
+              <div className="flex items-start gap-3">
                 <div className="relative mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
                   <Image
                     src="/Personalidad/isaak-avatar-verifactu.png"
@@ -678,129 +824,77 @@ export default function IsaakChatSection({
                     className="object-cover"
                   />
                 </div>
-                <div className="min-w-0 flex-1 pt-0.5">
-                  <div className="text-[15px] leading-7 text-slate-800">
-                    <IsaakMarkdown text={msg.content} />
-                  </div>
-                  {/* Acciones al hover */}
-                  <div className="mt-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
-                    <button
-                      type="button"
-                      onClick={() => void sendFeedback(msg.id, 'thumbs_up', messages)}
-                      title="Buena respuesta"
-                      disabled={!!ratings[msg.id]}
-                      className={`flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-default ${
-                        ratings[msg.id] === 'thumbs_up'
-                          ? 'text-emerald-600 bg-emerald-50'
-                          : 'text-slate-400 hover:bg-slate-100 hover:text-emerald-600'
-                      }`}
-                    >
-                      <ThumbsUp size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void sendFeedback(msg.id, 'thumbs_down', messages)}
-                      title="Mejorable"
-                      disabled={!!ratings[msg.id]}
-                      className={`flex h-7 w-7 items-center justify-center rounded-md transition disabled:cursor-default ${
-                        ratings[msg.id] === 'thumbs_down'
-                          ? 'text-rose-500 bg-rose-50'
-                          : 'text-slate-400 hover:bg-slate-100 hover:text-rose-500'
-                      }`}
-                    >
-                      <ThumbsDown size={13} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => speakMessage(msg.id, msg.content)}
-                      title={speakingId === msg.id ? 'Detener' : 'Escuchar respuesta'}
-                      className={`flex h-7 w-7 items-center justify-center rounded-md transition ${
-                        speakingId === msg.id
-                          ? 'text-blue-600 bg-blue-50'
-                          : 'text-slate-400 hover:bg-slate-100 hover:text-slate-700'
-                      }`}
-                    >
-                      {speakingId === msg.id ? <VolumeX size={13} /> : <Volume2 size={13} />}
-                    </button>
-                  </div>
+                <div className="flex items-center gap-1.5 pt-2 text-slate-400">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400" />
+                  <span
+                    className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+                    style={{ animationDelay: '150ms' }}
+                  />
+                  <span
+                    className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
+                    style={{ animationDelay: '300ms' }}
+                  />
                 </div>
               </div>
-            ),
-          )}
-          {loading && (
-            <div className="flex items-start gap-3">
-              <div className="relative mt-0.5 h-7 w-7 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
-                <Image
-                  src="/Personalidad/isaak-avatar-verifactu.png"
-                  alt="Isaak"
-                  fill
-                  sizes="28px"
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex items-center gap-1.5 pt-2 text-slate-400">
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400" />
-                <span
-                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
-                  style={{ animationDelay: '150ms' }}
-                />
-                <span
-                  className="h-1.5 w-1.5 animate-pulse rounded-full bg-slate-400"
-                  style={{ animationDelay: '300ms' }}
-                />
-              </div>
-            </div>
-          )}
-          <div ref={endRef} />
+            )}
+            <div ref={endRef} />
+          </div>
         </div>
+
+        {/* Composer sticky con backdrop blur */}
+        <div className="border-t border-slate-100 bg-white/80 backdrop-blur-sm">
+          <div className="mx-auto max-w-3xl px-6 py-3">
+            {quotaHit ? (
+              <QuotaHitBanner quotaHit={quotaHit} />
+            ) : (
+              <>
+                {isFreePlan && !upgradeBannerDismissed && (
+                  <div className="mb-2">
+                    <UpgradeBanner onDismiss={() => setUpgradeBannerDismissed(true)} />
+                  </div>
+                )}
+                {error && (
+                  <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
+                    {error}
+                  </div>
+                )}
+                <ChatInput
+                  input={input}
+                  loading={loading}
+                  onChange={setInput}
+                  onSubmit={() =>
+                    selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
+                  }
+                  onKeyDown={handleKeyDown}
+                  onFileSelect={setSelectedFile}
+                  selectedFile={selectedFile}
+                  onClearFile={() => setSelectedFile(null)}
+                  onMicClick={toggleMic}
+                  isListening={isListening}
+                  inputRef={inputRef}
+                />
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <p className="text-[11px] text-slate-400">
+                    Isaak puede cometer errores. Verifica información financiera importante.
+                  </p>
+                  <EscalationButton messages={messages} />
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        {/* end chat column */}
       </div>
 
-      {/* Composer sticky con backdrop blur */}
-      <div className="border-t border-slate-100 bg-white/80 backdrop-blur-sm">
-        <div className="mx-auto max-w-3xl px-6 py-3">
-          {quotaHit ? (
-            <QuotaHitBanner quotaHit={quotaHit} />
-          ) : (
-            <>
-              {isFreePlan && !upgradeBannerDismissed && (
-                <div className="mb-2">
-                  <UpgradeBanner onDismiss={() => setUpgradeBannerDismissed(true)} />
-                </div>
-              )}
-              {error && (
-                <div className="mb-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] text-rose-800">
-                  {error}
-                </div>
-              )}
-              <ChatInput
-                input={input}
-                loading={loading}
-                onChange={setInput}
-                onSubmit={() =>
-                  selectedFile ? void uploadFile(selectedFile) : void sendMessage(input)
-                }
-                onKeyDown={handleKeyDown}
-                onFileSelect={setSelectedFile}
-                selectedFile={selectedFile}
-                onClearFile={() => setSelectedFile(null)}
-                onMicClick={toggleMic}
-                isListening={isListening}
-                inputRef={inputRef}
-              />
-              <div className="mt-1.5 flex items-center justify-between gap-2">
-                <p className="text-[11px] text-slate-400">
-                  Isaak puede cometer errores. Verifica información financiera importante.
-                </p>
-                <EscalationButton messages={messages} />
-              </div>
-            </>
-          )}
+      {/* Artifact panel (58% width) */}
+      {activeArtifact && (
+        <div className="flex w-[58%] flex-col overflow-hidden bg-white">
+          <IsaakArtifactPanel artifact={activeArtifact} onClose={() => setActiveArtifact(null)} />
         </div>
-      </div>
+      )}
     </div>
   );
 }
-
 
 // ── HoldedCtaBanner ─────────────────────────────────────────────────────────
 // Banner persistente que invita a conectar Holded para acceder a datos
@@ -811,8 +905,8 @@ function HoldedCtaBanner() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (window.localStorage.getItem("isaak-holded-cta-dismissed") === "1") {
+    if (typeof window === 'undefined') return;
+    if (window.localStorage.getItem('isaak-holded-cta-dismissed') === '1') {
       setDismissed(true);
     }
   }, []);
@@ -821,7 +915,7 @@ function HoldedCtaBanner() {
 
   const handleDismiss = () => {
     try {
-      window.localStorage.setItem("isaak-holded-cta-dismissed", "1");
+      window.localStorage.setItem('isaak-holded-cta-dismissed', '1');
     } catch {
       // localStorage puede no estar disponible (modo privado, etc.) — fail-silent.
     }

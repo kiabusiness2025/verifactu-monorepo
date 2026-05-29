@@ -361,5 +361,26 @@ export async function POST(req: NextRequest) {
       console.error('[Isaak Chat Stream] post-stream tasks failed', err);
     });
 
-  return new Response(stream, { headers: sseHeaders() });
+  // Prepend a conversation event so the client can track conversationId.
+  const enc = new TextEncoder();
+  const convChunk = enc.encode(
+    `event: conversation\ndata: ${JSON.stringify({ id: conversation?.id ?? null })}\n\n`
+  );
+  const wrapped = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      controller.enqueue(convChunk);
+      const reader = stream.getReader();
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) {
+          controller.close();
+          break;
+        }
+        controller.enqueue(value);
+      }
+    },
+  });
+
+  return new Response(wrapped, { headers: sseHeaders() });
 }

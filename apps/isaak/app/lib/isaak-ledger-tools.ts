@@ -22,13 +22,16 @@ import {
   type LedgerDocType,
   type LedgerSourceSystem,
 } from './isaak-ledger-sql';
-import {
-  HOLDED_DOC_TYPES,
-  type HoldedDocType,
-} from './isaak-ledger-holded-mapper';
+import { HOLDED_DOC_TYPES, type HoldedDocType } from './isaak-ledger-holded-mapper';
 import { loadAuditInputsForTenant } from './isaak-audit-loader';
 import { runAudit } from './inspector-aeat-audit';
 import { REPORT_TYPES, reportFilename, type ReportType } from './isaak-excel-export';
+import {
+  VISUAL_REPORT_TYPES,
+  buildVisualReportData,
+  type VisualReportType,
+} from './isaak-visual-report';
+import { makeDownloadArtifact } from './isaak-artifact';
 import {
   TAX_RETURN_MODELS,
   TAX_RETURN_STATUSES,
@@ -80,8 +83,14 @@ export const LEDGER_CHAT_TOOLS = [
           description: 'Descripción breve del asiento (10-200 caracteres recomendado).',
         },
         docNumber: { type: ['string', 'null'], description: 'Número de documento (opcional).' },
-        counterpartyNif: { type: ['string', 'null'], description: 'NIF/CIF del tercero (opcional).' },
-        counterpartyName: { type: ['string', 'null'], description: 'Nombre del tercero (opcional).' },
+        counterpartyNif: {
+          type: ['string', 'null'],
+          description: 'NIF/CIF del tercero (opcional).',
+        },
+        counterpartyName: {
+          type: ['string', 'null'],
+          description: 'Nombre del tercero (opcional).',
+        },
         currency: {
           type: 'string',
           description: 'Código ISO 4217 (default EUR).',
@@ -134,7 +143,8 @@ export const LEDGER_CHAT_TOOLS = [
         },
         from: {
           type: ['string', 'null'],
-          description: 'Fecha desde (YYYY-MM-DD). Si se omite, Holded usa su rango por defecto (~6 meses atrás).',
+          description:
+            'Fecha desde (YYYY-MM-DD). Si se omite, Holded usa su rango por defecto (~6 meses atrás).',
         },
         to: {
           type: ['string', 'null'],
@@ -215,16 +225,19 @@ export const LEDGER_CHAT_TOOLS = [
         },
         period: {
           type: 'string',
-          description: 'Periodo en formato Q1-2026 (trimestral), M03-2026 (mensual SII), A-2025 (anual).',
+          description:
+            'Periodo en formato Q1-2026 (trimestral), M03-2026 (mensual SII), A-2025 (anual).',
         },
         amountDeclared: {
           type: 'string',
-          description: 'Importe declarado (decimal en string, p.ej. "1234.56"). Para retenciones: total retenido; para IVA: cuota; para anuales: total declarado.',
+          description:
+            'Importe declarado (decimal en string, p.ej. "1234.56"). Para retenciones: total retenido; para IVA: cuota; para anuales: total declarado.',
         },
         status: {
           type: 'string',
           enum: [...TAX_RETURN_STATUSES],
-          description: 'Estado actual. presented=enviado a AEAT, accepted=confirmado, draft=borrador interno.',
+          description:
+            'Estado actual. presented=enviado a AEAT, accepted=confirmado, draft=borrador interno.',
         },
         amountToPay: {
           type: ['string', 'null'],
@@ -240,7 +253,8 @@ export const LEDGER_CHAT_TOOLS = [
         },
         presentedAt: {
           type: ['string', 'null'],
-          description: 'Fecha de presentación en YYYY-MM-DD o ISO. Si status=presented y se omite, Isaak usa el momento actual.',
+          description:
+            'Fecha de presentación en YYYY-MM-DD o ISO. Si status=presented y se omite, Isaak usa el momento actual.',
         },
         notes: {
           type: ['string', 'null'],
@@ -271,14 +285,19 @@ export const LEDGER_CHAT_TOOLS = [
         territory: {
           type: ['string', 'null'],
           enum: [...TERRITORIES, null],
-          description: 'Territorio fiscal (común peninsular, Canarias=IGIC, foral País Vasco/Navarra, Ceuta/Melilla).',
+          description:
+            'Territorio fiscal (común peninsular, Canarias=IGIC, foral País Vasco/Navarra, Ceuta/Melilla).',
         },
         vatRegime: {
           type: ['string', 'null'],
           enum: [...VAT_REGIMES, null],
           description: 'Régimen de IVA.',
         },
-        sector: { type: ['string', 'null'], description: 'Sector de actividad (hosteleria, consultoria, ecommerce, construccion, inmobiliario, transporte, formacion, sanidad, otros).' },
+        sector: {
+          type: ['string', 'null'],
+          description:
+            'Sector de actividad (hosteleria, consultoria, ecommerce, construccion, inmobiliario, transporte, formacion, sanidad, otros).',
+        },
         corporateTaxSubject: { type: ['boolean', 'null'] },
         hasEmployees: { type: ['boolean', 'null'] },
         hasRentWithholding: { type: ['boolean', 'null'] },
@@ -305,11 +324,13 @@ export const LEDGER_CHAT_TOOLS = [
         periodo: {
           type: 'string',
           enum: ['1T', '2T', '3T', '4T'],
-          description: 'Trimestre. 1T=enero-marzo, 2T=abril-junio, 3T=julio-septiembre, 4T=octubre-diciembre.',
+          description:
+            'Trimestre. 1T=enero-marzo, 2T=abril-junio, 3T=julio-septiembre, 4T=octubre-diciembre.',
         },
         persist: {
           type: 'boolean',
-          description: 'Si true, guarda como IsaakTaxReturn draft (idempotente vía upsert). Default false: solo computa.',
+          description:
+            'Si true, guarda como IsaakTaxReturn draft (idempotente vía upsert). Default false: solo computa.',
         },
       },
       required: ['ejercicio', 'periodo'],
@@ -349,19 +370,23 @@ export const LEDGER_CHAT_TOOLS = [
         periodo: {
           type: 'string',
           enum: ['1T', '2T', '3T', '4T'],
-          description: 'Trimestre. El cálculo es acumulado desde 1 enero hasta fin de este trimestre.',
+          description:
+            'Trimestre. El cálculo es acumulado desde 1 enero hasta fin de este trimestre.',
         },
         retencionesAcumuladas: {
           type: ['number', 'null'],
-          description: 'Retenciones IRPF acumuladas del ejercicio (p.ej. retenciones del 15% en facturas profesionales). Opcional; si se omite, se asume 0.',
+          description:
+            'Retenciones IRPF acumuladas del ejercicio (p.ej. retenciones del 15% en facturas profesionales). Opcional; si se omite, se asume 0.',
         },
         ingresosACuenta: {
           type: ['number', 'null'],
-          description: 'Pagos fraccionados previos del 130 en el mismo año. Si se omite, Isaak intenta auto-detectarlos desde tax_payment del Ledger.',
+          description:
+            'Pagos fraccionados previos del 130 en el mismo año. Si se omite, Isaak intenta auto-detectarlos desde tax_payment del Ledger.',
         },
         persist: {
           type: 'boolean',
-          description: 'Si true, guarda como IsaakTaxReturn draft (idempotente vía upsert). Default false: solo computa.',
+          description:
+            'Si true, guarda como IsaakTaxReturn draft (idempotente vía upsert). Default false: solo computa.',
         },
       },
       required: ['ejercicio', 'periodo'],
@@ -516,8 +541,7 @@ export const LEDGER_CHAT_TOOLS = [
   },
   {
     name: 'isaak_submit_180',
-    description:
-      'Registra como presentado el borrador 180 del ejercicio. Audit-log inmutable.',
+    description: 'Registra como presentado el borrador 180 del ejercicio. Audit-log inmutable.',
     input_schema: {
       type: 'object',
       properties: { ejercicio: { type: 'number' } },
@@ -539,8 +563,7 @@ export const LEDGER_CHAT_TOOLS = [
   },
   {
     name: 'isaak_submit_190',
-    description:
-      'Registra como presentado el borrador 190 del ejercicio. Audit-log inmutable.',
+    description: 'Registra como presentado el borrador 190 del ejercicio. Audit-log inmutable.',
     input_schema: {
       type: 'object',
       properties: { ejercicio: { type: 'number' } },
@@ -556,12 +579,17 @@ export const LEDGER_CHAT_TOOLS = [
       properties: {
         query: {
           type: 'string',
-          description: 'Pregunta o concepto fiscal en lenguaje natural. Ejemplo: "deducibilidad IVA gasolina vehículo turismo".',
+          description:
+            'Pregunta o concepto fiscal en lenguaje natural. Ejemplo: "deducibilidad IVA gasolina vehículo turismo".',
         },
         sourceTypes: {
           type: 'array',
-          items: { type: 'string', enum: ['manual_aeat', 'boe', 'informa', 'sede_faq', 'doctrina_dgt'] },
-          description: 'Filtra por tipo de fuente. Opcional. Útil para buscar solo en BOE o solo en manuales.',
+          items: {
+            type: 'string',
+            enum: ['manual_aeat', 'boe', 'informa', 'sede_faq', 'doctrina_dgt'],
+          },
+          description:
+            'Filtra por tipo de fuente. Opcional. Útil para buscar solo en BOE o solo en manuales.',
         },
         topK: {
           type: 'number',
@@ -580,7 +608,8 @@ export const LEDGER_CHAT_TOOLS = [
       properties: {
         query: {
           type: 'string',
-          description: 'Pregunta fiscal en lenguaje natural. Ej: "¿Cuándo aplico prorrata especial?", "¿Qué retención IRPF para un alquiler de local?", "¿El IVA de la gasolina es deducible al 100%?".',
+          description:
+            'Pregunta fiscal en lenguaje natural. Ej: "¿Cuándo aplico prorrata especial?", "¿Qué retención IRPF para un alquiler de local?", "¿El IVA de la gasolina es deducible al 100%?".',
         },
         topK: {
           type: 'number',
@@ -599,7 +628,8 @@ export const LEDGER_CHAT_TOOLS = [
       properties: {
         periodEnd: {
           type: ['string', 'null'],
-          description: 'Fecha tope inclusiva en YYYY-MM-DD. Si se omite, computa hasta el último asiento.',
+          description:
+            'Fecha tope inclusiva en YYYY-MM-DD. Si se omite, computa hasta el último asiento.',
         },
         onlyKind: {
           type: ['string', 'null'],
@@ -707,6 +737,91 @@ export const LEDGER_CHAT_TOOLS = [
       required: ['periodFrom', 'periodTo'],
     },
   },
+  {
+    name: 'isaak_generate_visual_report',
+    description:
+      'Genera un informe visual interactivo (gráfico + tabla) en el panel lateral de Isaak. Úsala cuando el usuario pida "ver ventas por mes", "desglose de gastos", "flujo de caja" o "IVA trimestral" en formato visual/gráfico. NO modifica datos. Devuelve un artifact visual que la UI renderiza automáticamente.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        reportType: {
+          type: 'string',
+          enum: ['sales_by_month', 'expense_breakdown', 'cash_flow', 'iva_trimestral'],
+          description:
+            'Tipo de informe visual. sales_by_month=ventas por mes (barras), expense_breakdown=desglose gastos por proveedor (tarta), cash_flow=ingresos vs gastos por mes (líneas), iva_trimestral=IVA devengado/soportado por trimestre (barras).',
+        },
+        from: {
+          type: 'string',
+          description: 'Fecha inicio en formato YYYY-MM-DD (inclusivo).',
+        },
+        to: {
+          type: 'string',
+          description: 'Fecha fin en formato YYYY-MM-DD (inclusivo).',
+        },
+        title: {
+          type: ['string', 'null'],
+          description: 'Título personalizado del informe (opcional).',
+        },
+      },
+      required: ['reportType', 'from', 'to'],
+    },
+  },
+  {
+    name: 'isaak_export_pdf',
+    description:
+      'Genera un informe PDF descargable desde el Isaak Ledger. Úsalo cuando el usuario pida el libro IVA, libro diario o resumen 303 en formato PDF. Devuelve un artifact con enlace de descarga que la UI muestra en el panel lateral.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        reportType: {
+          type: 'string',
+          enum: ['libro_iva_emitidas', 'libro_iva_recibidas', 'libro_diario', 'modelo_303'],
+          description: 'Tipo de informe PDF a generar.',
+        },
+        from: {
+          type: 'string',
+          description: 'Fecha inicio en formato YYYY-MM-DD.',
+        },
+        to: {
+          type: 'string',
+          description: 'Fecha fin en formato YYYY-MM-DD.',
+        },
+        label: {
+          type: ['string', 'null'],
+          description: 'Etiqueta del periodo (ej. "T2 2026"). Opcional.',
+        },
+      },
+      required: ['reportType', 'from', 'to'],
+    },
+  },
+  {
+    name: 'isaak_export_word',
+    description:
+      'Genera un informe Word (.docx) descargable desde el Isaak Ledger. Úsalo cuando el usuario pida el libro IVA, diario o resumen 303 en formato Word/documento editable. Devuelve un artifact con enlace de descarga.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        reportType: {
+          type: 'string',
+          enum: ['libro_iva_emitidas', 'libro_iva_recibidas', 'libro_diario', 'modelo_303'],
+          description: 'Tipo de informe Word a generar.',
+        },
+        from: {
+          type: 'string',
+          description: 'Fecha inicio en formato YYYY-MM-DD.',
+        },
+        to: {
+          type: 'string',
+          description: 'Fecha fin en formato YYYY-MM-DD.',
+        },
+        label: {
+          type: ['string', 'null'],
+          description: 'Etiqueta del periodo (ej. "T2 2026"). Opcional.',
+        },
+      },
+      required: ['reportType', 'from', 'to'],
+    },
+  },
 ] as const;
 
 export type LedgerToolName = (typeof LEDGER_CHAT_TOOLS)[number]['name'];
@@ -782,7 +897,8 @@ export async function executeLedgerTool(
       return {
         ok: false,
         error: 'holded_not_connected',
-        message: 'Holded no está conectado en este tenant. Pide al usuario que conecte Holded antes.',
+        message:
+          'Holded no está conectado en este tenant. Pide al usuario que conecte Holded antes.',
       };
     }
     const docTypes = (args.docTypes as HoldedDocType[]) ?? [];
@@ -854,6 +970,7 @@ export async function executeLedgerTool(
       period: { from, to, label },
       filename,
       downloadUrl,
+      artifact: makeDownloadArtifact({ type: 'excel', title: filename, downloadUrl, filename }),
       message: `Excel "${filename}" listo. Indica al usuario que pulse el enlace de descarga; el documento es solo lectura excepto la columna de notas.`,
     };
   }
@@ -967,7 +1084,8 @@ export async function executeLedgerTool(
         corporateTaxSubject: (args.corporateTaxSubject as boolean | null | undefined) ?? null,
         hasEmployees: (args.hasEmployees as boolean | null | undefined) ?? null,
         hasRentWithholding: (args.hasRentWithholding as boolean | null | undefined) ?? null,
-        hasProfessionalInvoices: (args.hasProfessionalInvoices as boolean | null | undefined) ?? null,
+        hasProfessionalInvoices:
+          (args.hasProfessionalInvoices as boolean | null | undefined) ?? null,
         hasIntraEUOperations: (args.hasIntraEUOperations as boolean | null | undefined) ?? null,
         hasRelatedParties: (args.hasRelatedParties as boolean | null | undefined) ?? null,
         usesBillingSoftware: (args.usesBillingSoftware as boolean | null | undefined) ?? null,
@@ -1851,9 +1969,7 @@ export async function executeLedgerTool(
         tenantId: ctx.tenantId,
         periodEnd,
       });
-      const filtered = onlyKind
-        ? balances.filter((b) => b.kind === onlyKind)
-        : balances;
+      const filtered = onlyKind ? balances.filter((b) => b.kind === onlyKind) : balances;
       const aggregates = aggregateBalancesForAudit(balances);
       return {
         ok: true,
@@ -1882,10 +1998,7 @@ export async function executeLedgerTool(
   }
 
   if (name === 'isaak_summarize_aeat_inbox') {
-    const days = Math.max(
-      1,
-      Math.min(90, typeof args.days === 'number' ? args.days : 7),
-    );
+    const days = Math.max(1, Math.min(90, typeof args.days === 'number' ? args.days : 7));
     try {
       // Lazy import: el módulo carga @verifactu/utils (callLLM) y romperíamos
       // los unit tests del registry si lo importáramos arriba de forma
@@ -1925,12 +2038,16 @@ export async function executeLedgerTool(
   }
 
   if (name === 'isaak_validate_vat_intracom') {
-    const vatRaw = String(args.vatNumber ?? '').trim().toUpperCase().replace(/\s+/g, '');
+    const vatRaw = String(args.vatNumber ?? '')
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
     if (!/^[A-Z]{2}[A-Z0-9]{2,15}$/.test(vatRaw)) {
       return {
         ok: false,
         error: 'invalid_vat_format',
-        message: 'vatNumber debe empezar con prefijo país UE (2 letras) seguido del número (ej. DE123456789, ESB12345678).',
+        message:
+          'vatNumber debe empezar con prefijo país UE (2 letras) seguido del número (ej. DE123456789, ESB12345678).',
       };
     }
     try {
@@ -1943,7 +2060,8 @@ export async function executeLedgerTool(
         return {
           ok: false,
           error: 'vies_unreachable',
-          message: 'No se pudo contactar con VIES (puede estar caído temporalmente). Reintenta o consulta manualmente https://ec.europa.eu/taxation_customs/vies/.',
+          message:
+            'No se pudo contactar con VIES (puede estar caído temporalmente). Reintenta o consulta manualmente https://ec.europa.eu/taxation_customs/vies/.',
         };
       }
       return {
@@ -1990,10 +2108,7 @@ export async function executeLedgerTool(
   if (name === 'isaak_list_aeat_notifications') {
     const estado = args.estado as string | undefined;
     const onlyUnacknowledged = args.onlyUnacknowledged === true;
-    const limit = Math.max(
-      1,
-      Math.min(100, typeof args.limit === 'number' ? args.limit : 20),
-    );
+    const limit = Math.max(1, Math.min(100, typeof args.limit === 'number' ? args.limit : 20));
     const where: {
       tenantId: string;
       estado?: string;
@@ -2043,10 +2158,7 @@ export async function executeLedgerTool(
   }
 
   if (name === 'isaak_list_aeat_census_changes') {
-    const days = Math.max(
-      1,
-      Math.min(365, typeof args.days === 'number' ? args.days : 90),
-    );
+    const days = Math.max(1, Math.min(365, typeof args.days === 'number' ? args.days : 90));
     const since = new Date(Date.now() - days * 86_400_000);
     try {
       const rows = await prisma.isaakAeatCensusChange.findMany({
@@ -2086,12 +2198,26 @@ export async function executeLedgerTool(
     const periodFrom = String(args.periodFrom ?? '');
     const periodTo = String(args.periodTo ?? '');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(periodFrom) || !/^\d{4}-\d{2}-\d{2}$/.test(periodTo)) {
-      return { ok: false, error: 'invalid_period', message: 'periodFrom y periodTo deben ser YYYY-MM-DD' };
+      return {
+        ok: false,
+        error: 'invalid_period',
+        message: 'periodFrom y periodTo deben ser YYYY-MM-DD',
+      };
     }
     if (periodTo < periodFrom) {
-      return { ok: false, error: 'invalid_period', message: 'periodTo no puede ser anterior a periodFrom' };
+      return {
+        ok: false,
+        error: 'invalid_period',
+        message: 'periodTo no puede ser anterior a periodFrom',
+      };
     }
-    const scope = (args.scope as 'monthly_close' | 'quarterly_close' | 'annual_close' | 'on_demand' | undefined) ?? 'on_demand';
+    const scope =
+      (args.scope as
+        | 'monthly_close'
+        | 'quarterly_close'
+        | 'annual_close'
+        | 'on_demand'
+        | undefined) ?? 'on_demand';
     try {
       const { snapshot, profile } = await loadAuditInputsForTenant({
         tenantId: ctx.tenantId,
@@ -2117,9 +2243,8 @@ export async function executeLedgerTool(
           intracomOps: snapshot.intracomOperationsCount,
           presentedModels: snapshot.presentedModels.map((m) => m.model),
           cashBalance: snapshot.cashBalance,
-          banksWithoutReconciliation: snapshot.bankAccounts.filter(
-            (a) => !a.lastReconciliationDate,
-          ).length,
+          banksWithoutReconciliation: snapshot.bankAccounts.filter((a) => !a.lastReconciliationDate)
+            .length,
         },
       };
       return {
@@ -2142,6 +2267,108 @@ export async function executeLedgerTool(
         message: err instanceof Error ? err.message : String(err),
       };
     }
+  }
+
+  if (name === 'isaak_generate_visual_report') {
+    const reportType = args.reportType as VisualReportType;
+    if (!VISUAL_REPORT_TYPES.includes(reportType)) {
+      return {
+        ok: false,
+        error: 'invalid_report_type',
+        message: `reportType no soportado. Usa uno de: ${VISUAL_REPORT_TYPES.join(', ')}.`,
+      };
+    }
+    const from = String(args.from ?? '');
+    const to = String(args.to ?? '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return { ok: false, error: 'invalid_period', message: 'from/to deben ser YYYY-MM-DD.' };
+    }
+    if (to < from) {
+      return { ok: false, error: 'invalid_period', message: 'to no puede ser anterior a from.' };
+    }
+    const title = typeof args.title === 'string' ? args.title : undefined;
+    try {
+      const artifact = await buildVisualReportData(ctx.tenantId, reportType, from, to, title);
+      return {
+        ok: true,
+        artifact,
+        message: `Informe visual "${artifact.title}" generado. La UI lo muestra en el panel lateral.`,
+      };
+    } catch (err) {
+      return {
+        ok: false,
+        error: 'visual_report_failed',
+        message: err instanceof Error ? err.message : String(err),
+      };
+    }
+  }
+
+  if (name === 'isaak_export_pdf') {
+    const reportType = args.reportType as ReportType;
+    if (!REPORT_TYPES.includes(reportType)) {
+      return {
+        ok: false,
+        error: 'invalid_report_type',
+        message: `Tipo no soportado. Usa uno de: ${REPORT_TYPES.join(', ')}.`,
+      };
+    }
+    const from = String(args.from ?? '');
+    const to = String(args.to ?? '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return { ok: false, error: 'invalid_period', message: 'from/to deben ser YYYY-MM-DD.' };
+    }
+    if (to < from) {
+      return { ok: false, error: 'invalid_period', message: 'to no puede ser anterior a from.' };
+    }
+    const label = typeof args.label === 'string' ? args.label : undefined;
+    const params = new URLSearchParams({ reportType, from, to });
+    if (label) params.set('label', label);
+    const downloadUrl = `/api/isaak/export/pdf?${params.toString()}`;
+    const period = { from, to, label };
+    const filename = reportFilename(reportType, period).replace('.xlsx', '.pdf');
+    return {
+      ok: true,
+      reportType,
+      period,
+      filename,
+      downloadUrl,
+      artifact: makeDownloadArtifact({ type: 'pdf', title: filename, downloadUrl, filename }),
+      message: `PDF "${filename}" listo. Indica al usuario que pulse el enlace de descarga.`,
+    };
+  }
+
+  if (name === 'isaak_export_word') {
+    const reportType = args.reportType as ReportType;
+    if (!REPORT_TYPES.includes(reportType)) {
+      return {
+        ok: false,
+        error: 'invalid_report_type',
+        message: `Tipo no soportado. Usa uno de: ${REPORT_TYPES.join(', ')}.`,
+      };
+    }
+    const from = String(args.from ?? '');
+    const to = String(args.to ?? '');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      return { ok: false, error: 'invalid_period', message: 'from/to deben ser YYYY-MM-DD.' };
+    }
+    if (to < from) {
+      return { ok: false, error: 'invalid_period', message: 'to no puede ser anterior a from.' };
+    }
+    const label = typeof args.label === 'string' ? args.label : undefined;
+    const params = new URLSearchParams({ reportType, from, to });
+    if (label) params.set('label', label);
+    const downloadUrl = `/api/isaak/export/word?${params.toString()}`;
+    const period = { from, to, label };
+    const filename = reportFilename(reportType, period).replace('.xlsx', '.docx');
+    return {
+      ok: true,
+      reportType,
+      period,
+      filename,
+      downloadUrl,
+      artifact: makeDownloadArtifact({ type: 'word', title: filename, downloadUrl, filename }),
+      message: `Word "${filename}" listo. Indica al usuario que pulse el enlace de descarga.`,
+    };
   }
 
   return { ok: false, error: 'unknown_tool', message: `Tool desconocida: ${name}` };
