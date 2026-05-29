@@ -346,6 +346,7 @@ export default function IsaakChatSection({
   userName,
   holdedConnected = false,
   isFreePlan = false,
+  streamEndpoint = '/api/chat/stream',
 }: {
   context?: string;
   welcomeTitle?: string;
@@ -353,6 +354,7 @@ export default function IsaakChatSection({
   userName?: string | null;
   holdedConnected?: boolean;
   isFreePlan?: boolean;
+  streamEndpoint?: string;
 }) {
   const router = useRouter();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -487,7 +489,7 @@ export default function IsaakChatSection({
     setTimeout(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
 
     try {
-      const res = await fetch('/api/chat/stream', {
+      const res = await fetch(streamEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: trimmed, conversationId }),

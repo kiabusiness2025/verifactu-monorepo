@@ -1,25 +1,35 @@
-import IsaakPublicChat from '../components/IsaakPublicChat';
+import { redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import { getHoldedSession } from '@/app/lib/holded-session';
+import { checkDemoQuota, DEMO_COMPANY_NAME } from '@/app/lib/isaak-demo-context';
+import DemoShell from './DemoShell';
 
-export default function IsaakDemoPage() {
-  return (
-    <main className="min-h-screen py-14 text-slate-900">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="mb-8 max-w-3xl">
-          <div className="inline-flex items-center rounded-full bg-[#2361d8]/10 px-4 py-1.5 text-xs font-semibold text-[#2361d8] ring-1 ring-[#2361d8]/15">
-            Demo abierta de Isaak
-          </div>
-          <h1 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-5xl">
-            Habla con Isaak y prueba su criterio antes de conectar tu empresa.
-          </h1>
-          <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
-            Esta demo sirve para conocer el tono y la forma de trabajar de Isaak. Si necesitas
-            memoria, contexto real y acceso a tu negocio, el siguiente paso es abrir tu workspace y
-            conectar Holded.
+export const metadata: Metadata = {
+  title: `Demo — Isaak con ${DEMO_COMPANY_NAME}`,
+  description:
+    'Prueba Isaak con datos de una empresa real de demostración. Consultas financieras, informes y análisis sin conectar tu propio Holded.',
+};
+
+export default async function DemoPage() {
+  const session = await getHoldedSession().catch(() => null);
+
+  if (!session?.tenantId || !session.userId) {
+    redirect('/auth?redirect=/demo');
+  }
+
+  if (!process.env.HOLDED_DEMO_API_KEY) {
+    return (
+      <main className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-8 text-center">
+          <p className="text-sm font-semibold text-rose-700">
+            La demo no está disponible en este momento. Vuelve pronto.
           </p>
         </div>
+      </main>
+    );
+  }
 
-        <IsaakPublicChat />
-      </div>
-    </main>
-  );
+  const quota = await checkDemoQuota(session.userId);
+
+  return <DemoShell userName={session.name || null} demoUsed={quota.used} />;
 }
