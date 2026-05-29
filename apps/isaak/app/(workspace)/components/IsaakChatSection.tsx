@@ -633,10 +633,10 @@ export default function IsaakChatSection({
             {!holdedConnected && (
               <button
                 type="button"
-                onClick={() => router.push('/integrations')}
+                onClick={() => router.push('/integration-holded')}
                 className="rounded-xl border border-blue-200 bg-blue-50 px-3.5 py-2 text-[13px] font-medium text-blue-700 transition hover:border-blue-300 hover:bg-blue-100"
               >
-                Conectar tu contabilidad →
+                🔗 Conectar Holded (30 s)
               </button>
             )}
           </div>
@@ -651,6 +651,11 @@ export default function IsaakChatSection({
   // ── Chat active (Claude-style: sin burbujas excesivas, ancho 3xl) ─────────
   return (
     <div className="flex h-full flex-col">
+      {/* Banner persistente: conectar Holded. Solo si el usuario aún no lo
+          tiene conectado. Cierre dismissible via localStorage para no ser
+          intrusivo en sesiones avanzadas. */}
+      {!holdedConnected && <HoldedCtaBanner />}
+
       <div className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl space-y-8 px-6 py-8">
           {messages.map((msg) =>
@@ -790,6 +795,64 @@ export default function IsaakChatSection({
               </div>
             </>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ── HoldedCtaBanner ─────────────────────────────────────────────────────────
+// Banner persistente que invita a conectar Holded para acceder a datos
+// reales del ERP. Dismissible: si el usuario lo cierra, no vuelve a salir
+// en esa cuenta (localStorage). Reaparece si vuelve a desconectar Holded.
+
+function HoldedCtaBanner() {
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (window.localStorage.getItem("isaak-holded-cta-dismissed") === "1") {
+      setDismissed(true);
+    }
+  }, []);
+
+  if (dismissed) return null;
+
+  const handleDismiss = () => {
+    try {
+      window.localStorage.setItem("isaak-holded-cta-dismissed", "1");
+    } catch {
+      // localStorage puede no estar disponible (modo privado, etc.) — fail-silent.
+    }
+    setDismissed(true);
+  };
+
+  return (
+    <div className="border-b border-blue-100 bg-gradient-to-r from-blue-50 to-white px-5 py-2.5">
+      <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 text-[13px] text-blue-900">
+          <span className="text-base">🔗</span>
+          <span>
+            Conecta tu Holded en 30 s para que Isaak vea tus datos reales (ventas, IVA, clientes,
+            facturas).
+          </span>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <a
+            href="/integration-holded"
+            className="rounded-full bg-blue-600 px-3 py-1 text-[12px] font-semibold text-white shadow-sm hover:bg-blue-700"
+          >
+            Conectar
+          </a>
+          <button
+            type="button"
+            onClick={handleDismiss}
+            className="rounded-full px-2 py-1 text-[12px] text-blue-700 hover:bg-blue-100"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
         </div>
       </div>
     </div>
