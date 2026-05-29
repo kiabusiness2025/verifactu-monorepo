@@ -42,4 +42,26 @@ for (const migration of RESOLVE_BEFORE_DEPLOY) {
   }
 }
 
-run('npx prisma migrate deploy');
+try {
+  run('npx prisma migrate deploy');
+} catch (err) {
+  // P1001 = no se puede alcanzar la BD por TCP (ej. servidores de build de Vercel
+  // no tienen acceso directo a db.prisma.io:5432).
+  // Prisma Postgres soporta `migrate deploy` también via Prisma Accelerate (HTTPS).
+  // Si PRISMA_DATABASE_URL está disponible, reintentamos sobreescribiendo DATABASE_URL.
+  const isNetworkError = err instanceof Error && err.message.includes('P1001');
+  const accelerateUrl = process.env.PRISMA_DATABASE_URL;
+  if (isNetworkError && accelerateUrl) {
+    console.warn('[migrate-deploy] P1001: conexión directa no disponible desde este entorno.');
+    console.log('[migrate-deploy] Reintentando via Prisma Accelerate...');
+    const prev = process.env.DATABASE_URL;
+    process.env.DATABASE_URL = accelerateUrl;
+    try {
+      run('npx prisma migrate deploy');
+    } finally {
+      process.env.DATABASE_URL = prev;
+    }
+  } else {
+    throw err;
+  }
+}
