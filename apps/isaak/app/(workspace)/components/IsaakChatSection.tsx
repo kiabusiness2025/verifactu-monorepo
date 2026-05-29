@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import IsaakMarkdown from './IsaakMarkdown';
-import type { IsaakArtifact } from '@/app/lib/isaak-artifact';
+import { ARTIFACT_ICON, type IsaakArtifact } from '@/app/lib/isaak-artifact';
 import IsaakArtifactPanel from './IsaakArtifactPanel';
 
 // ── Speech API minimal types ──────────────────────────────────────────────────
@@ -768,6 +768,16 @@ export default function IsaakChatSection({
                     <div className="text-[15px] leading-7 text-slate-800">
                       <IsaakMarkdown text={msg.content} />
                     </div>
+                    {/* Artifact chip — reopen panel */}
+                    {msg.artifact && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveArtifact(msg.artifact!)}
+                        className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[12px] font-medium text-blue-700 transition hover:bg-blue-100"
+                      >
+                        {ARTIFACT_ICON[msg.artifact.type]} Ver informe
+                      </button>
+                    )}
                     {/* Acciones al hover */}
                     <div className="mt-2 flex gap-1 opacity-0 transition group-hover:opacity-100">
                       <button

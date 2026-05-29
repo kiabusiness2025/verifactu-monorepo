@@ -91,6 +91,33 @@ function VisualBody({ artifact }: { artifact: IsaakArtifact }) {
           </table>
         </div>
       )}
+
+      {/* Download links */}
+      {artifact.downloadLinks && (
+        <div className="border-t border-slate-100 pt-3">
+          <p className="mb-2 text-[11px] font-medium text-slate-400">Descargar como</p>
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ['excel', artifact.downloadLinks.excel],
+                ['pdf', artifact.downloadLinks.pdf],
+                ['word', artifact.downloadLinks.word],
+              ] as [string, string | undefined][]
+            )
+              .filter(([, url]) => Boolean(url))
+              .map(([fmt, url]) => (
+                <a
+                  key={fmt}
+                  href={url}
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-medium text-slate-700 shadow-sm transition hover:bg-slate-50"
+                >
+                  {fmt === 'excel' ? '📗' : fmt === 'pdf' ? '📄' : '📝'}{' '}
+                  {fmt.charAt(0).toUpperCase() + fmt.slice(1)}
+                </a>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

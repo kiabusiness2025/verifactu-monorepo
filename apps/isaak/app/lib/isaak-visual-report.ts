@@ -61,6 +61,13 @@ export async function buildVisualReportData(
   to: string,
   title?: string
 ): Promise<IsaakArtifact> {
+  const dlParams = new URLSearchParams({ reportType, from, to }).toString();
+  const downloadLinks = {
+    excel: `/api/isaak/export/excel?${dlParams}`,
+    pdf: `/api/isaak/export/pdf?${dlParams}`,
+    word: `/api/isaak/export/word?${dlParams}`,
+  };
+
   if (reportType === 'sales_by_month') {
     const rows = await loadLedgerRowsForExport({
       tenantId,
@@ -77,15 +84,18 @@ export async function buildVisualReportData(
     const sorted = Array.from(byMonth.entries()).sort(([a], [b]) => a.localeCompare(b));
     const total = sorted.reduce((s, [, v]) => s + v, 0);
 
-    return makeVisualArtifact({
-      title: title ?? 'Ventas por mes',
-      chartType: 'bar',
-      chartData: sorted.map(([mes, ventas]) => ({ mes, ventas: round2(ventas) })),
-      chartKeys: { nameKey: 'mes', valueKeys: ['ventas'] },
-      tableHeaders: ['Mes', 'Ventas (€)'],
-      tableRows: sorted.map(([mes, v]) => [mes, fmtEur(v)]),
-      summary: `Total ventas: ${fmtEur(total)} € en el periodo ${from} – ${to}.`,
-    });
+    return {
+      ...makeVisualArtifact({
+        title: title ?? 'Ventas por mes',
+        chartType: 'bar',
+        chartData: sorted.map(([mes, ventas]) => ({ mes, ventas: round2(ventas) })),
+        chartKeys: { nameKey: 'mes', valueKeys: ['ventas'] },
+        tableHeaders: ['Mes', 'Ventas (€)'],
+        tableRows: sorted.map(([mes, v]) => [mes, fmtEur(v)]),
+        summary: `Total ventas: ${fmtEur(total)} € en el periodo ${from} – ${to}.`,
+      }),
+      downloadLinks,
+    };
   }
 
   if (reportType === 'expense_breakdown') {
@@ -107,19 +117,22 @@ export async function buildVisualReportData(
     if (othersTotal > 0) top8.push(['Otros', othersTotal]);
     const total = sorted.reduce((s, [, v]) => s + v, 0);
 
-    return makeVisualArtifact({
-      title: title ?? 'Desglose de gastos',
-      chartType: 'pie',
-      chartData: top8.map(([categoria, importe]) => ({ categoria, importe: round2(importe) })),
-      chartKeys: { nameKey: 'categoria', valueKeys: ['importe'] },
-      tableHeaders: ['Categoría / Proveedor', 'Importe (€)', '%'],
-      tableRows: top8.map(([cat, v]) => [
-        cat,
-        fmtEur(v),
-        total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0%',
-      ]),
-      summary: `Total gastos: ${fmtEur(total)} € en el periodo ${from} – ${to}.`,
-    });
+    return {
+      ...makeVisualArtifact({
+        title: title ?? 'Desglose de gastos',
+        chartType: 'pie',
+        chartData: top8.map(([categoria, importe]) => ({ categoria, importe: round2(importe) })),
+        chartKeys: { nameKey: 'categoria', valueKeys: ['importe'] },
+        tableHeaders: ['Categoría / Proveedor', 'Importe (€)', '%'],
+        tableRows: top8.map(([cat, v]) => [
+          cat,
+          fmtEur(v),
+          total > 0 ? `${((v / total) * 100).toFixed(1)}%` : '0%',
+        ]),
+        summary: `Total gastos: ${fmtEur(total)} € en el periodo ${from} – ${to}.`,
+      }),
+      downloadLinks,
+    };
   }
 
   if (reportType === 'cash_flow') {
@@ -157,23 +170,26 @@ export async function buildVisualReportData(
     const totalIncome = sorted.reduce((s, m) => s + (incomeByMonth.get(m) ?? 0), 0);
     const totalExpense = sorted.reduce((s, m) => s + (expenseByMonth.get(m) ?? 0), 0);
 
-    return makeVisualArtifact({
-      title: title ?? 'Flujo de caja',
-      chartType: 'line',
-      chartData: sorted.map((mes) => ({
-        mes,
-        ingresos: round2(incomeByMonth.get(mes) ?? 0),
-        gastos: round2(expenseByMonth.get(mes) ?? 0),
-      })),
-      chartKeys: { nameKey: 'mes', valueKeys: ['ingresos', 'gastos'] },
-      tableHeaders: ['Mes', 'Ingresos (€)', 'Gastos (€)', 'Flujo neto (€)'],
-      tableRows: sorted.map((mes) => {
-        const inc = incomeByMonth.get(mes) ?? 0;
-        const exp = expenseByMonth.get(mes) ?? 0;
-        return [mes, fmtEur(inc), fmtEur(exp), fmtEur(inc - exp)];
+    return {
+      ...makeVisualArtifact({
+        title: title ?? 'Flujo de caja',
+        chartType: 'line',
+        chartData: sorted.map((mes) => ({
+          mes,
+          ingresos: round2(incomeByMonth.get(mes) ?? 0),
+          gastos: round2(expenseByMonth.get(mes) ?? 0),
+        })),
+        chartKeys: { nameKey: 'mes', valueKeys: ['ingresos', 'gastos'] },
+        tableHeaders: ['Mes', 'Ingresos (€)', 'Gastos (€)', 'Flujo neto (€)'],
+        tableRows: sorted.map((mes) => {
+          const inc = incomeByMonth.get(mes) ?? 0;
+          const exp = expenseByMonth.get(mes) ?? 0;
+          return [mes, fmtEur(inc), fmtEur(exp), fmtEur(inc - exp)];
+        }),
+        summary: `Ingresos: ${fmtEur(totalIncome)} € | Gastos: ${fmtEur(totalExpense)} € | Flujo neto: ${fmtEur(totalIncome - totalExpense)} €.`,
       }),
-      summary: `Ingresos: ${fmtEur(totalIncome)} € | Gastos: ${fmtEur(totalExpense)} € | Flujo neto: ${fmtEur(totalIncome - totalExpense)} €.`,
-    });
+      downloadLinks,
+    };
   }
 
   // iva_trimestral
@@ -212,21 +228,24 @@ export async function buildVisualReportData(
   const totalSop = sorted.reduce((s, q) => s + (sopByQ.get(q) ?? 0), 0);
   const resultado = totalDev - totalSop;
 
-  return makeVisualArtifact({
-    title: title ?? 'IVA trimestral',
-    chartType: 'bar',
-    chartData: sorted.map((trimestre) => ({
-      trimestre,
-      devengado: round2(devByQ.get(trimestre) ?? 0),
-      soportado: round2(sopByQ.get(trimestre) ?? 0),
-    })),
-    chartKeys: { nameKey: 'trimestre', valueKeys: ['devengado', 'soportado'] },
-    tableHeaders: ['Trimestre', 'IVA devengado (€)', 'IVA soportado (€)', 'Resultado (€)'],
-    tableRows: sorted.map((q) => {
-      const dev = devByQ.get(q) ?? 0;
-      const sop = sopByQ.get(q) ?? 0;
-      return [q, fmtEur(dev), fmtEur(sop), fmtEur(dev - sop)];
+  return {
+    ...makeVisualArtifact({
+      title: title ?? 'IVA trimestral',
+      chartType: 'bar',
+      chartData: sorted.map((trimestre) => ({
+        trimestre,
+        devengado: round2(devByQ.get(trimestre) ?? 0),
+        soportado: round2(sopByQ.get(trimestre) ?? 0),
+      })),
+      chartKeys: { nameKey: 'trimestre', valueKeys: ['devengado', 'soportado'] },
+      tableHeaders: ['Trimestre', 'IVA devengado (€)', 'IVA soportado (€)', 'Resultado (€)'],
+      tableRows: sorted.map((q) => {
+        const dev = devByQ.get(q) ?? 0;
+        const sop = sopByQ.get(q) ?? 0;
+        return [q, fmtEur(dev), fmtEur(sop), fmtEur(dev - sop)];
+      }),
+      summary: `IVA devengado: ${fmtEur(totalDev)} € | Soportado: ${fmtEur(totalSop)} € | Resultado: ${fmtEur(resultado)} € ${resultado > 0 ? '(a ingresar)' : resultado < 0 ? '(a devolver)' : ''}.`,
     }),
-    summary: `IVA devengado: ${fmtEur(totalDev)} € | Soportado: ${fmtEur(totalSop)} € | Resultado: ${fmtEur(resultado)} € ${resultado > 0 ? '(a ingresar)' : resultado < 0 ? '(a devolver)' : ''}.`,
-  });
+    downloadLinks,
+  };
 }

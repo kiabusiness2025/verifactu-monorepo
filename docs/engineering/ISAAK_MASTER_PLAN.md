@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-28 (D1 webhook emitter ✅, C-B modelos 303–349 ✅, RAG F13 fase 2 ✅, F12 inspector Capa 2 ✅, L4-L5 PGC balances ✅, sector sectoriales Inmovilla/Nubimed ✅)
+**Última actualización**: 2026-05-29 (Artifacts panel ✅ — informes visuales + PDF + Excel + Word + streaming SSE + split layout)
 **Visión**: Isaak como **Robot Contable** autónomo — el empresario opera SOLO a través de Isaak; Isaak es la fuente de verdad, el Inspector AEAT preventivo y el ejecutor fiscal.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
@@ -214,6 +214,71 @@ CHIFT_ACCOUNT_ID
 - Modelo Prisma `MarketingCampaign` + migración `20260521210000`
 - Send route persiste cada campaña tras envío (segment, subject, sentBy, counts)
 - Historial de últimas 20 campañas en tabla en `/admin-marketing`
+
+---
+
+## ✅ Completado en sesión 5 (2026-05-29) — Isaak Artifacts
+
+Paridad con Claude: panel lateral de artefactos que se abre cuando el LLM genera un informe. El chat migra de JSON a **SSE streaming token-a-token**. Ver `docs/engineering/sessions/2026-05-29_isaak_artifacts.md`.
+
+### AR-1: Tipo central `IsaakArtifact` ✅
+
+`app/lib/isaak-artifact.ts` — tipo + constructores + guards + iconos:
+
+- `type: 'visual' | 'excel' | 'pdf' | 'word'`
+- `makeVisualArtifact()` / `makeDownloadArtifact()` / `isIsaakArtifact()`
+- `ARTIFACT_ICON` / `ARTIFACT_LABEL` para UI
+- `downloadLinks?: { excel?; pdf?; word? }` — URLs de descarga cruzada en artifacts visuales
+
+### AR-2: LLM Tools ✅
+
+3 nuevas tools + actualización de excel:
+
+| Tool                           | Descripción                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------- |
+| `isaak_generate_visual_report` | Genera informe visual: `sales_by_month`, `expense_breakdown`, `cash_flow`, `iva_trimestral` |
+| `isaak_export_pdf`             | Genera URL de descarga PDF                                                                  |
+| `isaak_export_word`            | Genera URL de descarga Word                                                                 |
+| `isaak_export_ledger_excel`    | Actualizado: ahora devuelve `artifact` además del link                                      |
+
+Ficheros: `app/lib/isaak-ledger-tools.ts`, `app/lib/isaak-visual-report.ts`, `app/lib/isaak-tools-registry.ts`
+
+### AR-3: API Routes ✅
+
+```
+app/api/isaak/export/pdf/route.ts   — GET con @react-pdf/renderer
+app/api/isaak/export/word/route.ts  — GET con docx v9
+```
+
+Helpers: `app/lib/isaak-pdf-export.tsx` · `app/lib/isaak-word-export.ts`
+
+### AR-4: SSE `event: artifact` ✅
+
+`app/lib/isaak-chat-stream.ts` — tras cada tool call, parsea JSON del resultado y emite:
+
+```
+event: artifact
+data: { id, type, title, chartData?, downloadUrl?, downloadLinks?, ... }
+```
+
+### AR-5: Frontend ✅
+
+| Componente               | Descripción                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `IsaakArtifactChart.tsx` | Recharts: bar / line / area / pie con `ResponsiveContainer`                   |
+| `IsaakArtifactPanel.tsx` | Panel lateral: header + `VisualBody` (chart+tabla+downloads) o `DownloadBody` |
+| `IsaakChatSection.tsx`   | Migrado a SSE streaming; split layout 42/58%; chip "Ver informe" en historial |
+
+**Split layout:** `flex-row` cuando artifact activo; chat `w-[42%]`, panel `w-[58%]`.  
+**Historial:** cada mensaje con `.artifact` muestra chip `{icon} Ver informe` para reabrir el panel.  
+**Botones de descarga:** artifacts visuales muestran links a Excel/PDF/Word en el pie del panel.
+
+### Dependencias añadidas ✅
+
+```
+@react-pdf/renderer — PDF con JSX
+docx               — DOCX (Word)
+```
 
 ---
 

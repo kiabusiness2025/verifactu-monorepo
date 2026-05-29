@@ -43,10 +43,10 @@ El modelo anterior conectaba Isaak con **ERPs genéricos** (Holded, Sage, A3) co
 
 ## Tarifas V1 (vigentes desde 2026-05-28 — Plan de Lanzamiento V1)
 
-| Plan         | Precio                                  | Límites                                                                | IA incluida                          |
-| ------------ | --------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------ |
-| **Free**     | 0 €                                     | Chat **ilimitado** · Corpus AEAT · 10 msg/h (anti-abuso) · sin Holded  | Sí — Claude Haiku                    |
-| **Pro**      | **29 €/mes** o **290 €/año** (2 meses gratis) | Holded conectado · 20 tools · Alertas D-15/7/3/1 · Trial 14 días sin tarjeta | Sí — Claude Sonnet + GPT-4o fallback |
+| Plan     | Precio                                        | Límites                                                                      | IA incluida                          |
+| -------- | --------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
+| **Free** | 0 €                                           | Chat **ilimitado** · Corpus AEAT · 10 msg/h (anti-abuso) · sin Holded        | Sí — Claude Haiku                    |
+| **Pro**  | **29 €/mes** o **290 €/año** (2 meses gratis) | Holded conectado · 20 tools · Alertas D-15/7/3/1 · Trial 14 días sin tarjeta | Sí — Claude Sonnet + GPT-4o fallback |
 
 **Trial Pro:** 14 días gratis sin tarjeta (`payment_method_collection: 'if_required'` en Stripe). Si no continúa, cuenta cae a Free.
 
@@ -140,6 +140,36 @@ IsaakSiteChrome subtitle + footer fix · pricing AEAT section (Sede Electrónica
 - Toast post-conexión + ChannelBadge en dashboard
 - Confetti hook + disparado en holded-form y claude-form
 - ConnectorRequirementsCard en landings + hub público-ready
+
+---
+
+### ✅ Isaak Artifacts — Panel de informes (2026-05-29)
+
+Panel lateral tipo Claude que se abre automáticamente cuando Isaak genera un informe.
+El chat migra a **streaming SSE token-a-token** (antes respondía como JSON en bloque).
+
+**Qué puede hacer el usuario:**
+
+- "Genera un informe de ventas de enero a junio" → gráfico de barras + tabla + resumen
+- "Muéstrame el desglose de gastos del T2" → gráfico de tarta con top-8 proveedores
+- "Flujo de caja mensual 2026" → gráfico de líneas ingresos vs gastos
+- "IVA trimestral del año" → barras IVA devengado vs soportado + resultado
+- "Descarga el libro IVA como PDF/Word" → botón de descarga directo
+
+**Formatos de export disponibles desde el panel:**
+
+| Formato | Endpoint                  | Generado con        |
+| ------- | ------------------------- | ------------------- |
+| Excel   | `/api/isaak/export/excel` | ExcelJS             |
+| PDF     | `/api/isaak/export/pdf`   | @react-pdf/renderer |
+| Word    | `/api/isaak/export/word`  | docx                |
+
+**UX:**
+
+- Panel se abre a la derecha del chat (58% de ancho), el chat se estrecha al 42%
+- Botón ✕ cierra el panel y el chat vuelve a pantalla completa
+- Mensajes del historial con informe muestran chip "📊 Ver informe" para reabrir el panel
+- El texto de Isaak sigue fluyendo en streaming mientras el panel se está abriendo
 
 ---
 
@@ -320,15 +350,15 @@ integrar facturación VeriFactu, contabilidad y MCP en sus propias aplicaciones.
 
 **Stack documental público** (`verifactu.business/developers`):
 
-| URL | Contenido | Estado |
-|-----|-----------|--------|
-| `/developers` | Hub: quickstart, endpoints, MCP, Inspector | ✅ Operativo |
-| `/developers/api` | Referencia interactiva OpenAPI 3.1 con Scalar | ✅ **2026-05-27** |
-| `/developers/errors` | Códigos HTTP + error.code + retry guide | ✅ **2026-05-27** |
-| `/developers/rate-limits` | Política por plan + headers + backoff | ✅ **2026-05-27** |
-| `/developers/webhooks` | 9 eventos + firma HMAC + reintentos (beta cerrada) | ✅ **2026-05-27** |
-| `/developers/guides/*` | Recetario por caso de uso | ⏳ Roadmap |
-| `/developers/changelog` | API changelog público | ⏳ Roadmap |
+| URL                       | Contenido                                          | Estado            |
+| ------------------------- | -------------------------------------------------- | ----------------- |
+| `/developers`             | Hub: quickstart, endpoints, MCP, Inspector         | ✅ Operativo      |
+| `/developers/api`         | Referencia interactiva OpenAPI 3.1 con Scalar      | ✅ **2026-05-27** |
+| `/developers/errors`      | Códigos HTTP + error.code + retry guide            | ✅ **2026-05-27** |
+| `/developers/rate-limits` | Política por plan + headers + backoff              | ✅ **2026-05-27** |
+| `/developers/webhooks`    | 9 eventos + firma HMAC + reintentos (beta cerrada) | ✅ **2026-05-27** |
+| `/developers/guides/*`    | Recetario por caso de uso                          | ⏳ Roadmap        |
+| `/developers/changelog`   | API changelog público                              | ⏳ Roadmap        |
 
 **Modelo comercial**:
 

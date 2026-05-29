@@ -24,6 +24,8 @@ export type IsaakArtifact = {
   // Download artifacts
   downloadUrl?: string;
   filename?: string;
+  // Cross-format download links (populated for visual artifacts)
+  downloadLinks?: { excel?: string; pdf?: string; word?: string };
 };
 
 // ── Constructores ─────────────────────────────────────────────────────────────
