@@ -48,30 +48,25 @@ export const dynamic = 'force-dynamic';
 
 // ── Planes de suscripción ─────────────────────────────────────────────────────
 
+// Telegram Stars (XTR): ~50 Stars = $0.99 → 1 Star ≈ €0.013
+// Pro mensual  €29 → 2500 Stars
+// Pro anual    €290 (2 meses gratis, 10×€29) → 25000 Stars
 const ISAAK_PLANS = [
   {
-    code: 'starter',
-    label: 'Starter',
-    emoji: '🥉',
-    priceEur: 19,
-    amountCents: 1900,
-    description: '100 consultas/mes · 1 ERP · Dashboard KPI básico',
-  },
-  {
-    code: 'pyme',
-    label: 'Pyme',
+    code: 'pro',
+    label: 'Pro mensual',
     emoji: '⭐',
-    priceEur: 49,
-    amountCents: 4900,
-    description: 'Consultas ilimitadas · Google/Microsoft · Facturas VeriFactu',
+    amountStars: 2500,
+    period: 'mensual',
+    description: 'ERPs · Google/MS · Modelos AEAT · Open Banking · Todo incluido',
   },
   {
-    code: 'empresa',
-    label: 'Empresa',
-    emoji: '🏢',
-    priceEur: 149,
-    amountCents: 14900,
-    description: 'Multi-usuario · 3 ERPs · Notificaciones fiscales avanzadas',
+    code: 'pro_annual',
+    label: 'Pro anual',
+    emoji: '🎯',
+    amountStars: 25000,
+    period: 'anual',
+    description: '12 meses · 2 meses gratis · Mejor precio (≈ 24 €/mes)',
   },
 ] as const;
 
@@ -334,19 +329,31 @@ async function handlePlanes(
   tenantId: string | null
 ): Promise<void> {
   const lines = [
-    '<b>💳 Planes de Isaak</b>',
+    '<b>⭐ Planes de Isaak Pro</b>',
     '',
-    'Elige el plan que mejor se adapte a tu negocio:',
+    'Acceso completo a todas las integraciones, modelos AEAT, Open Banking, Google, Microsoft y mucho más.',
     '',
-    ...ISAAK_PLANS.map(
-      (p) => `${p.emoji} <b>${p.label} — ${p.priceEur} €/mes</b>\n${p.description}`
-    ),
+    `${ISAAK_PLANS[0].emoji} <b>Pro mensual</b> — ${ISAAK_PLANS[0].amountStars.toLocaleString()} ⭐ Stars`,
+    `${ISAAK_PLANS[0].description}`,
+    '',
+    `${ISAAK_PLANS[1].emoji} <b>Pro anual</b> — ${ISAAK_PLANS[1].amountStars.toLocaleString()} ⭐ Stars`,
+    `${ISAAK_PLANS[1].description}`,
+    '',
+    '<i>El pago se realiza con Telegram Stars. Puedes comprar Stars directamente en Telegram.</i>',
   ];
   const keyboard: TgInlineKeyboard = [
-    ISAAK_PLANS.map((p) => ({
-      text: `${p.emoji} ${p.label} ${p.priceEur}€`,
-      callback_data: `plan_${p.code}`,
-    })),
+    [
+      {
+        text: `⭐ Pro mensual (${ISAAK_PLANS[0].amountStars.toLocaleString()} Stars)`,
+        callback_data: `plan_${ISAAK_PLANS[0].code}`,
+      },
+    ],
+    [
+      {
+        text: `🎯 Pro anual · 2 meses gratis (${ISAAK_PLANS[1].amountStars.toLocaleString()} Stars)`,
+        callback_data: `plan_${ISAAK_PLANS[1].code}`,
+      },
+    ],
   ];
   const reply = lines.join('\n');
   await sendTelegramText(tgChatId, reply, keyboard);
@@ -362,20 +369,18 @@ async function handlePlanSelect(
   const plan = ISAAK_PLANS.find((p) => p.code === planCode);
   if (!plan) return;
 
-  const notice = tenantId
-    ? `Vas a suscribirte al plan <b>${plan.label}</b> (${plan.priceEur} €/mes).`
-    : `Vas a suscribirte al plan <b>${plan.label}</b> (${plan.priceEur} €/mes).\n\n⚠️ Vincula tu cuenta de Isaak antes o después del pago para activar el plan.`;
-
-  await sendTelegramText(tgChatId, notice);
+  if (!tenantId) {
+    await sendTelegramText(
+      tgChatId,
+      `⚠️ Vincula tu cuenta de Isaak antes del pago para activar el plan automáticamente.\n\nVe a <b>isaak.verifactu.business → Ajustes → Telegram</b> y genera el enlace de vinculación.`
+    );
+  }
 
   await sendTelegramInvoice(tgChatId, {
     title: `Isaak ${plan.label}`,
     description: plan.description,
     payload: `plan:${plan.code}`,
-    amountCents: plan.amountCents,
-    currency: 'EUR',
-    needEmail: true,
-    needName: true,
+    amountStars: plan.amountStars,
   });
   await saveOutbound(chatDbId, tenantId, `[invoice:${plan.code}]`);
 }
@@ -490,7 +495,7 @@ async function handleSuccessfulPayment(
   const activated = tenantId
     ? '\n\n✅ Tu suscripción está activa en Isaak.'
     : '\n\n🔗 Vincula tu cuenta en Isaak → Ajustes → Telegram para activar el plan.';
-  const reply = `✅ <b>¡Pago recibido!</b>\n\nPlan: ${planLabel}\nImporte: ${(payment.total_amount / 100).toFixed(2)} ${payment.currency}\nReferencia: <code>${payment.telegram_payment_charge_id.slice(-12)}</code>${activated}`;
+  const reply = `✅ <b>¡Pago recibido!</b>\n\nPlan: ${planLabel}\nImporte: ${payment.total_amount.toLocaleString()} ⭐ Stars\nReferencia: <code>${payment.telegram_payment_charge_id.slice(-12)}</code>${activated}`;
   await sendTelegramText(tgChatId, reply, tenantId ? MENU_CONNECTED : MENU_GENERAL);
   await saveOutbound(chatDbId, tenantId, `[payment_ok:${planCode}]`);
 }

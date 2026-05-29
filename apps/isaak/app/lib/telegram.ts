@@ -153,24 +153,31 @@ export async function sendTelegramInvoice(
     title: string;
     description: string;
     payload: string;
-    amountCents: number;
+    /** Stars amount (XTR). Pass this OR amountCents+currency for fiat. */
+    amountStars?: number;
+    /** Fiat amount in smallest units (cents). Requires currency. */
+    amountCents?: number;
     currency?: string;
     needEmail?: boolean;
     needName?: boolean;
     photoUrl?: string;
   }
 ): Promise<void> {
-  const providerToken = process.env.TELEGRAM_PAYMENT_PROVIDER_TOKEN?.trim() ?? '';
+  const isStars = opts.amountStars !== undefined;
+  const providerToken = isStars ? '' : (process.env.TELEGRAM_PAYMENT_PROVIDER_TOKEN?.trim() ?? '');
+  const currency = isStars ? 'XTR' : (opts.currency ?? 'EUR');
+  const amount = isStars ? (opts.amountStars ?? 0) : (opts.amountCents ?? 0);
+
   await tgPost('sendInvoice', {
     chat_id: chatId,
     title: opts.title,
     description: opts.description,
     payload: opts.payload,
     provider_token: providerToken,
-    currency: opts.currency ?? 'EUR',
-    prices: [{ label: opts.title, amount: opts.amountCents }],
-    need_email: opts.needEmail ?? true,
-    need_name: opts.needName ?? true,
+    currency,
+    prices: [{ label: opts.title, amount }],
+    // Stars no requiere datos personales
+    ...(isStars ? {} : { need_email: opts.needEmail ?? true, need_name: opts.needName ?? true }),
     ...(opts.photoUrl ? { photo_url: opts.photoUrl } : {}),
   });
 }

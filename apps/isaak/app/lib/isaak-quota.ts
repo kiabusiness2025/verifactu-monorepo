@@ -68,7 +68,7 @@ export async function checkIsaakChatQuota(tenantId: string): Promise<QuotaCheckR
   if (sub.queriesUsedToday >= sub.dailyQueryLimit) {
     return {
       allowed: false,
-      message: `Has llegado a tus ${sub.dailyQueryLimit} mensajes de hoy. Activa Isaak Starter desde 19 €/mes para continuar ahora, o vuelve mañana.`,
+      message: `Has llegado a tus ${sub.dailyQueryLimit} mensajes de hoy. Activa Isaak Pro por 29 €/mes para continuar ahora, o vuelve mañana.`,
       resetsAt: nextMidnightUTC(),
     };
   }

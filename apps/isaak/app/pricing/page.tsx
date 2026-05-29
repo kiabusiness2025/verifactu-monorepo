@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 type Plan = {
-  id: 'free' | 'starter' | 'pro' | 'business';
+  id: 'free' | 'pro';
   name: string;
   tagline: string;
   price: string;
@@ -22,49 +22,52 @@ type Plan = {
   footnote?: string;
 };
 
-// V1 LAUNCH (2026-05): planes simplificados a Free + Pro. Los legacy
-// (Starter / Pro 49 / Business 149) quedan archivados en Stripe — clientes
-// existentes mantienen su plan hasta cancelar. Ver docs/product/
-// ISAAK_LAUNCH_V1_2026-05-28.md.
 const PLANS: Plan[] = [
   {
     id: 'free',
     name: 'Free',
-    tagline: 'Chat ilimitado para preguntas fiscales y contables. Sin tarjeta.',
+    tagline: 'Gratis para siempre. Consultas fiscales y facturas ilimitadas.',
     price: '0 €',
     priceSuffix: '/ mes',
     highlight: 'free',
     features: [
-      'Chat ilimitado en español',
-      'Corpus completo de Agencia Tributaria',
+      'Consultas ilimitadas con Isaak en español',
+      'Chat fiscal y contable — IVA, IRPF, trámites AEAT',
+      'Crea y descarga facturas manuales',
+      'Sube documentos y facturas para análisis con IA',
+      'Plantillas de factura con tu logo y colores',
       'IA incluida — sin cuenta de Claude ni ChatGPT',
-      'Sin tarjeta · Para siempre',
-      'Sin Holded conectado',
     ],
     ctaLabel: 'Empezar gratis',
-    ctaHref: '/signup',
+    ctaHref: '/auth',
     footnote: 'Sin tarjeta. Sin fecha límite.',
   },
   {
     id: 'pro',
     name: 'Pro',
-    tagline: 'Tu Holded conectado. Datos reales en tiempo real.',
+    tagline: 'Todo lo que necesitas para gestionar tu negocio con IA.',
     price: '29 €',
-    priceSuffix: '/ mes',
-    annualNote: '🎁 290 € / año (2 meses gratis)',
+    priceSuffix: '/ mes + IVA',
+    annualNote: '24 €/mes · 2 meses gratis · facturado anual',
     highlight: 'recommended',
     features: [
-      'Todo lo del plan Free',
-      'Tu Holded conectado · 20 tools de lectura + borradores',
-      'Dashboard con KPIs: facturado, gastos, IVA estimado, próx. vencimiento',
-      'Alertas fiscales D-15/7/3/1 antes de cada vencimiento AEAT',
-      'Soporte por email',
-      'IA incluida — Claude Sonnet + GPT-4o fallback',
-      'Trial 14 días sin tarjeta',
+      'Todo lo de Free',
+      'ERPs conectados — Holded, PrestaShop, Revo, Mindbody y más',
+      'Dashboard KPIs: ventas, gastos e IVA en tiempo real',
+      'OCR automático — sube facturas y tickets',
+      'Google Calendar, Gmail y Drive conectados',
+      'Microsoft 365 — Outlook, Calendar, OneDrive',
+      'Modelos AEAT: 303, 130, 111, 347 y más',
+      'Open Banking — movimientos bancarios en tiempo real',
+      'Alertas fiscales proactivas y notificaciones push',
+      'Voz — dicta a Isaak y escucha las respuestas',
+      'Bot de Telegram @IsaakFiscalBot',
+      'Historial completo de conversaciones',
+      'IA incluida — Claude Sonnet, sin suscripción adicional',
     ],
-    ctaLabel: 'Probar 14 días gratis',
+    ctaLabel: 'Empezar trial 14 días',
     ctaHref: '/signup?plan=pro',
-    footnote: 'Trial 14 días sin tarjeta · Cancela cuando quieras · IVA no incluido',
+    footnote: 'Trial 14 días sin tarjeta. IVA no incluido en el precio.',
   },
 ];
 
@@ -74,24 +77,24 @@ const FAQ = [
     a: 'No. Isaak incluye toda la IA en el precio — usamos Claude y GPT-4o a través de nuestra propia integración. No necesitas ninguna cuenta adicional en Anthropic ni OpenAI.',
   },
   {
-    q: '¿Cuál es la diferencia entre el Conector de Holded (gratis) y el plan Free de Isaak?',
-    a: 'El Conector de Holded para Claude o ChatGPT conecta tus datos directamente en esas herramientas, pero requiere tu propia suscripción a Claude.ai o ChatGPT Plus. Isaak es un producto independiente donde la IA está incluida — no necesitas nada más.',
+    q: '¿Qué diferencia hay entre Free y Pro?',
+    a: 'Free te da acceso al asistente fiscal y a la creación de facturas manuales sin límite. Pro conecta Isaak con tu ERP, banco y herramientas (Google, Microsoft, banca), activa los modelos AEAT y desbloquea todas las integraciones.',
   },
   {
     q: '¿Necesito tarjeta para el trial de 14 días?',
     a: 'No. Te damos 14 días completos de Isaak Pro sin pedir tarjeta. Si decides continuar, te avisamos por email antes de cobrar.',
   },
   {
-    q: '¿Puedo cancelar en cualquier momento?',
-    a: 'Sí. Cancelas desde Ajustes > Facturación en cualquier momento. Mantienes el acceso hasta el final del periodo pagado.',
+    q: '¿Cuánto es el descuento anual?',
+    a: 'Con la facturación anual pagas 10 meses y tienes acceso durante 12 — equivale a 2 meses gratis (€290/año frente a €348 mensual).',
   },
   {
-    q: '¿Hay descuento si pago anual?',
-    a: 'Sí. El plan Pro anual son 290 € en lugar de 348 € — 2 meses gratis (descuento equivalente al 17 %).',
+    q: '¿Puedo cancelar en cualquier momento?',
+    a: 'Sí. Cancelas desde Ajustes → Facturación en cualquier momento. Mantienes el acceso hasta el final del periodo pagado.',
   },
   {
     q: '¿Qué pasa con mis datos si cancelo?',
-    a: 'Tus datos siguen siendo tuyos. Puedes exportar todo desde Ajustes > Datos. Tras 30 días de cancelación, eliminamos los datos del workspace.',
+    a: 'Tus datos siguen siendo tuyos. Puedes exportar todo desde Ajustes → Datos. Tras 30 días de cancelación, eliminamos los datos del workspace.',
   },
 ];
 
@@ -121,15 +124,15 @@ export default function IsaakPricingPage() {
 
       {/* Plans */}
       <section className="py-16 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4">
-          <div className="mx-auto grid max-w-3xl gap-6 md:grid-cols-2">
+        <div className="mx-auto max-w-4xl px-4">
+          <div className="grid gap-6 md:grid-cols-2">
             {PLANS.map((plan) => {
               const isRecommended = plan.highlight === 'recommended';
               const isFree = plan.highlight === 'free';
               return (
                 <article
                   key={plan.id}
-                  className={`relative flex flex-col rounded-[1.75rem] border bg-white p-6 shadow-sm transition ${
+                  className={`relative flex flex-col rounded-[1.75rem] border bg-white p-8 shadow-sm transition ${
                     isRecommended
                       ? 'border-[#2361d8] shadow-md ring-1 ring-[#2361d8]/30'
                       : 'border-slate-200'
@@ -142,16 +145,16 @@ export default function IsaakPricingPage() {
                   )}
                   {isFree && (
                     <span className="absolute -top-3 left-6 inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-white">
-                      Gratis
+                      Gratis para siempre
                     </span>
                   )}
 
-                  <h2 className="text-lg font-bold text-[#011c67]">{plan.name}</h2>
+                  <h2 className="text-xl font-bold text-[#011c67]">{plan.name}</h2>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{plan.tagline}</p>
 
                   <div className="mt-6">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-4xl font-bold tracking-tight text-slate-950">
+                      <span className="text-5xl font-bold tracking-tight text-slate-950">
                         {plan.price}
                       </span>
                       {plan.priceSuffix && (
@@ -159,13 +162,13 @@ export default function IsaakPricingPage() {
                       )}
                     </div>
                     {plan.annualNote && (
-                      <div className="mt-2 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                      <p className="mt-1 text-[11px] font-medium text-emerald-600">
                         {plan.annualNote}
-                      </div>
+                      </p>
                     )}
                   </div>
 
-                  <ul className="mt-6 flex-1 space-y-2.5">
+                  <ul className="mt-6 flex-1 space-y-3">
                     {plan.features.map((f) => (
                       <li
                         key={f}
@@ -180,7 +183,7 @@ export default function IsaakPricingPage() {
                   <div className="mt-8">
                     <Link
                       href={plan.ctaHref}
-                      className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold transition ${
+                      className={`inline-flex w-full items-center justify-center gap-2 rounded-full px-5 py-3.5 text-sm font-semibold transition ${
                         isRecommended
                           ? 'bg-[#2361d8] text-white hover:bg-[#1f55c0]'
                           : 'border border-slate-300 text-slate-800 hover:bg-slate-50'
@@ -228,7 +231,6 @@ export default function IsaakPricingPage() {
           </div>
 
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {/* Sede Electrónica */}
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-base font-semibold text-[#011c67]">Sede Electrónica AEAT</h3>
@@ -251,7 +253,6 @@ export default function IsaakPricingPage() {
               </a>
             </div>
 
-            {/* VeriFactu */}
             <div className="rounded-[1.5rem] border border-[#2361d8]/30 bg-white p-6 shadow-sm ring-1 ring-[#2361d8]/10">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-base font-semibold text-[#011c67]">VeriFactu</h3>
@@ -274,7 +275,6 @@ export default function IsaakPricingPage() {
               </a>
             </div>
 
-            {/* SII */}
             <div className="rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="text-base font-semibold text-[#011c67]">SII</h3>
@@ -328,11 +328,12 @@ export default function IsaakPricingPage() {
       {/* CTA final */}
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-4xl rounded-[2rem] bg-[#011c67] px-8 py-12 text-center text-white shadow-sm">
-          <h2 className="text-2xl font-semibold sm:text-3xl">¿No sabes por dónde empezar?</h2>
+          <h2 className="text-2xl font-semibold sm:text-3xl">
+            Simple. Dos planes. Sin letra pequeña.
+          </h2>
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-blue-100">
-            Empieza con el plan Free — es gratis para siempre. Si en algún momento necesitas Holded
-            conectado y alertas fiscales, el salto a Pro son 29 € al mes con 14 días de prueba sin
-            tarjeta.
+            Empieza gratis para siempre. Cuando necesites conectar tu ERP, tu banco o la AEAT,
+            activa Pro con 14 días de prueba sin tarjeta.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link

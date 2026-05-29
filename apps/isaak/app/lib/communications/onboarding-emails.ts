@@ -184,19 +184,19 @@ export function buildUpgradeCtaEmail(userName: string | null, queriesUsed: numbe
       ? `Ya has hecho ${queriesUsed} consulta${queriesUsed > 1 ? 's' : ''} con Isaak Free. `
       : '';
   return buildEmail({
-    subject: 'Desbloquea todo Isaak por 19 €/mes',
+    subject: 'Desbloquea todo Isaak por 29 €/mes',
     userName,
-    intro: `${used}Con el plan Starter conectas tu ERP y obtienes hasta 200 consultas al mes con contexto real de tu empresa. Sin límite de información, sin tarjeta de crédito para empezar.`,
+    intro: `${used}Con el plan Pro conectas tu ERP, tu banco y la AEAT — todo con contexto real de tu empresa. 14 días de prueba sin tarjeta.`,
     stepsHtml: stepsBlock([
       {
         emoji: '✅',
-        title: 'Holded conectado',
-        desc: 'Isaak ve tus ventas, gastos y facturas reales',
+        title: 'ERP y banca conectados',
+        desc: 'Isaak ve tus ventas, gastos y movimientos bancarios reales',
       },
       {
         emoji: '✅',
-        title: '200 consultas/mes',
-        desc: 'Frente a los 10 mensajes/día del plan Free',
+        title: 'Modelos AEAT incluidos',
+        desc: '303, 130, 111, 347 y más — borradores automáticos',
       },
       {
         emoji: '✅',
