@@ -1,5 +1,13 @@
+import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+function isInternalLink(href: string | undefined): boolean {
+  if (!href) return false;
+  if (href.startsWith('/') && !href.startsWith('//')) return true;
+  if (href.startsWith('#')) return true;
+  return false;
+}
 
 export default function IsaakMarkdown({ text }: { text: string }) {
   return (
@@ -54,16 +62,31 @@ export default function IsaakMarkdown({ text }: { text: string }) {
               {children}
             </pre>
           ),
-          a: ({ href, children }) => (
-            <a
-              href={href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[#2361d8] underline underline-offset-2 hover:text-[#1d55c2]"
-            >
-              {children}
-            </a>
-          ),
+          a: ({ href, children }) => {
+            // Links internos (/foo o #anchor) usan Next.js Link y abren en la
+            // misma pestaña — UX clave para CTAs como "conecta tu Holded".
+            // Externos abren en pestaña nueva como antes.
+            const isInternal = isInternalLink(href);
+            const className =
+              'text-[#2361d8] underline underline-offset-2 hover:text-[#1d55c2]';
+            if (isInternal && href) {
+              return (
+                <Link href={href} className={className}>
+                  {children}
+                </Link>
+              );
+            }
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={className}
+              >
+                {children}
+              </a>
+            );
+          },
           table: ({ children }) => (
             <div className="mb-1.5 overflow-x-auto">
               <table className="w-full border-collapse text-[13px]">{children}</table>

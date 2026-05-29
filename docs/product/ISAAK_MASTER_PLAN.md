@@ -41,18 +41,18 @@ El modelo anterior conectaba Isaak con **ERPs genéricos** (Holded, Sage, A3) co
 
 ---
 
-## Tarifas definitivas (vigentes desde 2026-05-16)
+## Tarifas V1 (vigentes desde 2026-05-28 — Plan de Lanzamiento V1)
 
-| Plan         | Precio    | Límites                                                            | IA incluida                          |
-| ------------ | --------- | ------------------------------------------------------------------ | ------------------------------------ |
-| **Free**     | 0 €       | 10 mensajes/día · solo chat fiscal general · sin Holded            | Sí — Claude Haiku                    |
-| **Starter**  | 19 €/mes  | Holded conectado · 200 consultas/mes · sin OCR ni Google           | Sí — Claude Haiku                    |
-| **Pro**      | 49 €/mes  | Ilimitado · OCR · Google Calendar/Gmail/Drive · voz · push         | Sí — Claude Sonnet                   |
-| **Business** | 149 €/mes | Todo Pro + multi-usuario (10) · modelos AEAT · banking · multi-ERP | Sí — Claude Sonnet + GPT-4o opcional |
+| Plan         | Precio                                  | Límites                                                                | IA incluida                          |
+| ------------ | --------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------ |
+| **Free**     | 0 €                                     | Chat **ilimitado** · Corpus AEAT · 10 msg/h (anti-abuso) · sin Holded  | Sí — Claude Haiku                    |
+| **Pro**      | **29 €/mes** o **290 €/año** (2 meses gratis) | Holded conectado · 20 tools · Alertas D-15/7/3/1 · Trial 14 días sin tarjeta | Sí — Claude Sonnet + GPT-4o fallback |
 
-**Descuento anual:** −20% en todos los planes de pago.
+**Trial Pro:** 14 días gratis sin tarjeta (`payment_method_collection: 'if_required'` en Stripe). Si no continúa, cuenta cae a Free.
 
-**Add-ons (Starter+):** Usuario adicional €9/mes · ERP adicional €15/mes · Banco adicional €10/mes.
+**Planes legacy (archivados):** Starter 19€, Pro 49€, Business 149€ — clientes existentes mantienen su suscripción hasta cancelar. No se ofrecen a clientes nuevos. La migración a V2+ reintroducirá Business cuando llegue multi-usuario.
+
+Ver `docs/product/ISAAK_LAUNCH_V1_2026-05-28.md` para el plan completo de lanzamiento V1.
 
 ---
 

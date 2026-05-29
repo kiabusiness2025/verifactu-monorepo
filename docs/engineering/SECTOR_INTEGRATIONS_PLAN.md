@@ -1,7 +1,9 @@
 # Isaak — Plan de Integraciones Sectoriales
 
+> ⚠️ **V1 LAUNCH (2026-05-28)** — Las integraciones sectoriales (HotelGest, Revo, Nubimed, Inmovilla…) están **escondidas en V1**. Reactivación prevista en **V3.0** (≈ 6 meses post-V1). Pricing reescrito en [`ISAAK_LAUNCH_V1_2026-05-28.md`](../product/ISAAK_LAUNCH_V1_2026-05-28.md) — el plan Business 149€ referenciado abajo está archivado.
+
 **Creado**: 2026-05-25
-**Estado**: Documento vivo — pivote estratégico confirmado
+**Estado**: Documento vivo — pivote estratégico confirmado · pausado para V1
 
 ---
 

@@ -70,6 +70,7 @@ const PRICING = [
     name: 'Pro',
     price: '29 €',
     priceSub: 'al mes · IVA no incluido',
+    annualBadge: '🎁 Pago anual: 2 meses gratis (290 € / año)',
     description: 'Todo lo que un autónomo o pyme necesita para que Holded vuele.',
     features: [
       'Todo lo del plan Free',
@@ -77,7 +78,7 @@ const PRICING = [
       '20 tools: lectura + crear borradores',
       'Alertas AEAT D-15/7/3/1 por email',
       'Soporte por email',
-      'Trial 14 días sin tarjeta',
+      'Trial 14 días sin tarjeta — sin compromiso',
     ],
     cta: { label: 'Probar 14 días gratis', href: SIGNUP_URL + '?plan=pro' },
     highlight: true,
@@ -301,6 +302,11 @@ export default function IsaakHomeLandingV1() {
                   <span className="text-4xl font-bold text-[#011c67]">{p.price}</span>
                   <span className="ml-2 text-sm text-slate-500">{p.priceSub}</span>
                 </div>
+                {'annualBadge' in p && p.annualBadge && (
+                  <div className="mt-2.5 inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-[12px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
+                    {p.annualBadge}
+                  </div>
+                )}
                 <p className="mt-3 text-sm text-slate-600">{p.description}</p>
 
                 <ul className="mt-6 space-y-2">
@@ -328,7 +334,7 @@ export default function IsaakHomeLandingV1() {
           </div>
 
           <p className="mt-6 text-center text-xs text-slate-500">
-            Anual: 290 € /año (equivale a 24,16 €/mes · ahorro del 20%)
+            Sin permanencia · Cancela cuando quieras desde tu panel · IVA no incluido
           </p>
         </div>
       </section>

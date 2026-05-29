@@ -202,41 +202,36 @@ const PROFILES = [
   },
 ];
 
+// V1 LAUNCH (2026-05): planes simplificados a Free + Pro. Los legacy
+// (Starter / Pro 49 / Business 149) quedan archivados en Stripe — clientes
+// existentes mantienen su plan hasta que cancelen. Ver docs/product/
+// ISAAK_LAUNCH_V1_2026-05-28.md.
 const PRICE_TEASER = [
   {
     id: 'free',
     name: 'Free',
     price: '0 €',
-    tagline: 'Consultas ilimitadas · Facturas VeriFactu · Sin tarjeta',
+    tagline: 'Chat ilimitado · Corpus AEAT completo · Sin tarjeta · Sin Holded conectado',
     cta: 'Empezar gratis',
-    href: '/auth',
-    highlight: false,
-  },
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: '19 €',
-    tagline: 'Software sectorial · ERP conectado · Gestión financiera en tiempo real',
-    cta: 'Empezar ahora',
-    href: '/signup?plan=starter',
+    href: '/signup',
     highlight: false,
   },
   {
     id: 'pro',
     name: 'Pro',
-    price: '49 €',
-    tagline: 'Documentos · Google · WhatsApp · Voz · Multicanal',
-    cta: 'Trial 14 días sin tarjeta',
+    price: '29 €',
+    tagline: 'Holded conectado · 20 tools · Alertas AEAT · IA incluida · 14 días gratis sin tarjeta',
+    cta: 'Probar 14 días gratis',
     href: '/signup?plan=pro',
     highlight: true,
   },
   {
-    id: 'business',
-    name: 'Business',
-    price: '149 €',
-    tagline: 'Banca conectada · Modelos AEAT · Multi-usuario · Empresa',
-    cta: 'Hablar con ventas',
-    href: '/support',
+    id: 'pro-annual',
+    name: 'Pro anual',
+    price: '290 €',
+    tagline: '🎁 2 meses gratis · Todo lo del plan Pro · Pago una vez al año',
+    cta: 'Probar 14 días gratis',
+    href: '/signup?plan=pro&cadence=annual',
     highlight: false,
   },
 ];

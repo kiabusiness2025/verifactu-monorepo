@@ -27,7 +27,7 @@
 - IA: Anthropic Claude (primario) + OpenAI GPT (fallback automático)
 - Auth: Firebase Admin + cookies httpOnly de sesión
 - Email: Resend
-- Pagos: Stripe (4 planes: Free/Starter/Pro/Business)
+- Pagos: Stripe — **V1**: 2 planes (Free + Pro 29 €/mes · 290 €/año con 2 meses gratis). Trial Pro 14d sin tarjeta. Planes legacy (Starter 19/Pro 49/Business 149) archivados, clientes existentes mantienen su suscripción hasta cancelar.
 
 ## Integraciones operativas
 
@@ -36,7 +36,7 @@
 | Holded (ERP directo) | ✅ Producción | API key cifrada AES-256-GCM |
 | Google (Calendar/Gmail/Drive) | ✅ Producción | OAuth, 8 LLM tools |
 | Microsoft 365 (Outlook/Calendar/OneDrive) | ✅ Producción | OAuth multi-tenant, 9 LLM tools |
-| Stripe billing | ✅ Producción | 4 planes + portal cliente |
+| Stripe billing | ✅ Producción | **V1: 2 planes** (Free + Pro 29€/290€) · Trial 14d sin tarjeta · portal cliente · legacy archivados |
 | Verifactu (AEAT SOAP mTLS) | ✅ Producción | P12 → PEM-JSON cifrado |
 | Salt Edge (Open Banking) | ✅ Producción | Fallback no-PSD2 |
 | **Enable Banking (PSD2 AIS)** | ✅ Producción (2026-05-23) | App prod `73fbe5d2-b322-4d71-ba5d-223be78df437` |
