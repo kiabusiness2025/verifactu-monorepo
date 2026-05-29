@@ -181,7 +181,7 @@ TIPOS DE IVA (vigentes hasta nueva modificación):
 // ── URLs de producto Isaak ─────────────────────────────────────────────────────
 
 const _base =
-  process.env.NEXT_PUBLIC_ISAAK_SITE_URL?.replace(/\/$/, '') || 'https://isaak.verifactu.business';
+  process.env.NEXT_PUBLIC_ISAAK_SITE_URL?.replace(/\/$/, '') || 'https://isaak.chat';
 
 export const ISAAK_URLS = {
   register: _base,

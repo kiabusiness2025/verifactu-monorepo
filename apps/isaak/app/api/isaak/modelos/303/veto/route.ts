@@ -35,7 +35,7 @@ function htmlPage(title: string, heading: string, body: string, color: string): 
     <div class="header"><h1>${heading}</h1></div>
     <div class="body">
       ${body}
-      <a class="link" href="https://isaak.verifactu.business">Ir a Isaak</a>
+      <a class="link" href="https://isaak.chat">Ir a Isaak</a>
       <p class="note">Isaak · Copiloto fiscal IA · verifactu.business</p>
     </div>
   </div>

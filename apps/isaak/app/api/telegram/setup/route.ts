@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.verifactu.business';
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.chat';
   const webhookUrl = `${appUrl}/api/telegram/webhook`;
 
   if (!process.env.TELEGRAM_BOT_TOKEN?.trim()) {

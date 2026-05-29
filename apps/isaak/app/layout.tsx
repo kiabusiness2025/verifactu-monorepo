@@ -8,7 +8,7 @@ import { isV1Launch } from './lib/feature-flags';
 import './globals.css';
 
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
-const siteUrl = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
+const siteUrl = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.chat';
 const avatarPath = '/Personalidad/isaak-avatar-verifactu.png';
 
 export const viewport: Viewport = {

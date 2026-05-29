@@ -167,7 +167,7 @@ async function buildInvoicePdf(invoice: {
 
     // Footer
     '0.6 0.6 0.6 rg',
-    'BT /F1 8 Tf 45 30 Td (Generado por Isaak ' + esc('— isaak.verifactu.business') + ') Tj ET',
+    'BT /F1 8 Tf 45 30 Td (Generado por Isaak ' + esc('— isaak.chat') + ') Tj ET',
     '0 0 0 rg',
   ]
     .filter(Boolean)

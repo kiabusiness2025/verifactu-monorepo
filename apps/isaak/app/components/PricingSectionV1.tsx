@@ -72,7 +72,7 @@ const PLANS: Plan[] = [
       { icon: MessageSquare, text: 'Chat ilimitado (10 mensajes/h)' },
       { icon: MessageCircle, text: 'Acceso desde WhatsApp + Telegram' },
       { icon: Brain, text: 'Corpus completo de Agencia Tributaria' },
-      { icon: Scale, text: 'Asesor legal de contratos', soon: true },
+      { icon: Scale, text: 'Asesor legal de contratos' },
       { icon: Sparkles, text: 'IA incluida — Claude Haiku' },
     ],
     notIncluded: ['Holded conectado', 'Alertas AEAT proactivas', 'Excel de libros y modelos'],

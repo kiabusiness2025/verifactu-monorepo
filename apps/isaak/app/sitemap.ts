@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
+const siteUrl = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.chat';
 
 const routes = ['/', '/modos/excel', '/conectores', '/asesorias'];
 

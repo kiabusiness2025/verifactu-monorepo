@@ -15,6 +15,12 @@ import {
   isSectorToolName,
   type SectorToolName,
 } from './sector-tools';
+import {
+  LEGAL_CHAT_TOOLS,
+  executeLegalTool,
+  isLegalToolName,
+  type LegalToolName,
+} from './isaak-legal-tools';
 import { emitWebhookEvent, type IsaakWebhookEventType } from './isaak-webhook-emitter';
 
 // Mapping: write tool name → webhook event type emitted on success.
@@ -132,6 +138,8 @@ const READ_ONLY_NAMES = new Set<string>([
   'sector_list_invoices',
   'sector_list_contacts',
   'sector_list_products',
+  // V1.2 — Legal (sub-agente revisión de contratos, read-only)
+  'isaak_review_contract',
 ]);
 
 type AnthropicToolDef = {
@@ -161,7 +169,8 @@ export type ToolCategoryFilter =
   | 'google'
   | 'microsoft'
   | 'ledger'
-  | 'sector';
+  | 'sector'
+  | 'legal';
 
 export function buildReadOnlyToolsForContext(
   ctx: IsaakToolContext,
@@ -207,6 +216,12 @@ export function buildReadOnlyToolsForContext(
       if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
+  // V1.2: Sub-agente Asesor Legal — siempre disponible (incl. Free).
+  if (include('legal')) {
+    for (const t of LEGAL_CHAT_TOOLS) {
+      if (isAllowed(t.name)) out.push(toAITool(t));
+    }
+  }
 
   return out;
 }
@@ -246,7 +261,13 @@ export async function executeIsaakTool(
 
   try {
     let result: unknown;
-    if (isSectorToolName(name)) {
+    if (isLegalToolName(name)) {
+      result = await executeLegalTool(
+        { tenantId: ctx.tenantId, userId: ctx.userId },
+        name as LegalToolName,
+        toolUse.input,
+      );
+    } else if (isSectorToolName(name)) {
       result = await executeSectorTool(ctx.tenantId, name as SectorToolName, toolUse.input);
     } else if (isLedgerToolName(name)) {
       result = await executeLedgerTool(
