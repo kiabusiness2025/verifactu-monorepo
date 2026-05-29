@@ -19,6 +19,7 @@ import {
   Bell,
   Brain,
   CheckCircle2,
+  Clock,
   CreditCard,
   HeadphonesIcon,
   Mail,
@@ -179,7 +180,15 @@ export default function PricingSectionV1() {
 
                 {/* Header del card */}
                 <div>
-                  <h3 className="text-xl font-bold text-[#011c67]">{plan.name}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-[#011c67]">{plan.name}</h3>
+                    {isPro && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-800 ring-1 ring-amber-200">
+                        <Clock className="h-2.5 w-2.5" />
+                        Trial 14 días
+                      </span>
+                    )}
+                  </div>
                   <p className="mt-1.5 text-sm text-slate-600">{plan.description}</p>
                 </div>
 
@@ -200,7 +209,7 @@ export default function PricingSectionV1() {
                         {plan.priceMonthly} €/mes
                       </span>
                       <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                        Ahorras {(plan.priceMonthly - plan.priceAnnualMonthlyEquivalent) * 12} €/año
+                        Ahorras {plan.priceMonthly * 12 - plan.priceAnnual} €/año
                       </span>
                     </div>
                   )}
