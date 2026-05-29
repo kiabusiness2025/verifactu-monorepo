@@ -23,6 +23,9 @@ import Link from 'next/link';
 import IsaakMarkdown from './IsaakMarkdown';
 import { ARTIFACT_ICON, type IsaakArtifact } from '@/app/lib/isaak-artifact';
 import IsaakArtifactPanel from './IsaakArtifactPanel';
+import SlashCommandPicker, {
+  shouldShowSlashPicker,
+} from './SlashCommandPicker';
 
 // ── Speech API minimal types ──────────────────────────────────────────────────
 interface ISpeechRecognitionResult {
@@ -221,9 +224,12 @@ function ChatInput({
   placeholder?: string;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [caret, setCaret] = useState(0);
+  const slashKeyHandlerRef = useRef<(e: React.KeyboardEvent) => boolean>(() => false);
+  const showSlashPicker = shouldShowSlashPicker(input, caret);
 
   return (
-    <div className="space-y-2">
+    <div className="relative space-y-2">
       {selectedFile && (
         <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2">
           <FileText size={13} className="shrink-0 text-[#2361d8]" />
@@ -290,8 +296,16 @@ function ChatInput({
         <textarea
           ref={inputRef}
           value={input}
-          onChange={(e) => onChange(e.target.value)}
-          onKeyDown={onKeyDown}
+          onChange={(e) => {
+            onChange(e.target.value);
+            setCaret(e.target.selectionStart ?? 0);
+          }}
+          onSelect={(e) => setCaret(e.currentTarget.selectionStart ?? 0)}
+          onKeyDown={(e) => {
+            // El picker tiene prioridad si está visible.
+            if (showSlashPicker && slashKeyHandlerRef.current(e)) return;
+            onKeyDown(e);
+          }}
           placeholder={
             isListening
               ? 'Escuchando...'
@@ -311,6 +325,27 @@ function ChatInput({
           {loading ? <Loader2 size={14} className="animate-spin" /> : <SendHorizonal size={14} />}
         </button>
       </form>
+      {showSlashPicker && (
+        <SlashCommandPicker
+          input={input}
+          caret={caret}
+          onPick={({ value, cursorPos }) => {
+            onChange(value);
+            requestAnimationFrame(() => {
+              const el = inputRef.current;
+              if (el) {
+                el.focus();
+                el.setSelectionRange(cursorPos, cursorPos);
+                setCaret(cursorPos);
+              }
+            });
+          }}
+          onClose={() => onChange('')}
+          registerKeyHandler={(handler) => {
+            slashKeyHandlerRef.current = handler;
+          }}
+        />
+      )}
     </div>
   );
 }

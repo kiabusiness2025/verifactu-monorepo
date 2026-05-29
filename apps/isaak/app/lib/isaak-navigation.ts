@@ -9,7 +9,7 @@ function getOrigin(value: string | undefined, fallback: string) {
 
 export const ISAAK_PUBLIC_URL = getOrigin(
   process.env.NEXT_PUBLIC_ISAAK_SITE_URL,
-  'https://isaak.verifactu.business'
+  'https://isaak.chat'
 );
 
 export const APP_URL = getOrigin(process.env.NEXT_PUBLIC_APP_URL, ISAAK_PUBLIC_URL);
@@ -26,7 +26,7 @@ export const HOLDed_AUTH_URL = `${HOLDed_URL}/auth/holded`;
 export const HOLDed_PROFILE_ONBOARDING_URL = `${HOLDed_URL}/onboarding/profile`;
 
 export const SUPPORT_EMAIL = (
-  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@isaak.verifactu.business'
+  process.env.NEXT_PUBLIC_SUPPORT_EMAIL || 'soporte@verifactu.business'
 ).trim();
 
 export const buildHoldedAuthUrl = (source: string, next?: string) => {

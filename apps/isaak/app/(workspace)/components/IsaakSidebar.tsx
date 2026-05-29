@@ -151,7 +151,8 @@ const PROFILE_MENU_V1 = [
   { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
   { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
-  { href: '/integration-holded', label: 'Integración Holded', icon: Plug },
+  { href: '/ajustes/notificaciones', label: 'Notificaciones', icon: Bell },
+  { href: '/integrations', label: 'Integraciones', icon: Plug },
   { href: '/ayuda', label: 'Centro de ayuda', icon: LifeBuoy },
 ] as const;
 
@@ -533,9 +534,16 @@ export default function IsaakSidebar({
         className={`relative border-t border-white/5 p-2 ${collapsed ? 'px-1.5' : ''}`}
         ref={profileRef}
       >
-        {/* Profile popover */}
-        {profileOpen && !collapsed && (
-          <div className="absolute bottom-full left-2 right-2 mb-2 overflow-hidden rounded-2xl border border-white/10 bg-[#0d1e4a] shadow-2xl">
+        {/* Profile popover — flota a la derecha cuando el sidebar está colapsado
+            (modo Chat / preferencia de usuario) para no quedar oculto. */}
+        {profileOpen && (
+          <div
+            className={
+              collapsed
+                ? 'absolute bottom-2 left-full ml-2 w-[260px] overflow-hidden rounded-2xl border border-white/10 bg-[#0d1e4a] shadow-2xl z-50'
+                : 'absolute bottom-full left-2 right-2 mb-2 overflow-hidden rounded-2xl border border-white/10 bg-[#0d1e4a] shadow-2xl'
+            }
+          >
             {/* User header */}
             <div className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
               <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-color)] text-[13px] font-bold text-white">
@@ -631,9 +639,7 @@ export default function IsaakSidebar({
         {/* Profile trigger button */}
         <button
           type="button"
-          onClick={() => {
-            if (!collapsed) setProfileOpen((v) => !v);
-          }}
+          onClick={() => setProfileOpen((v) => !v)}
           title={collapsed ? `${user.name} · Cuenta` : undefined}
           className={`flex w-full items-center rounded-xl p-2 transition hover:bg-white/5 ${
             collapsed ? 'justify-center' : 'gap-2.5'

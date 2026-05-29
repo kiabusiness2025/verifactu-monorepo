@@ -58,8 +58,8 @@ function buildHtml(input: ConnectorHealthAlertInput): string {
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
             © 2026 Verifactu Business ·
-            <a href="https://isaak.verifactu.business/settings?section=integraciones" style="color:#94a3b8;">Gestionar integraciones</a> ·
-            <a href="https://isaak.verifactu.business" style="color:#94a3b8;">isaak.verifactu.business</a>
+            <a href="https://isaak.chat/settings?section=integraciones" style="color:#94a3b8;">Gestionar integraciones</a> ·
+            <a href="https://isaak.chat" style="color:#94a3b8;">isaak.chat</a>
           </p>
         </td></tr>
       </table>

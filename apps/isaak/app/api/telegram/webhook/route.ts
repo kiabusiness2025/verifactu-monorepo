@@ -254,7 +254,7 @@ async function processUpdate(rawBody: string): Promise<void> {
 
     if (data === 'menu_vincular') {
       const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.verifactu.business';
+        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.chat';
       await sendTelegramText(
         tgChatId,
         `🔗 Para vincular tu cuenta de Isaak, ve a:\n\n<b>${appUrl}/settings/telegram</b>\n\nGenerarás un enlace de vinculación que abrirás aquí en Telegram.`
@@ -373,7 +373,7 @@ async function handleHelp(
     '',
     tenantId
       ? '✅ Tu cuenta de Isaak está vinculada.'
-      : `🔗 Vincula tu cuenta en <b>isaak.verifactu.business</b> → Ajustes → Telegram para acceder a tus datos.`,
+      : `🔗 Vincula tu cuenta en <b>isaak.chat</b> → Ajustes → Telegram para acceder a tus datos.`,
   ].join('\n');
   await sendTelegramText(tgChatId, reply);
   await saveOutbound(chatDbId, tenantId, reply);
@@ -451,7 +451,7 @@ async function handlePlanSelect(
   if (!tenantId) {
     await sendTelegramText(
       tgChatId,
-      `⚠️ Vincula tu cuenta de Isaak antes del pago para activar el plan automáticamente.\n\nVe a <b>isaak.verifactu.business → Ajustes → Telegram</b> y genera el enlace de vinculación.`
+      `⚠️ Vincula tu cuenta de Isaak antes del pago para activar el plan automáticamente.\n\nVe a <b>isaak.chat → Ajustes → Telegram</b> y genera el enlace de vinculación.`
     );
   }
 

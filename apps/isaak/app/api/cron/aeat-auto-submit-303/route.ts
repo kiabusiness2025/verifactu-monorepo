@@ -149,7 +149,7 @@ function buildVetoEmailHtml(input: {
         </td></tr>
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
-            Isaak · Copiloto fiscal IA · <a href="https://isaak.verifactu.business" style="color:#3b82f6;">isaak.verifactu.business</a>
+            Isaak · Copiloto fiscal IA · <a href="https://isaak.chat" style="color:#3b82f6;">isaak.chat</a>
           </p>
         </td></tr>
       </table>
@@ -197,7 +197,7 @@ export async function GET(req: NextRequest) {
     summary.passA.scanned = profiles.length;
 
     const appUrl =
-      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.verifactu.business';
+      process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.chat';
     const resendApiKey = process.env.RESEND_API_KEY?.trim();
     const fromEmail =
       process.env.RESEND_FROM_ISAAK?.trim() ||

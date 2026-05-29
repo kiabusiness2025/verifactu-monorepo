@@ -151,7 +151,7 @@ async function checkHoldedConnections(): Promise<{
             connectorName: 'Holded',
             reason:
               'La API key de Holded ya no responde correctamente. Es posible que haya caducado o sido revocada desde el panel de Holded.',
-            actionUrl: 'https://isaak.verifactu.business/settings?section=integraciones',
+            actionUrl: 'https://isaak.chat/settings?section=integraciones',
             actionLabel: 'Reconectar Holded',
           }).catch(() => null);
         }
@@ -225,7 +225,7 @@ async function checkSaltEdgeConnections(): Promise<{
           connector: 'banking',
           connectorName: conn.providerName,
           reason,
-          actionUrl: 'https://isaak.verifactu.business/workspace?tab=banca',
+          actionUrl: 'https://isaak.chat/workspace?tab=banca',
           actionLabel: 'Revisar conexión bancaria',
         }).catch(() => null);
       }
