@@ -1,5 +1,7 @@
 # ISAAK UNIFICADO - Especificación de Producto
 
+> ⚠️ **V1 LAUNCH (2026-05-28)** — pricing y scope simplificados: **Free + Pro 29 €/mes** (290 €/año con 2 meses gratis). Trial Pro 14 días sin tarjeta. Pro 49 €/mes referenciado abajo está **deprecated**. Ver fuente única [`ISAAK_LAUNCH_V1_2026-05-28.md`](../../product/ISAAK_LAUNCH_V1_2026-05-28.md).
+
 **Fecha:** 2026-01-15 · **Actualizado:** Marzo 2026  
 **Versión:** 1.1  
 **Estado:** Fases 1-2 completadas. Fase 3 en progreso.

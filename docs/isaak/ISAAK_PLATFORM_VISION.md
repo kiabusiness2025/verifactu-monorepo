@@ -1,5 +1,7 @@
 # ISAAK — Visión de Producto
 
+> ⚠️ **V1 LAUNCH (2026-05-28)** — pricing simplificado a **Free + Pro 29 €/mes** (290 €/año con 2 meses gratis). Trial Pro de 14 días sin tarjeta. Planes legacy Starter/Pro 49/Business 149 archivados. Fuente única del lanzamiento: [`ISAAK_LAUNCH_V1_2026-05-28.md`](../product/ISAAK_LAUNCH_V1_2026-05-28.md). El pricing y los planes de este documento histórico están **deprecated**.
+
 > Última actualización: 2026-04-28 · Arquitecto responsable: Verifactu Business
 
 ---
