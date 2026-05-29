@@ -21,11 +21,16 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  FileSpreadsheet,
   HeadphonesIcon,
   Mail,
+  MessageCircle,
   MessageSquare,
   Plug,
+  Scale,
+  Send,
   ShieldCheck,
+  Smartphone,
   Sparkles,
   XCircle,
   Zap,
@@ -38,6 +43,8 @@ type FeatureWithIcon = {
   text: string;
 };
 
+type Feature = FeatureWithIcon & { soon?: boolean };
+
 type Plan = {
   name: string;
   description: string;
@@ -47,7 +54,7 @@ type Plan = {
   cta: { label: string; href: string };
   ctaSubtitle?: string;
   highlight: boolean;
-  features: FeatureWithIcon[];
+  features: Feature[];
   notIncluded?: string[];
 };
 
@@ -63,10 +70,12 @@ const PLANS: Plan[] = [
     highlight: false,
     features: [
       { icon: MessageSquare, text: 'Chat ilimitado (10 mensajes/h)' },
+      { icon: MessageCircle, text: 'Acceso desde WhatsApp + Telegram' },
       { icon: Brain, text: 'Corpus completo de Agencia Tributaria' },
+      { icon: Scale, text: 'Asesor legal de contratos', soon: true },
       { icon: Sparkles, text: 'IA incluida — Claude Haiku' },
     ],
-    notIncluded: ['Holded conectado', 'Tools de lectura/escritura', 'Alertas AEAT por email'],
+    notIncluded: ['Holded conectado', 'Alertas AEAT proactivas', 'Excel de libros y modelos'],
   },
   {
     name: 'Pro',
@@ -81,8 +90,10 @@ const PLANS: Plan[] = [
       { icon: MessageSquare, text: 'Todo lo del plan Free' },
       { icon: Plug, text: 'Tu Holded conectado en 30 segundos' },
       { icon: Brain, text: '20 tools: lectura + crear borradores' },
-      { icon: Bell, text: 'Alertas AEAT D-15/7/3/1 por email' },
-      { icon: Sparkles, text: 'IA incluida — Claude Sonnet + GPT-4o fallback' },
+      { icon: Bell, text: 'Alertas AEAT D-15/7/3/1 por email + push web' },
+      { icon: FileSpreadsheet, text: 'Exporta a Excel (libros IVA, modelos AEAT, asientos)' },
+      { icon: Smartphone, text: 'Notificaciones push en móvil y escritorio' },
+      { icon: Sparkles, text: 'IA premium — Claude Sonnet + GPT-4o fallback' },
       { icon: HeadphonesIcon, text: 'Soporte por email en menos de 24 h' },
     ],
   },
@@ -260,7 +271,14 @@ export default function PricingSectionV1() {
                           >
                             <Icon className="h-3 w-3" />
                           </span>
-                          <span>{f.text}</span>
+                          <span className="flex flex-wrap items-center gap-1.5">
+                            <span>{f.text}</span>
+                            {f.soon && (
+                              <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                                En 2 semanas
+                              </span>
+                            )}
+                          </span>
                         </li>
                       );
                     })}

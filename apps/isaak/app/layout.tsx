@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import { Manrope } from 'next/font/google';
+import IsaakOmniChatWidget from './components/IsaakOmniChatWidget';
 import IsaakPublicSupportWidget from './components/IsaakPublicSupportWidget';
 import WhatsAppButton from './components/WhatsAppButton';
 import IsaakSiteChrome from './components/IsaakSiteChrome';
+import { isV1Launch } from './lib/feature-flags';
 import './globals.css';
 
 const manrope = Manrope({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
@@ -67,8 +69,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="es">
       <body className={manrope.className}>
         <IsaakSiteChrome>{children}</IsaakSiteChrome>
-        <WhatsAppButton />
-        <IsaakPublicSupportWidget />
+        {/* V1 LAUNCH: OmniChat unificado (Chat + WhatsApp + Telegram). Sin
+            el flag, se mantiene el patrón antiguo (WhatsAppButton +
+            SupportWidget) para no romper el comportamiento previo. */}
+        {isV1Launch() ? (
+          <IsaakOmniChatWidget />
+        ) : (
+          <>
+            <WhatsAppButton />
+            <IsaakPublicSupportWidget />
+          </>
+        )}
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});})}`,

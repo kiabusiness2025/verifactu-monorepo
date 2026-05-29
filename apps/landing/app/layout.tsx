@@ -7,7 +7,9 @@ import { GoogleTagManager } from '../components/GoogleTagManager';
 import CookieBanner from './components/CookieBanner';
 import DevStatusBanner from './components/DevStatusBanner';
 import IsaakChatClient from './components/IsaakChatClient';
+import IsaakOmniChatWidget from './components/IsaakOmniChatWidget';
 import WhatsAppButton from './components/WhatsAppButton';
+import { ISAAK_V1_LAUNCH } from './lib/feature-flags';
 import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import { ToastProvider } from './components/Toast';
 import { AuthProvider } from './context/AuthContext';
@@ -112,8 +114,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </main>
             {process.env.NODE_ENV !== 'production' && <DevStatusBanner />}
             <CookieBanner />
-            {!hideIsaakChat ? <IsaakChatClient /> : null}
-            <WhatsAppButton />
+            {/* V1: 1 widget unificado con 3 canales (Chat/WhatsApp/Telegram).
+                Sin flag: comportamiento original (Isaak chat + botón WA). */}
+            {ISAAK_V1_LAUNCH ? (
+              <IsaakOmniChatWidget />
+            ) : (
+              <>
+                {!hideIsaakChat ? <IsaakChatClient /> : null}
+                <WhatsAppButton />
+              </>
+            )}
             <PWAInstallPrompt />
             <Analytics />
           </ToastProvider>
