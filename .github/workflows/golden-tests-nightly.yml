@@ -6,8 +6,10 @@ name: Golden Tests — Nightly
 # También se puede disparar manualmente desde la pestaña Actions del repo.
 #
 # Required secrets (Settings → Secrets and variables → Actions):
-#   ANTHROPIC_API_KEY_TESTS   — API key de Anthropic, separada de la de prod
+#   ANTHROPIC_API_KEY_TESTS   — API key de Anthropic dedicada para tests (preferido)
 #                               (~$1.50/run, sugerencia: poner budget cap mensual)
+#   Si no existe, cae al secret ANTHROPIC_API_KEY (la de prod). Funciona pero
+#   no es lo recomendado — mejor crear una key dedicada con budget cap.
 #
 # Optional secrets:
 #   OPENAI_API_KEY_TESTS      — para el LLM judge (gpt-4o-mini)
@@ -70,12 +72,12 @@ jobs:
       # valor — solo confirma longitud y prefijo).
       - name: Check secrets and env
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS || secrets.ANTHROPIC_API_KEY }}
           ISAAK_GOLDEN_LIVE: '1'
         run: |
           if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::error::ANTHROPIC_API_KEY_TESTS secret is empty or not set."
-            echo "Add it in repo Settings → Secrets and variables → Actions."
+            echo "::error::Neither ANTHROPIC_API_KEY_TESTS nor ANTHROPIC_API_KEY is set."
+            echo "Add one in repo Settings → Secrets and variables → Actions → Repository secrets."
             exit 1
           fi
           echo "ANTHROPIC_API_KEY length: ${#ANTHROPIC_API_KEY}"
@@ -85,7 +87,7 @@ jobs:
       - name: Run golden tests
         id: tests
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY_TESTS || secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY_TESTS }}
           ISAAK_GOLDEN_LIVE: '1'
           ISAAK_GOLDEN_MODEL: ${{ vars.ISAAK_GOLDEN_MODEL || '' }}
