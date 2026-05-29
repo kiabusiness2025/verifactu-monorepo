@@ -23,6 +23,7 @@ export default function IsaakSiteChrome({ children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isWorkspaceRoute =
+    pathname === '/' || // home tiene su propio header (IsaakHomeLandingV1)
     pathname?.startsWith('/chat') ||
     pathname?.startsWith('/resumen') ||
     pathname?.startsWith('/ventas') ||

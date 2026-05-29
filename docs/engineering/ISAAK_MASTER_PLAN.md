@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-29 (Artifacts panel ✅ — informes visuales + PDF + Excel + Word + streaming SSE + split layout)
+**Última actualización**: 2026-05-29 (Artifacts ✅ · Tour page ✅ · Hero mockup ✅ · C-C cron 303 ✅ · F15 Telegram ✅)
 **Visión**: Isaak como **Robot Contable** autónomo — el empresario opera SOLO a través de Isaak; Isaak es la fuente de verdad, el Inspector AEAT preventivo y el ejecutor fiscal.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
@@ -529,11 +529,12 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 | **C — Cert digital AEAT**     | C-A4: resumen IA semanal del buzón (cron lunes 08:00 UTC)                                                | ✅ Operativo                                                                                                                                                                                    |
 | **C — Cert digital AEAT**     | UI: badge sidebar + panel `/sede` con cambios censales                                                   | ✅ Operativo                                                                                                                                                                                    |
 | **C — Cert digital AEAT**     | C-B: borrador asistido (presentación 303–349 con confirmación)                                           | ✅ Operativo — draft + submit + export para 8 modelos. Worker Playwright en `aeat-browser/` (requiere host externo con Playwright). Webhooks `tax_return.submitted` en todos los submit routes. |
-| **C — Cert digital AEAT**     | C-C: presentación automática (cron + veto-window + RC profesional)                                       | ⏳                                                                                                                                                                                              |
+| **C — Cert digital AEAT**     | C-C: presentación automática (cron + veto-window + RC profesional)                                       | ✅ Operativo — cron diario con veto-window 48h. Commit `d81d1e1`                                                                                                                                |
 | **Sectoriales**               | HotelGest ✅, Inmovilla ✅, Nubimed ✅, Revo ✅, Loyverse ✅, WooCommerce ✅, PrestaShop ✅, Mindbody ✅ | ✅ 8 clientes ERP sectoriales + 5 tools LLM sector                                                                                                                                              |
 | **F — Inspector LLM Capa 2**  | F12: sub-agente inspector contextual con prompt especializado                                            | ✅ Operativo — `inspector-capa-2.ts` + `inspector_consult` tool                                                                                                                                 |
 | **TEAR**                      | F14: consulta vinculante DGT automática                                                                  | ⏳                                                                                                                                                                                              |
-| **Canales**                   | F15-F16: Telegram + WhatsApp ampliado + Slack + Teams                                                    | ⏳                                                                                                                                                                                              |
+| **Canales**                   | F15: Telegram bot + vinculación + pipeline IA + pagos Stripe                                             | ✅ Operativo — commits `aa73ac4` + `3461be9`                                                                                                                                                    |
+| **Canales**                   | F16: WhatsApp ampliado + Slack + Teams                                                                   | ⏳                                                                                                                                                                                              |
 | **Gestión externa**           | F17: Airtable + Notion + Trello                                                                          | ⏳                                                                                                                                                                                              |
 | **Cobros**                    | F18: Stripe Connect + GoCardless AIS                                                                     | ⏳                                                                                                                                                                                              |
 | **ERP/CRM**                   | F19: HubSpot + Odoo                                                                                      | ⏳                                                                                                                                                                                              |
@@ -565,15 +566,22 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 
 ### Próximos pasos — orden recomendado
 
-**P1 ✅ COMPLETADO**
+### P1 ✅ Completado
 
-- L4-L5 PGC balances ✅, RAG F13 fase 2 ✅, F12 Inspector Capa 2 ✅, C-B 8 modelos ✅, D1 webhooks ✅, 8 sectoriales ✅
+- L4-L5 PGC balances ✅, RAG F13 fase 2 ✅, F12 Inspector Capa 2 ✅, C-B 8 modelos ✅, D1 webhooks ✅, 8 sectoriales ✅, C-C cron 303 ✅, F15 Telegram ✅
 
-**P2 (siguiente sprint)**
+### Sesión 5 (2026-05-29) ✅ Completado
 
-1. **Activar CORPUS_PDF_EXTRACTOR_ENABLED=1** en Vercel para ingestar manuales IRPF/IVA/Sociedades en PDF.
-2. **C-C cron 303 con veto-window 48h** — presentación automática después del borrador. Requiere RC profesional + audit log + email de confirmación.
-3. **Holded PGC mapper** — inferir `accountDebit`/`accountCredit` al importar facturas (430/700 ventas, 600/400 compras, 477/472 IVA). Activa R128/R129 para tenants Holded sin entradas manuales.
+- Artifacts panel (informes visuales, PDF, Excel, Word, streaming SSE, split layout)
+- Tour page `isaak.app/tour` — 8 escenarios animados con datos reales Nova Gestión
+- Hero mockup browser en `IsaakHomeLandingV1` + sección features (4 cards)
+- Fix nav duplicado `IsaakSiteChrome` en home
+- Fix Prisma schema → `PRISMA_DATABASE_URL` como `url` + fallback Accelerate en `migrate-deploy.mjs`
+
+### P2 — Siguiente sprint
+
+1. **Activar `CORPUS_PDF_EXTRACTOR_ENABLED=1`** en Vercel — activa ingestor PDFs AEAT (manuales IRPF/IVA/Sociedades). Solo env var, el código ya está.
+2. **Holded PGC mapper** — inferir `accountDebit`/`accountCredit` al importar facturas (430/700 ventas, 600/400 compras, 477/472 IVA). Activa R128/R129 para tenants Holded sin entradas manuales.
 
 **P3 (sectoriales + canales)** 4. Telegram bot (F15) + integraciones pendientes TeamUp/Loyverse/RepairShopr cuando haya tracción. 5. Cerrar piloto HotelGest → iterar con cliente real.
 
