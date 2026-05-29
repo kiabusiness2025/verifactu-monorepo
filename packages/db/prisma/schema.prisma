@@ -591,6 +591,9 @@ model Tenant {
   supportMessages               SupportMessage[]
   whatsappThreads               WhatsAppThread[]
   whatsappEvents                WhatsAppEvent[]
+  telegramChats                 TelegramChat[]
+  telegramMessages              TelegramMessage[]
+  telegramLinkTokens            TelegramLinkToken[]
   customIntegrationRequests     CustomIntegrationRequest[]
   connectionRecipients          ConnectionRecipient[]
   accessRequests                AccessRequest[]
@@ -1151,6 +1154,62 @@ model WhatsAppTemplate {
   @@index([category, isActive])
   @@index([language])
   @@map("whatsapp_templates")
+}
+
+// ==================== TELEGRAM (F15) ====================
+
+model TelegramChat {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatId        BigInt    @unique @map("chat_id") // Telegram chat_id (int64)
+  tenantId      String?   @map("tenant_id") @db.Uuid
+  username      String?
+  firstName     String?   @map("first_name")
+  language      String?   @default("es")
+  mode          String    @default("bot") // bot | human
+  lastMessageAt DateTime? @map("last_message_at") @db.Timestamptz
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  tenant   Tenant?           @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  messages TelegramMessage[]
+
+  @@index([tenantId])
+  @@map("telegram_chats")
+}
+
+model TelegramMessage {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatId     String   @map("chat_id") @db.Uuid // FK → TelegramChat.id
+  tenantId   String?  @map("tenant_id") @db.Uuid
+  messageId  Int?     @map("message_id") // Telegram message_id
+  direction  String // inbound | outbound
+  eventType  String   @map("event_type") // text | command | callback | photo | document
+  body       String?
+  payload    Json?
+  occurredAt DateTime @default(now()) @map("occurred_at") @db.Timestamptz
+
+  chat   TelegramChat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  tenant Tenant?      @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([chatId, occurredAt])
+  @@index([tenantId, occurredAt])
+  @@map("telegram_messages")
+}
+
+model TelegramLinkToken {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId  String    @map("tenant_id") @db.Uuid
+  token     String    @unique // short UUID used as /start deep-link param
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  chatId    BigInt?   @map("chat_id") // filled when the user clicks the link
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("telegram_link_tokens")
 }
 
 model CustomIntegrationRequest {
