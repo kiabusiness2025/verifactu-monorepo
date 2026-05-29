@@ -13,13 +13,35 @@
  *   /desvincular    — eliminar vinculación con tenant
  * Callbacks:
  *   menu_resumen, menu_facturas, menu_iva, menu_fiscal, menu_plazos, menu_tipo
- *   followup_0..2
+ *   followup_0..2   — seguimiento de la respuesta anterior (opciones SIGUIENTES)
  */
 
-import { NextRequest } from 'next/server';
 import { callLLM } from '@verifactu/utils';
+import type { AIProvider, AIUsage } from '@verifactu/utils';
+import { NextRequest } from 'next/server';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
+import {
+  formatWorkspaceSignalsForPrompt,
+  loadIsaakWorkspaceSignals,
+} from '@/app/lib/isaak-workspace-signals';
 import { prisma } from '@/app/lib/prisma';
+import { checkIsaakChatQuota } from '@/app/lib/isaak-quota';
+import { recordChatMetric } from '@/app/lib/isaak-chat-metrics';
+import {
+  buildAuthenticatedSystemPrompt,
+  buildPublicSystemPrompt,
+  type AuthenticatedChatContext,
+} from '@/app/lib/isaak-chat-prompts';
+import {
+  buildReadOnlyToolsForContext,
+  type IsaakToolContext,
+} from '@/app/lib/isaak-tools-registry';
+import { hasSectorErpConnected } from '@/app/lib/sector-tools';
+import { runIsaakToolLoop } from '@/app/lib/isaak-tool-loop';
+import { classifyIntent } from '@/app/lib/isaak-intent-classifier';
+import { retrieveFactsForChat } from '@/app/lib/isaak-rag';
+import { retrieveFewShotForChat } from '@/app/lib/isaak-few-shot';
+import { getSubAgent, pickSubAgent, type SubAgentId } from '@/app/lib/isaak-sub-agents';
 import {
   answerCallbackQuery,
   answerPreCheckoutQuery,
@@ -37,14 +59,13 @@ import {
   type TgInlineKeyboard,
   type TgUpdate,
 } from '@/app/lib/telegram';
-import {
-  buildFiscalKnowledgeBlock,
-  buildGeneralAdvisorInstructions,
-  ISAAK_URLS,
-} from '@/app/lib/fiscal-knowledge';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
+// ── Tipos locales ─────────────────────────────────────────────────────────────
+
+type ModelConfig = { provider: AIProvider; model: string };
 
 // ── Planes de suscripción ─────────────────────────────────────────────────────
 
@@ -105,6 +126,17 @@ const CALLBACK_QUERIES: Record<string, string> = {
   menu_tipo: '¿En qué se diferencia tributar como autónomo frente a tener una sociedad?',
 };
 
+// Instrucción SIGUIENTES añadida al system prompt de Telegram para obtener
+// botones de seguimiento inline en la respuesta del LLM.
+const SIGUIENTES_INSTRUCTION = [
+  '',
+  'FORMATO DE RESPUESTA TELEGRAM:',
+  '- Usa <b>negrita</b> para énfasis. Máximo 4 párrafos. Responde siempre en español.',
+  '- Si la respuesta incluye preguntas de seguimiento opcionales, añade al final:',
+  '→ SIGUIENTES: Pregunta A|Pregunta B|Pregunta C',
+  '  Máximo 3 opciones, cada una máximo 40 caracteres.',
+].join('\n');
+
 // ── Handlers ──────────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
@@ -143,13 +175,36 @@ async function processUpdate(rawBody: string): Promise<void> {
       tenantId,
       messageId: msg.message_id,
       direction: 'inbound',
-      eventType: text.startsWith('/') ? 'command' : 'text',
-      body: text,
+      eventType: text.startsWith('/')
+        ? 'command'
+        : msg.document
+          ? 'document'
+          : msg.photo
+            ? 'photo'
+            : 'text',
+      body: text || msg.caption || null,
       payload: { username: from?.username, firstName: from?.first_name },
     });
 
     if (msg.successful_payment) {
       await handleSuccessfulPayment(tgChatId, chatDbId, tenantId, msg.successful_payment);
+    } else if (msg.document || (msg.photo && msg.photo.length > 0)) {
+      // Documento o foto: usar el caption como consulta si existe
+      const captionText = msg.caption?.trim() || null;
+      if (captionText) {
+        await runIsaakPipeline({
+          tgChatId,
+          chatDbId,
+          tenantId,
+          text: captionText,
+          firstName: from?.first_name ?? null,
+        });
+      } else {
+        const reply =
+          '📎 He recibido tu archivo, pero aún no proceso documentos adjuntos directamente.\n\nSi tienes una pregunta sobre su contenido, escríbela en el chat.';
+        await sendTelegramText(tgChatId, reply);
+        await saveOutbound(chatDbId, tenantId, reply);
+      }
     } else if (text.startsWith('/start')) {
       await handleStart(tgChatId, chatDbId, tenantId, text, from?.first_name ?? null);
     } else if (text === '/menu' || text === '/menu@IsaakFiscalBot') {
@@ -205,6 +260,30 @@ async function processUpdate(rawBody: string): Promise<void> {
         `🔗 Para vincular tu cuenta de Isaak, ve a:\n\n<b>${appUrl}/settings/telegram</b>\n\nGenerarás un enlace de vinculación que abrirás aquí en Telegram.`
       );
       await saveOutbound(chatDbId, tenantId, '[menu_vincular]');
+      return;
+    }
+
+    // followup_0..2 — opciones SIGUIENTES de la respuesta anterior
+    if (/^followup_[0-2]$/.test(data)) {
+      const idx = parseInt(data.slice(-1));
+      const lastMsg = await prisma.telegramMessage.findFirst({
+        where: { chatId: chatDbId, direction: 'outbound' },
+        orderBy: { occurredAt: 'desc' },
+        select: { payload: true },
+      });
+      const siguientes = (lastMsg?.payload as Record<string, unknown> | null)?.siguientes as
+        | string[]
+        | undefined;
+      const followupText = siguientes?.[idx];
+      if (followupText) {
+        await runIsaakPipeline({
+          tgChatId,
+          chatDbId,
+          tenantId,
+          text: followupText,
+          firstName: cq.from.first_name ?? null,
+        });
+      }
       return;
     }
 
@@ -500,7 +579,7 @@ async function handleSuccessfulPayment(
   await saveOutbound(chatDbId, tenantId, `[payment_ok:${planCode}]`);
 }
 
-// ── Pipeline ─────────────────────────────────────────────────────────────────
+// ── Pipeline principal ────────────────────────────────────────────────────────
 
 async function runIsaakPipeline(input: {
   tgChatId: number;
@@ -511,107 +590,384 @@ async function runIsaakPipeline(input: {
 }): Promise<void> {
   const { tgChatId, chatDbId, tenantId, text, firstName } = input;
 
-  let systemPrompt: string;
-
+  // 1. Quota check (igual que web chat)
   if (tenantId) {
-    const primaryUserId = await getPrimaryUserId(tenantId);
-    try {
-      const context = await loadIsaakBusinessContext(
-        { tenantId, userId: primaryUserId ?? 'telegram-webhook' },
-        { includeSnapshot: true }
-      );
-      systemPrompt = buildEnrichedPrompt(context, firstName);
-    } catch {
-      systemPrompt = buildGeneralPrompt(firstName);
+    const quota = await checkIsaakChatQuota(tenantId);
+    if (!quota.allowed) {
+      const reply = `⏳ <b>Límite diario alcanzado.</b>\n\n${quota.message}`;
+      await sendTelegramText(tgChatId, reply, [
+        [{ text: '💳 Ver planes Pro', callback_data: 'menu_planes' }],
+      ]);
+      await saveOutbound(chatDbId, tenantId, reply);
+      return;
     }
-  } else {
-    systemPrompt = buildGeneralPrompt(firstName);
   }
 
-  const [model, history] = await Promise.all([
-    resolveModel(tenantId),
-    loadTelegramHistory(chatDbId, text),
-  ]);
+  // 2. Cargar contexto completo (igual que web chat)
+  const primaryUserId = tenantId ? await getPrimaryUserId(tenantId) : null;
+  const userId = primaryUserId ?? 'telegram-webhook';
 
-  const llmResult = await callLLM({
-    provider: 'anthropic',
-    model,
-    instructions: systemPrompt,
-    messages: history,
-    temperature: 0.3,
-    maxOutputTokens: 700,
-    enableFallback: true,
-  }).catch(() => null);
+  let toolContext: IsaakToolContext | null = null;
+  let promptCtx: AuthenticatedChatContext | null = null;
 
-  const rawText = llmResult?.text?.trim() ?? null;
+  if (tenantId) {
+    try {
+      const businessContext = await loadIsaakBusinessContext(
+        { tenantId, userId, name: firstName ?? undefined },
+        { includeSnapshot: false }
+      );
+
+      const [workspaceSignals, bankAccountCount, googleToken, microsoftToken, sectorConnected] =
+        await Promise.all([
+          loadIsaakWorkspaceSignals({ tenantId, context: businessContext }).catch(() => null),
+          prisma.seAccount.count({ where: { tenantId, status: 'active' } }).catch(() => 0),
+          prisma.isaakGoogleToken
+            .findFirst({ where: { tenantId, userId }, select: { id: true } })
+            .catch(() => null),
+          prisma.isaakMicrosoftToken
+            .findFirst({ where: { tenantId, userId }, select: { id: true } })
+            .catch(() => null),
+          hasSectorErpConnected(tenantId).catch(() => false),
+        ]);
+
+      toolContext = {
+        tenantId,
+        userId,
+        holdedApiKey: businessContext?.holded?.connection?.apiKey ?? null,
+        holdedConnected: Boolean(businessContext?.holded.hasLiveConnection),
+        bankConnected: bankAccountCount > 0,
+        googleConnected: Boolean(googleToken),
+        microsoftConnected: Boolean(microsoftToken),
+        sectorConnected,
+      };
+
+      promptCtx = {
+        tenantId,
+        userId,
+        preferredName:
+          businessContext?.isaak.profile?.preferredName ||
+          businessContext?.labels.firstName ||
+          firstName ||
+          'la persona usuaria',
+        companyName: businessContext?.labels.companyName || 'tu negocio',
+        contextSummary:
+          businessContext?.summary ||
+          'Todavía falta parte del contexto del negocio, así que conviene guiar con preguntas breves.',
+        roleLabel: describeRole(
+          businessContext?.isaak.profile?.roleInCompanyOther ||
+            businessContext?.isaak.profile?.roleInCompany ||
+            null
+        ),
+        sectorLabel:
+          businessContext?.company.sectorLabel ||
+          businessContext?.company.sectorCode ||
+          'sin definir',
+        communicationStyle:
+          businessContext?.isaak.instructions?.communicationStyle ||
+          businessContext?.isaak.profile?.communicationStyle ||
+          'spanish_clear_non_technical',
+        knowledgeLevel:
+          businessContext?.isaak.instructions?.likelyKnowledgeLevel ||
+          businessContext?.isaak.profile?.likelyKnowledgeLevel ||
+          'starter',
+        goals: businessContext?.isaak.profile?.mainGoals || [],
+        holdedConnected: Boolean(businessContext?.holded.hasLiveConnection),
+        workspaceSignalsBlock: workspaceSignals
+          ? formatWorkspaceSignalsForPrompt(workspaceSignals)
+          : 'No he podido cargar el estado ampliado del workspace en este momento.',
+      };
+    } catch {
+      // Fall through — responderá como usuario no conectado
+    }
+  }
+
+  // 3. Historial: separamos pasado (para classifier/tools) y completo (para callLLM directo)
+  const historyWithCurrent = await loadTelegramHistory(chatDbId, text);
+  const historyPast = historyWithCurrent.slice(0, -1); // sin el mensaje actual
+
+  const modelConfig = await resolveModel(tenantId);
+
+  // 4. Pipeline con classifier + RAG + few-shot + tool loop (igual que web chat)
+  let result: {
+    text: string;
+    provider: AIProvider;
+    model: string;
+    latencyMs?: number;
+    usage?: AIUsage;
+  } | null = null;
+  let toolNamesUsed: string[] = [];
+  let writeToolsUsed: string[] = [];
+  let judgeInvocations = 0;
+  let judgeBlocks = 0;
+  let judgeLatencyMs: number | null = null;
+  let inspectorRuns = 0;
+  let inspectorBlocks = 0;
+  let inspectorWarnings = 0;
+  let iterations = 0;
+  let routedTo: 'clarify_direct' | 'sonnet_no_tools' | 'sonnet_with_tools' | 'fallback' =
+    'fallback';
+  let classifierModel: string | null = null;
+  let classifierLatencyMs: number | null = null;
+  let factsBlock = '';
+  let fewShotBlock = '';
+  let factsRetrieved = 0;
+  let ragLatencyMs: number | null = null;
+  let ragTopSimilarity: number | null = null;
+  let fewShotInjected = 0;
+  let fewShotLatencyMs: number | null = null;
+  let fewShotTopSimilarity: number | null = null;
+  let subAgent: SubAgentId | null = null;
+  let useToolLoop = false;
+
+  if (promptCtx && toolContext) {
+    // Authenticated: pipeline completo (classifier → RAG → tool loop o LLM directo)
+    const [classification, ragResult, fewShotResult] = await Promise.all([
+      classifyIntent({
+        message: text,
+        history: historyPast,
+        context: {
+          holdedConnected: toolContext.holdedConnected,
+          bankConnected: toolContext.bankConnected,
+          googleConnected: toolContext.googleConnected,
+          microsoftConnected: toolContext.microsoftConnected,
+          sectorConnected: toolContext.sectorConnected,
+        },
+      }),
+      retrieveFactsForChat({ tenantId: tenantId!, queryText: text }),
+      retrieveFewShotForChat({ tenantId: tenantId!, queryText: text }),
+    ]);
+
+    factsBlock = ragResult.factsBlock;
+    factsRetrieved = ragResult.factsRetrieved;
+    ragLatencyMs = ragResult.latencyMs;
+    ragTopSimilarity = ragResult.topSimilarity;
+    fewShotBlock = fewShotResult.examplesBlock;
+    fewShotInjected = fewShotResult.injected;
+    fewShotLatencyMs = fewShotResult.latencyMs;
+    fewShotTopSimilarity = fewShotResult.topSimilarity;
+    classifierModel = classification.modelUsed;
+    classifierLatencyMs = classification.latencyMs;
+
+    if (classification.ambiguous && classification.suggestedClarification) {
+      // Ambiguo → enviar pregunta de clarificación como botones inline
+      const opts = classification.suggestedOptions ?? [];
+      const keyboard: TgInlineKeyboard | undefined =
+        opts.length > 0
+          ? [
+              opts
+                .slice(0, 3)
+                .map((o, i) => ({ text: o.slice(0, 40), callback_data: `followup_${i}` })),
+            ]
+          : undefined;
+      const reply = `❓ ${classification.suggestedClarification}`;
+      await sendTelegramText(tgChatId, reply, keyboard);
+      await saveOutbound(
+        chatDbId,
+        tenantId,
+        reply,
+        opts.length > 0 ? { siguientes: opts.slice(0, 3) } : undefined
+      );
+      routedTo = 'clarify_direct';
+
+      await recordChatMetric({
+        tenantId,
+        userId,
+        conversationId: null,
+        provider: 'anthropic',
+        modelUsed: classifierModel,
+        feature: 'telegram_chat',
+        latencyMs: classifierLatencyMs,
+        routedTo,
+        classifierModel,
+        classifierLatencyMs,
+      }).catch(() => {});
+      return;
+    }
+
+    if (classification.needsTools && classification.relevantCategories.length > 0) {
+      const subAgentId: SubAgentId | null = pickSubAgent({
+        message: text,
+        classifierCategories: classification.relevantCategories,
+        hasWriteIntent: false, // Telegram siempre read-only
+      });
+
+      let agentSystemPrompt: string;
+      let agentToolCategories = classification.relevantCategories;
+      let agentMaxOutputTokens = 1200;
+      let agentTemperature: number | undefined;
+
+      if (subAgentId) {
+        const agent = getSubAgent(subAgentId);
+        subAgent = subAgentId;
+        const factsTail = factsBlock ? `\n\n${factsBlock.trim()}` : '';
+        const fewShotTail = fewShotBlock ? `\n\n${fewShotBlock.trim()}` : '';
+        agentSystemPrompt = `${agent.systemPrompt}${factsTail}${fewShotTail}${SIGUIENTES_INSTRUCTION}`;
+        agentToolCategories = agent.toolCategories;
+        agentMaxOutputTokens = agent.maxOutputTokens;
+        agentTemperature = agent.temperature;
+      } else {
+        agentSystemPrompt =
+          buildAuthenticatedSystemPrompt(promptCtx, { factsBlock, fewShotBlock }) +
+          SIGUIENTES_INSTRUCTION;
+        if (!agentToolCategories.includes('ledger')) {
+          agentToolCategories = [...agentToolCategories, 'ledger'];
+        }
+      }
+
+      const filteredTools = buildReadOnlyToolsForContext(toolContext, {
+        only: agentToolCategories,
+        allowWrites: false, // Telegram = read-only siempre
+      });
+
+      if (filteredTools.length > 0) {
+        useToolLoop = true;
+        const loop = await runIsaakToolLoop({
+          systemPrompt: agentSystemPrompt,
+          history: historyPast,
+          userMessage: text,
+          tools: filteredTools,
+          context: toolContext,
+          model: modelConfig.model,
+          provider: modelConfig.provider,
+          feature: subAgentId ? `telegram_subagent_${subAgentId}` : 'telegram_chat_tools',
+          maxOutputTokens: agentMaxOutputTokens,
+          temperature: agentTemperature,
+          allowWrites: false,
+        });
+        result = loop.text
+          ? {
+              text: loop.text,
+              provider: loop.provider,
+              model: loop.model,
+              latencyMs: loop.totalLatencyMs,
+              usage: loop.totalUsage,
+            }
+          : null;
+        toolNamesUsed = loop.toolNames;
+        writeToolsUsed = loop.writeToolNames;
+        judgeInvocations = loop.judgeInvocations;
+        judgeBlocks = loop.judgeBlocks;
+        judgeLatencyMs = loop.judgeTotalLatencyMs || null;
+        inspectorRuns = loop.inspectorRuns;
+        inspectorBlocks = loop.inspectorBlocks;
+        inspectorWarnings = loop.inspectorWarnings;
+        iterations = loop.iterations;
+        routedTo = 'sonnet_with_tools';
+      }
+    }
+
+    // Fallback: LLM directo sin tools (clasificador dijo no tools, o tools vacías)
+    if (!result) {
+      const systemPrompt =
+        buildAuthenticatedSystemPrompt(promptCtx, { factsBlock, fewShotBlock }) +
+        SIGUIENTES_INSTRUCTION;
+      const llmResult = await callLLM({
+        provider: modelConfig.provider,
+        model: modelConfig.model,
+        instructions: systemPrompt,
+        messages: historyWithCurrent,
+        temperature: 0.45,
+        maxOutputTokens: 700,
+        feature: 'telegram_chat',
+        enableFallback: true,
+      }).catch(() => null);
+      if (llmResult) {
+        result = llmResult;
+        routedTo = 'sonnet_no_tools';
+      }
+    }
+  } else {
+    // Público (sin cuenta vinculada): asesor general
+    const systemPrompt = buildPublicSystemPrompt() + SIGUIENTES_INSTRUCTION;
+    const llmResult = await callLLM({
+      provider: modelConfig.provider,
+      model: modelConfig.model,
+      instructions: systemPrompt,
+      messages: historyWithCurrent,
+      temperature: 0.5,
+      maxOutputTokens: 700,
+      feature: 'telegram_chat_public',
+      enableFallback: true,
+    }).catch(() => null);
+    if (llmResult) {
+      result = llmResult;
+      routedTo = 'sonnet_no_tools';
+    }
+  }
+
+  // 5. Enviar respuesta
+  const rawText = result?.text?.trim() ?? null;
   const replyText = rawText
     ? truncateForTelegram(markdownToTgHtml(rawText))
     : 'Soy Isaak, tu asesor fiscal. ¿En qué puedo ayudarte hoy?';
 
-  // Extraer preguntas de seguimiento si las hay (formato → SIGUIENTES: A|B|C)
   const { cleanText, siguientes } = extractSiguientes(replyText);
-
   const followupKeyboard: TgInlineKeyboard | undefined =
     siguientes.length > 0
       ? [siguientes.map((q, i) => ({ text: q.slice(0, 40), callback_data: `followup_${i}` }))]
       : undefined;
 
   await sendTelegramText(tgChatId, cleanText, followupKeyboard);
-  await saveOutbound(chatDbId, tenantId, cleanText);
-}
+  await saveOutbound(
+    chatDbId,
+    tenantId,
+    cleanText,
+    siguientes.length > 0 ? { siguientes } : undefined
+  );
 
-// ── System prompts ────────────────────────────────────────────────────────────
-
-function buildGeneralPrompt(firstName: string | null): string {
-  const name = firstName ?? 'amigo';
-  return [
-    `Eres Isaak, asesor fiscal gratuito de Verifactu Business. Respondes por Telegram a ${name}.`,
-    'Asesoras sobre fiscalidad española, modelos tributarios, plazos y obligaciones.',
-    'NO tienes acceso a datos contables del usuario. Si preguntan por sus cifras reales, explica el concepto y propón que vinculen su cuenta.',
-    'Responde en español. Sé conciso (máximo 4 párrafos). Usa <b>negrita</b> para énfasis y listas con •.',
-    '',
-    buildFiscalKnowledgeBlock(),
-    '',
-    buildGeneralAdvisorInstructions(),
-    '',
-    'Si la respuesta incluye preguntas de seguimiento opcionales, añade al final:',
-    '→ SIGUIENTES: Pregunta A|Pregunta B|Pregunta C',
-    'Máximo 3 opciones, cada una máximo 40 caracteres.',
-  ].join('\n');
-}
-
-function buildEnrichedPrompt(
-  context: Awaited<ReturnType<typeof loadIsaakBusinessContext>>,
-  firstName: string | null
-): string {
-  const company = context.labels.companyName || 'tu empresa';
-  const name = firstName || context.labels.firstName || 'la persona';
-  const snapshot = context.holded.snapshot;
-
-  const lines = [
-    `Eres Isaak, asesor fiscal y contable digital de ${company}. Respondes por Telegram a ${name}.`,
-    'Actúa como asesor fiscal experto en España: da respuestas concretas con los datos reales y orienta hacia la acción correcta.',
-    'Responde en español. Sé conciso (máximo 4 párrafos). Usa <b>negrita</b> para énfasis y listas con •.',
-    '',
-    buildFiscalKnowledgeBlock(),
-    '',
-    'Si la respuesta incluye preguntas de seguimiento opcionales, añade al final:',
-    '→ SIGUIENTES: Pregunta A|Pregunta B|Pregunta C',
-    'Máximo 3 opciones, cada una máximo 40 caracteres.',
-  ];
-
-  if (snapshot) {
-    lines.push('', `Datos de Holded para ${company}:`);
-    lines.push(`• Facturas emitidas: ${snapshot.invoices.length}`);
-    lines.push(`• Contactos: ${snapshot.contacts.length}`);
-    if (context.holded.analytics?.monthSales) {
-      lines.push(`• Ventas este mes: ${context.holded.analytics.monthSales.toFixed(0)} €`);
-    }
-  }
-  return lines.join('\n');
+  // 6. Métricas (igual que web chat)
+  await recordChatMetric({
+    tenantId: tenantId ?? null,
+    userId,
+    conversationId: null,
+    provider: (result?.provider ?? 'fallback') as AIProvider | 'fallback',
+    modelUsed: result?.model ?? 'unknown',
+    feature: useToolLoop
+      ? 'telegram_chat_tools'
+      : tenantId
+        ? 'telegram_chat'
+        : 'telegram_chat_public',
+    usage: result?.usage,
+    latencyMs: result?.latencyMs ?? null,
+    toolCalls: toolNamesUsed,
+    historyTurns: historyPast.length,
+    classifierModel,
+    classifierLatencyMs,
+    routedTo,
+    judgeInvocations,
+    judgeBlocks,
+    judgeLatencyMs,
+    writeTools: writeToolsUsed,
+    factsRetrieved,
+    ragLatencyMs,
+    ragTopSimilarity,
+    fewShotInjected,
+    fewShotLatencyMs,
+    fewShotTopSimilarity,
+    subAgent,
+    inspectorRuns,
+    inspectorBlocks,
+    inspectorWarnings,
+  }).catch(() => {});
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+function describeRole(value: string | null | undefined): string {
+  if (!value) return 'no definido';
+  switch (value) {
+    case 'autonomo':
+      return 'autónomo';
+    case 'administrador':
+      return 'administrador';
+    case 'gerente':
+      return 'gerente';
+    case 'financiero':
+      return 'responsable financiero';
+    default:
+      return value;
+  }
+}
 
 function extractSiguientes(text: string): { cleanText: string; siguientes: string[] } {
   const lines = text.split('\n');
@@ -644,8 +1000,8 @@ async function getPrimaryUserId(tenantId: string): Promise<string | null> {
   return m?.userId ?? null;
 }
 
-async function resolveModel(tenantId: string | null): Promise<string> {
-  if (!tenantId) return 'claude-haiku-4-5-20251001';
+async function resolveModel(tenantId: string | null): Promise<ModelConfig> {
+  if (!tenantId) return { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' };
   try {
     const sub = await prisma.tenantSubscription.findFirst({
       where: { tenantId },
@@ -653,17 +1009,20 @@ async function resolveModel(tenantId: string | null): Promise<string> {
       orderBy: { createdAt: 'desc' },
     });
     const code = sub?.status === 'trial' ? 'pro' : (sub?.plan?.code ?? 'free');
-    if (['pro', 'business', 'enterprise'].includes(code)) return 'claude-sonnet-4-6';
+    if (['pro', 'business', 'enterprise'].includes(code)) {
+      return { provider: 'anthropic', model: 'claude-sonnet-4-6' };
+    }
   } catch {
     // fallback
   }
-  return 'claude-haiku-4-5-20251001';
+  return { provider: 'anthropic', model: 'claude-haiku-4-5-20251001' };
 }
 
 async function saveOutbound(
   chatDbId: string,
   tenantId: string | null,
-  body: string
+  body: string,
+  payload?: Record<string, unknown>
 ): Promise<void> {
   await saveTelegramMessage({
     chatDbId,
@@ -671,5 +1030,6 @@ async function saveOutbound(
     direction: 'outbound',
     eventType: 'text',
     body,
+    payload,
   });
 }
