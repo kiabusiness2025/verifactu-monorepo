@@ -12,9 +12,9 @@ type Props = {
 
 const NAV_LINKS = [
   { href: '/', label: 'Inicio' },
-  { href: '/#demo', label: 'Demo' },
+  { href: '/demo', label: 'Demo en vivo' },
+  { href: '/#como-funciona', label: 'Cómo funciona' },
   { href: '/conectores', label: 'Conectores' },
-  { href: '/asesorias', label: 'Asesorías' },
   { href: '/pricing', label: 'Precios' },
 ];
 
@@ -23,7 +23,6 @@ export default function IsaakSiteChrome({ children }: Props) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isWorkspaceRoute =
-    pathname === '/' || // home tiene su propio header (IsaakHomeLandingV1)
     pathname?.startsWith('/chat') ||
     pathname?.startsWith('/resumen') ||
     pathname?.startsWith('/ventas') ||

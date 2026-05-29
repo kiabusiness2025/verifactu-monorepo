@@ -25,6 +25,7 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PricingSectionV1 from './PricingSectionV1';
+import IsaakHeroTour from './IsaakHeroTour';
 
 export const isaakLandingV1Metadata: Metadata = {
   title: 'Isaak — Asistente fiscal y contable para Holded',
@@ -33,126 +34,6 @@ export const isaakLandingV1Metadata: Metadata = {
 };
 
 const SIGNUP_URL = '/signup';
-
-// ── Hero browser mockup ───────────────────────────────────────────────────────
-
-const HERO_BARS = [5840, 6230, 7180, 6920, 8440, 7660, 5320, 4190, 7840, 8920, 9340, 10140];
-const BAR_LABELS = ['Ene', 'Abr', 'Jul', 'Oct', 'Dic'];
-const BAR_LABEL_IDX = [0, 3, 6, 9, 11];
-
-function HeroMockup() {
-  const max = Math.max(...HERO_BARS);
-  const W = 260,
-    H = 68,
-    bB = 10;
-  const bW = W / 12 - 3;
-  return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
-      <div className="flex items-center gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2">
-        <div className="flex gap-1">
-          <div className="h-2.5 w-2.5 rounded-full bg-red-400" />
-          <div className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
-          <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
-        </div>
-        <div className="flex flex-1 items-center justify-center rounded border border-slate-200 bg-white px-2 py-0.5">
-          <span className="text-[10px] text-slate-400">app.isaak.app</span>
-        </div>
-        <div className="w-8" />
-      </div>
-      <div className="flex h-[230px]">
-        {/* Chat */}
-        <div className="flex w-[42%] flex-col border-r border-slate-100 bg-slate-50/60 p-2.5">
-          <div className="flex justify-end">
-            <div className="max-w-[90%] rounded-xl rounded-tr-sm bg-[#2361d8] px-2.5 py-1.5 text-[10px] leading-relaxed text-white">
-              ¿Cuánto hemos vendido en 2024?
-            </div>
-          </div>
-          <div className="mt-2 flex items-start gap-1.5">
-            <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#2361d8] text-[9px] font-bold text-white">
-              I
-            </div>
-            <div className="max-w-[90%] rounded-xl rounded-tl-sm border border-slate-100 bg-white px-2.5 py-1.5 text-[10px] leading-relaxed text-slate-700 shadow-sm">
-              En 2024 facturasteis 88.240 € en 199 facturas. Q4 fue el trimestre más fuerte.
-            </div>
-          </div>
-          <div className="mt-2 ml-6">
-            <span className="inline-flex items-center gap-1 rounded-full border border-blue-100 bg-blue-50 px-2 py-0.5 text-[9px] font-medium text-blue-700">
-              📊 Ver informe
-            </span>
-          </div>
-          <div className="mt-auto border-t border-slate-200 bg-white pt-1.5">
-            <div className="flex h-6 items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 text-[9px] text-slate-400">
-              Escribe a Isaak...
-            </div>
-          </div>
-        </div>
-        {/* Artifact panel */}
-        <div className="flex w-[58%] flex-col bg-white">
-          <div className="flex items-center justify-between border-b border-slate-100 px-2.5 py-1.5">
-            <span className="text-[10px] font-semibold text-[#011c67]">
-              📊 Ventas por mes — 2024
-            </span>
-            <span className="text-[9px] text-slate-400">✕</span>
-          </div>
-          <div className="flex-1 p-2.5">
-            <svg viewBox={`0 0 ${W} ${H}`} className="w-full" aria-hidden="true">
-              {HERO_BARS.map((v, i) => {
-                const bH = (v / max) * (H - bB - 4);
-                const x = i * (W / 12) + 1.5;
-                return (
-                  <g key={i}>
-                    <rect
-                      x={x}
-                      y={H - bB - bH}
-                      width={bW}
-                      height={bH}
-                      rx={2}
-                      fill="#2361d8"
-                      opacity={0.45 + 0.55 * (v / max)}
-                    />
-                    {BAR_LABEL_IDX.includes(i) && (
-                      <text
-                        x={x + bW / 2}
-                        y={H - 1}
-                        textAnchor="middle"
-                        fontSize={6}
-                        fill="#94a3b8"
-                      >
-                        {BAR_LABELS[BAR_LABEL_IDX.indexOf(i)]}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-            <div className="mt-1.5 grid grid-cols-3 gap-1">
-              {[
-                ['Ventas', '88.240 €'],
-                ['Neto', '78.332 €'],
-                ['IVA', '15.291 €'],
-              ].map(([l, v]) => (
-                <div key={l} className="rounded-md bg-slate-50 p-1.5">
-                  <div className="text-[8px] text-slate-500">{l}</div>
-                  <div className="text-[10px] font-bold text-[#011c67]">{v}</div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-1.5 flex gap-1">
-              {['📗', '📄', '📝'].map((ic) => (
-                <span
-                  key={ic}
-                  className="rounded-full border border-slate-200 bg-white px-1.5 py-0.5 text-[9px] text-slate-500"
-                >
-                  {ic}
-                </span>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Features cards ────────────────────────────────────────────────────────────
 
@@ -312,87 +193,60 @@ const FAQ = [
 export default function IsaakHomeLandingV1() {
   return (
     <main className="min-h-screen bg-white text-slate-900">
-      {/* ── HEADER simple ────────────────────────────────────────────────── */}
-      <header className="border-b border-slate-100 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <Link href="/" className="text-lg font-bold text-[#011c67]">
-            Isaak
-          </Link>
-          <nav className="flex items-center gap-5 text-sm">
-            <a href="#pricing" className="text-slate-600 hover:text-[#2361d8]">
-              Precios
-            </a>
-            <a href="#faq" className="text-slate-600 hover:text-[#2361d8]">
-              FAQ
-            </a>
-            <Link
-              href={SIGNUP_URL}
-              className="inline-flex items-center gap-1.5 rounded-full bg-[#2361d8] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0]"
-            >
-              Empezar gratis
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="bg-[linear-gradient(180deg,#f5f9ff_0%,#ffffff_72%)] py-16 sm:py-20">
-        <div className="mx-auto max-w-6xl px-5">
-          <div className="grid items-center gap-10 lg:grid-cols-[1fr,1.1fr]">
-            {/* Text */}
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-                <Sparkles className="h-3.5 w-3.5" />
-                Isaak para Holded
-              </div>
-              <h1 className="mt-6 text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl sm:leading-[1.06]">
-                Tu asistente fiscal para Holded. Sin licencias IA.
-              </h1>
-              <p className="mt-5 max-w-xl text-lg leading-8 text-slate-600">
-                Conecta tu Holded en 30 segundos. Pregunta lo que necesites. Recibe alertas antes de
-                cada vencimiento de la AEAT. <strong>La IA va incluida</strong> — no necesitas
-                Claude ni ChatGPT propios.
-              </p>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Link
-                  href={SIGNUP_URL + '?plan=pro'}
-                  className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-7 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
-                >
-                  Probar 14 días gratis
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/tour"
-                  className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/30 bg-white px-5 py-3.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/5"
-                >
-                  Ver Isaak en acción
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  Sin tarjeta
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  Cancela cuando quieras
-                </span>
-                <span className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                  30 segundos para conectar Holded
-                </span>
-              </div>
-            </div>
-
-            {/* Hero mockup */}
-            <div className="hidden lg:block">
-              <HeroMockup />
-            </div>
+      {/* ── HERO + TOUR ANIMADO ──────────────────────────────────────────── */}
+      <section className="bg-[linear-gradient(180deg,#f5f9ff_0%,#ffffff_60%)] pb-10 pt-16 sm:pt-20">
+        <div className="mx-auto max-w-4xl px-5 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+            <Sparkles className="h-3.5 w-3.5" />
+            Isaak para Holded
           </div>
+          <h1 className="mt-6 text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl sm:leading-[1.06]">
+            Tu asistente fiscal para Holded.
+            <br className="hidden sm:block" />
+            Sin licencias IA.
+          </h1>
+          <p className="mx-auto mt-5 max-w-2xl text-lg leading-8 text-slate-600">
+            Conecta tu Holded en 30 segundos. Pregunta lo que necesites. Recibe alertas antes de
+            cada vencimiento AEAT. <strong>La IA va incluida</strong> — sin Claude ni ChatGPT
+            propios.
+          </p>
+
+          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              href={SIGNUP_URL + '?plan=pro'}
+              className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-7 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
+            >
+              Probar 14 días gratis
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/demo"
+              className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/30 bg-white px-6 py-3.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/5"
+            >
+              Probar con datos reales
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm text-slate-500">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              Sin tarjeta
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              Cancela cuando quieras
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              30 segundos para conectar Holded
+            </span>
+          </div>
+        </div>
+
+        {/* Tour animado con 8 escenarios reales */}
+        <div id="como-funciona" className="mx-auto mt-10 max-w-4xl px-5">
+          <IsaakHeroTour />
         </div>
       </section>
 
@@ -506,10 +360,10 @@ export default function IsaakHomeLandingV1() {
 
           <div className="mt-8 text-center">
             <Link
-              href="/tour"
+              href="/demo"
               className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0]"
             >
-              Ver todos los escenarios en acción
+              Probar con datos reales
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -543,7 +397,7 @@ export default function IsaakHomeLandingV1() {
         </div>
       </section>
 
-      {/* ── CTA FINAL ────────────────────────────────────────────────────── */}
+      {/* ── CTA PRINCIPAL ────────────────────────────────────────────────── */}
       <section className="py-16">
         <div className="mx-auto max-w-3xl px-5">
           <div className="rounded-[2rem] border border-[#2361d8]/15 bg-[linear-gradient(135deg,#f0f5ff_0%,#ffffff_100%)] p-10 text-center sm:p-12">
@@ -554,16 +408,56 @@ export default function IsaakHomeLandingV1() {
             <h2 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
               Conecta tu Holded y empieza ahora.
             </h2>
-            <p className="mt-4 mx-auto max-w-2xl text-base text-slate-600">
+            <p className="mx-auto mt-4 max-w-2xl text-base text-slate-600">
               Si en 14 días no ves valor, no te cobramos nada. Sin condiciones, sin letra pequeña.
             </p>
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Link
+                href={SIGNUP_URL + '?plan=pro'}
+                className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-8 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
+              >
+                Probar 14 días gratis
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/demo"
+                className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/30 bg-white px-7 py-3.5 text-sm font-semibold text-[#2361d8] shadow-sm transition hover:bg-[#2361d8]/5"
+              >
+                Probar con datos reales
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── CTA INDECISOS ────────────────────────────────────────────────── */}
+      <section className="border-t border-slate-100 bg-slate-50 py-12">
+        <div className="mx-auto max-w-3xl px-5 text-center">
+          <p className="text-base font-semibold text-[#011c67]">¿Todavía no estás seguro?</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Sin tarjeta. Sin permanencia. Sin migrar nada. Si no ves el valor en 14 días, cancelas y
+            listo — sin hablar con nadie.
+          </p>
+          <div className="mt-5 flex flex-wrap justify-center gap-3">
             <Link
-              href={SIGNUP_URL + '?plan=pro'}
-              className="mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-[#2361d8] px-8 py-3.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
+              href="/demo"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
             >
-              Probar 14 días gratis
-              <ArrowRight className="h-4 w-4" />
+              Ver la demo con datos reales
             </Link>
+            <Link
+              href="/pricing"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Ver precios
+            </Link>
+            <a
+              href="mailto:soporte@verifactu.business"
+              className="inline-flex items-center gap-1.5 rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+            >
+              Hablar con el equipo
+            </a>
           </div>
         </div>
       </section>
