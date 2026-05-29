@@ -19,6 +19,7 @@ import {
   MessageCircle,
   PlugZap,
   RefreshCcw,
+  Send,
   Shield,
   Sparkles,
   Trash2,
@@ -644,6 +645,8 @@ export default function IsaakSettingsClient({
   const [apiKeyDraft, setApiKeyDraft] = useState('');
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCompanyLogo, setUploadingCompanyLogo] = useState(false);
+  const [telegramDeepLink, setTelegramDeepLink] = useState<string | null>(null);
+  const [telegramLinkLoading, setTelegramLinkLoading] = useState(false);
 
   // Team management state
   const [teamMembers, setTeamMembers] = useState(settingsData.team.members);
@@ -707,6 +710,22 @@ export default function IsaakSettingsClient({
       setNoticeTone('success');
     } finally {
       setGoogleDisconnecting(false);
+    }
+  }
+
+  async function generateTelegramLink() {
+    setTelegramLinkLoading(true);
+    setTelegramDeepLink(null);
+    try {
+      const res = await fetch('/api/isaak/telegram/link', { method: 'POST' });
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.ok) {
+        setTelegramDeepLink(data.deepLink as string);
+      }
+    } catch {
+      // silent
+    } finally {
+      setTelegramLinkLoading(false);
     }
   }
 
@@ -1205,6 +1224,51 @@ export default function IsaakSettingsClient({
                         <p className="text-[11px] text-slate-400">
                           Isaak te responderá en este número por WhatsApp. Formato: +34 612 345 678
                         </p>
+                      )}
+                    </div>
+                    <div className="grid gap-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-slate-700">Telegram</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                          <Send className="h-2.5 w-2.5" />
+                          Bot
+                        </span>
+                      </div>
+                      {telegramDeepLink ? (
+                        <div className="space-y-2">
+                          <a
+                            href={telegramDeepLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50/60 px-4 py-3 text-sm font-medium text-sky-700 transition hover:bg-sky-100"
+                          >
+                            <ExternalLink className="h-4 w-4 shrink-0" />
+                            Abrir en Telegram
+                          </a>
+                          <p className="text-[11px] text-slate-400">
+                            Enlace válido 24 h. Ábrelo desde el móvil para vincular la cuenta con
+                            @IsaakFiscalBot.
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => void generateTelegramLink()}
+                            disabled={telegramLinkLoading}
+                            className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60"
+                          >
+                            {telegramLinkLoading ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Send className="h-4 w-4" />
+                            )}
+                            Vincular Telegram
+                          </button>
+                          <p className="text-[11px] text-slate-400">
+                            Genera un enlace de 24 h para conectar @IsaakFiscalBot a tu cuenta.
+                          </p>
+                        </>
                       )}
                     </div>
                     <label className="grid gap-2 text-sm">
@@ -1765,10 +1829,7 @@ export default function IsaakSettingsClient({
                       {settingsData.team.workspaces.map((ws) => {
                         const isSwitching = switchingTenantId === ws.tenantId;
                         return (
-                          <li
-                            key={ws.tenantId}
-                            className="flex items-center gap-3 py-3"
-                          >
+                          <li key={ws.tenantId} className="flex items-center gap-3 py-3">
                             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-[#2361d8]/10 text-sm font-semibold text-[#2361d8]">
                               {ws.name.charAt(0).toUpperCase()}
                             </div>
@@ -1882,9 +1943,7 @@ export default function IsaakSettingsClient({
                         {inviteSuccess}
                       </div>
                     )}
-                    {inviteError && (
-                      <div className="mt-2 text-sm text-rose-600">{inviteError}</div>
-                    )}
+                    {inviteError && <div className="mt-2 text-sm text-rose-600">{inviteError}</div>}
                   </div>
                 )}
 
@@ -1941,7 +2000,9 @@ export default function IsaakSettingsClient({
                                 )}
                               </div>
                               {member.name && member.email ? (
-                                <div className="truncate text-xs text-slate-400">{member.email}</div>
+                                <div className="truncate text-xs text-slate-400">
+                                  {member.email}
+                                </div>
                               ) : null}
                             </div>
                             {/* Role badge */}
@@ -1998,8 +2059,8 @@ export default function IsaakSettingsClient({
                         Límite de usuarios alcanzado
                       </div>
                       <div className="mt-1 text-sm text-amber-700">
-                        Tu plan {settingsData.team.planCode} permite{' '}
-                        {settingsData.team.maxSeats} usuarios. Actualiza para añadir más.
+                        Tu plan {settingsData.team.planCode} permite {settingsData.team.maxSeats}{' '}
+                        usuarios. Actualiza para añadir más.
                       </div>
                       <a
                         href="/support?source=team_seats_limit"
