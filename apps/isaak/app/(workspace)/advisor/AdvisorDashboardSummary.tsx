@@ -6,6 +6,7 @@
 // Muestra contadores, próximos vencimientos AEAT y atajos a los
 // últimos clientes editados.
 
+import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import {
   ArrowRight,
@@ -13,6 +14,7 @@ import {
   CalendarClock,
   KeyRound,
   Loader2,
+  Mail,
   Users,
 } from 'lucide-react';
 
@@ -100,6 +102,18 @@ export default function AdvisorDashboardSummary() {
           value={String(data.totals.withoutHolded)}
           color={data.totals.withoutHolded > 0 ? 'amber' : 'blue'}
         />
+      </div>
+
+      {/* Atajos */}
+      <div className="flex flex-wrap gap-2">
+        <Link
+          href="/advisor/cartas"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-[#2361d8]/40 hover:bg-[#2361d8]/5 hover:text-[#2361d8]"
+        >
+          <Mail className="h-3.5 w-3.5" />
+          Cartas masivas
+          <ArrowRight className="h-3 w-3" />
+        </Link>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
