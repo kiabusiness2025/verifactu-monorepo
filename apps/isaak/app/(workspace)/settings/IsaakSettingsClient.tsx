@@ -72,6 +72,7 @@ type SettingsData = {
     communicationStyle: string;
     likelyKnowledgeLevel: string;
     mainGoals: string[];
+    customInstructions?: string;
     resetUrl: string;
   };
   billing: {
@@ -898,6 +899,7 @@ export default function IsaakSettingsClient({
           communicationStyle: isaak.communicationStyle,
           likelyKnowledgeLevel: isaak.likelyKnowledgeLevel,
           mainGoals: isaak.mainGoals,
+          customInstructions: isaak.customInstructions ?? '',
         }),
       });
       setIsaak(data);
@@ -1733,6 +1735,36 @@ export default function IsaakSettingsClient({
                     </select>
                   </label>
                 </div>
+
+                {/* V1.6.4 — Instrucciones personalizadas (custom prompts del tenant) */}
+                <div className="mt-5">
+                  <label className="grid gap-2 text-sm">
+                    <span className="flex items-center gap-2 font-medium text-slate-700">
+                      Instrucciones personalizadas
+                      <span className="rounded-full bg-[#2361d8]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#2361d8]">
+                        Nuevo
+                      </span>
+                    </span>
+                    <textarea
+                      value={isaak.customInstructions ?? ''}
+                      onChange={(event) =>
+                        setIsaak((current) => ({
+                          ...current,
+                          customInstructions: event.target.value.slice(0, 2000),
+                        }))
+                      }
+                      rows={5}
+                      maxLength={2000}
+                      placeholder={`Ej.: "Soy gestoría — firma siempre las respuestas como 'Equipo de Asesoría Núñez'."\nEj.: "Para el modelo 303 recuérdame siempre revisar el IVA de las cuotas de catering."\nEj.: "Mis clientes prefieren tutearse — usa 'tú' siempre."`}
+                      className="resize-none rounded-2xl border border-slate-200 px-4 py-3 text-sm leading-6 outline-none transition placeholder:text-slate-300 focus:border-[#2361d8]/35"
+                    />
+                    <span className="text-[11px] text-slate-500">
+                      Estas reglas se aplican en cada respuesta del chat. Máx 2.000 caracteres ·{' '}
+                      <strong className="font-semibold">{(isaak.customInstructions ?? '').length}/2000</strong>
+                    </span>
+                  </label>
+                </div>
+
                 <div className="mt-5">
                   <div className="text-sm font-medium text-slate-700">Objetivos principales</div>
                   <div className="mt-3 flex flex-wrap gap-2">

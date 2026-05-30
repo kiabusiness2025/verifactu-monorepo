@@ -46,6 +46,7 @@ export type SettingsIsaakData = {
   communicationStyle: string;
   likelyKnowledgeLevel: string;
   mainGoals: string[];
+  customInstructions?: string;
   resetUrl: string;
 };
 
@@ -428,6 +429,21 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
   const onboarding = onboardingState.profile;
   const instructions = onboardingState.instructions;
 
+  // V1.6.4 — Custom instructions del tenant (sub-key del whitelabelConfig)
+  let tenantCustomInstructions = '';
+  try {
+    const t = await prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { whitelabelConfig: true },
+    });
+    const cfg = (t?.whitelabelConfig ?? null) as { aiCustomInstructions?: unknown } | null;
+    if (cfg && typeof cfg.aiCustomInstructions === 'string') {
+      tenantCustomInstructions = cfg.aiCustomInstructions;
+    }
+  } catch {
+    /* fail-silent */
+  }
+
   const planCode = subscription?.plan?.code ?? billing.code ?? 'free';
   const maxSeats = maxSeatsForPlan(planCode);
   const activeMembers = memberships.filter((m) => m.status === 'active').length;
@@ -516,6 +532,7 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
       likelyKnowledgeLevel:
         instructions?.likelyKnowledgeLevel || onboarding?.likelyKnowledgeLevel || 'starter',
       mainGoals: onboarding?.mainGoals ?? [],
+      customInstructions: tenantCustomInstructions,
       resetUrl: buildHoldedProfileOnboardingUrl(
         'isaak_settings_repersonalize',
         `${ISAAK_PUBLIC_URL}/chat?source=isaak_settings`
