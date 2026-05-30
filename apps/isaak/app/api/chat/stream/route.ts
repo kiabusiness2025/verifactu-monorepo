@@ -347,11 +347,26 @@ export async function POST(req: NextRequest) {
   const languageHint = buildLanguageHint(detectedLang);
   const languageSuffix = languageHint ? `\n\n${languageHint}` : '';
 
+  // V1.6.1 — Contexto fiscal específico del régimen del tenant.
+  // Solo se inyecta cuando entra el sub-agente fiscal (donde añade más
+  // valor). Para el agente principal el perfil ya viaja en
+  // promptContext.contextSummary.
+  let fiscalContextSuffix = '';
+  if (subAgentId === 'fiscal') {
+    try {
+      const { buildFiscalContextBlock } = await import('@/app/lib/isaak-fiscal-context');
+      const block = await buildFiscalContextBlock(authenticated.toolContext.tenantId);
+      if (block.trim()) fiscalContextSuffix = `\n\n${block.trim()}`;
+    } catch (err) {
+      console.error('[chat/stream] fiscal context failed', err);
+    }
+  }
+
   const summarySuffix = conversationSummaryBlock ? `\n\n${conversationSummaryBlock}` : '';
   const systemPrompt = subAgentId
     ? `${getSubAgent(subAgentId).systemPrompt}${
         ragResult.factsBlock ? `\n\n${ragResult.factsBlock.trim()}` : ''
-      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${summarySuffix}${languageSuffix}`
+      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${fiscalContextSuffix}${summarySuffix}${languageSuffix}`
     : `${buildAuthenticatedSystemPrompt(authenticated.promptContext, {
         factsBlock: ragResult.factsBlock,
         fewShotBlock: fewShotResult.examplesBlock,
