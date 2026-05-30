@@ -373,6 +373,7 @@ export async function POST(req: NextRequest) {
       // memorables del turno y persistirlos. No bloquea ni afecta al usuario.
       try {
         const { autoExtractAndStoreFacts } = await import('@/app/lib/isaak-memory-extractor');
+        const { logEvent } = await import('@/app/lib/isaak-telemetry');
         const result = await autoExtractAndStoreFacts({
           tenantId: authenticated.toolContext.tenantId,
           userId: authenticated.toolContext.userId,
@@ -381,13 +382,22 @@ export async function POST(req: NextRequest) {
           assistantText: metrics.text,
         });
         if (result.inserted > 0 || result.error) {
-          console.info('[Isaak Auto-Memory]', {
+          logEvent({
+            event: 'memory.auto_extract',
             tenantId: authenticated.toolContext.tenantId,
-            ...result,
+            userId: authenticated.toolContext.userId,
+            conversationId: conversation?.id ?? null,
+            latencyMs: result.latencyMs,
+            candidates: result.candidates,
+            inserted: result.inserted,
+            skippedDuplicates: result.skippedDuplicates,
+            skippedInvalid: result.skippedInvalid,
+            error: result.error,
           });
         }
       } catch (e) {
-        console.error('[Isaak Auto-Memory] failed', e);
+        const { logError } = await import('@/app/lib/isaak-telemetry');
+        logError({ event: 'memory.auto_extract', error: e instanceof Error ? e : String(e) });
       }
       // V1.3.3 — Compactación. Si la conversación supera el umbral,
       // regenera el summary cubriendo todos los turnos menos los últimos.
@@ -396,15 +406,30 @@ export async function POST(req: NextRequest) {
           const { summarizeOlderTurns } = await import(
             '@/app/lib/isaak-conversation-summarizer'
           );
+          const { logEvent } = await import('@/app/lib/isaak-telemetry');
           const sumResult = await summarizeOlderTurns(conversation.id);
           if (sumResult.triggered) {
-            console.info('[Isaak Compaction]', {
+            logEvent({
+              event: 'conversation.compaction',
+              tenantId: authenticated.toolContext.tenantId,
               conversationId: conversation.id,
-              ...sumResult,
+              latencyMs: sumResult.latencyMs,
+              totalMessages: sumResult.totalMessages,
+              summarizedMessages: sumResult.summarizedMessages,
+              summaryChars: sumResult.summaryChars,
+              openLoops: sumResult.openLoops,
+              userPreferences: sumResult.userPreferences,
+              error: sumResult.error,
             });
           }
         } catch (e) {
-          console.error('[Isaak Compaction] failed', e);
+          const { logError } = await import('@/app/lib/isaak-telemetry');
+          logError({
+            event: 'conversation.compaction',
+            tenantId: authenticated.toolContext.tenantId,
+            conversationId: conversation?.id,
+            error: e instanceof Error ? e : String(e),
+          });
         }
       }
     })

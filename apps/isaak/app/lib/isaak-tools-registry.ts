@@ -326,21 +326,51 @@ export async function executeIsaakTool(
       }
     }
 
+    const latencyMs = Date.now() - start;
+    // V1.4 — telemetría por tool individual (fire-and-forget).
+    try {
+      const { logEvent } = await import('./isaak-telemetry');
+      logEvent({
+        event: 'tool.exec',
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        toolName: name,
+        latencyMs,
+        ok: true,
+      });
+    } catch {
+      /* fail-silent — la observability nunca rompe ejecución */
+    }
     return {
       toolName: name,
       toolUseId: toolUse.id,
       content: JSON.stringify(result),
       isError: false,
-      latencyMs: Date.now() - start,
+      latencyMs,
     };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
+    const latencyMs = Date.now() - start;
+    try {
+      const { logError } = await import('./isaak-telemetry');
+      logError({
+        event: 'tool.exec',
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        toolName: name,
+        latencyMs,
+        ok: false,
+        error: msg,
+      });
+    } catch {
+      /* fail-silent */
+    }
     return {
       toolName: name,
       toolUseId: toolUse.id,
       content: JSON.stringify({ error: 'tool_failed', message: msg }),
       isError: true,
-      latencyMs: Date.now() - start,
+      latencyMs,
     };
   }
 }
