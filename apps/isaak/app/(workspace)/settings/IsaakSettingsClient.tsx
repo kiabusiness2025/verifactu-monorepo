@@ -91,6 +91,9 @@ type SettingsData = {
     portalAvailable: boolean;
     checkoutAvailable: boolean;
     cancelAvailable: boolean;
+    pauseAvailable: boolean;
+    isPaused: boolean;
+    pausedUntil: string | null;
     invoices: Array<{
       id: string;
       number: string | null;
@@ -998,12 +1001,23 @@ export default function IsaakSettingsClient({
     }
   }
 
-  async function openBillingAction(endpoint: string, loadingText: string) {
+  async function openBillingAction(
+    endpoint: string,
+    loadingText: string,
+    body?: Record<string, unknown>,
+  ) {
     setSavingSection('billing');
     setNotice(null);
     setError(null);
     try {
-      const res = await fetch(endpoint, { method: 'POST' });
+      const init: RequestInit = body
+        ? {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          }
+        : { method: 'POST' };
+      const res = await fetch(endpoint, init);
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
         throw new Error(data?.error || loadingText);
@@ -2284,6 +2298,53 @@ export default function IsaakSettingsClient({
                           Portal de facturación
                         </button>
                       ) : null}
+                      {billing.pauseAvailable && !billing.isPaused ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void openBillingAction(
+                                '/api/settings/billing/pause',
+                                'No hemos podido pausar la suscripción.',
+                                { months: 1 },
+                              )
+                            }
+                            disabled={savingSection === 'billing'}
+                            className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 py-2.5 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-50"
+                          >
+                            Pausar 1 mes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void openBillingAction(
+                                '/api/settings/billing/pause',
+                                'No hemos podido pausar la suscripción.',
+                                { months: 3 },
+                              )
+                            }
+                            disabled={savingSection === 'billing'}
+                            className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-5 py-2.5 text-sm font-semibold text-amber-800 transition hover:bg-amber-100 disabled:opacity-50"
+                          >
+                            Pausar 3 meses
+                          </button>
+                        </>
+                      ) : null}
+                      {billing.isPaused ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void openBillingAction(
+                              '/api/settings/billing/resume',
+                              'No hemos podido reanudar la suscripción.'
+                            )
+                          }
+                          disabled={savingSection === 'billing'}
+                          className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100 disabled:opacity-50"
+                        >
+                          Reanudar suscripción
+                        </button>
+                      ) : null}
                       {billing.cancelAvailable ? (
                         <button
                           type="button"
@@ -2300,6 +2361,17 @@ export default function IsaakSettingsClient({
                         </button>
                       ) : null}
                     </div>
+
+                    {/* V1.8.1 — Banner cuando la suscripción está pausada */}
+                    {billing.isPaused ? (
+                      <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                        <strong className="font-semibold">Suscripción pausada.</strong>{' '}
+                        {billing.pausedUntil
+                          ? `Se reanudará automáticamente el ${new Date(billing.pausedUntil).toLocaleDateString('es-ES')}.`
+                          : 'Reanúdala cuando quieras desde el botón "Reanudar".'}{' '}
+                        Mantienes acceso al chat y a tus datos, pero no se cobra el próximo periodo.
+                      </div>
+                    ) : null}
                   </div>
 
                   {/* Invoice history */}

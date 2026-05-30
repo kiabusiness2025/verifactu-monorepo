@@ -77,6 +77,9 @@ export type SettingsBillingData = {
   portalAvailable: boolean;
   checkoutAvailable: boolean;
   cancelAvailable: boolean;
+  pauseAvailable: boolean;
+  isPaused: boolean;
+  pausedUntil: string | null;
   invoices: SettingsBillingInvoice[];
 };
 
@@ -276,6 +279,9 @@ export async function loadBillingData(input: {
     portalAvailable: Boolean(process.env.STRIPE_SECRET_KEY && customerId),
     checkoutAvailable: Boolean(process.env.STRIPE_SECRET_KEY && readDefaultPriceId()),
     cancelAvailable: Boolean(process.env.STRIPE_SECRET_KEY && subscriptionId),
+    pauseAvailable: Boolean(process.env.STRIPE_SECRET_KEY && subscriptionId),
+    isPaused: false,
+    pausedUntil: null,
     invoices: [],
   };
 
@@ -302,6 +308,19 @@ export async function loadBillingData(input: {
       billing.paymentMethodSummary = card
         ? `${formatCardBrand(card.brand)} terminada en ${card.last4}`
         : null;
+    }
+
+    // V1.8.1 — Estado de pausa de Stripe (pause_collection). Si está
+    // activa, exponemos pausedUntil para que el cliente muestre banner
+    // y botón "Reanudar". El flag pauseAvailable se calcula igual que
+    // cancelAvailable (requiere subscriptionId + Stripe configurado).
+    const pause = activeSubscription?.pause_collection;
+    if (pause) {
+      billing.pausedUntil =
+        typeof pause.resumes_at === 'number'
+          ? new Date(pause.resumes_at * 1000).toISOString()
+          : null;
+      billing.isPaused = true;
     }
 
     if (input.includeInvoices) {
