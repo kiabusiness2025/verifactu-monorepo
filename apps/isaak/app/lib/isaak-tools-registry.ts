@@ -21,6 +21,12 @@ import {
   isLegalToolName,
   type LegalToolName,
 } from './isaak-legal-tools';
+import {
+  MEMORY_CHAT_TOOLS,
+  executeMemoryTool,
+  isMemoryToolName,
+  type MemoryToolName,
+} from './isaak-memory-tools';
 import { emitWebhookEvent, type IsaakWebhookEventType } from './isaak-webhook-emitter';
 
 // Mapping: write tool name → webhook event type emitted on success.
@@ -140,6 +146,10 @@ const READ_ONLY_NAMES = new Set<string>([
   'sector_list_products',
   // V1.2 — Legal (sub-agente revisión de contratos, read-only)
   'isaak_review_contract',
+  // V1.2 — Memory (escritura sobre tabla privada del usuario, sin efecto
+  // en sistemas externos — no pasa por el judge).
+  'isaak_remember',
+  'isaak_forget',
 ]);
 
 type AnthropicToolDef = {
@@ -170,7 +180,8 @@ export type ToolCategoryFilter =
   | 'microsoft'
   | 'ledger'
   | 'sector'
-  | 'legal';
+  | 'legal'
+  | 'memory';
 
 export function buildReadOnlyToolsForContext(
   ctx: IsaakToolContext,
@@ -222,6 +233,13 @@ export function buildReadOnlyToolsForContext(
       if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
+  // V1.2: Memoria a largo plazo. Read (retrieve) ya se inyecta al system
+  // prompt; aquí exponemos write (remember) y delete (forget) al LLM.
+  if (include('memory')) {
+    for (const t of MEMORY_CHAT_TOOLS) {
+      if (isAllowed(t.name)) out.push(toAITool(t));
+    }
+  }
 
   return out;
 }
@@ -261,7 +279,13 @@ export async function executeIsaakTool(
 
   try {
     let result: unknown;
-    if (isLegalToolName(name)) {
+    if (isMemoryToolName(name)) {
+      result = await executeMemoryTool(
+        { tenantId: ctx.tenantId, userId: ctx.userId },
+        name as MemoryToolName,
+        toolUse.input,
+      );
+    } else if (isLegalToolName(name)) {
       result = await executeLegalTool(
         { tenantId: ctx.tenantId, userId: ctx.userId },
         name as LegalToolName,
