@@ -29,6 +29,7 @@ import {
   Plug,
   Plus,
   Receipt,
+  Scale,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -152,6 +153,7 @@ const PROFILE_MENU_V1 = [
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
   { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
   { href: '/ajustes/notificaciones', label: 'Notificaciones', icon: Bell },
+  { href: '/asesor-legal', label: 'Asesor legal', icon: Scale },
   { href: '/integrations', label: 'Integraciones', icon: Plug },
   { href: '/ayuda', label: 'Centro de ayuda', icon: LifeBuoy },
 ] as const;

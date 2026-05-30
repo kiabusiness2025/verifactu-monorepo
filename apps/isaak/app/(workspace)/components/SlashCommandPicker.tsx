@@ -106,7 +106,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     trigger: 'legal',
     label: '/legal',
-    description: 'Asesor Legal — revisar contrato',
+    description: 'Asesor Legal — pega aquí el texto del contrato (o sube PDF en /asesor-legal)',
     icon: Scale,
     expansion: 'Revísame este contrato:\n\n{cursor}',
   },
