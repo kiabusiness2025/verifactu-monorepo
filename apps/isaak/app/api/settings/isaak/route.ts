@@ -47,6 +47,31 @@ export async function PATCH(req: Request) {
   const likelyKnowledgeLevel = normalizeText(body.likelyKnowledgeLevel, 2);
   const mainGoals = parseGoals(body.mainGoals);
 
+  // V1.6.3 — Custom instructions del tenant. Texto libre que se inyecta
+  // al system prompt del agente principal en todos los turnos. Se persiste
+  // en Tenant.whitelabelConfig (Json libre que ya existía) bajo el sub-key
+  // aiCustomInstructions — sin migración, sin colisión con el resto del
+  // wrapper de whitelabel visual.
+  const customInstructionsInput =
+    typeof body.customInstructions === 'string' ? body.customInstructions.trim() : null;
+  if (customInstructionsInput !== null) {
+    const truncated = customInstructionsInput.slice(0, 2000);
+    const tenant = await prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { whitelabelConfig: true },
+    });
+    const existing = (tenant?.whitelabelConfig ?? {}) as Record<string, unknown>;
+    const nextConfig: Record<string, unknown> = {
+      ...existing,
+      aiCustomInstructions: truncated || undefined,
+    };
+    if (!truncated) delete nextConfig.aiCustomInstructions;
+    await prisma.tenant.update({
+      where: { id: session.tenantId },
+      data: { whitelabelConfig: nextConfig as Prisma.InputJsonValue },
+    });
+  }
+
   await prisma.isaakOnboardingProfile.upsert({
     where: {
       tenantId_userId: {

@@ -362,15 +362,31 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // V1.6.3 — Instrucciones personalizadas del tenant. Se inyectan al final
+  // del system prompt para que tengan máxima prioridad sin sobreescribir
+  // las reglas de seguridad/corrección fiscal. Aplica al agente principal
+  // y a sub-agentes (es preferencia general del propietario de la cuenta).
+  let customInstructionsSuffix = '';
+  try {
+    const { loadCustomInstructions, buildCustomInstructionsBlock } = await import(
+      '@/app/lib/isaak-custom-instructions'
+    );
+    const customText = await loadCustomInstructions(authenticated.toolContext.tenantId);
+    const block = buildCustomInstructionsBlock(customText);
+    if (block) customInstructionsSuffix = `\n\n${block}`;
+  } catch (err) {
+    console.error('[chat/stream] custom instructions failed', err);
+  }
+
   const summarySuffix = conversationSummaryBlock ? `\n\n${conversationSummaryBlock}` : '';
   const systemPrompt = subAgentId
     ? `${getSubAgent(subAgentId).systemPrompt}${
         ragResult.factsBlock ? `\n\n${ragResult.factsBlock.trim()}` : ''
-      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${fiscalContextSuffix}${summarySuffix}${languageSuffix}`
+      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${fiscalContextSuffix}${summarySuffix}${languageSuffix}${customInstructionsSuffix}`
     : `${buildAuthenticatedSystemPrompt(authenticated.promptContext, {
         factsBlock: ragResult.factsBlock,
         fewShotBlock: fewShotResult.examplesBlock,
-      })}${summarySuffix}${languageSuffix}`;
+      })}${summarySuffix}${languageSuffix}${customInstructionsSuffix}`;
 
   const { stream, metricsPromise } = streamIsaakChat({
     systemPrompt,
