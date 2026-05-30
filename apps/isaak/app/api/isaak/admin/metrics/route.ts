@@ -63,7 +63,7 @@ export async function GET(req: NextRequest) {
   const since = new Date(Date.now() - days * 86_400_000);
 
   try {
-    const [totals, latencyStats, byDay, byModel, byRouted, topToolsRaw, errorCounts] =
+    const [totals, latencyStats, byDay, byModel, byRouted, topToolsRaw, errorCounts, topReferrers] =
       await Promise.all([
         prisma.isaakChatMetric.aggregate({
           where: { createdAt: { gte: since } },
@@ -135,6 +135,19 @@ export async function GET(req: NextRequest) {
            WHERE created_at >= $1`,
           since,
         ),
+        // V1.8.4 — Top referrers desde el QR/link compartido
+        prisma.$queryRawUnsafe<CountRow[]>(
+          `SELECT metadata_json->>'ref' AS value, count(*)::bigint AS count
+           FROM usage_events
+           WHERE created_at >= $1
+             AND source = 'referral_qr'
+             AND metadata_json->>'kind' = 'referral_view'
+             AND metadata_json->>'ref' IS NOT NULL
+           GROUP BY 1
+           ORDER BY count DESC
+           LIMIT 20`,
+          since,
+        ),
       ]);
 
     const lat = latencyStats[0] ?? { p50: 0, p95: 0 };
@@ -169,6 +182,7 @@ export async function GET(req: NextRequest) {
       byModel: byModel.map((r) => ({ model: r.value, count: Number(r.count) })),
       byRoutedTo: byRouted.map((r) => ({ routedTo: r.value, count: Number(r.count) })),
       topTools: topToolsRaw.map((r) => ({ toolName: r.value, count: Number(r.count) })),
+      topReferrers: topReferrers.map((r) => ({ ref: r.value, count: Number(r.count) })),
     });
   } catch (err) {
     console.error('[admin/metrics] failed', err);

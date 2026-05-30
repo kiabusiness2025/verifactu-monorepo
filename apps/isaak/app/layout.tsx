@@ -5,6 +5,7 @@ import IsaakPublicSupportWidget from './components/IsaakPublicSupportWidget';
 import WhatsAppButton from './components/WhatsAppButton';
 import IsaakSiteChrome from './components/IsaakSiteChrome';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import ReferralTracker from './components/ReferralTracker';
 import { isV1Launch } from './lib/feature-flags';
 import './globals.css';
 
@@ -82,6 +83,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </>
         )}
         <PWAInstallPrompt />
+        <ReferralTracker />
         <script
           dangerouslySetInnerHTML={{
             __html: `if('serviceWorker'in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js').catch(function(){});})}`,

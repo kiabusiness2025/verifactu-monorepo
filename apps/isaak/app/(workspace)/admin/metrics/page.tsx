@@ -62,6 +62,7 @@ type MetricsResponse = {
   byModel: Array<{ model: string; count: number }>;
   byRoutedTo: Array<{ routedTo: string; count: number }>;
   topTools: Array<{ toolName: string; count: number }>;
+  topReferrers?: Array<{ ref: string; count: number }>;
 };
 
 const PERIOD_OPTIONS = [
@@ -256,6 +257,15 @@ export default function AdminMetricsPage() {
               </ResponsiveContainer>
             )}
           </Card>
+
+          {/* V1.8.4 — Top referrers del QR/link */}
+          {data.topReferrers && data.topReferrers.length > 0 && (
+            <Card title="Top referrers (?ref=)" icon={<Sparkles className="h-4 w-4" />}>
+              <RankingList
+                items={data.topReferrers.map((r) => ({ name: r.ref, count: r.count }))}
+              />
+            </Card>
+          )}
 
           <p className="text-center text-[11px] text-slate-400">
             Periodo: {data.period.days} días · desde {data.period.since.slice(0, 10)}
