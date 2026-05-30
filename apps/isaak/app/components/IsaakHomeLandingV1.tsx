@@ -25,6 +25,7 @@ import {
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import PricingSectionV1 from './PricingSectionV1';
+import HoldedTrialFormSection from './HoldedTrialFormSection';
 import IsaakHeroTour from './IsaakHeroTour';
 
 export const isaakLandingV1Metadata: Metadata = {
@@ -163,30 +164,111 @@ const BENEFITS = [
 // PRICING data ahora vive en PricingSectionV1.tsx (cliente, con toggle
 // mensual/anual). Se mantiene esta nota como referencia.
 
-const FAQ = [
+type FaqItem = { q: string; a: React.ReactNode };
+
+const FAQ: FaqItem[] = [
   {
-    q: '¿Necesito tener Claude o ChatGPT?',
-    a: 'No. La IA va incluida en Isaak — corre a nuestra cuenta. Tú solo necesitas tu cuenta de Isaak y tu API key de Holded.',
+    q: '¿Qué es Holded y por qué lo necesito para el plan Pro?',
+    a: (
+      <>
+        <a
+          href="https://www.holded.com/es"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-[#2361d8] hover:underline"
+        >
+          Holded
+        </a>{' '}
+        es un programa de gestión empresarial (ERP) muy usado por autónomos y
+        pymes en España: facturas, clientes, gastos, contabilidad y bancos en
+        un solo sitio. Isaak Pro se <strong>conecta a tu Holded</strong> y
+        habla con tus datos: te dice cuánto IVA debes, qué facturas están sin
+        cobrar, crea borradores… El plan Free no necesita Holded; el plan Pro
+        sí.
+      </>
+    ),
   },
   {
-    q: '¿Qué modelo IA usa Isaak por dentro?',
-    a: 'Claude (Anthropic) como primario y GPT-4o (OpenAI) como fallback automático. Si Claude tiene un incidente, GPT toma el relevo sin que tú lo notes.',
+    q: '¿Y si todavía no tengo Holded?',
+    a: (
+      <>
+        Pídenos una <strong>prueba gratuita</strong> desde el{' '}
+        <a href="#solicitar-holded" className="font-semibold text-[#2361d8] hover:underline">
+          formulario de esta misma página
+        </a>
+        . Te conectamos con el equipo de Holded para que la actives sin
+        compromiso. Mientras tanto puedes usar el plan Free de Isaak para
+        familiarizarte con el chat.
+      </>
+    ),
   },
   {
-    q: '¿Isaak puede emitir facturas a la AEAT?',
-    a: 'Isaak crea BORRADORES en tu Holded. La emisión y firma VeriFactu las hace Holded cuando tú apruebas el borrador. Es lo correcto: tú mantienes el control.',
+    q: '¿El precio incluye la licencia de Holded?',
+    a: (
+      <>
+        No. Holded se contrata aparte directamente con ellos (
+        <a
+          href="https://www.holded.com/es/precios"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-[#2361d8] hover:underline"
+        >
+          ver precios de Holded
+        </a>
+        ). Isaak es la capa de inteligencia que pones encima de tu Holded.
+      </>
+    ),
   },
   {
-    q: '¿Es seguro pasarle mi API key de Holded?',
-    a: 'Sí. La key se cifra con AES-256-GCM antes de guardarse en nuestra base de datos. Solo viaja a Holded para hacer las consultas que tú pidas en el chat. Puedes revocarla en un click desde Ajustes.',
+    q: '¿Necesito Claude, ChatGPT o cualquier IA aparte?',
+    a: (
+      <>
+        No. La inteligencia artificial va incluida en Isaak; corre a nuestra
+        cuenta. Tú solo necesitas tu cuenta de Isaak y, para el plan Pro, tu
+        Holded conectado.
+      </>
+    ),
   },
   {
-    q: '¿Qué pasa al acabar el trial?',
-    a: 'Si decides no continuar con Pro, tu cuenta queda en plan Free (chat ilimitado, sin Holded). No te cobramos automáticamente — no pides tarjeta para el trial.',
+    q: '¿Isaak puede emitir facturas oficialmente?',
+    a: (
+      <>
+        Isaak crea <strong>borradores</strong> en tu Holded. La emisión y
+        firma oficial (VeriFactu) las hace Holded cuando tú apruebas el
+        borrador. Así mantienes el control y la responsabilidad legal queda
+        bien atribuida.
+      </>
+    ),
+  },
+  {
+    q: '¿Es seguro darle acceso a mi Holded?',
+    a: (
+      <>
+        Sí. Tu clave de acceso a Holded se cifra antes de guardarse y solo
+        viaja a Holded para responder a lo que tú preguntes en el chat.
+        Puedes revocar el acceso en un click desde el panel de Ajustes.
+      </>
+    ),
+  },
+  {
+    q: '¿Qué pasa cuando acaba el trial de 14 días?',
+    a: (
+      <>
+        Si decides no continuar con Pro, tu cuenta pasa al plan Free
+        automáticamente (chat ilimitado, sin Holded conectado). No te
+        cobramos nada — no te pedimos tarjeta para el trial.
+      </>
+    ),
   },
   {
     q: '¿Puedo cancelar cuando quiera?',
-    a: 'Sí. Desde tu panel, sin llamar a soporte. La cancelación es inmediata y mantienes acceso hasta el final del periodo pagado.',
+    a: (
+      <>
+        Sí, desde tu panel y sin llamar a soporte. La cancelación es
+        inmediata y mantienes el acceso hasta el final del periodo que ya
+        habías pagado.
+      </>
+    ),
   },
 ];
 
@@ -372,6 +454,9 @@ export default function IsaakHomeLandingV1() {
 
       {/* ── PRICING ──────────────────────────────────────────────────────── */}
       <PricingSectionV1 />
+
+      {/* ── SOLICITAR PRUEBA HOLDED ──────────────────────────────────────── */}
+      <HoldedTrialFormSection />
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section id="faq" className="bg-slate-50 py-16">

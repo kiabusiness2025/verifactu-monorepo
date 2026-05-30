@@ -69,17 +69,17 @@ const PLANS: Plan[] = [
     ctaSubtitle: 'Sin tarjeta',
     highlight: false,
     features: [
-      { icon: MessageSquare, text: 'Chat ilimitado (10 mensajes/h)' },
-      { icon: MessageCircle, text: 'Acceso desde WhatsApp + Telegram' },
-      { icon: Brain, text: 'Corpus completo de Agencia Tributaria' },
-      { icon: Scale, text: 'Asesor legal de contratos' },
-      { icon: Sparkles, text: 'IA incluida — Claude Haiku' },
+      { icon: MessageSquare, text: 'Chat ilimitado con Isaak (10 mensajes/h)' },
+      { icon: MessageCircle, text: 'Acceso desde WhatsApp y Telegram' },
+      { icon: Brain, text: 'Conocimiento completo de Hacienda y normativa' },
+      { icon: Scale, text: 'Asesor legal para revisar contratos' },
+      { icon: Sparkles, text: 'IA incluida — sin licencias extra' },
     ],
-    notIncluded: ['Holded conectado', 'Alertas AEAT proactivas', 'Excel de libros y modelos'],
+    notIncluded: ['Conexión con tu Holded', 'Alertas automáticas de vencimientos AEAT', 'Exportación a Excel de libros y modelos'],
   },
   {
     name: 'Pro',
-    description: 'Tu Holded conectado + alertas. Lo que la mayoría elige.',
+    description: 'Tu Holded conectado a Isaak con alertas y exportaciones.',
     priceMonthly: 29,
     priceAnnual: 290,
     priceAnnualMonthlyEquivalent: 24,
@@ -88,12 +88,12 @@ const PLANS: Plan[] = [
     highlight: true,
     features: [
       { icon: MessageSquare, text: 'Todo lo del plan Free' },
-      { icon: Plug, text: 'Tu Holded conectado en 30 segundos' },
-      { icon: Brain, text: '20 tools: lectura + crear borradores' },
-      { icon: Bell, text: 'Alertas AEAT D-15/7/3/1 por email + push web' },
-      { icon: FileSpreadsheet, text: 'Exporta a Excel (libros IVA, modelos AEAT, asientos)' },
-      { icon: Smartphone, text: 'Notificaciones push en móvil y escritorio' },
-      { icon: Sparkles, text: 'IA premium — Claude Sonnet + GPT-4o fallback' },
+      { icon: Plug, text: 'Conecta tu Holded en 30 segundos' },
+      { icon: Brain, text: 'Isaak consulta y crea borradores en tu Holded' },
+      { icon: Bell, text: 'Alertas automáticas antes de cada vencimiento AEAT' },
+      { icon: FileSpreadsheet, text: 'Exporta a Excel: libros IVA, modelos AEAT y asientos' },
+      { icon: Smartphone, text: 'Notificaciones en móvil y escritorio' },
+      { icon: Sparkles, text: 'IA premium incluida (modo más rápido y preciso)' },
       { icon: HeadphonesIcon, text: 'Soporte por email en menos de 24 h' },
     ],
   },
@@ -254,6 +254,29 @@ export default function PricingSectionV1() {
                   )}
                 </div>
 
+                {/* Aviso Holded — solo en Pro */}
+                {isPro && (
+                  <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] leading-5 text-amber-900">
+                    <strong className="font-semibold">Requiere licencia de Holded.</strong>{' '}
+                    El precio no incluye la suscripción a{' '}
+                    <a
+                      href="https://www.holded.com/es"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-amber-900 underline decoration-amber-400 underline-offset-2 hover:decoration-amber-600"
+                    >
+                      Holded
+                    </a>
+                    .{' '}
+                    <a
+                      href="#solicitar-holded"
+                      className="font-semibold text-amber-900 underline decoration-amber-400 underline-offset-2 hover:decoration-amber-600"
+                    >
+                      ¿No tienes? Solicita prueba gratis →
+                    </a>
+                  </div>
+                )}
+
                 {/* Features incluidas */}
                 <div className="mt-7 border-t border-slate-100 pt-6">
                   <div className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
@@ -327,6 +350,21 @@ export default function PricingSectionV1() {
           </div>
           <p className="mt-4 text-center text-[11px] text-slate-500">
             Pagos seguros con Stripe · Precios en euros sin IVA · Facturas automáticas en PDF
+          </p>
+          <p className="mt-1.5 text-center text-[11px] text-slate-500">
+            El precio del plan Pro <strong>no incluye</strong> la licencia de{' '}
+            <a
+              href="https://www.holded.com/es"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline decoration-slate-300 hover:text-slate-700 hover:decoration-slate-500"
+            >
+              Holded
+            </a>
+            . Se contrata por separado.{' '}
+            <a href="#solicitar-holded" className="font-semibold text-[#2361d8] hover:underline">
+              Solicita una prueba gratuita →
+            </a>
           </p>
         </div>
       </div>
