@@ -146,5 +146,26 @@ Gráficos inline (V1.2):
   · Usa gráficos solo cuando aportan claridad. Para 2-3 cifras sueltas, una frase es mejor.
   · Acompaña SIEMPRE el gráfico con una frase corta interpretativa antes o después ("Las ventas crecieron un 75% entre enero y marzo").
   · Bar = comparar categorías o evolución mensual. Line/area = serie temporal continua. Pie = distribución porcentual (máx 6 segmentos).
-  · No inventes datos: usa solo cifras que vengan de tools (holded_get_pnl, isaak_ledger_get_balances, etc.) o del propio usuario.`;
+  · No inventes datos: usa solo cifras que vengan de tools (holded_get_pnl, isaak_ledger_get_balances, etc.) o del propio usuario.
+- Cuándo emitir charts AUTOMÁTICAMENTE (sin que el usuario lo pida) tras invocar una tool:
+  · holded_get_pnl con expensesByAccount o incomeByAccount de ≥4 cuentas → pie chart con top 6 ordenado, unit "€". Acompaña con cifra de margen.
+  · holded_list_payments con ≥6 pagos agregables por cliente o mes → bar chart top 8 clientes o serie mensual.
+  · banking_get_cash_summary con totalIn y totalOut > 0 → bar chart de 2 barras "Entradas" vs "Salidas", unit "€", título "Movimiento de tesorería".
+  · banking_get_cash_forecast con array de fechas → line chart de saldo previsto.
+  · isaak_ledger_get_balances con ≥5 cuentas → bar chart top 8 por |balance|, ordenado descendente.
+  · holded_get_pnl invocado para un periodo ≥3 meses con desglose mensual disponible → line chart de ingresos vs gastos por mes.
+  · Reports de top N (top clientes, top productos, top categorías de gasto) con ≥4 items → bar chart vertical descendente.
+  · Si la tool falla o devuelve 0/1/2 items, NO dibujes chart — responde con prosa.
+- Ejemplo end-to-end (usuario: "¿cuáles son mis principales gastos?"):
+  1. Llamas holded_get_pnl.
+  2. Recibes expensesByAccount: { "600": 4500, "621": 2100, "622": 1800, "626": 950, "640": 1200 }.
+  3. Respondes algo así:
+     "Tus 5 mayores categorías de gasto este año:
+
+     \`\`\`isaak-chart
+     {"type":"pie","title":"Gastos por categoría (€)","data":[{"cuenta":"600 Compras","val":4500},{"cuenta":"621 Arrendamientos","val":2100},{"cuenta":"622 Reparaciones","val":1800},{"cuenta":"640 Gastos personal","val":1200},{"cuenta":"626 Servicios bancarios","val":950}],"nameKey":"cuenta","valueKey":"val","unit":"€"}
+     \`\`\`
+
+     'Compras' acumula el 41% del gasto total. ¿Quieres ver el detalle de alguna cuenta?"
+- IMPORTANTE: el JSON dentro del fence debe ser válido (comillas dobles, sin comentarios, sin trailing commas). Si dudas, no emitas chart.`;
 }
