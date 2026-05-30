@@ -348,15 +348,35 @@ export async function POST(req: NextRequest) {
 
   // Fire-and-forget metrics + persistence after the stream finishes.
   metricsPromise
-    .then((metrics) =>
-      persistAndMetric({
+    .then(async (metrics) => {
+      await persistAndMetric({
         text: metrics.text,
         metrics,
         routedTo,
         feature: allowWrites ? 'workspace_chat_stream_write' : 'workspace_chat_stream',
         isClarification: detectClarificationResponse(metrics.text),
-      })
-    )
+      });
+      // V1.3.2 — Auto-memoria. Tras responder, intentamos extraer hechos
+      // memorables del turno y persistirlos. No bloquea ni afecta al usuario.
+      try {
+        const { autoExtractAndStoreFacts } = await import('@/app/lib/isaak-memory-extractor');
+        const result = await autoExtractAndStoreFacts({
+          tenantId: authenticated.toolContext.tenantId,
+          userId: authenticated.toolContext.userId,
+          conversationId: conversation?.id ?? null,
+          userMessage: message,
+          assistantText: metrics.text,
+        });
+        if (result.inserted > 0 || result.error) {
+          console.info('[Isaak Auto-Memory]', {
+            tenantId: authenticated.toolContext.tenantId,
+            ...result,
+          });
+        }
+      } catch (e) {
+        console.error('[Isaak Auto-Memory] failed', e);
+      }
+    })
     .catch((err) => {
       console.error('[Isaak Chat Stream] post-stream tasks failed', err);
     });
