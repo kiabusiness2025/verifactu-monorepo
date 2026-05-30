@@ -14,6 +14,7 @@ import {
   Loader2,
   Plus,
   Power,
+  PlayCircle,
   Trash2,
   Webhook,
 } from 'lucide-react';
@@ -46,7 +47,12 @@ export default function WebhooksPage() {
   const [copiedSecret, setCopiedSecret] = useState(false);
 
   // Busy states por endpoint
-  const [busy, setBusy] = useState<Record<string, 'toggle' | 'delete' | null>>({});
+  const [busy, setBusy] = useState<Record<string, 'toggle' | 'delete' | 'test' | null>>({});
+
+  // Resultado del último test por endpoint
+  const [testResult, setTestResult] = useState<
+    Record<string, { ok: boolean; statusCode: number | null; durationMs: number; event: string; error: string | null }>
+  >({});
 
   const load = useCallback(async () => {
     try {
@@ -112,6 +118,39 @@ export default function WebhooksPage() {
         body: JSON.stringify({ active: !current }),
       });
       await load();
+    } finally {
+      setBusy((b) => ({ ...b, [id]: null }));
+    }
+  };
+
+  const handleTest = async (id: string) => {
+    setBusy((b) => ({ ...b, [id]: 'test' }));
+    setTestResult((r) => {
+      const next = { ...r };
+      delete next[id];
+      return next;
+    });
+    try {
+      const res = await fetch(`/api/isaak/webhooks/endpoints/${id}/test`, { method: 'POST' });
+      const data = (await res.json()) as {
+        ok: boolean;
+        statusCode: number | null;
+        durationMs: number;
+        event: string;
+        error: string | null;
+      };
+      setTestResult((r) => ({ ...r, [id]: data }));
+    } catch (e) {
+      setTestResult((r) => ({
+        ...r,
+        [id]: {
+          ok: false,
+          statusCode: null,
+          durationMs: 0,
+          event: '—',
+          error: e instanceof Error ? e.message : 'Error de red',
+        },
+      }));
     } finally {
       setBusy((b) => ({ ...b, [id]: null }));
     }
@@ -315,6 +354,19 @@ export default function WebhooksPage() {
                     <div className="flex flex-shrink-0 items-center gap-1">
                       <button
                         type="button"
+                        onClick={() => void handleTest(e.id)}
+                        disabled={busy[e.id] === 'test'}
+                        title="Enviar evento de prueba"
+                        className="rounded-lg border border-blue-200 bg-blue-50 p-1.5 text-blue-700 transition hover:bg-blue-100 disabled:opacity-50"
+                      >
+                        {busy[e.id] === 'test' ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <PlayCircle className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => void handleToggle(e.id, e.active)}
                         disabled={busy[e.id] === 'toggle'}
                         title={e.active ? 'Pausar' : 'Activar'}
@@ -341,6 +393,23 @@ export default function WebhooksPage() {
                       </button>
                     </div>
                   </div>
+                  {testResult[e.id] && (
+                    <div
+                      className={`mt-3 rounded-lg border px-3 py-2 text-[11px] ${
+                        testResult[e.id].ok
+                          ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+                          : 'border-rose-200 bg-rose-50 text-rose-900'
+                      }`}
+                    >
+                      {testResult[e.id].ok ? '✓ ' : '✗ '}
+                      Evento <code className="font-mono">{testResult[e.id].event}</code> ·{' '}
+                      {testResult[e.id].statusCode != null
+                        ? `HTTP ${testResult[e.id].statusCode}`
+                        : 'sin respuesta'}{' '}
+                      · {testResult[e.id].durationMs} ms
+                      {testResult[e.id].error ? ` · ${testResult[e.id].error}` : ''}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
