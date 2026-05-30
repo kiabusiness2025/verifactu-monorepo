@@ -11,21 +11,30 @@ import {
   signOut,
   User,
 } from 'firebase/auth';
-import { auth, isFirebaseConfigComplete, isFirebaseReady } from './firebase';
+import { auth, isFirebaseConfigComplete, isFirebaseReady, missingConfigFields } from './firebase';
 import { clearSessionCookie, mintSessionCookie } from './serverSession';
 
 type SignInOptions = {
   rememberDevice?: boolean;
 };
 
-const authUnavailable = () => ({
-  user: null as any,
-  error: {
-    code: 'auth/config-unavailable',
-    message: 'Auth not initialized',
-    userMessage: 'Autenticación no disponible. Revisa la configuración de Firebase (entorno).',
-  },
-});
+const authUnavailable = () => {
+  // Las env vars NEXT_PUBLIC_FIREBASE_* son públicas — incluirlas en el
+  // mensaje no expone secretos y ayuda a diagnosticar deploys mal configurados.
+  const missing = missingConfigFields.length
+    ? ` Faltan: ${missingConfigFields
+        .map((f) => `NEXT_PUBLIC_FIREBASE_${f.replace(/([A-Z])/g, '_$1').toUpperCase()}`)
+        .join(', ')}.`
+    : '';
+  return {
+    user: null as any,
+    error: {
+      code: 'auth/config-unavailable',
+      message: 'Auth not initialized',
+      userMessage: `Autenticación no disponible. Revisa la configuración de Firebase (entorno).${missing}`,
+    },
+  };
+};
 
 // Type for auth errors with custom messages
 export interface AuthErrorMessage {
