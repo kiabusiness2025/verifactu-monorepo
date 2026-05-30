@@ -54,7 +54,16 @@ export default function PrivacidadPage() {
               Responsable
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Expert Estudios Profesionales, SLU. Contacto:{' '}
+              Expert Estudios Profesionales, SLU —{' '}
+              <a
+                href="https://www.holded.com/es/partners"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
+                Holded Solution Partner
+              </a>
+              . Contacto:{' '}
               <a
                 href="mailto:info@verifactu.business"
                 className="font-semibold text-[#2361d8] underline underline-offset-4"

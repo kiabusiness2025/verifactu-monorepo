@@ -26,6 +26,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import PricingSectionV1 from './PricingSectionV1';
 import HoldedTrialFormSection from './HoldedTrialFormSection';
+import HoldedPartnerBadge from './HoldedPartnerBadge';
 import IsaakHeroTour from './IsaakHeroTour';
 
 export const isaakLandingV1Metadata: Metadata = {
@@ -278,9 +279,12 @@ export default function IsaakHomeLandingV1() {
       {/* ── HERO + TOUR ANIMADO ──────────────────────────────────────────── */}
       <section className="bg-[linear-gradient(180deg,#f5f9ff_0%,#ffffff_60%)] pb-10 pt-16 sm:pt-20">
         <div className="mx-auto max-w-4xl px-5 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
-            <Sparkles className="h-3.5 w-3.5" />
-            Isaak para Holded
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#2361d8]/15 bg-white px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-[#2361d8]">
+              <Sparkles className="h-3.5 w-3.5" />
+              Isaak para Holded
+            </div>
+            <HoldedPartnerBadge variant="inline" />
           </div>
           <h1 className="mt-6 text-4xl font-bold tracking-tight text-[#011c67] sm:text-5xl sm:leading-[1.06]">
             Tu asistente fiscal para Holded.
@@ -454,6 +458,13 @@ export default function IsaakHomeLandingV1() {
 
       {/* ── PRICING ──────────────────────────────────────────────────────── */}
       <PricingSectionV1 />
+
+      {/* ── PARTNER OFICIAL HOLDED ───────────────────────────────────────── */}
+      <section className="py-12">
+        <div className="mx-auto max-w-3xl px-5">
+          <HoldedPartnerBadge variant="card" />
+        </div>
+      </section>
 
       {/* ── SOLICITAR PRUEBA HOLDED ──────────────────────────────────────── */}
       <HoldedTrialFormSection />
