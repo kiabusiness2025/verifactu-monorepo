@@ -1,6 +1,21 @@
+import React from 'react';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import IsaakChart from './IsaakChart';
+
+function preContainsChartCode(children: React.ReactNode): boolean {
+  const arr = React.Children.toArray(children);
+  for (const c of arr) {
+    if (React.isValidElement(c)) {
+      const cls = (c.props as { className?: string }).className ?? '';
+      if (cls.includes('language-isaak-chart') || cls.includes('language-chart')) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
 
 function isInternalLink(href: string | undefined): boolean {
   if (!href) return false;
@@ -44,6 +59,17 @@ export default function IsaakMarkdown({ text }: { text: string }) {
           ),
           code: ({ children, className }) => {
             const isBlock = className?.includes('language-');
+            // V1.2 — fence ```isaak-chart``` se renderiza con recharts en lugar
+            // de mostrarse como bloque de código. El LLM puede emitir JSON
+            // estructurado (type, data, xKey, yKeys, etc.) y aparece como
+            // gráfico inline en su mensaje.
+            const isChart =
+              className?.includes('language-isaak-chart') ||
+              className?.includes('language-chart');
+            if (isChart) {
+              const raw = String(children ?? '').trim();
+              return <IsaakChart raw={raw} />;
+            }
             if (isBlock) {
               return (
                 <code className="block overflow-x-auto rounded-lg bg-slate-100 px-3 py-2 font-mono text-[12px] text-slate-800">
@@ -57,11 +83,18 @@ export default function IsaakMarkdown({ text }: { text: string }) {
               </code>
             );
           },
-          pre: ({ children }) => (
-            <pre className="mb-1.5 overflow-x-auto rounded-lg bg-slate-100 p-3 text-[12px]">
-              {children}
-            </pre>
-          ),
+          pre: ({ children }) => {
+            // Si el bloque envuelve un fence ```isaak-chart```, lo soltamos
+            // sin <pre> para que IsaakChart se renderice tal cual.
+            if (preContainsChartCode(children)) {
+              return <>{children}</>;
+            }
+            return (
+              <pre className="mb-1.5 overflow-x-auto rounded-lg bg-slate-100 p-3 text-[12px]">
+                {children}
+              </pre>
+            );
+          },
           a: ({ href, children }) => {
             // Links internos (/foo o #anchor) usan Next.js Link y abren en la
             // misma pestaña — UX clave para CTAs como "conecta tu Holded".
