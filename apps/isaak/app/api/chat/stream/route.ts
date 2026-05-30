@@ -338,15 +338,24 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // V1.4.5 — Idioma del usuario. Si no es español, inyectamos el hint para
+  // que el LLM responda en la lengua adecuada (català, galego, euskera, EN).
+  const { detectUserLanguage, buildLanguageHint } = await import(
+    '@/app/lib/isaak-language-detector'
+  );
+  const detectedLang = detectUserLanguage(message);
+  const languageHint = buildLanguageHint(detectedLang);
+  const languageSuffix = languageHint ? `\n\n${languageHint}` : '';
+
   const summarySuffix = conversationSummaryBlock ? `\n\n${conversationSummaryBlock}` : '';
   const systemPrompt = subAgentId
     ? `${getSubAgent(subAgentId).systemPrompt}${
         ragResult.factsBlock ? `\n\n${ragResult.factsBlock.trim()}` : ''
-      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${summarySuffix}`
+      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${summarySuffix}${languageSuffix}`
     : `${buildAuthenticatedSystemPrompt(authenticated.promptContext, {
         factsBlock: ragResult.factsBlock,
         fewShotBlock: fewShotResult.examplesBlock,
-      })}${summarySuffix}`;
+      })}${summarySuffix}${languageSuffix}`;
 
   const { stream, metricsPromise } = streamIsaakChat({
     systemPrompt,
