@@ -83,6 +83,8 @@ export async function POST(req: NextRequest) {
 
   // Validate continueUrl is one of our allowed origins
   const allowedOrigins = [
+    'https://isaak.chat',
+    'https://www.isaak.chat',
     'https://verifactu.business',
     'https://isaak.verifactu.business',
     'https://app.verifactu.business',
