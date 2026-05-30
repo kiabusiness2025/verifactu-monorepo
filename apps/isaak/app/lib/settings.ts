@@ -622,6 +622,44 @@ export async function cancelBillingAtPeriodEnd(subscriptionId: string) {
   };
 }
 
+// V1.7.3 — Pause / Resume.
+// Stripe permite "pause_collection" para detener el cobro manteniendo
+// la suscripción activa. Tres comportamientos:
+//   - 'mark_uncollectible' → no se cobra y las facturas quedan así (lo
+//     que usamos para pausa típica del usuario).
+//   - 'keep_as_draft' / 'void' → variantes administrativas, no las
+//     exponemos al usuario.
+// Pasamos `resumes_at` (epoch seconds) para que Stripe reanude el cobro
+// automáticamente. Si meses === null, pausa indefinida hasta que el
+// usuario resume manualmente.
+export async function pauseSubscription(subscriptionId: string, months: number | null) {
+  const resumesAt =
+    months && months > 0
+      ? Math.floor(Date.now() / 1000) + months * 30 * 24 * 60 * 60
+      : undefined;
+  const subscription = await stripeClient.subscriptions.update(subscriptionId, {
+    pause_collection: {
+      behavior: 'mark_uncollectible',
+      ...(resumesAt ? { resumes_at: resumesAt } : {}),
+    },
+  });
+  return {
+    id: subscription.id,
+    status: subscription.status,
+    pausedUntil: resumesAt ? new Date(resumesAt * 1000) : null,
+  };
+}
+
+export async function resumeSubscription(subscriptionId: string) {
+  const subscription = await stripeClient.subscriptions.update(subscriptionId, {
+    pause_collection: '',
+  } as unknown as Parameters<typeof stripeClient.subscriptions.update>[1]);
+  return {
+    id: subscription.id,
+    status: subscription.status,
+  };
+}
+
 export function mapStripeErrorMessage(error: unknown, fallback: string) {
   if (error instanceof Error && error.message.trim()) {
     return error.message;
