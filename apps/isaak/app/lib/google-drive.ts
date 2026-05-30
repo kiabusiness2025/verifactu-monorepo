@@ -28,8 +28,12 @@ async function getAccessToken(tenantId: string, userId: string): Promise<string 
   return updated?.accessToken ?? null;
 }
 
-async function findOrCreateFolder(accessToken: string): Promise<string | null> {
-  const q = `name='${FOLDER_NAME}' and mimeType='${FOLDER_MIME}' and trashed=false`;
+async function findOrCreateFolder(
+  accessToken: string,
+  folderName: string = FOLDER_NAME,
+): Promise<string | null> {
+  const escapedName = folderName.replace(/'/g, "\\'");
+  const q = `name='${escapedName}' and mimeType='${FOLDER_MIME}' and trashed=false`;
   const listRes = await fetch(`${DRIVE_API}/files?q=${encodeURIComponent(q)}&fields=files(id)`, {
     headers: { Authorization: `Bearer ${accessToken}` },
   });
@@ -41,7 +45,7 @@ async function findOrCreateFolder(accessToken: string): Promise<string | null> {
   const createRes = await fetch(`${DRIVE_API}/files`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: FOLDER_NAME, mimeType: FOLDER_MIME }),
+    body: JSON.stringify({ name: folderName, mimeType: FOLDER_MIME }),
   });
   if (!createRes.ok) return null;
   const created = (await createRes.json()) as { id?: string };
@@ -53,7 +57,8 @@ export async function uploadFileToDrive(
   userId: string,
   fileName: string,
   fileBuffer: Buffer,
-  mimeType: string = 'application/pdf'
+  mimeType: string = 'application/pdf',
+  folderName?: string,
 ): Promise<string | null> {
   const accessToken = await getAccessToken(tenantId, userId);
   if (!accessToken) return null;
@@ -66,7 +71,7 @@ export async function uploadFileToDrive(
     .catch(() => null);
   if (!token?.scopes || !hasDriveScope(token.scopes)) return null;
 
-  const folderId = await findOrCreateFolder(accessToken);
+  const folderId = await findOrCreateFolder(accessToken, folderName);
   if (!folderId) return null;
 
   const metadata = JSON.stringify({ name: fileName, parents: [folderId] });

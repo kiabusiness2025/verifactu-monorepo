@@ -4,6 +4,7 @@ import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConversation, type HoldedChatConversation } from '@/app/lib/holded-chat';
 import IsaakChatSectionHydrated from '../../components/IsaakChatSectionHydrated';
 import ExportConversationButton from '../../components/ExportConversationButton';
+import SaveToDriveButton from '../../components/SaveToDriveButton';
 
 export const metadata: Metadata = { title: 'Chat — Isaak' };
 
@@ -33,7 +34,10 @@ export default async function ConversationPage({ params }: Props) {
           <h1 className="truncate text-[14px] font-medium text-slate-700">
             {conversation.title ?? 'Conversación'}
           </h1>
-          <ExportConversationButton conversationId={id} title={conversation.title ?? 'conversacion'} />
+          <div className="flex flex-shrink-0 items-center gap-1.5">
+            <SaveToDriveButton conversationId={id} />
+            <ExportConversationButton conversationId={id} title={conversation.title ?? 'conversacion'} />
+          </div>
         </div>
       </div>
       <div className="flex-1 overflow-hidden">
