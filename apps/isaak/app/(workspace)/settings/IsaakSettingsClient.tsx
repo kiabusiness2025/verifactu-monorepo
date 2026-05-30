@@ -30,6 +30,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import CustomSlashCommandsEditor from './CustomSlashCommandsEditor';
 
 type SettingsData = {
   profile: {
@@ -1797,6 +1798,10 @@ export default function IsaakSettingsClient({
                     {isaak.mainGoals.length}/3 seleccionadas
                   </div>
                 </div>
+                {/* V1.7.2 — Custom slash commands editor independiente
+                    (CRUD propio + endpoint propio, no afecta a saveIsaak). */}
+                <CustomSlashCommandsEditor />
+
                 <div className="mt-6 flex flex-wrap gap-3">
                   <button
                     type="button"
