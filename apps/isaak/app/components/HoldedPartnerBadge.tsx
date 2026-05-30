@@ -5,14 +5,13 @@
 //   - 'card':    bloque más grande con descripción, para sección dedicada
 //   - 'minimal': solo logo + texto, sin caja (footer/legal)
 //
-// URL: TODO — usuario debe pegar la URL exacta de su ficha en el catálogo
-// de partners de Holded (Expert Estudios Profesionales, SLU). Mientras
-// tanto apuntamos al catálogo general.
+// HOLDED_PARTNER_URL apunta a la ficha oficial de Expert Estudios
+// Profesionales, SLU en el directorio de Solution Partners de Holded.
 
 import Image from 'next/image';
 import { ExternalLink } from 'lucide-react';
 
-export const HOLDED_PARTNER_URL = 'https://www.holded.com/es/partners';
+export const HOLDED_PARTNER_URL = 'https://www.holded.com/es/directorio-solution-partners/expert';
 export const HOLDED_HOME_URL = 'https://www.holded.com/es';
 
 type Variant = 'inline' | 'card' | 'minimal';

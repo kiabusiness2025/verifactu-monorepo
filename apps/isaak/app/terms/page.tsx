@@ -66,7 +66,7 @@ export default function IsaakTermsPage() {
               Isaak es operado por <strong>Expert Estudios Profesionales, SLU</strong>{' '}
               (Verifactu Business), constituida como{' '}
               <a
-                href="https://www.holded.com/es/partners"
+                href="https://www.holded.com/es/directorio-solution-partners/expert"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-[#2361d8] underline underline-offset-4"

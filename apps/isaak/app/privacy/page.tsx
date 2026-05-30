@@ -45,7 +45,7 @@ export default function IsaakPrivacyPage() {
             <p className="mt-2 text-sm text-slate-600">
               Expert Estudios Profesionales, SLU —{' '}
               <a
-                href="https://www.holded.com/es/partners"
+                href="https://www.holded.com/es/directorio-solution-partners/expert"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-semibold text-[#2361d8] underline underline-offset-4"
