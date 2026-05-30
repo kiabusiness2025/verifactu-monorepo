@@ -3,13 +3,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   AlertTriangle,
+  Archive,
   Bell,
   Building,
   CheckCircle2,
+  CheckSquare,
   ExternalLink,
   Loader2,
+  MailOpen,
   RefreshCw,
+  RotateCcw,
   ShieldCheck,
+  Square,
   XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -110,6 +115,58 @@ export default function SedeElectronicaPage() {
   const [censusError, setCensusError] = useState<string | null>(null);
   const [loadingNotif, setLoadingNotif] = useState(false);
   const [loadingCensus, setLoadingCensus] = useState(false);
+
+  // V1.6.2 — selección bulk de notificaciones
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = useState<null | 'mark_read' | 'archive' | 'mark_pending'>(null);
+
+  const toggleSelected = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const selectAllVisible = useCallback(() => {
+    setSelectedIds((prev) => {
+      const visible = notifications?.map((n) => n.id) ?? [];
+      if (visible.every((id) => prev.has(id)) && visible.length > 0) return new Set();
+      return new Set(visible);
+    });
+  }, [notifications]);
+
+  const runBulk = useCallback(
+    async (action: 'mark_read' | 'archive' | 'mark_pending') => {
+      if (selectedIds.size === 0 || bulkBusy) return;
+      setBulkBusy(action);
+      try {
+        const res = await fetch('/api/isaak/sede/notifications/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: Array.from(selectedIds), action }),
+        });
+        if (!res.ok) {
+          console.error('[sede bulk] failed', await res.text().catch(() => ''));
+          return;
+        }
+        const newEstado =
+          action === 'mark_read' ? 'leida' : action === 'archive' ? 'expirada' : 'pendiente';
+        setNotifications((prev) =>
+          prev
+            ? prev.map((n) =>
+                selectedIds.has(n.id) ? { ...n, estado: newEstado as Notification['estado'] } : n,
+              )
+            : prev,
+        );
+        setSelectedIds(new Set());
+      } finally {
+        setBulkBusy(null);
+      }
+    },
+    [selectedIds, bulkBusy],
+  );
 
   const loadCert = useCallback(async () => {
     const res = await fetch('/api/isaak/certificates').catch(() => null);
@@ -332,19 +389,114 @@ export default function SedeElectronicaPage() {
                   No hay notificaciones pendientes.
                 </div>
               )}
-              {notifications?.map((n) => (
-                <div key={n.id} className="flex items-start gap-3 px-5 py-3.5">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-[13px] font-medium text-slate-800">{n.title}</p>
-                      {estadoBadge(n.estado)}
-                    </div>
-                    <p className="mt-0.5 text-[11px] text-slate-400">
-                      {n.emisor} · {n.fecha ? fmtDate(n.fecha) : ''} · {n.tipo}
-                    </p>
+              {/* Bulk action bar — visible cuando hay selección */}
+              {selectedIds.size > 0 && (
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 bg-[#2361d8]/[0.04] px-5 py-2.5">
+                  <span className="text-[12px] font-medium text-[#011c67]">
+                    {selectedIds.size} seleccionada{selectedIds.size === 1 ? '' : 's'}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => void runBulk('mark_read')}
+                      disabled={bulkBusy !== null}
+                      className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {bulkBusy === 'mark_read' ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <MailOpen size={11} />
+                      )}
+                      Marcar leídas
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void runBulk('archive')}
+                      disabled={bulkBusy !== null}
+                      className="inline-flex items-center gap-1 rounded-full bg-slate-600 px-3 py-1 text-[11px] font-semibold text-white transition hover:bg-slate-700 disabled:opacity-50"
+                    >
+                      {bulkBusy === 'archive' ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <Archive size={11} />
+                      )}
+                      Archivar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void runBulk('mark_pending')}
+                      disabled={bulkBusy !== null}
+                      className="inline-flex items-center gap-1 rounded-full border border-slate-300 bg-white px-3 py-1 text-[11px] font-semibold text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+                    >
+                      {bulkBusy === 'mark_pending' ? (
+                        <Loader2 size={11} className="animate-spin" />
+                      ) : (
+                        <RotateCcw size={11} />
+                      )}
+                      Volver a pendiente
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedIds(new Set())}
+                      className="rounded-md px-2 text-[11px] font-medium text-slate-500 transition hover:bg-white hover:text-slate-800"
+                    >
+                      Cancelar
+                    </button>
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* Header con "Seleccionar todo" */}
+              {(notifications?.length ?? 0) > 0 && (
+                <button
+                  type="button"
+                  onClick={selectAllVisible}
+                  className="flex w-full items-center gap-2 border-b border-slate-100 px-5 py-1.5 text-[11px] font-medium text-slate-500 transition hover:bg-slate-50"
+                >
+                  {selectedIds.size > 0 && notifications && selectedIds.size === notifications.length ? (
+                    <CheckSquare size={12} className="text-[#2361d8]" />
+                  ) : (
+                    <Square size={12} className="text-slate-400" />
+                  )}
+                  {selectedIds.size > 0 && notifications && selectedIds.size === notifications.length
+                    ? 'Deseleccionar todo'
+                    : 'Seleccionar todo'}
+                </button>
+              )}
+
+              {notifications?.map((n) => {
+                const checked = selectedIds.has(n.id);
+                return (
+                  <div
+                    key={n.id}
+                    className={`flex items-start gap-3 px-5 py-3.5 transition ${
+                      checked ? 'bg-[#2361d8]/[0.04]' : 'hover:bg-slate-50'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleSelected(n.id)}
+                      className="mt-0.5 flex-shrink-0"
+                      aria-label={checked ? 'Deseleccionar' : 'Seleccionar'}
+                    >
+                      {checked ? (
+                        <CheckSquare size={14} className="text-[#2361d8]" />
+                      ) : (
+                        <Square size={14} className="text-slate-300 hover:text-slate-500" />
+                      )}
+                    </button>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-[13px] font-medium text-slate-800">{n.title}</p>
+                        {estadoBadge(n.estado)}
+                      </div>
+                      <p className="mt-0.5 text-[11px] text-slate-400">
+                        {n.emisor} · {n.fecha ? fmtDate(n.fecha) : ''} · {n.tipo}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
