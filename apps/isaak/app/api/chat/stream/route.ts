@@ -138,10 +138,22 @@ export async function POST(req: NextRequest) {
   }).catch(() => null);
 
   let history: { role: 'user' | 'assistant'; content: string }[] = [];
+  // V1.3.3 — Summary de turnos antiguos (compactación). Para conversaciones
+  // largas, los turnos viejos se han comprimido en una sola entrada que se
+  // inyecta al system prompt — los últimos SHORT_MEMORY_TURNS van en raw.
+  let conversationSummaryBlock = '';
   if (conversation) {
-    history = await listRecentConversationMessages(conversation.id, SHORT_MEMORY_TURNS).catch(
-      () => []
-    );
+    const [recent, summary] = await Promise.all([
+      listRecentConversationMessages(conversation.id, SHORT_MEMORY_TURNS).catch(() => []),
+      import('@/app/lib/isaak-conversation-summarizer')
+        .then((mod) => mod.loadConversationSummary(conversation.id))
+        .catch(() => null),
+    ]);
+    history = recent;
+    if (summary) {
+      const { formatSummaryForPrompt } = await import('@/app/lib/isaak-conversation-summarizer');
+      conversationSummaryBlock = formatSummaryForPrompt(summary);
+    }
     await appendConversationMessage({
       conversationId: conversation.id,
       role: 'user',
@@ -326,14 +338,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const summarySuffix = conversationSummaryBlock ? `\n\n${conversationSummaryBlock}` : '';
   const systemPrompt = subAgentId
     ? `${getSubAgent(subAgentId).systemPrompt}${
         ragResult.factsBlock ? `\n\n${ragResult.factsBlock.trim()}` : ''
-      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}`
-    : buildAuthenticatedSystemPrompt(authenticated.promptContext, {
+      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${summarySuffix}`
+    : `${buildAuthenticatedSystemPrompt(authenticated.promptContext, {
         factsBlock: ragResult.factsBlock,
         fewShotBlock: fewShotResult.examplesBlock,
-      });
+      })}${summarySuffix}`;
 
   const { stream, metricsPromise } = streamIsaakChat({
     systemPrompt,
@@ -375,6 +388,24 @@ export async function POST(req: NextRequest) {
         }
       } catch (e) {
         console.error('[Isaak Auto-Memory] failed', e);
+      }
+      // V1.3.3 — Compactación. Si la conversación supera el umbral,
+      // regenera el summary cubriendo todos los turnos menos los últimos.
+      if (conversation?.id) {
+        try {
+          const { summarizeOlderTurns } = await import(
+            '@/app/lib/isaak-conversation-summarizer'
+          );
+          const sumResult = await summarizeOlderTurns(conversation.id);
+          if (sumResult.triggered) {
+            console.info('[Isaak Compaction]', {
+              conversationId: conversation.id,
+              ...sumResult,
+            });
+          }
+        } catch (e) {
+          console.error('[Isaak Compaction] failed', e);
+        }
       }
     })
     .catch((err) => {
