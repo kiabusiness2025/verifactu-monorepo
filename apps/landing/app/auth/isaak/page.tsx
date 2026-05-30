@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import { useToast } from '../../components/Toast';
-import { signInWithEmail, signInWithGoogle } from '../../lib/auth';
+import { signInWithEmail, signInWithGoogle, signInWithMicrosoft } from '../../lib/auth';
 import { auth } from '../../lib/firebase';
 import { mintSessionCookie } from '../../lib/serverSession';
 import { getAppUrl, getIsaakUrl } from '../../lib/urls';
@@ -182,6 +182,25 @@ export default function IsaakAuthPage() {
       }
     } catch {
       setError('Error al acceder con Google. Inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMicrosoft = async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const result = await signInWithMicrosoft({ rememberDevice: true });
+      if (result.error) {
+        setError(result.error.userMessage);
+        return;
+      }
+      if (auth?.currentUser) {
+        await handleSessionAndRedirect(auth.currentUser as User);
+      }
+    } catch {
+      setError('Error al acceder con Microsoft. Inténtalo de nuevo.');
     } finally {
       setIsLoading(false);
     }
@@ -396,6 +415,22 @@ export default function IsaakAuthPage() {
                   />
                 </svg>
                 Continuar con Google
+              </button>
+
+              {/* Microsoft */}
+              <button
+                type="button"
+                onClick={handleMicrosoft}
+                disabled={isLoading}
+                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/10 disabled:opacity-50"
+              >
+                <svg className="h-4 w-4 flex-shrink-0" viewBox="0 0 23 23" aria-hidden="true">
+                  <rect x="1" y="1" width="10" height="10" fill="#F25022" />
+                  <rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
+                  <rect x="1" y="12" width="10" height="10" fill="#00A4EF" />
+                  <rect x="12" y="12" width="10" height="10" fill="#FFB900" />
+                </svg>
+                Continuar con Microsoft
               </button>
             </>
           )}
