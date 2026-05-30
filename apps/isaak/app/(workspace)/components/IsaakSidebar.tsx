@@ -39,6 +39,7 @@ import {
   UserCircle2,
   Users,
   Users2,
+  Webhook,
 } from 'lucide-react';
 import { ISAAK_V1_LAUNCH } from '@/app/lib/feature-flags';
 
@@ -158,6 +159,7 @@ const PROFILE_MENU_V1 = [
   { href: '/advisor', label: 'Mis clientes (asesoría)', icon: Briefcase },
   { href: '/asesor-legal', label: 'Asesor legal', icon: Scale },
   { href: '/integrations', label: 'Integraciones', icon: Plug },
+  { href: '/webhooks', label: 'Webhooks', icon: Webhook },
   { href: '/compartir-isaak', label: 'Compartir Isaak', icon: Share2 },
   { href: '/ayuda', label: 'Centro de ayuda', icon: LifeBuoy },
 ] as const;
