@@ -152,6 +152,7 @@ const PROFILE_MENU_V1 = [
   { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
   { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
+  { href: '/bienvenida', label: 'Setup inicial', icon: Sparkles },
   { href: '/ajustes/notificaciones', label: 'Notificaciones', icon: Bell },
   { href: '/advisor', label: 'Mis clientes (asesoría)', icon: Briefcase },
   { href: '/asesor-legal', label: 'Asesor legal', icon: Scale },
