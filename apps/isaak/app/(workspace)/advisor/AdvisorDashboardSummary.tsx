@@ -39,7 +39,10 @@ type Dashboard = {
     nif: string | null;
     hasHolded: boolean;
     updatedAt: string;
+    modelos: string[];
+    nextDeadline: { modelo: string; daysUntil: number; date: string } | null;
   }>;
+  upcomingFilteredByProfiles?: boolean;
 };
 
 export default function AdvisorDashboardSummary() {
@@ -122,6 +125,14 @@ export default function AdvisorDashboardSummary() {
           <h3 className="flex items-center gap-1.5 text-[12px] font-bold text-slate-900">
             <CalendarClock className="h-3.5 w-3.5 text-amber-600" />
             Próximos vencimientos AEAT
+            {data.upcomingFilteredByProfiles && (
+              <span
+                title="Filtrados por los modelos que has marcado en cada cliente"
+                className="ml-1 rounded bg-[#2361d8]/10 px-1 text-[9px] font-bold text-[#2361d8]"
+              >
+                FILTRADOS
+              </span>
+            )}
           </h3>
           {data.upcomingDeadlines.length === 0 ? (
             <p className="mt-2 text-[11px] text-slate-500">
@@ -187,6 +198,20 @@ export default function AdvisorDashboardSummary() {
                       </span>
                     </div>
                   </div>
+                  {c.nextDeadline && (
+                    <span
+                      title={`Modelo ${c.nextDeadline.modelo} · ${c.nextDeadline.date}`}
+                      className={`hidden flex-shrink-0 rounded px-1 text-[9px] font-bold text-white sm:inline-flex ${
+                        c.nextDeadline.daysUntil <= 7
+                          ? 'bg-rose-500'
+                          : c.nextDeadline.daysUntil <= 14
+                            ? 'bg-amber-500'
+                            : 'bg-slate-400'
+                      }`}
+                    >
+                      {c.nextDeadline.modelo} · {c.nextDeadline.daysUntil}d
+                    </span>
+                  )}
                   <span className="flex flex-shrink-0 items-center gap-1 text-[10px] font-medium text-[#2361d8] opacity-0 transition group-hover:opacity-100">
                     {switching === c.id ? (
                       <Loader2 className="h-3 w-3 animate-spin" />

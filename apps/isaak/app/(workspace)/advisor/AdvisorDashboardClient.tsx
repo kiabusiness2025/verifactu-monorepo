@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Building2,
+  CalendarClock,
   ChevronRight,
   KeyRound,
   Loader2,
@@ -14,6 +15,15 @@ import {
   X,
 } from 'lucide-react';
 
+// V2.0.1 — modelos AEAT seleccionables manualmente por el asesor.
+const SELECTABLE_MODELOS: Array<{ code: string; label: string }> = [
+  { code: '303', label: 'IVA trimestral (303 / 390)' },
+  { code: '130', label: 'IRPF fraccionado autónomos (130)' },
+  { code: '200', label: 'Impuesto sociedades (200)' },
+  { code: '111', label: 'Retenciones trabajo (111 / 190)' },
+  { code: '115', label: 'Retenciones alquiler (115 / 180)' },
+];
+
 type AdvisorClient = {
   id: string;
   alias: string;
@@ -23,6 +33,7 @@ type AdvisorClient = {
   notes: string | null;
   isActive: boolean;
   createdAt: string;
+  modelos: string[];
 };
 
 type FormState = {
@@ -31,6 +42,7 @@ type FormState = {
   nif: string;
   holdedApiKey: string;
   notes: string;
+  modelos: string[];
 };
 
 const EMPTY_FORM: FormState = {
@@ -39,6 +51,7 @@ const EMPTY_FORM: FormState = {
   nif: '',
   holdedApiKey: '',
   notes: '',
+  modelos: [],
 };
 
 function ClientCard({
@@ -71,6 +84,19 @@ function ClientCard({
               <div className="mt-1 flex items-center gap-1 text-[11px] text-emerald-600">
                 <KeyRound size={11} />
                 Holded: {client.holdedKeyMasked}
+              </div>
+            )}
+            {client.modelos.length > 0 && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                <CalendarClock size={10} className="text-slate-400" />
+                {client.modelos.map((m) => (
+                  <span
+                    key={m}
+                    className="rounded bg-slate-100 px-1.5 text-[9px] font-bold text-slate-600"
+                  >
+                    {m}
+                  </span>
+                ))}
               </div>
             )}
           </div>
@@ -135,8 +161,17 @@ function ClientForm({
   }, []);
 
   const set =
-    (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    (field: 'alias' | 'companyName' | 'nif' | 'holdedApiKey' | 'notes') =>
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const toggleModelo = (code: string) =>
+    setForm((f) => ({
+      ...f,
+      modelos: f.modelos.includes(code)
+        ? f.modelos.filter((m) => m !== code)
+        : [...f.modelos, code],
+    }));
 
   return (
     <div className="rounded-2xl border border-[#2361d8]/20 bg-[#2361d8]/3 p-4">
@@ -194,6 +229,33 @@ function ClientForm({
             placeholder="Observaciones internas (no visibles al cliente)"
             className="w-full resize-none rounded-lg border border-slate-200 px-3 py-2 text-[13px] focus:border-[#2361d8] focus:outline-none focus:ring-1 focus:ring-[#2361d8]/30"
           />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="mb-1 block text-[11px] font-semibold text-slate-500">
+            Modelos AEAT que aplican a este cliente
+          </label>
+          <div className="flex flex-wrap gap-1.5">
+            {SELECTABLE_MODELOS.map((m) => {
+              const on = form.modelos.includes(m.code);
+              return (
+                <button
+                  key={m.code}
+                  type="button"
+                  onClick={() => toggleModelo(m.code)}
+                  className={`rounded-full border px-2.5 py-1 text-[11px] font-medium transition ${
+                    on
+                      ? 'border-[#2361d8] bg-[#2361d8] text-white'
+                      : 'border-slate-200 bg-white text-slate-600 hover:border-[#2361d8]/40 hover:text-[#2361d8]'
+                  }`}
+                >
+                  {m.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-[10px] text-slate-400">
+            Sirve para filtrar los próximos vencimientos AEAT de este cliente.
+          </p>
         </div>
       </div>
       <div className="mt-3 flex justify-end gap-2">
@@ -256,6 +318,14 @@ export default function AdvisorDashboardClient() {
         setError((d as { error?: string }).error ?? 'Error al crear el cliente');
         return;
       }
+      const created = (await res.json()) as { client?: { id: string } };
+      if (created.client?.id && form.modelos.length > 0) {
+        await fetch(`/api/isaak/advisor/clients/${created.client.id}/fiscal-profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modelos: form.modelos }),
+        });
+      }
       setShowForm(false);
       loadClients();
     } finally {
@@ -278,6 +348,11 @@ export default function AdvisorDashboardClient() {
         setError((d as { error?: string }).error ?? 'Error al actualizar');
         return;
       }
+      await fetch(`/api/isaak/advisor/clients/${editingClient.id}/fiscal-profile`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modelos: form.modelos }),
+      });
       setEditingClient(null);
       loadClients();
     } finally {
@@ -373,6 +448,7 @@ export default function AdvisorDashboardClient() {
                 nif: c.nif ?? '',
                 holdedApiKey: '',
                 notes: c.notes ?? '',
+                modelos: c.modelos,
               }}
               onSave={handleUpdate}
               onCancel={() => setEditingClient(null)}
