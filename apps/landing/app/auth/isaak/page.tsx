@@ -2,6 +2,7 @@
 
 import type { User } from 'firebase/auth';
 import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import Image from 'next/image';
 import { ArrowLeft, Mail, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -233,8 +234,15 @@ export default function IsaakAuthPage() {
 
         {/* Logo + title */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#2361d8]/20 ring-1 ring-[#2361d8]/30">
-            <Sparkles className="h-7 w-7 text-[#2361d8]" />
+          <div className="relative h-16 w-16 overflow-hidden rounded-full shadow-xl ring-2 ring-white/20">
+            <Image
+              src="/Isaak/isaak-avatar-verifactu.png"
+              alt="Isaak"
+              fill
+              sizes="64px"
+              className="object-cover"
+              priority
+            />
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight text-white">Acceder a Isaak</h1>
