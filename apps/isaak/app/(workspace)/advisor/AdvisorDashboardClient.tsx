@@ -11,11 +11,14 @@ import {
   Loader2,
   Pencil,
   Plus,
+  Sparkles,
   StickyNote,
   Trash2,
+  Upload,
   UserCheck,
   X,
 } from 'lucide-react';
+import { parseCsv } from '@/app/lib/isaak-csv';
 
 // V2.0.1 — modelos AEAT seleccionables manualmente por el asesor.
 const SELECTABLE_MODELOS: Array<{ code: string; label: string }> = [
@@ -359,11 +362,186 @@ function ClientForm({
   );
 }
 
+// V2.0.3 — Modal para importar clientes en masa desde CSV.
+const EXAMPLE_IMPORT_CSV = `alias,companyName,nif,modelos,notes
+ACME,ACME SL,B12345678,303|130|111,Cliente desde 2019
+BETA,BETA SLU,B87654321,303|111,Cierres trimestrales`;
+
+function BulkImportModal({
+  onClose,
+  onDone,
+}: {
+  onClose: () => void;
+  onDone: () => void;
+}) {
+  const [csv, setCsv] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<{
+    created: number;
+    skipped: Array<{ rowIndex: number; reason: string }>;
+  } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const preview = csv.trim() ? parseCsv(csv) : { headers: [], rows: [] };
+
+  const submit = async () => {
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/isaak/advisor/clients/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv }),
+      });
+      const json = (await res.json()) as {
+        created?: number;
+        skipped?: Array<{ rowIndex: number; reason: string }>;
+        error?: string;
+      };
+      if (!res.ok) {
+        setError(json.error ?? `error_${res.status}`);
+        return;
+      }
+      setResult({ created: json.created ?? 0, skipped: json.skipped ?? [] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'unknown_error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const closeAndRefresh = () => {
+    if (result && result.created > 0) onDone();
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4">
+      <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3">
+          <div className="flex items-center gap-2">
+            <Upload size={16} className="text-[#2361d8]" />
+            <h2 className="text-[14px] font-semibold text-[#011c67]">
+              Importar clientes en masa
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={closeAndRefresh}
+            className="rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-3 overflow-y-auto p-5">
+          {result ? (
+            <div className="space-y-2">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-[12px] text-emerald-700">
+                <strong>{result.created} clientes</strong> creados correctamente.
+              </div>
+              {result.skipped.length > 0 && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-[11px] text-amber-700">
+                  <p className="font-semibold">
+                    {result.skipped.length} fila{result.skipped.length !== 1 ? 's' : ''}{' '}
+                    omitida{result.skipped.length !== 1 ? 's' : ''}:
+                  </p>
+                  <ul className="mt-1 list-disc pl-4">
+                    {result.skipped.slice(0, 10).map((s) => (
+                      <li key={s.rowIndex}>
+                        Fila {s.rowIndex}: {s.reason}
+                      </li>
+                    ))}
+                    {result.skipped.length > 10 && (
+                      <li>… y {result.skipped.length - 10} más</li>
+                    )}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] text-slate-500">
+                  Columnas reconocidas:{' '}
+                  <code className="rounded bg-slate-100 px-1 text-[10px]">alias</code>{' '}
+                  (obligatoria),{' '}
+                  <code className="rounded bg-slate-100 px-1 text-[10px]">companyName</code>,{' '}
+                  <code className="rounded bg-slate-100 px-1 text-[10px]">nif</code>,{' '}
+                  <code className="rounded bg-slate-100 px-1 text-[10px]">holdedApiKey</code>,{' '}
+                  <code className="rounded bg-slate-100 px-1 text-[10px]">modelos</code> (303|130|111),{' '}
+                  <code className="rounded bg-slate-100 px-1 text-[10px]">notes</code>.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCsv(EXAMPLE_IMPORT_CSV)}
+                  className="flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[10px] font-medium text-slate-600 hover:bg-slate-50"
+                >
+                  <Sparkles size={10} />
+                  Ejemplo
+                </button>
+              </div>
+              <textarea
+                value={csv}
+                onChange={(e) => setCsv(e.target.value)}
+                rows={10}
+                placeholder={EXAMPLE_IMPORT_CSV}
+                className="w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-[11px] focus:border-[#2361d8] focus:outline-none focus:ring-1 focus:ring-[#2361d8]/20"
+              />
+              {preview.rows.length > 0 && (
+                <div className="text-[11px] text-emerald-700">
+                  <strong>{preview.rows.length}</strong> filas detectadas · columnas:{' '}
+                  {preview.headers.map((h) => (
+                    <span key={h} className="mr-1 rounded bg-slate-100 px-1 font-mono text-[10px]">
+                      {h}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {error && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] text-rose-700">
+                  {error}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        <div className="flex justify-end gap-2 border-t border-slate-100 px-5 py-3">
+          <button
+            type="button"
+            onClick={closeAndRefresh}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+          >
+            {result ? 'Cerrar' : 'Cancelar'}
+          </button>
+          {!result && (
+            <button
+              type="button"
+              onClick={() => void submit()}
+              disabled={submitting || preview.rows.length === 0}
+              className="flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#1d55c2] disabled:opacity-60"
+            >
+              {submitting ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <Upload size={11} />
+              )}
+              Importar {preview.rows.length > 0 ? preview.rows.length : ''}
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdvisorDashboardClient() {
   const router = useRouter();
   const [clients, setClients] = useState<AdvisorClient[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editingClient, setEditingClient] = useState<AdvisorClient | null>(null);
   const [saving, setSaving] = useState(false);
   const [switching, setSwitching] = useState<string | null>(null);
@@ -488,18 +666,35 @@ export default function AdvisorDashboardClient() {
           <strong className="text-[#011c67]">{clients.length}</strong> cliente
           {clients.length !== 1 ? 's' : ''}
         </span>
-        <button
-          type="button"
-          onClick={() => {
-            setShowForm(true);
-            setEditingClient(null);
-          }}
-          className="flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
-        >
-          <Plus size={12} />
-          Nuevo cliente
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-[#2361d8]/40 hover:text-[#2361d8]"
+          >
+            <Upload size={12} />
+            Importar CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowForm(true);
+              setEditingClient(null);
+            }}
+            className="flex items-center gap-1.5 rounded-lg bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
+          >
+            <Plus size={12} />
+            Nuevo cliente
+          </button>
+        </div>
       </div>
+
+      {showImport && (
+        <BulkImportModal
+          onClose={() => setShowImport(false)}
+          onDone={() => loadClients()}
+        />
+      )}
 
       <div className="flex-1 space-y-3 p-5">
         {error && (
