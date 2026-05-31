@@ -208,3 +208,9 @@ export type {
 } from './enable-banking';
 export { recordUsageEvent } from './usage-events';
 export type { CanonicalUsageEventType } from './usage-events';
+export { prefillFromPublicSources } from './company-prefill';
+export type {
+  CompanyPrefillInput,
+  CompanyPrefillResult,
+  CompanyPrefillSignal,
+} from './company-prefill';
