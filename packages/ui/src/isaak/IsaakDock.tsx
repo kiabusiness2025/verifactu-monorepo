@@ -186,6 +186,14 @@ function IsaakPanel({
   const exportApiPath = typeof context.exportApiPath === 'string' ? context.exportApiPath : null;
   const uploadApiPath = typeof context.uploadApiPath === 'string' ? context.uploadApiPath : null;
   const tenantId = typeof context.tenantId === 'string' ? context.tenantId : undefined;
+  // V3.3 (admin) — pathname para que el backend pueda adaptar el system prompt
+  // según la página donde está el admin. Resto de apps lo ignoran.
+  const dockPathname =
+    typeof context.pathname === 'string'
+      ? context.pathname
+      : typeof window !== 'undefined'
+        ? window.location.pathname
+        : undefined;
   const [input, setInput] = React.useState('');
   const [messages, setMessages] = React.useState<ChatMessage[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -250,6 +258,7 @@ function IsaakPanel({
           messages: [...history, { role: 'user', content }],
           document: document ? { filename: document.filename, text: document.text } : undefined,
           tenantId,
+          pathname: dockPathname,
         }),
       });
 
