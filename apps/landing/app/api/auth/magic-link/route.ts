@@ -199,11 +199,39 @@ export async function POST(req: NextRequest) {
 
     if (!sendRes.ok) {
       const errText = await sendRes.text();
-      console.error('[magic-link] Resend error', { status: sendRes.status, body: errText });
-      return NextResponse.json(
-        { error: 'No pudimos enviar el correo. Inténtalo de nuevo en unos minutos.' },
-        { status: 502 }
-      );
+      // Log estructurado para que el admin pueda identificar la causa exacta
+      // en Vercel Logs (Resend devuelve JSON con `name` y `message`).
+      console.error('[magic-link] Resend rejected email', {
+        status: sendRes.status,
+        from: fromEmail,
+        to: email,
+        body: errText.slice(0, 500),
+      });
+
+      // Mapeo de causas comunes para devolver mensaje útil al usuario.
+      let userError = 'No pudimos enviar el correo. Inténtalo de nuevo en unos minutos.';
+      let httpStatus = 502;
+      if (sendRes.status === 401 || sendRes.status === 403) {
+        // Auth/domain. El admin debe verificar el dominio en
+        // https://resend.com/domains o regenerar la API key.
+        userError =
+          'El servicio de correo no está configurado correctamente. Contacta con soporte (soporte@verifactu.business).';
+        httpStatus = 503;
+        // Hint específico si el cuerpo menciona "not verified"
+        if (/not verified|domain/i.test(errText)) {
+          console.error(
+            `[magic-link] Hint: dominio del 'from' (${fromEmail}) NO está verificado en Resend. ` +
+              `Verifícalo en https://resend.com/domains o cambia RESEND_FROM_ISAAK a un sender verificado.`,
+          );
+        }
+      } else if (sendRes.status === 429) {
+        userError = 'Demasiados envíos. Espera unos minutos e inténtalo de nuevo.';
+        httpStatus = 429;
+      }
+      // Para 422 y otros 4xx/5xx mantenemos el 502 genérico — el cuerpo
+      // queda en logs para diagnóstico, pero no exponemos al usuario.
+
+      return NextResponse.json({ error: userError }, { status: httpStatus });
     }
 
     return NextResponse.json({ ok: true });
