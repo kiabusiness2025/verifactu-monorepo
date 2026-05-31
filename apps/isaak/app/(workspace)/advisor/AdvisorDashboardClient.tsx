@@ -5,11 +5,13 @@ import { useRouter } from 'next/navigation';
 import {
   Building2,
   CalendarClock,
+  Check,
   ChevronRight,
   KeyRound,
   Loader2,
   Pencil,
   Plus,
+  StickyNote,
   Trash2,
   UserCheck,
   X,
@@ -59,14 +61,38 @@ function ClientCard({
   onEdit,
   onDelete,
   onSwitch,
+  onSaveNotes,
   switching,
 }: {
   client: AdvisorClient;
   onEdit: (client: AdvisorClient) => void;
   onDelete: (id: string) => void;
   onSwitch: (id: string) => void;
+  onSaveNotes: (id: string, notes: string) => Promise<void>;
   switching: string | null;
 }) {
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [draft, setDraft] = useState(client.notes ?? '');
+  const [savingNotes, setSavingNotes] = useState(false);
+
+  const startEditNotes = () => {
+    setDraft(client.notes ?? '');
+    setEditingNotes(true);
+  };
+  const cancelEditNotes = () => {
+    setDraft(client.notes ?? '');
+    setEditingNotes(false);
+  };
+  const commitNotes = async () => {
+    setSavingNotes(true);
+    try {
+      await onSaveNotes(client.id, draft.trim());
+      setEditingNotes(false);
+    } finally {
+      setSavingNotes(false);
+    }
+  };
+
   return (
     <div className="group rounded-2xl border border-slate-200 bg-white p-4 transition hover:border-[#2361d8]/40 hover:shadow-sm">
       <div className="flex items-start justify-between gap-3">
@@ -105,6 +131,58 @@ function ClientCard({
           size={16}
           className="mt-1 shrink-0 text-slate-300 group-hover:text-[#2361d8]"
         />
+      </div>
+
+      {/* Notas inline (V2.0.2) */}
+      <div className="mt-3 rounded-xl border border-amber-100 bg-amber-50/40 p-2">
+        {editingNotes ? (
+          <div>
+            <textarea
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              autoFocus
+              rows={2}
+              maxLength={2000}
+              placeholder="Observaciones internas: ciclo de pago, contacto principal, recordatorios…"
+              className="w-full resize-none rounded-md border border-amber-200 bg-white px-2 py-1 text-[12px] focus:border-amber-400 focus:outline-none"
+            />
+            <div className="mt-1 flex items-center justify-end gap-1.5">
+              <button
+                type="button"
+                onClick={cancelEditNotes}
+                className="rounded-md border border-slate-200 bg-white px-2 py-0.5 text-[10px] text-slate-600 hover:bg-slate-50"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void commitNotes()}
+                disabled={savingNotes}
+                className="flex items-center gap-1 rounded-md bg-amber-500 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-amber-600 disabled:opacity-60"
+              >
+                {savingNotes ? (
+                  <Loader2 size={9} className="animate-spin" />
+                ) : (
+                  <Check size={9} />
+                )}
+                Guardar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={startEditNotes}
+            className="flex w-full items-start gap-1.5 text-left text-[11px] text-slate-600 hover:text-slate-900"
+          >
+            <StickyNote size={11} className="mt-0.5 shrink-0 text-amber-500" />
+            {client.notes ? (
+              <span className="whitespace-pre-wrap leading-snug">{client.notes}</span>
+            ) : (
+              <span className="italic text-slate-400">Añadir nota interna…</span>
+            )}
+          </button>
+        )}
       </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -379,6 +457,21 @@ export default function AdvisorDashboardClient() {
     }
   };
 
+  // V2.0.2 — guarda únicamente el campo notes (mucho más ligero que el
+  // formulario completo de edición). Optimistic update.
+  const handleSaveNotes = async (id: string, notes: string) => {
+    setClients((prev) => prev.map((c) => (c.id === id ? { ...c, notes: notes || null } : c)));
+    try {
+      await fetch(`/api/isaak/advisor/clients/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes }),
+      });
+    } catch {
+      loadClients();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -461,6 +554,7 @@ export default function AdvisorDashboardClient() {
               onEdit={setEditingClient}
               onDelete={handleDelete}
               onSwitch={handleSwitch}
+              onSaveNotes={handleSaveNotes}
               switching={switching}
             />
           )
