@@ -72,14 +72,14 @@ async function loadData(filters: Filters) {
           where: { status: { in: ['active', 'trial', 'past_due', 'paused'] } },
           orderBy: { createdAt: 'desc' },
           take: 1,
-          include: { plan: { select: { name: true, code: true } } },
+          include: { plan: { select: { name: true, code: true, fixedMonthly: true } } },
         },
         externalConnections: {
           where: { provider: 'holded', connectionStatus: 'connected' },
           take: 1,
           select: { id: true, connectionStatus: true },
         },
-        _count: { select: { users: true } },
+        _count: { select: { users: true, isaakConversations: true } },
       },
     }),
     prisma.tenant.count({ where: tenantWhere }),
@@ -252,6 +252,9 @@ export default async function TenantsPage({ searchParams }: PageProps) {
               <th className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 md:table-cell">
                 Miembros
               </th>
+              <th className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 lg:table-cell">
+                Conv. Isaak
+              </th>
               <th className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 md:table-cell">
                 Última actividad
               </th>
@@ -263,7 +266,7 @@ export default async function TenantsPage({ searchParams }: PageProps) {
           <tbody className="divide-y divide-slate-100">
             {tenants.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
+                <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
                   No hay empresas que coincidan con los filtros.
                 </td>
               </tr>
@@ -285,14 +288,25 @@ export default async function TenantsPage({ searchParams }: PageProps) {
                     {t.subscription ? (
                       <>
                         <div className="font-medium text-slate-800">{t.subscription.plan.name}</div>
-                        <span
-                          className={`mt-0.5 inline-block rounded-full border px-1.5 py-0 text-[10px] font-semibold ${
-                            STATUS_BADGE[t.subscription.status] ??
-                            'border-slate-200 bg-slate-50 text-slate-600'
-                          }`}
-                        >
-                          {t.subscription.status}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`inline-block rounded-full border px-1.5 py-0 text-[10px] font-semibold ${
+                              STATUS_BADGE[t.subscription.status] ??
+                              'border-slate-200 bg-slate-50 text-slate-600'
+                            }`}
+                          >
+                            {t.subscription.status}
+                          </span>
+                          {Number(t.subscription.plan.fixedMonthly) > 0 && (
+                            <span className="text-[10px] text-slate-500">
+                              {new Intl.NumberFormat('es-ES', {
+                                style: 'currency',
+                                currency: 'EUR',
+                                maximumFractionDigits: 0,
+                              }).format(Number(t.subscription.plan.fixedMonthly))}/mes
+                            </span>
+                          )}
+                        </div>
                       </>
                     ) : (
                       <span className="text-[11px] text-slate-400 italic">sin suscripción</span>
@@ -309,6 +323,18 @@ export default async function TenantsPage({ searchParams }: PageProps) {
                   </td>
                   <td className="hidden px-4 py-3 text-sm text-slate-600 md:table-cell">
                     {t._count.users}
+                  </td>
+                  <td className="hidden px-4 py-3 text-sm text-slate-600 lg:table-cell">
+                    {t._count.isaakConversations > 0 ? (
+                      <Link
+                        href={`/tenants/${t.id}/isaak`}
+                        className="font-medium text-[#2361d8] hover:underline"
+                      >
+                        {t._count.isaakConversations}
+                      </Link>
+                    ) : (
+                      <span className="text-slate-300">0</span>
+                    )}
                   </td>
                   <td className="hidden px-4 py-3 text-xs text-slate-500 md:table-cell">
                     {t.lastActivity ? (
