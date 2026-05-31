@@ -6,6 +6,16 @@
 //   • allowWrites = false siempre (modo sandbox, nunca modifica datos demo)
 //   • Sin RAG ni few-shot (la empresa demo no tiene historial de usuario)
 //   • Cuota independiente: 20 msgs/día en feature='demo_chat'
+//
+// ⚠️ ALINEACIÓN CON /api/chat/stream:
+//   El frontend ya está alineado — ambas rutas usan IsaakChatSection (mismo
+//   componente, streamEndpoint diferente). Para el backend, cuando se añada
+//   una funcionalidad significativa a /api/chat/stream, evaluar si debe
+//   replicarse aquí:
+//     • Nuevos eventos SSE (artifact, tool-use-result, etc.) → sí, automático vía streamIsaakChat
+//     • Nuevas tool categories → depende (demo solo Holded read)
+//     • RAG / few-shot para la empresa demo → no necesario (no hay historial)
+//     • Sub-agentes → considerar si añade valor al demo
 
 import { NextRequest } from 'next/server';
 import {

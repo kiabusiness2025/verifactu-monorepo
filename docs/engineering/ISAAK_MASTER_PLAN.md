@@ -1,6 +1,6 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-29 (Artifacts ✅ · Tour page ✅ · Hero mockup ✅ · C-C cron 303 ✅ · F15 Telegram ✅)
+**Última actualización**: 2026-05-29 (Demo sandbox ✅ · Tour en hero ✅ · Hub 3 productos ✅ · Prisma Accelerate fix ✅)
 **Visión**: Isaak como **Robot Contable** autónomo — el empresario opera SOLO a través de Isaak; Isaak es la fuente de verdad, el Inspector AEAT preventivo y el ejecutor fiscal.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
