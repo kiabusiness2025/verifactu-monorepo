@@ -111,7 +111,7 @@ export default function SmokeTestsPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/admin/connectors/overview" className="hover:text-slate-700">
+            <Link href="/connectors/overview" className="hover:text-slate-700">
               Conectores
             </Link>
             <span>/</span>

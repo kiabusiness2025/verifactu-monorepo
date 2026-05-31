@@ -485,13 +485,13 @@ export default function ConnectorsOverviewPage() {
         </p>
         <div className="flex items-center gap-2">
           <Link
-            href="/admin/connectors/smoke-tests"
+            href="/connectors/smoke-tests"
             className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-soft hover:bg-slate-50"
           >
             🧪 Tests ChatGPT →
           </Link>
           <Link
-            href="/admin/connectors/claude-smoke-tests"
+            href="/connectors/claude-smoke-tests"
             className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 shadow-soft hover:bg-amber-100"
           >
             🧪 Tests Claude →
