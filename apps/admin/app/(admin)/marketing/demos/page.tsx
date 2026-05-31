@@ -140,7 +140,7 @@ export default function DemoRequestsPage() {
                   <td className="px-4 py-3 text-slate-500">{formatDate(item.createdAt)}</td>
                   <td className="px-4 py-3 text-right">
                     <Link
-                      href={`/demo-requests/${item.id}`}
+                      href={`/marketing/demos/${item.id}`}
                       className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-100"
                     >
                       Ver

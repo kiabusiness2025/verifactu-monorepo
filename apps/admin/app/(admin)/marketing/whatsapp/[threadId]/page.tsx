@@ -233,7 +233,7 @@ export default function ThreadDetailPage() {
     return (
       <div className="p-6 text-center text-slate-500">
         Conversación no encontrada.{' '}
-        <Link href="/whatsapp" className="text-emerald-600 underline">
+        <Link href="/marketing/whatsapp" className="text-emerald-600 underline">
           Volver
         </Link>
       </div>
@@ -258,7 +258,7 @@ export default function ThreadDetailPage() {
     <div className="flex flex-col h-[calc(100vh-56px)]">
       {/* Header */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-slate-200 bg-white shrink-0">
-        <Link href="/whatsapp" className="text-slate-400 hover:text-slate-700 transition-colors">
+        <Link href="/marketing/whatsapp" className="text-slate-400 hover:text-slate-700 transition-colors">
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1 min-w-0">

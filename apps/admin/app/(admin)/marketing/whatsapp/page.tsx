@@ -73,7 +73,7 @@ export default function WhatsAppPage() {
         <h1 className="text-2xl font-semibold text-slate-900">WhatsApp</h1>
         <div className="flex items-center gap-3">
           <Link
-            href="/whatsapp/templates"
+            href="/marketing/whatsapp/templates"
             className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-800 transition-colors"
           >
             <Tag className="h-4 w-4" />
@@ -183,7 +183,7 @@ export default function WhatsAppPage() {
                 >
                   <td className="px-4 py-3">
                     <Link
-                      href={`/whatsapp/${t.id}`}
+                      href={`/marketing/whatsapp/${t.id}`}
                       className="font-mono text-emerald-700 hover:underline"
                     >
                       {t.phoneNumber}

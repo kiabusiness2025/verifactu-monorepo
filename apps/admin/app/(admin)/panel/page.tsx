@@ -275,7 +275,7 @@ export default async function AdminPanelPage() {
             {pendingDemos > 0 && (
               <li>
                 —{' '}
-                <Link href="/demo-requests" className="underline hover:text-amber-900">
+                <Link href="/marketing/demos" className="underline hover:text-amber-900">
                   {pendingDemos} demo{pendingDemos > 1 ? 's' : ''} pendiente
                   {pendingDemos > 1 ? 's' : ''} de respuesta
                 </Link>
@@ -332,14 +332,14 @@ export default async function AdminPanelPage() {
             label="Demos pendientes"
             value={pendingDemos}
             sub="solicitudes sin atender"
-            href="/demo-requests"
+            href="/marketing/demos"
             variant={pendingDemos > 0 ? 'amber' : 'default'}
           />
           <MetricCard
             label="Sesiones activas"
             value={summary.activeSessions}
             sub="en este momento"
-            href="/sessions"
+            href="/connectors/sessions"
           />
           <MetricCard
             label="Conectores OK"
