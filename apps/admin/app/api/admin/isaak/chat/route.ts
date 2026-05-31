@@ -18,6 +18,7 @@ import {
   type ToolInput,
 } from '@/lib/isaakTools';
 import { requireAdmin } from '@/lib/adminAuth';
+import { checkCopilotRateLimit } from '@/lib/isaakCopilotAudit';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -39,7 +40,20 @@ function buildSystemPrompt(doc?: DocumentContext, tenantId?: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    await requireAdmin(req);
+    const admin = await requireAdmin(req);
+
+    // V3.4 — Rate limit: max 60 mensajes/h por admin (in-memory).
+    const rl = checkCopilotRateLimit(admin.email);
+    if (!rl.allowed) {
+      const resetIn = Math.ceil((rl.resetAt - Date.now()) / 60_000);
+      return NextResponse.json(
+        {
+          role: 'assistant',
+          content: `Has alcanzado el límite de mensajes del copiloto (60/hora). Vuelve a intentarlo en ${resetIn} min.`,
+        },
+        { status: 429 },
+      );
+    }
 
     const body = (await req.json()) as {
       messages?: Message[];
@@ -125,7 +139,11 @@ export async function POST(req: NextRequest) {
         toolUseBlocks.map(async (block) => ({
           type: 'tool_result' as const,
           tool_use_id: block.id,
-          content: await runTool(block.name, block.input),
+          content: await runTool(block.name, block.input, {
+            adminEmail: admin.email,
+            adminUserId: admin.userId,
+            tenantId: tenantId ?? null,
+          }),
         }))
       );
 

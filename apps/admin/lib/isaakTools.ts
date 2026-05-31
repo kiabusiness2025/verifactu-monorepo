@@ -6,6 +6,13 @@
 import { createDecipheriv, createHash } from 'crypto';
 import { query } from '@/lib/db';
 import prisma from '@/lib/prisma';
+import { logCopilotAction } from '@/lib/isaakCopilotAudit';
+
+export type RunToolContext = {
+  adminEmail: string;
+  adminUserId: string | null;
+  tenantId?: string | null;
+};
 
 const HOLDED_API_BASE = 'https://api.holded.com';
 
@@ -419,7 +426,11 @@ export const TOOLS = [
   },
 ];
 
-export async function runTool(name: string, input: ToolInput): Promise<string> {
+export async function runTool(
+  name: string,
+  input: ToolInput,
+  context?: RunToolContext,
+): Promise<string> {
   if (name === 'get_activity_stats') {
     const [activityRows, statusRows] = await Promise.all([
       query<{ active_30d: number; active_7d: number; queries_today: number; dormant: number }>(
@@ -1642,19 +1653,44 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
 
   // ── V3.1.a — Action tools dispatcher ──────────────────────────────────────
   if (name === 'admin_extend_trial') {
-    return runExtendTrial(input);
+    return withAudit(name, input, context, () => runExtendTrial(input));
   }
   if (name === 'admin_change_plan') {
-    return runChangePlan(input);
+    return withAudit(name, input, context, () => runChangePlan(input));
   }
   if (name === 'admin_cancel_subscription') {
-    return runCancelSubscription(input);
+    return withAudit(name, input, context, () => runCancelSubscription(input));
   }
   if (name === 'admin_impersonate_user') {
-    return runImpersonateUser(input);
+    return withAudit(name, input, context, () => runImpersonateUser(input));
   }
 
   return JSON.stringify({ error: `Herramienta desconocida: ${name}` });
+}
+
+// V3.4 — Audit log: solo cuando la acción se EJECUTA (confirm=true).
+async function withAudit(
+  toolName: string,
+  input: ToolInput,
+  context: RunToolContext | undefined,
+  exec: () => Promise<string>,
+): Promise<string> {
+  const result = await exec();
+  if (input.confirm === true && context?.adminEmail) {
+    const tenantId =
+      typeof input.tenant_id === 'string'
+        ? input.tenant_id
+        : context.tenantId ?? null;
+    void logCopilotAction({
+      tool: toolName,
+      args: input,
+      adminEmail: context.adminEmail,
+      adminUserId: context.adminUserId,
+      tenantId,
+      resultPreview: result,
+    });
+  }
+  return result;
 }
 
 // ── V3.1.a — Implementaciones acciones admin ────────────────────────────────
