@@ -161,8 +161,17 @@ function MetricCard({
 }
 
 export default async function AdminPanelPage() {
-  const [data, pendingDemos, connectorsStatus, activityStats, refreshedAt, platformApps] =
-    await Promise.all([
+  const [
+    data,
+    pendingDemos,
+    connectorsStatus,
+    activityStats,
+    refreshedAt,
+    platformApps,
+    activeSubs,
+    pastDueCount,
+    trialCount,
+  ] = await Promise.all([
       getHoldedDirectPanelData({
         userLimit: 0,
         tenantLimit: 0,
@@ -211,6 +220,14 @@ export default async function AdminPanelPage() {
       ),
       Promise.resolve(new Date().toISOString()),
       fetchPlatformHealth(),
+      prisma.tenantSubscription
+        .findMany({
+          where: { status: 'active' },
+          include: { plan: { select: { fixedMonthly: true } } },
+        })
+        .catch(() => []),
+      prisma.tenantSubscription.count({ where: { status: 'past_due' } }).catch(() => 0),
+      prisma.tenantSubscription.count({ where: { status: 'trial' } }).catch(() => 0),
     ]);
 
   const { summary } = data;
@@ -223,6 +240,16 @@ export default async function AdminPanelPage() {
     dormant: 0,
   };
   const platformDown = platformApps.filter((a) => !a.ok).length;
+  const mrr = activeSubs.reduce(
+    (acc: number, s: { plan: { fixedMonthly: unknown } }) => acc + Number(s.plan.fixedMonthly),
+    0,
+  );
+  const fmtMoney = (n: number) =>
+    new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 0,
+    }).format(n);
 
   return (
     <main className="space-y-5 px-4 py-5 sm:px-6 lg:px-8">
@@ -247,7 +274,8 @@ export default async function AdminPanelPage() {
         pendingDemos > 0 ||
         errConnectors > 0 ||
         activity.dormant > 0 ||
-        platformDown > 0) && (
+        platformDown > 0 ||
+        pastDueCount > 0) && (
         <section className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-3">
           <p className="text-xs font-semibold text-amber-800">Atención requerida</p>
           <ul className="mt-1 space-y-0.5 text-xs text-amber-700">
@@ -299,6 +327,14 @@ export default async function AdminPanelPage() {
                 (ver estado abajo)
               </li>
             )}
+            {pastDueCount > 0 && (
+              <li>
+                —{' '}
+                <Link href="/subscriptions?status=past_due" className="underline hover:text-amber-900">
+                  {pastDueCount} suscripción{pastDueCount > 1 ? 'es' : ''} en impago
+                </Link>
+              </li>
+            )}
           </ul>
         </section>
       )}
@@ -311,7 +347,21 @@ export default async function AdminPanelPage() {
 
       {/* KPIs — cada tarjeta enlaza a su sección */}
       <section>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+          <MetricCard
+            label="MRR"
+            value={fmtMoney(mrr)}
+            sub={`${activeSubs.length} activas · ${trialCount} trial`}
+            href="/subscriptions"
+            variant="blue"
+          />
+          <MetricCard
+            label="Impagos"
+            value={pastDueCount}
+            sub="en past_due"
+            href="/subscriptions?status=past_due"
+            variant={pastDueCount > 0 ? 'amber' : 'default'}
+          />
           <MetricCard
             label="Activos 30d"
             value={activity.active_30d}
