@@ -3,6 +3,7 @@ import { getHoldedSession } from '@/app/lib/holded-session';
 import { encryptHoldedSecret, maskSecret } from '@/app/lib/holded-integration';
 import { prisma } from '@/app/lib/prisma';
 import { getAllClientFiscalProfiles } from '@/app/lib/isaak-advisor-fiscal';
+import { logAdvisorEvent } from '@/app/lib/isaak-advisor-audit';
 
 export const runtime = 'nodejs';
 
@@ -67,6 +68,12 @@ export async function POST(req: NextRequest) {
       isActive: true,
       createdAt: true,
     },
+  });
+
+  void logAdvisorEvent(session.tenantId, 'client_created', {
+    clientId: client.id,
+    alias: client.alias,
+    hasHolded: !!client.holdedKeyMasked,
   });
 
   return NextResponse.json({ client }, { status: 201 });

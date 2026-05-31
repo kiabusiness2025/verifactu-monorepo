@@ -13,6 +13,7 @@ import {
   getClientFiscalProfile,
   setClientFiscalProfile,
 } from '@/app/lib/isaak-advisor-fiscal';
+import { logAdvisorEvent } from '@/app/lib/isaak-advisor-audit';
 
 export const runtime = 'nodejs';
 
@@ -65,5 +66,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
   await setClientFiscalProfile(session.tenantId, id, modelos);
 
   const updated = await getClientFiscalProfile(session.tenantId, id);
+  void logAdvisorEvent(session.tenantId, 'fiscal_profile_updated', {
+    clientId: id,
+    modelos: updated?.modelos ?? [],
+  });
   return NextResponse.json({ modelos: updated?.modelos ?? [] });
 }

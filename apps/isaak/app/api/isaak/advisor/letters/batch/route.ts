@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { buildLettersZip } from '@/app/lib/isaak-letter-batch';
+import { logAdvisorEvent } from '@/app/lib/isaak-advisor-audit';
 
 export const runtime = 'nodejs';
 
@@ -83,6 +84,11 @@ export async function POST(req: NextRequest) {
     senderName: optionalString(body.senderName),
     senderNif: optionalString(body.senderNif),
     filenameField: optionalString(body.filenameField),
+  });
+
+  void logAdvisorEvent(session.tenantId, 'letters_generated', {
+    count: body.rows.length,
+    subject: optionalString(body.subject) ?? null,
   });
 
   const ts = new Date().toISOString().slice(0, 10);

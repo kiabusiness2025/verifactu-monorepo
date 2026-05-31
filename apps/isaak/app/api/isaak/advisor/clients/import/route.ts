@@ -22,6 +22,7 @@ import {
   ADVISOR_SELECTABLE_MODELOS,
   setClientFiscalProfile,
 } from '@/app/lib/isaak-advisor-fiscal';
+import { logAdvisorEvent } from '@/app/lib/isaak-advisor-audit';
 
 export const runtime = 'nodejs';
 
@@ -120,6 +121,13 @@ export async function POST(req: NextRequest) {
         reason: err instanceof Error ? err.message.slice(0, 120) : 'db_error',
       });
     }
+  }
+
+  if (created.length > 0) {
+    void logAdvisorEvent(session.tenantId, 'clients_imported', {
+      created: created.length,
+      skipped: skipped.length,
+    });
   }
 
   return NextResponse.json({

@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Building2,
   CalendarClock,
+  ClipboardList,
   KeyRound,
   Loader2,
   Mail,
@@ -115,6 +116,14 @@ export default function AdvisorDashboardSummary() {
         >
           <Mail className="h-3.5 w-3.5" />
           Cartas masivas
+          <ArrowRight className="h-3 w-3" />
+        </Link>
+        <Link
+          href="/advisor/audit"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-slate-700 transition hover:border-[#2361d8]/40 hover:bg-[#2361d8]/5 hover:text-[#2361d8]"
+        >
+          <ClipboardList className="h-3.5 w-3.5" />
+          Actividad
           <ArrowRight className="h-3 w-3" />
         </Link>
       </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { setActiveAdvisorClientId, clearActiveAdvisorClientId } from '@/app/lib/advisor-session';
 import { prisma } from '@/app/lib/prisma';
+import { logAdvisorEvent } from '@/app/lib/isaak-advisor-audit';
 
 export const runtime = 'nodejs';
 
@@ -26,5 +27,9 @@ export async function POST(_req: NextRequest, { params }: Params) {
   }
 
   await setActiveAdvisorClientId(id);
+  void logAdvisorEvent(session.tenantId, 'client_switched', {
+    clientId: id,
+    alias: client.alias,
+  });
   return NextResponse.json({ active: id, alias: client.alias, companyName: client.companyName });
 }
