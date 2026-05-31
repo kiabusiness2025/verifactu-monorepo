@@ -5,6 +5,7 @@
 
 import { createDecipheriv, createHash } from 'crypto';
 import { query } from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 const HOLDED_API_BASE = 'https://api.holded.com';
 
@@ -111,7 +112,28 @@ Extrae headers y rows de los datos devueltos por la herramienta.
 
 9. Comparativa de períodos: cuando uses get_tenant_period_comparison, presenta una tabla con columnas (Concepto | Período actual | Período anterior | Variación €| Variación %) y resalta en negrita las variaciones superiores al 20%.
 
-10. Vista general fiscal de tenants: cuando uses get_tenants_fiscal_overview, presenta los resultados como tabla Markdown (Nombre | Canales | API Key | Última actividad | Queries 30d). Resalta en **negrita** los tenants con queries_30d = 0 (dormidos). Si hay tenants con API key disponible, sugiere usar get_tenant_fiscal_analysis para los más relevantes.`;
+10. Vista general fiscal de tenants: cuando uses get_tenants_fiscal_overview, presenta los resultados como tabla Markdown (Nombre | Canales | API Key | Última actividad | Queries 30d). Resalta en **negrita** los tenants con queries_30d = 0 (dormidos). Si hay tenants con API key disponible, sugiere usar get_tenant_fiscal_analysis para los más relevantes.
+
+PROTOCOLO DE CONFIRMACIÓN PARA ACCIONES (admin_*):
+
+Las herramientas que empiezan por admin_* MODIFICAN datos (extender trial,
+cambiar plan, cancelar suscripción, suplantar usuario). NUNCA las ejecutes
+en el primer turno: tu obligación es PROPONER, no decidir.
+
+Protocolo obligatorio:
+1) Primero llama la herramienta SIN el parámetro \`confirm\` (o con confirm=false).
+   La tool devolverá un objeto con \`preview\` describiendo qué pasaría.
+2) Muestra el preview al admin con un resumen claro (tenant, plan actual,
+   cambio propuesto, impacto en MRR si aplica) y pregunta literalmente
+   "¿Confirmas?".
+3) Solo si el admin responde afirmativamente ("sí", "confirma", "adelante",
+   "hazlo"), vuelve a llamar la MISMA tool con \`confirm: true\`.
+4) Tras ejecutar, muestra el resultado de la operación + el tenant/usuario
+   afectado en una línea concisa.
+
+Si el admin pide cancelar el plan, NO asumas el tenant: confirma el tenantId
+exacto antes de simular. Si estamos en contexto de un tenant
+(\`CONTEXTO ACTUAL: tenant X\`), usa ese por defecto pero CONFÍRMALO.`;
 
 export type ToolInput = Record<string, unknown>;
 
@@ -127,7 +149,12 @@ export type ToolName =
   | 'get_tenant_unbooked_alerts'
   | 'get_tenant_period_comparison'
   | 'get_tenant_modelo_303'
-  | 'get_tenants_fiscal_overview';
+  | 'get_tenants_fiscal_overview'
+  // V3.1.a — Action tools (con confirm flow)
+  | 'admin_extend_trial'
+  | 'admin_change_plan'
+  | 'admin_cancel_subscription'
+  | 'admin_impersonate_user';
 
 export const TOOLS = [
   {
@@ -329,6 +356,65 @@ export const TOOLS = [
         },
       },
       required: [],
+    },
+  },
+  // ── V3.1.a — Action tools (con confirm flow) ─────────────────────────────
+  {
+    name: 'admin_extend_trial' as ToolName,
+    description:
+      'Extiende el período de trial de un tenant N días. Solo aplica a suscripciones en estado trial o active. NO ejecutes sin confirm=true: primero llama sin confirm para obtener el preview, pregunta al admin, y solo entonces vuelve con confirm=true.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'UUID del tenant' },
+        days: { type: 'number', description: 'Días a extender (1-90)' },
+        confirm: { type: 'boolean', description: 'true para ejecutar; false/omitir para preview' },
+      },
+      required: ['tenant_id', 'days'],
+    },
+  },
+  {
+    name: 'admin_change_plan' as ToolName,
+    description:
+      'Cambia el plan activo de la suscripción de un tenant. Recibe el planId numérico (consultable en /subscriptions/stripe). NO ejecutes sin confirm=true.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'UUID del tenant' },
+        plan_id: { type: 'number', description: 'ID numérico del Plan destino' },
+        confirm: { type: 'boolean', description: 'true para ejecutar; false/omitir para preview' },
+      },
+      required: ['tenant_id', 'plan_id'],
+    },
+  },
+  {
+    name: 'admin_cancel_subscription' as ToolName,
+    description:
+      'Cancela la suscripción activa de un tenant marcándola para cancelación al final del período actual (cancel_at_period_end=true). El tenant sigue activo hasta currentPeriodEnd. NO ejecutes sin confirm=true.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        tenant_id: { type: 'string', description: 'UUID del tenant' },
+        confirm: { type: 'boolean', description: 'true para ejecutar; false/omitir para preview' },
+      },
+      required: ['tenant_id'],
+    },
+  },
+  {
+    name: 'admin_impersonate_user' as ToolName,
+    description:
+      'Genera un enlace de suplantación: al abrirlo, el admin abre la app del usuario como si fuera él (para soporte). Auditado. NO ejecutes sin confirm=true.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        user_id: { type: 'string', description: 'UUID del usuario a suplantar' },
+        reason: {
+          type: 'string',
+          description: 'Motivo breve de la suplantación (para audit log)',
+        },
+        confirm: { type: 'boolean', description: 'true para ejecutar; false/omitir para preview' },
+      },
+      required: ['user_id'],
     },
   },
 ];
@@ -1554,7 +1640,198 @@ export async function runTool(name: string, input: ToolInput): Promise<string> {
     });
   }
 
+  // ── V3.1.a — Action tools dispatcher ──────────────────────────────────────
+  if (name === 'admin_extend_trial') {
+    return runExtendTrial(input);
+  }
+  if (name === 'admin_change_plan') {
+    return runChangePlan(input);
+  }
+  if (name === 'admin_cancel_subscription') {
+    return runCancelSubscription(input);
+  }
+  if (name === 'admin_impersonate_user') {
+    return runImpersonateUser(input);
+  }
+
   return JSON.stringify({ error: `Herramienta desconocida: ${name}` });
+}
+
+// ── V3.1.a — Implementaciones acciones admin ────────────────────────────────
+
+async function runExtendTrial(input: ToolInput): Promise<string> {
+  const tenantId = typeof input.tenant_id === 'string' ? input.tenant_id : '';
+  const days = typeof input.days === 'number' ? Math.floor(input.days) : 0;
+  const confirm = input.confirm === true;
+  if (!tenantId || days < 1 || days > 90) {
+    return JSON.stringify({ error: 'tenant_id obligatorio y days entre 1 y 90' });
+  }
+
+  const sub = await prisma.tenantSubscription.findFirst({
+    where: { tenantId, status: { in: ['active', 'trial', 'past_due'] } },
+    orderBy: { createdAt: 'desc' },
+    include: { plan: { select: { name: true, code: true } }, tenant: { select: { name: true } } },
+  });
+  if (!sub) {
+    return JSON.stringify({ error: 'El tenant no tiene suscripción activa' });
+  }
+
+  const base =
+    sub.trialEndsAt && sub.trialEndsAt > new Date() ? sub.trialEndsAt : new Date();
+  const newTrialEndsAt = new Date(base.getTime() + days * 86_400_000);
+
+  if (!confirm) {
+    return JSON.stringify({
+      preview: true,
+      action: 'extend_trial',
+      tenant: { id: tenantId, name: sub.tenant.name },
+      current: {
+        plan: sub.plan.name,
+        status: sub.status,
+        trialEndsAt: sub.trialEndsAt?.toISOString() ?? null,
+      },
+      changes: {
+        newTrialEndsAt: newTrialEndsAt.toISOString(),
+        newStatus: 'trial',
+        addedDays: days,
+      },
+      message: `Esto extendería el trial de "${sub.tenant.name}" hasta ${newTrialEndsAt.toLocaleDateString('es-ES')} (${days}d más).`,
+    });
+  }
+
+  const updated = await prisma.tenantSubscription.update({
+    where: { id: sub.id },
+    data: { trialEndsAt: newTrialEndsAt, status: 'trial' },
+  });
+  return JSON.stringify({
+    executed: true,
+    action: 'extend_trial',
+    tenant: { id: tenantId, name: sub.tenant.name },
+    newTrialEndsAt: updated.trialEndsAt?.toISOString() ?? null,
+    message: `Trial de "${sub.tenant.name}" extendido ${days}d hasta ${updated.trialEndsAt?.toLocaleDateString('es-ES')}.`,
+  });
+}
+
+async function runChangePlan(input: ToolInput): Promise<string> {
+  const tenantId = typeof input.tenant_id === 'string' ? input.tenant_id : '';
+  const planId = typeof input.plan_id === 'number' ? Math.floor(input.plan_id) : 0;
+  const confirm = input.confirm === true;
+  if (!tenantId || planId < 1) {
+    return JSON.stringify({ error: 'tenant_id y plan_id obligatorios' });
+  }
+
+  const [sub, newPlan] = await Promise.all([
+    prisma.tenantSubscription.findFirst({
+      where: { tenantId, status: { in: ['active', 'trial', 'past_due'] } },
+      orderBy: { createdAt: 'desc' },
+      include: { plan: true, tenant: { select: { name: true } } },
+    }),
+    prisma.plan.findUnique({ where: { id: planId } }),
+  ]);
+  if (!sub) return JSON.stringify({ error: 'El tenant no tiene suscripción activa' });
+  if (!newPlan) return JSON.stringify({ error: `No existe Plan id=${planId}` });
+
+  if (!confirm) {
+    return JSON.stringify({
+      preview: true,
+      action: 'change_plan',
+      tenant: { id: tenantId, name: sub.tenant.name },
+      current: { plan: sub.plan.name, monthly: Number(sub.plan.fixedMonthly) },
+      next: { plan: newPlan.name, monthly: Number(newPlan.fixedMonthly) },
+      delta: Number(newPlan.fixedMonthly) - Number(sub.plan.fixedMonthly),
+      message: `Esto cambiaría a "${sub.tenant.name}" del plan ${sub.plan.name} (${Number(sub.plan.fixedMonthly)}€/mes) al plan ${newPlan.name} (${Number(newPlan.fixedMonthly)}€/mes).`,
+    });
+  }
+
+  await prisma.tenantSubscription.update({
+    where: { id: sub.id },
+    data: { planId },
+  });
+  return JSON.stringify({
+    executed: true,
+    action: 'change_plan',
+    tenant: { id: tenantId, name: sub.tenant.name },
+    newPlan: newPlan.name,
+    newMonthly: Number(newPlan.fixedMonthly),
+    message: `Plan de "${sub.tenant.name}" cambiado a ${newPlan.name} (${Number(newPlan.fixedMonthly)}€/mes).`,
+  });
+}
+
+async function runCancelSubscription(input: ToolInput): Promise<string> {
+  const tenantId = typeof input.tenant_id === 'string' ? input.tenant_id : '';
+  const confirm = input.confirm === true;
+  if (!tenantId) return JSON.stringify({ error: 'tenant_id obligatorio' });
+
+  const sub = await prisma.tenantSubscription.findFirst({
+    where: { tenantId, status: { in: ['active', 'trial', 'past_due'] } },
+    orderBy: { createdAt: 'desc' },
+    include: { plan: { select: { name: true } }, tenant: { select: { name: true } } },
+  });
+  if (!sub) return JSON.stringify({ error: 'El tenant no tiene suscripción activa' });
+
+  if (!confirm) {
+    return JSON.stringify({
+      preview: true,
+      action: 'cancel_subscription',
+      tenant: { id: tenantId, name: sub.tenant.name },
+      current: {
+        plan: sub.plan.name,
+        status: sub.status,
+        currentPeriodEnd: sub.currentPeriodEnd?.toISOString() ?? null,
+        cancelAtPeriodEnd: sub.cancelAtPeriodEnd ?? false,
+      },
+      message: `Esto cancelaría la suscripción de "${sub.tenant.name}" (${sub.plan.name}) al final del período actual${
+        sub.currentPeriodEnd
+          ? ` (${sub.currentPeriodEnd.toLocaleDateString('es-ES')})`
+          : ''
+      }. No es un hard-delete: el acceso se mantiene hasta esa fecha.`,
+    });
+  }
+
+  await prisma.tenantSubscription.update({
+    where: { id: sub.id },
+    data: { cancelAtPeriodEnd: true },
+  });
+  return JSON.stringify({
+    executed: true,
+    action: 'cancel_subscription',
+    tenant: { id: tenantId, name: sub.tenant.name },
+    message: `Suscripción de "${sub.tenant.name}" marcada para cancelación al final del período actual.`,
+  });
+}
+
+async function runImpersonateUser(input: ToolInput): Promise<string> {
+  const userId = typeof input.user_id === 'string' ? input.user_id : '';
+  const reason = typeof input.reason === 'string' ? input.reason.slice(0, 200) : 'no especificado';
+  const confirm = input.confirm === true;
+  if (!userId) return JSON.stringify({ error: 'user_id obligatorio' });
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true, name: true },
+  });
+  if (!user) return JSON.stringify({ error: 'Usuario no encontrado' });
+
+  if (!confirm) {
+    return JSON.stringify({
+      preview: true,
+      action: 'impersonate_user',
+      user: { id: user.id, email: user.email, name: user.name },
+      reason,
+      message: `Esto generará un enlace para abrir Isaak suplantando a ${user.email}. Quedará auditado.`,
+    });
+  }
+
+  // El enlace lleva al panel admin con un endpoint que setea la cookie y
+  // redirige a Isaak. Mantenemos la lógica existente intacta.
+  return JSON.stringify({
+    executed: true,
+    action: 'impersonate_user',
+    user: { id: user.id, email: user.email, name: user.name },
+    reason,
+    impersonateUrl: `/users/${user.id}#impersonate`,
+    message: `Listo. Ve a la ficha de ${user.email} y pulsa "Abrir Isaak suplantando" para iniciar la sesión.`,
+  });
 }
 
 // Anthropic wire types
