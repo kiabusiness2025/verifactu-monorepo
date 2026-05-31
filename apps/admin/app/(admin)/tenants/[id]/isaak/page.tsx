@@ -77,6 +77,29 @@ function Sparkline({ data }: { data: DailyMsg[] }) {
   );
 }
 
+type MemoryFact = {
+  id: string;
+  category: string;
+  factKey: string;
+  valueJson: unknown;
+  scope: string;
+  source: string;
+  confidence: number | null;
+  createdAt: string;
+};
+type LongTermMemoryEntry = {
+  id: string;
+  fact: string;
+  factType: string;
+  source: string;
+  createdAt: string;
+};
+type MemoryResponse = {
+  facts: MemoryFact[];
+  longTerm: LongTermMemoryEntry[];
+  totals: { facts: number; longTerm: number };
+};
+
 export default function TenantIsaakPage() {
   const params = useParams<{ id: string }>();
   const id = params?.id ?? '';
@@ -91,6 +114,18 @@ export default function TenantIsaakPage() {
       .then((res) => setStats(res))
       .catch(() => setStats(null))
       .finally(() => setLoadingStats(false));
+  }, [id]);
+
+  // ── Memory (V2.C.4) ──────────────────────────────────────────
+  const [memory, setMemory] = useState<MemoryResponse | null>(null);
+  const [loadingMemory, setLoadingMemory] = useState(true);
+
+  useEffect(() => {
+    setLoadingMemory(true);
+    void adminGet<MemoryResponse>(`/api/admin/tenants/${id}/isaak-memory`)
+      .then((res) => setMemory(res))
+      .catch(() => setMemory(null))
+      .finally(() => setLoadingMemory(false));
   }, [id]);
 
   // ── White-label config ───────────────────────────────────────
@@ -239,6 +274,96 @@ export default function TenantIsaakPage() {
               )}
             </div>
           </>
+        )}
+      </section>
+
+      {/* ── Memoria persistente (V2.C.4) ──────────────────────── */}
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-soft">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Memoria persistente</h2>
+            <p className="text-xs text-slate-500">
+              Hechos estructurados (IsaakMemoryFact) y memoria de largo plazo con embeddings
+              (IsaakLongTermMemory) que Isaak ha recopilado sobre este tenant.
+            </p>
+          </div>
+          {memory && (
+            <div className="flex items-center gap-2 text-[11px] text-slate-500">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold">
+                {memory.totals.facts} hechos
+              </span>
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold">
+                {memory.totals.longTerm} long-term
+              </span>
+            </div>
+          )}
+        </div>
+
+        {loadingMemory ? (
+          <p className="text-xs text-slate-400">Cargando memoria…</p>
+        ) : !memory || (memory.facts.length === 0 && memory.longTerm.length === 0) ? (
+          <p className="text-xs text-slate-400 italic">Sin memoria registrada para este tenant.</p>
+        ) : (
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Hechos estructurados ({memory.facts.length} mostrados)
+              </h3>
+              <ul className="space-y-1.5 max-h-72 overflow-y-auto">
+                {memory.facts.map((f) => (
+                  <li
+                    key={f.id}
+                    className="rounded-lg border border-slate-100 bg-slate-50/40 px-2.5 py-1.5 text-[11px]"
+                  >
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="font-mono text-[10px] font-semibold text-slate-700">
+                        {f.category}.{f.factKey}
+                      </span>
+                      <span className="text-[9px] text-slate-400">{f.source}</span>
+                    </div>
+                    <div className="mt-0.5 break-all text-slate-600">
+                      {(() => {
+                        try {
+                          const v = f.valueJson;
+                          if (typeof v === 'string') return v;
+                          return JSON.stringify(v);
+                        } catch {
+                          return '—';
+                        }
+                      })()}
+                    </div>
+                  </li>
+                ))}
+                {memory.facts.length === 0 && (
+                  <li className="text-[11px] italic text-slate-400">Sin hechos</li>
+                )}
+              </ul>
+            </div>
+            <div>
+              <h3 className="mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Long-term memory ({memory.longTerm.length} mostrados)
+              </h3>
+              <ul className="space-y-1.5 max-h-72 overflow-y-auto">
+                {memory.longTerm.map((m) => (
+                  <li
+                    key={m.id}
+                    className="rounded-lg border border-slate-100 bg-slate-50/40 px-2.5 py-1.5 text-[11px]"
+                  >
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span className="rounded bg-violet-100 px-1.5 text-[9px] font-bold uppercase text-violet-700">
+                        {m.factType}
+                      </span>
+                      <span className="text-[9px] text-slate-400">{m.source}</span>
+                    </div>
+                    <div className="mt-0.5 text-slate-600 line-clamp-3">{m.fact}</div>
+                  </li>
+                ))}
+                {memory.longTerm.length === 0 && (
+                  <li className="text-[11px] italic text-slate-400">Sin long-term</li>
+                )}
+              </ul>
+            </div>
+          </div>
         )}
       </section>
 
