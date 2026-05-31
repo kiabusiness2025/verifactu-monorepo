@@ -78,9 +78,12 @@ export function getLandingUrl(): string {
 
 /**
  * Get the standalone Isaak site URL.
+ *
+ * Fallback: isaak.app (dominio canónico actual). En entornos donde
+ * NEXT_PUBLIC_ISAAK_SITE_URL esté seteado (Vercel) prevalece ese.
  */
 export function getIsaakUrl(): string {
-  const fallback = 'https://isaak.verifactu.business';
+  const fallback = 'https://isaak.app';
 
   if (typeof window === 'undefined') {
     return normalizeBaseUrl(process.env.NEXT_PUBLIC_ISAAK_SITE_URL, fallback);

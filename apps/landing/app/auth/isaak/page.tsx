@@ -223,9 +223,10 @@ export default function IsaakAuthPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#0b1a40] px-4 py-8">
       <div className="w-full max-w-sm">
-        {/* Back link */}
+        {/* Back link — vuelve a la home de Isaak (isaak.app o el dominio configurado),
+            NO a verifactu.business. El usuario aterrizó aquí desde Isaak. */}
         <Link
-          href="https://verifactu.business"
+          href={getIsaakUrl()}
           className="mb-6 flex items-center gap-2 text-sm text-slate-500 hover:text-slate-400 transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -375,7 +376,12 @@ export default function IsaakAuthPage() {
                   </button>
                   <div className="flex items-center justify-between text-xs">
                     <Link
-                      href="/auth/signup"
+                      href={(() => {
+                        const sp = new URLSearchParams();
+                        sp.set('source', source);
+                        if (nextParam) sp.set('next', nextParam);
+                        return `/auth/signup?${sp.toString()}`;
+                      })()}
                       className="text-slate-500 hover:text-slate-400 underline"
                     >
                       Crear cuenta
