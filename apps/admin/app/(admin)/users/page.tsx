@@ -76,7 +76,20 @@ export default async function UsersPage({ searchParams }: PageProps) {
           where: { status: { not: 'disabled' } },
           select: {
             tenant: {
-              select: { id: true, name: true, legalName: true },
+              select: {
+                id: true,
+                name: true,
+                legalName: true,
+                tenantSubscriptions: {
+                  where: { status: { in: ['active', 'trial', 'past_due', 'paused'] } },
+                  orderBy: { createdAt: 'desc' },
+                  take: 1,
+                  select: {
+                    status: true,
+                    plan: { select: { name: true, code: true } },
+                  },
+                },
+              },
             },
           },
           take: 3,
@@ -146,6 +159,9 @@ export default async function UsersPage({ searchParams }: PageProps) {
               <th className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 sm:table-cell">
                 Empresas
               </th>
+              <th className="hidden px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 md:table-cell">
+                Plan
+              </th>
               <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                 Holded
               </th>
@@ -157,7 +173,7 @@ export default async function UsersPage({ searchParams }: PageProps) {
           <tbody className="divide-y divide-slate-100">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-4 py-10 text-center text-sm text-slate-400">
+                <td colSpan={5} className="px-4 py-10 text-center text-sm text-slate-400">
                   No se encontraron usuarios
                   {search ? ` para "${search}"` : ''}.
                 </td>
@@ -168,6 +184,10 @@ export default async function UsersPage({ searchParams }: PageProps) {
                 const tenants = user.tenantMemberships.map(
                   (m) => m.tenant.legalName ?? m.tenant.name
                 );
+                // Plan principal: el primer tenant con suscripción activa/trial.
+                const principalSub = user.tenantMemberships
+                  .map((m) => m.tenant.tenantSubscriptions[0])
+                  .find(Boolean);
                 return (
                   <tr key={user.id} className="transition-colors hover:bg-slate-50">
                     <td className="px-4 py-3">
@@ -199,6 +219,28 @@ export default async function UsersPage({ searchParams }: PageProps) {
                           <span className="text-[11px] text-slate-300">—</span>
                         )}
                       </div>
+                    </td>
+                    <td className="hidden px-4 py-3 md:table-cell">
+                      {principalSub ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[12px] font-medium text-slate-700">
+                            {principalSub.plan.name}
+                          </span>
+                          <span
+                            className={`rounded-full border px-1.5 py-0 text-[9px] font-semibold ${
+                              principalSub.status === 'active'
+                                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                : principalSub.status === 'trial'
+                                  ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                  : 'border-rose-200 bg-rose-50 text-rose-700'
+                            }`}
+                          >
+                            {principalSub.status}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-[11px] text-slate-300">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1.5">

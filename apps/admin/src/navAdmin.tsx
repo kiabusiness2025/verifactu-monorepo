@@ -38,10 +38,6 @@ export const navAdmin = [
     label: 'Marketing',
     href: '/marketing',
     icon: <Megaphone className="h-4 w-4" />,
-    match: (p: string) =>
-      p.startsWith('/marketing') ||
-      p.startsWith('/admin-marketing') ||
-      p.startsWith('/demo-requests') ||
-      p.startsWith('/whatsapp'),
+    match: (p: string) => p.startsWith('/marketing'),
   },
 ];

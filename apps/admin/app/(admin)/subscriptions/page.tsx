@@ -176,11 +176,19 @@ export default async function SubscriptionsPage({ searchParams }: PageProps) {
 
   return (
     <main className="space-y-5">
-      <header>
-        <h1 className="text-2xl font-semibold text-slate-900">Suscripciones</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Vista global de todas las suscripciones del producto (Stripe + plan asignado).
-        </p>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-semibold text-slate-900">Suscripciones</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Vista global de todas las suscripciones del producto (Stripe + plan asignado).
+          </p>
+        </div>
+        <Link
+          href="/subscriptions/stripe"
+          className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Estado Stripe →
+        </Link>
       </header>
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-5">
