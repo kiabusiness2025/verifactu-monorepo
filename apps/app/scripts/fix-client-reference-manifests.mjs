@@ -27,11 +27,36 @@ async function walk(dirPath) {
 }
 
 async function main() {
-  const appServerDir = path.join(process.cwd(), ".next", "server", "app");
+  const standaloneAppServerDir = path.join(
+    process.cwd(),
+    ".next",
+    "standalone",
+    path.relative(path.resolve(process.cwd(), "..", ".."), process.cwd()),
+    ".next",
+    "server",
+    "app"
+  );
 
+  const appServerDirs = [
+    path.join(process.cwd(), ".next", "server", "app"),
+    standaloneAppServerDir,
+  ];
+
+  let created = 0;
+
+  for (const appServerDir of appServerDirs) {
+    created += await fixAppServerDir(appServerDir);
+  }
+
+  if (created > 0) {
+    console.log(`[postbuild] Created ${created} missing page_client-reference-manifest.js files`);
+  }
+}
+
+async function fixAppServerDir(appServerDir) {
   if (!(await fileExists(appServerDir))) {
     // Not an app-router build output; nothing to do.
-    return;
+    return 0;
   }
 
   const allFiles = await walk(appServerDir);
@@ -59,9 +84,7 @@ async function main() {
     created += 1;
   }
 
-  if (created > 0) {
-    console.log(`[postbuild] Created ${created} missing page_client-reference-manifest.js files`);
-  }
+  return created;
 }
 
 await main();
