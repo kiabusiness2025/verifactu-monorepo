@@ -1,5 +1,12 @@
 import { holdedAdapter } from '@/lib/integrations/accounting';
 
+export type HoldedMcpJsonSchema = {
+  type: 'object';
+  properties: Record<string, unknown>;
+  required?: string[];
+  additionalProperties?: boolean;
+};
+
 export type HoldedMcpToolDefinition = {
   name: string;
   title: string;
@@ -10,12 +17,22 @@ export type HoldedMcpToolDefinition = {
     idempotentHint?: boolean;
     openWorldHint?: boolean;
   };
-  inputSchema: {
-    type: 'object';
-    properties: Record<string, unknown>;
-    required?: string[];
-    additionalProperties?: boolean;
-  };
+  inputSchema: HoldedMcpJsonSchema;
+  /**
+   * V3.H (2026-06-01) — Per MCP spec draft, tools MAY declare an `outputSchema`
+   * describing the shape of `structuredContent` returned in tools/call results.
+   * OpenAI App Review recommends it ("Add an outputSchema so models can better
+   * understand this tool's results"). The route returns `structuredContent` as
+   * the raw handler payload (see formatToolResult in app/api/mcp/holded/route.ts)
+   * so the schema must describe that object.
+   *
+   * Optional — only present on the public preset tools where OpenAI/Anthropic
+   * reviewers benefit from the additional structure. Other tools keep the
+   * minimal definition.
+   *
+   * Spec: https://modelcontextprotocol.io/specification/draft/server/tools#tool
+   */
+  outputSchema?: HoldedMcpJsonSchema;
 };
 
 type HoldedMcpToolHandler = (
@@ -238,11 +255,220 @@ function writeSchema(extraProperties: Record<string, unknown>, required: string[
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// V3.H (2026-06-01) — outputSchema reusables para las 10 tools del preset
+// `openai_review_invoicing_v1`. Spec MCP draft, sección "Tool":
+// https://modelcontextprotocol.io/specification/draft/server/tools#tool
+//
+// Estos schemas describen `structuredContent` (la forma del payload JSON que
+// devuelve el handler). El formatToolResult de route.ts ya expone el handler
+// payload directamente como structuredContent, así que el schema describe
+// {items}, {item}, {created}, {pdf}, etc. con campos concretos para que el
+// modelo (ChatGPT, Claude) pueda predecir la estructura sin tener que
+// inferirla de ejemplos.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const errorOutputSchemaFragment = {
+  error: {
+    type: 'string',
+    description:
+      'Present when the resource was not found or another expected condition prevented the read. The structured tool result is still valid; the caller should branch on `error` before trusting other fields.',
+  },
+  code: { type: 'string' },
+  id: { type: 'string' },
+} as const;
+
+const holdedInvoiceItemSchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string', description: 'Internal Holded cuid (24 hex chars).' },
+    docNumber: {
+      type: 'string',
+      description: 'Visible invoice number (e.g. "F0030"). Stable across edits.',
+    },
+    contactId: { type: 'string' },
+    contactName: { type: 'string' },
+    date: {
+      type: 'number',
+      description: 'Issue date as Unix timestamp in seconds.',
+    },
+    dueDate: { type: 'number' },
+    total: { type: 'number' },
+    subtotal: { type: 'number' },
+    tax: { type: 'number' },
+    currency: { type: 'string' },
+    status: { type: 'string', description: 'Holded status string (e.g. "approved", "paid").' },
+    description: { type: 'string' },
+  },
+  additionalProperties: true,
+};
+
+const holdedDocumentItemSchema = {
+  type: 'object' as const,
+  properties: {
+    ...holdedInvoiceItemSchema.properties,
+    docType: {
+      type: 'string',
+      description: 'Document type (invoice, estimate, purchase, purchaseorder, purchaserefund).',
+    },
+  },
+  additionalProperties: true,
+};
+
+const holdedContactItemSchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    tradeName: { type: 'string' },
+    code: { type: 'string' },
+    email: { type: 'string' },
+    phone: { type: 'string' },
+    mobile: { type: 'string' },
+    vatnumber: { type: 'string', description: 'Spanish tax id (CIF/NIF/NIE).' },
+    type: { type: 'string', description: '"client", "supplier" or "lead".' },
+    clientRecord: {
+      type: ['number', 'object', 'null'],
+      description: 'Truthy when this contact has active sales activity.',
+    },
+    supplierRecord: {
+      type: ['number', 'object', 'null'],
+      description: 'Truthy when this contact has active purchase activity.',
+    },
+  },
+  additionalProperties: true,
+};
+
+const holdedAccountItemSchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string' },
+    num: { type: ['string', 'number'], description: 'Chart of accounts code (e.g. "70500000").' },
+    name: { type: 'string' },
+    debe: { type: 'number', description: 'Debit balance.' },
+    haber: { type: 'number', description: 'Credit balance.' },
+    saldo: { type: 'number', description: 'Net balance (debe - haber).' },
+  },
+  additionalProperties: true,
+};
+
+const holdedJournalEntrySchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string' },
+    number: { type: ['string', 'number'], description: 'Entry number, used for ordering.' },
+    date: { type: 'number', description: 'Entry date as Unix seconds.' },
+    description: { type: 'string' },
+    lines: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          account: { type: ['string', 'number'] },
+          debit: { type: 'number' },
+          credit: { type: 'number' },
+          description: { type: 'string' },
+        },
+        additionalProperties: true,
+      },
+    },
+  },
+  additionalProperties: true,
+};
+
+function listOutputSchema(
+  itemSchema: typeof holdedInvoiceItemSchema | typeof holdedDocumentItemSchema | typeof holdedContactItemSchema | typeof holdedAccountItemSchema | typeof holdedJournalEntrySchema
+): HoldedMcpJsonSchema {
+  return {
+    type: 'object',
+    properties: {
+      items: {
+        type: 'array',
+        items: itemSchema,
+        description:
+          'Array of items returned by Holded for this page. Empty array means no records matched the query (not an error). Pagination is client-side; call with higher `page` numbers to advance.',
+      },
+      history: {
+        type: 'object',
+        description:
+          'Present when the connector fell back to the historical scan (year/from/to). Includes `total` and `scannedPages` so the caller knows whether the listing is exhaustive.',
+        additionalProperties: true,
+      },
+    },
+    required: ['items'],
+    additionalProperties: true,
+  };
+}
+
+function singleOutputSchema(
+  itemSchema: typeof holdedInvoiceItemSchema | typeof holdedDocumentItemSchema | typeof holdedContactItemSchema
+): HoldedMcpJsonSchema {
+  return {
+    type: 'object',
+    properties: {
+      item: itemSchema,
+      ...errorOutputSchemaFragment,
+    },
+    additionalProperties: true,
+  };
+}
+
+const pdfOutputSchema: HoldedMcpJsonSchema = {
+  type: 'object',
+  properties: {
+    pdf: {
+      type: 'object',
+      properties: {
+        base64: {
+          type: 'string',
+          description:
+            'PDF rendering encoded in base64. Validated against the %PDF- magic bytes before being returned; an HTTP 200 with a JSON error body from Holded is rejected with a meaningful error message instead of being passed through as a fake PDF.',
+        },
+        contentType: { type: 'string', description: 'Always "application/pdf" on success.' },
+        fileName: {
+          type: ['string', 'null'],
+          description: 'Recommended filename (defaults to `{docType}-{documentId}.pdf`).',
+        },
+        size: { type: 'number', description: 'Byte size of the decoded PDF.' },
+      },
+      required: ['base64', 'contentType', 'size'],
+      additionalProperties: true,
+    },
+  },
+  required: ['pdf'],
+  additionalProperties: true,
+};
+
+const createInvoiceDraftOutputSchema: HoldedMcpJsonSchema = {
+  type: 'object',
+  properties: {
+    created: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description:
+            'Internal Holded cuid of the newly created draft. The draft is created with approveDoc:false hardcoded — never sent, finalized, charged, emailed, nor AEAT/Verifactu-submitted.',
+        },
+        docNumber: { type: 'string' },
+        status: {
+          type: 'string',
+          description: 'Should be "draft" or equivalent on creation. User confirms in Holded UI.',
+        },
+      },
+      additionalProperties: true,
+    },
+  },
+  required: ['created'],
+  additionalProperties: true,
+};
+
 function readTool(
   name: string,
   title: string,
   description: string,
-  inputSchema: HoldedMcpToolDefinition['inputSchema']
+  inputSchema: HoldedMcpToolDefinition['inputSchema'],
+  outputSchema?: HoldedMcpToolDefinition['outputSchema']
 ): HoldedMcpToolDefinition {
   return {
     name,
@@ -250,6 +476,7 @@ function readTool(
     description,
     annotations: readOnlyAnnotations,
     inputSchema,
+    ...(outputSchema ? { outputSchema } : {}),
   };
 }
 
@@ -258,7 +485,7 @@ function writeTool(
   title: string,
   description: string,
   inputSchema: HoldedMcpToolDefinition['inputSchema'],
-  options?: { destructiveHint?: boolean }
+  options?: { destructiveHint?: boolean; outputSchema?: HoldedMcpToolDefinition['outputSchema'] }
 ): HoldedMcpToolDefinition {
   return {
     name,
@@ -266,6 +493,7 @@ function writeTool(
     description,
     annotations: writeAnnotations(options?.destructiveHint ?? false),
     inputSchema,
+    ...(options?.outputSchema ? { outputSchema: options.outputSchema } : {}),
   };
 }
 
@@ -1985,7 +2213,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
       year: yearProperty,
       from: isoDateProperty,
       to: isoDateProperty,
-    })
+    }),
+    listOutputSchema(holdedInvoiceItemSchema)
   ),
   readTool(
     'holded_get_invoice',
@@ -2002,7 +2231,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         ),
       },
       ['invoiceId']
-    )
+    ),
+    singleOutputSchema(holdedInvoiceItemSchema)
   ),
   readTool(
     'holded_list_documents',
@@ -2018,7 +2248,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
       year: yearProperty,
       from: isoDateProperty,
       to: isoDateProperty,
-    })
+    }),
+    listOutputSchema(holdedDocumentItemSchema)
   ),
   readTool(
     'holded_get_document',
@@ -2034,7 +2265,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         ),
       },
       ['docType', 'documentId']
-    )
+    ),
+    singleOutputSchema(holdedDocumentItemSchema)
   ),
   writeTool(
     'holded_create_document',
@@ -2129,14 +2361,16 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_get_document_pdf',
     'Get a document PDF from Holded',
-    'Retrieve a Holded document PDF as base64 together with filename and content type metadata.',
+    'Retrieve a Holded document PDF as base64 together with filename and content type metadata. ' +
+      'The connector validates the PDF magic bytes ("%PDF-") and content-type before returning so that a Holded JSON error body cannot be passed back as a fake PDF; if the document has no PDF attached, the call fails with a meaningful error instead of returning bogus base64.',
     simpleSchema(
       {
         docType: stringProperty('The Holded document type, for example invoice or estimate.'),
         documentId: stringProperty('The Holded document identifier.'),
       },
       ['docType', 'documentId']
-    )
+    ),
+    pdfOutputSchema
   ),
   writeTool(
     'holded_update_document_tracking',
@@ -2240,7 +2474,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
       type: stringProperty(
         'Optional contact role filter. Valid values: "client" (customers only — clientRecord present), "supplier" (suppliers only — supplierRecord present), "lead" (sales leads). Omit to list all contacts regardless of role.'
       ),
-    })
+    }),
+    listOutputSchema(holdedContactItemSchema)
   ),
   readTool(
     'holded_get_contact',
@@ -2258,7 +2493,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         ),
       },
       ['contactId']
-    )
+    ),
+    singleOutputSchema(holdedContactItemSchema)
   ),
   readTool(
     'holded_list_contact_attachments',
@@ -2831,12 +3067,14 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         description:
           'Whether to include empty accounting accounts. Defaults to true to avoid partial chart-of-accounts views.',
       },
-    })
+    }),
+    listOutputSchema(holdedAccountItemSchema)
   ),
   readTool(
     'holded_list_daily_ledger',
     'List daily ledger entries in Holded',
-    'List daily ledger entries from Holded for a bounded accounting window. Provide the range as either ISO dates (startDate / endDate, format YYYY-MM-DD — preferred for assistants) or Unix seconds (startTimestamp / endTimestamp). Either pair is required because this endpoint rejects unbounded requests in production tenants.',
+    'List daily ledger entries from Holded for a bounded accounting window. Provide the range as either ISO dates (startDate / endDate, format YYYY-MM-DD — preferred for assistants) or Unix seconds (startTimestamp / endTimestamp). Either pair is required because this endpoint rejects unbounded requests in production tenants. ' +
+      'Entries are returned sorted by date ascending (oldest first) then by entry number ascending — a stable, reconciliation-friendly order. Holded\'s native response is in Mongo insertion order without guarantees; the connector reorders client-side before returning.',
     listSchemaWithRequired(
       {
         startDate: stringProperty(
@@ -2849,7 +3087,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         endTimestamp: unixTimestampProperty,
       },
       []
-    )
+    ),
+    listOutputSchema(holdedJournalEntrySchema)
   ),
   writeTool(
     'holded_create_daily_ledger_entry',
@@ -3011,7 +3250,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         ),
       },
       []
-    )
+    ),
+    { outputSchema: createInvoiceDraftOutputSchema }
   ),
 ];
 
