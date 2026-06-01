@@ -253,18 +253,38 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
 export function registerAccountingTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'get_chart_of_accounts',
-    'Returns the Holded chart of accounts. Read-only.',
+    'Returns the Holded chart of accounts with the balances pre-computed by Holded. Read-only. ' +
+      '⚠ KNOWN HOLDED API LIMITATION (V3.G.1 audit 2026-06-01): the balances returned by Holded\'s /chartofaccounts endpoint reflect only DOCUMENTAL entries (those auto-generated from invoices, purchases, payments). Manual journal entries created directly in Holded\'s accounting module — amortizations, regularizations, year-end closings, capital contributions — are NOT included in these aggregates. ' +
+      'For an accurate, complete balance you MUST re-aggregate the full journal yourself: call get_journal with a wide date range that covers all fiscal years of interest, paginate to an empty page, and sum debit/credit by account code. Compare against Holded\'s built-in "Libro diario" export to verify completeness.',
     {},
     readOnlyAnnotations('get_chart_of_accounts'),
     async () => {
       const data = await getClient().getChartOfAccounts();
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                accounts: data,
+                holdedApiCaveat:
+                  'Balances reflect documental entries only. Manual journal entries (amortization, regularization, closings) are NOT included. Re-aggregate via get_journal for an accurate total.',
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
     }
   );
 
   server.tool(
     'get_journal',
-    'Returns Holded journal entries (daily ledger) for a date range. Read-only. PAGINATED — always check the `pagination.likelyHasMorePages` flag and fetch all pages before computing aggregates. If you omit starttmp and endtmp, the connector defaults to the current calendar year (Jan 1 to today).',
+    'Returns Holded journal entries (daily ledger) for a date range. Read-only. ' +
+      'PAGINATED — `pagination.likelyHasMorePages` is true whenever the page is non-empty (the connector cannot deterministically detect the last page from Holded, so it always asks you to probe page+1; an empty array confirms the end). MUST drain all pages before computing aggregates. ' +
+      'If you omit starttmp and endtmp, the connector defaults to the current calendar year (Jan 1 to today). Entries are returned sorted by date ascending then by entry number ascending. ' +
+      '⚠ KNOWN HOLDED API CAVEAT (V3.G.1 audit 2026-06-01): in some tenants Holded\'s /dailyledger endpoint returns fewer entries than Holded\'s native "Libro diario" UI export, missing manual entries (amortizations, regularizations, year-end closings, capital contributions). If you compute an aggregate (account balance, total debit/credit) and the result does not match the user\'s expectation, advise the user to verify against Holded\'s native Libro diario export — the API may be omitting entries that the UI shows.',
     {
       starttmp: dateInputOptional().describe(
         'Start date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to Jan 1 of the current calendar year.'

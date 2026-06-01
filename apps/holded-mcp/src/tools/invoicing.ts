@@ -181,6 +181,50 @@ export function registerInvoicingTools(
       ({ documentId }) => documentId,
       async ({ docType, documentId }) => {
         const buf = await getClient().getDocumentPdf(docType, documentId);
+
+        // V3.G.1 (auditoría 2026-06-01): valida magic bytes %PDF- antes de
+        // exponer el buffer como application/pdf. Holded devuelve 200 OK +
+        // body JSON ({"status":0,"info":"No attachments found"}) cuando el
+        // documento no tiene PDF — antes el handler retornaba 42 bytes con
+        // contentType: 'application/pdf' mentiroso y el consumidor recibía
+        // basura. Mismo patrón ya cerrado en apps/app y apps/isaak.
+        const magic = buf.subarray(0, 5).toString('latin1');
+        const isPdfMagic = magic.startsWith('%PDF-');
+
+        if (!isPdfMagic) {
+          let parsedError: string | null = null;
+          try {
+            const body = buf.toString('utf8');
+            const parsed = JSON.parse(body) as {
+              info?: string;
+              error?: string;
+              message?: string;
+            };
+            parsedError = parsed?.info ?? parsed?.error ?? parsed?.message ?? null;
+          } catch {
+            // Cuerpo no es JSON parseable — dejamos parsedError null.
+          }
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    error: 'no_attachment',
+                    docType,
+                    documentId,
+                    message:
+                      parsedError ||
+                      `Holded returned no PDF for ${docType}/${documentId}. The document may not have an attached PDF or may not be in a printable state.`,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {

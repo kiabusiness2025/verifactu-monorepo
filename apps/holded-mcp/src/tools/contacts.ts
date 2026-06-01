@@ -73,11 +73,33 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
       const raw = await getClient().listContacts(filtered);
       const all = Array.isArray(raw) ? raw : [];
 
+      // V3.G.1 (auditoría 2026-06-01): el server-side filter de Holded
+      // `type=supplier` devuelve también contactos con supplierRecord:0
+      // (rol histórico, ya no activo). Para que list_contacts respete el
+      // rol pedido, aplicamos un filtro client-side adicional:
+      //   - type=supplier → exigimos supplierRecord truthy (>0 o objeto)
+      //   - type=client → exigimos clientRecord truthy
+      //   - type=debtor/creditor → respetamos el filtro server-side
+      // Mismo patrón ya aplicado en apps/app/lib/integrations/accounting.ts.
+      const filteredByRole = (() => {
+        if (type !== 'supplier' && type !== 'client') return all;
+        return all.filter((c) => {
+          const record =
+            type === 'supplier'
+              ? (c as { supplierRecord?: unknown }).supplierRecord
+              : (c as { clientRecord?: unknown }).clientRecord;
+          if (record === undefined || record === null) return true;
+          if (typeof record === 'number') return record > 0;
+          if (typeof record === 'object') return Object.keys(record).length > 0;
+          return Boolean(record);
+        });
+      })();
+
       // Holded no garantiza orden en /contacts (regresion documentada en demo
       // 12-may-2026, task #102): dos clientes pidieron "los 5 mas recientes" y
       // recibieron conjuntos completamente disjuntos. Ordenamos client-side por
       // createdAt antes de paginar para que el modelo reciba un orden predecible.
-      const sorted = [...all].sort((a, b) => {
+      const sorted = [...filteredByRole].sort((a, b) => {
         const ca = readCreatedAt(a);
         const cb = readCreatedAt(b);
         return sort === 'oldest' ? ca - cb : cb - ca;

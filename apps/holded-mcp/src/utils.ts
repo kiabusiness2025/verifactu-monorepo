@@ -113,19 +113,25 @@ export function buildPaginationMeta(
   page: number = 1,
   pageSize: number = 250
 ): PaginationMeta {
-  // V3.G (auditoría 2026-06-01): default era 500 con un comentario equivocado
-  // ("Holded /dailyledger devuelve por defecto hasta ~500 por pagina"). En
-  // realidad Holded devuelve hasta ~250 por pagina en /dailyledger (testeado
-  // contra Nova Gestion: pagina 1 = 250, pagina 2 = 219 más). El default 500
-  // hacia que `itemsInPage >= pageSize` evaluase a false cuando la pagina
-  // venia con 250 (la realidad), el modelo dejaba de paginar y se perdia
-  // medio diario — exactamente el bug reportado por el usuario en una
-  // consulta de inmovilizado + cierres 2025.
+  // V3.G.1 (auditoría 2026-06-01, segunda iteración): la heurística
+  // `itemsInPage >= pageSize` resultó frágil contra Holded /dailyledger
+  // en tenants grandes (Nova Gestion SL, 408 asientos reales). El reviewer
+  // observó: pagina 1 devolvió ~155 entries (menos que pageSize=250) con
+  // likelyHasMorePages: false, pero la pagina 2 traía 219 más. Holded NO
+  // garantiza que una pagina por debajo del pageSize sea la última — el
+  // pageSize observado varia por endpoint, segmentación interna y mongo
+  // cursor batching.
   //
-  // Heuristica corregida: si la pagina llego "llena" (itemsInPage >= 250)
-  // asumimos que hay mas. Falsos positivos siguen siendo OK (una llamada
-  // extra y lista vacia). Falsos negativos = aggregates a la mitad sin avisar.
-  const likelyHasMorePages = itemsInPage >= pageSize;
+  // Solución pragmática: cuando hay CUALQUIER resultado, asumimos que
+  // puede haber más y suggested next_page. El coste es UNA llamada extra
+  // al final (pagina vacía cierra el bucle). El beneficio: cero falsos
+  // negativos. Para datos fiscales (libro diario, cuentas) un agregado
+  // a la mitad sin avisar es peor que una llamada extra.
+  //
+  // pageSize se mantiene en la metadata como info diagnóstica del cliente
+  // (cuántas entries pidió por página) — ya NO se usa para decidir el
+  // flag.
+  const likelyHasMorePages = itemsInPage > 0;
   return {
     page,
     pageSize,
@@ -133,7 +139,7 @@ export function buildPaginationMeta(
     likelyHasMorePages,
     suggestedNextPage: likelyHasMorePages ? page + 1 : null,
     hint: likelyHasMorePages
-      ? `Holded returned ${itemsInPage} items in page ${page} (matches expected pageSize=${pageSize}, page is full). MORE PAGES LIKELY EXIST. Call again with page=${page + 1} to continue, and merge results client-side. Do NOT report aggregate values (totals, sums, counts) until you have fetched every page or you will return a partial answer.`
+      ? `Holded returned ${itemsInPage} items in page ${page}. The connector cannot reliably know whether more pages exist (Holded does not return a hasMore flag and its page size is not deterministic), so it ALWAYS suggests probing the next page until an empty page is returned. Call again with page=${page + 1}; an empty array means you have fetched everything. Do NOT report aggregate values (totals, sums, counts) until you have walked to an empty page.`
       : null,
   };
 }
