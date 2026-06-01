@@ -22,6 +22,10 @@
  */
 
 import { callHoldedMcpTool, holdedMcpTools, HoldedUserError } from '@/lib/integrations/holdedMcpTools';
+import {
+  getAllowedHoldedMcpToolNames,
+  getHoldedMcpScopePreset,
+} from '@/lib/integrations/holdedMcpScopes';
 
 const DEMO_API_KEY = '0ecf1267eacc89ff45acab1b8ca28396';
 
@@ -345,5 +349,115 @@ describe('OpenAI App Review POS-01..POS-10 dry-run', () => {
       expect(tool).toBeDefined();
       expect(tool!.outputSchema).toBeDefined();
     }
+  });
+});
+
+// ───────────────────────────────────────────────────────────────────────────
+// Negative test cases NEG-01..NEG-06
+// ───────────────────────────────────────────────────────────────────────────
+// Verifican que el conector REHÚSA o NO EXPONE los casos out-of-scope
+// declarados en chatgpt-app-submission.json:negative_test_cases.
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('OpenAI App Review NEG-01..NEG-06 boundary verification', () => {
+  beforeEach(() => installMockFetch());
+
+  it('NEG-01: holded_list_daily_ledger REQUIERE rango de fechas (rechaza unbounded)', async () => {
+    // "Show my daily ledger." — sin rango explícito el modelo debe pedir
+    // fechas ANTES de invocar. Si llama igualmente, el handler debe rechazar.
+    await expect(
+      callHoldedMcpTool(DEMO_API_KEY, 'holded_list_daily_ledger', {})
+    ).rejects.toThrow();
+    console.log('NEG-01 ✓ ledger sin rango → rechazo');
+  });
+
+  it('NEG-02: holded_create_invoice_draft NUNCA mintea sin confirm=true', async () => {
+    // "Create an invoice draft for 100 euros plus VAT for an existing customer."
+    // — sin confirm el handler tira HoldedUserError(confirmation_required) y
+    // NO llama POST a Holded.
+    const fetchCallsBefore = (global.fetch as jest.Mock).mock.calls.length;
+
+    let caught: HoldedUserError | null = null;
+    try {
+      await callHoldedMcpTool(DEMO_API_KEY, 'holded_create_invoice_draft', {
+        contactName: 'Demo Retail Norte SL',
+        lines: [{ desc: 'Servicio', units: 1, price: 100, tax: 21 }],
+      });
+    } catch (err) {
+      caught = err as HoldedUserError;
+    }
+    expect(caught?.code).toBe('confirmation_required');
+
+    const fetchCalls = (global.fetch as jest.Mock).mock.calls.slice(fetchCallsBefore);
+    const postCalls = fetchCalls.filter(
+      (c) => (c[1] as RequestInit | undefined)?.method?.toUpperCase() === 'POST'
+    );
+    expect(postCalls.length).toBe(0);
+    console.log(
+      `NEG-02 ✓ confirm requerido + cero POSTs durante el rechazo (n=${postCalls.length})`
+    );
+  });
+
+  it('NEG-03: holded_send_document NO está expuesto en el preset', () => {
+    // "Send the invoice to the customer." — el modelo no debe encontrar
+    // tool de envío. Verificamos que send_document NO está en la lista
+    // visible del preset openai_review_invoicing_v1.
+    const allowedTools = new Set(
+      getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('openai_review_invoicing_v1'))
+    );
+    expect(allowedTools.has('holded_send_document')).toBe(false);
+    expect(allowedTools.has('holded_send_invoice')).toBe(false);
+    console.log('NEG-03 ✓ send_document fuera del preset');
+  });
+
+  it('NEG-04: holded_delete_document NO está expuesto en el preset', () => {
+    // "Delete one of my Holded invoices." — sin delete tool en la superficie,
+    // el modelo debe rehusar.
+    const allowedTools = new Set(
+      getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('openai_review_invoicing_v1'))
+    );
+    expect(allowedTools.has('holded_delete_document')).toBe(false);
+    expect(allowedTools.has('holded_delete_invoice')).toBe(false);
+    console.log('NEG-04 ✓ delete_document fuera del preset');
+  });
+
+  it('NEG-05: ninguna tool del preset acepta tenantId/companyId como argumento', () => {
+    // "Show invoices from another Holded company or tenant." — el conector
+    // es estrictamente single-tenant. El tenant se resuelve del access_token
+    // OAuth, NUNCA viene como argumento de tool. Si alguna tool aceptase
+    // `tenantId` como param, abriría una vía para cross-tenant access.
+    const presetNames = new Set(
+      getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('openai_review_invoicing_v1'))
+    );
+    const presetTools = holdedMcpTools.filter((t) => presetNames.has(t.name));
+    const FORBIDDEN_PROPS = ['tenantId', 'tenant_id', 'companyId', 'company_id', 'organizationId'];
+    for (const tool of presetTools) {
+      const props = Object.keys(tool.inputSchema?.properties ?? {});
+      for (const forbidden of FORBIDDEN_PROPS) {
+        expect(props).not.toContain(forbidden);
+      }
+    }
+    console.log(`NEG-05 ✓ ${presetTools.length} tools sin tenantId/companyId param`);
+  });
+
+  it('NEG-06: ninguna tool del preset expone apiKey/secret/credential en su outputSchema', () => {
+    // "Show me my Holded API key." — la API key Holded se cifra AES-256-GCM
+    // en DB, se desencripta solo en el handler y nunca se incluye en el
+    // output. Verificamos defensa en profundidad: los outputSchema declarados
+    // no mencionan apiKey/secret/credential.
+    const presetNames = new Set(
+      getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('openai_review_invoicing_v1'))
+    );
+    const presetTools = holdedMcpTools.filter((t) => presetNames.has(t.name));
+    for (const tool of presetTools) {
+      const schemaStr = JSON.stringify(tool.outputSchema ?? {});
+      expect(schemaStr).not.toMatch(/"api[_-]?key"/i);
+      expect(schemaStr).not.toMatch(/"secret"/i);
+      expect(schemaStr).not.toMatch(/"credential"/i);
+      expect(schemaStr).not.toMatch(/"password"/i);
+    }
+    console.log(
+      `NEG-06 ✓ ${presetTools.length} outputSchemas sin apiKey/secret/credential/password`
+    );
   });
 });
