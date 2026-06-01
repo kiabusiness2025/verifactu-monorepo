@@ -461,3 +461,148 @@ describe('OpenAI App Review NEG-01..NEG-06 boundary verification', () => {
     );
   });
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// V3.G.4 regression — bugs reportados en producción 2026-06-01
+// ───────────────────────────────────────────────────────────────────────────
+// Bug A: holded_create_invoice_draft con contactName que no matchea exacto
+//        creaba la factura para items[0] (cualquier contacto que Holded
+//        devuelva primero) — usuario confirmó en producción que pidió
+//        "Alfa Retail Madrid SL" y el conector creó para "Beta Eventos
+//        Barcelona SL".
+// Bug B: defensa adicional contra drafts de €0 (units o price <= 0).
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('V3.G.4 — holded_create_invoice_draft contact resolution safety', () => {
+  function mockListContactsResponse(contacts: Array<Record<string, unknown>>) {
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      const method = (init?.method || 'GET').toUpperCase();
+      if (url.includes('/api/invoicing/v1/contacts') && method === 'GET') {
+        return mockFetchResponse(contacts);
+      }
+      if (method === 'POST' && url.includes('/api/invoicing/v1/documents/invoice')) {
+        return mockFetchResponse({
+          id: 'newdraft1234567890abcdef',
+          docNumber: 'F0031',
+          status: 'draft',
+        });
+      }
+      return mockFetchResponse({});
+    }) as unknown as typeof fetch;
+  }
+
+  it('Bug A: con contactName que matchea parcial a múltiples, throw contact_ambiguous', async () => {
+    // Holded devuelve dos contactos que CONTIENEN "retail" — ambos hacen
+    // match parcial. Antes el conector elegía items[0] sin avisar. Ahora
+    // exige al usuario que desambigüe.
+    mockListContactsResponse([
+      { id: 'beta-id', name: 'Beta Retail Barcelona SL' },
+      { id: 'alfa-id', name: 'Alfa Retail Madrid SL' },
+    ]);
+
+    let caught: HoldedUserError | null = null;
+    try {
+      await callHoldedMcpTool(DEMO_API_KEY, 'holded_create_invoice_draft', {
+        contactName: 'Retail', // partial match a múltiples
+        lines: [{ desc: 'Consulting', units: 8, price: 90, tax: 21 }],
+        confirm: true,
+      });
+    } catch (err) {
+      caught = err as HoldedUserError;
+    }
+    expect(caught?.code).toBe('contact_ambiguous');
+    expect(caught?.message).toMatch(/Multiple Holded contacts match/);
+    expect(caught?.message).toContain('Beta Retail Barcelona SL');
+    expect(caught?.message).toContain('Alfa Retail Madrid SL');
+  });
+
+  it('Bug A: con contactName que NO matchea ningún contacto, throw contact_not_found', async () => {
+    // Antes habría fallback a items[0] aunque no matcheara — ahora rechaza.
+    mockListContactsResponse([{ id: 'beta-id', name: 'Beta Eventos Barcelona SL' }]);
+
+    let caught: HoldedUserError | null = null;
+    try {
+      await callHoldedMcpTool(DEMO_API_KEY, 'holded_create_invoice_draft', {
+        contactName: 'Cliente Que No Existe SL',
+        lines: [{ desc: 'Consulting', units: 8, price: 90, tax: 21 }],
+        confirm: true,
+      });
+    } catch (err) {
+      caught = err as HoldedUserError;
+    }
+    expect(caught?.code).toBe('contact_not_found');
+  });
+
+  it('Bug A: match exacto case-insensitive elige el contacto correcto y sobrescribe contactName con canónico', async () => {
+    mockListContactsResponse([
+      { id: 'beta-id', name: 'Beta Eventos Barcelona SL' },
+      { id: 'alfa-id', name: 'Alfa Retail Madrid SL' },
+    ]);
+
+    const result = await callHoldedMcpTool(DEMO_API_KEY, 'holded_create_invoice_draft', {
+      contactName: 'alfa retail madrid sl', // case insensitive
+      lines: [{ desc: 'Consulting', units: 8, price: 90, tax: 21 }],
+      confirm: true,
+    });
+    expect(result).toBeDefined();
+
+    // Verificamos que el POST a /documents/invoice se hizo con el contactId
+    // correcto (alfa-id), NO con beta-id.
+    const fetchMock = global.fetch as jest.Mock;
+    const postCall = fetchMock.mock.calls.find(
+      (c) => (c[1] as RequestInit | undefined)?.method?.toUpperCase() === 'POST'
+    );
+    expect(postCall).toBeDefined();
+    const postBody = JSON.parse((postCall![1] as RequestInit).body as string);
+    expect(postBody.contactId).toBe('alfa-id');
+    // contactName se normalizó al nombre canónico del contacto encontrado.
+    expect(postBody.contactName).toBe('Alfa Retail Madrid SL');
+  });
+
+  it('Bug A: match parcial UNICO se acepta sin pedir disambiguación', async () => {
+    // Si solo 1 contacto matchea parcialmente, es razonable aceptarlo.
+    mockListContactsResponse([
+      { id: 'gamma-id', name: 'Gamma Foods SL' },
+      { id: 'alfa-id', name: 'Alfa Retail Madrid SL' },
+    ]);
+
+    const result = await callHoldedMcpTool(DEMO_API_KEY, 'holded_create_invoice_draft', {
+      contactName: 'Alfa', // partial, UNIQUE among items
+      lines: [{ desc: 'Consulting', units: 8, price: 90, tax: 21 }],
+      confirm: true,
+    });
+    expect(result).toBeDefined();
+
+    const fetchMock = global.fetch as jest.Mock;
+    const postCall = fetchMock.mock.calls.find(
+      (c) => (c[1] as RequestInit | undefined)?.method?.toUpperCase() === 'POST'
+    );
+    const postBody = JSON.parse((postCall![1] as RequestInit).body as string);
+    expect(postBody.contactId).toBe('alfa-id');
+  });
+
+  it('Bug B: line con units=0 lanza error claro, NO crea draft vacío', async () => {
+    mockListContactsResponse([{ id: 'alfa-id', name: 'Alfa Retail Madrid SL' }]);
+
+    await expect(
+      callHoldedMcpTool(DEMO_API_KEY, 'holded_create_invoice_draft', {
+        contactName: 'Alfa Retail Madrid SL',
+        lines: [{ desc: 'Consulting', units: 0, price: 90, tax: 21 }],
+        confirm: true,
+      })
+    ).rejects.toThrow(/units must be greater than 0/);
+  });
+
+  it('Bug B: line con price=0 lanza error claro, NO crea draft vacío', async () => {
+    mockListContactsResponse([{ id: 'alfa-id', name: 'Alfa Retail Madrid SL' }]);
+
+    await expect(
+      callHoldedMcpTool(DEMO_API_KEY, 'holded_create_invoice_draft', {
+        contactName: 'Alfa Retail Madrid SL',
+        lines: [{ desc: 'Consulting', units: 8, price: 0, tax: 21 }],
+        confirm: true,
+      })
+    ).rejects.toThrow(/price must be greater than 0/);
+  });
+});

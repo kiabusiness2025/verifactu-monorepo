@@ -670,6 +670,24 @@ function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products
     );
   }
 
+  // V3.G.4 (2026-06-01): el usuario reportó drafts de €0 creados en Holded
+  // ("No asignado", 0,00 € / 0,00 € / 0,00 €). Para asegurar que el modelo
+  // nunca crea una factura sin importe, exigimos que units > 0 Y price > 0.
+  // Si el modelo intenta crear con un line item de coste cero (e.g. el
+  // usuario solo dijo "factura para Alfa" sin importe), respondemos con un
+  // error legible para que el modelo pida los datos al usuario en lugar de
+  // generar un draft vacío que confunde más que ayuda.
+  if (units <= 0) {
+    throw new Error(
+      `payload.${sourceKey}[${index}].units must be greater than 0 (got ${units}). Please specify how many units/hours/items are being invoiced.`
+    );
+  }
+  if (price <= 0) {
+    throw new Error(
+      `payload.${sourceKey}[${index}].price must be greater than 0 (got ${price}). Please specify the unit price in EUR (or the document currency).`
+    );
+  }
+
   return {
     ...rawItem,
     desc,
@@ -2193,16 +2211,64 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
       const items: Array<Record<string, unknown>> = Array.isArray(matches)
         ? (matches as Array<Record<string, unknown>>)
         : [];
+
+      // V3.G.4 (2026-06-01) — BUG CRÍTICO arreglado:
+      //
+      // ANTES: `const chosen = exact ?? items[0]` — si no había match exacto
+      // por nombre, cogíamos el primer contacto que Holded devolviese. Holded
+      // /contacts ordena por insertion order (no por relevancia al filtro),
+      // así que para el prompt "Alfa Retail Madrid SL" Holded podía devolver
+      // "Beta Eventos Barcelona SL" como items[0] y ese era el cliente al
+      // que se creaba la factura. EL USUARIO confirmó en producción contra
+      // Nova Gestion SL: factura del cliente equivocado creada en Holded.
+      //
+      // AHORA: solo aceptamos:
+      //   1) Match EXACTO por nombre (case-insensitive).
+      //   2) Match parcial UNICO: solo 1 contacto contiene el nombre.
+      //
+      // Cualquier otro caso (0 matches, múltiples partials no exactos) →
+      // HoldedUserError con un mensaje claro que el modelo puede mostrar al
+      // usuario para que confirme cuál es el contacto correcto antes de
+      // reintentar. Mejor "no encontré, ¿cuál?" que "creé para otro cliente".
       const exact = items.find(
         (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
       );
-      const chosen = exact ?? items[0];
+      let chosen: Record<string, unknown> | undefined = exact;
+      if (!chosen) {
+        const partialMatches = items.filter(
+          (c) =>
+            typeof c.name === 'string' &&
+            c.name.toLowerCase().includes(name.toLowerCase())
+        );
+        if (partialMatches.length === 1) {
+          chosen = partialMatches[0];
+        } else if (partialMatches.length > 1) {
+          const sample = partialMatches
+            .slice(0, 5)
+            .map((c) => `"${c.name}"`)
+            .join(', ');
+          throw new HoldedUserError(
+            'contact_ambiguous',
+            `Multiple Holded contacts match "${name}": ${sample}. Please specify the exact contact name or pass the contactId from holded_list_contacts to disambiguate.`
+          );
+        }
+      }
       const chosenId = chosen?.id ?? chosen?._id;
       if (typeof chosenId === 'string' && chosenId.trim()) {
         payload.contactId = chosenId.trim();
+        // V3.G.4: sobrescribimos contactName con el nombre canónico del
+        // contacto encontrado, para que el ChatGPT consent card muestre el
+        // nombre real al usuario (en vez del que escribió, que puede ser
+        // un alias o variante). Si el usuario ve "Beta Eventos Barcelona"
+        // en la card cuando escribió "Alfa Retail Madrid", sabe que algo
+        // no cuadra y deniega.
+        if (typeof chosen?.name === 'string') {
+          payload.contactName = chosen.name;
+        }
       } else {
-        throw new Error(
-          `No contact found for "${name}". Use holded_list_contacts to find the correct contact and pass contactId.`
+        throw new HoldedUserError(
+          'contact_not_found',
+          `No Holded contact found matching "${name}". Please verify the customer name (case-insensitive exact match is required when partial matches are ambiguous) or call holded_list_contacts first and pass the contactId explicitly.`
         );
       }
     }
