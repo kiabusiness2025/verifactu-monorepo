@@ -298,8 +298,11 @@ describe('Holded accounting adapter', () => {
     );
   });
 
-  it('lists daily ledger entries with timestamp filters', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+  it('V3.G.2: auto-paginates Holded /dailyledger from page=1 with timestamp filters', async () => {
+    // Antes pasábamos `page` y `limit` literal a Holded en una sola llamada.
+    // Ahora auto-paginamos server-side desde page=1 — Holded ignora `limit`
+    // (devuelve ~250 fijo) y el page del caller es solo slice client-side.
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       status: 200,
       text: async () => '[]',
@@ -312,8 +315,12 @@ describe('Holded accounting adapter', () => {
       endtmp: 1_704_153_599,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.holded.com/api/accounting/v1/dailyledger?page=3&limit=100&starttmp=1704067200&endtmp=1704153599',
+    // Single call expected (page 1 returned empty → loop exits inmediatamente).
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(1);
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
+      'https://api.holded.com/api/accounting/v1/dailyledger?page=1&starttmp=1704067200&endtmp=1704153599'
+    );
+    expect((global.fetch as jest.Mock).mock.calls[0][1]).toEqual(
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -323,6 +330,52 @@ describe('Holded accounting adapter', () => {
         }),
       })
     );
+  });
+
+  it('V3.G.2: auto-pagination loops while Holded returns full pages (250 entries)', async () => {
+    // Page 1 = 250 (full) → loop continues. Page 2 = 50 (partial) → loop stops.
+    // Total agregado = 300 entries antes del client-side slice.
+    const fullPage = Array.from({ length: 250 }, (_, i) => ({
+      id: `e-${i + 1}`,
+      date: 1_704_067_200 + i * 60,
+      number: String(i + 1),
+    }));
+    const partialPage = Array.from({ length: 50 }, (_, i) => ({
+      id: `e-${251 + i}`,
+      date: 1_704_080_000 + i * 60,
+      number: String(251 + i),
+    }));
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify(fullPage),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify(partialPage),
+      });
+
+    // Page 3 client-side de un agregado de 300 entries con limit=100 →
+    // últimos 100 entries (entries 201-300, los 50 del page 2 + 50 finales
+    // del page 1 reordenados por date ASC).
+    const result = await holdedAdapter.listDailyLedger('demo-key', {
+      page: 3,
+      limit: 100, // max permitido por normalizePagingArgs
+      starttmp: 1_704_067_200,
+      endtmp: 1_735_689_599,
+    });
+
+    // 2 calls a Holded (page 1 lleno → continúa; page 2 parcial → para).
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(2);
+    const calledUrls = (global.fetch as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(calledUrls[0]).toContain('page=1');
+    expect(calledUrls[1]).toContain('page=2');
+
+    // Page 3 con limit 100 sobre 300 entries → 100 últimos.
+    expect((result as unknown[]).length).toBe(100);
   });
 
   it('paginates daily ledger entries locally when Holded ignores page and limit', async () => {

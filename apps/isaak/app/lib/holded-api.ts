@@ -162,22 +162,55 @@ export async function holdedGetContact(apiKey: string, contactId: string) {
   return holdedFetch(apiKey, `/api/invoicing/v1/contacts/${contactId}`);
 }
 
-export async function holdedGetChartOfAccounts(apiKey: string) {
-  return holdedFetch(apiKey, '/api/accounting/v1/chartofaccounts?includeEmpty=1');
+/**
+ * V3.G.2 (2026-06-01): acepta starttmp/endtmp opcionales para escopear el
+ * balance a un ejercicio fiscal. Sin ellos Holded usa el rango default del
+ * tenant. Ver docs/engineering/connectors/HOLDED_API_QUIRKS.md Q6.1.
+ */
+export async function holdedGetChartOfAccounts(
+  apiKey: string,
+  params?: { starttmp?: string; endtmp?: string }
+) {
+  const qs = new URLSearchParams({ includeEmpty: '1' });
+  if (params?.starttmp) qs.set('starttmp', toUnix(params.starttmp) ?? '');
+  if (params?.endtmp) qs.set('endtmp', toUnix(params.endtmp) ?? '');
+  return holdedFetch(apiKey, `/api/accounting/v1/chartofaccounts?${qs}`);
 }
 
+/**
+ * V3.G.2 (2026-06-01): auto-paginar /dailyledger hasta agregar todas las
+ * páginas. Antes hacíamos una sola llamada → reviewer obtenía 155 de 408
+ * asientos. Ahora iteramos page=1,2,3,... hasta una página parcial o el
+ * cap HOLDED_LEDGER_MAX_PAGES.
+ */
 export async function holdedGetJournal(
   apiKey: string,
   params?: { starttmp?: string; endtmp?: string }
 ) {
   const range = defaultDocRange();
-  const qs = new URLSearchParams({
+  const baseParams = {
     starttmp: toUnix(params?.starttmp) ?? range.starttmp,
     endtmp: toUnix(params?.endtmp) ?? range.endtmp,
-  });
-  const raw = (await holdedFetch(apiKey, `/api/accounting/v1/dailyledger?${qs}`)) as unknown[];
-  const all = Array.isArray(raw) ? raw : [];
-  return { entries: all.slice(0, 100), total: all.length, truncated: all.length > 100 };
+  };
+
+  const pageSize = Number(process.env.HOLDED_LEDGER_PAGE_SIZE || '250');
+  const maxPages = Math.max(1, Number(process.env.HOLDED_LEDGER_MAX_PAGES || '10'));
+  const aggregated: unknown[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const qs = new URLSearchParams({ ...baseParams, page: String(page) });
+    const raw = (await holdedFetch(apiKey, `/api/accounting/v1/dailyledger?${qs}`)) as unknown[];
+    const pageItems = Array.isArray(raw) ? raw : [];
+    aggregated.push(...pageItems);
+    if (pageItems.length < pageSize) break;
+  }
+
+  return {
+    entries: aggregated.slice(0, 100),
+    total: aggregated.length,
+    truncated: aggregated.length > 100,
+    autoPaginatedByConnector: true,
+  };
 }
 
 export async function holdedListTreasuryAccounts(apiKey: string) {

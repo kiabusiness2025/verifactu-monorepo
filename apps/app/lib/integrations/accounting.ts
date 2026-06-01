@@ -22,6 +22,16 @@ const HOLDED_HISTORY_SCAN_BUDGET_MS = Math.max(
 const HOLDED_RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
 const HOLDED_MAX_RETRIES = 2;
 
+// V3.G.2 (2026-06-01): Holded /dailyledger pagina con tamaño real ~250 entries
+// (la doc oficial dice 500 pero empíricamente devuelve 250 — ver
+// docs/engineering/connectors/HOLDED_API_QUIRKS.md Q1.1). Auto-paginamos
+// hasta el cap para no degradar el latency por queries gigantes.
+const HOLDED_LEDGER_PAGE_SIZE = Number(process.env.HOLDED_LEDGER_PAGE_SIZE || '250');
+const HOLDED_LEDGER_MAX_PAGES = Math.max(
+  1,
+  Number(process.env.HOLDED_LEDGER_MAX_PAGES || '10')
+);
+
 function holdedSleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
@@ -1118,6 +1128,43 @@ function attachDocType(items: Record<string, unknown>[], docType: string) {
   return items.map((item) => ({ ...item, docType }));
 }
 
+/**
+ * V3.G.2 (2026-06-01): auto-pagina Holded /dailyledger desde page=1 hasta
+ * recibir menos de HOLDED_LEDGER_PAGE_SIZE entries o llegar al cap
+ * HOLDED_LEDGER_MAX_PAGES (default 10 = ~2500 entries). El array agregado
+ * se devuelve SIN sortear — el caller aplica sortHoldedJournalEntries.
+ *
+ * Si el caller quiere paginar manualmente con `page=N` el array agregado,
+ * usa `paginateArrayResponse` después (compat hacia atrás).
+ *
+ * Ver docs/engineering/connectors/HOLDED_API_QUIRKS.md Q6.2 para el
+ * contexto del bug que cerramos con esta función.
+ */
+async function fetchHoldedDailyLedgerAllPages(
+  apiKey: string,
+  args: { starttmp?: number; endtmp?: number }
+): Promise<Record<string, unknown>[]> {
+  const aggregated: Record<string, unknown>[] = [];
+  for (let page = 1; page <= HOLDED_LEDGER_MAX_PAGES; page++) {
+    const pageItems = await holdedRequest<Record<string, unknown>[]>({
+      apiKey,
+      path: '/api/accounting/v1/dailyledger',
+      query: {
+        page,
+        starttmp: args.starttmp,
+        endtmp: args.endtmp,
+      },
+    });
+    const items = Array.isArray(pageItems) ? pageItems : [];
+    aggregated.push(...items);
+    // Si la página llegó parcial (< pageSize), asumimos que ya hemos
+    // consumido el dataset completo. Si llegó con exactamente pageSize o
+    // más, intentamos la siguiente.
+    if (items.length < HOLDED_LEDGER_PAGE_SIZE) break;
+  }
+  return aggregated;
+}
+
 export const holdedAdapter = {
   async listInvoices(apiKey: string, args?: { page?: number; limit?: number; status?: string }) {
     return listTypedDocuments(apiKey, 'invoice', args);
@@ -1499,22 +1546,22 @@ export const holdedAdapter = {
     apiKey: string,
     args?: { page?: number; limit?: number; starttmp?: number; endtmp?: number }
   ) {
-    const entries = await holdedRequest<Record<string, unknown>[]>({
-      apiKey,
-      path: '/api/accounting/v1/dailyledger',
-      query: {
-        page: args?.page ?? 1,
-        limit: args?.limit ?? 25,
-        starttmp: args?.starttmp,
-        endtmp: args?.endtmp,
-      },
+    // V3.G.2 (auditoría 2026-06-01, post-investigación spec OpenAPI Holded):
+    // Holded /dailyledger PAGINA con tamaño real ~250 (no 500 como dice la
+    // doc oficial). El reviewer reportó "155 de 408 asientos reales" porque
+    // antes hacíamos UNA sola llamada sin iterar. Fix: auto-paginar server-
+    // side desde page=1 hasta recibir menos de HOLDED_LEDGER_PAGE_SIZE
+    // entries (o llegar al cap HOLDED_LEDGER_MAX_PAGES) y devolver el array
+    // agregado y sorteado.
+    //
+    // El parámetro `page` que el caller pase se mantiene como "slice
+    // client-side" sobre el array agregado (compat hacia atrás con clientes
+    // que iteran page por page).
+    const aggregated = await fetchHoldedDailyLedgerAllPages(apiKey, {
+      starttmp: args?.starttmp,
+      endtmp: args?.endtmp,
     });
-    // V3.G (auditoría 2026-06-01): Holded /dailyledger devuelve los asientos
-    // en orden interno Mongo (sin garantías). Para reconciliación contable
-    // el usuario espera orden cronológico ASC. Sort estable por date ASC +
-    // number ASC ANTES de paginar — si no, el slice client-side
-    // (paginateArrayResponse) devolvía páginas inconexas.
-    const sorted = sortHoldedJournalEntries(Array.isArray(entries) ? entries : []);
+    const sorted = sortHoldedJournalEntries(aggregated);
     return paginateArrayResponse(sorted, args, { enabled: true });
   },
 

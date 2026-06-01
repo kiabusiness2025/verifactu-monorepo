@@ -2013,11 +2013,29 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     // devolvía las 206 cuentas enteras dentro de structuredContent y ChatGPT
     // rechazaba el payload. Ahora paginamos SIEMPRE con defaults (page 1,
     // limit 25); el caller puede pedir más con page/limit explícitos.
+    //
+    // V3.G.2 (2026-06-01): acepta tambien ISO dates startDate/endDate, mas
+    // intuitivas para ChatGPT/Claude que los Unix timestamps. Necesarios
+    // para scopear el balance a un ejercicio fiscal especifico — sin esto
+    // Holded usa el rango default del tenant que casi nunca cuadra.
+    const starttmp =
+      resolveDateInput(input, {
+        timestampKey: 'startTimestamp',
+        dateKey: 'startDate',
+        required: false,
+      }) ?? undefined;
+    const endtmp =
+      resolveDateInput(input, {
+        timestampKey: 'endTimestamp',
+        dateKey: 'endDate',
+        required: false,
+        endOfDay: true,
+      }) ?? undefined;
     const items = await holdedAdapter.listAccounts(apiKey, {
       page: readPage(input),
       limit: readLimit(input),
-      starttmp: optionalUnixTimestamp(input, 'startTimestamp'),
-      endtmp: optionalUnixTimestamp(input, 'endTimestamp'),
+      starttmp,
+      endtmp,
       includeEmpty: optionalBoolean(input, 'includeEmpty', true),
     });
     return { items };
@@ -3055,10 +3073,19 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_accounts',
     'List accounting accounts in Holded',
-    'List the Holded chart of accounts for the currently authorized tenant. Results are paginated (default 25 per page); pass page and limit to walk the full chart. By default the connector calls chartofaccounts with includeEmpty=1 so empty accounts are not silently omitted.',
+    'List the Holded chart of accounts (Spanish PGC) for the currently authorized tenant. Returns each account code plus the **pre-computed balance** from Holded for the selected fiscal range. ' +
+      'Results are paginated (default 25 per page); pass page and limit to walk the full chart. By default the connector calls chartofaccounts with includeEmpty=1 so empty accounts are not silently omitted. ' +
+      '⚠ KNOWN HOLDED LIMITATION (audit 2026-06-01): the balances returned by Holded\'s /chartofaccounts EXCLUDE manual closing/regularization journal entries by design (see https://help.holded.com/en/articles/6895943). If you need the **real balance** including manual entries (amortizations, year-end closings, capital contributions), re-aggregate from holded_list_daily_ledger across the full fiscal year. ' +
+      'PASS `startTimestamp` and `endTimestamp` (or the ISO `startDate`/`endDate`) to scope the balance to a specific fiscal year — otherwise Holded uses the tenant default (often current year only, missing prior-year closings).',
     simpleSchema({
       page: pageProperty,
       limit: limitProperty,
+      startDate: stringProperty(
+        'Start of the fiscal range as an ISO date YYYY-MM-DD (e.g. 2025-01-01). Preferred for ChatGPT and Claude. Either startDate OR startTimestamp may be provided; omit both to use Holded\'s tenant default.'
+      ),
+      endDate: stringProperty(
+        'End of the fiscal range as an ISO date YYYY-MM-DD (e.g. 2025-12-31). Preferred for ChatGPT and Claude.'
+      ),
       startTimestamp: unixTimestampProperty,
       endTimestamp: unixTimestampProperty,
       includeEmpty: {
