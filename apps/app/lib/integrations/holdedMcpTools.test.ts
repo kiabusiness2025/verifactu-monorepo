@@ -657,6 +657,8 @@ describe('holdedMcpTools', () => {
         fileName: 'invoice-doc-1.pdf',
         size: 4,
       },
+      // V3.G.5: discriminate rendered PDF vs user-uploaded attachment.
+      source: 'rendered',
     });
   });
 

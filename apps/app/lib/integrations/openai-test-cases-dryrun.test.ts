@@ -606,3 +606,122 @@ describe('V3.G.4 — holded_create_invoice_draft contact resolution safety', () 
     ).rejects.toThrow(/price must be greater than 0/);
   });
 });
+
+// ───────────────────────────────────────────────────────────────────────────
+// V3.G.5 regression — bugs reportados por usuario en producción 2026-06-01
+// ───────────────────────────────────────────────────────────────────────────
+// Bug 6: parseIsoDateToUnix("2025-01-01") devolvía UTC midnight (1735689600).
+//        Pero Holded almacena fechas a Madrid midnight (1735686000). Un
+//        starttmp UTC midnight EXCLUYE los docs fechados ese mismo día.
+// Bug 7: get_document_pdf solo intentaba /pdf renderizado. Si el documento
+//        tenía PDF SUBIDO por el usuario (sin renderizar nativo), devolvía
+//        no_attachment aunque el PDF estaba ahí.
+// ───────────────────────────────────────────────────────────────────────────
+
+describe('V3.G.5 — Madrid timezone + document attachments fallback', () => {
+  beforeEach(() => installMockFetch());
+
+  it('Bug 6: holded_list_daily_ledger con startDate="2025-01-01" pide Madrid midnight a Holded', async () => {
+    // Verificamos que el query enviado a Holded usa Madrid midnight
+    // (1735686000) en lugar de UTC midnight (1735689600). Diferencia: 3600
+    // segundos (CET = UTC+1 en enero).
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValue(mockFetchResponse([]));
+
+    await callHoldedMcpTool(DEMO_API_KEY, 'holded_list_daily_ledger', {
+      startDate: '2025-01-01',
+      endDate: '2025-01-31',
+    });
+
+    const calls = fetchMock.mock.calls.map((c) => c[0] as string);
+    // Primer fetch debe contener starttmp=1735686000 (Madrid midnight 2025-01-01).
+    const firstCall = calls[0];
+    expect(firstCall).toContain('starttmp=1735686000');
+    // Y NO debe contener starttmp=1735689600 (UTC midnight, valor ANTIGUO buggy).
+    expect(firstCall).not.toContain('starttmp=1735689600');
+  });
+
+  it('Bug 6: parseIsoDateToUnix de fecha en verano (DST CEST) usa offset +2h', async () => {
+    // 2025-07-01 está en verano → Madrid es CEST (UTC+2).
+    // Madrid midnight 2025-07-01 = 2025-06-30 22:00 UTC = 1751320800.
+    // UTC midnight 2025-07-01 = 1751328000. Diferencia: 7200s (= 2h).
+    const fetchMock = global.fetch as jest.Mock;
+    fetchMock.mockClear();
+    fetchMock.mockResolvedValue(mockFetchResponse([]));
+
+    await callHoldedMcpTool(DEMO_API_KEY, 'holded_list_daily_ledger', {
+      startDate: '2025-07-01',
+      endDate: '2025-07-31',
+    });
+
+    const firstCall = (fetchMock.mock.calls[0] as [string])[0];
+    // Madrid midnight 2025-07-01 en CEST = 1751320800.
+    expect(firstCall).toContain('starttmp=1751320800');
+  });
+
+  it('Bug 7: holded_get_document_pdf con /pdf vacío hace fallback a attachments', async () => {
+    // Mock fetch que simula:
+    //   1. /pdf → 200 + JSON {"status":0,"info":"No attachments found"} (no PDF nativo)
+    //   2. /attachments/list → [{fileName: "factura-proveedor.pdf"}]
+    //   3. /attachments/get → bytes %PDF- válidos
+    const pdfBytes = new Uint8Array(Buffer.from('%PDF-1.4\nuploaded by user\n%%EOF', 'utf8'));
+    const isolated = pdfBytes.buffer.slice(
+      pdfBytes.byteOffset,
+      pdfBytes.byteOffset + pdfBytes.byteLength
+    );
+    const noPdfJson = JSON.stringify({ status: 0, info: 'No attachments found' });
+    const noPdfBytes = new Uint8Array(Buffer.from(noPdfJson, 'utf8'));
+    const noPdfIsolated = noPdfBytes.buffer.slice(
+      noPdfBytes.byteOffset,
+      noPdfBytes.byteOffset + noPdfBytes.byteLength
+    );
+
+    global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/attachments/list')) {
+        return mockFetchResponse([{ fileName: 'factura-proveedor.pdf', size: 1234 }]);
+      }
+      if (url.includes('/attachments/get')) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => '',
+          headers: {
+            get: (h: string) => (h.toLowerCase() === 'content-type' ? 'application/pdf' : null),
+          },
+          arrayBuffer: async () => isolated,
+        } as unknown as Response;
+      }
+      if (url.endsWith('/pdf')) {
+        // Simulamos respuesta "200 + JSON error" que es el bug original Holded.
+        return {
+          ok: true,
+          status: 200,
+          text: async () => noPdfJson,
+          headers: {
+            get: (h: string) =>
+              h.toLowerCase() === 'content-type' ? 'application/json' : null,
+          },
+          arrayBuffer: async () => noPdfIsolated,
+        } as unknown as Response;
+      }
+      return mockFetchResponse({});
+    }) as unknown as typeof fetch;
+
+    const result = await callHoldedMcpTool(DEMO_API_KEY, 'holded_get_document_pdf', {
+      docType: 'purchase',
+      documentId: '69fe16ff19098de62508fb80',
+    });
+
+    const pdfResult = result as {
+      pdf?: { base64?: string; contentType?: string; fileName?: string };
+      source?: string;
+    };
+    expect(pdfResult.source).toBe('attachment');
+    expect(pdfResult.pdf?.fileName).toBe('factura-proveedor.pdf');
+    expect(pdfResult.pdf?.contentType).toBe('application/pdf');
+    const decoded = Buffer.from(pdfResult.pdf!.base64!, 'base64').toString('latin1');
+    expect(decoded.startsWith('%PDF-')).toBe(true);
+  });
+});

@@ -197,6 +197,37 @@ export class HoldedClient {
     );
   }
 
+  /**
+   * V3.G.5 (auditoría 2026-06-01): cobertura de attachments subidos
+   * manualmente al documento. Holded distingue /pdf (renderizado) de
+   * /attachments (archivos subidos por el usuario). Ver
+   * docs/engineering/connectors/HOLDED_API_QUIRKS.md.
+   */
+  async listDocumentAttachments(docType: HoldedDocType, documentId: string) {
+    const raw = await this.request<unknown>(
+      `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/list`
+    );
+    if (Array.isArray(raw)) return raw as unknown[];
+    if (raw && typeof raw === 'object') {
+      const obj = raw as { attachments?: unknown[] };
+      return obj.attachments ?? [];
+    }
+    return [];
+  }
+
+  async getDocumentAttachment(
+    docType: HoldedDocType,
+    documentId: string,
+    fileName: string
+  ): Promise<Buffer> {
+    const qs = '?' + new URLSearchParams({ filename: fileName }).toString();
+    return this.request<Buffer>(
+      `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/get${qs}`,
+      {},
+      { expectBinary: true }
+    );
+  }
+
   // ── Contactos / CRM ──────────────────────────────────────────────────────
 
   async listContacts(params?: Record<string, string>) {

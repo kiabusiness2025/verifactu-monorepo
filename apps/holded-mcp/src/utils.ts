@@ -68,12 +68,45 @@ export function toUnixSecondsString(input: string | number): string {
     return (n >= 1e12 ? Math.floor(n / 1000) : n).toString();
   }
 
+  // V3.G.5 (auditoría 2026-06-01): YYYY-MM-DD se interpreta como medianoche
+  // LOCAL Europe/Madrid, NO UTC. Holded almacena las fechas de documentos
+  // al timestamp de medianoche local del tenant. Si parseamos "2025-01-01"
+  // como UTC midnight (1735689600), filtros con starttmp=ese valor pierden
+  // silenciosamente los documentos fechados al 2025-01-01 (cuyo timestamp
+  // real es 1735686000 = 2025-01-01 00:00 Madrid). Daño en auditorías
+  // por ejercicio/trimestre. Repro: P250001 en Nova Gestión.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return parseDateAsMadridMidnight(trimmed).toString();
+  }
+
   const ms = Date.parse(trimmed);
   if (!Number.isFinite(ms)) {
     throw new Error(`Invalid date: ${trimmed}. Use ISO 8601 or Unix timestamp.`);
   }
 
   return Math.floor(ms / 1000).toString();
+}
+
+/**
+ * "YYYY-MM-DD" → segundos epoch de las 00:00:00 LOCAL Europe/Madrid de ese día.
+ * Maneja DST automáticamente (CET +60 invierno / CEST +120 verano).
+ */
+function parseDateAsMadridMidnight(isoDate: string): number {
+  const utcMidnightMs = Date.parse(`${isoDate}T00:00:00Z`);
+  if (!Number.isFinite(utcMidnightMs)) return NaN;
+  const sample = new Date(utcMidnightMs);
+  const tzPart = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Madrid',
+    timeZoneName: 'shortOffset',
+  })
+    .formatToParts(sample)
+    .find((p) => p.type === 'timeZoneName')?.value;
+  const match = tzPart?.match(/GMT([+-])(\d+)(?::(\d+))?/);
+  const offsetMin = match
+    ? (match[1] === '-' ? -1 : 1) *
+      (Number(match[2]) * 60 + (match[3] ? Number(match[3]) : 0))
+    : 60;
+  return Math.floor(utcMidnightMs / 1000) - offsetMin * 60;
 }
 
 /**

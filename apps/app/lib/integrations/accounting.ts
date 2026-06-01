@@ -1542,6 +1542,52 @@ export const holdedAdapter = {
     });
   },
 
+  /**
+   * V3.G.5 (auditoría 2026-06-01): Holded distingue dos cosas para cada
+   * documento: el PDF RENDERIZADO (generado del contenido del doc, vía
+   * /pdf) y los ARCHIVOS ADJUNTOS (PDFs/imágenes subidas manualmente por
+   * el usuario, ej. el PDF del proveedor en una factura de compra).
+   *
+   * Antes solo cubríamos el rendered. Para tenants con datos demo o docs
+   * sin imprimir, /pdf devuelve "No attachments found" aunque el documento
+   * SÍ tenga un archivo adjunto subido por el usuario. listDocumentAttachments
+   * + getDocumentAttachment cubren ese segundo caso.
+   *
+   * Mismo patrón que /contacts/{id}/attachments/list y .../get.
+   */
+  async listDocumentAttachments(apiKey: string, docType: string, documentId: string) {
+    const raw = await holdedRequest<{ attachments?: unknown[] } | unknown[]>({
+      apiKey,
+      path: `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/list`,
+    });
+    return Array.isArray(raw) ? raw : ((raw as { attachments?: unknown[] }).attachments ?? []);
+  },
+
+  async getDocumentAttachment(
+    apiKey: string,
+    docType: string,
+    documentId: string,
+    fileName: string
+  ) {
+    const attachment = await holdedBinaryRequest({
+      apiKey,
+      path: `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/get`,
+      query: { filename: fileName },
+      accept: 'application/octet-stream, image/*, application/pdf, application/json',
+      defaultContentType: 'application/octet-stream',
+    });
+
+    ensureHoldedBinaryNotJsonError(attachment, {
+      expectedKind: 'any',
+      pathLabel: `document ${docType}/${documentId} / attachment ${fileName}`,
+    });
+
+    return {
+      ...attachment,
+      fileName: attachment.fileName || fileName,
+    } satisfies HoldedBinaryFile;
+  },
+
   async listDailyLedger(
     apiKey: string,
     args?: { page?: number; limit?: number; starttmp?: number; endtmp?: number }

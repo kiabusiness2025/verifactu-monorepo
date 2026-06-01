@@ -192,6 +192,50 @@ export function registerInvoicingTools(
         const isPdfMagic = magic.startsWith('%PDF-');
 
         if (!isPdfMagic) {
+          // V3.G.5 (auditoría 2026-06-01): antes de devolver no_attachment,
+          // intentamos los archivos subidos manualmente al documento (Holded
+          // distingue PDF renderizado vs attachments del usuario). Cubre el
+          // caso real reportado con P250001 en Nova Gestión.
+          try {
+            const attachments = await getClient().listDocumentAttachments(docType, documentId);
+            if (Array.isArray(attachments) && attachments.length > 0) {
+              const first = attachments[0] as Record<string, unknown>;
+              const fileName = String(
+                first.fileName ?? first.name ?? first.filename ?? ''
+              ).trim();
+              if (fileName) {
+                const attachBuf = await getClient().getDocumentAttachment(
+                  docType,
+                  documentId,
+                  fileName
+                );
+                return {
+                  content: [
+                    {
+                      type: 'text',
+                      text: JSON.stringify(
+                        {
+                          docType,
+                          documentId,
+                          source: 'attachment',
+                          fileName,
+                          contentType: 'application/pdf',
+                          base64: attachBuf.toString('base64'),
+                          bytes: attachBuf.length,
+                          attachmentMeta: first,
+                        },
+                        null,
+                        2
+                      ),
+                    },
+                  ],
+                };
+              }
+            }
+          } catch {
+            // Si /attachments también falla, caemos al mensaje genérico.
+          }
+
           let parsedError: string | null = null;
           try {
             const body = buf.toString('utf8');
@@ -215,7 +259,7 @@ export function registerInvoicingTools(
                     documentId,
                     message:
                       parsedError ||
-                      `Holded returned no PDF for ${docType}/${documentId}. The document may not have an attached PDF or may not be in a printable state.`,
+                      `Holded returned no PDF for ${docType}/${documentId}. The document has no rendered PDF and no user-uploaded attachments.`,
                   },
                   null,
                   2

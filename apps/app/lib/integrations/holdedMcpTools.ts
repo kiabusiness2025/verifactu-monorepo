@@ -756,10 +756,54 @@ function parseIsoDateToUnix(value: unknown): number | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
-  // Accept YYYY-MM-DD or full ISO
-  const date = new Date(trimmed.length === 10 ? `${trimmed}T00:00:00Z` : trimmed);
+
+  // V3.G.5 (auditoría 2026-06-01): YYYY-MM-DD se interpreta como
+  // medianoche LOCAL Europe/Madrid, NO UTC.
+  //
+  // BUG REPRO: Holded almacena las fechas de los documentos al timestamp
+  // de medianoche LOCAL del tenant (Madrid → UTC+1 invierno / UTC+2 verano).
+  // Doc P250001 fechado 2025-01-01 tenía date=1735686000 (= 2025-01-01
+  // 00:00 Madrid = 2024-12-31 23:00 UTC).
+  //
+  // ANTES interpretábamos "2025-01-01" como UTC midnight = 1735689600,
+  // que en Madrid son las 01:00 del 01/01/2025 — 1 HORA DESPUÉS del doc.
+  // Resultado: range filter con starttmp=1735689600 EXCLUÍA silenciosamente
+  // el doc P250001. Cada corte de ejercicio/trimestre perdía las facturas
+  // del primer día. Daño en auditorías reales.
+  //
+  // AHORA "2025-01-01" → 1735686000 (Madrid midnight) → doc P250001 incluido.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return parseDateAsMadridMidnight(trimmed);
+  }
+
+  // ISO completo con tiempo/timezone explícito → respetamos la conversión nativa.
+  const date = new Date(trimmed);
   if (Number.isNaN(date.getTime())) return undefined;
   return Math.floor(date.getTime() / 1000);
+}
+
+/**
+ * "YYYY-MM-DD" → segundos epoch de las 00:00:00 LOCAL Europe/Madrid de ese día.
+ * Maneja correctamente las transiciones DST (CET → CEST en marzo, vuelta en octubre)
+ * porque computa el offset dinámicamente para la fecha exacta.
+ */
+function parseDateAsMadridMidnight(isoDate: string): number {
+  const utcMidnightMs = Date.parse(`${isoDate}T00:00:00Z`);
+  if (!Number.isFinite(utcMidnightMs)) return NaN;
+  const sample = new Date(utcMidnightMs);
+  const tzPart = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Madrid',
+    timeZoneName: 'shortOffset',
+  })
+    .formatToParts(sample)
+    .find((p) => p.type === 'timeZoneName')?.value;
+  // tzPart parecido a "GMT+1" o "GMT+2". Fallback CET (+1) si fail.
+  const match = tzPart?.match(/GMT([+-])(\d+)(?::(\d+))?/);
+  const offsetMin = match
+    ? (match[1] === '-' ? -1 : 1) *
+      (Number(match[2]) * 60 + (match[3] ? Number(match[3]) : 0))
+    : 60;
+  return Math.floor(utcMidnightMs / 1000) - offsetMin * 60;
 }
 
 /**
@@ -1325,12 +1369,57 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_document_pdf(apiKey, input) {
-    const pdf = await holdedAdapter.getDocumentPdf(
-      apiKey,
-      requiredString(input, 'docType'),
-      requiredString(input, 'documentId')
-    );
-    return { pdf };
+    const docType = requiredString(input, 'docType');
+    const documentId = requiredString(input, 'documentId');
+
+    // V3.G.5 (auditoría 2026-06-01): Holded distingue dos cosas:
+    //   1. PDF renderizado del documento (/pdf endpoint, generado del contenido)
+    //   2. Archivos adjuntos por el usuario (/attachments endpoint)
+    //
+    // ANTES solo intentábamos /pdf. Si el documento no tenía PDF renderizado
+    // (frecuente en datos demo o purchases del proveedor), devolvíamos
+    // `no_attachment` aunque el usuario hubiese subido manualmente el PDF
+    // del proveedor en la UI. El reviewer reportó este caso con P250001 en
+    // Nova Gestión.
+    //
+    // AHORA: intentamos /pdf primero. Si falla porque el body no es binario,
+    // hacemos fallback a /attachments/list + /attachments/get del primer
+    // archivo subido. Si tampoco hay attachments → notFoundResponse legible.
+    try {
+      const pdf = await holdedAdapter.getDocumentPdf(apiKey, docType, documentId);
+      return { pdf, source: 'rendered' };
+    } catch (renderedErr) {
+      const message = renderedErr instanceof Error ? renderedErr.message : '';
+      const looksLikeNoPdf = /non-binary response|no PDF|No attachments/i.test(message);
+      if (!looksLikeNoPdf) throw renderedErr;
+
+      // Fallback: PDF/file subido manualmente al documento.
+      try {
+        const attachments = await holdedAdapter.listDocumentAttachments(
+          apiKey,
+          docType,
+          documentId
+        );
+        if (attachments.length > 0) {
+          const first = attachments[0] as Record<string, unknown>;
+          const fileName = String(
+            first.fileName ?? first.name ?? first.filename ?? ''
+          ).trim();
+          if (fileName) {
+            const file = await holdedAdapter.getDocumentAttachment(
+              apiKey,
+              docType,
+              documentId,
+              fileName
+            );
+            return { pdf: file, source: 'attachment', attachmentMeta: first };
+          }
+        }
+      } catch {
+        // Si attachments también falla, propagamos el error original.
+      }
+      throw renderedErr;
+    }
   },
 
   async holded_update_document_tracking(apiKey, input) {
