@@ -2,6 +2,45 @@
 
 Historial de fixes y hardening aplicados a los conectores durante el ciclo de OpenAI App Review (mayo-junio 2026). Cada commit etiquetado con un identificador V3.X reproducible.
 
+## V3.G.3 — 2026-06-01 · Fix fetchHoldedSnapshot purchases
+
+> Cierra bug histórico que afectaba el business context de Isaak.
+
+Reviewer confirmó que Nova Gestión SL tiene facturas de compras en
+`/expenses/list` (UI). Pero `fetchHoldedSnapshot` devolvía `invoices: []`
+incluso en ese tenant rico, por dos errores:
+
+1. Llamaba `/api/invoicing/v1/documents` SIN docType en el path.
+2. Aplicaba fallbacks `?docType=invoice` como query (Holded ignora).
+
+**Fix**: `packages/integrations/holded/connection.ts:fetchHoldedSnapshot`
+ahora itera en paralelo por los 4 docTypes principales (`invoice`,
+`purchase`, `creditnote`, `purchaserefund`) usando path-prefix correcto
+(`/documents/{docType}`). Devuelve los items tageados con `docType`.
+
+Return shape expandido (backward-compat — `invoices` sigue conteniendo
+solo sales):
+- `invoices` (sales — backward compat con consumers existentes)
+- `purchases` (gastos / facturas de compra) ← nuevo, antes no se exponía
+- `creditnotes` (rectificativas venta) ← nuevo
+- `purchaserefunds` (rectificativas compra) ← nuevo
+- `documents` (agregado) ← nuevo
+- `contacts` (sin cambios)
+- `accounts` (sin cambios)
+
+Verificado contra spec OpenAPI Holded + 4 wrappers community + Holded
+Academy. El MCP path (`apps/app/api/mcp/holded`) NO tenía este bug —
+usaba `listTypedDocuments(apiKey, docType, args)` con path-prefix
+correcto desde siempre.
+
+Script smoke nuevo: `pnpm holded:purchases:smoke` prueba 12 endpoints
+contra la API live para verificar cuál devuelve las purchases del
+tenant. Útil para diagnosticar tenants futuros con problemas similares.
+
+Doc añadido: HOLDED_API_QUIRKS.md sección [INVESTIGATION 2] con la
+lista oficial de docTypes válidos, mapeo UI→API, y caveats sobre la
+API v2 en preview (acceso a prod junio 2026).
+
 ## V3.G.2 — 2026-06-01 · Auto-pagination del libro diario
 
 > Cierra BUGS 1+2 reportados por reviewer 2026-06-01 (chartofaccounts saldos incompletos + dailyledger subset de asientos).

@@ -340,3 +340,111 @@ Cita relevante de la auditoría interna de un equipo distinto que también tocó
 - Endpoint mapping con fiscal year scoping: https://github.com/energio-es/holded-mcp/blob/main/ENDPOINT_MAPPING.md
 - Holded Academy sobre manuales: https://help.holded.com/en/articles/6895943-use-the-predefined-accounting-entries
 - Mirror docs Holded (albertov): https://github.com/albertov/holded-mcp/tree/main/api-docs
+
+## [INVESTIGATION 2] Purchases endpoint · Hallazgos 2026-06-01
+
+> Investigación separada tras reviewer confirmar que Nova Gestión tiene
+> facturas de compras visibles en `https://app.holded.com/expenses/list`.
+
+### Q6.3 — `docType` es path parameter en `/documents`, NO query
+
+Confirmado contra spec OpenAPI oficial Holded + 4 wrappers community
+(`mawrkus/holded-client`, `iamsamuelfraga/mcp-holded`, `BonifacioCalindoro/holded-python`,
+`energio-es/holded-mcp`):
+
+```
+GET /api/invoicing/v1/documents/{docType}   ← path parameter, OBLIGATORIO
+```
+
+NO funciona como query: `GET /documents?docType=purchase` devuelve subset arbitrario
+o ignora el filtro. La sintaxis correcta es siempre path-prefixed con uno de los
+docTypes válidos (lista oficial en Q6.4).
+
+### Q6.4 — Lista oficial de docTypes válidos
+
+```
+invoice           → Facturas de venta emitidas
+salesreceipt      → Tickets de venta
+creditnote        → Abonos / rectificativas de venta
+salesorder        → Pedidos de venta
+proform           → Facturas proforma
+waybill           → Albaranes
+estimate          → Presupuestos
+purchase          → Facturas de COMPRA (gastos / facturas de proveedor)
+purchaseorder     → Pedidos a proveedor
+purchaserefund    → Abonos de compra (rectificativas de compra)
+receiptnote       → Albaranes de recepción (no en todos los wrappers community)
+```
+
+**Mapeo UI → API**:
+
+| UI Holded | docType API |
+|---|---|
+| `app.holded.com/invoices` | `invoice` |
+| `app.holded.com/expenses/list` (sección "Gastos") | **`purchase`** + opcionalmente `purchaserefund` |
+| Tickets simplificados dentro de Expenses | `purchase` (modelo con flag de "ticket") |
+| `app.holded.com/purchaseorder` | `purchaseorder` |
+| `app.holded.com/estimates` | `estimate` |
+
+Confirmado por Holded Academy: *"En Holded, la opción Purchase te lleva a Expenses"*
+y *"para acceder a las facturas de compra, ve a Expenses > Expenses"*.
+
+### Q6.5 — `expensesaccounts` ≠ `expenses` (semánticas distintas)
+
+`/api/invoicing/v1/expensesaccounts` es el **plan contable de categorías de gasto**
+(cuentas 6xx — Suministros, Viajes, etc.), NO los documentos de gasto. Es una
+confusión semántica frecuente: la UI "Expenses" tiene dos significados.
+
+### Q6.6 — Bug histórico en `fetchHoldedSnapshot` (cerrado V3.G.3)
+
+Síntoma: el snapshot de Isaak (business context, weekly digest, chat) devolvía
+`invoices: []` incluso en tenants ricos como Nova Gestión SL.
+
+Root cause: el código pre-V3.G.3 llamaba `/api/invoicing/v1/documents` SIN docType
+en el path y aplicaba como fallback queries `?docType=invoice`, `?doctype=invoice`,
+`?type=invoice`, `?documentType=invoice` — TODOS ignorados por Holded.
+
+Fix (V3.G.3): iteración paralela por los 4 docTypes principales
+(`invoice`, `purchase`, `creditnote`, `purchaserefund`) usando path-prefix
+correcto, devolviendo cada doc tageado con `docType` para que el consumidor
+los distinga.
+
+El return shape ahora expone:
+- `invoices` (sales — backward compat)
+- `purchases` (gastos / facturas de compra)
+- `creditnotes` (rectificativas venta)
+- `purchaserefunds` (rectificativas compra)
+- `documents` (agregado de todos los anteriores)
+- `contacts`
+- `accounts`
+
+⚠ Nota: el MCP path (`apps/app/api/mcp/holded`) usaba la sintaxis correcta
+(`listTypedDocuments(apiKey, docType, args)` con path-prefix) — solo el código
+de snapshot interno tenía el bug. La tool `holded_list_documents(docType=purchase)`
+expuesta a ChatGPT/Claude SIEMPRE ha funcionado bien.
+
+### Q6.7 — API Holded v2 en preview (junio 2026)
+
+Holded ha lanzado API v2 en preview pública con acceso a producción abriendo
+**junio 2026** (este mes). 305 endpoints, REST/JSON, bearer auth, cursor
+pagination. OpenAPI spec disponible públicamente. El modelo de docTypes
+NO cambia — `purchase` sigue siendo el docType de facturas de compra.
+
+v1 sigue operativa y será soportada durante el periodo de migración (sin
+fecha de sunset anunciada).
+
+TODO post-aprobación OpenAI: evaluar migración a v2 cuando esté en producción.
+
+### Fuentes consultadas (Investigación 2)
+
+- [List Documents — Holded API v1](https://developers.holded.com/reference/list-documents-1)
+- [DOCUMENTS overview — Holded API](https://developers.holded.com/reference/documents)
+- [Create Document — Holded API v1](https://developers.holded.com/reference/create-document-1)
+- [Holded Developers Portal](https://www.holded.com/developers)
+- [Expenditure: advanced guide — Holded Academy](https://help.holded.com/en/articles/7941994-expenditure-advanced-guide)
+- [Manage your purchases — Holded Academy](https://help.holded.com/en/articles/6899952-manage-your-purchases)
+- [mawrkus/holded-client (Node wrapper)](https://github.com/mawrkus/holded-client)
+- [iamsamuelfraga/mcp-holded (MCP server)](https://github.com/iamsamuelfraga/mcp-holded)
+- [BonifacioCalindoro/holded-python](https://github.com/BonifacioCalindoro/holded-python)
+- [Rollout — Holded API Essential Guide](https://rollout.com/integration-guides/holded/api-essentials)
+- [Unified.to — Holded integration](https://unified.to/integrations/holded)
