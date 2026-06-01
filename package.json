@@ -42,6 +42,7 @@
     "holded:demo:validate": "node scripts/holded-demo-regression.mjs",
     "holded:chatgpt:smoke": "node scripts/chatgpt-mcp-smoke.mjs",
     "holded:purchases:smoke": "node scripts/holded-purchases-smoke.mjs",
+    "holded:doc-attachment:smoke": "node scripts/holded-document-attachment-smoke.mjs",
     "holded:qa:landings": "node scripts/qa-holded-landings.mjs",
     "openai:validate-tool-hints": "node scripts/validate-openai-tool-hints.mjs",
     "video:intro": "node scripts/generate-intro-sora.mjs",
