@@ -7,6 +7,7 @@ import {
   defaultDailyLedgerRange,
   paginateInMemory,
   parsePageParam,
+  sortJournalEntries,
   toUnixSecondsString,
 } from '../utils.js';
 import { withControlledErrors } from './errors.js';
@@ -292,7 +293,12 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
       params.endtmp = endtmp !== undefined ? toUnixSecondsString(endtmp) : defaults.endtmp;
 
       const data = await getClient().getDailyLedger(params);
-      const entries = Array.isArray(data) ? data : [];
+      const rawEntries = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+      // V3.G (auditoría 2026-06-01): Holded /dailyledger devuelve los asientos
+      // en orden interno Mongo (sin garantías). Para reconciliación contable
+      // el usuario espera orden cronológico ASC (oldest first). Sort estable
+      // por date ASC + number ASC antes de exponer al modelo.
+      const entries = sortJournalEntries(rawEntries);
       const page = parsePageParam(rest.page);
       const pagination = buildPaginationMeta(entries.length, page);
       const usedDefaults = {
@@ -312,6 +318,7 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
                   endtmp: params.endtmp,
                   defaultsAppliedByConnector: usedDefaults,
                 },
+                sortApplied: 'date_asc_then_number_asc',
               },
               null,
               2
@@ -348,7 +355,10 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
       if (page !== undefined) params.page = String(page);
 
       const data = await getClient().getDailyLedger(params);
-      const entries = Array.isArray(data) ? data : [];
+      const rawEntries = Array.isArray(data) ? (data as Record<string, unknown>[]) : [];
+      // V3.G: mismo sort que get_journal — orden cronológico ASC para
+      // reconciliación contable.
+      const entries = sortJournalEntries(rawEntries);
       const pageNum = parsePageParam(page);
       const pagination = buildPaginationMeta(entries.length, pageNum);
       const usedDefaults = {
@@ -368,6 +378,7 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
                   endtmp: params.endtmp,
                   defaultsAppliedByConnector: usedDefaults,
                 },
+                sortApplied: 'date_asc_then_number_asc',
               },
               null,
               2

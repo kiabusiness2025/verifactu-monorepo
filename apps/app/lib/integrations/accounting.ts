@@ -725,6 +725,55 @@ function paginateArrayResponse<T>(
   return items.slice(offset, offset + limit);
 }
 
+/**
+ * V3.G (auditoría 2026-06-01): orden estable de asientos del libro diario
+ * por date ASC (oldest first) + number ASC. Holded `/dailyledger` devuelve
+ * los registros en orden interno de Mongo (insertion order, sin garantías):
+ * el usuario reportó asientos saliendo "122-129, 280, 356, 384..., 660-677,
+ * 137 al final" — imposible cuadrar. El sort se aplica ANTES de paginar.
+ */
+function sortHoldedJournalEntries<T extends Record<string, unknown>>(entries: T[]): T[] {
+  const withIndex = entries.map((entry, idx) => ({ entry, idx }));
+  withIndex.sort((a, b) => {
+    const dateA = entryToComparableNumber((a.entry as { date?: unknown }).date);
+    const dateB = entryToComparableNumber((b.entry as { date?: unknown }).date);
+    if (dateA !== dateB) {
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
+      return dateA - dateB;
+    }
+    const numA = entryToComparableNumber(
+      (a.entry as { number?: unknown }).number ?? (a.entry as { docNumber?: unknown }).docNumber
+    );
+    const numB = entryToComparableNumber(
+      (b.entry as { number?: unknown }).number ?? (b.entry as { docNumber?: unknown }).docNumber
+    );
+    if (numA !== numB) {
+      if (numA === null) return 1;
+      if (numB === null) return -1;
+      return numA - numB;
+    }
+    return a.idx - b.idx;
+  });
+  return withIndex.map((w) => w.entry);
+}
+
+function entryToComparableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) return parsed;
+    const digits = trimmed.match(/\d+/);
+    if (digits) {
+      const parsedDigits = Number(digits[0]);
+      if (Number.isFinite(parsedDigits)) return parsedDigits;
+    }
+  }
+  return null;
+}
+
 function normalizeSearchText(value: unknown) {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
 }
@@ -1460,7 +1509,13 @@ export const holdedAdapter = {
         endtmp: args?.endtmp,
       },
     });
-    return paginateArrayResponse(entries, args, { enabled: true });
+    // V3.G (auditoría 2026-06-01): Holded /dailyledger devuelve los asientos
+    // en orden interno Mongo (sin garantías). Para reconciliación contable
+    // el usuario espera orden cronológico ASC. Sort estable por date ASC +
+    // number ASC ANTES de paginar — si no, el slice client-side
+    // (paginateArrayResponse) devolvía páginas inconexas.
+    const sorted = sortHoldedJournalEntries(Array.isArray(entries) ? entries : []);
+    return paginateArrayResponse(sorted, args, { enabled: true });
   },
 
   async createDailyLedgerEntry(apiKey: string, payload: HoldedEntityPayload) {

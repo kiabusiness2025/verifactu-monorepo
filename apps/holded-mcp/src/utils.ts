@@ -111,15 +111,20 @@ export interface PaginationMeta {
 export function buildPaginationMeta(
   itemsInPage: number,
   page: number = 1,
-  pageSize: number = 500
+  pageSize: number = 250
 ): PaginationMeta {
-  // Holded /dailyledger devuelve por defecto hasta ~500 entradas por pagina
-  // (observado empiricamente; no documentado oficialmente). Si itemsInPage
-  // iguala o supera ese umbral, asumimos que hay mas paginas.
+  // V3.G (auditoría 2026-06-01): default era 500 con un comentario equivocado
+  // ("Holded /dailyledger devuelve por defecto hasta ~500 por pagina"). En
+  // realidad Holded devuelve hasta ~250 por pagina en /dailyledger (testeado
+  // contra Nova Gestion: pagina 1 = 250, pagina 2 = 219 más). El default 500
+  // hacia que `itemsInPage >= pageSize` evaluase a false cuando la pagina
+  // venia con 250 (la realidad), el modelo dejaba de paginar y se perdia
+  // medio diario — exactamente el bug reportado por el usuario en una
+  // consulta de inmovilizado + cierres 2025.
   //
-  // Bug arreglado (12-may-2026, task #107): antes el default era 100, lo que
-  // hacia que el smoke test reportara pageSize=100 cuando Holded devolvia 250.
-  // El modelo veia la discrepancia y se confundia.
+  // Heuristica corregida: si la pagina llego "llena" (itemsInPage >= 250)
+  // asumimos que hay mas. Falsos positivos siguen siendo OK (una llamada
+  // extra y lista vacia). Falsos negativos = aggregates a la mitad sin avisar.
   const likelyHasMorePages = itemsInPage >= pageSize;
   return {
     page,
@@ -131,6 +136,63 @@ export function buildPaginationMeta(
       ? `Holded returned ${itemsInPage} items in page ${page} (matches expected pageSize=${pageSize}, page is full). MORE PAGES LIKELY EXIST. Call again with page=${page + 1} to continue, and merge results client-side. Do NOT report aggregate values (totals, sums, counts) until you have fetched every page or you will return a partial answer.`
       : null,
   };
+}
+
+/**
+ * V3.G (auditoría 2026-06-01): orden estable client-side de asientos del
+ * libro diario y entradas similares. Holded `/dailyledger` devuelve los
+ * registros en el orden interno de Mongo (insertion order, sin garantías),
+ * lo que para una vista contable es inutilizable — el usuario reporto
+ * asientos saliendo en orden "122-129, luego 280, 356, 384..., 660-677,
+ * 137 al final", imposible de cuadrar.
+ *
+ * Ordenamos por `date` ASC (oldest first, como espera un libro diario)
+ * y rompemos empates por `number` (numero de asiento) ASC. Si alguno de
+ * estos campos falta, lo movemos al final manteniendo la posicion entre
+ * ellos (sort estable).
+ */
+export function sortJournalEntries<T extends Record<string, unknown>>(entries: T[]): T[] {
+  const withIndex = entries.map((entry, idx) => ({ entry, idx }));
+  withIndex.sort((a, b) => {
+    const dateA = toComparableNumber((a.entry as { date?: unknown }).date);
+    const dateB = toComparableNumber((b.entry as { date?: unknown }).date);
+    if (dateA !== dateB) {
+      // null/NaN al final
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
+      return dateA - dateB;
+    }
+    const numA = toComparableNumber(
+      (a.entry as { number?: unknown }).number ?? (a.entry as { docNumber?: unknown }).docNumber
+    );
+    const numB = toComparableNumber(
+      (b.entry as { number?: unknown }).number ?? (b.entry as { docNumber?: unknown }).docNumber
+    );
+    if (numA !== numB) {
+      if (numA === null) return 1;
+      if (numB === null) return -1;
+      return numA - numB;
+    }
+    return a.idx - b.idx;
+  });
+  return withIndex.map((w) => w.entry);
+}
+
+function toComparableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) return parsed;
+    // Soporta formato "001", "A-002", etc. — extraemos solo los digitos.
+    const digits = trimmed.match(/\d+/);
+    if (digits) {
+      const parsedDigits = Number(digits[0]);
+      if (Number.isFinite(parsedDigits)) return parsedDigits;
+    }
+  }
+  return null;
 }
 
 /**

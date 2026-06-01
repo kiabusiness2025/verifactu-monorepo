@@ -57,19 +57,20 @@ test('parsePageParam: fallback a 1 para valores invalidos', () => {
 });
 
 test('regresion task #103+#107: balance contable parcial', () => {
-  // Pagina 1 con default pageSize=500
-  const page1Entries = Array.from({ length: 500 }, (_, i) => ({
+  // V3.G (2026-06-01): default pasó de 500 a 250 (cifra real de Holded
+  // /dailyledger). Página llena = exactamente pageSize.
+  const page1Entries = Array.from({ length: 250 }, (_, i) => ({
     accountId: 70500000,
     debit: 0,
     credit: 100 + i,
   }));
   const meta1 = buildPaginationMeta(page1Entries.length, 1);
-  assert.equal(meta1.pageSize, 500);
+  assert.equal(meta1.pageSize, 250);
   assert.equal(meta1.likelyHasMorePages, true);
   assert.equal(meta1.suggestedNextPage, 2);
   assert.match(meta1.hint as string, /fetched every page/i);
 
-  // Pagina 2 parcial
+  // Pagina 2 parcial — el modelo debe parar.
   const page2Entries = Array.from({ length: 30 }, () => ({
     accountId: 70500000,
     debit: 0,
@@ -81,11 +82,16 @@ test('regresion task #103+#107: balance contable parcial', () => {
   assert.equal(meta2.hint, null);
 });
 
-test('regresion task #107: pageSize default NO debe ser 100', () => {
-  // Smoke test post-deploy T#106: pagination.pageSize:100 pero itemsInPage:250
-  // = discrepancia. Fix: default cambio a 500.
+test('V3.G: pageSize default coincide con Holded /dailyledger real (250)', () => {
+  // Bug reportado por reviewer 2026-06-01: con default pageSize=500 una
+  // página llena de Holded (250 entries) marcaba likelyHasMorePages:false →
+  // modelo paraba paginación → datos a la mitad sin avisar (faltaban los
+  // asientos de inmovilizado y cierres 2025 del segundo lote de 219 entries).
+  // Fix: default 250 coincide con la realidad observada, página llena se
+  // detecta como tal y se sugiere page=2.
   const meta = buildPaginationMeta(250, 1);
-  assert.equal(meta.pageSize, 500, 'pageSize default debe ser 500');
-  assert.equal(meta.likelyHasMorePages, false, '250 < 500');
-  assert.equal(meta.suggestedNextPage, null);
+  assert.equal(meta.pageSize, 250, 'pageSize default debe ser 250 (no 500)');
+  assert.equal(meta.likelyHasMorePages, true, '250 >= 250 → hay más páginas');
+  assert.equal(meta.suggestedNextPage, 2);
+  assert.match(meta.hint as string, /Call again with page=2/);
 });

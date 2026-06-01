@@ -487,6 +487,41 @@ describe('Holded accounting adapter', () => {
     ).rejects.toThrow(/non-binary response.*Document has no PDF attachment/);
   });
 
+  it('V3.G: sorts daily ledger entries by date ASC then number ASC before returning', async () => {
+    // Bug reportado por reviewer 2026-06-01: Holded /dailyledger devuelve los
+    // asientos en orden interno Mongo, no por fecha ni numero. El usuario veia
+    // "122-129, 280, 356, 384..., 660-677, 137 al final" y no podia cuadrar.
+    // Fix: sort estable por date ASC + number ASC antes de paginar.
+    const unsorted = [
+      { id: 'e3', date: 1717200000, number: '280', description: 'Asiento 280' },
+      { id: 'e5', date: 1709251200, number: '137', description: 'Asiento 137' },
+      { id: 'e1', date: 1704067200, number: '122', description: 'Asiento 122' },
+      { id: 'e2', date: 1704153600, number: '129', description: 'Asiento 129' },
+      { id: 'e4', date: 1721174400, number: '677', description: 'Asiento 677' },
+    ];
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(unsorted),
+    });
+
+    const result = await holdedAdapter.listDailyLedger('demo-key', {
+      page: 1,
+      limit: 25,
+      starttmp: 1704067200,
+      endtmp: 1735689599,
+    });
+
+    expect((result as Array<{ number: string }>).map((e) => e.number)).toEqual([
+      '122',
+      '129',
+      '137',
+      '280',
+      '677',
+    ]);
+  });
+
   it('V3.F: filters out contacts with empty supplierRecord when type=supplier requested', async () => {
     // El server-side filter de Holded type=supplier devuelve también contactos
     // con supplierRecord=0 (rol legacy, ya no es proveedor activo). Aplicamos
