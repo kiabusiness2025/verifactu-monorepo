@@ -1871,7 +1871,10 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_invoices',
     'List invoices in Holded',
-    'List SALES invoice documents (issued invoices, Holded docType=invoice) for the currently authorized tenant. Use year or from/to when you need older history such as 2025. This tool does NOT list received supplier invoices: for purchases call holded_list_documents with docType set to purchase, purchaseorder or purchaserefund.',
+    'List SALES invoice documents (issued invoices, Holded docType=invoice) for the currently authorized tenant. ' +
+      'BEHAVIOR: if the default scope returns 0 invoices (tenant has restrictive default scope), the connector automatically retries against the current year and then the previous year via Holded history. So an empty result means the tenant truly has no invoices in recent history, not a connector failure. ' +
+      'Use `year` or explicit `from`/`to` ISO dates only when you need OLDER history (e.g. 2024). ' +
+      'This tool does NOT list received supplier invoices: for PURCHASES / SUPPLIER BILLS / EXPENSES call `holded_list_documents` with `docType: "purchase"`.',
     listSchema({
       status: stringProperty(
         'Optional Holded invoice status filter, if supported by the tenant account.'
@@ -1901,11 +1904,13 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_documents',
     'List documents in Holded',
-    'List invoice, sales and supplier documents from Holded for the currently authorized tenant. Use docType purchase, purchaseorder or purchaserefund for purchases and supplier expenses, and use year or from/to when you need older history such as 2025.',
+    'List commercial documents (sales invoices/estimates by default, OR purchases when docType is specified) for the currently authorized Holded tenant. ' +
+      'PASS `docType: "purchase"` (or `"purchaseorder"`, `"purchaserefund"`) when the user asks for SUPPLIER documents, BILLS, EXPENSES or PURCHASES. Without docType, the tool returns sales invoices + estimates merged. ' +
+      'Use `year` (e.g. 2025) or explicit `from`/`to` ISO dates if you need older history; otherwise the default scope is recent.',
     listSchema({
       status: stringProperty('Optional Holded document status filter.'),
       docType: stringProperty(
-        'Optional Holded document type filter such as invoice, estimate, purchase, purchaseorder or purchaserefund.'
+        'Holded document type. For sales: "invoice" or "estimate" (default if omitted = invoices + estimates). For purchases / supplier bills: "purchase", "purchaseorder" or "purchaserefund".'
       ),
       year: yearProperty,
       from: isoDateProperty,

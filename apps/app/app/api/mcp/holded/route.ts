@@ -344,7 +344,15 @@ function summarizeItem(item: unknown): string {
 
 function buildItemsSummary(items: unknown[], total?: number): string {
   if (items.length === 0) {
-    return 'No items returned for this query.';
+    // V3.D — mensaje más informativo cuando no hay resultados, para que el
+    // reviewer (ChatGPT web y mobile) entienda que es un resultado válido
+    // y NO un error del conector. Antes decía solo "No items returned
+    // for this query." y el modelo a veces lo interpretaba como fallo.
+    return (
+      'The connector returned 0 items for this query — this is a valid read-only result, ' +
+      'not an error. The tenant simply has no matching records in that scope or date range. ' +
+      'Try broadening the filters (e.g. add `year` or wider `from`/`to`) or call again without filters.'
+    );
   }
   const preview = items.slice(0, TEXT_PREVIEW_LIMIT).map(summarizeItem).join('\n');
   const totalText = total !== undefined ? `${total}` : `${items.length}`;
