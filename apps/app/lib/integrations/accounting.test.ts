@@ -484,7 +484,7 @@ describe('Holded accounting adapter', () => {
 
     await expect(
       holdedAdapter.getDocumentPdf('demo-key', 'invoice', 'doc-1')
-    ).rejects.toThrow(/no PDF.*Document has no PDF attachment/);
+    ).rejects.toThrow(/non-binary response.*Document has no PDF attachment/);
   });
 
   it('V3.F: filters out contacts with empty supplierRecord when type=supplier requested', async () => {

@@ -206,6 +206,78 @@ function safeJsonParse(raw: string) {
   }
 }
 
+/**
+ * V3.F.II (auditoría 2026-06-01): valida que un response binario de Holded
+ * sea realmente del tipo esperado y no un JSON de error disfrazado.
+ *
+ * Holded a veces devuelve HTTP 200 + body JSON (`{"status":0,"error":"..."}`)
+ * cuando no hay binario disponible (documento sin PDF, contacto sin
+ * attachment, producto sin imagen, etc.). Sin validación, el adapter
+ * encodea ese JSON como base64 con contentType mentiroso y el caller
+ * (ChatGPT, Claude, Isaak) cree que tiene un PDF/imagen real.
+ *
+ * Detecta el caso via: magic bytes conocidos (`%PDF-`, `\x89PNG`,
+ * `\xFF\xD8\xFF` JPEG, `GIF8`, `RIFF` WebP, `BM` BMP) + content-type.
+ * Si NINGUNO de los dos pasa, decodifica el body y propaga el mensaje
+ * de error de Holded como Error legible.
+ */
+function ensureHoldedBinaryNotJsonError(
+  file: HoldedBinaryFile,
+  options: {
+    expectedKind: 'pdf' | 'image' | 'any';
+    pathLabel: string;
+  }
+): void {
+  const ct = (file.contentType || '').toLowerCase();
+  const head = file.base64
+    ? Buffer.from(file.base64.slice(0, 16), 'base64').toString('latin1')
+    : '';
+
+  const isPdfMagic = head.startsWith('%PDF-');
+  const isImageMagic =
+    head.startsWith('\x89PNG') ||
+    head.startsWith('\xFF\xD8\xFF') ||
+    head.startsWith('GIF8') ||
+    head.startsWith('RIFF') ||
+    head.startsWith('BM');
+
+  const ctIsPdf = ct.startsWith('application/pdf');
+  const ctIsImage = ct.startsWith('image/');
+  const ctIsJson = ct.startsWith('application/json');
+  const headLooksLikeJson =
+    head.trimStart().startsWith('{') || head.trimStart().startsWith('[');
+
+  let isOk: boolean;
+  if (options.expectedKind === 'pdf') {
+    isOk = isPdfMagic || (ctIsPdf && !ctIsJson && !headLooksLikeJson);
+  } else if (options.expectedKind === 'image') {
+    isOk = isImageMagic || (ctIsImage && !ctIsJson && !headLooksLikeJson);
+  } else {
+    isOk =
+      isPdfMagic ||
+      isImageMagic ||
+      (ctIsPdf && !headLooksLikeJson) ||
+      (ctIsImage && !headLooksLikeJson) ||
+      (!ctIsJson && !headLooksLikeJson);
+  }
+
+  if (isOk) return;
+
+  const body = file.base64 ? Buffer.from(file.base64, 'base64').toString('utf8') : '';
+  const parsed = safeJsonParse(body);
+  const msg =
+    parsed && typeof parsed === 'object'
+      ? ((parsed as { error?: string; message?: string }).error ??
+        (parsed as { error?: string; message?: string }).message ??
+        null)
+      : null;
+  throw new Error(
+    msg
+      ? `Holded returned a non-binary response for ${options.pathLabel}: ${msg}`
+      : `Holded returned a non-binary response for ${options.pathLabel}. The resource may not exist or may not have a binary attachment.`
+  );
+}
+
 function extractFilenameFromContentDisposition(value: string | null) {
   if (!value) return null;
 
@@ -1218,6 +1290,15 @@ export const holdedAdapter = {
       defaultContentType: 'application/octet-stream',
     });
 
+    // V3.F.II: misma validación que getDocumentPdf. Holded puede devolver
+    // 200+JSON cuando el attachment no existe (filename mal escrito, contacto
+    // sin documentos adjuntos, etc.). Aceptamos cualquier tipo binario
+    // (PDF, imagen, octet-stream) pero rechazamos JSON disfrazado.
+    ensureHoldedBinaryNotJsonError(attachment, {
+      expectedKind: 'any',
+      pathLabel: `contact ${contactId} / ${fileName}`,
+    });
+
     return {
       ...attachment,
       fileName: attachment.fileName || fileName,
@@ -1275,43 +1356,16 @@ export const holdedAdapter = {
       path: `/api/invoicing/v1/documents/${docType}/${documentId}/pdf`,
     });
 
-    // V3.F (auditoría 2026-06-01): Holded a veces devuelve HTTP 200 con un
-    // JSON de error en el body (no hay PDF adjunto, doc no aprobado, etc.)
-    // en lugar de un 404. Antes encodeábamos ese JSON como base64 con
-    // contentType: 'application/pdf' falso → el caller obtenía un "PDF"
-    // que en realidad era texto JSON corrupto.
-    //
-    // Validación: un PDF real EMPIEZA por la firma "%PDF-" (ASCII bytes
-    // 0x25 0x50 0x44 0x46 0x2D). Decodificamos los primeros 5 bytes del
-    // base64 y los comparamos. Si no coinciden Y el content-type no es
-    // application/pdf, tratamos la respuesta como un error legible.
-    const looksLikePdfByContentType = (pdf.contentType || '').toLowerCase().startsWith('application/pdf');
-    const firstBytes = pdf.base64
-      ? Buffer.from(pdf.base64.slice(0, 12), 'base64').toString('latin1')
-      : '';
-    const looksLikePdfByMagic = firstBytes.startsWith('%PDF-');
-
-    if (!looksLikePdfByMagic && !looksLikePdfByContentType) {
-      // Si el body parece JSON, extraemos el mensaje de error para que el
-      // caller (ChatGPT/Claude) lo pueda mostrar en lenguaje natural.
-      const bodyText = pdf.base64 ? Buffer.from(pdf.base64, 'base64').toString('utf8') : '';
-      const parsedError = safeJsonParse(bodyText);
-      const message =
-        parsedError && typeof parsedError === 'object'
-          ? ((parsedError as { error?: string; message?: string }).error ??
-            (parsedError as { error?: string; message?: string }).message ??
-            null)
-          : null;
-      throw new Error(
-        message
-          ? `Holded returned no PDF for ${docType}/${documentId}: ${message}`
-          : `Holded returned no PDF for ${docType}/${documentId}. The document may not have an attached PDF or may not be in a printable state.`
-      );
-    }
+    ensureHoldedBinaryNotJsonError(pdf, {
+      expectedKind: 'pdf',
+      pathLabel: `${docType}/${documentId}`,
+    });
 
     return {
       ...pdf,
-      contentType: looksLikePdfByMagic ? 'application/pdf' : pdf.contentType || 'application/pdf',
+      contentType: pdf.contentType?.toLowerCase().startsWith('application/pdf')
+        ? pdf.contentType
+        : 'application/pdf',
       fileName: pdf.fileName || `${docType}-${documentId}.pdf`,
     } satisfies HoldedBinaryFile;
   },
@@ -1558,6 +1612,14 @@ export const holdedAdapter = {
       defaultContentType: 'application/octet-stream',
     });
 
+    // V3.F.II: producto sin imagen principal → Holded devuelve 200+JSON.
+    // Validamos magic bytes de imagen (PNG, JPEG, GIF, WebP, BMP) o
+    // content-type image/*. Si falla, propagamos el mensaje de error real.
+    ensureHoldedBinaryNotJsonError(image, {
+      expectedKind: 'image',
+      pathLabel: `product ${productId} main image`,
+    });
+
     return {
       ...image,
       fileName: image.fileName || `${productId}-main-image`,
@@ -1577,6 +1639,12 @@ export const holdedAdapter = {
       path: `/api/invoicing/v1/products/${productId}/image/${imageFileName}`,
       accept: 'image/*, application/octet-stream, application/json',
       defaultContentType: 'application/octet-stream',
+    });
+
+    // V3.F.II: misma validación que getProductMainImage para imagen secundaria.
+    ensureHoldedBinaryNotJsonError(image, {
+      expectedKind: 'image',
+      pathLabel: `product ${productId} / image ${imageFileName}`,
     });
 
     return {

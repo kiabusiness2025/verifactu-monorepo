@@ -580,6 +580,37 @@ export async function holdedGetDocumentPdf(
       throw new Error(`Holded API ${res.status} at /documents/${docType}/${documentId}/pdf`);
     }
     const buf = Buffer.from(await res.arrayBuffer());
+
+    // V3.F.II (auditoría 2026-06-01): mismo patrón que el bug ya cerrado en
+    // apps/app/lib/integrations/accounting.ts. Holded a veces devuelve 200 OK
+    // con body JSON `{"status":0,"error":"..."}` cuando el documento no tiene
+    // PDF — sin esta validación, encodeábamos ese JSON como base64 con
+    // mimeType: 'application/pdf' mentiroso (ver holded-tools.ts:539).
+    //
+    // Magic bytes de un PDF real: %PDF- (bytes 0x25 0x50 0x44 0x46 0x2D).
+    // Si los primeros 5 bytes NO coinciden Y el content-type devuelto por
+    // Holded no es application/pdf, propagamos el error real de Holded.
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    const magic = buf.subarray(0, 5).toString('latin1');
+    const isPdfMagic = magic.startsWith('%PDF-');
+    const isPdfContentType = contentType.startsWith('application/pdf');
+
+    if (!isPdfMagic && !isPdfContentType) {
+      const bodyText = buf.toString('utf8');
+      let parsedMessage: string | null = null;
+      try {
+        const parsed = JSON.parse(bodyText) as { error?: string; message?: string };
+        parsedMessage = parsed?.error ?? parsed?.message ?? null;
+      } catch {
+        // Body no es JSON parseable, dejamos parsedMessage null.
+      }
+      throw new Error(
+        parsedMessage
+          ? `Holded returned no PDF for ${docType}/${documentId}: ${parsedMessage}`
+          : `Holded returned no PDF for ${docType}/${documentId}. The document may not have an attached PDF or may not be in a printable state.`
+      );
+    }
+
     return { base64: buf.toString('base64'), bytes: buf.byteLength };
   } finally {
     clearTimeout(timer);

@@ -954,8 +954,79 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   async holded_get_document(apiKey, input) {
     const docType = requiredString(input, 'docType');
     const documentId = requiredString(input, 'documentId');
+
+    // V3.F.II (auditoría 2026-06-01): mismo smart lookup que holded_get_invoice.
+    // Holded mantiene dos identificadores: cuid interno (24 hex) y docNumber
+    // visible (ej. "P0045"). ChatGPT/Claude tienden a pasar el docNumber
+    // porque es lo que ven en holded_list_documents. Antes daba 404 directo.
+    //
+    // Logica:
+    //   1. Si parece cuid (24 hex) → llamada directa.
+    //   2. Si parece docNumber → listar (incluyendo año/año-1) y matchear.
+    //   3. Si nada matchea → notFoundResponse legible.
+    if (/^[a-f0-9]{24}$/i.test(documentId)) {
+      try {
+        const item = await holdedAdapter.getDocument(apiKey, docType, documentId);
+        return { item };
+      } catch (err) {
+        if (isHoldedNotFound(err)) return notFoundResponse('document', documentId);
+        throw err;
+      }
+    }
+
+    type DocLike = {
+      id?: string;
+      _id?: string;
+      docNumber?: string;
+      number?: string;
+    };
+
+    const matchByDocNumber = (items: unknown): DocLike | undefined => {
+      if (!Array.isArray(items)) return undefined;
+      return (items as DocLike[]).find(
+        (doc) =>
+          doc?.docNumber === documentId ||
+          doc?.number === documentId ||
+          doc?.docNumber?.toLowerCase() === documentId.toLowerCase() ||
+          doc?.number?.toLowerCase() === documentId.toLowerCase()
+      );
+    };
+
+    const defaultList = await holdedAdapter.listDocuments(apiKey, {
+      page: 1,
+      limit: 100,
+      docType,
+    });
+    let candidate = matchByDocNumber(defaultList);
+
+    if (!candidate) {
+      const currentYear = new Date().getUTCFullYear();
+      const historyResult = await holdedAdapter.listDocumentsHistory(apiKey, {
+        page: 1,
+        limit: 100,
+        docType,
+        year: currentYear,
+      });
+      candidate = matchByDocNumber(historyResult?.items);
+
+      if (!candidate) {
+        const previousResult = await holdedAdapter.listDocumentsHistory(apiKey, {
+          page: 1,
+          limit: 100,
+          docType,
+          year: currentYear - 1,
+        });
+        candidate = matchByDocNumber(previousResult?.items);
+      }
+    }
+
+    if (!candidate) {
+      return notFoundResponse('document', documentId);
+    }
+
+    const resolvedId = candidate.id ?? candidate._id ?? documentId;
     try {
-      const item = await holdedAdapter.getDocument(apiKey, docType, documentId);
+      const item = await holdedAdapter.getDocument(apiKey, docType, resolvedId);
       return { item };
     } catch (err) {
       if (isHoldedNotFound(err)) return notFoundResponse('document', documentId);
@@ -1952,11 +2023,15 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_get_document',
     'Get one document from Holded',
-    'Retrieve a single Holded document by type and id.',
+    'Retrieve a single Holded document by type. Accepts EITHER the internal Holded document id (24-character hex cuid returned by previous listings) OR the visible document number such as "P0045" / "P-0045" / "F0030". When you receive a list of documents from holded_list_documents you can pass the `docNumber` field directly here — the connector resolves it to the internal id automatically (scanning the current page and recent historical years).',
     simpleSchema(
       {
-        docType: stringProperty('The Holded document type, for example invoice or estimate.'),
-        documentId: stringProperty('The Holded document identifier.'),
+        docType: stringProperty(
+          'The Holded document type. Sales: "invoice", "estimate". Purchases / supplier bills: "purchase", "purchaseorder", "purchaserefund".'
+        ),
+        documentId: stringProperty(
+          'The Holded document identifier — either the internal cuid (24 hex chars) OR the visible docNumber (e.g. "P0045"). The connector resolves docNumbers automatically.'
+        ),
       },
       ['docType', 'documentId']
     )
