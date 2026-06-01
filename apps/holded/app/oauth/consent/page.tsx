@@ -73,7 +73,14 @@ function buildAuthorizeReturnUrl(params: SearchParams): string {
     const value = getString(params, key);
     if (value) url.searchParams.set(key, value);
   }
-  url.searchParams.set('consent_confirmed', '1');
+  // V3.E (hardening 2026-06-01): el consent screen ya no envía un flag suelto
+  // `consent_confirmed=1` (replay-vulnerable). En su lugar forwardea intacto
+  // el `consent_proof` HMAC que firmó /oauth/authorize antes de redirigirnos
+  // aquí. Esta página no necesita SESSION_SECRET — solo pasa el token.
+  const consentProof = getString(params, 'consent_proof');
+  if (consentProof) {
+    url.searchParams.set('consent_proof', consentProof);
+  }
   url.searchParams.set('holded_login_confirmed', '1');
   return url.toString();
 }

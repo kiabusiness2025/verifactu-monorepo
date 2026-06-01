@@ -9,7 +9,9 @@ export {
   readSessionSecret,
   readSessionSecrets,
   resolveSharedTenantSession,
+  signConsentProof,
   signSessionToken,
+  verifyConsentProof,
   verifySessionToken,
   verifySessionTokenFromEnv,
   verifySessionTokenWithFallback,
@@ -17,6 +19,7 @@ export {
 export { UserRole, type AuthUser, type SessionUser } from './types';
 export { checkPermission, canImpersonate } from './utils/permissions';
 export type {
+  ConsentProofInput,
   SessionCookieInput,
   SessionCookieOptions,
   SessionPayload,

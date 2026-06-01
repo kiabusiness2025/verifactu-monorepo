@@ -3,10 +3,13 @@ import {
   buildSessionCookieOptions,
   readSessionSecret,
   readSessionSecrets,
+  signConsentProof,
   signSessionToken,
+  verifyConsentProof,
   verifySessionToken,
   verifySessionTokenFromEnv,
   verifySessionTokenWithFallback,
+  type ConsentProofInput,
   type SessionCookieInput,
   type SessionCookieOptions,
   type SessionPayload,
@@ -18,13 +21,21 @@ export {
   buildSessionCookieOptions,
   readSessionSecret,
   readSessionSecrets,
+  signConsentProof,
   signSessionToken,
+  verifyConsentProof,
   verifySessionToken,
   verifySessionTokenFromEnv,
   verifySessionTokenWithFallback,
 };
 
-export type { SessionCookieInput, SessionCookieOptions, SessionPayload, SessionSameSite };
+export type {
+  ConsentProofInput,
+  SessionCookieInput,
+  SessionCookieOptions,
+  SessionPayload,
+  SessionSameSite,
+};
 
 export type CookieReader = {
   get(name: string): { value: string } | undefined;

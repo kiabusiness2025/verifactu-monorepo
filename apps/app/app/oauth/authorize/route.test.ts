@@ -55,8 +55,46 @@ import {
   resolveTenantForHoldedFirstSession,
 } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
+import { signConsentProof } from '@verifactu/utils/consent-proof';
 import { NextRequest } from 'next/server';
 import { GET } from './route';
+
+// V3.E (hardening 2026-06-01): /oauth/authorize ahora exige `consent_proof`
+// (HMAC firmado con SESSION_SECRET) en lugar del flag suelto `consent_confirmed=1`.
+// Los tests deben firmar el proof con la misma SESSION_SECRET que el código
+// productivo, vinculando uid + client_id + redirect_uri + scope + code_challenge.
+const TEST_SESSION_SECRET = 'test-session-secret-32chars-aaaaaaaaaaaaaaa';
+process.env.SESSION_SECRET = TEST_SESSION_SECRET;
+
+function buildConsentProof(input: {
+  uid?: string;
+  clientId: string;
+  redirectUri: string;
+  scope: string;
+  codeChallenge: string;
+}) {
+  return signConsentProof(
+    {
+      uid: input.uid ?? 'user-1',
+      clientId: input.clientId,
+      redirectUri: input.redirectUri,
+      scope: input.scope,
+      codeChallenge: input.codeChallenge,
+    },
+    TEST_SESSION_SECRET
+  );
+}
+
+const CHATGPT_REDIRECT = 'https://chat.openai.com/aip/oauth/callback';
+const CHATGPT_CLIENT = 'openai-chatgpt-test';
+const TEST_SCOPE = 'mcp.read holded.invoices.read';
+const TEST_CHALLENGE = 'a'.repeat(43);
+const VALID_CONSENT_PROOF = buildConsentProof({
+  clientId: CHATGPT_CLIENT,
+  redirectUri: CHATGPT_REDIRECT,
+  scope: TEST_SCOPE,
+  codeChallenge: TEST_CHALLENGE,
+});
 
 describe('oauth authorize holded flow', () => {
   afterEach(() => {
@@ -167,7 +205,8 @@ describe('oauth authorize holded flow', () => {
   it('emite el código directamente cuando ya existe conexión Holded aunque no llegue connection_confirmed', async () => {
     // Fix tercera pantalla: el DB check (hasHoldedConnection) es autoritativo.
     // Ya no se exige connection_confirmed para usuarios con conexión activa.
-    // B4: consent_confirmed=1 es requerido (consent screen) antes de mintar.
+    // V3.E: consent_proof (HMAC) es requerido en lugar de consent_confirmed=1
+    // suelto, para cerrar replay attack del consent screen.
     (getSessionPayload as jest.Mock).mockResolvedValue({
       uid: 'user-1',
       email: 'demo@example.com',
@@ -177,7 +216,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&consent_confirmed=1&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+      `https://app.verifactu.business/oauth/authorize?response_type=code&client_id=${CHATGPT_CLIENT}&redirect_uri=${encodeURIComponent(CHATGPT_REDIRECT)}&scope=${encodeURIComponent(TEST_SCOPE)}&holded_login_confirmed=1&consent_proof=${VALID_CONSENT_PROOF}&code_challenge=${TEST_CHALLENGE}&code_challenge_method=S256`
     );
 
     const response = await GET(request);
@@ -223,7 +262,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&consent_confirmed=1&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+      `https://app.verifactu.business/oauth/authorize?response_type=code&client_id=${CHATGPT_CLIENT}&redirect_uri=${encodeURIComponent(CHATGPT_REDIRECT)}&scope=${encodeURIComponent(TEST_SCOPE)}&holded_login_confirmed=1&consent_proof=${VALID_CONSENT_PROOF}&state=abc123&code_challenge=${TEST_CHALLENGE}&code_challenge_method=S256`
     );
 
     const response = await GET(request);
@@ -249,7 +288,7 @@ describe('oauth authorize holded flow', () => {
     (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
 
     const request = new NextRequest(
-      'https://app.verifactu.business/oauth/authorize?response_type=code&client_id=openai-chatgpt-test&redirect_uri=https%3A%2F%2Fchat.openai.com%2Faip%2Foauth%2Fcallback&scope=mcp.read%20holded.invoices.read&holded_login_confirmed=1&consent_confirmed=1&connected_provider_account_id=some-db-uuid&state=abc123&code_challenge=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&code_challenge_method=S256'
+      `https://app.verifactu.business/oauth/authorize?response_type=code&client_id=${CHATGPT_CLIENT}&redirect_uri=${encodeURIComponent(CHATGPT_REDIRECT)}&scope=${encodeURIComponent(TEST_SCOPE)}&holded_login_confirmed=1&consent_proof=${VALID_CONSENT_PROOF}&connected_provider_account_id=some-db-uuid&state=abc123&code_challenge=${TEST_CHALLENGE}&code_challenge_method=S256`
     );
 
     const response = await GET(request);
@@ -258,6 +297,66 @@ describe('oauth authorize holded flow', () => {
     expect(response.status).toBe(307);
     expect(location).toBe('https://chat.openai.com/aip/oauth/callback?code=code-123&state=abc123');
     expect(mintAuthorizationCode).toHaveBeenCalled();
+  });
+
+  it('V3.E: blocks consent replay attack — bare consent_confirmed=1 no longer mints a code', async () => {
+    // Pre-V3.E, an attacker who acquired a victim's session cookie could craft
+    // a URL with `consent_confirmed=1` and skip the consent screen entirely.
+    // After V3.E, only a valid HMAC-bound `consent_proof` lets the request
+    // through. A bare `consent_confirmed=1` is silently ignored: the user gets
+    // redirected to /oauth/consent instead of receiving a fresh auth code.
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+    (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
+
+    const request = new NextRequest(
+      `https://app.verifactu.business/oauth/authorize?response_type=code&client_id=${CHATGPT_CLIENT}&redirect_uri=${encodeURIComponent(CHATGPT_REDIRECT)}&scope=${encodeURIComponent(TEST_SCOPE)}&holded_login_confirmed=1&consent_confirmed=1&code_challenge=${TEST_CHALLENGE}&code_challenge_method=S256`
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location') ?? '';
+
+    expect(response.status).toBe(307);
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
+    expect(location).toContain('/oauth/consent');
+    expect(location).toContain('consent_proof=');
+  });
+
+  it('V3.E: rejects consent_proof signed for a different client_id (tampered HMAC)', async () => {
+    // Defense in depth: a proof signed for client A cannot be replayed against
+    // client B. The HMAC binds all 5 fields (uid, client_id, redirect_uri,
+    // scope, code_challenge) — changing any of them invalidates the proof.
+    (getSessionPayload as jest.Mock).mockResolvedValue({
+      uid: 'user-1',
+      email: 'demo@example.com',
+      name: 'Demo User',
+      tenantId: 'tenant-1',
+    });
+    (hasSharedHoldedConnectionForTenant as jest.Mock).mockResolvedValue(true);
+
+    // Proof signed for a DIFFERENT client_id ("attacker-client") but reused
+    // on a request for CHATGPT_CLIENT. Verification must fail.
+    const tamperedProof = buildConsentProof({
+      clientId: 'attacker-client',
+      redirectUri: CHATGPT_REDIRECT,
+      scope: TEST_SCOPE,
+      codeChallenge: TEST_CHALLENGE,
+    });
+
+    const request = new NextRequest(
+      `https://app.verifactu.business/oauth/authorize?response_type=code&client_id=${CHATGPT_CLIENT}&redirect_uri=${encodeURIComponent(CHATGPT_REDIRECT)}&scope=${encodeURIComponent(TEST_SCOPE)}&holded_login_confirmed=1&consent_proof=${tamperedProof}&code_challenge=${TEST_CHALLENGE}&code_challenge_method=S256`
+    );
+
+    const response = await GET(request);
+    const location = response.headers.get('location') ?? '';
+
+    expect(response.status).toBe(307);
+    expect(mintAuthorizationCode).not.toHaveBeenCalled();
+    expect(location).toContain('/oauth/consent');
   });
 
   it('passes the selected tenant hint into the final oauth tenant resolution', async () => {
