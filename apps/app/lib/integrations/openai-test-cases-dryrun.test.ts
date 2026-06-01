@@ -660,6 +660,74 @@ describe('V3.G.5 — Madrid timezone + document attachments fallback', () => {
     expect(firstCall).toContain('starttmp=1751320800');
   });
 
+  it('V3.G.7: attachments con shape REAL Holded (array de strings) — caso P250001', async () => {
+    // Bug del reviewer: Holded devuelve {"status":1,"attachments":["xxx.pdf"]}
+    // (array de strings, no objetos). En V3.G.5 trataba el item como objeto
+    // y first.fileName → undefined → no descargaba. Fix V3.G.7: aceptar
+    // string directo. Verificado con P250001 real en Nova Gestión.
+    const pdfBytes = new Uint8Array(Buffer.from('%PDF-1.4\nfake purchase invoice\n%%EOF', 'utf8'));
+    const isolated = pdfBytes.buffer.slice(
+      pdfBytes.byteOffset,
+      pdfBytes.byteOffset + pdfBytes.byteLength
+    );
+    const noPdfJson = JSON.stringify({ status: 0, info: 'No attachments found' });
+    const noPdfBytes = new Uint8Array(Buffer.from(noPdfJson, 'utf8'));
+    const noPdfIsolated = noPdfBytes.buffer.slice(
+      noPdfBytes.byteOffset,
+      noPdfBytes.byteOffset + noPdfBytes.byteLength
+    );
+
+    global.fetch = jest.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+      if (url.includes('/attachments/list')) {
+        // ⚠ Shape REAL de Holded: array de STRINGS, no objetos.
+        return mockFetchResponse({
+          status: 1,
+          attachments: ['31PTaxInvoice299055226B001260000000235.pdf'],
+        });
+      }
+      if (url.includes('/attachments/get')) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => '',
+          headers: {
+            get: (h: string) => (h.toLowerCase() === 'content-type' ? 'application/pdf' : null),
+          },
+          arrayBuffer: async () => isolated,
+        } as unknown as Response;
+      }
+      if (url.endsWith('/pdf')) {
+        return {
+          ok: true,
+          status: 200,
+          text: async () => noPdfJson,
+          headers: {
+            get: (h: string) =>
+              h.toLowerCase() === 'content-type' ? 'application/json' : null,
+          },
+          arrayBuffer: async () => noPdfIsolated,
+        } as unknown as Response;
+      }
+      return mockFetchResponse({});
+    }) as unknown as typeof fetch;
+
+    const result = await callHoldedMcpTool(DEMO_API_KEY, 'holded_get_document_pdf', {
+      docType: 'purchase',
+      documentId: '69fe16f919098de62508fa64',
+    });
+
+    const pdfResult = result as {
+      pdf?: { base64?: string; contentType?: string; fileName?: string };
+      source?: string;
+      attachmentMeta?: { fileName?: string };
+    };
+    expect(pdfResult.source).toBe('attachment');
+    expect(pdfResult.attachmentMeta?.fileName).toBe('31PTaxInvoice299055226B001260000000235.pdf');
+    const decoded = Buffer.from(pdfResult.pdf!.base64!, 'base64').toString('latin1');
+    expect(decoded.startsWith('%PDF-')).toBe(true);
+  });
+
   it('Bug 7: holded_get_document_pdf con /pdf vacío hace fallback a attachments', async () => {
     // Mock fetch que simula:
     //   1. /pdf → 200 + JSON {"status":0,"info":"No attachments found"} (no PDF nativo)

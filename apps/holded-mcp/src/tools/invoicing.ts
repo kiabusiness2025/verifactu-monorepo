@@ -196,13 +196,22 @@ export function registerInvoicingTools(
           // intentamos los archivos subidos manualmente al documento (Holded
           // distingue PDF renderizado vs attachments del usuario). Cubre el
           // caso real reportado con P250001 en Nova Gestión.
+          //
+          // V3.G.7 (2026-06-01): Holded devuelve attachments como array de
+          // STRINGS (nombres de archivo), NO array de objetos. Aceptamos
+          // ambas formas por defensa. Verificado empíricamente contra
+          // P250001: `{"status":1,"attachments":["31PTaxInvoice...pdf"]}`.
           try {
             const attachments = await getClient().listDocumentAttachments(docType, documentId);
             if (Array.isArray(attachments) && attachments.length > 0) {
-              const first = attachments[0] as Record<string, unknown>;
-              const fileName = String(
-                first.fileName ?? first.name ?? first.filename ?? ''
-              ).trim();
+              const first = attachments[0] as unknown;
+              let fileName = '';
+              if (typeof first === 'string') {
+                fileName = first.trim();
+              } else if (first && typeof first === 'object') {
+                const obj = first as Record<string, unknown>;
+                fileName = String(obj.fileName ?? obj.name ?? obj.filename ?? '').trim();
+              }
               if (fileName) {
                 const attachBuf = await getClient().getDocumentAttachment(
                   docType,
@@ -222,7 +231,6 @@ export function registerInvoicingTools(
                           contentType: 'application/pdf',
                           base64: attachBuf.toString('base64'),
                           bytes: attachBuf.length,
-                          attachmentMeta: first,
                         },
                         null,
                         2

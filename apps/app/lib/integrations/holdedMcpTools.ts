@@ -1401,10 +1401,25 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
           documentId
         );
         if (attachments.length > 0) {
-          const first = attachments[0] as Record<string, unknown>;
-          const fileName = String(
-            first.fileName ?? first.name ?? first.filename ?? ''
-          ).trim();
+          // V3.G.7 (2026-06-01): Holded devuelve `attachments` como array de
+          // STRINGS (nombres de archivo), NO array de objetos. En V3.G.5 lo
+          // trataba como objeto y leía `first.fileName` que daba undefined →
+          // fileName quedaba vacío → no se descargaba el adjunto.
+          //
+          // Verificado empíricamente contra P250001 en Nova Gestión:
+          //   `{"status":1,"attachments":["31PTaxInvoice299055226B001260000000235.pdf"]}`
+          //
+          // Aceptamos ambas formas (string o objeto con fileName/name/filename)
+          // por defensa — algunos endpoints Holded podrían devolver objetos
+          // (no documentado, mejor curarse en salud).
+          const first = attachments[0] as unknown;
+          let fileName = '';
+          if (typeof first === 'string') {
+            fileName = first.trim();
+          } else if (first && typeof first === 'object') {
+            const obj = first as Record<string, unknown>;
+            fileName = String(obj.fileName ?? obj.name ?? obj.filename ?? '').trim();
+          }
           if (fileName) {
             const file = await holdedAdapter.getDocumentAttachment(
               apiKey,
@@ -1412,7 +1427,7 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
               documentId,
               fileName
             );
-            return { pdf: file, source: 'attachment', attachmentMeta: first };
+            return { pdf: file, source: 'attachment', attachmentMeta: { fileName } };
           }
         }
       } catch {
