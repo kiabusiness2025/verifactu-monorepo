@@ -7,15 +7,15 @@ import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getRemoteConfig } from 'firebase/remote-config';
 
-// Firebase configuration from Firebase Console
+// Firebase configuration from environment variables
 const firebaseConfig = {
-  apiKey: 'AIzaSyDahYslX6rDZSWcHk4sCXOZnU9cmqgEt0o',
-  authDomain: 'verifactu-business.firebaseapp.com',
-  projectId: 'verifactu-business',
-  storageBucket: 'verifactu-business.firebasestorage.app',
-  messagingSenderId: '536174799167',
-  appId: '1:536174799167:web:69c286d928239c9069cb8a',
-  measurementId: 'G-F91R5J137F',
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
 // Initialize Firebase (singleton pattern)
