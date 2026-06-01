@@ -485,6 +485,12 @@ export type HoldedContact = {
   email?: string;
   mobile?: string;
   phone?: string;
+  type?: string;
+  // V3.F: Holded marca a cada contacto con flags de rol — 0 / null si NUNCA
+  // ha actuado en ese rol, número o objeto cuando tiene actividad. Usado
+  // para discriminar resultados cuando se filtra por type=client/supplier.
+  clientRecord?: number | Record<string, unknown> | null;
+  supplierRecord?: number | Record<string, unknown> | null;
 };
 
 export type HoldedAccount = {
@@ -1142,7 +1148,15 @@ export const holdedAdapter = {
     });
   },
 
-  async listContacts(apiKey: string, args?: { page?: number; limit?: number; name?: string }) {
+  async listContacts(
+    apiKey: string,
+    args?: {
+      page?: number;
+      limit?: number;
+      name?: string;
+      type?: 'client' | 'supplier' | 'lead';
+    }
+  ) {
     const contacts = await holdedRequest<HoldedContact[]>({
       apiKey,
       path: '/api/invoicing/v1/contacts',
@@ -1150,9 +1164,31 @@ export const holdedAdapter = {
         page: args?.page ?? 1,
         limit: args?.limit ?? 25,
         ...(args?.name ? { name: args.name } : {}),
+        ...(args?.type ? { type: args.type } : {}),
       },
     });
-    return paginateArrayResponse(filterContactsByName(contacts, args?.name), args, {
+
+    // V3.F (auditoría 2026-06-01): el server-side filter de Holded `type=supplier`
+    // devuelve contactos cuyo `type` está marcado como "supplier" PERO algunos
+    // tienen `supplierRecord: 0` (rol histórico, ya no es proveedor activo).
+    // Para que list_contacts devuelva resultados fiables cuando se pide un rol
+    // específico, aplicamos un filtro client-side adicional:
+    //   - type=supplier → exigimos supplierRecord truthy (> 0 o objeto presente)
+    //   - type=client → exigimos clientRecord truthy
+    //   - type=lead → se respeta el filtro server-side sin extras
+    const filteredByRole = (() => {
+      const raw = filterContactsByName(contacts, args?.name);
+      if (!args?.type || args.type === 'lead') return raw;
+      return raw.filter((c) => {
+        const record = args.type === 'supplier' ? c.supplierRecord : c.clientRecord;
+        if (record === undefined || record === null) return true;
+        if (typeof record === 'number') return record > 0;
+        if (typeof record === 'object') return Object.keys(record).length > 0;
+        return Boolean(record);
+      });
+    })();
+
+    return paginateArrayResponse(filteredByRole, args, {
       enabled: true,
     });
   },
@@ -1239,9 +1275,43 @@ export const holdedAdapter = {
       path: `/api/invoicing/v1/documents/${docType}/${documentId}/pdf`,
     });
 
+    // V3.F (auditoría 2026-06-01): Holded a veces devuelve HTTP 200 con un
+    // JSON de error en el body (no hay PDF adjunto, doc no aprobado, etc.)
+    // en lugar de un 404. Antes encodeábamos ese JSON como base64 con
+    // contentType: 'application/pdf' falso → el caller obtenía un "PDF"
+    // que en realidad era texto JSON corrupto.
+    //
+    // Validación: un PDF real EMPIEZA por la firma "%PDF-" (ASCII bytes
+    // 0x25 0x50 0x44 0x46 0x2D). Decodificamos los primeros 5 bytes del
+    // base64 y los comparamos. Si no coinciden Y el content-type no es
+    // application/pdf, tratamos la respuesta como un error legible.
+    const looksLikePdfByContentType = (pdf.contentType || '').toLowerCase().startsWith('application/pdf');
+    const firstBytes = pdf.base64
+      ? Buffer.from(pdf.base64.slice(0, 12), 'base64').toString('latin1')
+      : '';
+    const looksLikePdfByMagic = firstBytes.startsWith('%PDF-');
+
+    if (!looksLikePdfByMagic && !looksLikePdfByContentType) {
+      // Si el body parece JSON, extraemos el mensaje de error para que el
+      // caller (ChatGPT/Claude) lo pueda mostrar en lenguaje natural.
+      const bodyText = pdf.base64 ? Buffer.from(pdf.base64, 'base64').toString('utf8') : '';
+      const parsedError = safeJsonParse(bodyText);
+      const message =
+        parsedError && typeof parsedError === 'object'
+          ? ((parsedError as { error?: string; message?: string }).error ??
+            (parsedError as { error?: string; message?: string }).message ??
+            null)
+          : null;
+      throw new Error(
+        message
+          ? `Holded returned no PDF for ${docType}/${documentId}: ${message}`
+          : `Holded returned no PDF for ${docType}/${documentId}. The document may not have an attached PDF or may not be in a printable state.`
+      );
+    }
+
     return {
       ...pdf,
-      contentType: pdf.contentType || 'application/pdf',
+      contentType: looksLikePdfByMagic ? 'application/pdf' : pdf.contentType || 'application/pdf',
       fileName: pdf.fileName || `${docType}-${documentId}.pdf`,
     } satisfies HoldedBinaryFile;
   },

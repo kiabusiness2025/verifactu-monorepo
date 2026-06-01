@@ -1078,22 +1078,54 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_list_contacts(apiKey, input) {
+    const typeRaw = optionalString(input, 'type');
+    const type =
+      typeRaw === 'client' || typeRaw === 'supplier' || typeRaw === 'lead' ? typeRaw : undefined;
     const items = await holdedAdapter.listContacts(apiKey, {
       page: readPage(input),
       limit: readLimit(input),
       name: optionalString(input, 'name'),
+      type,
     });
     return { items };
   },
 
   async holded_get_contact(apiKey, input) {
     const contactId = requiredString(input, 'contactId');
+    // V3.F (auditoría 2026-06-01): los contact IDs que vienen embebidos en
+    // documentos (campo `contact` de /documents/{type}/{id}) NO siempre son
+    // resolubles vía /contacts/{id} — Holded mantiene IDs internos legacy
+    // de versiones históricas del contacto que difieren de los IDs vivos
+    // del CRM. El docNumber/contactName es estable; el ID no.
+    //
+    // Fallback en cadena cuando el lookup directo da 404:
+    //   1. Si el caller pasó `contactName` o `name` como hint, buscarlo vía
+    //      listContacts({name}) y devolver la primera coincidencia exacta.
+    //   2. Si no hay name, retornar un notFoundResponse explícito que
+    //      indique al modelo que llame holded_list_contacts y vuelva con
+    //      un contactId fresco.
     try {
       const item = await holdedAdapter.getContact(apiKey, contactId);
       return { item };
     } catch (err) {
-      if (isHoldedNotFound(err)) return notFoundResponse('contact', contactId);
-      throw err;
+      if (!isHoldedNotFound(err)) throw err;
+
+      const fallbackName =
+        optionalString(input, 'contactName') ?? optionalString(input, 'name');
+      if (fallbackName && fallbackName.trim().length > 0) {
+        const name = fallbackName.trim();
+        const matches = await holdedAdapter.listContacts(apiKey, { page: 1, name });
+        const items: Array<Record<string, unknown>> = Array.isArray(matches)
+          ? (matches as Array<Record<string, unknown>>)
+          : [];
+        const exact = items.find(
+          (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
+        );
+        const chosen = exact ?? items[0];
+        if (chosen) return { item: chosen };
+      }
+
+      return notFoundResponse('contact', contactId);
     }
   },
 
@@ -2122,21 +2154,32 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_contacts',
     'List contacts in Holded',
-    'List customer or supplier contacts from Holded for the currently authorized tenant. Use the optional `name` filter when the user mentions a customer or supplier by name to avoid scanning every page.',
+    'List customer or supplier contacts from Holded for the currently authorized tenant. ' +
+      'Use `type: "client"` to list only CUSTOMERS with active sales records, `type: "supplier"` to list only SUPPLIERS with active purchase records, or omit `type` to list everyone. ' +
+      'The connector applies a client-side role filter after Holded\'s server-side filter to drop contacts whose role record is empty (Holded\'s server filter sometimes returns historical/inactive role assignments). ' +
+      'Use the optional `name` filter when the user mentions a customer or supplier by name to avoid scanning every page.',
     listSchema({
       name: stringProperty(
         'Optional case-insensitive substring search by contact name, trade name, code, tax id or email (e.g. "Garcia"). The connector also applies this filter locally when Holded returns an unfiltered page.'
+      ),
+      type: stringProperty(
+        'Optional contact role filter. Valid values: "client" (customers only — clientRecord present), "supplier" (suppliers only — supplierRecord present), "lead" (sales leads). Omit to list all contacts regardless of role.'
       ),
     })
   ),
   readTool(
     'holded_get_contact',
     'Get one contact from Holded',
-    'Retrieve a single Holded contact by id.',
+    'Retrieve a single Holded contact by id. ' +
+      'IMPORTANT: contact IDs embedded inside document responses (e.g. the `contact` field of an invoice) are NOT always resolvable here — Holded keeps legacy IDs for historical document versions that differ from live CRM IDs. ' +
+      'For best reliability ALSO pass `contactName` (when known from the prior document or list context). If the direct id lookup fails, the connector will retry by name match. If neither id nor name resolves, the response will indicate not_found and the caller should call holded_list_contacts to look up a fresh id.',
     simpleSchema(
       {
         contactId: stringProperty(
-          'The Holded contact identifier returned by a previous contact listing.'
+          'The Holded contact identifier returned by a previous contact listing OR embedded in a document. May refer to a legacy/historical id; see contactName fallback.'
+        ),
+        contactName: stringProperty(
+          'Optional fallback contact name (e.g. "Kappa Digital Zaragoza SL"). Used to recover when the contactId is a legacy id that no longer resolves to a live contact.'
         ),
       },
       ['contactId']

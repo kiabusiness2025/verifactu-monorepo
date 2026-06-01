@@ -453,6 +453,65 @@ describe('Holded accounting adapter', () => {
     });
   });
 
+  it('V3.F: rejects fake PDF responses where Holded returns JSON error with HTTP 200', async () => {
+    // Antes Holded podía devolver 200 OK con un body JSON `{"status":0,
+    // "error":"No PDF available"}` y nuestro adapter lo encodeaba como
+    // base64 con contentType: 'application/pdf' falso — el caller pensaba
+    // que tenía un PDF cuando en realidad eran bytes JSON sin sentido.
+    // El fix valida los magic bytes "%PDF-" y el content-type antes de
+    // devolver el blob.
+    const fakeJsonBody = '{"status":0,"error":"Document has no PDF attachment"}';
+    const headerGet = jest.fn((name: string) => {
+      if (name === 'content-type') return 'application/json';
+      return null;
+    });
+    // IMPORTANTE: Node Buffer pool — Buffer.from(str).buffer puede devolver
+    // un ArrayBuffer compartido más grande que los bytes reales (pool de 8KB).
+    // El adapter llama a Buffer.from(arrayBuffer) que tomaría TODO el pool.
+    // Forzamos un ArrayBuffer aislado con la longitud exacta vía Uint8Array.
+    const bytes = new Uint8Array(Buffer.from(fakeJsonBody, 'utf8'));
+    const isolatedBuffer = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength
+    );
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: headerGet },
+      arrayBuffer: async () => isolatedBuffer,
+    });
+
+    await expect(
+      holdedAdapter.getDocumentPdf('demo-key', 'invoice', 'doc-1')
+    ).rejects.toThrow(/no PDF.*Document has no PDF attachment/);
+  });
+
+  it('V3.F: filters out contacts with empty supplierRecord when type=supplier requested', async () => {
+    // El server-side filter de Holded type=supplier devuelve también contactos
+    // con supplierRecord=0 (rol legacy, ya no es proveedor activo). Aplicamos
+    // un filtro client-side para que list_contacts respete el rol pedido.
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify([
+          { id: 'c-1', name: 'Proveedor Activo SL', supplierRecord: 5, clientRecord: 0 },
+          { id: 'c-2', name: 'Cliente Solo SL', supplierRecord: 0, clientRecord: 12 },
+          { id: 'c-3', name: 'Histórico SL', supplierRecord: 0, clientRecord: 0 },
+          { id: 'c-4', name: 'Proveedor Reciente SL', supplierRecord: 1, clientRecord: 0 },
+        ]),
+    });
+
+    const result = await holdedAdapter.listContacts('demo-key', {
+      page: 1,
+      limit: 25,
+      type: 'supplier',
+    });
+
+    expect(result.map((c) => c.id)).toEqual(['c-1', 'c-4']);
+  });
+
   it('lists and downloads contact attachments through the documented routes', async () => {
     const emptyHeaderGet = jest.fn(() => null);
 
