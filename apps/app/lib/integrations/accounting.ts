@@ -1556,11 +1556,47 @@ export const holdedAdapter = {
    * Mismo patrón que /contacts/{id}/attachments/list y .../get.
    */
   async listDocumentAttachments(apiKey: string, docType: string, documentId: string) {
-    const raw = await holdedRequest<{ attachments?: unknown[] } | unknown[]>({
+    // Endpoint UNDOCUMENTED de Holded (no aparece en su OpenAPI oficial)
+    // pero confirmado funcional por 3 community wrappers (energio-es,
+    // albertov, BonifacioCalindoro). Probe externo verificado contra
+    // docType=estimate. Para purchase aún sin confirmación pública —
+    // Holded a veces responde HTML 200 cuando el endpoint no aplica.
+    //
+    // V3.G.6 (2026-06-01): si Holded devuelve algo que NO es array y NO
+    // es `{attachments:[]}`, lo loggeamos para diagnosticar (en vez de
+    // silenciar la lista como vacía). Esto cubre el caso "HTML 404 con
+    // HTTP 200" que es comportamiento conocido del backend Holded en
+    // endpoints undocumented.
+    const raw = await holdedRequest<unknown>({
       apiKey,
       path: `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/list`,
     });
-    return Array.isArray(raw) ? raw : ((raw as { attachments?: unknown[] }).attachments ?? []);
+
+    if (Array.isArray(raw)) return raw;
+
+    if (raw && typeof raw === 'object') {
+      const wrapped = (raw as { attachments?: unknown[]; status?: unknown; info?: unknown });
+      if (Array.isArray(wrapped.attachments)) return wrapped.attachments;
+      // Holded soft error con status=0: dejamos diagnóstico claro.
+      if (wrapped.status === 0 || wrapped.info) {
+        console.warn('[holded] listDocumentAttachments soft error', {
+          docType,
+          documentId,
+          status: wrapped.status,
+          info: wrapped.info,
+        });
+        return [];
+      }
+    }
+
+    // Respuesta inesperada (HTML, string, etc.). Log para diagnóstico.
+    console.warn('[holded] listDocumentAttachments unexpected response shape', {
+      docType,
+      documentId,
+      rawType: typeof raw,
+      sample: typeof raw === 'string' ? raw.slice(0, 200) : JSON.stringify(raw).slice(0, 200),
+    });
+    return [];
   },
 
   async getDocumentAttachment(
