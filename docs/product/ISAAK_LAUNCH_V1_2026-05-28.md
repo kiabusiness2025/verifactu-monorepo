@@ -2,7 +2,7 @@
 
 > **Fecha**: 2026-05-28
 > **Autor**: producto + ingeniería (sesión de planificación)
-> **Estado**: borrador para revisión — pendiente de aprobación antes de Sprint A
+> **Estado**: aprobado para V1 — Sprint A arrancado el 2026-06-02
 > **Reemplaza**: secciones de roadmap en `docs/product/ISAAK_MASTER_PLAN.md` y `docs/engineering/ISAAK_MASTER_PLAN.md` durante el periodo V1. El Master Plan original queda como referencia para el roadmap V2+.
 
 ---
@@ -15,22 +15,24 @@ El cliente paga una suscripción única (29 €/mes). No necesita Claude / ChatG
 
 **Diferencial respecto al estado actual de Isaak (mayo 2026)**: hoy Isaak tiene 22 entradas en el sidebar y demasiada superficie. V1 reduce a **4 entradas** y un único caso de uso (chat con Holded + alertas), escondiendo el resto bajo feature flag — el código queda intacto para reactivarse en V2 sin re-trabajo.
 
+**Actualización 2026-06-02**: este documento es la fuente de verdad operativa para V1. El plan maestro de ingeniería conserva el backlog V2+ como referencia, pero el trabajo activo queda centrado en Sprint A/B/C de este plan.
+
 ---
 
 ## 2. Decisiones de scope (cerradas)
 
-| # | Decisión | Detalle |
-|---|---|---|
-| 1 | **Producto V1** | App web `isaak.verifactu.business`. Conectores Claude / ChatGPT son canales paralelos, **no se tocan** (siguen en revisión Anthropic / OpenAI). |
-| 2 | **Marca** | "Isaak" se mantiene. Tagline: *"Tu asistente fiscal para Holded. Sin licencias IA."* |
-| 3 | **Motor IA interno** | Claude Sonnet (Anthropic) primario + GPT-4o (OpenAI) fallback. Transparente al usuario. |
-| 4 | **Free** | Chat **ilimitado** con corpus AEAT. Sin Holded. Estrategia: funnel de aprendizaje para entrenar Isaak. |
-| 5 | **Pro** | 29 €/mes · 290 €/año (-20%). Holded conectado + tools + alertas. |
-| 6 | **Trial** | 14 días Pro sin tarjeta. Conversión automática al final si paga. |
-| 7 | **Funcionalidad core** | Chat con tools Holded · Corpus AEAT en system prompt · Alertas D-15/7/3/1 de vencimientos 303/130. |
-| 8 | **Verifactu emisión** | **Escondida**. Holded ya lo tiene. Isaak genera **borradores** via tools API Holded. |
-| 9 | **Tools Holded** | Cobertura máxima en **invoicing + contabilidad**. CRM / stock / warehouses / time-records fuera de V1. |
-| 10 | **Landing** | `verifactu.business` rediseñada **como Hub** de los 3 productos. `isaak.verifactu.business` como landing dedicada del producto Isaak. |
+| #   | Decisión               | Detalle                                                                                                                                         |
+| --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Producto V1**        | App web `isaak.verifactu.business`. Conectores Claude / ChatGPT son canales paralelos, **no se tocan** (siguen en revisión Anthropic / OpenAI). |
+| 2   | **Marca**              | "Isaak" se mantiene. Tagline: _"Tu asistente fiscal para Holded. Sin licencias IA."_                                                            |
+| 3   | **Motor IA interno**   | Claude Sonnet (Anthropic) primario + GPT-4o (OpenAI) fallback. Transparente al usuario.                                                         |
+| 4   | **Free**               | Chat **ilimitado** con corpus AEAT. Sin Holded. Estrategia: funnel de aprendizaje para entrenar Isaak.                                          |
+| 5   | **Pro**                | 29 €/mes · 290 €/año (-20%). Holded conectado + tools + alertas.                                                                                |
+| 6   | **Trial**              | 14 días Pro sin tarjeta. Conversión automática al final si paga.                                                                                |
+| 7   | **Funcionalidad core** | Chat con tools Holded · Corpus AEAT en system prompt · Alertas D-15/7/3/1 de vencimientos 303/130.                                              |
+| 8   | **Verifactu emisión**  | **Escondida**. Holded ya lo tiene. Isaak genera **borradores** via tools API Holded.                                                            |
+| 9   | **Tools Holded**       | Cobertura máxima en **invoicing + contabilidad**. CRM / stock / warehouses / time-records fuera de V1.                                          |
+| 10  | **Landing**            | `verifactu.business` rediseñada **como Hub** de los 3 productos. `isaak.verifactu.business` como landing dedicada del producto Isaak.           |
 
 ---
 
@@ -38,12 +40,12 @@ El cliente paga una suscripción única (29 €/mes). No necesita Claude / ChatG
 
 ### Sidebar — de 22 entradas a 4
 
-| Entrada | Ruta | Contenido |
-|---|---|---|
-| **🗨️ Chat** | `/chat` | Home. Chat con datos Holded + corpus AEAT. Pregunta sugerida inicial. |
-| **📊 Resumen** | `/resumen` | Cards del trimestre: ventas, gastos, IVA estimado, próximo vencimiento. |
-| **🔔 Alertas** | `/alertas` | Listado de alertas fiscales activas (vencimientos próximos). Histórico. |
-| **⚙️ Ajustes** | `/settings` | Perfil · Empresa · Holded (API key) · Plan & billing. |
+| Entrada        | Ruta        | Contenido                                                               |
+| -------------- | ----------- | ----------------------------------------------------------------------- |
+| **🗨️ Chat**    | `/chat`     | Home. Chat con datos Holded + corpus AEAT. Pregunta sugerida inicial.   |
+| **📊 Resumen** | `/resumen`  | Cards del trimestre: ventas, gastos, IVA estimado, próximo vencimiento. |
+| **🔔 Alertas** | `/alertas`  | Listado de alertas fiscales activas (vencimientos próximos). Histórico. |
+| **⚙️ Ajustes** | `/settings` | Perfil · Empresa · Holded (API key) · Plan & billing.                   |
 
 Todas las demás entradas actuales (Banking, Mail, Calendario, WhatsApp, Microsoft 365, Modelos AEAT, Auditoría, Inspector AEAT, Buzón Sede, Perfil fiscal, Contactos, Equipo, Modo Asesoría, Corpus AEAT admin, Personalizar Isaak) **se ocultan por feature flag `ISAAK_V1_LAUNCH=true`**. El código queda intacto.
 
@@ -65,6 +67,7 @@ Signup (email + Google)
 `holded_list_documents`, `holded_get_document`, `holded_list_contacts`, `holded_get_contact`, `holded_get_chart_of_accounts`, `holded_get_journal`, `holded_list_treasury_accounts`, `holded_list_products`, `holded_list_projects`, `holded_list_employees`, `holded_get_verifactu_status`, `holded_get_pnl`, `holded_list_payments`, `holded_create_invoice`, `holded_register_payment`, `holded_create_contact`, `holded_send_document`.
 
 **Tools a añadir en V1 (5 nuevas, portadas desde `apps/holded-mcp`)**:
+
 1. `holded_list_taxes` — impuestos disponibles en el ERP (crítico fiscal)
 2. `holded_list_numbering_series` — series correlativas (necesario para crear facturas)
 3. `holded_get_document_pdf` — devolver PDF al usuario via chat
@@ -78,15 +81,17 @@ Signup (email + Google)
 ### 4.2 Corpus AEAT en system prompt
 
 Infraestructura existente:
+
 - Cron `aeat-corpus-reingest` (ya activo)
 - Cron `aeat-sede-sync` (ya activo)
 - Página admin `/sede-corpus`
 
-**Acción V1**: verificar que el corpus está correctamente inyectado en el system prompt del chat (tarea Sprint B). Test smoke: preguntas tipo *"¿cuál es el plazo del 303 del Q2 2026?"*, *"¿qué deduce el régimen simplificado?"*. Debe responder con datos AEAT correctos sin alucinaciones.
+**Acción V1**: verificar que el corpus está correctamente inyectado en el system prompt del chat (tarea Sprint B). Test smoke: preguntas tipo _"¿cuál es el plazo del 303 del Q2 2026?"_, _"¿qué deduce el régimen simplificado?"_. Debe responder con datos AEAT correctos sin alucinaciones.
 
 ### 4.3 Alertas fiscales D-15/7/3/1
 
 Cron `fiscal-alerts` ya existe. Envía email vía Resend para los vencimientos del modelo 303 y 130 a:
+
 - D-15: aviso temprano
 - D-7: recordatorio
 - D-3: urgente
@@ -97,6 +102,7 @@ Cron `fiscal-alerts` ya existe. Envía email vía Resend para los vencimientos d
 ### 4.4 Resumen — vista simplificada
 
 Página `/resumen` con 4 cards horizontales:
+
 1. **Ventas mes** (importe + variación vs mes previo)
 2. **Gastos mes** (importe + variación)
 3. **IVA estimado del trimestre** (casillas 303 pre-calculadas, sin emitir)
@@ -108,16 +114,17 @@ Sin gráficos complejos en V1. Si el cliente quiere más, abre el chat y pregunt
 
 ## 5. Pricing V1
 
-| Plan | Mensual | Anual | Incluye |
-|---|---|---|---|
-| **Free** | 0 € | — | Chat ilimitado · Corpus AEAT completo · Sin Holded |
-| **Pro** | **29 €/mes** | **290 €/año** (-20%) | Todo Free + Holded conectado + 21 tools API + alertas D-15/7/3/1 + email |
+| Plan     | Mensual      | Anual                | Incluye                                                                  |
+| -------- | ------------ | -------------------- | ------------------------------------------------------------------------ |
+| **Free** | 0 €          | —                    | Chat ilimitado · Corpus AEAT completo · Sin Holded                       |
+| **Pro**  | **29 €/mes** | **290 €/año** (-20%) | Todo Free + Holded conectado + 21 tools API + alertas D-15/7/3/1 + email |
 
 **Trial Pro**: 14 días sin tarjeta. Stripe trial mode con conversión opt-in.
 
 **Add-ons V1**: ninguno. Mantener simple. Add-ons (usuario adicional, ERP adicional) llegan en V2.
 
 **Stripe products**:
+
 - Crear nuevos products `isaak_pro_monthly` (29 €) y `isaak_pro_annual` (290 €).
 - Los 4 productos actuales (Free / Starter / Pro / Business) quedan archivados pero no eliminados — si algún cliente legacy los tiene, su suscripción persiste hasta cancelación.
 
@@ -148,6 +155,7 @@ verifactu.business (Hub)
 ### `verifactu.business` (Hub) — **rehacer desde cero**
 
 Estructura propuesta:
+
 1. **Hero**: "Verifactu Business — La forma más simple de cumplir y crecer"
 2. **3 cards productos** lado a lado:
    - **Isaak** → asistente fiscal para Holded (de pago, IA incluida)
@@ -159,6 +167,7 @@ Estructura propuesta:
 ### `isaak.verifactu.business` (landing producto)
 
 Estructura:
+
 1. **Hero**: "Tu asistente fiscal para Holded. Sin licencias IA."
 2. **3 beneficios**:
    - "Habla con tu Holded en español"
@@ -179,44 +188,44 @@ Ya existen en `holded.verifactu.business`. Pequeño ajuste de header para apunta
 
 ### Sprint A — Esconder (1-2 días · 1 dev)
 
-| ID | Tarea |
-|---|---|
-| A1 | Helper `lib/feature-flags.ts` + env `ISAAK_V1_LAUNCH=true` |
-| A2 | `IsaakSidebar.tsx` reducido a 4 entradas si flag activo |
-| A3 | `IsaakBottomNav.tsx` reducido en móvil |
-| A4 | `/integrations` muestra solo Holded + sección "Próximamente" |
-| A5 | Esconder página `/verifactu` (la tool del chat reemplazada por draft) |
-| A6 | Esconder páginas: `/banking`, `/mail`, `/calendario`, `/whatsapp`, `/microsoft`, `/fiscal/*`, `/auditoria`, `/inspector`, `/sede`, `/perfil-fiscal`, `/contactos`, `/equipo`, `/advisor`, `/sede-corpus` |
-| A7 | Onboarding: skip steps de Google/WhatsApp/Microsoft si flag |
-| A8 | Smoke test: sidebar + onboarding + chat siguen funcionando con flag activo |
+| ID  | Tarea                                                                                                                                                                                                    | Estado 2026-06-02                  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| A1  | Helper `lib/feature-flags.ts` + env `ISAAK_V1_LAUNCH=true`                                                                                                                                               | Hecho; env prod confirmado en true |
+| A2  | `IsaakSidebar.tsx` reducido a 4 entradas si flag activo                                                                                                                                                  | Hecho                              |
+| A3  | `IsaakBottomNav.tsx` reducido en móvil                                                                                                                                                                   | Hecho                              |
+| A4  | `/integrations` muestra solo Holded + sección "Próximamente"                                                                                                                                             | Hecho                              |
+| A5  | Esconder página `/verifactu` (si existe) y mantener emision UI fuera de V1                                                                                                                               | Cubierto por guard V1              |
+| A6  | Esconder páginas: `/banking`, `/mail`, `/calendario`, `/whatsapp`, `/microsoft`, `/fiscal/*`, `/auditoria`, `/inspector`, `/sede`, `/perfil-fiscal`, `/contactos`, `/equipo`, `/advisor`, `/sede-corpus` | Hecho por middleware V1            |
+| A7  | Onboarding: skip steps de Google/WhatsApp/Microsoft si flag                                                                                                                                              | Hecho; V1 deja solo Holded         |
+| A8  | Smoke test: sidebar + onboarding + chat siguen funcionando con flag activo                                                                                                                               | Pendiente de smoke final           |
 
 ### Sprint B — Pulir core (3-5 días · 1 dev)
 
-| ID | Tarea |
-|---|---|
-| B1 | Verificar corpus AEAT en system prompt (test con 10 preguntas tipo) |
-| B2 | Portar 5 tools nuevas: `list_taxes`, `list_numbering_series`, `get_document_pdf`, `get_daily_book`, `create_invoice_draft` |
-| B3 | Reemplazar `holded_create_invoice` por `holded_create_invoice_draft` en system prompt + naming |
-| B4 | Confirmar cron `fiscal-alerts` end-to-end con tenant real (D-15 → email) |
-| B5 | `/resumen` simplificado: 4 cards (ventas, gastos, IVA, próx. vencimiento) |
-| B6 | `/alertas` simplificado: listado activas + histórico |
-| B7 | Onboarding Holded: copy + validación + manejo errores |
-| B8 | Stripe products nuevos (`isaak_pro_monthly`, `isaak_pro_annual`) |
-| B9 | Trial 14 días sin tarjeta: lógica + webhook trial end |
+| ID  | Tarea                                                                                                                      |
+| --- | -------------------------------------------------------------------------------------------------------------------------- |
+| B1  | Verificar corpus AEAT en system prompt (test con 10 preguntas tipo)                                                        |
+| B2  | Portar 5 tools nuevas: `list_taxes`, `list_numbering_series`, `get_document_pdf`, `get_daily_book`, `create_invoice_draft` |
+| B3  | Reemplazar `holded_create_invoice` por `holded_create_invoice_draft` en system prompt + naming                             |
+| B4  | Confirmar cron `fiscal-alerts` end-to-end con tenant real (D-15 → email)                                                   |
+| B5  | `/resumen` simplificado: 4 cards (ventas, gastos, IVA, próx. vencimiento)                                                  |
+| B6  | `/alertas` simplificado: listado activas + histórico                                                                       |
+| B7  | Onboarding Holded: copy + validación + manejo errores                                                                      |
+| B8  | Stripe products nuevos (`isaak_pro_monthly`, `isaak_pro_annual`)                                                           |
+| B9  | Trial 14 días sin tarjeta: lógica + webhook trial end                                                                      |
 
 ### Sprint C — Hub + landing + lanzamiento (3-4 días · 1 dev + 1 diseño)
 
-| ID | Tarea |
-|---|---|
-| C1 | `verifactu.business` Hub: rediseño completo (Hero + 3 cards + valor + footer) |
-| C2 | `isaak.verifactu.business`: nueva landing producto (Hero + beneficios + video + pricing + FAQ + CTA) |
-| C3 | Video demo 60 s grabado y editado |
-| C4 | Ajuste header landings Claude / ChatGPT para apuntar al Hub |
-| C5 | Email lanzamiento (Resend campaign) a base actual |
-| C6 | Email bienvenida + email pre-vencimiento (templates Resend) |
-| C7 | Smoke test E2E completo: signup → Holded → chat → resumen → alerta |
-| C8 | Habilitar `ISAAK_V1_LAUNCH=true` en Vercel prod |
-| C9 | Anuncio LinkedIn / Twitter / comunidades Holded |
+| ID  | Tarea                                                                                                |
+| --- | ---------------------------------------------------------------------------------------------------- |
+| C1  | `verifactu.business` Hub: rediseño completo (Hero + 3 cards + valor + footer)                        |
+| C2  | `isaak.verifactu.business`: nueva landing producto (Hero + beneficios + video + pricing + FAQ + CTA) |
+| C3  | Video demo 60 s grabado y editado                                                                    |
+| C4  | Ajuste header landings Claude / ChatGPT para apuntar al Hub                                          |
+| C5  | Email lanzamiento (Resend campaign) a base actual                                                    |
+| C6  | Email bienvenida + email pre-vencimiento (templates Resend)                                          |
+| C7  | Smoke test E2E completo: signup → Holded → chat → resumen → alerta                                   |
+| C8  | Habilitar `ISAAK_V1_LAUNCH=true` en Vercel prod                                                      |
+| C9  | Anuncio LinkedIn / Twitter / comunidades Holded                                                      |
 
 **Estimación total**: 7-11 días (1-2 semanas de calendario con 1 dev FT).
 
@@ -226,16 +235,16 @@ Ya existen en `holded.verifactu.business`. Pequeño ajuste de header para apunta
 
 ### Primeros 30 días post-lanzamiento
 
-| Métrica | Target | Cómo se mide |
-|---|---|---|
-| Signups Free | 800 | Stripe + Firebase Auth |
-| Signups Pro (trial) | 200 | Stripe trials |
+| Métrica                       | Target        | Cómo se mide                          |
+| ----------------------------- | ------------- | ------------------------------------- |
+| Signups Free                  | 800           | Stripe + Firebase Auth                |
+| Signups Pro (trial)           | 200           | Stripe trials                         |
 | Activación (Holded conectado) | 60% de trials | `IsaakOnboarding.holded_connected_at` |
-| DAU sobre activados | 30% | Analytics |
-| Conversión trial → Pro | 15% | Stripe subscription created |
-| **MRR mes 1** | **≈ 870 €** | 30 Pro × 29 € |
-| Mensajes Free (entrenamiento) | > 10.000 | UsageEvent count |
-| NPS día 14 | > 30 | encuesta in-app |
+| DAU sobre activados           | 30%           | Analytics                             |
+| Conversión trial → Pro        | 15%           | Stripe subscription created           |
+| **MRR mes 1**                 | **≈ 870 €**   | 30 Pro × 29 €                         |
+| Mensajes Free (entrenamiento) | > 10.000      | UsageEvent count                      |
+| NPS día 14                    | > 30          | encuesta in-app                       |
 
 ### Métricas de aprendizaje (Free funnel)
 
@@ -264,15 +273,15 @@ Todo lo anterior **existe en código**, solo queda escondido por flag. Reactivac
 
 ## 11. Roadmap V2+ (lo escondido, orden tentativo)
 
-| Versión | Funcionalidad | Cuándo se considera |
-|---|---|---|
-| **V1.1** | Verifactu emisión UI (página dedicada) | 4 semanas post-V1 |
-| **V1.2** | Banking via Enable Banking (PSD2) | 6 semanas post-V1 |
-| **V1.3** | Modelos AEAT 303/130 emisión + Inspector | 8 semanas post-V1 |
-| **V2.0** | Multi-usuario + Modo Asesoría | 12 semanas post-V1 |
-| **V2.1** | Google Calendar + Gmail (re-activar UI) | 16 semanas post-V1 |
-| **V2.2** | WhatsApp + Microsoft 365 (re-activar UI) | 20 semanas post-V1 |
-| **V3.0** | Integraciones sectoriales (HotelGest, Revo XEF, Nubimed, Inmovilla) | 6 meses post-V1 |
+| Versión  | Funcionalidad                                                       | Cuándo se considera |
+| -------- | ------------------------------------------------------------------- | ------------------- |
+| **V1.1** | Verifactu emisión UI (página dedicada)                              | 4 semanas post-V1   |
+| **V1.2** | Banking via Enable Banking (PSD2)                                   | 6 semanas post-V1   |
+| **V1.3** | Modelos AEAT 303/130 emisión + Inspector                            | 8 semanas post-V1   |
+| **V2.0** | Multi-usuario + Modo Asesoría                                       | 12 semanas post-V1  |
+| **V2.1** | Google Calendar + Gmail (re-activar UI)                             | 16 semanas post-V1  |
+| **V2.2** | WhatsApp + Microsoft 365 (re-activar UI)                            | 20 semanas post-V1  |
+| **V3.0** | Integraciones sectoriales (HotelGest, Revo XEF, Nubimed, Inmovilla) | 6 meses post-V1     |
 
 **Disparador para V1.1+**: 50 clientes Pro pagando consistentemente, o pedido reiterado del mismo subconjunto.
 
@@ -280,26 +289,28 @@ Todo lo anterior **existe en código**, solo queda escondido por flag. Reactivac
 
 ## 12. Riesgos y mitigaciones
 
-| Riesgo | Probabilidad | Impacto | Mitigación |
-|---|---|---|---|
-| Free ilimitado dispara coste de Claude | Media | Alto | Cap por session (10 msg/h) + monitoring `UsageEvent` semanal · downgrade Free a Haiku puro (sin tools) |
-| Corpus AEAT desactualizado tras cambios normativos | Alta | Medio | Cron `aeat-corpus-reingest` semanal + alerta admin si falla |
-| Holded cambia su API y rompe tools | Baja | Alto | Tests contract en CI (`holded:ci:contract`) ya existentes |
-| Conversión trial → Pro debajo de 10% | Media | Alto | Email D-12 personalizado · Llamada manual a primeros 20 trials para feedback |
-| Conector Claude o ChatGPT NO se aprueba | Baja | Bajo en V1 | V1 no depende de ellos. Si llega aprobación, se suma al Hub como upsell. |
-| Cliente legacy en plan Starter/Business actual queda confuso | Media | Bajo | Email aviso + portal sigue funcionando · plan persiste hasta cancelación voluntaria |
+| Riesgo                                                       | Probabilidad | Impacto    | Mitigación                                                                                             |
+| ------------------------------------------------------------ | ------------ | ---------- | ------------------------------------------------------------------------------------------------------ |
+| Free ilimitado dispara coste de Claude                       | Media        | Alto       | Cap por session (10 msg/h) + monitoring `UsageEvent` semanal · downgrade Free a Haiku puro (sin tools) |
+| Corpus AEAT desactualizado tras cambios normativos           | Alta         | Medio      | Cron `aeat-corpus-reingest` semanal + alerta admin si falla                                            |
+| Holded cambia su API y rompe tools                           | Baja         | Alto       | Tests contract en CI (`holded:ci:contract`) ya existentes                                              |
+| Conversión trial → Pro debajo de 10%                         | Media        | Alto       | Email D-12 personalizado · Llamada manual a primeros 20 trials para feedback                           |
+| Conector Claude o ChatGPT NO se aprueba                      | Baja         | Bajo en V1 | V1 no depende de ellos. Si llega aprobación, se suma al Hub como upsell.                               |
+| Cliente legacy en plan Starter/Business actual queda confuso | Media        | Bajo       | Email aviso + portal sigue funcionando · plan persiste hasta cancelación voluntaria                    |
 
 ---
 
 ## 13. Decisiones reversibles vs. irreversibles
 
 **Reversibles (cambiar sin coste)**:
+
 - Precio Pro (Stripe permite cambios)
 - Tools incluidas (añadir/quitar es código)
 - Sidebar entries (flag)
 - Trial días (env var)
 
 **Irreversibles o caras de revertir**:
+
 - Renombrar plan Pro (URL stripe + emails + landing)
 - Eliminar planes Starter/Business legacy (clientes activos)
 - Cambios al schema Prisma (migración)
@@ -310,10 +321,10 @@ Todo lo anterior **existe en código**, solo queda escondido por flag. Reactivac
 
 ## 14. Próximos pasos inmediatos
 
-1. ✅ Documento aprobado (este PR)
-2. ⏳ Sprint A — Esconder (rama `claude/isaak-v1-sprint-a-*`)
-3. ⏳ Sprint B — Pulir core (rama `claude/isaak-v1-sprint-b-*`)
-4. ⏳ Sprint C — Hub + landing + launch (rama `claude/isaak-v1-sprint-c-*`)
+1. ✅ Documento aprobado
+2. 🔄 Sprint A — Esconder (en curso desde 2026-06-02)
+3. ⏳ Sprint B — Pulir core
+4. ⏳ Sprint C — Hub + landing + launch
 
 Cada sprint = 1 PR independiente. Mergeo entre sprints solo si A está en main antes de empezar B.
 

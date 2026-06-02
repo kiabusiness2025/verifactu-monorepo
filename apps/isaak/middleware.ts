@@ -41,7 +41,43 @@ const EXEMPT_PREFIXES = [
   '/api/cron/', // crons llegan con Bearer secret, no Origin
 ];
 
+const V1_RESTRICTED_PREFIXES = [
+  '/ventas',
+  '/gastos',
+  '/banking',
+  '/informes',
+  '/mail',
+  '/calendario',
+  '/whatsapp',
+  '/microsoft',
+  '/fiscal',
+  '/auditoria',
+  '/inspector',
+  '/sede',
+  '/perfil-fiscal',
+  '/contactos',
+  '/equipo',
+  '/advisor',
+  '/sede-corpus',
+  '/asesor-legal',
+  '/webhooks',
+  '/compartir-isaak',
+  '/ajustes/notificaciones',
+  '/verifactu',
+];
+
 const MUTATION_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE']);
+
+function isV1LaunchEnabled(): boolean {
+  const raw = process.env.NEXT_PUBLIC_ISAAK_V1_LAUNCH ?? process.env.ISAAK_V1_LAUNCH;
+  return ['true', '1', 'yes'].includes((raw ?? '').trim().toLowerCase());
+}
+
+function isRestrictedV1Path(pathname: string): boolean {
+  return V1_RESTRICTED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
+}
 
 function getAllowedHosts(): Set<string> {
   const extra = (process.env.ISAAK_ALLOWED_ORIGINS ?? '')
@@ -65,7 +101,14 @@ function isAllowedOrigin(originHeader: string | null, allowed: Set<string>): boo
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Solo aplica a rutas API
+  if (isV1LaunchEnabled() && !pathname.startsWith('/api/') && isRestrictedV1Path(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/chat';
+    url.search = '';
+    return NextResponse.redirect(url);
+  }
+
+  // CSRF: solo aplica a rutas API
   if (!pathname.startsWith('/api/')) return NextResponse.next();
 
   // Métodos idempotentes pasan sin check
@@ -84,7 +127,7 @@ export function middleware(request: NextRequest) {
     if (!isAllowedOrigin(origin, allowed)) {
       return NextResponse.json(
         { error: 'csrf_blocked', message: `Origin no permitido: ${origin}` },
-        { status: 403 },
+        { status: 403 }
       );
     }
     return NextResponse.next();
@@ -102,13 +145,14 @@ export function middleware(request: NextRequest) {
   // navegador siempre envía Origin o Referer en POST cross-origin.
   return NextResponse.json(
     { error: 'csrf_blocked', message: 'Falta Origin/Referer válido.' },
-    { status: 403 },
+    { status: 403 }
   );
 }
 
 export const config = {
-  // Aplica a TODAS las rutas API. Las exclusiones se gestionan dentro
-  // del middleware (EXEMPT_PREFIXES) para mantener un único punto de
-  // verdad.
-  matcher: '/api/:path*',
+  // API completa para CSRF + paginas workspace para el recorte V1.
+  matcher: [
+    '/api/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|manifest.json|.*\\..*).*)',
+  ],
 };
