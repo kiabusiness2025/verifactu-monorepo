@@ -2305,6 +2305,57 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     // id, try to find the contact via search. This makes ChatGPT's life much
     // easier — it can pass "Kappa Digital Zaragoza SL" instead of needing to
     // call holded_list_contacts first to grab an opaque mongo id.
+    //
+    // V3.G.9 (2026-06-01) — defensa contra MISMATCH:
+    // Si el modelo pasa BOTH contactId Y contactName y los dos NO coinciden
+    // (el id resuelve a un contacto cuyo nombre no contiene/no es el nombre
+    // dado), throw "contact_id_name_mismatch". Esto cubre casos donde
+    // ChatGPT contamina contexto desde conversaciones anteriores y manda
+    // un contactId de otro cliente con un contactName distinto.
+    //
+    // CASO QUE NO CUBRE: si el modelo manda contactId+contactName que SÍ
+    // coinciden entre sí (los dos son "Beta" en este ejemplo) pero el
+    // usuario pidió otro cliente ("Alfa"), no podemos detectarlo desde
+    // el backend porque no conocemos la intención del usuario. La
+    // mitigación de ese caso es la tarjeta de consent (el usuario ve
+    // "Beta" y deniega) + las descriptions explícitas que añadimos.
+    if (
+      typeof payload.contactId === 'string' &&
+      payload.contactId.trim() &&
+      typeof payload.contactName === 'string' &&
+      payload.contactName.trim()
+    ) {
+      const declaredName = payload.contactName.trim();
+      try {
+        const resolved = (await holdedAdapter.getContact(
+          apiKey,
+          payload.contactId.trim()
+        )) as Record<string, unknown> | null;
+        const canonicalName =
+          resolved && typeof resolved.name === 'string' ? resolved.name : '';
+        const matches =
+          canonicalName.toLowerCase() === declaredName.toLowerCase() ||
+          canonicalName.toLowerCase().includes(declaredName.toLowerCase()) ||
+          declaredName.toLowerCase().includes(canonicalName.toLowerCase());
+        if (canonicalName && !matches) {
+          throw new HoldedUserError(
+            'contact_id_name_mismatch',
+            `The provided contactId resolves to "${canonicalName}" but contactName was "${declaredName}". These look like different contacts — please verify which one you intended (the contactId may be stale from a previous conversation). To proceed, pass ONLY contactName="${declaredName}" and the connector will resolve it freshly, OR pass ONLY the contactId you trust.`
+          );
+        }
+        // Match confirmado — sobrescribimos contactName con el canónico para
+        // que el consent card muestre el nombre exacto que Holded tiene.
+        if (canonicalName) {
+          payload.contactName = canonicalName;
+        }
+      } catch (err) {
+        if (err instanceof HoldedUserError) throw err;
+        // getContact falló (404 u otro). Asumimos que el id es legacy y
+        // hacemos fallback a resolución por nombre.
+        payload.contactId = '';
+      }
+    }
+
     if (
       (typeof payload.contactId !== 'string' || !payload.contactId.trim()) &&
       typeof payload.contactName === 'string' &&

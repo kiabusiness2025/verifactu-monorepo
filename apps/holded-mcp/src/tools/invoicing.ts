@@ -409,6 +409,56 @@ export function registerInvoicingTools(
       // contactName -> contactId resolution. Mirror of F2a in the ChatGPT
       // adapter. Avoids forcing the caller to chain list_contacts first.
       let resolvedContactId = contactId?.trim();
+
+      // V3.G.9 (2026-06-01): si el modelo pasa contactId Y contactName,
+      // verificamos que coinciden. Cubre el caso de contaminación de
+      // contexto donde el modelo improvisa un id de conversaciones
+      // anteriores con un nombre distinto.
+      if (resolvedContactId && contactName?.trim()) {
+        const declaredName = contactName.trim();
+        try {
+          const resolved = (await getClient().getContact(resolvedContactId)) as Record<
+            string,
+            unknown
+          > | null;
+          const canonicalName =
+            resolved && typeof resolved.name === 'string' ? resolved.name : '';
+          const matches =
+            canonicalName.toLowerCase() === declaredName.toLowerCase() ||
+            canonicalName.toLowerCase().includes(declaredName.toLowerCase()) ||
+            declaredName.toLowerCase().includes(canonicalName.toLowerCase());
+          if (canonicalName && !matches) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      error: 'contact_id_name_mismatch',
+                      contactId: resolvedContactId,
+                      canonicalName,
+                      declaredName,
+                      message: `contactId ${resolvedContactId} resolves to "${canonicalName}" but you passed contactName="${declaredName}". These look like different contacts — the contactId may be stale. To proceed, pass ONLY contactName="${declaredName}" (we'll resolve it freshly) OR pass ONLY the contactId you trust.`,
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: false,
+            };
+          }
+          if (canonicalName) {
+            // Sobrescribimos contactName canónico para que la consent card de
+            // Claude muestre el nombre exacto que Holded tiene almacenado.
+            contactName = canonicalName;
+          }
+        } catch {
+          // getContact falló — caemos a resolver por contactName como fallback.
+          resolvedContactId = undefined;
+        }
+      }
+
       if (!resolvedContactId) {
         if (!contactName?.trim()) {
           // Input validation: ningún identificador de contacto.
