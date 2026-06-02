@@ -29,8 +29,6 @@ import {
   Plug,
   Plus,
   Receipt,
-  Scale,
-  Share2,
   ShieldAlert,
   ShieldCheck,
   Sparkles,
@@ -39,7 +37,6 @@ import {
   UserCircle2,
   Users,
   Users2,
-  Webhook,
 } from 'lucide-react';
 import { ISAAK_V1_LAUNCH } from '@/app/lib/feature-flags';
 
@@ -153,15 +150,8 @@ const PROFILE_MENU_FULL = [
 const PROFILE_MENU_V1 = [
   { href: '/settings?section=profile', label: 'Perfil', icon: UserCircle2 },
   { href: '/settings?section=company', label: 'Empresa', icon: Building2 },
+  { href: '/settings?section=connections', label: 'Holded', icon: Plug },
   { href: '/settings?section=billing', label: 'Plan y facturación', icon: CreditCard },
-  { href: '/bienvenida', label: 'Setup inicial', icon: Sparkles },
-  { href: '/ajustes/notificaciones', label: 'Notificaciones', icon: Bell },
-  { href: '/advisor', label: 'Mis clientes (asesoría)', icon: Briefcase },
-  { href: '/asesor-legal', label: 'Asesor legal', icon: Scale },
-  { href: '/integrations', label: 'Integraciones', icon: Plug },
-  { href: '/webhooks', label: 'Webhooks', icon: Webhook },
-  { href: '/compartir-isaak', label: 'Compartir Isaak', icon: Share2 },
-  { href: '/ayuda', label: 'Centro de ayuda', icon: LifeBuoy },
 ] as const;
 
 const PROFILE_MENU = ISAAK_V1_LAUNCH ? PROFILE_MENU_V1 : PROFILE_MENU_FULL;
@@ -232,9 +222,10 @@ export default function IsaakSidebar({
   const profileRef = useRef<HTMLDivElement>(null);
 
   // C-A — badge buzón AEAT: poll /api/isaak/sede/pending-count cada 5 min
-  const [aeatPending, setAeatPending] = useState<{ pending: number; critical: number }>(
-    { pending: 0, critical: 0 },
-  );
+  const [aeatPending, setAeatPending] = useState<{ pending: number; critical: number }>({
+    pending: 0,
+    critical: 0,
+  });
   useEffect(() => {
     let cancelled = false;
     const fetchCount = async () => {
@@ -421,10 +412,8 @@ export default function IsaakSidebar({
             {group.items.map((item) => {
               const { href, label, icon: Icon } = item;
               const badgeKind = 'badgeKind' in item ? item.badgeKind : undefined;
-              const badgeCount =
-                badgeKind === 'aeat-pending' ? aeatPending.pending : 0;
-              const badgeUrgent =
-                badgeKind === 'aeat-pending' && aeatPending.critical > 0;
+              const badgeCount = badgeKind === 'aeat-pending' ? aeatPending.pending : 0;
+              const badgeUrgent = badgeKind === 'aeat-pending' && aeatPending.critical > 0;
               return (
                 <Link
                   key={href}
