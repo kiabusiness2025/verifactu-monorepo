@@ -217,10 +217,11 @@ describe('OpenAI App Review POS-01..POS-10 dry-run', () => {
       invoiceId: MOCK_INVOICE.id,
     });
     expect(result).toBeDefined();
-    const item = (result as { item?: { docNumber?: string } }).item;
+    const item = (result as { item?: { docNumber?: string; contactName?: string; total?: number } })
+      .item;
     expect(item?.docNumber).toBe('F0030');
     expect(item?.contactName).toBe('Demo Retail Norte SL');
-    console.log('POS-02 ✓ item.docNumber=', item?.docNumber, 'total=', (item as { total?: number })?.total);
+    console.log('POS-02 ✓ item.docNumber=', item?.docNumber, 'total=', item?.total);
   });
 
   it('POS-03 holded_list_documents(docType=purchase): returns purchases', async () => {
