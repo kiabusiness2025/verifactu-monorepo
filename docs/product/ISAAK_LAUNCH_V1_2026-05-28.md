@@ -203,7 +203,7 @@ Ya existen en `holded.verifactu.business`. Pequeño ajuste de header para apunta
 
 | ID  | Tarea                                                                                                                      | Estado 2026-06-02                          |
 | --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| B1  | Verificar corpus AEAT en system prompt (test con 10 preguntas tipo)                                                        | Pendiente                                  |
+| B1  | Verificar corpus AEAT en system prompt (test con 10 preguntas tipo)                                                        | Hecho; test automático cubre 10 temas AEAT |
 | B2  | Portar 5 tools nuevas: `list_taxes`, `list_numbering_series`, `get_document_pdf`, `get_daily_book`, `create_invoice_draft` | Hecho en código                            |
 | B3  | Reemplazar `holded_create_invoice` por `holded_create_invoice_draft` en system prompt + naming                             | Hecho; draft-only y confirmación explícita |
 | B4  | Confirmar cron `fiscal-alerts` end-to-end con tenant real (D-15 → email)                                                   | Pendiente                                  |
