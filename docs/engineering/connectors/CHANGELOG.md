@@ -2,6 +2,264 @@
 
 Historial de fixes y hardening aplicados a los conectores durante el ciclo de OpenAI App Review (mayo-junio 2026). Cada commit etiquetado con un identificador V3.X reproducible.
 
+## V3.G.9 — 2026-06-02 · Mismatch contactId / contactName (commit `1f92f964`)
+
+> Defensa contra contaminación de contexto del modelo en `create_invoice_draft`.
+
+Reviewer reportó: prompt "Create a draft invoice for Alfa Retail Madrid SL"
+pero el consent card de ChatGPT mostraba `Names: Beta Eventos Barcelo...` con
+`contactId: 69edd394b6b0967c30052220`. ChatGPT sustituía Alfa→Beta entre el
+prompt del usuario y la llamada al tool — contaminación de contexto del modelo
+desde turnos / Memory previa.
+
+V3.G.4 y V3.G.8 ya cerraban el caso "contactName que no matchea exacto", pero
+aquí el modelo enviaba `contactName Beta` y `contactId Beta` (coherentes entre
+sí, ambos apuntando a Beta — solo que NO era lo que el usuario pidió).
+
+**Fix V3.G.9**: cuando el modelo manda BOTH `contactId` Y `contactName`:
+
+1. Hacemos `getContact(contactId)` para obtener el nombre canónico de Holded.
+2. Si el nombre canónico no contiene/no es el contactName declarado → throw
+   `contact_id_name_mismatch` con mensaje claro: "id resuelve a X pero
+   nombre dado fue Y, son contactos distintos. Pasa SOLO contactName para
+   resolver limpio, O SOLO el contactId que confíes".
+3. Si coinciden, sobrescribimos `contactName` con el canónico de Holded para
+   que la consent card muestre el nombre real.
+
+**Limitación aceptada**: no cubre el caso exacto del screenshot (Beta+Beta
+coherentes entre sí pero ambos incorrectos respecto a la intención del
+usuario) porque desde el backend no conocemos la intención. Mitigación: el
+usuario inspecciona el consent card y deniega si ve un contacto distinto al
+que tipeó.
+
+**Files**:
+- `apps/app/lib/integrations/holdedMcpTools.ts` (ChatGPT MCP)
+- `apps/holded-mcp/src/tools/invoicing.ts` (Claude MCP)
+
+Tests: 131/131 apps/app + 81/81 Claude verdes.
+
+## V3.G.8 — 2026-06-02 · Validación robusta `create_invoice_draft` Claude + descriptions `get_contact` con quirks (commit `7af6d991`)
+
+> Cierra bug nuevo del reviewer (V3.G.4 olvidado en Claude) + mitiga bug 5.
+
+Reviewer hizo ronda final y reportó BUG 8 (crítico):
+
+**A) Contacto inexistente reasignado**: `contactName="CLIENTE QUE NO EXISTE
+XYZ 99999"` se asignaba a Beta Eventos (items[0]) en silencio.
+
+**B) Importe negativo aceptado**: `subtotal: -500€` pasaba sin error.
+
+**C) Fecha inválida aceptada**: `date: "fecha-invalida-2026"` se ignoraba y
+Holded aplicaba "hoy" silenciosamente.
+
+**D) Line item name vacío aceptado**.
+
+**Root cause**: V3.G.4 cerró este patrón en `apps/app` pero NO en
+`apps/holded-mcp`. El Claude connector tiene su propia implementación que se
+olvidó actualizar (otra trampa de adapters independientes).
+
+**Fix V3.G.8 — Claude**:
+
+1. Cascada `exact` / `unique-partial` / `contact_ambiguous` /
+   `contact_not_found` reemplaza el `chosen = exact ?? items[0]` peligroso.
+2. `contactName` sobrescrito al canónico → consent card muestra el real.
+3. Zod schema reforzado:
+   - `name: z.string().min(1)` — no vacío
+   - `units: z.number().positive()` — > 0
+   - `subtotal: z.number().positive()` — > 0 (refunds usan credit notes,
+     no facturas con importe negativo)
+   - `items: ...min(1)` — al menos una línea
+4. Validación explícita date/dueDate con try/catch → respuesta controlada
+   `{"error":"invalid_date","date",message}` legible.
+
+**Fix V3.G.8 — BUG 5 mitigado en ambos connectors**:
+
+Reviewer confirmó que `get_contact` devuelve `type:""` aunque el contacto
+sea claramente proveedor, y que el CIF español vive en `code` (no
+`vatnumber`, que es EU VIES intracomunitario). No es bug del conector — es
+así en la API Holded — pero confunde al modelo.
+
+Descriptions de `get_contact` actualizadas en ambos connectors con sección
+"⚠ FIELDS QUIRKS":
+
+- CIF/NIF/NIE → `code`, NO `vatnumber`.
+- `type` → no fiable, usar `supplierRecord`/`clientRecord` para el rol.
+- IDs de documento → pueden ser legacy y no resolver aquí.
+
+**Files**:
+- `apps/holded-mcp/src/tools/invoicing.ts`
+- `apps/holded-mcp/src/tools/contacts.ts`
+- `apps/app/lib/integrations/holdedMcpTools.ts`
+
+Tests: 131/131 apps/app + 81/81 Claude verdes.
+
+## V3.G.7 — 2026-06-02 · `attachments[]` es array de strings, NO objetos (commit `417fb400`)
+
+> Causa raíz definitiva del BUG 7 reportado por reviewer.
+
+Tras V3.G.5 + V3.G.6, el reviewer ejecutó curl directo contra Holded y
+compartió evidencia empírica del shape REAL de la respuesta:
+
+```
+GET /api/invoicing/v1/documents/purchase/{id}/attachments/list
+→ 200 OK
+→ {"status":1,"attachments":["31PTaxInvoice299055226B001260000000235.pdf"]}
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                            Array de STRINGS (filenames), NO objetos.
+```
+
+En V3.G.5 escribí el fallback asumiendo objetos:
+
+```ts
+const first = attachments[0] as Record<string, unknown>;
+const fileName = String(first.fileName ?? first.name ?? first.filename ?? '').trim();
+//                       ↑ undefined porque first es un STRING
+```
+
+Resultado: `fileName` vacío, no se descargaba el adjunto, caía al
+`no_attachment` genérico.
+
+**Fix V3.G.7** (apps/app + apps/holded-mcp): acepta ambas formas:
+
+```ts
+const first = attachments[0] as unknown;
+let fileName = '';
+if (typeof first === 'string') {
+  fileName = first.trim();
+} else if (first && typeof first === 'object') {
+  const obj = first as Record<string, unknown>;
+  fileName = String(obj.fileName ?? obj.name ?? obj.filename ?? '').trim();
+}
+```
+
+**Otros hallazgos empíricos del curl del reviewer** (documentados):
+
+- `GET /documents/purchase/{id}` → NO incluye attachments en el payload.
+- `/documents/purchase/{id}/attachment` (singular) → HTML 404.
+- `/documents/purchase/{id}/attach` → header `Allow: POST`, no GET.
+- `/documents/purchase/{id}/files` → HTML 404.
+- **Único endpoint válido**: `/documents/purchase/{id}/attachments/list`.
+
+Tests V3.G.7 añadidos con shape REAL Holded.
+
+## V3.G.6 — 2026-06-02 · Diagnostic logging para `listDocumentAttachments` (commit `41d6607b`)
+
+> Iteración intermedia entre V3.G.5 y V3.G.7. Defensa diagnóstica.
+
+Tras V3.G.5 el reviewer seguía viendo `no_attachment` para P250001. Sospechas:
+endpoint correcto pero Holded responde "HTML 200 con widget de error" cuando
+no aplica para un docType específico, y nuestro adapter silenciaba esa
+respuesta tratándola como lista vacía.
+
+**Fix V3.G.6** (defensivo en `apps/app/lib/integrations/accounting.ts`):
+`listDocumentAttachments` ahora distingue cuatro casos:
+
+1. Array directo → devuelve.
+2. `{attachments:[]}` wrapper → unwrap.
+3. `{status:0, info:"..."}` (Holded soft error) → `console.warn` + `[]`.
+4. Cualquier otra cosa (HTML, string raw) → `console.warn` + `[]`.
+
+Los `console.warn` dejan traza en Vercel logs para diagnosticar.
+
+Tests: 95/95 verdes (sin regresión).
+
+Investigación paralela del agent + curl del reviewer (que llegaron poco
+después) confirmaron que el endpoint era correcto y el bug real era el
+parsing → V3.G.7.
+
+## V3.G.5 — 2026-06-02 · Timezone Madrid en fechas ISO + fallback a attachments en PDF (commit `e9dd3ac1`)
+
+> Cierra BUG 6 (timezone) y abre la cadena de fixes que culmina en V3.G.7.
+
+**BUG 6 (ALTO) — Off-by-one por timezone**:
+
+Reviewer reportó: `list_documents` con `starttmp=01/01/2025` excluía
+silenciosamente la factura P250001 (date=1735686000, fecha visible
+01/01/2025, 918 €). Bajando starttmp un día reaparecía. Afectaba cualquier
+corte fiscal: auditorías por ejercicio/trimestre perdían las facturas del
+primer día.
+
+Root cause: Holded almacena las fechas a la medianoche LOCAL del tenant
+(Europe/Madrid → CET +1 / CEST +2). Nuestro parser ISO interpretaba
+`"2025-01-01"` como UTC midnight (1735689600). En Madrid son las 01:00 — 1
+hora DESPUÉS de la medianoche local (1735686000). Filtros con
+starttmp=UTC-midnight excluían los docs fechados ese mismo día local.
+
+**Fix V3.G.5**:
+
+- `apps/app/lib/integrations/holdedMcpTools.ts:parseIsoDateToUnix`
+- `apps/holded-mcp/src/utils.ts:toUnixSecondsString`
+
+Para `YYYY-MM-DD` (sin tiempo), parsea como medianoche LOCAL Europe/Madrid
+usando `Intl.DateTimeFormat` para detectar el offset dinámico (maneja DST).
+ISO completos con tiempo/TZ explícito se respetan tal cual.
+
+Repro tests:
+- `"2025-01-01"` → 1735686000 (Madrid midnight CET) — antes 1735689600 (UTC).
+- `"2025-07-01"` → 1751320800 (Madrid midnight CEST = UTC+2) — antes 1751328000.
+
+**BUG 7 (ALTO) — primer intento — fallback a attachments**:
+
+`get_document_pdf` solo intentaba `/pdf` renderizado. Si el usuario subió
+PDF manualmente en Holded UI (caso real P250001), el conector decía no_attachment.
+
+V3.G.5 añadió cascada en `holded_get_document_pdf`:
+
+1. Intenta `/pdf`.
+2. Si falla con "no PDF" → list_attachments + get del primer file.
+3. Si tampoco hay → notFoundResponse legible.
+
+⚠ Asumió incorrectamente que `attachments[0]` era un objeto → causó la
+cadena V3.G.6 → V3.G.7 hasta cerrar.
+
+Files también modificados: `apps/holded-mcp/src/holded-client.ts`,
+`apps/holded-mcp/src/tools/invoicing.ts`, `apps/isaak/app/lib/holded-api.ts`.
+
+Tests V3.G.5: 3 nuevos (timezone CET + CEST + fallback attachments).
+
+## V3.G.4 — 2026-06-01 · `create_invoice_draft` rechaza contactos ambiguos + drafts de €0 (commit `a5149006`)
+
+> Cierra Bug A y Bug B reportados por el reviewer en producción.
+
+**Bug A — Cliente equivocado en draft**:
+
+Usuario pidió "Create a draft invoice for Alfa Retail Madrid SL..." y el
+ChatGPT consent card mostraba `contactId: 69edd394...` con `Name: Beta Eventos
+Barcelona SL`. Tras confirmar, draft creado para Beta en vez de Alfa.
+
+Root cause (apps/app): `const chosen = exact ?? items[0]`. Si no había
+match exacto por nombre, cogíamos el primer contacto que Holded devolviese.
+Holded `/contacts` ordena por insertion order interno, no por relevancia al
+filtro `name=` → para "Alfa Retail Madrid SL" Holded devolvía "Beta Eventos
+Barcelona SL" como items[0] y ese era el cliente al que se creaba la factura.
+
+**Fix V3.G.4 — cascada de 3 niveles**:
+
+1. Match EXACTO case-insensitive → acepta.
+2. Match parcial ÚNICO (solo 1 contacto contiene el nombre) → acepta.
+3. Cualquier otro caso (0 matches, múltiples partials no exactos) →
+   `HoldedUserError` con mensaje legible (`contact_ambiguous` o
+   `contact_not_found`).
+
+Bonus: cuando aceptamos contacto, sobrescribimos `contactName` con el
+canónico de Holded → consent card muestra el nombre real.
+
+**Bug B — Drafts de €0 silenciosamente**:
+
+En Holded UI aparecen 2 drafts "Borrador Factura" para Alfa Retail Madrid
+SL con Subtotal 0€ / IVA 0€ / Total 0€. Causa: el normalizer de líneas
+exigía `desc, units, price` definidos pero NO exigía que `units > 0` o
+`price > 0`.
+
+**Fix V3.G.4**: `normalizeDocumentLineItem` ahora exige `units > 0` Y
+`price > 0`. Si falla → throw con mensaje específico ("units must be
+greater than 0", "price must be greater than 0").
+
+⚠ Aplicado SOLO en `apps/app` — V3.G.8 lo portó a Claude tras nuevo reporte.
+
+Tests V3.G.4: 6 nuevos (contact ambiguous, not_found, exact case-insensitive,
+unique partial, units=0, price=0).
+
 ## V3.G.3 — 2026-06-01 · Fix fetchHoldedSnapshot purchases
 
 > Cierra bug histórico que afectaba el business context de Isaak.

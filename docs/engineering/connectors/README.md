@@ -2,7 +2,7 @@
 
 Documentación técnica de los conectores que exponen los datos de **Holded** (ERP/CRM/contabilidad español) a asistentes IA mediante el protocolo **MCP** (Model Context Protocol) y a la app **Isaak**.
 
-> Última actualización: 2026-06-01 · Versión V3.G.1 · Auditoría OpenAI activa
+> Última actualización: 2026-06-02 · Versión V3.G.9 · Auditoría OpenAI ronda final cerrada (16 bugs reportados → 15 cerrados + 1 limitación Holded API documentada)
 
 ## Mapa de surfaces
 
@@ -23,7 +23,7 @@ Documentación técnica de los conectores que exponen los datos de **Holded** (E
 4. [`CHATGPT_MCP.md`](./CHATGPT_MCP.md) — Detalles específicos del MCP de ChatGPT (apps/app).
 5. [`CLAUDE_MCP.md`](./CLAUDE_MCP.md) — Detalles específicos del MCP de Claude (apps/holded-mcp).
 6. [`TESTING.md`](./TESTING.md) — Cómo testear cada conector localmente y contra el demo tenant Nova Gestión.
-7. [`CHANGELOG.md`](./CHANGELOG.md) — Historial de bugs cerrados V3.A → V3.G.1.
+7. [`CHANGELOG.md`](./CHANGELOG.md) — Historial de bugs cerrados V3.A → V3.G.9.
 
 ## Resumen ejecutivo
 
@@ -64,6 +64,14 @@ Los fixes aplicados al conector se etiquetan **V3.X** en el changelog:
 - **V3.E**: HMAC binding del consent screen (closes replay attack).
 - **V3.F / V3.F.II**: validación de respuestas binarias + smart lookup de contactos.
 - **V3.G / V3.G.1**: paginación + orden del libro diario + sort estable + portado Claude.
+- **V3.G.2**: auto-paginación de libro diario + `chartofaccounts` con fiscal range.
+- **V3.G.3**: `fetchHoldedSnapshot` expone purchases (Isaak business context).
+- **V3.G.4**: `create_invoice_draft` rechaza contactos ambiguos / drafts de €0 (ChatGPT MCP).
+- **V3.G.5**: timezone Europe/Madrid en parseo de ISO dates + fallback a attachments en `get_document_pdf`.
+- **V3.G.6**: diagnostic logging para `listDocumentAttachments` (HTML 404 silencioso).
+- **V3.G.7**: parsing real shape Holded `attachments[]: string[]` (P250001 fix).
+- **V3.G.8**: validación robusta `create_invoice_draft` Claude (cascada contact + units/price/name) + descriptions con quirks `get_contact`.
+- **V3.G.9**: mismatch `contactId` ↔ `contactName` detectado y rechazado.
 - **V3.H**: outputSchema JSON Schema en las 10 tools del preset OpenAI.
 
 Ver [`CHANGELOG.md`](./CHANGELOG.md) para el detalle commit por commit.
