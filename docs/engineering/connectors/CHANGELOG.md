@@ -2,6 +2,56 @@
 
 Historial de fixes y hardening aplicados a los conectores durante el ciclo de OpenAI App Review (mayo-junio 2026). Cada commit etiquetado con un identificador V3.X reproducible.
 
+## V3.G.10 — 2026-06-02 · `items[]` se transforma a `lines[]` en el body que va a Holded
+
+> Cierra bug del reviewer: draft creado con base 0,00€ pese a que Claude
+> mostraba importes correctos.
+
+Reviewer reportó: prompt "Create a draft invoice for Zeta Salud Alicante
+SL for 1 hour of consulting at 90 EUR plus 21% VAT". El conector creó el
+draft (`6a1ea540ef05f92d220b5aef`) y Claude mostró:
+
+```
+Servicio profesional — 1 hora       90,00 €
+IVA 21%                              18,90 €
+Total                               108,90 €
+```
+
+Pero en Holded UI el draft aparecía con `Subtotal 0,00€ / IVA 0,00€ /
+Total 0,00€`.
+
+**Root cause**: el schema input de Claude expone `items: [{name, units,
+subtotal, tax}]` (más natural para el modelo) pero Holded API espera
+`lines: [{desc, units, price, tax}]` para create_invoice. Si enviamos
+`items`, Holded acepta el create (HTTP 200) pero IGNORA esa key
+silenciosamente — la factura se guarda con líneas vacías.
+
+Confirmado contra el seed `scripts/seed-holded-demo.mjs` que SÍ funciona:
+usa `lines/desc/price` y crea drafts con importes reales.
+
+**Fix V3.G.10**: en `apps/holded-mcp/src/tools/invoicing.ts`, antes de
+construir el body que va a Holded, transformamos:
+
+```ts
+items: [{name, units, subtotal, tax}]
+   →
+lines: [{desc: name, units, price: subtotal, tax}]
+```
+
+Mantenemos `items` como input schema (no rompemos lo que el modelo ya
+conoce) pero por debajo enviamos `lines` que es lo que Holded entiende.
+
+Test añadido en `apps/holded-mcp/test/create-invoice-draft.test.ts`:
+verifica que el POST body a `/documents/invoice` NO contiene `items`,
+SÍ contiene `lines`, y cada línea tiene `desc/units/price/tax` con los
+valores correctos del input.
+
+**Files**:
+- `apps/holded-mcp/src/tools/invoicing.ts` (transformación)
+- `apps/holded-mcp/test/create-invoice-draft.test.ts` (+1 test V3.G.10)
+
+Tests: 82/82 Claude + 65/65 apps/app verdes.
+
 ## V3.G.9 — 2026-06-02 · Mismatch contactId / contactName (commit `1f92f964`)
 
 > Defensa contra contaminación de contexto del modelo en `create_invoice_draft`.

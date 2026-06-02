@@ -2,7 +2,7 @@
 
 Documentación técnica de los conectores que exponen los datos de **Holded** (ERP/CRM/contabilidad español) a asistentes IA mediante el protocolo **MCP** (Model Context Protocol) y a la app **Isaak**.
 
-> Última actualización: 2026-06-02 · Versión V3.G.9 · Auditoría OpenAI ronda final cerrada (16 bugs reportados → 15 cerrados + 1 limitación Holded API documentada)
+> Última actualización: 2026-06-02 · Versión V3.G.10 · Auditoría OpenAI ronda final cerrada (17 bugs reportados → 16 cerrados + 1 limitación Holded API documentada)
 
 ## Mapa de surfaces
 
@@ -72,6 +72,7 @@ Los fixes aplicados al conector se etiquetan **V3.X** en el changelog:
 - **V3.G.7**: parsing real shape Holded `attachments[]: string[]` (P250001 fix).
 - **V3.G.8**: validación robusta `create_invoice_draft` Claude (cascada contact + units/price/name) + descriptions con quirks `get_contact`.
 - **V3.G.9**: mismatch `contactId` ↔ `contactName` detectado y rechazado.
+- **V3.G.10**: transforma `items[]` (input schema) a `lines[]` (shape que Holded API entiende) en el wire — antes el draft se creaba con base 0€.
 - **V3.H**: outputSchema JSON Schema en las 10 tools del preset OpenAI.
 
 Ver [`CHANGELOG.md`](./CHANGELOG.md) para el detalle commit por commit.

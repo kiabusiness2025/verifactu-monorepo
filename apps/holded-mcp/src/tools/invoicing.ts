@@ -564,13 +564,48 @@ export function registerInvoicingTools(
         }
       }
 
+      // V3.G.10 (2026-06-02) — CRÍTICO. Holded API espera `lines: [{desc,
+      // units, price, tax}]` para create_invoice, NO `items: [{name, units,
+      // subtotal, tax}]`. Si enviamos `items`, Holded acepta el create
+      // (status 200) pero IGNORA esa key — el draft se crea con base 0,00€.
+      //
+      // Reviewer reportó: Claude muestra "Servicio profesional — 1 hora,
+      // 90 €, IVA 18,90 €, Total 108,90 €" pero en Holded UI sale
+      // Subtotal/IVA/Total 0,00€. Confirmado: el draft 6a1ea540ef05f92d220b5aef
+      // se creó vacío porque enviamos `items` en lugar de `lines`.
+      //
+      // El seed `scripts/seed-holded-demo.mjs` ya usa `lines/desc/price`
+      // correctamente y sus drafts SÍ tienen importes — confirma el mapeo.
+      //
+      // Aquí transformamos `items` (shape friendly al modelo) a `lines`
+      // (shape que Holded acepta) antes de enviar. Mantenemos `items` como
+      // input schema para no romper la API que el modelo ya conoce.
+      const { items: inputItems, ...restWithoutItems } = rest as {
+        items: Array<{
+          productId?: string;
+          name: string;
+          units: number;
+          subtotal: number;
+          tax?: number;
+        }>;
+        [k: string]: unknown;
+      };
+      const lines = (inputItems ?? []).map((item) => ({
+        desc: item.name,
+        units: item.units,
+        price: item.subtotal,
+        ...(item.tax !== undefined ? { tax: item.tax } : {}),
+        ...(item.productId !== undefined ? { productId: item.productId } : {}),
+      }));
+
       // approveDoc se fuerza al final del spread para que ningun input pueda
       // anularlo. NO mover esta linea.
       const body: Record<string, unknown> = {
-        ...rest,
+        ...restWithoutItems,
         contactId: resolvedContactId,
         date: dateUnix,
         ...(dueDateUnix !== undefined ? { dueDate: dueDateUnix } : {}),
+        lines,
         approveDoc: false,
       };
 
