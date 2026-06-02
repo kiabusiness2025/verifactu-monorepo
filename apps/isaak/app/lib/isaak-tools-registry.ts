@@ -31,7 +31,7 @@ import { emitWebhookEvent, type IsaakWebhookEventType } from './isaak-webhook-em
 
 // Mapping: write tool name → webhook event type emitted on success.
 const WRITE_TOOL_WEBHOOK_MAP: Partial<Record<string, IsaakWebhookEventType>> = {
-  holded_create_invoice: 'invoice.created',
+  holded_create_invoice_draft: 'invoice.created',
   holded_send_document: 'invoice.sent',
   holded_register_payment: 'payment.registered',
   isaak_submit_303: 'tax_return.submitted',
@@ -99,6 +99,7 @@ const READ_ONLY_NAMES = new Set<string>([
   'holded_get_contact',
   'holded_get_chart_of_accounts',
   'holded_get_journal',
+  'holded_get_daily_book',
   'holded_list_treasury_accounts',
   'holded_list_products',
   'holded_list_projects',
@@ -106,6 +107,9 @@ const READ_ONLY_NAMES = new Set<string>([
   'holded_get_verifactu_status',
   'holded_get_pnl',
   'holded_list_payments',
+  'holded_list_taxes',
+  'holded_list_numbering_series',
+  'holded_get_document_pdf',
   // Banking
   'banking_check_connection',
   'banking_list_accounts',
@@ -283,13 +287,13 @@ export async function executeIsaakTool(
       result = await executeMemoryTool(
         { tenantId: ctx.tenantId, userId: ctx.userId },
         name as MemoryToolName,
-        toolUse.input,
+        toolUse.input
       );
     } else if (isLegalToolName(name)) {
       result = await executeLegalTool(
         { tenantId: ctx.tenantId, userId: ctx.userId },
         name as LegalToolName,
-        toolUse.input,
+        toolUse.input
       );
     } else if (isSectorToolName(name)) {
       result = await executeSectorTool(ctx.tenantId, name as SectorToolName, toolUse.input);
