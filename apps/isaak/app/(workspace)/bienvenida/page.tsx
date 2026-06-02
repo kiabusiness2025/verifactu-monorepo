@@ -25,6 +25,7 @@ import {
   Sparkles,
   UserCircle2,
 } from 'lucide-react';
+import { ISAAK_V1_LAUNCH } from '@/app/lib/feature-flags';
 
 type OnboardingState = {
   completedAt: string | null;
@@ -50,7 +51,7 @@ type StepDef = {
   important?: boolean;
 };
 
-const STEPS: StepDef[] = [
+const STEPS_FULL: StepDef[] = [
   {
     key: 'profile',
     icon: UserCircle2,
@@ -84,12 +85,26 @@ const STEPS: StepDef[] = [
     key: 'channels',
     icon: MessageCircle,
     title: 'Vincula WhatsApp o Telegram',
-    description:
-      'Para hablar con Isaak desde tu móvil sin abrir la web. Una sola vez, opcional.',
+    description: 'Para hablar con Isaak desde tu móvil sin abrir la web. Una sola vez, opcional.',
     ctaLabel: 'Vincular canal',
     href: '/ajustes/notificaciones',
   },
 ];
+
+const STEPS_V1: StepDef[] = [
+  {
+    key: 'holded',
+    icon: Plug,
+    title: 'Conecta tu Holded',
+    description:
+      'Es el unico paso imprescindible de V1. Isaak necesita tu API key para consultar ventas, gastos, facturas y contabilidad real.',
+    ctaLabel: 'Conectar Holded',
+    href: '/integration-holded',
+    important: true,
+  },
+];
+
+const STEPS = ISAAK_V1_LAUNCH ? STEPS_V1 : STEPS_FULL;
 
 export default function BienvenidaPage() {
   const router = useRouter();
@@ -140,7 +155,10 @@ export default function BienvenidaPage() {
     );
   }
 
-  const pct = Math.round((state.doneCount / state.totalSteps) * 100);
+  const visibleDoneCount = STEPS.filter((step) => state.steps[step.key].done).length;
+  const visibleTotalSteps = STEPS.length;
+  const visibleAllDone = visibleDoneCount === visibleTotalSteps;
+  const pct = Math.round((visibleDoneCount / visibleTotalSteps) * 100);
 
   return (
     <div className="mx-auto w-full max-w-3xl px-5 py-10">
@@ -150,16 +168,18 @@ export default function BienvenidaPage() {
           <Sparkles className="h-7 w-7" />
         </div>
         <h1 className="mt-5 text-3xl font-bold tracking-tight text-[#011c67] sm:text-4xl">
-          {state.allDone
+          {visibleAllDone
             ? '¡Todo listo!'
-            : state.doneCount === 0
+            : visibleDoneCount === 0
               ? 'Bienvenido a Isaak'
               : 'Falta poco'}
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-base text-slate-600">
-          {state.allDone
-            ? 'Has completado los 4 pasos. Isaak está listo para trabajar contigo.'
-            : 'Vamos a configurar lo esencial. Cada paso lleva 30 segundos.'}
+          {visibleAllDone
+            ? 'Has completado la configuración esencial. Isaak está listo para trabajar contigo.'
+            : ISAAK_V1_LAUNCH
+              ? 'Conecta Holded para empezar a usar Isaak con datos reales.'
+              : 'Vamos a configurar lo esencial. Cada paso lleva 30 segundos.'}
         </p>
 
         {/* Progress bar */}
@@ -171,7 +191,7 @@ export default function BienvenidaPage() {
             />
           </div>
           <span className="text-xs font-semibold tabular-nums text-slate-600">
-            {state.doneCount}/{state.totalSteps}
+            {visibleDoneCount}/{visibleTotalSteps}
           </span>
         </div>
       </div>
@@ -241,7 +261,7 @@ export default function BienvenidaPage() {
 
       {/* Footer actions */}
       <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
-        {state.allDone ? (
+        {visibleAllDone ? (
           <Link
             href="/chat"
             className="inline-flex items-center gap-2 rounded-full bg-[#2361d8] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
@@ -273,9 +293,8 @@ export default function BienvenidaPage() {
       {state.completedAt && (
         <p className="mt-6 text-center text-[11px] text-slate-400">
           <Briefcase className="mr-1 inline h-3 w-3" />
-          Marcado como completado el{' '}
-          {new Date(state.completedAt).toLocaleDateString('es-ES')}. Puedes seguir
-          completando pasos cuando quieras.
+          Marcado como completado el {new Date(state.completedAt).toLocaleDateString('es-ES')}.
+          Puedes seguir completando pasos cuando quieras.
         </p>
       )}
     </div>
