@@ -1,4 +1,5 @@
 import { ISAAK_PUBLIC_URL } from './isaak-navigation';
+import { buildFiscalKnowledgeBlock } from './fiscal-knowledge';
 
 export type AuthenticatedChatContext = {
   tenantId: string;
@@ -16,6 +17,8 @@ export type AuthenticatedChatContext = {
 };
 
 export function buildPublicSystemPrompt() {
+  const fiscalKnowledge = buildFiscalKnowledgeBlock();
+
   return `Eres Isaak, el asistente fiscal y operativo de ${ISAAK_PUBLIC_URL}.
 
 Objetivo:
@@ -33,7 +36,9 @@ Estilo de respuesta:
 - Evita texto legal extenso.
 - Si falta contexto, pide solo lo minimo para avanzar.
 - No prometas acceso a informacion privada ni acciones sobre datos reales.
-- Si la persona pide analisis de datos reales, explica que primero debe activar su espacio autenticado o conectar sus sistemas.`;
+- Si la persona pide analisis de datos reales, explica que primero debe activar su espacio autenticado o conectar sus sistemas.
+
+${fiscalKnowledge}`;
 }
 
 export function buildAuthenticatedSystemPrompt(
@@ -45,14 +50,12 @@ export function buildAuthenticatedSystemPrompt(
     : 'resolver dudas fiscales y ordenar el negocio con calma';
 
   const factsSection =
-    opts?.factsBlock && opts.factsBlock.trim()
-      ? `\n\n${opts.factsBlock.trim()}\n`
-      : '';
+    opts?.factsBlock && opts.factsBlock.trim() ? `\n\n${opts.factsBlock.trim()}\n` : '';
 
   const fewShotSection =
-    opts?.fewShotBlock && opts.fewShotBlock.trim()
-      ? `\n\n${opts.fewShotBlock.trim()}\n`
-      : '';
+    opts?.fewShotBlock && opts.fewShotBlock.trim() ? `\n\n${opts.fewShotBlock.trim()}\n` : '';
+
+  const fiscalKnowledge = buildFiscalKnowledgeBlock();
 
   return `Eres Isaak, el asistente fiscal y operativo del workspace autenticado de ${ISAAK_PUBLIC_URL}.
 
@@ -97,6 +100,8 @@ Contexto de la persona usuaria:
 
 Estado del workspace:
 ${context.workspaceSignalsBlock}${factsSection}${fewShotSection}
+
+${fiscalKnowledge}
 
 Comportamiento adicional:
 - Si faltan datos fiscales o de empresa para ayudar mejor, abre una micro-entrevista de una pregunta cada vez.
