@@ -124,7 +124,15 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
     'get_contact',
     'Returns the full details of a specific Holded contact by its ID. Read-only. ' +
       'Si el contactId no existe o está malformado, devuelve `{ "error": "not_found" }` ' +
-      'con un mensaje legible en vez de propagar un error genérico.',
+      'con un mensaje legible en vez de propagar un error genérico. ' +
+      '⚠ FIELDS QUIRKS (verified empirically against Nova Gestión SL, V3.G.8 audit 2026-06-01):\n' +
+      '  • The Spanish tax ID (CIF/NIF/NIE — needed for modelo 347 reports) lives in the `code` field, NOT `vatnumber`. ' +
+      'The `vatnumber` field is intended for EU VIES VAT numbers (intracommunity) and is usually empty for domestic Spanish contacts.\n' +
+      '  • The `type` field is UNRELIABLE — Holded often returns it as an empty string even when the contact is clearly a supplier or client. ' +
+      'To determine role reliably, check whether `supplierRecord` is populated (supplier) or `clientRecord` is populated (client). ' +
+      'Both can be present if the contact acts in both roles.\n' +
+      '  • Document-embedded contact IDs (the `contact` field inside an invoice/purchase document) may refer to legacy contact versions that no longer resolve here — Holded keeps separate historical and live IDs. ' +
+      'If the lookup fails for an ID extracted from a document, search by name via list_contacts instead.',
     {
       contactId: z.string().describe('Holded contact ID.'),
     },

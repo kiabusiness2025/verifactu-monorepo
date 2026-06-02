@@ -330,16 +330,82 @@ export function registerInvoicingTools(
         .array(
           z.object({
             productId: z.string().optional().describe('Optional existing Holded product ID.'),
-            name: z.string().describe('Line item name.'),
-            units: z.number().describe('Quantity.'),
-            subtotal: z.number().describe('Unit price before tax.'),
+            // V3.G.8 (2026-06-01): exigir name no vacío, units > 0, subtotal > 0.
+            // El reviewer creó drafts basura con name vacío, units 0 y subtotal
+            // negativo (-500€) porque Zod aceptaba cualquier número/string.
+            name: z
+              .string()
+              .min(1, 'Line item name cannot be empty.')
+              .describe('Line item name (must be non-empty).'),
+            units: z
+              .number()
+              .positive('Quantity must be greater than 0.')
+              .describe('Quantity (must be > 0).'),
+            subtotal: z
+              .number()
+              .positive('Unit price must be greater than 0. Refunds use credit notes, not negative invoices.')
+              .describe('Unit price before tax (must be > 0).'),
             tax: z.number().optional().describe('VAT percentage, for example 21.'),
           })
         )
-        .describe('Invoice draft line items.'),
+        .min(1, 'At least one line item is required to create a draft.')
+        .describe('Invoice draft line items (at least one required).'),
     },
     writeAnnotations('create_invoice_draft'),
     async ({ date, dueDate, contactId, contactName, ...rest }) => {
+      // V3.G.8 (2026-06-01): validación explícita de fechas. Antes confiábamos
+      // solo en toUnixSecondsNumber que throw para input inválido, pero el
+      // withControlledErrors wrapper podía enmascarar el error. Ahora lo
+      // capturamos y devolvemos respuesta controlada legible.
+      let dateUnix: number;
+      try {
+        dateUnix = toUnixSecondsNumber(date);
+        if (!Number.isFinite(dateUnix)) throw new Error('Invalid');
+      } catch {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  error: 'invalid_date',
+                  date,
+                  message: `Invoice date "${date}" is not a valid ISO 8601 date or Unix timestamp. Use a format like "2026-06-15" or "1750118400".`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: false,
+        };
+      }
+      let dueDateUnix: number | undefined;
+      if (dueDate !== undefined) {
+        try {
+          dueDateUnix = toUnixSecondsNumber(dueDate);
+          if (!Number.isFinite(dueDateUnix)) throw new Error('Invalid');
+        } catch {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    error: 'invalid_due_date',
+                    dueDate,
+                    message: `Due date "${dueDate}" is not a valid ISO 8601 date or Unix timestamp.`,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: false,
+          };
+        }
+      }
+
       // contactName -> contactId resolution. Mirror of F2a in the ChatGPT
       // adapter. Avoids forcing the caller to chain list_contacts first.
       let resolvedContactId = contactId?.trim();
@@ -369,14 +435,57 @@ export function registerInvoicingTools(
           Record<string, unknown>
         >;
         const items = Array.isArray(matches) ? matches : [];
+
+        // V3.G.8 (2026-06-01) — CRÍTICO. Antes: `const chosen = exact ?? items[0]`
+        // hacía que cuando NO había match exacto cogiéramos items[0] — el primer
+        // contacto que Holded devolviese, que puede ser cualquiera. El reviewer
+        // reportó "CLIENTE QUE NO EXISTE XYZ 99999" reasignándose a Beta Eventos
+        // silenciosamente. Riesgo real de factura al cliente equivocado.
+        //
+        // Cascada V3.G.8 (mismo patrón ya aplicado en apps/app V3.G.4):
+        //   1) Match EXACTO case-insensitive → acepta.
+        //   2) Match parcial ÚNICO (solo 1 contacto contiene el nombre) → acepta.
+        //   3) Multiple partials → error "ambiguous" con sample, NO elige por ti.
+        //   4) Cero matches → error "not_found".
         const exact = items.find(
           (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
         );
-        const chosen = exact ?? items[0];
+        let chosen: Record<string, unknown> | undefined = exact;
+        if (!chosen) {
+          const partialMatches = items.filter(
+            (c) =>
+              typeof c.name === 'string' &&
+              c.name.toLowerCase().includes(name.toLowerCase())
+          );
+          if (partialMatches.length === 1) {
+            chosen = partialMatches[0];
+          } else if (partialMatches.length > 1) {
+            const sample = partialMatches
+              .slice(0, 5)
+              .map((c) => `"${c.name}"`)
+              .join(', ');
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      error: 'contact_ambiguous',
+                      contactName: name,
+                      matches: sample,
+                      message: `Multiple Holded contacts match "${name}": ${sample}. Please specify the exact contact name or call list_contacts and pass the contactId explicitly.`,
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: false,
+            };
+          }
+        }
         const chosenId = chosen?.id ?? chosen?._id;
         if (typeof chosenId !== 'string' || !chosenId.trim()) {
-          // Devolvemos respuesta controlada (no throw) para que el modelo pueda
-          // razonar sobre el resultado y reintentar con contactId resuelto.
           return {
             content: [
               {
@@ -385,7 +494,7 @@ export function registerInvoicingTools(
                   {
                     error: 'contact_not_found',
                     contactName: name,
-                    message: `No contact found for "${name}". Use list_contacts to find the correct contact and pass contactId.`,
+                    message: `No Holded contact matches "${name}" (exact or partial). Call list_contacts to find the right contact and pass its contactId.`,
                   },
                   null,
                   2
@@ -396,6 +505,13 @@ export function registerInvoicingTools(
           };
         }
         resolvedContactId = chosenId.trim();
+        // V3.G.8: sobrescribimos contactName con el nombre canónico para que la
+        // tarjeta de confirmación de Claude muestre el nombre real, no lo que
+        // escribió el usuario. Si el usuario ve un nombre distinto al que
+        // escribió, sabe que algo no cuadra y deniega.
+        if (typeof chosen?.name === 'string') {
+          contactName = chosen.name;
+        }
       }
 
       // approveDoc se fuerza al final del spread para que ningun input pueda
@@ -403,8 +519,8 @@ export function registerInvoicingTools(
       const body: Record<string, unknown> = {
         ...rest,
         contactId: resolvedContactId,
-        date: toUnixSecondsNumber(date),
-        ...(dueDate !== undefined ? { dueDate: toUnixSecondsNumber(dueDate) } : {}),
+        date: dateUnix,
+        ...(dueDateUnix !== undefined ? { dueDate: dueDateUnix } : {}),
         approveDoc: false,
       };
 

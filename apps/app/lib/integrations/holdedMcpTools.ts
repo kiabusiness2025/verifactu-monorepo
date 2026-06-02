@@ -2670,7 +2670,12 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
     'Get one contact from Holded',
     'Retrieve a single Holded contact by id. ' +
       'IMPORTANT: contact IDs embedded inside document responses (e.g. the `contact` field of an invoice) are NOT always resolvable here — Holded keeps legacy IDs for historical document versions that differ from live CRM IDs. ' +
-      'For best reliability ALSO pass `contactName` (when known from the prior document or list context). If the direct id lookup fails, the connector will retry by name match. If neither id nor name resolves, the response will indicate not_found and the caller should call holded_list_contacts to look up a fresh id.',
+      'For best reliability ALSO pass `contactName` (when known from the prior document or list context). If the direct id lookup fails, the connector will retry by name match. If neither id nor name resolves, the response will indicate not_found and the caller should call holded_list_contacts to look up a fresh id. ' +
+      '⚠ FIELDS QUIRKS (verified empirically against Nova Gestión SL, V3.G.8 audit 2026-06-01):\n' +
+      '  • The Spanish tax ID (CIF/NIF/NIE — needed for modelo 347 reports) lives in the `code` field, NOT `vatnumber`. ' +
+      'The `vatnumber` field is intended for EU VIES VAT numbers (intracommunity) and is usually empty for domestic Spanish contacts.\n' +
+      '  • The `type` field is UNRELIABLE — Holded often returns it as an empty string even when the contact is clearly a supplier or client. ' +
+      'To determine role reliably, check whether `supplierRecord` is populated (supplier) or `clientRecord` is populated (client). Both can be present if the contact acts in both roles.',
     simpleSchema(
       {
         contactId: stringProperty(
