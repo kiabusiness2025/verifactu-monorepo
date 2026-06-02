@@ -31,6 +31,7 @@ import {
   X,
 } from 'lucide-react';
 import CustomSlashCommandsEditor from './CustomSlashCommandsEditor';
+import { ISAAK_V1_LAUNCH } from '@/app/lib/feature-flags';
 
 type SettingsData = {
   profile: {
@@ -174,7 +175,7 @@ const GOAL_OPTIONS = [
   'Entender balances y resultados',
   'Llevar mejor la gestion diaria',
 ];
-const sections: Array<{
+const SECTIONS_FULL: Array<{
   key: SectionKey;
   label: string;
   icon: typeof UserCircle2;
@@ -189,6 +190,20 @@ const sections: Array<{
   { key: 'notificaciones', label: 'Notificaciones', icon: Bell },
   { key: 'developer', label: 'Developer', icon: Code2, external: '/integrations?tab=developer' },
 ];
+
+const SECTIONS_V1: Array<{
+  key: SectionKey;
+  label: string;
+  icon: typeof UserCircle2;
+  external?: string;
+}> = [
+  { key: 'profile', label: 'Perfil', icon: UserCircle2 },
+  { key: 'company', label: 'Empresa', icon: Building2 },
+  { key: 'connections', label: 'Holded', icon: PlugZap },
+  { key: 'billing', label: 'Facturacion', icon: CreditCard },
+];
+
+const sections = ISAAK_V1_LAUNCH ? SECTIONS_V1 : SECTIONS_FULL;
 
 function deriveInitial(name: string) {
   return (name.trim().charAt(0) || 'I').toUpperCase();
@@ -656,7 +671,7 @@ export default function IsaakSettingsClient({
   }, [activeSection, billing.invoices.length]);
 
   useEffect(() => {
-    if (activeSection !== 'connections' || googleStatus) return;
+    if (ISAAK_V1_LAUNCH || activeSection !== 'connections' || googleStatus) return;
     setGoogleLoading(true);
     void fetch('/api/isaak/google/status')
       .then((r) => (r.ok ? r.json() : null))
@@ -1004,7 +1019,7 @@ export default function IsaakSettingsClient({
   async function openBillingAction(
     endpoint: string,
     loadingText: string,
-    body?: Record<string, unknown>,
+    body?: Record<string, unknown>
   ) {
     setSavingSection('billing');
     setNotice(null);
@@ -1501,7 +1516,9 @@ export default function IsaakSettingsClient({
             ) : null}
 
             {activeSection === 'connections' ? (
-              <div className="mt-6 grid gap-6 xl:grid-cols-[1fr_0.9fr]">
+              <div
+                className={`mt-6 grid gap-6 ${ISAAK_V1_LAUNCH ? '' : 'xl:grid-cols-[1fr_0.9fr]'}`}
+              >
                 <section className="rounded-[1.6rem] border border-slate-200 p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div>
@@ -1620,85 +1637,87 @@ export default function IsaakSettingsClient({
                     </div>
                   </div>
                 </section>
-                <section className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
-                  <div className="text-lg font-semibold text-slate-950">Google Calendar</div>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Sincroniza los plazos fiscales del año directamente en tu calendario.
-                  </p>
-                  <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
-                          <Calendar className="h-4 w-4 text-red-500" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-slate-900">
-                            Google Calendar
+                {!ISAAK_V1_LAUNCH ? (
+                  <section className="rounded-[1.6rem] border border-slate-200 bg-white p-5">
+                    <div className="text-lg font-semibold text-slate-950">Google Calendar</div>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Sincroniza los plazos fiscales del año directamente en tu calendario.
+                    </p>
+                    <div className="mt-5 rounded-[1.5rem] border border-slate-200 bg-slate-50/70 p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50">
+                            <Calendar className="h-4 w-4 text-red-500" />
                           </div>
-                          {googleLoading ? (
-                            <div className="text-xs text-slate-400">Cargando...</div>
-                          ) : googleStatus?.connected ? (
-                            <div className="text-xs text-slate-500">{googleStatus.email}</div>
-                          ) : (
-                            <div className="text-xs text-slate-400">No conectado</div>
-                          )}
+                          <div>
+                            <div className="text-sm font-semibold text-slate-900">
+                              Google Calendar
+                            </div>
+                            {googleLoading ? (
+                              <div className="text-xs text-slate-400">Cargando...</div>
+                            ) : googleStatus?.connected ? (
+                              <div className="text-xs text-slate-500">{googleStatus.email}</div>
+                            ) : (
+                              <div className="text-xs text-slate-400">No conectado</div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      {!googleLoading && (
-                        <div className="flex items-center gap-2">
-                          {googleStatus?.connected ? (
-                            <>
-                              <span className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
-                                <CheckCircle2 className="h-3 w-3" />
-                                Conectado
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => void disconnectGoogle()}
-                                disabled={googleDisconnecting}
-                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+                        {!googleLoading && (
+                          <div className="flex items-center gap-2">
+                            {googleStatus?.connected ? (
+                              <>
+                                <span className="flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-800">
+                                  <CheckCircle2 className="h-3 w-3" />
+                                  Conectado
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => void disconnectGoogle()}
+                                  disabled={googleDisconnecting}
+                                  className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100 disabled:opacity-60"
+                                >
+                                  {googleDisconnecting ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    <Unplug className="h-3 w-3" />
+                                  )}
+                                  Desconectar
+                                </button>
+                              </>
+                            ) : googleStatus?.googleConfigured ? (
+                              <a
+                                href="/api/isaak/google/auth"
+                                className="inline-flex items-center gap-1.5 rounded-full bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
                               >
-                                {googleDisconnecting ? (
-                                  <Loader2 className="h-3 w-3 animate-spin" />
-                                ) : (
-                                  <Unplug className="h-3 w-3" />
-                                )}
-                                Desconectar
-                              </button>
-                            </>
-                          ) : googleStatus?.googleConfigured ? (
-                            <a
-                              href="/api/isaak/google/auth"
-                              className="inline-flex items-center gap-1.5 rounded-full bg-[#2361d8] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#1d55c2]"
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                              Conectar
-                            </a>
-                          ) : (
-                            <span className="text-xs text-slate-400">Próximamente</span>
-                          )}
-                        </div>
+                                <ExternalLink className="h-3 w-3" />
+                                Conectar
+                              </a>
+                            ) : (
+                              <span className="text-xs text-slate-400">Próximamente</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                      {googleStatus?.connected && (
+                        <p className="mt-3 text-xs text-slate-500">
+                          Ve a{' '}
+                          <a href="/calendario" className="text-[#2361d8] underline">
+                            Calendario Fiscal
+                          </a>{' '}
+                          para sincronizar los plazos tributarios del año.
+                        </p>
                       )}
                     </div>
-                    {googleStatus?.connected && (
-                      <p className="mt-3 text-xs text-slate-500">
-                        Ve a{' '}
-                        <a href="/calendario" className="text-[#2361d8] underline">
-                          Calendario Fiscal
-                        </a>{' '}
-                        para sincronizar los plazos tributarios del año.
-                      </p>
-                    )}
-                  </div>
-                  <div className="mt-4 space-y-2 text-sm text-slate-400">
-                    <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-2.5">
-                      Google Drive · Próximamente
+                    <div className="mt-4 space-y-2 text-sm text-slate-400">
+                      <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-2.5">
+                        Google Drive · Próximamente
+                      </div>
+                      <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-2.5">
+                        Gmail · Próximamente
+                      </div>
                     </div>
-                    <div className="rounded-2xl border border-dashed border-slate-200 px-4 py-2.5">
-                      Gmail · Próximamente
-                    </div>
-                  </div>
-                </section>
+                  </section>
+                ) : null}
               </div>
             ) : null}
 
@@ -1775,7 +1794,9 @@ export default function IsaakSettingsClient({
                     />
                     <span className="text-[11px] text-slate-500">
                       Estas reglas se aplican en cada respuesta del chat. Máx 2.000 caracteres ·{' '}
-                      <strong className="font-semibold">{(isaak.customInstructions ?? '').length}/2000</strong>
+                      <strong className="font-semibold">
+                        {(isaak.customInstructions ?? '').length}/2000
+                      </strong>
                     </span>
                   </label>
                 </div>
@@ -2306,7 +2327,7 @@ export default function IsaakSettingsClient({
                               void openBillingAction(
                                 '/api/settings/billing/pause',
                                 'No hemos podido pausar la suscripción.',
-                                { months: 1 },
+                                { months: 1 }
                               )
                             }
                             disabled={savingSection === 'billing'}
@@ -2320,7 +2341,7 @@ export default function IsaakSettingsClient({
                               void openBillingAction(
                                 '/api/settings/billing/pause',
                                 'No hemos podido pausar la suscripción.',
-                                { months: 3 },
+                                { months: 3 }
                               )
                             }
                             disabled={savingSection === 'billing'}
