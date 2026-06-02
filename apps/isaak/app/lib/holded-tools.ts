@@ -23,7 +23,7 @@ import {
 
 // Anthropic tool definitions for Isaak chat.
 //
-// V1 LAUNCH (2026-05-28): 20 tools, todas centradas en invoicing + contabilidad.
+// V1 LAUNCH (2026-05-28): 21 tools, todas centradas en invoicing + contabilidad.
 // CRM funnels, leads, stock, warehouses, time-records, project tasks quedan
 // fuera del MVP a propósito para no saturar el contexto del LLM.
 //
@@ -32,6 +32,7 @@ import {
 //   - + holded_list_taxes
 //   - + holded_list_numbering_series
 //   - + holded_get_document_pdf
+//   - + holded_get_daily_book
 //
 // Ver docs/product/ISAAK_LAUNCH_V1_2026-05-28.md.
 export const HOLDED_CHAT_TOOLS = [
@@ -121,6 +122,18 @@ export const HOLDED_CHAT_TOOLS = [
     name: 'holded_get_journal',
     description:
       'Devuelve asientos contables del libro diario (daily book) de Holded en un rango de fechas. Si el usuario pregunta por "libro diario", "diario contable" o "asientos del mes" responde con esta tool.',
+    input_schema: {
+      type: 'object',
+      properties: {
+        starttmp: { type: 'string', description: 'Fecha inicio ISO 8601 o Unix.' },
+        endtmp: { type: 'string', description: 'Fecha fin ISO 8601 o Unix.' },
+      },
+    },
+  },
+  {
+    name: 'holded_get_daily_book',
+    description:
+      'Devuelve el libro diario contable de Holded en un rango de fechas. Es un alias explícito de holded_get_journal para las preguntas que usen el nombre "daily book", "libro diario" o "registro diario".',
     input_schema: {
       type: 'object',
       properties: {
@@ -222,7 +235,8 @@ export const HOLDED_CHAT_TOOLS = [
       properties: {
         contactId: {
           type: 'string',
-          description: 'ID del cliente en Holded (obtenerlo con holded_list_contacts si no se conoce).',
+          description:
+            'ID del cliente en Holded (obtenerlo con holded_list_contacts si no se conoce).',
         },
         items: {
           type: 'array',
@@ -333,7 +347,8 @@ export const HOLDED_CHAT_TOOLS = [
         type: {
           type: 'string',
           enum: ['client', 'supplier', 'both'],
-          description: 'Tipo de contacto: client=cliente, supplier=proveedor, both=ambos. Default: client.',
+          description:
+            'Tipo de contacto: client=cliente, supplier=proveedor, both=ambos. Default: client.',
         },
         address: { type: 'string', description: 'Dirección postal (opcional).' },
         city: { type: 'string', description: 'Ciudad (opcional).' },
@@ -427,6 +442,11 @@ export async function executeHoldedTool(
           starttmp: input.starttmp ? String(input.starttmp) : undefined,
           endtmp: input.endtmp ? String(input.endtmp) : undefined,
         });
+      case 'holded_get_daily_book':
+        return await holdedGetJournal(apiKey, {
+          starttmp: input.starttmp ? String(input.starttmp) : undefined,
+          endtmp: input.endtmp ? String(input.endtmp) : undefined,
+        });
       case 'holded_list_treasury_accounts':
         return await holdedListTreasuryAccounts(apiKey);
       case 'holded_list_products':
@@ -465,11 +485,16 @@ export async function executeHoldedTool(
         if (emails.length === 0) {
           return { error: 'invalid_input', message: 'Se requiere al menos un email destinatario.' };
         }
-        return await holdedSendDocument(apiKey, String(input.docType ?? 'invoice'), String(input.documentId ?? ''), {
-          emails,
-          subject: typeof input.subject === 'string' ? input.subject : undefined,
-          body: typeof input.body === 'string' ? input.body : undefined,
-        });
+        return await holdedSendDocument(
+          apiKey,
+          String(input.docType ?? 'invoice'),
+          String(input.documentId ?? ''),
+          {
+            emails,
+            subject: typeof input.subject === 'string' ? input.subject : undefined,
+            body: typeof input.body === 'string' ? input.body : undefined,
+          }
+        );
       }
 
       case 'holded_create_invoice_draft': {
@@ -482,7 +507,10 @@ export async function executeHoldedTool(
         }
         const contactId = String(input.contactId ?? '');
         if (!contactId) {
-          return { error: 'invalid_input', message: 'Se requiere contactId. Usa holded_list_contacts para obtenerlo.' };
+          return {
+            error: 'invalid_input',
+            message: 'Se requiere contactId. Usa holded_list_contacts para obtenerlo.',
+          };
         }
         const rawItems = Array.isArray(input.items) ? input.items : [];
         if (rawItems.length === 0) {
@@ -540,7 +568,10 @@ export async function executeHoldedTool(
         } catch (err) {
           const msg = err instanceof Error ? err.message : String(err);
           if (msg.includes('404')) {
-            return { error: 'not_found', message: `Documento ${docType}/${documentId} no encontrado.` };
+            return {
+              error: 'not_found',
+              message: `Documento ${docType}/${documentId} no encontrado.`,
+            };
           }
           throw err;
         }
@@ -590,9 +621,10 @@ export async function executeHoldedTool(
         if (!name) {
           return { error: 'invalid_input', message: 'Se requiere el nombre del contacto.' };
         }
-        const typeVal = typeof input.type === 'string' && ['client', 'supplier', 'both'].includes(input.type)
-          ? (input.type as 'client' | 'supplier' | 'both')
-          : 'client';
+        const typeVal =
+          typeof input.type === 'string' && ['client', 'supplier', 'both'].includes(input.type)
+            ? (input.type as 'client' | 'supplier' | 'both')
+            : 'client';
         const result = await holdedCreateContact(apiKey, {
           name,
           email: typeof input.email === 'string' ? input.email : undefined,
