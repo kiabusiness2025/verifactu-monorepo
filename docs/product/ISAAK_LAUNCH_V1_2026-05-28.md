@@ -201,17 +201,17 @@ Ya existen en `holded.verifactu.business`. Pequeño ajuste de header para apunta
 
 ### Sprint B — Pulir core (3-5 días · 1 dev)
 
-| ID  | Tarea                                                                                                                      | Estado 2026-06-02                          |
-| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| B1  | Verificar corpus AEAT en system prompt (test con 10 preguntas tipo)                                                        | Hecho; test automático cubre 10 temas AEAT |
-| B2  | Portar 5 tools nuevas: `list_taxes`, `list_numbering_series`, `get_document_pdf`, `get_daily_book`, `create_invoice_draft` | Hecho en código                            |
-| B3  | Reemplazar `holded_create_invoice` por `holded_create_invoice_draft` en system prompt + naming                             | Hecho; draft-only y confirmación explícita |
-| B4  | Confirmar cron `fiscal-alerts` end-to-end con tenant real (D-15 → email)                                                   | Pendiente                                  |
-| B5  | `/resumen` simplificado: 4 cards (ventas, gastos, IVA, próx. vencimiento)                                                  | Pendiente                                  |
-| B6  | `/alertas` simplificado: listado activas + histórico                                                                       | Pendiente                                  |
-| B7  | Onboarding Holded: copy + validación + manejo errores                                                                      | Pendiente                                  |
-| B8  | Stripe products nuevos (`isaak_pro_monthly`, `isaak_pro_annual`)                                                           | Pendiente                                  |
-| B9  | Trial 14 días sin tarjeta: lógica + webhook trial end                                                                      | Pendiente                                  |
+| ID  | Tarea                                                                                                                      | Estado 2026-06-02                           |
+| --- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| B1  | Verificar corpus AEAT en system prompt (test con 10 preguntas tipo)                                                        | Hecho; test automático cubre 10 temas AEAT  |
+| B2  | Portar 5 tools nuevas: `list_taxes`, `list_numbering_series`, `get_document_pdf`, `get_daily_book`, `create_invoice_draft` | Hecho en código                             |
+| B3  | Reemplazar `holded_create_invoice` por `holded_create_invoice_draft` en system prompt + naming                             | Hecho; draft-only y confirmación explícita  |
+| B4  | Confirmar cron `fiscal-alerts` end-to-end con tenant real (D-15 → email)                                                   | Pendiente                                   |
+| B5  | `/resumen` simplificado: 4 cards (ventas, gastos, IVA, próx. vencimiento)                                                  | Hecho; V1 oculta gráficos/banking/Verifactu |
+| B6  | `/alertas` simplificado: listado activas + histórico                                                                       | Hecho en código                             |
+| B7  | Onboarding Holded: copy + validación + manejo errores                                                                      | Pendiente                                   |
+| B8  | Stripe products nuevos (`isaak_pro_monthly`, `isaak_pro_annual`)                                                           | Pendiente                                   |
+| B9  | Trial 14 días sin tarjeta: lógica + webhook trial end                                                                      | Pendiente                                   |
 
 ### Sprint C — Hub + landing + lanzamiento (3-4 días · 1 dev + 1 diseño)
 
