@@ -647,7 +647,11 @@ function normalizeDocumentDate(value: unknown) {
   return readFiniteNumber(value) ?? buildDefaultDocumentDate();
 }
 
-function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products', index: number) {
+function normalizeDocumentLineItem(
+  item: unknown,
+  sourceKey: 'lines' | 'products' | 'items',
+  index: number
+) {
   if (!item || typeof item !== 'object' || Array.isArray(item)) {
     throw new Error(`payload.${sourceKey}[${index}] must be an object`);
   }
@@ -658,10 +662,15 @@ function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products
     optionalString(rawItem, 'name') ||
     optionalString(rawItem, 'title');
   const units = readFiniteNumber(rawItem.units) ?? readFiniteNumber(rawItem.quantity);
+  // V3.G.11 — subtotal/total aceptados como aliases de price. ChatGPT a
+  // veces emite { name, units, subtotal, tax } en vez de la forma
+  // canónica { desc, units, price, tax }.
   const price =
     readFiniteNumber(rawItem.price) ??
     readFiniteNumber(rawItem.unitPrice) ??
-    readFiniteNumber(rawItem.amount);
+    readFiniteNumber(rawItem.amount) ??
+    readFiniteNumber(rawItem.subtotal) ??
+    readFiniteNumber(rawItem.total);
   const tax = readFiniteNumber(rawItem.tax) ?? readFiniteNumber(rawItem.taxPercent);
 
   if (!desc || units === undefined || price === undefined) {
@@ -670,13 +679,7 @@ function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products
     );
   }
 
-  // V3.G.4 (2026-06-01): el usuario reportó drafts de €0 creados en Holded
-  // ("No asignado", 0,00 € / 0,00 € / 0,00 €). Para asegurar que el modelo
-  // nunca crea una factura sin importe, exigimos que units > 0 Y price > 0.
-  // Si el modelo intenta crear con un line item de coste cero (e.g. el
-  // usuario solo dijo "factura para Alfa" sin importe), respondemos con un
-  // error legible para que el modelo pida los datos al usuario en lugar de
-  // generar un draft vacío que confunde más que ayuda.
+  // V3.G.4: enforce units > 0 y price > 0 para no crear drafts vacíos.
   if (units <= 0) {
     throw new Error(
       `payload.${sourceKey}[${index}].units must be greater than 0 (got ${units}). Please specify how many units/hours/items are being invoiced.`
@@ -688,13 +691,18 @@ function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products
     );
   }
 
-  return {
-    ...rawItem,
-    desc,
-    units,
-    price,
-    ...(tax !== undefined ? { tax } : {}),
-  };
+  // V3.G.12 — CRÍTICO: emitir SÓLO los campos canónicos al wire.
+  // El spread previo {...rawItem,...} dejaba pasar al body de Holded
+  // campos del input como `name`/`sku`/`subtotal` que Holded interpreta
+  // como referencia al catálogo de productos. Al no encontrar match,
+  // descarta la línea entera silenciosamente (200 OK pero draft con
+  // products:[]). Limitamos al set documentado de Holded.
+  const cleanLine: Record<string, unknown> = { desc, units, price };
+  if (tax !== undefined) cleanLine.tax = tax;
+  if (typeof rawItem.productId === 'string' && rawItem.productId.trim()) {
+    cleanLine.productId = rawItem.productId.trim();
+  }
+  return cleanLine;
 }
 
 function normalizeDocumentCreatePayload(payload: Record<string, unknown>) {
@@ -702,19 +710,25 @@ function normalizeDocumentCreatePayload(payload: Record<string, unknown>) {
     throw new Error('payload.contactId is required');
   }
 
-  const sourceKey =
+  // V3.G.11 — `items` aceptado como tercer source key. Holded espera
+  // `lines[]` en el body, pero ChatGPT a veces emite el array como
+  // `items` (vocabulario heredado de otras integraciones del modelo).
+  // El output siempre emite `lines` que es lo que Holded acepta.
+  const sourceKey: 'lines' | 'products' | 'items' | null =
     Array.isArray(payload.lines) && payload.lines.length > 0
       ? 'lines'
       : Array.isArray(payload.products) && payload.products.length > 0
         ? 'products'
-        : null;
+        : Array.isArray(payload.items) && payload.items.length > 0
+          ? 'items'
+          : null;
 
   if (!sourceKey) {
-    throw new Error('payload.lines or payload.products must be a non-empty array');
+    throw new Error('payload.lines, payload.products or payload.items must be a non-empty array');
   }
 
   const rawLines = payload[sourceKey] as unknown[];
-  const { lines: _lines, products: _products, ...rest } = payload;
+  const { lines: _lines, products: _products, items: _items, ...rest } = payload;
 
   return {
     ...rest,
@@ -2272,6 +2286,7 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
         'dueDate',
         'lines',
         'products',
+        'items',
         'currency',
         'language',
         'notes',
@@ -2284,6 +2299,7 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
       if (
         !flat.lines &&
         !flat.products &&
+        !flat.items &&
         (input.desc !== undefined ||
           input.units !== undefined ||
           input.price !== undefined ||
