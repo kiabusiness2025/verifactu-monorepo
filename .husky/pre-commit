@@ -1,17 +1,19 @@
 #!/bin/sh
-# Pre-commit hook - runs linting and formatting checks
+# Pre-commit hook - runs staged file checks and app TypeScript validation.
 
 set -e
 
-# Get the list of staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
 if [ -z "$STAGED_FILES" ]; then
-  echo "⏭️  No staged files to check"
+  echo "No staged files to check"
   exit 0
 fi
 
-echo "🔍 Running lint-staged on staged files..."
+echo "Running lint-staged on staged files..."
 pnpm exec lint-staged
 
-echo "✅ Pre-commit checks passed!"
+echo "Running verifactu-app TypeScript check..."
+pnpm -w run typecheck:app
+
+echo "Pre-commit checks passed"

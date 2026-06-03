@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "node scripts/vercel-install.mjs",
-  "buildCommand": "pnpm run build",
   "framework": "nextjs",
+  "installCommand": "cd ../.. && npx -y pnpm@10.27.0 install --frozen-lockfile",
+  "buildCommand": "cd ../.. && npx -y pnpm@10.27.0 turbo run build --filter=verifactu-app",
+  "outputDirectory": ".next",
   "crons": [
     {
       "path": "/api/cron/connector-health",

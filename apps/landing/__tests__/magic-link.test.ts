@@ -83,7 +83,7 @@ function mockResendFail(status = 422, body = 'Unprocessable Entity') {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/auth/magic-link', () => {
-  let POST: (req: Request) => Promise<Response>;
+  let POST: (req: NextRequest) => Promise<Response>;
 
   const VALID_BODY = {
     email: 'test@example.com',
