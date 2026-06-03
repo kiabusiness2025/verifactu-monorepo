@@ -609,7 +609,60 @@ export function registerInvoicingTools(
         approveDoc: false,
       };
 
-      const data = await getClient().createDocument('invoice', body);
+      const createResponse = await getClient().createDocument('invoice', body);
+
+      // V3.G.14 (2026-06-03) — WORKAROUND del quirk Holded.
+      //
+      // Hallazgo verificado contra el tenant real Nova Gestión hoy:
+      // POST /api/invoicing/v1/documents/invoice con `approveDoc:false` crea
+      // el shell del documento pero DESCARTA el array de líneas — el draft
+      // resultante tiene `products: []`, `subtotal: 0`, `total: 0` aunque el
+      // request lleve un wire body idéntico al del seed (lines con desc,
+      // units, price, tax) que SÍ funciona cuando aproveDoc no se manda.
+      //
+      // Reproducido empíricamente con 3 contactos distintos hoy 2026-06-03:
+      //   6a2077adb4... 6a2078747f... 6a20788461... → todos products:[]
+      // El único contraejemplo con products poblados (6a1891beff... del 28-may
+      // F260001) fue creado con approveDoc default (true) por el seed.
+      //
+      // El workaround respeta la policy "approveDoc:false hardcoded a nivel
+      // de wire": en NINGÚN momento aprobamos el documento. Solo añadimos un
+      // segundo round-trip PUT con los products ahora que el shell existe.
+      // Holded acepta PUT sobre drafts (status=1, approvedAt=null) y persiste
+      // las líneas correctamente cuando vienen así.
+      const createdShell = createResponse as Record<string, unknown>;
+      const newDocId =
+        typeof createdShell.id === 'string'
+          ? createdShell.id
+          : typeof createdShell._id === 'string'
+            ? createdShell._id
+            : null;
+
+      let data: unknown = createResponse;
+      if (newDocId && lines.length > 0) {
+        try {
+          // Holded acepta el mismo shape de lines en PUT. No re-enviamos
+          // contactId/date/etc. — solo lo necesario para añadir las líneas.
+          const updateResp = await getClient().updateDocument('invoice', newDocId, {
+            lines,
+          });
+          // Mergeamos la respuesta del PUT sobre el shell para que el caller
+          // vea los importes finales (Holded recalcula subtotal/tax/total al
+          // persistir las líneas).
+          data = updateResp && typeof updateResp === 'object'
+            ? { ...createdShell, ...(updateResp as Record<string, unknown>) }
+            : createResponse;
+        } catch (err) {
+          // Si el PUT falla, el shell ya existe. Devolvemos el create response
+          // sin bloquear — el usuario podrá completar manualmente en Holded UI.
+          // Log para diagnosticar futuros fallos del workaround.
+          // eslint-disable-next-line no-console
+          console.warn('[create_invoice_draft] PUT update lines failed', {
+            documentId: newDocId,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
 
       // F5.3: dispatch admin email "borrador de factura creado" via el endpoint
       // receptor en apps/holded. Best-effort: si falla la red, el draft ya esta

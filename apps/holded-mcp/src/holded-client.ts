@@ -189,6 +189,26 @@ export class HoldedClient {
     });
   }
 
+  /**
+   * V3.G.14 (2026-06-03) — PUT update de un documento existente. Necesario
+   * para el workaround del quirk de Holded donde POST con `approveDoc:false`
+   * NO persiste las líneas: creamos el shell vacío, luego hacemos PUT con
+   * los products para que entren. Verificado empíricamente que toda factura
+   * draft creada por nuestro connector entre marzo y junio 2026 sale con
+   * products:[] pese a mandar lines en el POST. La únicas que tienen
+   * products poblados son las aprobadas (seed con approveDoc:true).
+   */
+  async updateDocument(
+    docType: HoldedDocType,
+    documentId: string,
+    body: Record<string, unknown>
+  ) {
+    return this.request<unknown>(`/api/invoicing/v1/documents/${docType}/${documentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
   async getDocumentPdf(docType: HoldedDocType, documentId: string): Promise<Buffer> {
     return this.request<Buffer>(
       `/api/invoicing/v1/documents/${docType}/${documentId}/pdf`,

@@ -2473,22 +2473,74 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
       )}`
     );
 
-    const created = await holdedAdapter.createDocument(apiKey, docType, wireBody);
+    const createResponse = await holdedAdapter.createDocument(apiKey, docType, wireBody);
 
-    // Log de la respuesta de Holded para ver si persistió o no las líneas.
-    const createdShape = created as {
+    // Log de la respuesta del POST.
+    const createdShape = createResponse as {
       id?: string;
       products?: unknown[];
       subtotal?: number;
       total?: number;
     };
     console.info(
-      `[create_invoice_draft] holded response — id=${String(createdShape.id ?? '')} products.length=${
+      `[create_invoice_draft] holded POST — id=${String(createdShape.id ?? '')} products.length=${
         Array.isArray(createdShape.products) ? createdShape.products.length : 'n/a'
       } subtotal=${String(createdShape.subtotal ?? 'n/a')} total=${String(
         createdShape.total ?? 'n/a'
       )}`
     );
+
+    // V3.G.14 (2026-06-03) — WORKAROUND del quirk Holded.
+    //
+    // Verificado contra el tenant Nova Gestión: POST /documents/{type} con
+    // `approveDoc:false` crea el shell pero DESCARTA las líneas. El draft
+    // sale con products:[], subtotal:0, total:0 aunque mandemos lines con
+    // desc/units/price/tax idéntico al seed que sí funciona (sin approveDoc).
+    //
+    // Workaround respeta la policy "approveDoc:false hardcoded a wire": NO
+    // aprobamos el documento en ningún momento. Solo añadimos un segundo
+    // round-trip PUT con los products ahora que el shell existe. Holded
+    // acepta PUT sobre drafts y persiste las líneas correctamente.
+    //
+    // Si el PUT falla, devolvemos el create response sin bloquear — el
+    // usuario podrá completar manualmente en Holded UI.
+    const newDocId =
+      typeof createdShape.id === 'string' ? createdShape.id : null;
+    const linesArr =
+      Array.isArray((wireBody as { lines?: unknown[] }).lines)
+        ? (wireBody as { lines: unknown[] }).lines
+        : [];
+
+    let created: unknown = createResponse;
+    if (newDocId && linesArr.length > 0) {
+      try {
+        const updateResp = await holdedAdapter.updateDocument(apiKey, docType, newDocId, {
+          lines: linesArr,
+        });
+        const updatedShape = updateResp as {
+          products?: unknown[];
+          subtotal?: number;
+          total?: number;
+        };
+        console.info(
+          `[create_invoice_draft] holded PUT update — products.length=${
+            Array.isArray(updatedShape.products) ? updatedShape.products.length : 'n/a'
+          } subtotal=${String(updatedShape.subtotal ?? 'n/a')} total=${String(
+            updatedShape.total ?? 'n/a'
+          )}`
+        );
+        created =
+          updateResp && typeof updateResp === 'object'
+            ? { ...(createResponse as Record<string, unknown>), ...(updateResp as Record<string, unknown>) }
+            : createResponse;
+      } catch (err) {
+        console.warn('[create_invoice_draft] PUT update lines failed', {
+          documentId: newDocId,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
     return { created };
   },
 };
