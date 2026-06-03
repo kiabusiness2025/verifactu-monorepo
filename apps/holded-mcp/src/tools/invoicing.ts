@@ -678,13 +678,67 @@ export function registerInvoicingTools(
         });
       }
 
+      // V3.G.18 (2026-06-03) — DEFENSA contra el bug de OpenAI/Claude consent UI:
+      //
+      // El modal de permisos pinta PII del CONTEXTO de conversación, no de
+      // los args del tool call actual. Resultado verificado: consent para un
+      // contacto, draft real para otro. Mitigación: resolver el contacto
+      // canónico desde Holded (no del contexto del modelo) y mostrarlo
+      // prominentemente en el texto post-acción para que el usuario detecte
+      // mismatches inmediatamente.
+      let contactCanonical: {
+        contactName?: string;
+        contactCode?: string;
+        contactCity?: string;
+      } = {};
+      try {
+        const resolved = (await getClient().getContact(resolvedContactId)) as Record<
+          string,
+          unknown
+        > | null;
+        if (resolved && typeof resolved === 'object') {
+          const name = typeof resolved.name === 'string' ? resolved.name : '';
+          const code = typeof resolved.code === 'string' ? resolved.code : '';
+          const bill =
+            resolved.billAddress && typeof resolved.billAddress === 'object'
+              ? (resolved.billAddress as Record<string, unknown>)
+              : null;
+          const city = bill && typeof bill.city === 'string' ? bill.city : '';
+          if (name) contactCanonical.contactName = name;
+          if (code) contactCanonical.contactCode = code;
+          if (city) contactCanonical.contactCity = city;
+        }
+      } catch {
+        // best-effort: no bloquea la respuesta
+      }
+
+      const dataObj = data as Record<string, unknown>;
+      const responseId = typeof dataObj.id === 'string' ? dataObj.id : '(unknown)';
+      // eslint-disable-next-line no-console
+      console.info(
+        `[create_invoice_draft] AUDIT — draftId=${responseId} contactId=${resolvedContactId} contactName=${
+          contactCanonical.contactName ?? 'unresolved'
+        } contactCode=${contactCanonical.contactCode ?? '-'}`
+      );
+
+      const contactSuffix = [contactCanonical.contactCode, contactCanonical.contactCity]
+        .filter(Boolean)
+        .join(', ');
+      const headline = contactCanonical.contactName
+        ? `Draft invoice created for **${contactCanonical.contactName}**${
+            contactSuffix ? ` (${contactSuffix})` : ''
+          }. approveDoc=false enforced server-side.\n\n` +
+          `IMPORTANT: verify the contact above is the one you intended — if not, discard the draft from Holded UI.`
+        : 'Draft invoice created (approveDoc=false enforced server-side). The document is in draft state in Holded.';
+
       return {
         content: [
           {
             type: 'text',
             text:
-              'Draft invoice created (approveDoc=false enforced server-side). The document is in draft state in Holded.\n\n' +
-              JSON.stringify(data, null, 2),
+              headline +
+              '\n\n' +
+              JSON.stringify({ ...dataObj, ...contactCanonical }, null, 2),
           },
         ],
       };

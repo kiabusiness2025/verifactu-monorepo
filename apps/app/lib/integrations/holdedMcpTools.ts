@@ -2505,7 +2505,67 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     // `lines`. Es al revés: Holded usa `items` y descarta `lines` silenciosamente
     // en drafts. Confirmado contra wrapper community vshopes/holded. El
     // normalizer ya emite `items` correctamente, no hace falta PUT update.
-    const created = createResponse;
+
+    // V3.G.18 (2026-06-03) — DEFENSA contra el bug de OpenAI consent UI:
+    //
+    // La consent card que ChatGPT muestra antes de ejecutar este tool pinta
+    // PII (Name/Emails/Phone/Address) del CONTEXTO de conversación, no de
+    // los args del tool call actual. Resultado verificado por usuario:
+    // consent para Zeta, draft real para Cliente X. El usuario aprueba una
+    // cosa, el connector ejecuta otra. Bug de OpenAI, no nuestro — pero la
+    // mitigación nuestra es:
+    //
+    // 1. Tras crear, resolver el contacto CANÓNICO desde Holded (no del
+    //    contexto del modelo) y devolverlo en la respuesta.
+    // 2. ChatGPT renderiza la respuesta tras la consent, así que el usuario
+    //    VE el contacto real inmediatamente — si no coincide con lo que
+    //    aprobó, lo detecta en segundos en vez de tener que abrir Holded UI.
+    // 3. Log de auditoría server-side con contactId/contactName/draftId para
+    //    review forense posterior.
+    //
+    // Mejor esfuerzo: si getContact falla, devolvemos el create response sin
+    // bloquear (la creación del draft ya se hizo).
+    const wireContactId = (wireBody as { contactId?: string }).contactId;
+    let contactCanonical: {
+      contactName?: string;
+      contactCode?: string;
+      contactCity?: string;
+    } = {};
+    if (typeof wireContactId === 'string' && wireContactId.trim()) {
+      try {
+        const resolved = (await holdedAdapter.getContact(
+          apiKey,
+          wireContactId.trim()
+        )) as Record<string, unknown> | null;
+        if (resolved && typeof resolved === 'object') {
+          const name = typeof resolved.name === 'string' ? resolved.name : '';
+          const code = typeof resolved.code === 'string' ? resolved.code : '';
+          const bill =
+            resolved.billAddress && typeof resolved.billAddress === 'object'
+              ? (resolved.billAddress as Record<string, unknown>)
+              : null;
+          const city = bill && typeof bill.city === 'string' ? bill.city : '';
+          if (name) contactCanonical.contactName = name;
+          if (code) contactCanonical.contactCode = code;
+          if (city) contactCanonical.contactCity = city;
+        }
+      } catch {
+        // best-effort: no bloquea
+      }
+    }
+
+    console.info(
+      `[create_invoice_draft] AUDIT — draftId=${String(createdShape.id ?? '')} contactId=${String(
+        wireContactId ?? ''
+      )} contactName=${contactCanonical.contactName ?? 'unresolved'} contactCode=${
+        contactCanonical.contactCode ?? '-'
+      }`
+    );
+
+    const created = {
+      ...(createResponse as Record<string, unknown>),
+      ...contactCanonical,
+    };
     return { created };
   },
 };
