@@ -598,86 +598,51 @@ export function registerInvoicingTools(
         ...(item.productId !== undefined ? { productId: item.productId } : {}),
       }));
 
-      // V3.G.16 (2026-06-03) — TEORÍA FINAL: Holded usa `lines` como INPUT
-      // que convierte a `products` durante la APROBACIÓN. Cuando enviamos
-      // approveDoc:false, esa conversión NO ocurre y el draft queda con
-      // products:[]. Solución: enviar `products` directamente (el shape
-      // de output) para que Holded no necesite convertir.
+      // V3.G.17 (2026-06-03) — REVERT al shape ORIGINAL pre-V3.G.10.
       //
-      // Enviamos AMBAS keys por defensa. Si Holded sigue ignorando,
-      // confirmamos bug del producto y reportamos.
+      // Comunidad wrapper vshopes/holded confirma que Holded usa `items: [{
+      // name, units, subtotal, tax }]` como input al crear documentos —
+      // NO `lines` (V3.G.10 mal-asumido). Esto explica por qué:
+      // - Pre-V3.G.10 (con items) Claude funcionaba
+      // - Post-V3.G.10 (con lines) Claude empezó a crear drafts vacíos
       //
+      // V3.G.10 fue "fixing" un bug que no existía. El seed-holded-demo
+      // que decían "funciona con lines" probablemente nunca se verificó
+      // end-to-end. Holded acepta `lines` silenciosamente pero NO los
+      // persiste — exactamente el patrón empírico que estamos viendo.
+      //
+      // Reconstruimos `items` con el shape original {name, units, subtotal,
+      // tax, productId} que era el del schema Zod expuesto al modelo.
       // approveDoc se fuerza al final del spread para que ningun input pueda
       // anularlo. NO mover esta linea.
+      const itemsForHolded = (inputItems ?? []).map((item) => ({
+        name: item.name,
+        units: item.units,
+        subtotal: item.subtotal,
+        ...(item.tax !== undefined ? { tax: item.tax } : {}),
+        ...(item.productId !== undefined ? { productId: item.productId } : {}),
+      }));
       const body: Record<string, unknown> = {
         ...restWithoutItems,
         contactId: resolvedContactId,
         date: dateUnix,
         ...(dueDateUnix !== undefined ? { dueDate: dueDateUnix } : {}),
-        lines,
-        products: lines,
+        items: itemsForHolded,
         approveDoc: false,
       };
 
-      const createResponse = await getClient().createDocument('invoice', body);
+      const data = await getClient().createDocument('invoice', body);
 
-      // V3.G.14 (2026-06-03) — WORKAROUND del quirk Holded.
-      //
-      // Hallazgo verificado contra el tenant real Nova Gestión hoy:
-      // POST /api/invoicing/v1/documents/invoice con `approveDoc:false` crea
-      // el shell del documento pero DESCARTA el array de líneas — el draft
-      // resultante tiene `products: []`, `subtotal: 0`, `total: 0` aunque el
-      // request lleve un wire body idéntico al del seed (lines con desc,
-      // units, price, tax) que SÍ funciona cuando aproveDoc no se manda.
-      //
-      // Reproducido empíricamente con 3 contactos distintos hoy 2026-06-03:
-      //   6a2077adb4... 6a2078747f... 6a20788461... → todos products:[]
-      // El único contraejemplo con products poblados (6a1891beff... del 28-may
-      // F260001) fue creado con approveDoc default (true) por el seed.
-      //
-      // El workaround respeta la policy "approveDoc:false hardcoded a nivel
-      // de wire": en NINGÚN momento aprobamos el documento. Solo añadimos un
-      // segundo round-trip PUT con los products ahora que el shell existe.
-      // Holded acepta PUT sobre drafts (status=1, approvedAt=null) y persiste
-      // las líneas correctamente cuando vienen así.
-      const createdShell = createResponse as Record<string, unknown>;
-      const newDocId =
-        typeof createdShell.id === 'string'
-          ? createdShell.id
-          : typeof createdShell._id === 'string'
-            ? createdShell._id
-            : null;
+      // V3.G.17 (2026-06-03): el PUT workaround V3.G.14/15 se retira porque
+      // (a) no funcionaba (PUT también descartaba líneas en drafts), (b) ya
+      // no hace falta si POST con `items` persiste correctamente.
+      // Si V3.G.17 también falla → el quirk es ortogonal a la key elegida y
+      // es bug puro de Holded; documentamos limitación.
 
-      let data: unknown = createResponse;
-      if (newDocId && lines.length > 0) {
-        try {
-          // V3.G.15 (2026-06-03) — PUT con `products` (key que usa el GET
-          // response), body completo (contactId, date), y `lines` como
-          // backup. V3.G.14 con solo {lines} devolvió "Updated" pero
-          // products siguió vacío → Holded ignora la key incorrecta.
-          const updateResp = await getClient().updateDocument('invoice', newDocId, {
-            contactId: resolvedContactId,
-            date: dateUnix,
-            products: lines,
-            lines,
-          });
-          // Mergeamos la respuesta del PUT sobre el shell para que el caller
-          // vea los importes finales (Holded recalcula subtotal/tax/total al
-          // persistir las líneas).
-          data = updateResp && typeof updateResp === 'object'
-            ? { ...createdShell, ...(updateResp as Record<string, unknown>) }
-            : createResponse;
-        } catch (err) {
-          // Si el PUT falla, el shell ya existe. Devolvemos el create response
-          // sin bloquear — el usuario podrá completar manualmente en Holded UI.
-          // Log para diagnosticar futuros fallos del workaround.
-          // eslint-disable-next-line no-console
-          console.warn('[create_invoice_draft] PUT update lines failed', {
-            documentId: newDocId,
-            error: err instanceof Error ? err.message : String(err),
-          });
-        }
-      }
+      // V3.G.14-15-16 workarounds retirados — POST con `items` (V3.G.17)
+      // es el shape correcto según wrapper comunidad vshopes/holded; el PUT
+      // update ya no es necesario porque Holded debería persistir las líneas
+      // directamente al recibir la key correcta.
 
       // F5.3: dispatch admin email "borrador de factura creado" via el endpoint
       // receptor en apps/holded. Best-effort: si falla la red, el draft ya esta

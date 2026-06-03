@@ -697,7 +697,17 @@ function normalizeDocumentLineItem(
   // como referencia al catálogo de productos. Al no encontrar match,
   // descarta la línea entera silenciosamente (200 OK pero draft con
   // products:[]). Limitamos al set documentado de Holded.
-  const cleanLine: Record<string, unknown> = { desc, units, price };
+  // V3.G.17 (2026-06-03) — Holded API espera `items: [{ name, units,
+  // subtotal, tax }]`. V3.G.10 cambió erróneamente a `lines: [{ desc,
+  // units, price, tax }]` causando que Holded aceptara la request pero
+  // descartara las líneas en drafts (approveDoc:false). Confirmado contra
+  // wrapper community vshopes/holded y la respuesta GET que también usa
+  // `products` (alias de items en el output) con name/subtotal.
+  const cleanLine: Record<string, unknown> = {
+    name: desc,
+    units,
+    subtotal: price,
+  };
   if (tax !== undefined) cleanLine.tax = tax;
   if (typeof rawItem.productId === 'string' && rawItem.productId.trim()) {
     cleanLine.productId = rawItem.productId.trim();
@@ -730,11 +740,13 @@ function normalizeDocumentCreatePayload(payload: Record<string, unknown>) {
   const rawLines = payload[sourceKey] as unknown[];
   const { lines: _lines, products: _products, items: _items, ...rest } = payload;
 
+  // V3.G.17 — Holded espera `items` no `lines`. La normalización ya devuelve
+  // cada elemento con shape {name, units, subtotal, tax, productId}.
   return {
     ...rest,
     contactId: payload.contactId.trim(),
     date: normalizeDocumentDate(payload.date),
-    lines: rawLines.map((item, index) => normalizeDocumentLineItem(item, sourceKey, index)),
+    items: rawLines.map((item, index) => normalizeDocumentLineItem(item, sourceKey, index)),
   };
 }
 
@@ -2460,18 +2472,15 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     console.info(
       `[create_invoice_draft] wire body — contactId=${String(wireBody.contactId ?? '')}`
     );
-    console.info(
-      `[create_invoice_draft] wire body — lines count=${
-        Array.isArray((wireBody as { lines?: unknown[] }).lines)
-          ? (wireBody as { lines: unknown[] }).lines.length
-          : 0
-      }`
-    );
-    console.info(
-      `[create_invoice_draft] wire body — lines[0]=${JSON.stringify(
-        ((wireBody as { lines?: unknown[] }).lines || [])[0] ?? null
-      )}`
-    );
+    {
+      // V3.G.17: logging adaptado a items (la key correcta) en vez de lines.
+      const wb = wireBody as unknown as { items?: unknown[] };
+      const itemsArr = Array.isArray(wb.items) ? wb.items : [];
+      console.info(`[create_invoice_draft] wire body — items count=${itemsArr.length}`);
+      console.info(
+        `[create_invoice_draft] wire body — items[0]=${JSON.stringify(itemsArr[0] ?? null)}`
+      );
+    }
 
     const createResponse = await holdedAdapter.createDocument(apiKey, docType, wireBody);
 
@@ -2490,61 +2499,13 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
       )}`
     );
 
-    // V3.G.14 (2026-06-03) — WORKAROUND del quirk Holded.
-    //
-    // Verificado contra el tenant Nova Gestión: POST /documents/{type} con
-    // `approveDoc:false` crea el shell pero DESCARTA las líneas. El draft
-    // sale con products:[], subtotal:0, total:0 aunque mandemos lines con
-    // desc/units/price/tax idéntico al seed que sí funciona (sin approveDoc).
-    //
-    // Workaround respeta la policy "approveDoc:false hardcoded a wire": NO
-    // aprobamos el documento en ningún momento. Solo añadimos un segundo
-    // round-trip PUT con los products ahora que el shell existe. Holded
-    // acepta PUT sobre drafts y persiste las líneas correctamente.
-    //
-    // Si el PUT falla, devolvemos el create response sin bloquear — el
-    // usuario podrá completar manualmente en Holded UI.
-    const newDocId =
-      typeof createdShape.id === 'string' ? createdShape.id : null;
-    const linesArr =
-      Array.isArray((wireBody as { lines?: unknown[] }).lines)
-        ? (wireBody as { lines: unknown[] }).lines
-        : [];
-
-    let created: unknown = createResponse;
-    if (newDocId && linesArr.length > 0) {
-      try {
-        // V3.G.15 — PUT con `products` (key del GET), body completo, lines de backup.
-        const updateResp = await holdedAdapter.updateDocument(apiKey, docType, newDocId, {
-          contactId: (wireBody as { contactId?: string }).contactId,
-          date: (wireBody as { date?: unknown }).date,
-          products: linesArr,
-          lines: linesArr,
-        });
-        const updatedShape = updateResp as {
-          products?: unknown[];
-          subtotal?: number;
-          total?: number;
-        };
-        console.info(
-          `[create_invoice_draft] holded PUT update — products.length=${
-            Array.isArray(updatedShape.products) ? updatedShape.products.length : 'n/a'
-          } subtotal=${String(updatedShape.subtotal ?? 'n/a')} total=${String(
-            updatedShape.total ?? 'n/a'
-          )}`
-        );
-        created =
-          updateResp && typeof updateResp === 'object'
-            ? { ...(createResponse as Record<string, unknown>), ...(updateResp as Record<string, unknown>) }
-            : createResponse;
-      } catch (err) {
-        console.warn('[create_invoice_draft] PUT update lines failed', {
-          documentId: newDocId,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-
+    // V3.G.17 (2026-06-03): los workarounds V3.G.14-16 (PUT update + products
+    // key + body completo) NO funcionaron porque la causa raíz era otra: V3.G.10
+    // cambió el shape al wire de `items` → `lines` asumiendo que Holded usaba
+    // `lines`. Es al revés: Holded usa `items` y descarta `lines` silenciosamente
+    // en drafts. Confirmado contra wrapper community vshopes/holded. El
+    // normalizer ya emite `items` correctamente, no hace falta PUT update.
+    const created = createResponse;
     return { created };
   },
 };
