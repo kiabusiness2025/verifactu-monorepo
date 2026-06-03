@@ -2445,10 +2445,50 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     }
 
     const normalizedPayload = normalizeDocumentCreatePayload(payload);
-    const created = await holdedAdapter.createDocument(apiKey, docType, {
+    const wireBody = {
       ...normalizedPayload,
       approveDoc: false,
-    });
+    };
+
+    // V3.G.13 diagnóstico (2026-06-03): log granular del body que vamos a
+    // mandar a Holded para diagnosticar por qué los drafts entran sin
+    // líneas pese a V3.G.12. Una línea por campo crítico — la vista
+    // tabular de Vercel Logs trunca, así esto sale legible.
+    console.info(
+      `[create_invoice_draft] wire body — keys=${Object.keys(wireBody).join(',')}`
+    );
+    console.info(
+      `[create_invoice_draft] wire body — contactId=${String(wireBody.contactId ?? '')}`
+    );
+    console.info(
+      `[create_invoice_draft] wire body — lines count=${
+        Array.isArray((wireBody as { lines?: unknown[] }).lines)
+          ? (wireBody as { lines: unknown[] }).lines.length
+          : 0
+      }`
+    );
+    console.info(
+      `[create_invoice_draft] wire body — lines[0]=${JSON.stringify(
+        ((wireBody as { lines?: unknown[] }).lines || [])[0] ?? null
+      )}`
+    );
+
+    const created = await holdedAdapter.createDocument(apiKey, docType, wireBody);
+
+    // Log de la respuesta de Holded para ver si persistió o no las líneas.
+    const createdShape = created as {
+      id?: string;
+      products?: unknown[];
+      subtotal?: number;
+      total?: number;
+    };
+    console.info(
+      `[create_invoice_draft] holded response — id=${String(createdShape.id ?? '')} products.length=${
+        Array.isArray(createdShape.products) ? createdShape.products.length : 'n/a'
+      } subtotal=${String(createdShape.subtotal ?? 'n/a')} total=${String(
+        createdShape.total ?? 'n/a'
+      )}`
+    );
     return { created };
   },
 };
