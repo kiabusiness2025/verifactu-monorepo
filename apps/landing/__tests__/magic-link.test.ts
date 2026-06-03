@@ -215,6 +215,25 @@ describe('POST /api/auth/magic-link', () => {
     });
   });
 
+  it('usa Firebase Admin de Isaak si /auth/isaak tiene vars propias', async () => {
+    process.env.ISAAK_FIREBASE_ADMIN_PROJECT_ID = 'isaak-project';
+    process.env.ISAAK_FIREBASE_ADMIN_CLIENT_EMAIL = 'isaak@test.iam.gserviceaccount.com';
+    process.env.ISAAK_FIREBASE_ADMIN_PRIVATE_KEY =
+      '-----BEGIN PRIVATE KEY-----\\nISAAK\\n-----END PRIVATE KEY-----\\n';
+    try {
+      mockResendOk();
+
+      const res = await POST(makeRequest(VALID_BODY));
+
+      expect(res.status).toBe(200);
+      expect(mockInitializeApp).toHaveBeenCalledWith(expect.any(Object), 'isaak-admin');
+    } finally {
+      delete process.env.ISAAK_FIREBASE_ADMIN_PROJECT_ID;
+      delete process.env.ISAAK_FIREBASE_ADMIN_CLIENT_EMAIL;
+      delete process.env.ISAAK_FIREBASE_ADMIN_PRIVATE_KEY;
+    }
+  });
+
   // --- Resend ---
 
   it('devuelve 503 si RESEND_API_KEY no está configurada', async () => {

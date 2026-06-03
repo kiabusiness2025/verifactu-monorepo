@@ -163,4 +163,23 @@ describe('ensureAdminApp: gestión de variables de entorno', () => {
     expect(processed).toContain('\n');
     expect(processed).not.toContain('\\n');
   });
+
+  it('inicializa app isaak si existen vars ISAAK_FIREBASE_ADMIN_*', async () => {
+    process.env.ISAAK_FIREBASE_ADMIN_PROJECT_ID = 'isaak-project';
+    process.env.ISAAK_FIREBASE_ADMIN_CLIENT_EMAIL = 'isaak@test.iam.gserviceaccount.com';
+    process.env.ISAAK_FIREBASE_ADMIN_PRIVATE_KEY =
+      '-----BEGIN PRIVATE KEY-----\\nISAAK\\n-----END PRIVATE KEY-----\\n';
+    try {
+      const req = makeSessionRequest({});
+      const mod = await import('../app/api/auth/session/route');
+      const res = await mod.POST(req);
+
+      expect(res.status).toBe(400);
+      expect(mockInitializeApp).toHaveBeenCalledWith(expect.any(Object), 'isaak-admin');
+    } finally {
+      delete process.env.ISAAK_FIREBASE_ADMIN_PROJECT_ID;
+      delete process.env.ISAAK_FIREBASE_ADMIN_CLIENT_EMAIL;
+      delete process.env.ISAAK_FIREBASE_ADMIN_PRIVATE_KEY;
+    }
+  });
 });

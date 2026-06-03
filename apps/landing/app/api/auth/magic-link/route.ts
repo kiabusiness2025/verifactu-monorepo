@@ -5,6 +5,8 @@ export const runtime = 'nodejs';
 
 const RATE_LIMIT_MAP = new Map<string, { count: number; resetAt: number }>();
 const MAX_PER_HOUR = 5;
+const DEFAULT_ADMIN_APP_NAME = '[DEFAULT]';
+const ISAAK_ADMIN_APP_NAME = 'isaak-admin';
 
 function getClientIp(req: NextRequest): string {
   return (
@@ -29,29 +31,70 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-function getFirebaseApp() {
-  const existing = admin.apps.find((a) => a?.name === '[DEFAULT]');
+function envOrNull(name: string) {
+  const value = process.env[name]?.trim();
+  return value ? value : null;
+}
+
+function ensureAdminApp(appName: string, envPrefix: string, required: boolean) {
+  const existing = admin.apps.find((a) => a?.name === appName);
   if (existing) return existing;
 
-  const projectId = (
-    process.env.FIREBASE_ADMIN_PROJECT_ID || process.env.FIREBASE_PROJECT_ID
-  )?.trim();
-  const clientEmail = (
-    process.env.FIREBASE_ADMIN_CLIENT_EMAIL || process.env.FIREBASE_CLIENT_EMAIL
-  )?.trim();
-  const privateKeyRaw = (
-    process.env.FIREBASE_ADMIN_PRIVATE_KEY || process.env.FIREBASE_PRIVATE_KEY
-  )?.trim();
+  const projectId =
+    envOrNull(`${envPrefix}PROJECT_ID`) ||
+    (envPrefix === 'FIREBASE_ADMIN_' ? envOrNull('FIREBASE_PROJECT_ID') : null);
+  const clientEmail =
+    envOrNull(`${envPrefix}CLIENT_EMAIL`) ||
+    (envPrefix === 'FIREBASE_ADMIN_' ? envOrNull('FIREBASE_CLIENT_EMAIL') : null);
+  const privateKeyRaw =
+    envOrNull(`${envPrefix}PRIVATE_KEY`) ||
+    (envPrefix === 'FIREBASE_ADMIN_' ? envOrNull('FIREBASE_PRIVATE_KEY') : null);
 
-  if (!projectId || !clientEmail || !privateKeyRaw) return null;
+  if (!projectId || !clientEmail || !privateKeyRaw) {
+    if (required) {
+      console.error('[magic-link] Missing Firebase Admin env vars', { envPrefix });
+    }
+    return null;
+  }
 
-  return admin.initializeApp({
+  const options = {
     credential: admin.credential.cert({
       projectId,
       clientEmail,
       privateKey: privateKeyRaw.replace(/\\n/g, '\n'),
     }),
-  });
+  };
+
+  return appName === DEFAULT_ADMIN_APP_NAME
+    ? admin.initializeApp(options)
+    : admin.initializeApp(options, appName);
+}
+
+function shouldUseIsaakFirebase(continueUrl: string) {
+  try {
+    const parsed = new URL(continueUrl);
+    return (
+      parsed.pathname.startsWith('/auth/isaak') ||
+      [
+        'isaak.app',
+        'www.isaak.app',
+        'isaak.chat',
+        'www.isaak.chat',
+        'isaak.verifactu.business',
+      ].includes(parsed.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function getFirebaseApp(continueUrl: string) {
+  if (shouldUseIsaakFirebase(continueUrl)) {
+    const isaakApp = ensureAdminApp(ISAAK_ADMIN_APP_NAME, 'ISAAK_FIREBASE_ADMIN_', false);
+    if (isaakApp) return isaakApp;
+  }
+
+  return ensureAdminApp(DEFAULT_ADMIN_APP_NAME, 'FIREBASE_ADMIN_', true);
 }
 
 export async function POST(req: NextRequest) {
@@ -111,7 +154,7 @@ export async function POST(req: NextRequest) {
   // Note: Firebase Admin SDK can generate action links directly
   // This avoids exposing Firebase client SDK keys in API routes
   try {
-    const app = getFirebaseApp();
+    const app = getFirebaseApp(continueUrl);
     if (!app) {
       return NextResponse.json(
         { error: 'Servicio de autenticación no disponible en este entorno.' },
@@ -221,7 +264,7 @@ export async function POST(req: NextRequest) {
         if (/not verified|domain/i.test(errText)) {
           console.error(
             `[magic-link] Hint: dominio del 'from' (${fromEmail}) NO está verificado en Resend. ` +
-              `Verifícalo en https://resend.com/domains o cambia RESEND_FROM_ISAAK a un sender verificado.`,
+              `Verifícalo en https://resend.com/domains o cambia RESEND_FROM_ISAAK a un sender verificado.`
           );
         }
       } else if (sendRes.status === 429) {

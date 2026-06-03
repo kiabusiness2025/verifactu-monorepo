@@ -11,7 +11,13 @@ import {
   signOut,
   User,
 } from 'firebase/auth';
-import { auth, isFirebaseConfigComplete, isFirebaseReady, missingConfigFields } from './firebase';
+import {
+  auth,
+  firebaseEnvFamily,
+  isFirebaseConfigComplete,
+  isFirebaseReady,
+  missingConfigFields,
+} from './firebase';
 import { clearSessionCookie, mintSessionCookie } from './serverSession';
 
 type SignInOptions = {
@@ -19,12 +25,10 @@ type SignInOptions = {
 };
 
 const authUnavailable = () => {
-  // Las env vars NEXT_PUBLIC_FIREBASE_* son públicas — incluirlas en el
-  // mensaje no expone secretos y ayuda a diagnosticar deploys mal configurados.
+  // Public Firebase vars are safe to name in the error; this makes deploy
+  // misconfiguration visible for the active auth profile.
   const missing = missingConfigFields.length
-    ? ` Faltan: ${missingConfigFields
-        .map((f) => `NEXT_PUBLIC_FIREBASE_${f.replace(/([A-Z])/g, '_$1').toUpperCase()}`)
-        .join(', ')}.`
+    ? ` Faltan campos Firebase: ${missingConfigFields.join(', ')}. Variables esperadas: ${firebaseEnvFamily}.`
     : '';
   return {
     user: null as any,
