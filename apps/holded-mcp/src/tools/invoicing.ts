@@ -598,6 +598,15 @@ export function registerInvoicingTools(
         ...(item.productId !== undefined ? { productId: item.productId } : {}),
       }));
 
+      // V3.G.16 (2026-06-03) — TEORÍA FINAL: Holded usa `lines` como INPUT
+      // que convierte a `products` durante la APROBACIÓN. Cuando enviamos
+      // approveDoc:false, esa conversión NO ocurre y el draft queda con
+      // products:[]. Solución: enviar `products` directamente (el shape
+      // de output) para que Holded no necesite convertir.
+      //
+      // Enviamos AMBAS keys por defensa. Si Holded sigue ignorando,
+      // confirmamos bug del producto y reportamos.
+      //
       // approveDoc se fuerza al final del spread para que ningun input pueda
       // anularlo. NO mover esta linea.
       const body: Record<string, unknown> = {
@@ -606,6 +615,7 @@ export function registerInvoicingTools(
         date: dateUnix,
         ...(dueDateUnix !== undefined ? { dueDate: dueDateUnix } : {}),
         lines,
+        products: lines,
         approveDoc: false,
       };
 
