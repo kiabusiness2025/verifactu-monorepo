@@ -641,9 +641,14 @@ export function registerInvoicingTools(
       let data: unknown = createResponse;
       if (newDocId && lines.length > 0) {
         try {
-          // Holded acepta el mismo shape de lines en PUT. No re-enviamos
-          // contactId/date/etc. — solo lo necesario para añadir las líneas.
+          // V3.G.15 (2026-06-03) — PUT con `products` (key que usa el GET
+          // response), body completo (contactId, date), y `lines` como
+          // backup. V3.G.14 con solo {lines} devolvió "Updated" pero
+          // products siguió vacío → Holded ignora la key incorrecta.
           const updateResp = await getClient().updateDocument('invoice', newDocId, {
+            contactId: resolvedContactId,
+            date: dateUnix,
+            products: lines,
             lines,
           });
           // Mergeamos la respuesta del PUT sobre el shell para que el caller

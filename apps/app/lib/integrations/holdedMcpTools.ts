@@ -2514,7 +2514,11 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     let created: unknown = createResponse;
     if (newDocId && linesArr.length > 0) {
       try {
+        // V3.G.15 — PUT con `products` (key del GET), body completo, lines de backup.
         const updateResp = await holdedAdapter.updateDocument(apiKey, docType, newDocId, {
+          contactId: (wireBody as { contactId?: string }).contactId,
+          date: (wireBody as { date?: unknown }).date,
+          products: linesArr,
           lines: linesArr,
         });
         const updatedShape = updateResp as {
