@@ -2,6 +2,62 @@
 
 Historial de fixes y hardening aplicados a los conectores durante el ciclo de OpenAI App Review (mayo-junio 2026). Cada commit etiquetado con un identificador V3.X reproducible.
 
+## V3.G.17 — 2026-06-03 · REVERT a `items[]` · V3.G.10 fue mal-diagnóstico
+
+> Cierra DEFINITIVAMENTE el bug de drafts vacíos. Estado correcto del connector restaurado.
+
+**Causa raíz** (confirmada con wrapper community [vshopes/holded](https://github.com/vshopes/holded) y verificada empíricamente contra tenant Nova Gestión SL): la API Holded espera **`items: [{ name, units, subtotal, tax, productId }]`** como input al crear documentos. NO `lines` (V3.G.10 mal-asumió).
+
+**Historia del bug**:
+
+1. **Pre-V3.G.10** — `apps/holded-mcp` y `apps/app` enviaban `items[]`. **Funcionaba bien**, drafts persistían líneas.
+2. **2026-06-02 V3.G.10** — el reviewer reportó draft `6a1ea540ef05f92d220b5aef` vacío. Se asumió erróneamente que la causa era el shape `items` (y se cambió a `lines`). El draft estaba vacío por otra razón (posiblemente latencia de read inmediato, cf. Q0.3), no por la key.
+3. **V3.G.10 → V3.G.16** (1 día) — el connector envió `lines` durante 24h. Holded acepta `lines` silenciosamente (HTTP 200 + `status:1` + id) pero descarta el array. TODOS los drafts creados en este periodo salieron con `products: []`. V3.G.11 (subtotal aliases), V3.G.12 (clean line item), V3.G.13 (logging), V3.G.14-15 (PUT update), V3.G.16 (POST con products+lines) todos ineficaces porque la causa raíz era el key name.
+4. **2026-06-03 V3.G.17** — revert a `items`. Verificado contra tenant real con 2 drafts test (Zeta + Nu Foods): líneas persisten, subtotal/tax/total calculados por Holded, `draft: true` mantenido.
+
+**Cambios**:
+
+- `apps/holded-mcp/src/tools/invoicing.ts` — revert de mapeo `lines` → `items` con shape `{name, units, subtotal, tax, productId}`. Retirados workarounds inútiles V3.G.14/15 (PUT update).
+- `apps/app/lib/integrations/holdedMcpTools.ts` — `normalizeDocumentLineItem` retorna `{name, subtotal, units, tax, productId}` en lugar de `{desc, price, units, tax, productId}`. `normalizeDocumentCreatePayload` emite key `items` en lugar de `lines`. Workaround PUT update eliminado.
+
+**Observaciones documentadas en `HOLDED_API_QUIRKS.md`**:
+
+- Q0.1: Holded espera `items`, descarta `lines` silenciosamente
+- Q0.2: marcador in-band para detectar el bug (`status: 1` + `total: 0` = firma del bug, `status: 0` + products poblados = draft válido)
+- Q0.3: `get_document` tiene latencia de indexación post-create; usar `list_documents` filtrado para verificación inmediata
+
+**Lecciones aprendidas**:
+
+1. Los mock tests de wire body shape (V3.G.10/11/12) NO equivalen a verificación end-to-end. Pasaban verificando que el body contiene `lines: [...]` pero NO que Holded lo persistía.
+2. Un "fix" sin reproducción contra el entorno real es una hipótesis, no un fix. V3.G.10 cambió un connector funcional en base a una asunción no validada.
+3. La memoria del usuario ("ayer Claude funcionaba") era el dato más valioso del diagnóstico — invalidó la hipótesis V3.G.10 y apuntó a un cambio reciente como culprit.
+
+Tests: 80/80 verdes (`holdedMcpTools` + `openai-test-cases-dryrun`). Drafts reales contra tenant: 2/2 con líneas correctas.
+
+## V3.G.16 — 2026-06-03 · POST con `products` + `lines` (intermedio, sin efecto)
+
+> Hipótesis: Holded convierte `lines → products` durante approval pipeline. Sin aprobación queda vacío. Solución: enviar `products` directo.
+
+Verificado contra tenant: products: [] igual. Hipótesis incorrecta — el problema era el key name (V3.G.17), no el approval pipeline. Conservado en historia para no repetir el camino.
+
+## V3.G.15 — 2026-06-03 · PUT con `products` + body completo (intermedio, sin efecto)
+
+> Conjetura: Holded ignora `lines` en PUT, espera `products`. PUT body: `{ contactId, date, products, lines }`.
+
+Verificado contra tenant: PUT response `"info": "Updated"` pero products: [] sigue. Holded ignoró el PUT del array — confirmando que el quirk no era resoluble en el endpoint PUT. Camino abandonado.
+
+## V3.G.14 — 2026-06-03 · Workaround POST + PUT update (intermedio, sin efecto)
+
+> Tras POST con `approveDoc:false` (shell creado sin líneas), PUT update con `{lines}`.
+
+Verificado contra tenant: PUT respondió "Updated" pero el draft seguía vacío. Confirmamos que Holded descarta líneas en draft state independiente del endpoint. Esto motivó la búsqueda de causa raíz V3.G.17.
+
+## V3.G.13 — 2026-06-03 · Logging granular del wire body
+
+> Añade 5 `console.info` al handler `create_invoice_draft` (keys, contactId, lines count, lines[0], holded response) para diagnosticar en Vercel logs.
+
+Útil durante la cadena de fixes V3.G.14-16. Sigue activo en V3.G.17 (adaptado a `items` count).
+
 ## V3.G.10 — 2026-06-02 · `items[]` se transforma a `lines[]` en el body que va a Holded
 
 > Cierra bug del reviewer: draft creado con base 0,00€ pese a que Claude

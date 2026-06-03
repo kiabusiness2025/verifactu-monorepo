@@ -2,7 +2,44 @@
 
 Catálogo de quirks, bugs y limitaciones encontradas en la API REST de Holded (`api.holded.com`) durante el desarrollo de los conectores. Documentado para que cualquier ingeniero que tope con uno de estos comportamientos sepa que es Holded y no nuestro código.
 
-> Última actualización: 2026-06-01 · V3.G.1
+> Última actualización: 2026-06-03 · V3.G.17
+
+## ⚠ Quirks críticos descubiertos 2026-06-03 (V3.G.17)
+
+### Q0.1 — POST `/documents/{type}` debe usar `items`, NO `lines`
+
+**Síntoma**: el draft se crea con `products: []`, `subtotal: 0`, `total: 0` pese a que el wire body lleva un array de líneas con todos los campos rellenos. HTTP 200 OK + `status: 1` + `id`. Sin error ni warning.
+
+**Causa**: la API espera el array bajo la key **`items`** (`[{ name, units, subtotal, tax }]`), no `lines`. Cuando se envía `lines`, Holded acepta el POST y **descarta el array silenciosamente** — no devuelve error.
+
+Confirmado contra el wrapper community [`vshopes/holded`](https://github.com/vshopes/holded) y verificado empíricamente contra el tenant Nova Gestión SL el 2026-06-03 con 15+ drafts (V3.G.10-16 con `lines` → todos vacíos; V3.G.17 con `items` → líneas persisten).
+
+**Cómo lo manejamos** (V3.G.17): los handlers de `create_invoice_draft` en `apps/app` y `apps/holded-mcp` normalizan el input del modelo al shape canónico:
+
+```ts
+items: [{ name, units, subtotal, tax, productId? }]
+```
+
+**Histórico**: V3.G.10 (2026-06-02) hizo el cambio inverso `items → lines` asumiendo (incorrectamente) que `lines` era la key correcta. Ese commit rompió un connector que funcionaba bien. V3.G.17 lo revierte.
+
+### Q0.2 — Status `0` vs `1` distingue draft válido vs draft roto
+
+Marcador útil para detectar instantáneamente si Holded persistió las líneas:
+
+| `status` | `products` | Significado |
+|---|---|---|
+| `0` | poblado | Draft válido con líneas — el caso correcto |
+| `1` | `[]` | Draft roto sin líneas — firma del bug Q0.1 |
+
+Ambos casos tienen `draft: true` y `approvedAt: null`. El `status` es la única señal in-band que permite verificar persistencia sin leer `products.length`. Si en futuro alguien ve `status: 1 + total: 0` en un draft recién creado, **es la firma exacta del bug Q0.1**: revisar que el wire body use `items` y no `lines`.
+
+### Q0.3 — `get_document` tiene latencia/indexación para docs recién creados
+
+**Síntoma**: tras `POST /documents/{type}` exitoso (status 200 + id válido), un `GET /documents/{type}/{id}` inmediato puede devolver `{"status":0,"info":"..."}` (soft error). El documento existe pero no es legible vía read-by-id durante una ventana corta.
+
+**Workaround**: usar `GET /documents/{type}` con filtro de fecha (`starttmp` + `endtmp` del día del create) para verificar — la respuesta del listing **sí** incluye el documento recién creado. La latencia parece afectar solo al endpoint individual `/{id}`, no al de listado.
+
+Verificado empíricamente 2026-06-03 — el delta entre create y read-by-id consistente fue ~5-30 segundos. Cualquier herramienta MCP que necesite verificar inmediatamente debe usar `list_documents` filtrado, NO `get_document`.
 
 ## Quirks por categoría
 
