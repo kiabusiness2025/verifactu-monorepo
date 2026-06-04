@@ -117,11 +117,8 @@ export default function IsaakAuthPage() {
     [redirectTarget]
   );
 
-  useEffect(() => {
-    if (auth?.currentUser && !redirectedRef.current) {
-      void handleSessionAndRedirect(auth.currentUser as User);
-    }
-  }, [handleSessionAndRedirect]);
+  // Removed auto-redirect on cached Firebase session: it sets redirectedRef.current=true
+  // before the user clicks Google, blocking handleGoogle's redirect via the same ref.
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
