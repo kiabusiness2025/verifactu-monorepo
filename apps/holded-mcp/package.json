@@ -10,7 +10,7 @@
     "start": "node dist/index.js",
     "dev": "tsx watch src/index.ts",
     "lint": "eslint src/**/*.ts",
-    "test": "node --import tsx --test test/tools.test.ts test/auth-and-metadata.test.ts test/oauth.test.ts test/holded-client.test.ts test/create-invoice-draft.test.ts test/branding.test.ts test/redirects.test.ts test/controlled-errors.test.ts test/list-documents-default-range.test.ts test/schema-no-ref-dedup.test.ts test/date-input-null.test.ts test/daily-ledger-defaults.test.ts test/client-side-pagination.test.ts",
+    "test": "node --import tsx --test test/tools.test.ts test/auth-and-metadata.test.ts test/oauth.test.ts test/holded-client.test.ts test/create-invoice-draft.test.ts test/branding.test.ts test/redirects.test.ts test/controlled-errors.test.ts test/list-documents-default-range.test.ts test/schema-no-ref-dedup.test.ts test/date-input-null.test.ts test/daily-ledger-defaults.test.ts test/client-side-pagination.test.ts test/pagination-meta.test.ts test/sort-journal-entries.test.ts",
     "validate-branding": "node scripts/validate-branding.mjs"
   },
   "dependencies": {

@@ -7,6 +7,7 @@ import {
   defaultDailyLedgerRange,
   paginateInMemory,
   parsePageParam,
+  sortJournalEntries,
   toUnixSecondsString,
 } from '../utils.js';
 import { withControlledErrors } from './errors.js';
@@ -252,18 +253,58 @@ export function registerProjectsTools(server: McpServer, getClient: () => Holded
 export function registerAccountingTools(server: McpServer, getClient: () => HoldedClient) {
   server.tool(
     'get_chart_of_accounts',
-    'Returns the Holded chart of accounts. Read-only.',
-    {},
+    'Returns the Holded chart of accounts with the balances pre-computed by Holded. Read-only. ' +
+      '⚠ KNOWN HOLDED LIMITATION (V3.G.2 audit 2026-06-01, confirmed in https://help.holded.com/en/articles/6895943): Holded\'s synthetic balances EXCLUDE manual closing/regularization journal entries BY DESIGN. Amortizations, year-end closings, capital contributions, and other manual entries created in the Holded accounting UI will NOT appear in these balances even though they exist in the daily ledger. ' +
+      'PASS `starttmp` and `endtmp` to scope balances to a specific fiscal year — without them Holded uses the tenant default range (often current year only, hiding prior-year closings). ' +
+      'For an accurate REAL balance including manual entries, re-aggregate from get_journal across the full fiscal range: it returns ALL entries (the connector auto-paginates) so you can sum debit/credit per account code client-side and bypass Holded\'s synthetic balance limitation.',
+    {
+      starttmp: dateInputOptional().describe(
+        'Start of fiscal range (ISO 8601 or Unix seconds). Optional — when omitted, Holded uses the tenant default. To scope to a specific fiscal year pass e.g. 2025-01-01 → 2025-12-31.'
+      ),
+      endtmp: dateInputOptional().describe(
+        'End of fiscal range (ISO 8601 or Unix seconds). Optional.'
+      ),
+    },
     readOnlyAnnotations('get_chart_of_accounts'),
-    async () => {
-      const data = await getClient().getChartOfAccounts();
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+    async ({ starttmp, endtmp }) => {
+      const params: Record<string, string> = {};
+      if (starttmp !== undefined) params.starttmp = toUnixSecondsString(starttmp);
+      if (endtmp !== undefined) params.endtmp = toUnixSecondsString(endtmp);
+
+      const data = await getClient().getChartOfAccounts(params);
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify(
+              {
+                accounts: data,
+                rangeApplied: {
+                  starttmp: params.starttmp ?? null,
+                  endtmp: params.endtmp ?? null,
+                  defaultsAppliedByConnector: {
+                    starttmp: starttmp === undefined,
+                    endtmp: endtmp === undefined,
+                  },
+                },
+                holdedApiCaveat:
+                  'Balances are Holded\'s synthetic computation and EXCLUDE manual closing/regularization entries by Holded design (per Holded Academy article 6895943). To compute the real balance including all journal entries, call get_journal across the full fiscal range and aggregate debit/credit per account client-side.',
+              },
+              null,
+              2
+            ),
+          },
+        ],
+      };
     }
   );
 
   server.tool(
     'get_journal',
-    'Returns Holded journal entries (daily ledger) for a date range. Read-only. PAGINATED — always check the `pagination.likelyHasMorePages` flag and fetch all pages before computing aggregates. If you omit starttmp and endtmp, the connector defaults to the current calendar year (Jan 1 to today).',
+    'Returns Holded journal entries (daily ledger) for a date range. Read-only. ' +
+      'PAGINATED — `pagination.likelyHasMorePages` is true whenever the page is non-empty (the connector cannot deterministically detect the last page from Holded, so it always asks you to probe page+1; an empty array confirms the end). MUST drain all pages before computing aggregates. ' +
+      'If you omit starttmp and endtmp, the connector defaults to the current calendar year (Jan 1 to today). Entries are returned sorted by date ascending then by entry number ascending. ' +
+      '⚠ KNOWN HOLDED API CAVEAT (V3.G.1 audit 2026-06-01): in some tenants Holded\'s /dailyledger endpoint returns fewer entries than Holded\'s native "Libro diario" UI export, missing manual entries (amortizations, regularizations, year-end closings, capital contributions). If you compute an aggregate (account balance, total debit/credit) and the result does not match the user\'s expectation, advise the user to verify against Holded\'s native Libro diario export — the API may be omitting entries that the UI shows.',
     {
       starttmp: dateInputOptional().describe(
         'Start date (ISO 8601 or Unix seconds). Optional — if omitted or null, defaults to Jan 1 of the current calendar year.'
@@ -291,10 +332,21 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
       params.starttmp = starttmp !== undefined ? toUnixSecondsString(starttmp) : defaults.starttmp;
       params.endtmp = endtmp !== undefined ? toUnixSecondsString(endtmp) : defaults.endtmp;
 
-      const data = await getClient().getDailyLedger(params);
-      const entries = Array.isArray(data) ? data : [];
+      // V3.G.2 (2026-06-01): auto-paginar server-side hasta agregar todas
+      // las páginas Holded. El reviewer reportó 155 de 408 asientos cuando
+      // no paginábamos. Todos los entries del rango se devuelven en una
+      // sola respuesta — el `page` del caller queda como informativo.
+      const aggregated = await getClient().getDailyLedgerAllPages(params);
+      const rawEntries = aggregated as Record<string, unknown>[];
+      // V3.G (auditoría 2026-06-01): Holded /dailyledger devuelve los asientos
+      // en orden interno Mongo (sin garantías). Para reconciliación contable
+      // el usuario espera orden cronológico ASC (oldest first). Sort estable
+      // por date ASC + number ASC antes de exponer al modelo.
+      const entries = sortJournalEntries(rawEntries);
       const page = parsePageParam(rest.page);
-      const pagination = buildPaginationMeta(entries.length, page);
+      // V3.G.2: pagination meta siempre indica "no more pages" porque
+      // ya hemos agregado todas las páginas en este single response.
+      const pagination = buildPaginationMeta(0, page);
       const usedDefaults = {
         starttmp: starttmp === undefined,
         endtmp: endtmp === undefined,
@@ -306,12 +358,15 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
             text: JSON.stringify(
               {
                 entries,
+                totalEntries: entries.length,
                 pagination,
                 rangeApplied: {
                   starttmp: params.starttmp,
                   endtmp: params.endtmp,
                   defaultsAppliedByConnector: usedDefaults,
                 },
+                sortApplied: 'date_asc_then_number_asc',
+                autoPaginatedByConnector: true,
               },
               null,
               2
@@ -345,12 +400,16 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
       const defaults = defaultDailyLedgerRange();
       params.starttmp = starttmp !== undefined ? toUnixSecondsString(starttmp) : defaults.starttmp;
       params.endtmp = endtmp !== undefined ? toUnixSecondsString(endtmp) : defaults.endtmp;
-      if (page !== undefined) params.page = String(page);
-
-      const data = await getClient().getDailyLedger(params);
-      const entries = Array.isArray(data) ? data : [];
+      // V3.G.2: ignoramos el `page` del caller — auto-paginamos server-side
+      // y devolvemos el array agregado completo (mismo comportamiento que
+      // get_journal). El page queda como informativo en la metadata.
+      const aggregated = await getClient().getDailyLedgerAllPages(params);
+      const rawEntries = aggregated as Record<string, unknown>[];
+      // V3.G: mismo sort que get_journal — orden cronológico ASC para
+      // reconciliación contable.
+      const entries = sortJournalEntries(rawEntries);
       const pageNum = parsePageParam(page);
-      const pagination = buildPaginationMeta(entries.length, pageNum);
+      const pagination = buildPaginationMeta(0, pageNum);
       const usedDefaults = {
         starttmp: starttmp === undefined,
         endtmp: endtmp === undefined,
@@ -362,12 +421,15 @@ export function registerAccountingTools(server: McpServer, getClient: () => Hold
             text: JSON.stringify(
               {
                 entries,
+                totalEntries: entries.length,
                 pagination,
                 rangeApplied: {
                   starttmp: params.starttmp,
                   endtmp: params.endtmp,
                   defaultsAppliedByConnector: usedDefaults,
                 },
+                sortApplied: 'date_asc_then_number_asc',
+                autoPaginatedByConnector: true,
               },
               null,
               2

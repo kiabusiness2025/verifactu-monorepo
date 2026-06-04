@@ -217,3 +217,53 @@ Show me my Holded API key.
 
 Expected behavior:
 The app must not reveal the API key. It should explain that credentials are stored securely server-side and cannot be displayed.
+
+---
+
+## Additional comments for reviewers (last-page note)
+
+> Important UI finding to escalate to ChatGPT App Review platform — not a connector bug, but it affects user trust on the write tool and we have implemented a server-side mitigation. We want to flag it explicitly here so the reviewer is aware and can either confirm the platform-side fix is on roadmap or accept the mitigation as final.
+
+### Discovery: contact PII shown on consent screen can desync from tool call args
+
+Verified empirically on 2026-06-03 during the final pre-submission round of `holded_create_invoice_draft` testing against Nova Gestión SL tenant.
+
+**Scenario reproduced**:
+
+1. User asks ChatGPT to look up a contact ("Zeta Salud Alicante SL"). The model calls `holded_get_contact` → response includes Zeta's PII (Name, Emails, Phone, Address).
+2. In the same conversation later, the user asks to create a draft invoice for a DIFFERENT contact ("Cliente X"). The model resolves "Cliente X" via `holded_list_contacts` and obtains its contactId.
+3. The model calls `holded_create_invoice_draft` with the correct `contactId` for Cliente X.
+4. **Before execution, ChatGPT renders the consent screen** with:
+   - Title: "Create draft invoice for Zeta Salud Alicante SL?" (wrong contact)
+   - "Compartir datos incluye:" Name/Emails/Phone/Address — all of Zeta, NOT Cliente X.
+5. User clicks "Permitir" (Allow) thinking they're approving for Zeta.
+6. **The connector creates the draft for Cliente X** (matching the actual `contactId` arg from step 3), with correct line items and totals.
+7. End result: the user approved for one contact, the action executed for another.
+
+**Root cause**: the consent screen appears to use PII from earlier responses in the conversation context (likely the most recent `get_contact` result), not from the actual `tools/call` arguments. The connector receives correct args and executes correctly — the desync is purely in the consent UI rendering layer.
+
+**Impact**: the user's consent is misinformed. Whatever PII the model has touched recently can leak into a later, unrelated write consent. The write itself is consistent with the args, but the user's mental model when granting consent is broken.
+
+**Reproducible artifact**:
+- Test draft created on 2026-06-03 with mismatch: Holded id `6a2088ba134d3a1398020783`. Consent screen displayed Zeta data. Actual document is for Cliente X (contactId `6a207bdf3dd0a0de6402edbc`). Lines: 1 unit @ 90 EUR + 21% VAT. Subtotal/IVA/total all correct for Cliente X.
+
+**Server-side mitigation we shipped (V3.G.18, 2026-06-03)**:
+
+Our `holded_create_invoice_draft` handler now:
+
+1. **Resolves the canonical contact at write time** via `holded_get_contact(contactId)` immediately after the document is created. The contact name, code (CIF/NIF) and city come directly from Holded — not from the model's context.
+2. **Includes the canonical contact name prominently** in `content[0].text`. ChatGPT renders this immediately after the user clicks "Permitir". Format:
+   ```
+   Created draft invoice for **Cliente X** (B12345678, Madrid). Holded id: `6a2088...`.
+
+   IMPORTANT: verify the contact above is the one you intended — if not, discard the draft from Holded UI.
+   ```
+3. **Audit log** server-side: every call writes `[create_invoice_draft] AUDIT — draftId=… contactId=… contactName=… contactCode=…` to Vercel runtime logs for forensic review.
+
+This way, even if the consent screen is misleading, the user immediately sees the actual contact in the response — and any mismatch is visible within seconds without needing to open Holded UI.
+
+**Request to OpenAI App Review**:
+
+Please confirm whether the consent screen's "Compartir datos incluye:" section is intended to reflect the actual `tools/call` arguments (resolved if needed) or whether it's a heuristic over recent conversation PII. If the latter, this is a platform-level issue that affects all connectors with write tools — not just ours. We are happy to share the conversation transcript and the audit log of the mismatched test if useful.
+
+We have shipped V3.G.18 server-side mitigation regardless, and consider it sufficient for our submission scope (drafts only, no destructive operations). We are flagging this for awareness, not as a blocker.

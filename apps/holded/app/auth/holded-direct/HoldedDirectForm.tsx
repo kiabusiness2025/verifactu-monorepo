@@ -972,6 +972,23 @@ export function HoldedDirectForm({ sessionEmail }: { sessionEmail: string | null
                 </div>
               )}
 
+              {/* No tengo Holded — sale discreto solo en paso 2, evita que
+                  el usuario sin Holded se quede atascado pidiendo cuenta. */}
+              {isApiKeyStep ? (
+                <div className="mt-4 text-center text-[11px] text-slate-400">
+                  ¿Aún no usas Holded?{' '}
+                  <a
+                    href="https://www.holded.com/es"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-slate-500 underline-offset-2 hover:text-slate-700 hover:underline"
+                  >
+                    Pruébalo gratis
+                  </a>
+                  .
+                </div>
+              ) : null}
+
               {/* Volver */}
               <div className="mt-6 text-center">
                 <a

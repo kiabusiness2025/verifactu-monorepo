@@ -1,4 +1,5 @@
 export * from './session';
+export * from './consent-proof';
 export * from './admin-access';
 export * from './safeRedirect';
 export * from './urls';

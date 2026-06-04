@@ -344,7 +344,15 @@ function summarizeItem(item: unknown): string {
 
 function buildItemsSummary(items: unknown[], total?: number): string {
   if (items.length === 0) {
-    return 'No items returned for this query.';
+    // V3.D — mensaje más informativo cuando no hay resultados, para que el
+    // reviewer (ChatGPT web y mobile) entienda que es un resultado válido
+    // y NO un error del conector. Antes decía solo "No items returned
+    // for this query." y el modelo a veces lo interpretaba como fallo.
+    return (
+      'The connector returned 0 items for this query — this is a valid read-only result, ' +
+      'not an error. The tenant simply has no matching records in that scope or date range. ' +
+      'Try broadening the filters (e.g. add `year` or wider `from`/`to`) or call again without filters.'
+    );
   }
   const preview = items.slice(0, TEXT_PREVIEW_LIMIT).map(summarizeItem).join('\n');
   const totalText = total !== undefined ? `${total}` : `${items.length}`;
@@ -414,7 +422,24 @@ function formatToolResult(data: unknown) {
       const created = obj.created as Record<string, unknown>;
       const id =
         pickFirst<string>(created, ['id', '_id', 'documentId']) ?? '(id not returned by Holded)';
-      text = `Created successfully. Holded id: \`${id}\`. The draft is saved but NOT sent, finalized, charged, or emailed. Verify it from Holded UI before issuing.`;
+
+      // V3.G.18 (2026-06-03): si el handler ha resuelto el contacto canónico,
+      // lo incluimos prominentemente en el texto post-acción. Esto compensa
+      // un bug verificado de la consent UI de ChatGPT, que pinta PII de
+      // contexto previo en vez de los args del tool call actual — el usuario
+      // puede aprobar una cosa y ejecutarse otra. Mostrando el contacto real
+      // tras la acción, cualquier mismatch se detecta inmediatamente.
+      const contactName =
+        typeof created.contactName === 'string' ? created.contactName : '';
+      const contactCode = typeof created.contactCode === 'string' ? created.contactCode : '';
+      const contactCity = typeof created.contactCity === 'string' ? created.contactCity : '';
+      const contactSuffix = [contactCode, contactCity].filter(Boolean).join(', ');
+      const contactLine = contactName
+        ? `Created draft invoice for **${contactName}**${
+            contactSuffix ? ` (${contactSuffix})` : ''
+          }. Holded id: \`${id}\`.\n\nIMPORTANT: verify the contact above is the one you intended — if not, discard the draft from Holded UI. The draft is saved but NOT sent, finalized, charged, or emailed.`
+        : `Created successfully. Holded id: \`${id}\`. The draft is saved but NOT sent, finalized, charged, or emailed. Verify it from Holded UI before issuing.`;
+      text = contactLine;
     } else if (obj.stock && Array.isArray(obj.stock)) {
       text = buildItemsSummary(obj.stock as unknown[]);
     } else {

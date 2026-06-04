@@ -22,6 +22,16 @@ const HOLDED_HISTORY_SCAN_BUDGET_MS = Math.max(
 const HOLDED_RETRYABLE_STATUS = new Set([429, 502, 503, 504]);
 const HOLDED_MAX_RETRIES = 2;
 
+// V3.G.2 (2026-06-01): Holded /dailyledger pagina con tamaño real ~250 entries
+// (la doc oficial dice 500 pero empíricamente devuelve 250 — ver
+// docs/engineering/connectors/HOLDED_API_QUIRKS.md Q1.1). Auto-paginamos
+// hasta el cap para no degradar el latency por queries gigantes.
+const HOLDED_LEDGER_PAGE_SIZE = Number(process.env.HOLDED_LEDGER_PAGE_SIZE || '250');
+const HOLDED_LEDGER_MAX_PAGES = Math.max(
+  1,
+  Number(process.env.HOLDED_LEDGER_MAX_PAGES || '10')
+);
+
 function holdedSleep(ms: number) {
   return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
@@ -204,6 +214,78 @@ function safeJsonParse(raw: string) {
   } catch {
     return raw;
   }
+}
+
+/**
+ * V3.F.II (auditoría 2026-06-01): valida que un response binario de Holded
+ * sea realmente del tipo esperado y no un JSON de error disfrazado.
+ *
+ * Holded a veces devuelve HTTP 200 + body JSON (`{"status":0,"error":"..."}`)
+ * cuando no hay binario disponible (documento sin PDF, contacto sin
+ * attachment, producto sin imagen, etc.). Sin validación, el adapter
+ * encodea ese JSON como base64 con contentType mentiroso y el caller
+ * (ChatGPT, Claude, Isaak) cree que tiene un PDF/imagen real.
+ *
+ * Detecta el caso via: magic bytes conocidos (`%PDF-`, `\x89PNG`,
+ * `\xFF\xD8\xFF` JPEG, `GIF8`, `RIFF` WebP, `BM` BMP) + content-type.
+ * Si NINGUNO de los dos pasa, decodifica el body y propaga el mensaje
+ * de error de Holded como Error legible.
+ */
+function ensureHoldedBinaryNotJsonError(
+  file: HoldedBinaryFile,
+  options: {
+    expectedKind: 'pdf' | 'image' | 'any';
+    pathLabel: string;
+  }
+): void {
+  const ct = (file.contentType || '').toLowerCase();
+  const head = file.base64
+    ? Buffer.from(file.base64.slice(0, 16), 'base64').toString('latin1')
+    : '';
+
+  const isPdfMagic = head.startsWith('%PDF-');
+  const isImageMagic =
+    head.startsWith('\x89PNG') ||
+    head.startsWith('\xFF\xD8\xFF') ||
+    head.startsWith('GIF8') ||
+    head.startsWith('RIFF') ||
+    head.startsWith('BM');
+
+  const ctIsPdf = ct.startsWith('application/pdf');
+  const ctIsImage = ct.startsWith('image/');
+  const ctIsJson = ct.startsWith('application/json');
+  const headLooksLikeJson =
+    head.trimStart().startsWith('{') || head.trimStart().startsWith('[');
+
+  let isOk: boolean;
+  if (options.expectedKind === 'pdf') {
+    isOk = isPdfMagic || (ctIsPdf && !ctIsJson && !headLooksLikeJson);
+  } else if (options.expectedKind === 'image') {
+    isOk = isImageMagic || (ctIsImage && !ctIsJson && !headLooksLikeJson);
+  } else {
+    isOk =
+      isPdfMagic ||
+      isImageMagic ||
+      (ctIsPdf && !headLooksLikeJson) ||
+      (ctIsImage && !headLooksLikeJson) ||
+      (!ctIsJson && !headLooksLikeJson);
+  }
+
+  if (isOk) return;
+
+  const body = file.base64 ? Buffer.from(file.base64, 'base64').toString('utf8') : '';
+  const parsed = safeJsonParse(body);
+  const msg =
+    parsed && typeof parsed === 'object'
+      ? ((parsed as { error?: string; message?: string }).error ??
+        (parsed as { error?: string; message?: string }).message ??
+        null)
+      : null;
+  throw new Error(
+    msg
+      ? `Holded returned a non-binary response for ${options.pathLabel}: ${msg}`
+      : `Holded returned a non-binary response for ${options.pathLabel}. The resource may not exist or may not have a binary attachment.`
+  );
 }
 
 function extractFilenameFromContentDisposition(value: string | null) {
@@ -485,6 +567,12 @@ export type HoldedContact = {
   email?: string;
   mobile?: string;
   phone?: string;
+  type?: string;
+  // V3.F: Holded marca a cada contacto con flags de rol — 0 / null si NUNCA
+  // ha actuado en ese rol, número o objeto cuando tiene actividad. Usado
+  // para discriminar resultados cuando se filtra por type=client/supplier.
+  clientRecord?: number | Record<string, unknown> | null;
+  supplierRecord?: number | Record<string, unknown> | null;
 };
 
 export type HoldedAccount = {
@@ -645,6 +733,55 @@ function paginateArrayResponse<T>(
 
   const offset = (page - 1) * limit;
   return items.slice(offset, offset + limit);
+}
+
+/**
+ * V3.G (auditoría 2026-06-01): orden estable de asientos del libro diario
+ * por date ASC (oldest first) + number ASC. Holded `/dailyledger` devuelve
+ * los registros en orden interno de Mongo (insertion order, sin garantías):
+ * el usuario reportó asientos saliendo "122-129, 280, 356, 384..., 660-677,
+ * 137 al final" — imposible cuadrar. El sort se aplica ANTES de paginar.
+ */
+function sortHoldedJournalEntries<T extends Record<string, unknown>>(entries: T[]): T[] {
+  const withIndex = entries.map((entry, idx) => ({ entry, idx }));
+  withIndex.sort((a, b) => {
+    const dateA = entryToComparableNumber((a.entry as { date?: unknown }).date);
+    const dateB = entryToComparableNumber((b.entry as { date?: unknown }).date);
+    if (dateA !== dateB) {
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
+      return dateA - dateB;
+    }
+    const numA = entryToComparableNumber(
+      (a.entry as { number?: unknown }).number ?? (a.entry as { docNumber?: unknown }).docNumber
+    );
+    const numB = entryToComparableNumber(
+      (b.entry as { number?: unknown }).number ?? (b.entry as { docNumber?: unknown }).docNumber
+    );
+    if (numA !== numB) {
+      if (numA === null) return 1;
+      if (numB === null) return -1;
+      return numA - numB;
+    }
+    return a.idx - b.idx;
+  });
+  return withIndex.map((w) => w.entry);
+}
+
+function entryToComparableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) return parsed;
+    const digits = trimmed.match(/\d+/);
+    if (digits) {
+      const parsedDigits = Number(digits[0]);
+      if (Number.isFinite(parsedDigits)) return parsedDigits;
+    }
+  }
+  return null;
 }
 
 function normalizeSearchText(value: unknown) {
@@ -991,6 +1128,43 @@ function attachDocType(items: Record<string, unknown>[], docType: string) {
   return items.map((item) => ({ ...item, docType }));
 }
 
+/**
+ * V3.G.2 (2026-06-01): auto-pagina Holded /dailyledger desde page=1 hasta
+ * recibir menos de HOLDED_LEDGER_PAGE_SIZE entries o llegar al cap
+ * HOLDED_LEDGER_MAX_PAGES (default 10 = ~2500 entries). El array agregado
+ * se devuelve SIN sortear — el caller aplica sortHoldedJournalEntries.
+ *
+ * Si el caller quiere paginar manualmente con `page=N` el array agregado,
+ * usa `paginateArrayResponse` después (compat hacia atrás).
+ *
+ * Ver docs/engineering/connectors/HOLDED_API_QUIRKS.md Q6.2 para el
+ * contexto del bug que cerramos con esta función.
+ */
+async function fetchHoldedDailyLedgerAllPages(
+  apiKey: string,
+  args: { starttmp?: number; endtmp?: number }
+): Promise<Record<string, unknown>[]> {
+  const aggregated: Record<string, unknown>[] = [];
+  for (let page = 1; page <= HOLDED_LEDGER_MAX_PAGES; page++) {
+    const pageItems = await holdedRequest<Record<string, unknown>[]>({
+      apiKey,
+      path: '/api/accounting/v1/dailyledger',
+      query: {
+        page,
+        starttmp: args.starttmp,
+        endtmp: args.endtmp,
+      },
+    });
+    const items = Array.isArray(pageItems) ? pageItems : [];
+    aggregated.push(...items);
+    // Si la página llegó parcial (< pageSize), asumimos que ya hemos
+    // consumido el dataset completo. Si llegó con exactamente pageSize o
+    // más, intentamos la siguiente.
+    if (items.length < HOLDED_LEDGER_PAGE_SIZE) break;
+  }
+  return aggregated;
+}
+
 export const holdedAdapter = {
   async listInvoices(apiKey: string, args?: { page?: number; limit?: number; status?: string }) {
     return listTypedDocuments(apiKey, 'invoice', args);
@@ -1142,7 +1316,15 @@ export const holdedAdapter = {
     });
   },
 
-  async listContacts(apiKey: string, args?: { page?: number; limit?: number; name?: string }) {
+  async listContacts(
+    apiKey: string,
+    args?: {
+      page?: number;
+      limit?: number;
+      name?: string;
+      type?: 'client' | 'supplier' | 'lead';
+    }
+  ) {
     const contacts = await holdedRequest<HoldedContact[]>({
       apiKey,
       path: '/api/invoicing/v1/contacts',
@@ -1150,9 +1332,31 @@ export const holdedAdapter = {
         page: args?.page ?? 1,
         limit: args?.limit ?? 25,
         ...(args?.name ? { name: args.name } : {}),
+        ...(args?.type ? { type: args.type } : {}),
       },
     });
-    return paginateArrayResponse(filterContactsByName(contacts, args?.name), args, {
+
+    // V3.F (auditoría 2026-06-01): el server-side filter de Holded `type=supplier`
+    // devuelve contactos cuyo `type` está marcado como "supplier" PERO algunos
+    // tienen `supplierRecord: 0` (rol histórico, ya no es proveedor activo).
+    // Para que list_contacts devuelva resultados fiables cuando se pide un rol
+    // específico, aplicamos un filtro client-side adicional:
+    //   - type=supplier → exigimos supplierRecord truthy (> 0 o objeto presente)
+    //   - type=client → exigimos clientRecord truthy
+    //   - type=lead → se respeta el filtro server-side sin extras
+    const filteredByRole = (() => {
+      const raw = filterContactsByName(contacts, args?.name);
+      if (!args?.type || args.type === 'lead') return raw;
+      return raw.filter((c) => {
+        const record = args.type === 'supplier' ? c.supplierRecord : c.clientRecord;
+        if (record === undefined || record === null) return true;
+        if (typeof record === 'number') return record > 0;
+        if (typeof record === 'object') return Object.keys(record).length > 0;
+        return Boolean(record);
+      });
+    })();
+
+    return paginateArrayResponse(filteredByRole, args, {
       enabled: true,
     });
   },
@@ -1180,6 +1384,15 @@ export const holdedAdapter = {
       query: { filename: fileName },
       accept: 'application/octet-stream, image/*, application/pdf, application/json',
       defaultContentType: 'application/octet-stream',
+    });
+
+    // V3.F.II: misma validación que getDocumentPdf. Holded puede devolver
+    // 200+JSON cuando el attachment no existe (filename mal escrito, contacto
+    // sin documentos adjuntos, etc.). Aceptamos cualquier tipo binario
+    // (PDF, imagen, octet-stream) pero rechazamos JSON disfrazado.
+    ensureHoldedBinaryNotJsonError(attachment, {
+      expectedKind: 'any',
+      pathLabel: `contact ${contactId} / ${fileName}`,
     });
 
     return {
@@ -1239,9 +1452,16 @@ export const holdedAdapter = {
       path: `/api/invoicing/v1/documents/${docType}/${documentId}/pdf`,
     });
 
+    ensureHoldedBinaryNotJsonError(pdf, {
+      expectedKind: 'pdf',
+      pathLabel: `${docType}/${documentId}`,
+    });
+
     return {
       ...pdf,
-      contentType: pdf.contentType || 'application/pdf',
+      contentType: pdf.contentType?.toLowerCase().startsWith('application/pdf')
+        ? pdf.contentType
+        : 'application/pdf',
       fileName: pdf.fileName || `${docType}-${documentId}.pdf`,
     } satisfies HoldedBinaryFile;
   },
@@ -1322,21 +1542,109 @@ export const holdedAdapter = {
     });
   },
 
+  /**
+   * V3.G.5 (auditoría 2026-06-01): Holded distingue dos cosas para cada
+   * documento: el PDF RENDERIZADO (generado del contenido del doc, vía
+   * /pdf) y los ARCHIVOS ADJUNTOS (PDFs/imágenes subidas manualmente por
+   * el usuario, ej. el PDF del proveedor en una factura de compra).
+   *
+   * Antes solo cubríamos el rendered. Para tenants con datos demo o docs
+   * sin imprimir, /pdf devuelve "No attachments found" aunque el documento
+   * SÍ tenga un archivo adjunto subido por el usuario. listDocumentAttachments
+   * + getDocumentAttachment cubren ese segundo caso.
+   *
+   * Mismo patrón que /contacts/{id}/attachments/list y .../get.
+   */
+  async listDocumentAttachments(apiKey: string, docType: string, documentId: string) {
+    // Endpoint UNDOCUMENTED de Holded (no aparece en su OpenAPI oficial)
+    // pero confirmado funcional por 3 community wrappers (energio-es,
+    // albertov, BonifacioCalindoro). Probe externo verificado contra
+    // docType=estimate. Para purchase aún sin confirmación pública —
+    // Holded a veces responde HTML 200 cuando el endpoint no aplica.
+    //
+    // V3.G.6 (2026-06-01): si Holded devuelve algo que NO es array y NO
+    // es `{attachments:[]}`, lo loggeamos para diagnosticar (en vez de
+    // silenciar la lista como vacía). Esto cubre el caso "HTML 404 con
+    // HTTP 200" que es comportamiento conocido del backend Holded en
+    // endpoints undocumented.
+    const raw = await holdedRequest<unknown>({
+      apiKey,
+      path: `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/list`,
+    });
+
+    if (Array.isArray(raw)) return raw;
+
+    if (raw && typeof raw === 'object') {
+      const wrapped = (raw as { attachments?: unknown[]; status?: unknown; info?: unknown });
+      if (Array.isArray(wrapped.attachments)) return wrapped.attachments;
+      // Holded soft error con status=0: dejamos diagnóstico claro.
+      if (wrapped.status === 0 || wrapped.info) {
+        console.warn('[holded] listDocumentAttachments soft error', {
+          docType,
+          documentId,
+          status: wrapped.status,
+          info: wrapped.info,
+        });
+        return [];
+      }
+    }
+
+    // Respuesta inesperada (HTML, string, etc.). Log para diagnóstico.
+    console.warn('[holded] listDocumentAttachments unexpected response shape', {
+      docType,
+      documentId,
+      rawType: typeof raw,
+      sample: typeof raw === 'string' ? raw.slice(0, 200) : JSON.stringify(raw).slice(0, 200),
+    });
+    return [];
+  },
+
+  async getDocumentAttachment(
+    apiKey: string,
+    docType: string,
+    documentId: string,
+    fileName: string
+  ) {
+    const attachment = await holdedBinaryRequest({
+      apiKey,
+      path: `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/get`,
+      query: { filename: fileName },
+      accept: 'application/octet-stream, image/*, application/pdf, application/json',
+      defaultContentType: 'application/octet-stream',
+    });
+
+    ensureHoldedBinaryNotJsonError(attachment, {
+      expectedKind: 'any',
+      pathLabel: `document ${docType}/${documentId} / attachment ${fileName}`,
+    });
+
+    return {
+      ...attachment,
+      fileName: attachment.fileName || fileName,
+    } satisfies HoldedBinaryFile;
+  },
+
   async listDailyLedger(
     apiKey: string,
     args?: { page?: number; limit?: number; starttmp?: number; endtmp?: number }
   ) {
-    const entries = await holdedRequest<Record<string, unknown>[]>({
-      apiKey,
-      path: '/api/accounting/v1/dailyledger',
-      query: {
-        page: args?.page ?? 1,
-        limit: args?.limit ?? 25,
-        starttmp: args?.starttmp,
-        endtmp: args?.endtmp,
-      },
+    // V3.G.2 (auditoría 2026-06-01, post-investigación spec OpenAPI Holded):
+    // Holded /dailyledger PAGINA con tamaño real ~250 (no 500 como dice la
+    // doc oficial). El reviewer reportó "155 de 408 asientos reales" porque
+    // antes hacíamos UNA sola llamada sin iterar. Fix: auto-paginar server-
+    // side desde page=1 hasta recibir menos de HOLDED_LEDGER_PAGE_SIZE
+    // entries (o llegar al cap HOLDED_LEDGER_MAX_PAGES) y devolver el array
+    // agregado y sorteado.
+    //
+    // El parámetro `page` que el caller pase se mantiene como "slice
+    // client-side" sobre el array agregado (compat hacia atrás con clientes
+    // que iteran page por page).
+    const aggregated = await fetchHoldedDailyLedgerAllPages(apiKey, {
+      starttmp: args?.starttmp,
+      endtmp: args?.endtmp,
     });
-    return paginateArrayResponse(entries, args, { enabled: true });
+    const sorted = sortHoldedJournalEntries(aggregated);
+    return paginateArrayResponse(sorted, args, { enabled: true });
   },
 
   async createDailyLedgerEntry(apiKey: string, payload: HoldedEntityPayload) {
@@ -1488,6 +1796,14 @@ export const holdedAdapter = {
       defaultContentType: 'application/octet-stream',
     });
 
+    // V3.F.II: producto sin imagen principal → Holded devuelve 200+JSON.
+    // Validamos magic bytes de imagen (PNG, JPEG, GIF, WebP, BMP) o
+    // content-type image/*. Si falla, propagamos el mensaje de error real.
+    ensureHoldedBinaryNotJsonError(image, {
+      expectedKind: 'image',
+      pathLabel: `product ${productId} main image`,
+    });
+
     return {
       ...image,
       fileName: image.fileName || `${productId}-main-image`,
@@ -1507,6 +1823,12 @@ export const holdedAdapter = {
       path: `/api/invoicing/v1/products/${productId}/image/${imageFileName}`,
       accept: 'image/*, application/octet-stream, application/json',
       defaultContentType: 'application/octet-stream',
+    });
+
+    // V3.F.II: misma validación que getProductMainImage para imagen secundaria.
+    ensureHoldedBinaryNotJsonError(image, {
+      expectedKind: 'image',
+      pathLabel: `product ${productId} / image ${imageFileName}`,
     });
 
     return {

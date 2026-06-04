@@ -298,8 +298,11 @@ describe('Holded accounting adapter', () => {
     );
   });
 
-  it('lists daily ledger entries with timestamp filters', async () => {
-    (global.fetch as jest.Mock).mockResolvedValue({
+  it('V3.G.2: auto-paginates Holded /dailyledger from page=1 with timestamp filters', async () => {
+    // Antes pasábamos `page` y `limit` literal a Holded en una sola llamada.
+    // Ahora auto-paginamos server-side desde page=1 — Holded ignora `limit`
+    // (devuelve ~250 fijo) y el page del caller es solo slice client-side.
+    (global.fetch as jest.Mock).mockResolvedValueOnce({
       ok: true,
       status: 200,
       text: async () => '[]',
@@ -312,8 +315,12 @@ describe('Holded accounting adapter', () => {
       endtmp: 1_704_153_599,
     });
 
-    expect(global.fetch).toHaveBeenCalledWith(
-      'https://api.holded.com/api/accounting/v1/dailyledger?page=3&limit=100&starttmp=1704067200&endtmp=1704153599',
+    // Single call expected (page 1 returned empty → loop exits inmediatamente).
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(1);
+    expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
+      'https://api.holded.com/api/accounting/v1/dailyledger?page=1&starttmp=1704067200&endtmp=1704153599'
+    );
+    expect((global.fetch as jest.Mock).mock.calls[0][1]).toEqual(
       expect.objectContaining({
         method: 'GET',
         headers: expect.objectContaining({
@@ -323,6 +330,52 @@ describe('Holded accounting adapter', () => {
         }),
       })
     );
+  });
+
+  it('V3.G.2: auto-pagination loops while Holded returns full pages (250 entries)', async () => {
+    // Page 1 = 250 (full) → loop continues. Page 2 = 50 (partial) → loop stops.
+    // Total agregado = 300 entries antes del client-side slice.
+    const fullPage = Array.from({ length: 250 }, (_, i) => ({
+      id: `e-${i + 1}`,
+      date: 1_704_067_200 + i * 60,
+      number: String(i + 1),
+    }));
+    const partialPage = Array.from({ length: 50 }, (_, i) => ({
+      id: `e-${251 + i}`,
+      date: 1_704_080_000 + i * 60,
+      number: String(251 + i),
+    }));
+
+    (global.fetch as jest.Mock)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify(fullPage),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify(partialPage),
+      });
+
+    // Page 3 client-side de un agregado de 300 entries con limit=100 →
+    // últimos 100 entries (entries 201-300, los 50 del page 2 + 50 finales
+    // del page 1 reordenados por date ASC).
+    const result = await holdedAdapter.listDailyLedger('demo-key', {
+      page: 3,
+      limit: 100, // max permitido por normalizePagingArgs
+      starttmp: 1_704_067_200,
+      endtmp: 1_735_689_599,
+    });
+
+    // 2 calls a Holded (page 1 lleno → continúa; page 2 parcial → para).
+    expect((global.fetch as jest.Mock).mock.calls.length).toBe(2);
+    const calledUrls = (global.fetch as jest.Mock).mock.calls.map((c) => c[0]);
+    expect(calledUrls[0]).toContain('page=1');
+    expect(calledUrls[1]).toContain('page=2');
+
+    // Page 3 con limit 100 sobre 300 entries → 100 últimos.
+    expect((result as unknown[]).length).toBe(100);
   });
 
   it('paginates daily ledger entries locally when Holded ignores page and limit', async () => {
@@ -451,6 +504,100 @@ describe('Holded accounting adapter', () => {
       fileName: 'invoice-doc-1.pdf',
       size: 4,
     });
+  });
+
+  it('V3.F: rejects fake PDF responses where Holded returns JSON error with HTTP 200', async () => {
+    // Antes Holded podía devolver 200 OK con un body JSON `{"status":0,
+    // "error":"No PDF available"}` y nuestro adapter lo encodeaba como
+    // base64 con contentType: 'application/pdf' falso — el caller pensaba
+    // que tenía un PDF cuando en realidad eran bytes JSON sin sentido.
+    // El fix valida los magic bytes "%PDF-" y el content-type antes de
+    // devolver el blob.
+    const fakeJsonBody = '{"status":0,"error":"Document has no PDF attachment"}';
+    const headerGet = jest.fn((name: string) => {
+      if (name === 'content-type') return 'application/json';
+      return null;
+    });
+    // IMPORTANTE: Node Buffer pool — Buffer.from(str).buffer puede devolver
+    // un ArrayBuffer compartido más grande que los bytes reales (pool de 8KB).
+    // El adapter llama a Buffer.from(arrayBuffer) que tomaría TODO el pool.
+    // Forzamos un ArrayBuffer aislado con la longitud exacta vía Uint8Array.
+    const bytes = new Uint8Array(Buffer.from(fakeJsonBody, 'utf8'));
+    const isolatedBuffer = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength
+    );
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: headerGet },
+      arrayBuffer: async () => isolatedBuffer,
+    });
+
+    await expect(
+      holdedAdapter.getDocumentPdf('demo-key', 'invoice', 'doc-1')
+    ).rejects.toThrow(/non-binary response.*Document has no PDF attachment/);
+  });
+
+  it('V3.G: sorts daily ledger entries by date ASC then number ASC before returning', async () => {
+    // Bug reportado por reviewer 2026-06-01: Holded /dailyledger devuelve los
+    // asientos en orden interno Mongo, no por fecha ni numero. El usuario veia
+    // "122-129, 280, 356, 384..., 660-677, 137 al final" y no podia cuadrar.
+    // Fix: sort estable por date ASC + number ASC antes de paginar.
+    const unsorted = [
+      { id: 'e3', date: 1717200000, number: '280', description: 'Asiento 280' },
+      { id: 'e5', date: 1709251200, number: '137', description: 'Asiento 137' },
+      { id: 'e1', date: 1704067200, number: '122', description: 'Asiento 122' },
+      { id: 'e2', date: 1704153600, number: '129', description: 'Asiento 129' },
+      { id: 'e4', date: 1721174400, number: '677', description: 'Asiento 677' },
+    ];
+
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () => JSON.stringify(unsorted),
+    });
+
+    const result = await holdedAdapter.listDailyLedger('demo-key', {
+      page: 1,
+      limit: 25,
+      starttmp: 1704067200,
+      endtmp: 1735689599,
+    });
+
+    expect((result as Array<{ number: string }>).map((e) => e.number)).toEqual([
+      '122',
+      '129',
+      '137',
+      '280',
+      '677',
+    ]);
+  });
+
+  it('V3.F: filters out contacts with empty supplierRecord when type=supplier requested', async () => {
+    // El server-side filter de Holded type=supplier devuelve también contactos
+    // con supplierRecord=0 (rol legacy, ya no es proveedor activo). Aplicamos
+    // un filtro client-side para que list_contacts respete el rol pedido.
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      status: 200,
+      text: async () =>
+        JSON.stringify([
+          { id: 'c-1', name: 'Proveedor Activo SL', supplierRecord: 5, clientRecord: 0 },
+          { id: 'c-2', name: 'Cliente Solo SL', supplierRecord: 0, clientRecord: 12 },
+          { id: 'c-3', name: 'Histórico SL', supplierRecord: 0, clientRecord: 0 },
+          { id: 'c-4', name: 'Proveedor Reciente SL', supplierRecord: 1, clientRecord: 0 },
+        ]),
+    });
+
+    const result = await holdedAdapter.listContacts('demo-key', {
+      page: 1,
+      limit: 25,
+      type: 'supplier',
+    });
+
+    expect(result.map((c) => c.id)).toEqual(['c-1', 'c-4']);
   });
 
   it('lists and downloads contact attachments through the documented routes', async () => {

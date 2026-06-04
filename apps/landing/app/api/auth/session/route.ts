@@ -12,6 +12,7 @@ export const runtime = 'nodejs';
 
 const DEFAULT_ADMIN_APP_NAME = '[DEFAULT]';
 const HOLDED_ADMIN_APP_NAME = 'holded-admin';
+const ISAAK_ADMIN_APP_NAME = 'isaak-admin';
 
 function requireEnv(name: string) {
   const v = process.env[name];
@@ -64,6 +65,9 @@ function initFirebaseAdminApps() {
 
   const holdedApp = ensureAdminApp(HOLDED_ADMIN_APP_NAME, 'HOLDED_FIREBASE_ADMIN_', false);
   if (holdedApp) apps.push(holdedApp);
+
+  const isaakApp = ensureAdminApp(ISAAK_ADMIN_APP_NAME, 'ISAAK_FIREBASE_ADMIN_', false);
+  if (isaakApp) apps.push(isaakApp);
 
   return apps;
 }
