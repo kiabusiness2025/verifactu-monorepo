@@ -53,12 +53,12 @@ export default function SignupPage() {
     setPasswordError('');
 
     if (password.length < 8) {
-      setPasswordError('La contraseña debe tener al menos 8 caracteres');
+      setPasswordError('La contrasena debe tener al menos 8 caracteres');
       return false;
     }
 
     if (password !== confirmPassword) {
-      setPasswordError('Las contraseñas no coinciden');
+      setPasswordError('Las contrasenas no coinciden');
       return false;
     }
 
@@ -160,7 +160,7 @@ export default function SignupPage() {
         onGoogle={handleGoogleSignup}
         onMicrosoft={handleMicrosoftSignup}
         isLoading={isLoading}
-        dividerText="O crea cuenta con email y contraseña"
+        dividerText="O crea cuenta con email y contrasena"
       />
 
       <motion.form
@@ -190,7 +190,7 @@ export default function SignupPage() {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
-            Contraseña <span className="text-red-500">*</span>
+            Contrasena <span className="text-red-500">*</span>
           </label>
           <PasswordInput
             value={password}
@@ -206,7 +206,7 @@ export default function SignupPage() {
 
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
-            Confirmar contraseña <span className="text-red-500">*</span>
+            Confirmar contrasena <span className="text-red-500">*</span>
           </label>
           <PasswordInput
             value={confirmPassword}
@@ -214,7 +214,7 @@ export default function SignupPage() {
               setConfirmPassword(e.target.value);
               setPasswordError('');
             }}
-            placeholder="Repite tu contraseña"
+            placeholder="Repite tu contrasena"
             required
           />
         </div>
@@ -252,7 +252,7 @@ export default function SignupPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className={`w-full rounded-full py-3 font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`h-12 w-full rounded-2xl text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
             holdedMode ? 'bg-[#ff5460] hover:bg-[#ef4654]' : 'bg-[#2361d8] hover:bg-[#1f55c0]'
           }`}
         >

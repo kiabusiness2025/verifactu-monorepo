@@ -6,6 +6,7 @@
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
 > Para el manifesto técnico F1-F8 (completado) ver `docs/engineering/ISAAK_INTELLIGENCE.md`.
 > **Fuente de verdad V1**: `docs/product/ISAAK_LAUNCH_V1_2026-05-28.md` durante el lanzamiento.
+> **Nota de prioridad inmediata**: todas las decisiones operativas actuales deben seguir el plan V1. Las capacidades de Robot Contable, sectoriales y canales extendidos son **roadmap V2+** y se reactivan después del corte V1.
 > **Roadmap V2+**: `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md` conserva el plan Robot Contable, pero no es la fase activa mientras V1 este en Sprint A/B/C.
 
 ---

@@ -1,47 +1,51 @@
-"use client";
+'use client';
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { Mail, ArrowLeft } from "lucide-react";
-import { AuthLayout, FormInput } from "../../components/AuthComponents";
-import { useToast } from "../../components/Toast";
-import { sendResetEmail, resetPasswordWithCode } from "../../lib/auth";
-import { useAuth } from "../../context/AuthContext";
+import React, { useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import { Mail, ArrowLeft } from 'lucide-react';
+import { AuthLayout, FormInput } from '../../components/AuthComponents';
+import { useToast } from '../../components/Toast';
+import { sendResetEmail, resetPasswordWithCode } from '../../lib/auth';
+import { useAuth } from '../../context/AuthContext';
 
-type ForgotPasswordStep = "email" | "sent" | "reset";
+type ForgotPasswordStep = 'email' | 'sent' | 'reset';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { showToast } = useToast();
   const { user } = useAuth();
-  const [step, setStep] = useState<ForgotPasswordStep>("email");
-  const [email, setEmail] = useState("");
-  const [resetCode, setResetCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
+  const [step, setStep] = useState<ForgotPasswordStep>('email');
+  const [email, setEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const result = await sendResetEmail(email);
 
       if (result.error) {
         setError(result.error.userMessage);
-        showToast({ type: "error", title: "Error", message: result.error.userMessage });
+        showToast({ type: 'error', title: 'Error', message: result.error.userMessage });
         return;
       }
 
-      showToast({ type: "info", title: "Correo enviado", message: "Revisa tu bandeja para el codigo" });
-      setStep("sent");
+      showToast({
+        type: 'info',
+        title: 'Correo enviado',
+        message: 'Revisa tu bandeja para el codigo',
+      });
+      setStep('sent');
     } catch (err) {
-      setError("Error al enviar el correo. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "No se pudo enviar el correo" });
+      setError('Error al enviar el correo. Intenta de nuevo.');
+      showToast({ type: 'error', title: 'Error', message: 'No se pudo enviar el correo' });
     } finally {
       setIsLoading(false);
     }
@@ -50,22 +54,26 @@ export default function ForgotPasswordPage() {
   const handleResetSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
+    setError('');
 
     try {
       const result = await resetPasswordWithCode(resetCode, newPassword);
 
       if (result.error) {
         setError(result.error.userMessage);
-        showToast({ type: "error", title: "Error", message: result.error.userMessage });
+        showToast({ type: 'error', title: 'Error', message: result.error.userMessage });
         return;
       }
 
-      showToast({ type: "success", title: "Actualizada", message: "Tu contraseña ha sido cambiada" });
-      router.push("/auth/login");
+      showToast({
+        type: 'success',
+        title: 'Actualizada',
+        message: 'Tu contrasena ha sido cambiada',
+      });
+      router.push('/auth/login');
     } catch (err) {
-      setError("Error al actualizar la contraseña. Intenta de nuevo.");
-      showToast({ type: "error", title: "Error", message: "No se pudo actualizar la contraseña" });
+      setError('Error al actualizar la contrasena. Intenta de nuevo.');
+      showToast({ type: 'error', title: 'Error', message: 'No se pudo actualizar la contrasena' });
     } finally {
       setIsLoading(false);
     }
@@ -73,19 +81,19 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthLayout
-      title={step === "email" ? "Recuperar contraseña" : "Restablece tu contraseña"}
+      title={step === 'email' ? 'Recuperar contrasena' : 'Restablece tu contrasena'}
       subtitle={
-        step === "email"
-          ? "Te enviaremos un enlace para restablecerla"
+        step === 'email'
+          ? 'Te enviaremos un enlace para restablecerla'
           : `Hemos enviado un codigo a ${email}`
       }
     >
       {user && (
         <div className="mb-3 rounded border border-[#2361d8]/20 bg-[#2361d8]/10 p-2 text-xs text-[#2361d8]">
-          Ya has iniciado sesion. Puedes cambiar tu contraseña con el enlace del correo.
+          Ya has iniciado sesion. Puedes cambiar tu contrasena con el enlace del correo.
         </div>
       )}
-      {step === "email" && (
+      {step === 'email' && (
         <motion.form
           onSubmit={handleEmailSubmit}
           className="space-y-4"
@@ -111,9 +119,9 @@ export default function ForgotPasswordPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
+            className="h-12 w-full rounded-2xl bg-[#2361d8] text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isLoading ? "Enviando..." : "Enviar enlace"}
+            {isLoading ? 'Enviando...' : 'Enviar enlace'}
           </button>
 
           <Link
@@ -126,7 +134,7 @@ export default function ForgotPasswordPage() {
         </motion.form>
       )}
 
-      {step === "sent" && (
+      {step === 'sent' && (
         <motion.div
           className="space-y-4"
           initial={{ opacity: 0, y: 10 }}
@@ -142,7 +150,9 @@ export default function ForgotPasswordPage() {
           <div className="mb-6 space-y-2 text-center">
             <p className="text-gray-600">Hemos enviado un codigo de recuperacion a:</p>
             <p className="font-medium text-gray-900">{email}</p>
-            <p className="text-sm text-gray-500">Revisa tu bandeja de entrada (y spam si es necesario)</p>
+            <p className="text-sm text-gray-500">
+              Revisa tu bandeja de entrada (y spam si es necesario)
+            </p>
           </div>
 
           <form onSubmit={handleResetSubmit} className="space-y-4">
@@ -162,7 +172,7 @@ export default function ForgotPasswordPage() {
             />
 
             <FormInput
-              label="Nueva contraseña"
+              label="Nueva contrasena"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -173,14 +183,14 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full rounded-full bg-[#2361d8] py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
+              className="h-12 w-full rounded-2xl bg-[#2361d8] text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isLoading ? "Actualizando..." : "Actualizar contraseña"}
+              {isLoading ? 'Actualizando...' : 'Actualizar contrasena'}
             </button>
           </form>
 
           <button
-            onClick={() => setStep("email")}
+            onClick={() => setStep('email')}
             className="w-full text-sm font-medium text-[#2361d8] hover:text-[#2361d8]"
           >
             No recibiste el codigo? Intenta de nuevo
@@ -200,6 +210,3 @@ export default function ForgotPasswordPage() {
     </AuthLayout>
   );
 }
-
-
-

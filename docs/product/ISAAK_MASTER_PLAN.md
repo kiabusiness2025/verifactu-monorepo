@@ -24,6 +24,15 @@ El modelo anterior conectaba Isaak con **ERPs genéricos** (Holded, Sage, A3) co
 
 **Holded se mantiene** como conector legacy para clientes existentes y como alternativa para empresas sin software sectorial específico.
 
+> **Nota de foco V1 (actual):** este documento es referencia general, pero la ejecución operativa inmediata está en `docs/product/ISAAK_LAUNCH_V1_2026-05-28.md`. El objetivo actual es cerrar el corte V1 con una superficie simplificada, solo Holded visible y las siguientes prioridades inmediatas:
+>
+> 1. Ejecutar el plan de lanzamiento V1: ocultar superficie avanzada con `ISAAK_V1_LAUNCH=true`, mantener 4 entradas en sidebar, onboarding de 1 paso y solo Holded como integración visible.
+> 2. Pulir el core V1: verificar corpus AEAT en el prompt, portar/cerrar tools Holded V1, usar `create_invoice_draft` en vez de emisión directa, validar alertas fiscales end-to-end, simplificar `/resumen` y `/alertas`, y cerrar trial Stripe 14 días.
+> 3. Cerrar landing/hub: `verifactu.business` como hub de 3 productos, landing Isaak dedicada, demo video, emails de lanzamiento y smoke E2E completo.
+> 4. Activar/verificar `CORPUS_PDF_EXTRACTOR_ENABLED=1` en Vercel.
+>
+> Todo lo demás pasa a **roadmap V2+**: Robot Contable, sectoriales, canales extendidos, Developer Portal, SDKs y status page. Este documento contiene muchas funcionalidades ya implementadas, pero no todas forman parte de la entrega mínima V1.
+
 ---
 
 ## Ecosistema de productos — 3 canales, 1 producto de pago

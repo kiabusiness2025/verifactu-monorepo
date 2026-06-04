@@ -339,6 +339,59 @@ describe('MCP Holded route discovery and auth', () => {
     );
   });
 
+  it('executes tools/call with the internal shared secret using the full supported scope set', async () => {
+    const oldSecret = process.env.MCP_SHARED_SECRET;
+    const oldTestKey = process.env.HOLDED_TEST_API_KEY;
+    process.env.MCP_SHARED_SECRET = 'local-test-secret';
+    process.env.HOLDED_TEST_API_KEY = 'local-holded-test-key';
+
+    try {
+      const mcpMock = jest.requireMock('@/lib/oauth/mcp') as {
+        MCP_TOOL_SCOPES: Record<string, string[]>;
+        hasRequiredScopes: jest.Mock;
+      };
+      mcpMock.MCP_TOOL_SCOPES = { holded_list_invoices: ['mcp.read', 'holded.invoices.read'] };
+      mcpMock.hasRequiredScopes.mockReturnValueOnce(true);
+      (callHoldedMcpTool as jest.Mock).mockResolvedValue({
+        items: [{ id: 'inv-1', total: 100 }],
+      });
+
+      const response = await POST(
+        new Request('https://app.verifactu.business/api/mcp/holded', {
+          method: 'POST',
+          headers: {
+            authorization: 'Bearer local-test-secret',
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            jsonrpc: '2.0',
+            id: 16,
+            method: 'tools/call',
+            params: { name: 'holded_list_invoices', arguments: {} },
+          }),
+        }) as never
+      );
+      const payload = await response.json();
+
+      expect(response.status).toBe(200);
+      expect(payload.error).toBeUndefined();
+      expect(hasRequiredScopes).toHaveBeenCalledWith('mcp.read holded.invoices.read', [
+        'mcp.read',
+        'holded.invoices.read',
+      ]);
+      expect(callHoldedMcpTool).toHaveBeenCalledWith(
+        'local-holded-test-key',
+        'holded_list_invoices',
+        {}
+      );
+    } finally {
+      if (oldSecret === undefined) delete process.env.MCP_SHARED_SECRET;
+      else process.env.MCP_SHARED_SECRET = oldSecret;
+      if (oldTestKey === undefined) delete process.env.HOLDED_TEST_API_KEY;
+      else process.env.HOLDED_TEST_API_KEY = oldTestKey;
+    }
+  });
+
   it('returns MCP error when OAuth token is valid but scope is missing for requested tool', async () => {
     (verifyAccessToken as jest.Mock).mockResolvedValue({
       tenantId: 'tenant_123',

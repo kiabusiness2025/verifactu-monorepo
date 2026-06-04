@@ -15,6 +15,7 @@
 
 import type { Metadata } from 'next';
 import Image from 'next/image';
+import { ArrowLeft } from 'lucide-react';
 import { SuccessActions } from './SuccessActions';
 
 const HOLDED_SITE_URL =
@@ -108,6 +109,16 @@ export default function HoldedDirectSuccessPage() {
               'Inicia sesión con el mismo email que aquí',
             ]}
           />
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <a
+            href={HOLDED_SITE_URL}
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            Ahora no, volver al inicio
+          </a>
         </div>
 
         {/* Soporte */}

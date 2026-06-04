@@ -15,27 +15,6 @@ const REQUIRED_CONFIG_FIELDS = [
   'appId',
 ] as const;
 
-function cleanEnv(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  const trimmed = value.replace(/[\r\n]/g, '').trim();
-  const unquoted =
-    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-    (trimmed.startsWith("'") && trimmed.endsWith("'"))
-      ? trimmed.slice(1, -1).trim()
-      : trimmed;
-  return unquoted;
-}
-
-function normalizeAuthDomain(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-
-  const withoutProtocol = value.replace(/^https?:\/\//i, '');
-  const withoutPath = withoutProtocol.split('/')[0]?.trim();
-  return withoutPath || undefined;
-}
-
-// Next.js only exposes NEXT_PUBLIC_* variables to the client when they are
-// referenced statically. Keep this map in sync with every auth profile.
 const PUBLIC_ENV = {
   NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -51,70 +30,62 @@ const PUBLIC_ENV = {
   NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID:
     process.env.NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID,
   NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID,
-  NEXT_PUBLIC_ISAAK_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_ISAAK_FIREBASE_API_KEY,
-  NEXT_PUBLIC_ISAAK_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_ISAAK_FIREBASE_AUTH_DOMAIN,
-  NEXT_PUBLIC_ISAAK_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_ISAAK_FIREBASE_PROJECT_ID,
-  NEXT_PUBLIC_ISAAK_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_ISAAK_FIREBASE_STORAGE_BUCKET,
-  NEXT_PUBLIC_ISAAK_FIREBASE_MESSAGING_SENDER_ID:
-    process.env.NEXT_PUBLIC_ISAAK_FIREBASE_MESSAGING_SENDER_ID,
-  NEXT_PUBLIC_ISAAK_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_ISAAK_FIREBASE_APP_ID,
   NEXT_PUBLIC_USE_AUTH_EMULATOR: process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR,
 } as const;
 
-function readPublicEnv(primary: keyof typeof PUBLIC_ENV, fallback?: keyof typeof PUBLIC_ENV) {
+function cleanEnv(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  const trimmed = value.replace(/[\r\n]/g, '').trim();
+  const unquoted =
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+      ? trimmed.slice(1, -1).trim()
+      : trimmed;
+  return unquoted;
+}
+
+function readEnv(
+  primary: keyof typeof PUBLIC_ENV,
+  fallback?: keyof typeof PUBLIC_ENV
+): string | undefined {
   const first = cleanEnv(PUBLIC_ENV[primary]);
   if (first) return first;
   if (!fallback) return undefined;
   return cleanEnv(PUBLIC_ENV[fallback]);
 }
 
+function normalizeAuthDomain(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+
+  const withoutProtocol = value.replace(/^https?:\/\//i, '');
+  const withoutPath = withoutProtocol.split('/')[0]?.trim();
+  return withoutPath || undefined;
+}
+
 const defaultFirebaseConfig = {
-  apiKey: readPublicEnv('NEXT_PUBLIC_FIREBASE_API_KEY'),
-  authDomain: normalizeAuthDomain(readPublicEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN')),
-  projectId: readPublicEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
-  storageBucket: readPublicEnv('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'),
-  messagingSenderId: readPublicEnv('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
-  appId: readPublicEnv('NEXT_PUBLIC_FIREBASE_APP_ID'),
+  apiKey: readEnv('NEXT_PUBLIC_FIREBASE_API_KEY'),
+  authDomain: normalizeAuthDomain(readEnv('NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN')),
+  projectId: readEnv('NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
+  storageBucket: readEnv('NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: readEnv('NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: readEnv('NEXT_PUBLIC_FIREBASE_APP_ID'),
 };
 
 const holdedFirebaseConfig = {
-  apiKey: readPublicEnv('NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY', 'NEXT_PUBLIC_FIREBASE_API_KEY'),
+  apiKey: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY', 'NEXT_PUBLIC_FIREBASE_API_KEY'),
   authDomain: normalizeAuthDomain(
-    readPublicEnv('NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN', 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN')
+    readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN', 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN')
   ),
-  projectId: readPublicEnv(
-    'NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID'
-  ),
-  storageBucket: readPublicEnv(
+  projectId: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID', 'NEXT_PUBLIC_FIREBASE_PROJECT_ID'),
+  storageBucket: readEnv(
     'NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET',
     'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'
   ),
-  messagingSenderId: readPublicEnv(
+  messagingSenderId: readEnv(
     'NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID',
     'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'
   ),
-  appId: readPublicEnv('NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID', 'NEXT_PUBLIC_FIREBASE_APP_ID'),
-};
-
-const isaakFirebaseConfig = {
-  apiKey: readPublicEnv('NEXT_PUBLIC_ISAAK_FIREBASE_API_KEY', 'NEXT_PUBLIC_FIREBASE_API_KEY'),
-  authDomain: normalizeAuthDomain(
-    readPublicEnv('NEXT_PUBLIC_ISAAK_FIREBASE_AUTH_DOMAIN', 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN')
-  ),
-  projectId: readPublicEnv(
-    'NEXT_PUBLIC_ISAAK_FIREBASE_PROJECT_ID',
-    'NEXT_PUBLIC_FIREBASE_PROJECT_ID'
-  ),
-  storageBucket: readPublicEnv(
-    'NEXT_PUBLIC_ISAAK_FIREBASE_STORAGE_BUCKET',
-    'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET'
-  ),
-  messagingSenderId: readPublicEnv(
-    'NEXT_PUBLIC_ISAAK_FIREBASE_MESSAGING_SENDER_ID',
-    'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID'
-  ),
-  appId: readPublicEnv('NEXT_PUBLIC_ISAAK_FIREBASE_APP_ID', 'NEXT_PUBLIC_FIREBASE_APP_ID'),
+  appId: readEnv('NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID', 'NEXT_PUBLIC_FIREBASE_APP_ID'),
 };
 
 function isHoldedAuthRoute() {
@@ -122,28 +93,8 @@ function isHoldedAuthRoute() {
   return window.location.pathname.startsWith('/auth/holded');
 }
 
-function isIsaakAuthRoute() {
-  if (typeof window === 'undefined') return false;
-  return window.location.pathname.startsWith('/auth/isaak');
-}
-
 const useHoldedFirebase = isHoldedAuthRoute();
-const useIsaakFirebase = !useHoldedFirebase && isIsaakAuthRoute();
-const firebaseConfig = useHoldedFirebase
-  ? holdedFirebaseConfig
-  : useIsaakFirebase
-    ? isaakFirebaseConfig
-    : defaultFirebaseConfig;
-const firebaseAppName = useHoldedFirebase
-  ? 'holded-auth'
-  : useIsaakFirebase
-    ? 'isaak-auth'
-    : '[DEFAULT]';
-const firebaseEnvFamily = useHoldedFirebase
-  ? 'NEXT_PUBLIC_HOLDED_FIREBASE_* or NEXT_PUBLIC_FIREBASE_*'
-  : useIsaakFirebase
-    ? 'NEXT_PUBLIC_ISAAK_FIREBASE_* or NEXT_PUBLIC_FIREBASE_*'
-    : 'NEXT_PUBLIC_FIREBASE_*';
+const firebaseConfig = useHoldedFirebase ? holdedFirebaseConfig : defaultFirebaseConfig;
 
 const isConfigComplete = Object.values(firebaseConfig).every(Boolean);
 const missingConfigFields = REQUIRED_CONFIG_FIELDS.filter((field) => !firebaseConfig[field]);
@@ -155,14 +106,12 @@ let auth: any;
 
 if (typeof window !== 'undefined' && isConfigComplete) {
   try {
-    if (firebaseAppName === '[DEFAULT]') {
-      app = getApps().some((existingApp) => existingApp.name === '[DEFAULT]')
-        ? getApp()
-        : initializeApp(firebaseConfig);
+    if (useHoldedFirebase) {
+      app = getApps().some((existingApp) => existingApp.name === 'holded-auth')
+        ? getApp('holded-auth')
+        : initializeApp(firebaseConfig, 'holded-auth');
     } else {
-      app = getApps().some((existingApp) => existingApp.name === firebaseAppName)
-        ? getApp(firebaseAppName)
-        : initializeApp(firebaseConfig, firebaseAppName);
+      app = getApps().length ? getApp() : initializeApp(firebaseConfig);
     }
     auth = getAuth(app);
     isFirebaseReady = true;
@@ -187,20 +136,18 @@ if (typeof window !== 'undefined' && isConfigComplete) {
     isFirebaseReady = false;
   }
 } else if (typeof window !== 'undefined' && !isConfigComplete) {
-  const routeLabel = useHoldedFirebase
-    ? 'Landing /auth/holded'
-    : useIsaakFirebase
-      ? 'Landing /auth/isaak'
-      : 'Landing auth';
+  const envFamily = useHoldedFirebase
+    ? 'NEXT_PUBLIC_HOLDED_FIREBASE_* or NEXT_PUBLIC_FIREBASE_*'
+    : 'NEXT_PUBLIC_FIREBASE_*';
+  const routeLabel = useHoldedFirebase ? 'Landing /auth/holded' : 'Landing auth';
   console.warn(
-    `Firebase config incomplete for ${routeLabel}. Missing: ${missingConfigFields.join(', ')}. Set ${firebaseEnvFamily} env vars in the deployed project.`
+    `Firebase config incomplete for ${routeLabel}. Missing: ${missingConfigFields.join(', ')}. Set ${envFamily} env vars in the deployed project.`
   );
 }
 
 export {
   app,
   auth,
-  firebaseEnvFamily,
   isConfigComplete as isFirebaseConfigComplete,
   isFirebaseReady,
   missingConfigFields,

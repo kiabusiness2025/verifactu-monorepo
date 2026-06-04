@@ -11,13 +11,7 @@ import {
   signOut,
   User,
 } from 'firebase/auth';
-import {
-  auth,
-  firebaseEnvFamily,
-  isFirebaseConfigComplete,
-  isFirebaseReady,
-  missingConfigFields,
-} from './firebase';
+import { auth, isFirebaseConfigComplete, isFirebaseReady, missingConfigFields } from './firebase';
 import { clearSessionCookie, mintSessionCookie } from './serverSession';
 
 type SignInOptions = {
@@ -28,7 +22,7 @@ const authUnavailable = () => {
   // Public Firebase vars are safe to name in the error; this makes deploy
   // misconfiguration visible for the active auth profile.
   const missing = missingConfigFields.length
-    ? ` Faltan campos Firebase: ${missingConfigFields.join(', ')}. Variables esperadas: ${firebaseEnvFamily}.`
+    ? ` Faltan campos Firebase: ${missingConfigFields.join(', ')}.`
     : '';
   return {
     user: null as any,

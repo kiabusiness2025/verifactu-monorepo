@@ -168,7 +168,11 @@ async function assertMcpAccess(request: NextRequest) {
   if (!token) return null;
 
   if (expected && token === expected) {
-    return { mode: 'shared_secret' as const, tenantId: null };
+    return {
+      mode: 'shared_secret' as const,
+      tenantId: null,
+      scope: getSupportedScopes().join(' '),
+    };
   }
 
   // Personal Access Token branch — preferred for ChatGPT mobile and any client
@@ -429,8 +433,7 @@ function formatToolResult(data: unknown) {
       // contexto previo en vez de los args del tool call actual — el usuario
       // puede aprobar una cosa y ejecutarse otra. Mostrando el contacto real
       // tras la acción, cualquier mismatch se detecta inmediatamente.
-      const contactName =
-        typeof created.contactName === 'string' ? created.contactName : '';
+      const contactName = typeof created.contactName === 'string' ? created.contactName : '';
       const contactCode = typeof created.contactCode === 'string' ? created.contactCode : '';
       const contactCity = typeof created.contactCity === 'string' ? created.contactCity : '';
       const contactSuffix = [contactCode, contactCity].filter(Boolean).join(', ');

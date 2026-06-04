@@ -147,16 +147,16 @@ export default function LoginPage() {
               </div>
 
               <h1 className="mt-5 text-2xl font-bold tracking-tight text-black sm:text-3xl">
-                Preparando tu conexión
+                Preparando tu conexion
               </h1>
 
               {!authLoadingTimedOut ? (
                 <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-neutral-600 sm:text-base">
-                  Estamos validando tu acceso para continuar con la conexión de Holded.
+                  Estamos validando tu acceso para continuar con la conexion de Holded.
                 </p>
               ) : (
                 <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-amber-700 sm:text-base">
-                  Está tardando más de lo normal. Puedes recargar para reintentar.
+                  Esta tardando mas de lo normal. Puedes recargar para reintentar.
                 </p>
               )}
 
@@ -188,12 +188,12 @@ export default function LoginPage() {
           <p className="mt-4 text-sm font-semibold text-slate-900">Cargando tu acceso...</p>
           {!authLoadingTimedOut ? (
             <p className="mt-1 text-sm text-gray-600">
-              En unos segundos continuamos con la conexión.
+              En unos segundos continuamos con la conexion.
             </p>
           ) : (
             <>
               <p className="mt-2 text-sm text-amber-700">
-                Está tardando más de lo normal. Puedes recargar para reintentar.
+                Esta tardando mas de lo normal. Puedes recargar para reintentar.
               </p>
               <button
                 type="button"
@@ -236,7 +236,7 @@ export default function LoginPage() {
               </h1>
 
               <p className="mx-auto mt-3 max-w-lg text-sm leading-7 text-neutral-600 sm:text-base">
-                Todo listo. En unos segundos entrarás al paso de conexión con Holded.
+                Todo listo. En unos segundos entraras al paso de conexion con Holded.
               </p>
 
               <div className="mx-auto mt-8 h-2 w-28 overflow-hidden rounded-full bg-neutral-200">
@@ -256,7 +256,7 @@ export default function LoginPage() {
           {mintError ? (
             <>
               <p className="mt-4 text-red-600">
-                Error al iniciar sesión. Por favor, recarga e inténtalo de nuevo.
+                Error al iniciar sesion. Por favor, recarga e intentalo de nuevo.
               </p>
               <button
                 className="mt-4 text-[#2361d8] underline text-sm"
@@ -382,7 +382,7 @@ export default function LoginPage() {
         onGoogle={handleGoogleLogin}
         onMicrosoft={handleMicrosoftLogin}
         isLoading={isLoading}
-        dividerText="O entra con email y contraseña"
+        dividerText="O entra con email y contrasena"
       />
 
       <motion.form
@@ -403,7 +403,7 @@ export default function LoginPage() {
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+            <label className="block text-sm font-medium text-slate-700">Contrasena</label>
             <Link
               href={buildAuthHref('/auth/forgot-password')}
               className={`text-sm font-medium ${
@@ -437,7 +437,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isLoading}
-          className={`w-full rounded-full py-3 font-semibold text-white shadow-md transition disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`h-12 w-full rounded-2xl text-sm font-semibold text-white shadow-sm transition disabled:cursor-not-allowed disabled:opacity-50 ${
             holdedMode ? 'bg-[#ff5460] hover:bg-[#ef4654]' : 'bg-[#2361d8] hover:bg-[#1f55c0]'
           }`}
         >

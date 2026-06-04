@@ -11,7 +11,7 @@ export function AuthOAuthButtons({
   onGoogle,
   onMicrosoft,
   isLoading,
-  dividerText = 'O continua con email y contraseña',
+  dividerText = 'O continua con email y contrasena',
 }: AuthOAuthButtonsProps) {
   return (
     <>
@@ -20,7 +20,7 @@ export function AuthOAuthButtons({
           type="button"
           onClick={onGoogle}
           disabled={isLoading}
-          className="flex w-full items-center justify-center gap-3 rounded-full border border-gray-300 bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
             <path
@@ -47,7 +47,7 @@ export function AuthOAuthButtons({
           type="button"
           onClick={onMicrosoft}
           disabled={isLoading}
-          className="flex w-full items-center justify-center gap-3 rounded-full border border-gray-200 bg-white px-4 py-3 font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#F25022" d="M2 2h9v9H2z" />
@@ -59,13 +59,10 @@ export function AuthOAuthButtons({
         </button>
       </div>
 
-      <div className="relative pt-1">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="bg-white px-2 text-gray-500">{dividerText}</span>
-        </div>
+      <div className="flex items-center gap-3">
+        <span className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs font-medium text-slate-400">{dividerText}</span>
+        <span className="h-px flex-1 bg-slate-200" />
       </div>
     </>
   );

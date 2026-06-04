@@ -55,7 +55,22 @@ export function renderCorporateBrandedEmail(input: CorporateTemplateInput): stri
       <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;margin:0 auto;background:#ffffff;border:1px solid #dbe7ff;border-radius:16px;overflow:hidden;">
         <tr>
           <td style="padding:20px 24px;background:#ffffff;border-bottom:1px solid #e2e8f0;">
-            <img src="https://verifactu.business/brand/logo-horizontal-dark.png" alt="verifactu.business" style="display:block;height:28px;width:auto;" />
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+              <tr>
+                <td style="vertical-align:middle;">
+                  <span style="display:inline-flex;align-items:center;gap:10px;">
+                    <img src="https://verifactu.business/Isaak/isaak-avatar-verifactu.png" alt="Isaak" style="display:block;height:34px;width:34px;border-radius:999px;" />
+                    <span>
+                      <span style="display:block;font-size:16px;font-weight:800;color:#0f172a;line-height:1.1;">Isaak</span>
+                      <span style="display:block;font-size:12px;color:#64748b;line-height:1.2;">verifactu.business</span>
+                    </span>
+                  </span>
+                </td>
+                <td align="right" style="vertical-align:middle;">
+                  <img src="https://verifactu.business/brand/logo-horizontal-dark.png" alt="verifactu.business" style="display:block;height:24px;width:auto;margin-left:auto;" />
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
@@ -83,7 +98,7 @@ export function renderCorporatePlainTextEmail(input: CorporatePlainTextInput): s
   const badge = VARIANT_META[variant].badge;
 
   const sections = [
-    `verifactu.business · ${badge}`,
+    `verifactu.business - ${badge}`,
     '',
     title,
     '',

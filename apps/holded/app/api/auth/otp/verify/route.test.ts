@@ -76,13 +76,14 @@ beforeEach(() => {
   readSecretMock.mockReturnValue(TEST_SECRET);
   signSessionMock.mockResolvedValue('minted-session-jwt');
   buildCookieMock.mockImplementation((input) => ({
+    name: '__session',
     value: input.value,
     httpOnly: true,
     secure: true,
     sameSite: 'none' as const,
     path: '/',
     domain: '.verifactu.business',
-    maxAge: input.maxAgeSeconds,
+    maxAge: input.maxAgeSeconds ?? 1800,
   }));
 });
 

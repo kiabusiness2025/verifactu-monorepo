@@ -18,9 +18,10 @@ import { NextRequest, NextResponse } from 'next/server';
 // Hosts permitidos por defecto. Se pueden extender via env
 // ISAAK_ALLOWED_ORIGINS (lista separada por comas).
 const DEFAULT_ALLOWED_HOSTS = [
+  'isaak.app',
+  'www.isaak.app',
   'isaak.chat',
   'www.isaak.chat',
-  'isaak.app',
   'isaak.verifactu.business',
   'app.verifactu.business',
   'verifactu.business',

@@ -14,6 +14,7 @@
  */
 
 import { Check, Copy, ExternalLink } from 'lucide-react';
+import Image from 'next/image';
 import { useState } from 'react';
 
 type Platform = 'claude' | 'chatgpt';
@@ -27,41 +28,27 @@ interface SuccessActionsProps {
   steps: string[];
 }
 
-const PLATFORM_THEME: Record<Platform, { ring: string; bg: string; cta: string; label: string }> = {
+const PLATFORM_THEME: Record<
+  Platform,
+  { ring: string; bg: string; cta: string; label: string; logoSrc: string; logoAlt: string }
+> = {
   claude: {
     ring: 'ring-orange-200',
     bg: 'bg-orange-50',
     cta: 'bg-[#d97757] hover:bg-[#c4654a]',
     label: 'Abrir Claude',
+    logoSrc: '/brand/claude-logo.svg',
+    logoAlt: 'Claude',
   },
   chatgpt: {
     ring: 'ring-emerald-200',
     bg: 'bg-emerald-50',
     cta: 'bg-[#10a37f] hover:bg-[#0e8a6c]',
     label: 'Abrir ChatGPT',
+    logoSrc: '/brand/chatgpt-logo.png',
+    logoAlt: 'ChatGPT',
   },
 };
-
-function PlatformIcon({ platform }: { platform: Platform }) {
-  if (platform === 'claude') {
-    return (
-      <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
-        <path
-          d="M5.4 18.5L11.5 4h2L19.6 18.5h-2.3l-1.4-3.6H9l-1.4 3.6H5.4zm4.3-5.5h4.6L12 7.2 9.7 13z"
-          fill="#d97757"
-        />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" className="h-6 w-6" aria-hidden="true">
-      <path
-        d="M22.28 9.82a5.95 5.95 0 0 0-.51-4.91A6.04 6.04 0 0 0 15.2 2.66 6 6 0 0 0 4.55 4.81a5.95 5.95 0 0 0-3.97 2.88 6.04 6.04 0 0 0 .74 7.08 5.95 5.95 0 0 0 .51 4.91 6.04 6.04 0 0 0 6.5 2.9 5.95 5.95 0 0 0 4.49 2.01 6.04 6.04 0 0 0 5.77-4.16 5.95 5.95 0 0 0 3.97-2.88 6.04 6.04 0 0 0-.74-7.08l.46-.65z"
-        fill="#10a37f"
-      />
-    </svg>
-  );
-}
 
 export function SuccessActions({
   platform,
@@ -93,7 +80,13 @@ export function SuccessActions({
         <div
           className={`flex h-10 w-10 items-center justify-center rounded-xl ${theme.bg} ring-1 ${theme.ring}`}
         >
-          <PlatformIcon platform={platform} />
+          <Image
+            src={theme.logoSrc}
+            alt={theme.logoAlt}
+            width={24}
+            height={24}
+            className="h-6 w-6 object-contain"
+          />
         </div>
         <div>
           <p className="text-sm font-semibold text-slate-900">{title}</p>

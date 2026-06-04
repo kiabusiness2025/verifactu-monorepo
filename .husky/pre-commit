@@ -1,5 +1,5 @@
 #!/bin/sh
-# Pre-commit hook - runs staged file checks and app TypeScript validation.
+# Pre-commit hook - blocks commits with TypeScript or staged-file check errors.
 
 set -e
 
@@ -13,7 +13,13 @@ fi
 echo "Running lint-staged on staged files..."
 pnpm exec lint-staged
 
-echo "Running verifactu-app TypeScript check..."
-pnpm -w run typecheck:app
+echo "Running app TypeScript check..."
+pnpm run typecheck:app
+
+echo "Running landing TypeScript check..."
+pnpm run typecheck:landing
+
+echo "Running Holded TypeScript check..."
+pnpm run typecheck:holded
 
 echo "Pre-commit checks passed"
