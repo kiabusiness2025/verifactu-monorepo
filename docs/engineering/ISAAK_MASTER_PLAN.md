@@ -635,3 +635,161 @@ Detalle completo por módulos en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.
 - **Idempotencia**: header `Idempotency-Key` opcional en POST/PATCH. TTL 24h.
 - **Trazas**: cada respuesta incluye `meta.requestId` (o `error.requestId`). Logs internos correlacionables.
 - **Confirmation flow**: acciones AEAT requieren 2 POST — primero devuelve `confirmationToken` (TTL 5min), segundo confirma con ese token.
+
+---
+
+## Plan H — Isaak-MCP + multi-ERP abstraction (2026-06-04)
+
+**Contexto**: Holded fue el "capítulo 1" — validamos que un connector MCP escoped por tenant podía exponer datos contables a Claude y ChatGPT con confirmación humana sobre escrituras. La visión real de Isaak es ser **asesor fiscal + contable (+ laboral)** integral, conectado a los sistemas sectoriales que el cliente ya usa (HotelGest, Revo, Loyverse, Inmovilla, Nubimed, WooCommerce, PrestaShop, Mindbody…), no a un ERP genérico adicional.
+
+**Decisión estratégica**: lanzar `apps/isaak-mcp` como segundo connector MCP — pero esta vez expone las capacidades **de Isaak**, no las de Holded. Internamente Isaak resuelve la fuente de datos correcta (Holded, sectorial, ledger nativo, banking, AEAT) sin que el connector tenga que saber sobre cada ERP.
+
+> **Fuente de verdad Plan H**: este documento + `docs/isaak/SECTORS.md` (cobertura sectorial) + `docs/isaak/CAPABILITY_MATRIX.md` (features × superficies) + `docs/isaak/REFACTOR_PLAN.md` (sub-task 3F).
+
+### H.0 — Visión
+
+| Eje                           | Lectura                                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Posicionamiento               | Isaak es el **asesor fiscal-contable integral**. El connector MCP es solo la superficie Claude/ChatGPT — no es el producto.                   |
+| ERP abstraction               | Holded ≠ caso especial. Es un backend más al lado de HotelGest/Revo/Loyverse/etc. Toda la lógica fiscal vive sobre el **ledger nativo F9-L5**. |
+| Surface parity                | Cada capacidad (lectura/escritura) se expone en las superficies relevantes: web chat, Telegram, WhatsApp, MCP Claude, MCP ChatGPT, mobile.    |
+| Admin Panel                   | Único punto de control para tenants, integraciones, jobs fiscales, cron health, modelos AEAT, webhooks y observabilidad.                      |
+| Bootstrap económico vigente   | Sin inversión externa. Inversión solo se evalúa post-certificación AEAT (B5). Sin cambio respecto al roadmap actual.                          |
+
+### H.1 — Multi-ERP abstraction (`packages/erp-abstraction`)
+
+**Estado actual**: `ErpClient` interface vive en `apps/isaak/app/lib/erp-client.ts` con factory `erp-client-factory.ts`. Implementaciones: `HoldedErpClient`, `ChiftErpClient` (suspendido) + 8 clientes sectoriales sueltos en `apps/isaak/app/lib/{hotelgest,revo,loyverse,woocommerce,prestashop,mindbody,inmovilla,nubimed}-*.ts`.
+
+**Problema**: el contrato sectorial no es uniforme. Cada cliente expone su propio shape, no hay normalización a un modelo común y la lógica fiscal repite mappings ad hoc.
+
+**Acción H.1.a**: extraer `packages/erp-abstraction` como package del monorepo (ver `docs/isaak/REFACTOR_PLAN.md` sub-task 3F).
+
+- `ErpClient` interface + `ErpProvider` enum + tipos canónicos (`CanonicalContact`, `CanonicalDocument`, `CanonicalLedgerEntry`).
+- Adapters por backend: `HoldedAdapter`, `HotelgestAdapter`, `RevoAdapter`, `LoyverseAdapter`, `WoocommerceAdapter`, `PrestashopAdapter`, `MindbodyAdapter`, `InmovillaAdapter`, `NubimedAdapter`, `LedgerAdapter` (ledger nativo F9), `BankingAdapter` (EnableBanking + Salt Edge).
+- Cada adapter responsable de: normalizar → modelo canónico, traducir escrituras (cuando aplica), exponer capability flags (`supportsInvoiceCreate`, `supportsLedgerRead`, etc.).
+- Factory `createErpClient({ provider, credentials })` único.
+
+**Acción H.1.b**: el chat route + LLM tools + cron jobs consumen únicamente `ErpClient` canónico. Mappings backend-específicos quedan **detrás del adapter**, nunca en la capa de tools.
+
+**Acción H.1.c**: lógica fiscal AEAT (modelos 303/130/111/180/190/347/349, Inspector 51 reglas, RAG corpus) ya opera sobre el **ledger nativo F9-L5**, no sobre ERP. Esta separación queda explícita y consolidada: el ERP es **fuente de operaciones**, el ledger es **fuente de verdad fiscal**.
+
+### H.2 — Foundation del Isaak-MCP
+
+**Decisión**: `apps/isaak-mcp` reusa la arquitectura validada de `apps/holded-mcp` (auth tenant-scoped por token, transport remote-MCP, OAuth-style consent screen) pero expone tools de **Isaak**, no de Holded directamente.
+
+**Tools propuestos (V1)**:
+
+| Tool                                   | Lectura/Escritura | Backend resuelto por Isaak                                                  |
+| -------------------------------------- | ----------------- | --------------------------------------------------------------------------- |
+| `isaak_get_company_profile`            | R                 | `CompanyIntelligenceService` + perfil fiscal R000                           |
+| `isaak_list_sales_invoices`            | R                 | ErpClient canónico (Holded / sectorial / ledger nativo)                     |
+| `isaak_get_sales_invoice`              | R                 | idem + PDF base64 (si el adapter lo soporta)                                |
+| `isaak_list_purchase_documents`        | R                 | idem                                                                        |
+| `isaak_list_contacts` / `get_contact`  | R                 | idem                                                                        |
+| `isaak_list_ledger_entries`            | R                 | Ledger nativo F9 (rango de fechas obligatorio)                              |
+| `isaak_list_bank_transactions`         | R                 | EnableBanking + Salt Edge unificados                                        |
+| `isaak_get_tax_return_draft`           | R                 | Borrador modelo 303/130/111/etc. ya implementado en C-B                     |
+| `isaak_run_inspector_audit`            | R                 | Inspector AEAT 51 reglas (módulo F11) — read-only audit                     |
+| `isaak_create_invoice_draft`           | W (consent)       | ErpClient canónico — mismo patrón confirmación que Holded MCP V3.G.18       |
+| `isaak_submit_tax_return`              | W (consent)       | C-B submit — confirmación explícita + token TTL 5min                        |
+
+**Constraint crítico** (sin cambios vs. Holded MCP): cada tool debe declarar annotations honestas, justificaciones, ejemplos. Cualquier write requiere consent del usuario. Aplica V3.G.18 de Holded MCP: server-side resolver + audit log + canonical entity name en `content[0].text` para defender contra el bug de consent UI desync.
+
+**Constraint regulatorio**: este connector no se lanza hasta tener aprobado el MCP de Holded (Anthropic + OpenAI). Mientras tanto, **diseño en docs + scaffolding interno** pero sin publicar URL pública ni someter a review hasta que Holded MCP esté green-lit.
+
+### H.3 — Cobertura fiscal completa (modelos AEAT) sobre la abstracción
+
+Toda la lógica fiscal ya implementada (C-B 8 modelos, Inspector 51 reglas, CI 9 reglas, RAG corpus AEAT F13, ledger F9-L5, presentación automática C-C) **vive sobre la abstracción multi-ERP** desde H.1. Ningún módulo fiscal debería re-implementarse para un nuevo backend — basta con sumar un adapter al `packages/erp-abstraction`.
+
+| Modelo | Estado | Backend-agnostic? |
+| ------ | ------ | ----------------- |
+| 303 IVA trimestral | ✅ C-B operativo | ✅ vía ledger nativo |
+| 130 pagos fraccionados | ✅ C-B operativo | ✅ vía ledger nativo |
+| 111 retenciones trabajadores | ✅ C-B operativo | ✅ vía ledger nativo |
+| 115 retenciones arrendamientos | ✅ C-B operativo | ✅ vía ledger nativo |
+| 180 resumen anual 115 | ✅ C-B operativo | ✅ vía ledger nativo |
+| 190 resumen anual 111 | ✅ C-B operativo | ✅ vía ledger nativo |
+| 347 operaciones >3.005 € | ✅ C-B operativo | ✅ vía ledger nativo |
+| 349 operaciones intracomunitarias | ✅ C-B operativo | ✅ vía ledger nativo + CI VIES |
+
+### H.4 — Cobertura sectorial
+
+Ver `docs/isaak/SECTORS.md` para el detalle por sector (cobertura, profundidad, gaps, prioridades).
+
+**Resumen**:
+
+| Sector            | ERP/PMS/POS              | Estado adapter | Profundidad |
+| ----------------- | ------------------------ | -------------- | ----------- |
+| Hoteles           | HotelGest                | ✅ Operativo   | Full        |
+| Restauración      | Revo XEF                 | ✅ Operativo   | Full        |
+| Retail/Comercio   | Loyverse                 | ✅ Operativo   | Full        |
+| E-commerce        | WooCommerce, PrestaShop  | ✅ Operativo   | Full        |
+| Bienestar/Gym     | Mindbody                 | ✅ Operativo   | Partial     |
+| Inmobiliarias     | Inmovilla                | ✅ Operativo   | Partial     |
+| Clínicas/Dental   | Nubimed                  | ✅ Operativo   | Partial     |
+| Contable genérico | Holded                   | ✅ Operativo   | Full        |
+| Banking           | EnableBanking, Salt Edge | ✅ Operativo   | Full        |
+| Gimnasios         | TeamUp                   | ⏳ Backlog P2  | —           |
+| Talleres          | RepairShopr              | ⏳ Backlog P2  | —           |
+| Contable genérico | Chift (Sage/A3/Odoo)     | ⏸️ Suspendido  | —           |
+
+### H.5 — Admin Panel (control unificado)
+
+**Objetivo**: un único panel para operar Isaak — tenants, integraciones, jobs fiscales, salud de connectors, modelos AEAT presentados/draft, webhooks, marketing y observabilidad.
+
+**Estado actual**: existen rutas admin sueltas (`/admin-marketing` D4, `/admin/...` varias). No hay panel consolidado.
+
+**Acción H.5.a — consolidar en `/admin`**:
+
+| Sección                        | Datos / acciones                                                                                                                          |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Overview                       | KPIs globales: tenants activos, MRR, cron health, alertas abiertas, modelos AEAT presentados último trimestre                             |
+| Tenants                        | Listado + búsqueda + ficha (perfil fiscal R000, integraciones, plan, asesor, AdvisorClient si aplica, ledger size, alertas abiertas)      |
+| Integraciones                  | Por tenant: estado Holded/sectorial/banking/google/microsoft/whatsapp/telegram (last sync, errores, reconectar)                           |
+| Modelos AEAT                   | Pipeline draft → review → submitted → confirmed; reintentos; export PDF; auditoría firma                                                  |
+| Inspector                      | Auditorías abiertas + reglas dispararon más en últimos 30 días (por severidad)                                                            |
+| Connector health               | Crons (`audit-monthly`, `aeat-sede-sync`, `aeat-weekly-summary`, `aeat-corpus-reingest`, `webhook-retry`, `eb-sync`) — último run + errores |
+| Webhooks                       | Cola `IsaakWebhookDelivery` + dead-letter + replay manual                                                                                 |
+| MCP servers                    | Holded MCP + Isaak MCP — sesiones activas por tenant, tools call count, errores                                                           |
+| Marketing                      | Campañas (D4) + segmentos + plantillas                                                                                                    |
+| Observabilidad                 | Vercel logs + Sentry digest + uptime AEAT                                                                                                 |
+
+**Acción H.5.b**: RBAC mínimo — `role ∈ {staff, support, admin}` con scope por sección. Audit log de acciones admin (quién resetea token, quién aprueba modelo, etc.).
+
+### H.6 — Banking & EnableBanking (ya integrado, queda dentro de Plan H)
+
+EnableBanking PSD2 AIS está operativo en producción desde 2026-05-23 (sesión 3, app `73fbe5d2-b322-4d71-ba5d-223be78df437`). Cron `eb-sync` cada 6h, monitor de expiración en cron `connector-health`, reconcile con ledger nativo.
+
+**Encaje en Plan H**: EnableBanking es un adapter más del `packages/erp-abstraction` (categoría banking), expuesto al MCP de Isaak como `isaak_list_bank_transactions` y consumido por Inspector AEAT (validación pagos/cobros vs. asientos ledger).
+
+### H.7 — Roadmap laboral V3 (futuro)
+
+Fuera del alcance de Plan H V1. Bloqueado por dependencia de adapters laborales (Sage 200 Labour, A3NOM, otros). Se documentará en `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md` cuando se priorice.
+
+### Repo cleanup & reorganización (paralelo a Plan H)
+
+Backup: `kiabusiness2025/verifactu-monorepo` queda como repositorio histórico/legacy. Limpieza se hace sobre `kiabusiness2025/isaak`.
+
+**Backlog cleanup** (ver `docs/isaak/REFACTOR_PLAN.md` para detalle):
+
+1. **Mover `apps/holded-mcp` y `apps/app/api/mcp/holded` a estado congelado** — no tocar hasta aprobación Anthropic/OpenAI; documentar como "frozen connectors".
+2. **Extraer `packages/erp-abstraction`** (sub-task 3F).
+3. **Eliminar Chift code path** (suspendido) — mover a `docs/legacy/CHIFT_ARCHIVE.md` + borrar `apps/isaak/app/lib/chift-*.ts` + ruta `/api/isaak/chift/*` + workspace page.
+4. **Consolidar `apps/landing` + `apps/holded` + `apps/isaak/app/p`** — un solo target landing público.
+5. **Limpieza secrets**: rotar `HOLDED_TEST_API_KEY` post-aprobación, validar que no hay PAT/API keys en histórico (audit `git log -p | grep -E '(token|key|secret)'`).
+6. **Mover docs huérfanos** (`docs/legacy/` ya existe en `verifactu-monorepo`) — definir política única en `docs/README.md`.
+7. **Tests E2E del MCP**: harness tipo `holded-mcp/scripts/test-*.sh` replicado para Isaak MCP cuando arranque H.2.
+
+### Plan H — pendientes y dependencias
+
+| ID  | Tarea                                                                          | Bloqueado por                                |
+| --- | ------------------------------------------------------------------------------ | -------------------------------------------- |
+| H.1 | Extraer `packages/erp-abstraction` (sub-task 3F)                               | —                                            |
+| H.2 | Diseñar Isaak MCP (sin publicar URL)                                           | Anthropic + OpenAI green-light a Holded MCP  |
+| H.3 | Migrar lógica fiscal a consumir `ErpClient` canónico                           | H.1                                          |
+| H.4 | Documentar cobertura sectorial actual + gaps (TeamUp, RepairShopr)             | —                                            |
+| H.5 | `/admin` panel consolidado                                                     | —                                            |
+| H.6 | (EnableBanking ya integrado, solo documentación)                               | ✅ N/A                                       |
+| H.7 | Roadmap laboral V3                                                             | Decisión post-piloto fiscal                  |
+| Clean | Repo cleanup (7 puntos arriba)                                               | —                                            |
+
