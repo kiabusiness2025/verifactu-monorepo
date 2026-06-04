@@ -51,8 +51,10 @@ Cada capacidad de Isaak puede aparecer en varias superficies (chat web, Telegram
 | ---------------------------- | -------- | -------- | -------- | ---------- | ----------- | --------- | ------- |
 | Crear factura draft          | ✅ GA    | ✅ GA    | 🧪 Exp   | 🔒         | 🔒          | ⏳ Plan   | ✅ GA   |
 | Crear factura final          | ✅ GA    | ✅ GA    | ⏳ Plan  | 🚫         | 🚫          | ⏳ Plan   | ✅ GA   |
-| Registrar gasto OCR          | ✅ GA    | ✅ GA    | ✅ GA    | 🚫         | 🚫          | ⏳ Plan   | ✅ GA   |
+| Registrar gasto OCR          | ✅ GA    | ✅ GA    | ⏳ Plan  | 🚫         | 🚫          | ⏳ Plan   | ✅ GA   |
 | Submit modelo AEAT           | ✅ GA    | 🧪 Exp   | 🚫       | 🚫         | 🚫          | ⏳ Plan   | ✅ GA   |
+
+> Nota WhatsApp OCR (2026-06-04): `apps/isaak/app/api/whatsapp/webhook/route.ts` actualmente solo confirma la recepción del adjunto (`handleIncomingMedia`). El pipeline OCR (descarga media → `extractInvoiceFromImage` → registro gasto) está pendiente — pasa a `⏳ Plan` hasta que el webhook ejecute end-to-end.
 
 ### Fiscal / AEAT
 

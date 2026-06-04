@@ -10,28 +10,32 @@ Isaak conecta con el software de gestión que el cliente ya usa. No reemplaza al
 
 | Sector              | Software                 | Adapter                                        | Profundidad | Estado          |
 | ------------------- | ------------------------ | ---------------------------------------------- | ----------- | --------------- |
-| Hoteles             | HotelGest                | `hotelgest-erp-client.ts`                      | Full        | ✅ Operativo    |
-| Restauración        | Revo XEF                 | `revo-erp-client.ts`                           | Full        | ✅ Operativo    |
-| Retail/Comercio     | Loyverse                 | `loyverse-erp-client.ts`                       | Full        | ✅ Operativo    |
-| E-commerce          | WooCommerce              | `woocommerce-erp-client.ts`                    | Full        | ✅ Operativo    |
-| E-commerce          | PrestaShop               | `prestashop-erp-client.ts`                     | Full        | ✅ Operativo    |
+| Hoteles             | HotelGest                | `hotelgest-erp-client.ts`                      | Partial     | ✅ Operativo    |
+| Restauración        | Revo XEF                 | `revo-erp-client.ts`                           | Partial     | ✅ Operativo    |
+| Retail/Comercio     | Loyverse                 | `loyverse-erp-client.ts`                       | Partial     | ✅ Operativo    |
+| E-commerce          | WooCommerce              | `woocommerce-erp-client.ts`                    | Partial     | ✅ Operativo    |
+| E-commerce          | PrestaShop               | `prestashop-erp-client.ts`                     | Partial     | ✅ Operativo    |
 | Bienestar / Gym     | Mindbody                 | `mindbody-erp-client.ts`                       | Partial     | ✅ Operativo    |
 | Inmobiliarias       | Inmovilla                | `inmovilla-erp-client.ts`                      | Partial     | ✅ Operativo    |
 | Clínicas / Dental   | Nubimed                  | `nubimed-erp-client.ts`                        | Partial     | ✅ Operativo    |
 | Contable genérico   | Holded                   | `holded-erp-client.ts`                         | Full        | ✅ Operativo    |
 | Banking (PSD2)      | EnableBanking            | `enable-banking.ts` + adapter                  | Full        | ✅ Operativo    |
 | Banking (no-PSD2)   | Salt Edge                | salt-edge integration                          | Full        | ✅ Operativo    |
+
+> Nota profundidad sectoriales (2026-06-04): los adapters sectoriales (HotelGest/Revo/Loyverse/WooCommerce/PrestaShop/Mindbody/Inmovilla/Nubimed) hoy devuelven ledger vacío porque las APIs origen no exponen asientos contables, y el contrato `ErpClient` actual no incluye método de creación de documento. La reconciliación con el ledger nativo F9 se hace vía importer dedicado por sector (no por el adapter mismo). Sub-task 3F de `REFACTOR_PLAN.md` consolidará capabilities + writes en la abstracción canónica.
 | Gimnasios           | TeamUp                   | —                                              | —           | ⏳ Backlog P2   |
 | Talleres            | RepairShopr              | —                                              | —           | ⏳ Backlog P2   |
 | Contable genérico   | Chift (Sage/A3/Odoo…)    | `chift-erp-client.ts`                          | —           | ⏸️ Suspendido   |
 
 ## Definición de profundidad
 
-| Nivel       | Lectura                                          | Escritura                                                  | Reconcile con ledger F9                                  |
-| ----------- | ------------------------------------------------ | ---------------------------------------------------------- | -------------------------------------------------------- |
-| **Full**    | Contactos, ventas, compras, productos, ledger    | Crear documento (con consent humano)                       | Sí — importer dedicado                                   |
-| **Partial** | Subset relevante para fiscal (ventas + cobros)   | Solo si el sectorial lo soporta de forma trivial           | Sí pero con mapping limitado                             |
-| **Planned** | Investigación de API + scoping                   | —                                                          | —                                                        |
+| Nivel       | Lectura                                                                    | Escritura (vía adapter)                                  | Ledger del adapter                                | Reconcile con ledger F9                          |
+| ----------- | -------------------------------------------------------------------------- | -------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------------ |
+| **Full**    | Contactos, ventas, compras, productos, ledger contable                     | Crear documento con consent humano (vía `ErpClient`)     | Asientos contables expuestos por la API origen   | Importer dedicado sobre datos del propio adapter |
+| **Partial** | Subset operativo relevante (ventas + cobros + catálogo, según el sector)   | No expuesta hoy (contrato `ErpClient` aún sin write CRUD)| Vacío — la API origen no expone libro contable    | Importer dedicado deriva asientos desde ventas    |
+| **Planned** | Investigación de API + scoping                                             | —                                                        | —                                                 | —                                                |
+
+> Sólo Holded cumple hoy la definición Full (lectura+escritura+ledger contable). Banking (EnableBanking + Salt Edge) cumple Full a nivel banking (cuentas + transacciones + reconcile). El resto son Partial mientras 3F no añada capabilities + write CRUD al contrato.
 
 ## Política multi-adapter
 
