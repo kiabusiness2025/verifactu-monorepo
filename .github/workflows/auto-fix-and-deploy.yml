@@ -70,10 +70,8 @@ jobs:
           # Guardar contexto para análisis
           echo '${{ github.event.inputs.error_context }}' > error-context.json
 
-      - name: Generate Prisma Client
-        run: |
-          cd apps/app
-          pnpm exec prisma generate
+      - name: Generate Prisma Client (workspace schema)
+        run: pnpm -F @verifactu/db run prisma:generate
 
       - name: TypeScript Type Check (App)
         id: typecheck-app
