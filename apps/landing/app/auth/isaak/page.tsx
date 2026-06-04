@@ -87,11 +87,12 @@ export default function IsaakAuthPage() {
   };
 
   const handleSessionAndRedirect = React.useCallback(
-    async (user: User) => {
+    async (user: User, preToken?: string) => {
       if (redirectedRef.current) return;
       redirectedRef.current = true;
       try {
-        const { token } = await mintSessionCookie(user, { rememberDevice: true });
+        // Use pre-minted token if available to avoid a second /api/auth/session call
+        const token = preToken ?? (await mintSessionCookie(user, { rememberDevice: true })).token;
         const targetUrl = new URL(redirectTarget);
         const isCrossDomain = targetUrl.origin !== window.location.origin;
 
@@ -212,7 +213,7 @@ export default function IsaakAuthPage() {
         return;
       }
       if (result.user) {
-        await handleSessionAndRedirect(result.user);
+        await handleSessionAndRedirect(result.user, result.token);
       }
     } catch {
       setError('Error al acceder con Google. Intentalo de nuevo.');
@@ -231,7 +232,7 @@ export default function IsaakAuthPage() {
         return;
       }
       if (result.user) {
-        await handleSessionAndRedirect(result.user);
+        await handleSessionAndRedirect(result.user, result.token);
       }
     } catch {
       setError('Error al acceder con Microsoft. Intentalo de nuevo.');

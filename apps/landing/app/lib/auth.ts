@@ -193,16 +193,20 @@ export const signInWithEmail = async (
  */
 export const signInWithGoogle = async (
   options: SignInOptions = {}
-): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
+): Promise<
+  { user: User; error: null; token?: string } | { user: null; error: AuthErrorMessage }
+> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
 
+    let token: string | undefined;
     try {
-      await mintSessionCookie(userCredential.user, {
+      const mintResult = await mintSessionCookie(userCredential.user, {
         rememberDevice: options.rememberDevice,
       });
+      token = mintResult?.token;
     } catch (cookieError) {
       console.error('Failed to mint session cookie after Google login:', cookieError);
       return {
@@ -215,7 +219,7 @@ export const signInWithGoogle = async (
       };
     }
 
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, token };
   } catch (error) {
     console.error('Google sign-in error:', error);
     return {
@@ -230,16 +234,20 @@ export const signInWithGoogle = async (
  */
 export const signInWithMicrosoft = async (
   options: SignInOptions = {}
-): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
+): Promise<
+  { user: User; error: null; token?: string } | { user: null; error: AuthErrorMessage }
+> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const provider = new OAuthProvider('microsoft.com');
     const userCredential = await signInWithPopup(auth, provider);
 
+    let token: string | undefined;
     try {
-      await mintSessionCookie(userCredential.user, {
+      const mintResult = await mintSessionCookie(userCredential.user, {
         rememberDevice: options.rememberDevice,
       });
+      token = mintResult?.token;
     } catch (cookieError) {
       console.error('Failed to mint session cookie after Microsoft login:', cookieError);
       return {
@@ -247,12 +255,12 @@ export const signInWithMicrosoft = async (
         error: {
           code: 'auth/session-mint-failed',
           message: 'Session mint failed',
-          userMessage: 'Error al crear tu sesiИn. Por favor, intenta de nuevo o contacta soporte.',
+          userMessage: 'Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.',
         },
       };
     }
 
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, token };
   } catch (error) {
     console.error('Microsoft sign-in error:', error);
     return {
