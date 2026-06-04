@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Building2 } from 'lucide-react';
 import AdvisorDashboardClient from './AdvisorDashboardClient';
+import AdvisorDashboardSummary from './AdvisorDashboardSummary';
 
 export const metadata: Metadata = { title: 'Mis clientes — Isaak' };
 
@@ -18,7 +19,9 @@ export default function AdvisorPage() {
           </div>
         </div>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-y-auto">
+        {/* V1.9.2 — Cabecera resumen con KPIs y atajos */}
+        <AdvisorDashboardSummary />
         <AdvisorDashboardClient />
       </div>
     </div>

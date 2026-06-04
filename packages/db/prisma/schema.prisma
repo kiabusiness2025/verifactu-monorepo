@@ -3077,3 +3077,48 @@ model IsaakAeatSubmission {
   @@index([tenantId, submittedAt(sort: Desc)])
   @@map("isaak_aeat_submissions")
 }
+
+
+// V2.D.1 — Ingesta del BORME (Boletín Oficial del Registro Mercantil).
+//
+// Cada acto publicado en BORME sección A se persiste como BormeAct.
+// Sirve para pre-rellenar el perfil de un tenant al conectar Holded:
+// dado el NIF o la razón social, buscamos los últimos actos
+// (nombramientos, ampliaciones, cambios de domicilio, etc.).
+//
+// Cron diario en /api/cron/borme-ingest descarga el sumario del día
+// anterior, fetch-ea cada publicación XML y persiste los actos.
+model BormeAct {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+
+  // Identificación del acto en BOE
+  bormeId       String  @map("borme_id")        // BORME-A-2026-100-28
+  publicationId String  @map("publication_id")  // BORME-A-2026-100
+  publishedOn   DateTime @map("published_on")   @db.Date
+
+  // Provincia (28 = Madrid, 8 = Barcelona, etc.)
+  provinciaCode String @map("provincia_code")
+  seccion       String @default("A") // BORME suele ser A=actos mercantiles
+
+  // Empresa
+  companyName     String  @map("company_name")
+  normalizedName  String  @map("normalized_name") // mayusc + sin espacios + sin SL/SA
+  nif             String? // raramente presente en BORME, parseado mejor-esfuerzo
+
+  // Tipo de acto: usamos los códigos del BORME (5=nombramientos, 12=cambio domicilio, etc.)
+  codigoActo  String? @map("codigo_acto")
+  tipoActo    String  @map("tipo_acto") // legible: "nombramientos", "ampliación de capital"...
+
+  // Payload original del acto (texto libre + estructura parseada)
+  rawText  String @map("raw_text") @db.Text
+  metadata Json?
+
+  ingestedAt DateTime @default(now()) @map("ingested_at") @db.Timestamptz
+
+  @@unique([bormeId, normalizedName, codigoActo, tipoActo], map: "borme_act_unique")
+  @@index([normalizedName, publishedOn(sort: Desc)])
+  @@index([nif, publishedOn(sort: Desc)])
+  @@index([publishedOn(sort: Desc)])
+  @@map("borme_acts")
+}
+

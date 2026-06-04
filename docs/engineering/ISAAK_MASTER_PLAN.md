@@ -1,11 +1,13 @@
 # Isaak — Plan Maestro de Evolución (Ingeniería)
 
-**Última actualización**: 2026-05-29 (Artifacts ✅ · Tour page ✅ · Hero mockup ✅ · C-C cron 303 ✅ · F15 Telegram ✅)
+**Última actualización**: 2026-06-02 (V1 launch aprobado · Sprint A iniciado · backlog Robot Contable queda como V2+)
 **Visión**: Isaak como **Robot Contable** autónomo — el empresario opera SOLO a través de Isaak; Isaak es la fuente de verdad, el Inspector AEAT preventivo y el ejecutor fiscal.
 
 > Para contexto de producto, pricing y estrategia de captación ver `docs/product/ISAAK_MASTER_PLAN.md`.
 > Para el manifesto técnico F1-F8 (completado) ver `docs/engineering/ISAAK_INTELLIGENCE.md`.
-> **Para el roadmap post-manifiesto detallado por módulos ver `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md`** (fase activa).
+> **Fuente de verdad V1**: `docs/product/ISAAK_LAUNCH_V1_2026-05-28.md` durante el lanzamiento.
+> **Nota de prioridad inmediata**: todas las decisiones operativas actuales deben seguir el plan V1. Las capacidades de Robot Contable, sectoriales y canales extendidos son **roadmap V2+** y se reactivan después del corte V1.
+> **Roadmap V2+**: `docs/engineering/ISAAK_ROADMAP_POST_MANIFESTO.md` conserva el plan Robot Contable, pero no es la fase activa mientras V1 este en Sprint A/B/C.
 
 ---
 

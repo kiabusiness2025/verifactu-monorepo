@@ -138,10 +138,22 @@ export async function POST(req: NextRequest) {
   }).catch(() => null);
 
   let history: { role: 'user' | 'assistant'; content: string }[] = [];
+  // V1.3.3 — Summary de turnos antiguos (compactación). Para conversaciones
+  // largas, los turnos viejos se han comprimido en una sola entrada que se
+  // inyecta al system prompt — los últimos SHORT_MEMORY_TURNS van en raw.
+  let conversationSummaryBlock = '';
   if (conversation) {
-    history = await listRecentConversationMessages(conversation.id, SHORT_MEMORY_TURNS).catch(
-      () => []
-    );
+    const [recent, summary] = await Promise.all([
+      listRecentConversationMessages(conversation.id, SHORT_MEMORY_TURNS).catch(() => []),
+      import('@/app/lib/isaak-conversation-summarizer')
+        .then((mod) => mod.loadConversationSummary(conversation.id))
+        .catch(() => null),
+    ]);
+    history = recent;
+    if (summary) {
+      const { formatSummaryForPrompt } = await import('@/app/lib/isaak-conversation-summarizer');
+      conversationSummaryBlock = formatSummaryForPrompt(summary);
+    }
     await appendConversationMessage({
       conversationId: conversation.id,
       role: 'user',
@@ -326,14 +338,55 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // V1.4.5 — Idioma del usuario. Si no es español, inyectamos el hint para
+  // que el LLM responda en la lengua adecuada (català, galego, euskera, EN).
+  const { detectUserLanguage, buildLanguageHint } = await import(
+    '@/app/lib/isaak-language-detector'
+  );
+  const detectedLang = detectUserLanguage(message);
+  const languageHint = buildLanguageHint(detectedLang);
+  const languageSuffix = languageHint ? `\n\n${languageHint}` : '';
+
+  // V1.6.1 — Contexto fiscal específico del régimen del tenant.
+  // Solo se inyecta cuando entra el sub-agente fiscal (donde añade más
+  // valor). Para el agente principal el perfil ya viaja en
+  // promptContext.contextSummary.
+  let fiscalContextSuffix = '';
+  if (subAgentId === 'fiscal') {
+    try {
+      const { buildFiscalContextBlock } = await import('@/app/lib/isaak-fiscal-context');
+      const block = await buildFiscalContextBlock(authenticated.toolContext.tenantId);
+      if (block.trim()) fiscalContextSuffix = `\n\n${block.trim()}`;
+    } catch (err) {
+      console.error('[chat/stream] fiscal context failed', err);
+    }
+  }
+
+  // V1.6.3 — Instrucciones personalizadas del tenant. Se inyectan al final
+  // del system prompt para que tengan máxima prioridad sin sobreescribir
+  // las reglas de seguridad/corrección fiscal. Aplica al agente principal
+  // y a sub-agentes (es preferencia general del propietario de la cuenta).
+  let customInstructionsSuffix = '';
+  try {
+    const { loadCustomInstructions, buildCustomInstructionsBlock } = await import(
+      '@/app/lib/isaak-custom-instructions'
+    );
+    const customText = await loadCustomInstructions(authenticated.toolContext.tenantId);
+    const block = buildCustomInstructionsBlock(customText);
+    if (block) customInstructionsSuffix = `\n\n${block}`;
+  } catch (err) {
+    console.error('[chat/stream] custom instructions failed', err);
+  }
+
+  const summarySuffix = conversationSummaryBlock ? `\n\n${conversationSummaryBlock}` : '';
   const systemPrompt = subAgentId
     ? `${getSubAgent(subAgentId).systemPrompt}${
         ragResult.factsBlock ? `\n\n${ragResult.factsBlock.trim()}` : ''
-      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}`
-    : buildAuthenticatedSystemPrompt(authenticated.promptContext, {
+      }${fewShotResult.examplesBlock ? `\n\n${fewShotResult.examplesBlock.trim()}` : ''}${fiscalContextSuffix}${summarySuffix}${languageSuffix}${customInstructionsSuffix}`
+    : `${buildAuthenticatedSystemPrompt(authenticated.promptContext, {
         factsBlock: ragResult.factsBlock,
         fewShotBlock: fewShotResult.examplesBlock,
-      });
+      })}${summarySuffix}${languageSuffix}${customInstructionsSuffix}`;
 
   const { stream, metricsPromise } = streamIsaakChat({
     systemPrompt,
@@ -348,15 +401,78 @@ export async function POST(req: NextRequest) {
 
   // Fire-and-forget metrics + persistence after the stream finishes.
   metricsPromise
-    .then((metrics) =>
-      persistAndMetric({
+    .then(async (metrics) => {
+      await persistAndMetric({
         text: metrics.text,
         metrics,
         routedTo,
         feature: allowWrites ? 'workspace_chat_stream_write' : 'workspace_chat_stream',
         isClarification: detectClarificationResponse(metrics.text),
-      })
-    )
+      });
+      // V1.3.2 — Auto-memoria. Tras responder, intentamos extraer hechos
+      // memorables del turno y persistirlos. No bloquea ni afecta al usuario.
+      try {
+        const { autoExtractAndStoreFacts } = await import('@/app/lib/isaak-memory-extractor');
+        const { logEvent } = await import('@/app/lib/isaak-telemetry');
+        const result = await autoExtractAndStoreFacts({
+          tenantId: authenticated.toolContext.tenantId,
+          userId: authenticated.toolContext.userId,
+          conversationId: conversation?.id ?? null,
+          userMessage: message,
+          assistantText: metrics.text,
+        });
+        if (result.inserted > 0 || result.error) {
+          logEvent({
+            event: 'memory.auto_extract',
+            tenantId: authenticated.toolContext.tenantId,
+            userId: authenticated.toolContext.userId,
+            conversationId: conversation?.id ?? null,
+            latencyMs: result.latencyMs,
+            candidates: result.candidates,
+            inserted: result.inserted,
+            skippedDuplicates: result.skippedDuplicates,
+            skippedInvalid: result.skippedInvalid,
+            error: result.error,
+          });
+        }
+      } catch (e) {
+        const { logError } = await import('@/app/lib/isaak-telemetry');
+        logError({ event: 'memory.auto_extract', error: e instanceof Error ? e : String(e) });
+      }
+      // V1.3.3 — Compactación. Si la conversación supera el umbral,
+      // regenera el summary cubriendo todos los turnos menos los últimos.
+      if (conversation?.id) {
+        try {
+          const { summarizeOlderTurns } = await import(
+            '@/app/lib/isaak-conversation-summarizer'
+          );
+          const { logEvent } = await import('@/app/lib/isaak-telemetry');
+          const sumResult = await summarizeOlderTurns(conversation.id);
+          if (sumResult.triggered) {
+            logEvent({
+              event: 'conversation.compaction',
+              tenantId: authenticated.toolContext.tenantId,
+              conversationId: conversation.id,
+              latencyMs: sumResult.latencyMs,
+              totalMessages: sumResult.totalMessages,
+              summarizedMessages: sumResult.summarizedMessages,
+              summaryChars: sumResult.summaryChars,
+              openLoops: sumResult.openLoops,
+              userPreferences: sumResult.userPreferences,
+              error: sumResult.error,
+            });
+          }
+        } catch (e) {
+          const { logError } = await import('@/app/lib/isaak-telemetry');
+          logError({
+            event: 'conversation.compaction',
+            tenantId: authenticated.toolContext.tenantId,
+            conversationId: conversation?.id,
+            error: e instanceof Error ? e : String(e),
+          });
+        }
+      }
+    })
     .catch((err) => {
       console.error('[Isaak Chat Stream] post-stream tasks failed', err);
     });

@@ -1,0 +1,73 @@
+name: E2E
+
+# Se dispara solo manualmente o nightly — no en cada PR (5-8min por run).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 4 * * *' # 04:00 UTC diario
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Playwright auth + landing flows
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.x'
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile --node-linker=isolated
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Prepare env stubs
+        run: |
+          cp e2e/.env.local.example apps/landing/.env.local
+          echo "NEXT_PUBLIC_ISAAK_V1_LAUNCH=true" > apps/isaak/.env.local
+
+      - name: Start landing dev (background)
+        run: |
+          nohup pnpm --filter verifactu-landing dev > /tmp/landing.log 2>&1 &
+          for i in {1..60}; do
+            grep -q "Ready in" /tmp/landing.log && break
+            sleep 1
+          done
+          grep "Ready in" /tmp/landing.log || (tail -30 /tmp/landing.log && exit 1)
+
+      - name: Start isaak dev (background)
+        run: |
+          nohup pnpm --filter verifactu-isaak dev > /tmp/isaak.log 2>&1 &
+          for i in {1..60}; do
+            grep -q "Ready in" /tmp/isaak.log && break
+            sleep 1
+          done
+          grep "Ready in" /tmp/isaak.log || (tail -30 /tmp/isaak.log && exit 1)
+
+      - name: Run auth flows
+        env:
+          PLAYWRIGHT_CHROMIUM: ''
+        run: node e2e/auth-flows.mjs
+
+      - name: Run landing flows
+        env:
+          PLAYWRIGHT_CHROMIUM: ''
+        run: node e2e/landing-flows.mjs
+
+      - name: Upload server logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dev-server-logs
+          path: |
+            /tmp/landing.log
+            /tmp/isaak.log

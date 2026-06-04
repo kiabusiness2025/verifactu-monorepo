@@ -1,5 +1,12 @@
 import { holdedAdapter } from '@/lib/integrations/accounting';
 
+export type HoldedMcpJsonSchema = {
+  type: 'object';
+  properties: Record<string, unknown>;
+  required?: string[];
+  additionalProperties?: boolean;
+};
+
 export type HoldedMcpToolDefinition = {
   name: string;
   title: string;
@@ -10,12 +17,22 @@ export type HoldedMcpToolDefinition = {
     idempotentHint?: boolean;
     openWorldHint?: boolean;
   };
-  inputSchema: {
-    type: 'object';
-    properties: Record<string, unknown>;
-    required?: string[];
-    additionalProperties?: boolean;
-  };
+  inputSchema: HoldedMcpJsonSchema;
+  /**
+   * V3.H (2026-06-01) — Per MCP spec draft, tools MAY declare an `outputSchema`
+   * describing the shape of `structuredContent` returned in tools/call results.
+   * OpenAI App Review recommends it ("Add an outputSchema so models can better
+   * understand this tool's results"). The route returns `structuredContent` as
+   * the raw handler payload (see formatToolResult in app/api/mcp/holded/route.ts)
+   * so the schema must describe that object.
+   *
+   * Optional — only present on the public preset tools where OpenAI/Anthropic
+   * reviewers benefit from the additional structure. Other tools keep the
+   * minimal definition.
+   *
+   * Spec: https://modelcontextprotocol.io/specification/draft/server/tools#tool
+   */
+  outputSchema?: HoldedMcpJsonSchema;
 };
 
 type HoldedMcpToolHandler = (
@@ -238,11 +255,220 @@ function writeSchema(extraProperties: Record<string, unknown>, required: string[
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// V3.H (2026-06-01) — outputSchema reusables para las 10 tools del preset
+// `openai_review_invoicing_v1`. Spec MCP draft, sección "Tool":
+// https://modelcontextprotocol.io/specification/draft/server/tools#tool
+//
+// Estos schemas describen `structuredContent` (la forma del payload JSON que
+// devuelve el handler). El formatToolResult de route.ts ya expone el handler
+// payload directamente como structuredContent, así que el schema describe
+// {items}, {item}, {created}, {pdf}, etc. con campos concretos para que el
+// modelo (ChatGPT, Claude) pueda predecir la estructura sin tener que
+// inferirla de ejemplos.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const errorOutputSchemaFragment = {
+  error: {
+    type: 'string',
+    description:
+      'Present when the resource was not found or another expected condition prevented the read. The structured tool result is still valid; the caller should branch on `error` before trusting other fields.',
+  },
+  code: { type: 'string' },
+  id: { type: 'string' },
+} as const;
+
+const holdedInvoiceItemSchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string', description: 'Internal Holded cuid (24 hex chars).' },
+    docNumber: {
+      type: 'string',
+      description: 'Visible invoice number (e.g. "F0030"). Stable across edits.',
+    },
+    contactId: { type: 'string' },
+    contactName: { type: 'string' },
+    date: {
+      type: 'number',
+      description: 'Issue date as Unix timestamp in seconds.',
+    },
+    dueDate: { type: 'number' },
+    total: { type: 'number' },
+    subtotal: { type: 'number' },
+    tax: { type: 'number' },
+    currency: { type: 'string' },
+    status: { type: 'string', description: 'Holded status string (e.g. "approved", "paid").' },
+    description: { type: 'string' },
+  },
+  additionalProperties: true,
+};
+
+const holdedDocumentItemSchema = {
+  type: 'object' as const,
+  properties: {
+    ...holdedInvoiceItemSchema.properties,
+    docType: {
+      type: 'string',
+      description: 'Document type (invoice, estimate, purchase, purchaseorder, purchaserefund).',
+    },
+  },
+  additionalProperties: true,
+};
+
+const holdedContactItemSchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string' },
+    name: { type: 'string' },
+    tradeName: { type: 'string' },
+    code: { type: 'string' },
+    email: { type: 'string' },
+    phone: { type: 'string' },
+    mobile: { type: 'string' },
+    vatnumber: { type: 'string', description: 'Spanish tax id (CIF/NIF/NIE).' },
+    type: { type: 'string', description: '"client", "supplier" or "lead".' },
+    clientRecord: {
+      type: ['number', 'object', 'null'],
+      description: 'Truthy when this contact has active sales activity.',
+    },
+    supplierRecord: {
+      type: ['number', 'object', 'null'],
+      description: 'Truthy when this contact has active purchase activity.',
+    },
+  },
+  additionalProperties: true,
+};
+
+const holdedAccountItemSchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string' },
+    num: { type: ['string', 'number'], description: 'Chart of accounts code (e.g. "70500000").' },
+    name: { type: 'string' },
+    debe: { type: 'number', description: 'Debit balance.' },
+    haber: { type: 'number', description: 'Credit balance.' },
+    saldo: { type: 'number', description: 'Net balance (debe - haber).' },
+  },
+  additionalProperties: true,
+};
+
+const holdedJournalEntrySchema = {
+  type: 'object' as const,
+  properties: {
+    id: { type: 'string' },
+    number: { type: ['string', 'number'], description: 'Entry number, used for ordering.' },
+    date: { type: 'number', description: 'Entry date as Unix seconds.' },
+    description: { type: 'string' },
+    lines: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          account: { type: ['string', 'number'] },
+          debit: { type: 'number' },
+          credit: { type: 'number' },
+          description: { type: 'string' },
+        },
+        additionalProperties: true,
+      },
+    },
+  },
+  additionalProperties: true,
+};
+
+function listOutputSchema(
+  itemSchema: typeof holdedInvoiceItemSchema | typeof holdedDocumentItemSchema | typeof holdedContactItemSchema | typeof holdedAccountItemSchema | typeof holdedJournalEntrySchema
+): HoldedMcpJsonSchema {
+  return {
+    type: 'object',
+    properties: {
+      items: {
+        type: 'array',
+        items: itemSchema,
+        description:
+          'Array of items returned by Holded for this page. Empty array means no records matched the query (not an error). Pagination is client-side; call with higher `page` numbers to advance.',
+      },
+      history: {
+        type: 'object',
+        description:
+          'Present when the connector fell back to the historical scan (year/from/to). Includes `total` and `scannedPages` so the caller knows whether the listing is exhaustive.',
+        additionalProperties: true,
+      },
+    },
+    required: ['items'],
+    additionalProperties: true,
+  };
+}
+
+function singleOutputSchema(
+  itemSchema: typeof holdedInvoiceItemSchema | typeof holdedDocumentItemSchema | typeof holdedContactItemSchema
+): HoldedMcpJsonSchema {
+  return {
+    type: 'object',
+    properties: {
+      item: itemSchema,
+      ...errorOutputSchemaFragment,
+    },
+    additionalProperties: true,
+  };
+}
+
+const pdfOutputSchema: HoldedMcpJsonSchema = {
+  type: 'object',
+  properties: {
+    pdf: {
+      type: 'object',
+      properties: {
+        base64: {
+          type: 'string',
+          description:
+            'PDF rendering encoded in base64. Validated against the %PDF- magic bytes before being returned; an HTTP 200 with a JSON error body from Holded is rejected with a meaningful error message instead of being passed through as a fake PDF.',
+        },
+        contentType: { type: 'string', description: 'Always "application/pdf" on success.' },
+        fileName: {
+          type: ['string', 'null'],
+          description: 'Recommended filename (defaults to `{docType}-{documentId}.pdf`).',
+        },
+        size: { type: 'number', description: 'Byte size of the decoded PDF.' },
+      },
+      required: ['base64', 'contentType', 'size'],
+      additionalProperties: true,
+    },
+  },
+  required: ['pdf'],
+  additionalProperties: true,
+};
+
+const createInvoiceDraftOutputSchema: HoldedMcpJsonSchema = {
+  type: 'object',
+  properties: {
+    created: {
+      type: 'object',
+      properties: {
+        id: {
+          type: 'string',
+          description:
+            'Internal Holded cuid of the newly created draft. The draft is created with approveDoc:false hardcoded — never sent, finalized, charged, emailed, nor AEAT/Verifactu-submitted.',
+        },
+        docNumber: { type: 'string' },
+        status: {
+          type: 'string',
+          description: 'Should be "draft" or equivalent on creation. User confirms in Holded UI.',
+        },
+      },
+      additionalProperties: true,
+    },
+  },
+  required: ['created'],
+  additionalProperties: true,
+};
+
 function readTool(
   name: string,
   title: string,
   description: string,
-  inputSchema: HoldedMcpToolDefinition['inputSchema']
+  inputSchema: HoldedMcpToolDefinition['inputSchema'],
+  outputSchema?: HoldedMcpToolDefinition['outputSchema']
 ): HoldedMcpToolDefinition {
   return {
     name,
@@ -250,6 +476,7 @@ function readTool(
     description,
     annotations: readOnlyAnnotations,
     inputSchema,
+    ...(outputSchema ? { outputSchema } : {}),
   };
 }
 
@@ -258,7 +485,7 @@ function writeTool(
   title: string,
   description: string,
   inputSchema: HoldedMcpToolDefinition['inputSchema'],
-  options?: { destructiveHint?: boolean }
+  options?: { destructiveHint?: boolean; outputSchema?: HoldedMcpToolDefinition['outputSchema'] }
 ): HoldedMcpToolDefinition {
   return {
     name,
@@ -266,6 +493,7 @@ function writeTool(
     description,
     annotations: writeAnnotations(options?.destructiveHint ?? false),
     inputSchema,
+    ...(options?.outputSchema ? { outputSchema: options.outputSchema } : {}),
   };
 }
 
@@ -419,7 +647,11 @@ function normalizeDocumentDate(value: unknown) {
   return readFiniteNumber(value) ?? buildDefaultDocumentDate();
 }
 
-function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products', index: number) {
+function normalizeDocumentLineItem(
+  item: unknown,
+  sourceKey: 'lines' | 'products' | 'items',
+  index: number
+) {
   if (!item || typeof item !== 'object' || Array.isArray(item)) {
     throw new Error(`payload.${sourceKey}[${index}] must be an object`);
   }
@@ -430,10 +662,15 @@ function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products
     optionalString(rawItem, 'name') ||
     optionalString(rawItem, 'title');
   const units = readFiniteNumber(rawItem.units) ?? readFiniteNumber(rawItem.quantity);
+  // V3.G.11 — subtotal/total aceptados como aliases de price. ChatGPT a
+  // veces emite { name, units, subtotal, tax } en vez de la forma
+  // canónica { desc, units, price, tax }.
   const price =
     readFiniteNumber(rawItem.price) ??
     readFiniteNumber(rawItem.unitPrice) ??
-    readFiniteNumber(rawItem.amount);
+    readFiniteNumber(rawItem.amount) ??
+    readFiniteNumber(rawItem.subtotal) ??
+    readFiniteNumber(rawItem.total);
   const tax = readFiniteNumber(rawItem.tax) ?? readFiniteNumber(rawItem.taxPercent);
 
   if (!desc || units === undefined || price === undefined) {
@@ -442,13 +679,40 @@ function normalizeDocumentLineItem(item: unknown, sourceKey: 'lines' | 'products
     );
   }
 
-  return {
-    ...rawItem,
-    desc,
+  // V3.G.4: enforce units > 0 y price > 0 para no crear drafts vacíos.
+  if (units <= 0) {
+    throw new Error(
+      `payload.${sourceKey}[${index}].units must be greater than 0 (got ${units}). Please specify how many units/hours/items are being invoiced.`
+    );
+  }
+  if (price <= 0) {
+    throw new Error(
+      `payload.${sourceKey}[${index}].price must be greater than 0 (got ${price}). Please specify the unit price in EUR (or the document currency).`
+    );
+  }
+
+  // V3.G.12 — CRÍTICO: emitir SÓLO los campos canónicos al wire.
+  // El spread previo {...rawItem,...} dejaba pasar al body de Holded
+  // campos del input como `name`/`sku`/`subtotal` que Holded interpreta
+  // como referencia al catálogo de productos. Al no encontrar match,
+  // descarta la línea entera silenciosamente (200 OK pero draft con
+  // products:[]). Limitamos al set documentado de Holded.
+  // V3.G.17 (2026-06-03) — Holded API espera `items: [{ name, units,
+  // subtotal, tax }]`. V3.G.10 cambió erróneamente a `lines: [{ desc,
+  // units, price, tax }]` causando que Holded aceptara la request pero
+  // descartara las líneas en drafts (approveDoc:false). Confirmado contra
+  // wrapper community vshopes/holded y la respuesta GET que también usa
+  // `products` (alias de items en el output) con name/subtotal.
+  const cleanLine: Record<string, unknown> = {
+    name: desc,
     units,
-    price,
-    ...(tax !== undefined ? { tax } : {}),
+    subtotal: price,
   };
+  if (tax !== undefined) cleanLine.tax = tax;
+  if (typeof rawItem.productId === 'string' && rawItem.productId.trim()) {
+    cleanLine.productId = rawItem.productId.trim();
+  }
+  return cleanLine;
 }
 
 function normalizeDocumentCreatePayload(payload: Record<string, unknown>) {
@@ -456,25 +720,33 @@ function normalizeDocumentCreatePayload(payload: Record<string, unknown>) {
     throw new Error('payload.contactId is required');
   }
 
-  const sourceKey =
+  // V3.G.11 — `items` aceptado como tercer source key. Holded espera
+  // `lines[]` en el body, pero ChatGPT a veces emite el array como
+  // `items` (vocabulario heredado de otras integraciones del modelo).
+  // El output siempre emite `lines` que es lo que Holded acepta.
+  const sourceKey: 'lines' | 'products' | 'items' | null =
     Array.isArray(payload.lines) && payload.lines.length > 0
       ? 'lines'
       : Array.isArray(payload.products) && payload.products.length > 0
         ? 'products'
-        : null;
+        : Array.isArray(payload.items) && payload.items.length > 0
+          ? 'items'
+          : null;
 
   if (!sourceKey) {
-    throw new Error('payload.lines or payload.products must be a non-empty array');
+    throw new Error('payload.lines, payload.products or payload.items must be a non-empty array');
   }
 
   const rawLines = payload[sourceKey] as unknown[];
-  const { lines: _lines, products: _products, ...rest } = payload;
+  const { lines: _lines, products: _products, items: _items, ...rest } = payload;
 
+  // V3.G.17 — Holded espera `items` no `lines`. La normalización ya devuelve
+  // cada elemento con shape {name, units, subtotal, tax, productId}.
   return {
     ...rest,
     contactId: payload.contactId.trim(),
     date: normalizeDocumentDate(payload.date),
-    lines: rawLines.map((item, index) => normalizeDocumentLineItem(item, sourceKey, index)),
+    items: rawLines.map((item, index) => normalizeDocumentLineItem(item, sourceKey, index)),
   };
 }
 
@@ -510,10 +782,54 @@ function parseIsoDateToUnix(value: unknown): number | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   if (!trimmed) return undefined;
-  // Accept YYYY-MM-DD or full ISO
-  const date = new Date(trimmed.length === 10 ? `${trimmed}T00:00:00Z` : trimmed);
+
+  // V3.G.5 (auditoría 2026-06-01): YYYY-MM-DD se interpreta como
+  // medianoche LOCAL Europe/Madrid, NO UTC.
+  //
+  // BUG REPRO: Holded almacena las fechas de los documentos al timestamp
+  // de medianoche LOCAL del tenant (Madrid → UTC+1 invierno / UTC+2 verano).
+  // Doc P250001 fechado 2025-01-01 tenía date=1735686000 (= 2025-01-01
+  // 00:00 Madrid = 2024-12-31 23:00 UTC).
+  //
+  // ANTES interpretábamos "2025-01-01" como UTC midnight = 1735689600,
+  // que en Madrid son las 01:00 del 01/01/2025 — 1 HORA DESPUÉS del doc.
+  // Resultado: range filter con starttmp=1735689600 EXCLUÍA silenciosamente
+  // el doc P250001. Cada corte de ejercicio/trimestre perdía las facturas
+  // del primer día. Daño en auditorías reales.
+  //
+  // AHORA "2025-01-01" → 1735686000 (Madrid midnight) → doc P250001 incluido.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return parseDateAsMadridMidnight(trimmed);
+  }
+
+  // ISO completo con tiempo/timezone explícito → respetamos la conversión nativa.
+  const date = new Date(trimmed);
   if (Number.isNaN(date.getTime())) return undefined;
   return Math.floor(date.getTime() / 1000);
+}
+
+/**
+ * "YYYY-MM-DD" → segundos epoch de las 00:00:00 LOCAL Europe/Madrid de ese día.
+ * Maneja correctamente las transiciones DST (CET → CEST en marzo, vuelta en octubre)
+ * porque computa el offset dinámicamente para la fecha exacta.
+ */
+function parseDateAsMadridMidnight(isoDate: string): number {
+  const utcMidnightMs = Date.parse(`${isoDate}T00:00:00Z`);
+  if (!Number.isFinite(utcMidnightMs)) return NaN;
+  const sample = new Date(utcMidnightMs);
+  const tzPart = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Madrid',
+    timeZoneName: 'shortOffset',
+  })
+    .formatToParts(sample)
+    .find((p) => p.type === 'timeZoneName')?.value;
+  // tzPart parecido a "GMT+1" o "GMT+2". Fallback CET (+1) si fail.
+  const match = tzPart?.match(/GMT([+-])(\d+)(?::(\d+))?/);
+  const offsetMin = match
+    ? (match[1] === '-' ? -1 : 1) *
+      (Number(match[2]) * 60 + (match[3] ? Number(match[3]) : 0))
+    : 60;
+  return Math.floor(utcMidnightMs / 1000) - offsetMin * 60;
 }
 
 /**
@@ -954,8 +1270,79 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   async holded_get_document(apiKey, input) {
     const docType = requiredString(input, 'docType');
     const documentId = requiredString(input, 'documentId');
+
+    // V3.F.II (auditoría 2026-06-01): mismo smart lookup que holded_get_invoice.
+    // Holded mantiene dos identificadores: cuid interno (24 hex) y docNumber
+    // visible (ej. "P0045"). ChatGPT/Claude tienden a pasar el docNumber
+    // porque es lo que ven en holded_list_documents. Antes daba 404 directo.
+    //
+    // Logica:
+    //   1. Si parece cuid (24 hex) → llamada directa.
+    //   2. Si parece docNumber → listar (incluyendo año/año-1) y matchear.
+    //   3. Si nada matchea → notFoundResponse legible.
+    if (/^[a-f0-9]{24}$/i.test(documentId)) {
+      try {
+        const item = await holdedAdapter.getDocument(apiKey, docType, documentId);
+        return { item };
+      } catch (err) {
+        if (isHoldedNotFound(err)) return notFoundResponse('document', documentId);
+        throw err;
+      }
+    }
+
+    type DocLike = {
+      id?: string;
+      _id?: string;
+      docNumber?: string;
+      number?: string;
+    };
+
+    const matchByDocNumber = (items: unknown): DocLike | undefined => {
+      if (!Array.isArray(items)) return undefined;
+      return (items as DocLike[]).find(
+        (doc) =>
+          doc?.docNumber === documentId ||
+          doc?.number === documentId ||
+          doc?.docNumber?.toLowerCase() === documentId.toLowerCase() ||
+          doc?.number?.toLowerCase() === documentId.toLowerCase()
+      );
+    };
+
+    const defaultList = await holdedAdapter.listDocuments(apiKey, {
+      page: 1,
+      limit: 100,
+      docType,
+    });
+    let candidate = matchByDocNumber(defaultList);
+
+    if (!candidate) {
+      const currentYear = new Date().getUTCFullYear();
+      const historyResult = await holdedAdapter.listDocumentsHistory(apiKey, {
+        page: 1,
+        limit: 100,
+        docType,
+        year: currentYear,
+      });
+      candidate = matchByDocNumber(historyResult?.items);
+
+      if (!candidate) {
+        const previousResult = await holdedAdapter.listDocumentsHistory(apiKey, {
+          page: 1,
+          limit: 100,
+          docType,
+          year: currentYear - 1,
+        });
+        candidate = matchByDocNumber(previousResult?.items);
+      }
+    }
+
+    if (!candidate) {
+      return notFoundResponse('document', documentId);
+    }
+
+    const resolvedId = candidate.id ?? candidate._id ?? documentId;
     try {
-      const item = await holdedAdapter.getDocument(apiKey, docType, documentId);
+      const item = await holdedAdapter.getDocument(apiKey, docType, resolvedId);
       return { item };
     } catch (err) {
       if (isHoldedNotFound(err)) return notFoundResponse('document', documentId);
@@ -1008,12 +1395,72 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_get_document_pdf(apiKey, input) {
-    const pdf = await holdedAdapter.getDocumentPdf(
-      apiKey,
-      requiredString(input, 'docType'),
-      requiredString(input, 'documentId')
-    );
-    return { pdf };
+    const docType = requiredString(input, 'docType');
+    const documentId = requiredString(input, 'documentId');
+
+    // V3.G.5 (auditoría 2026-06-01): Holded distingue dos cosas:
+    //   1. PDF renderizado del documento (/pdf endpoint, generado del contenido)
+    //   2. Archivos adjuntos por el usuario (/attachments endpoint)
+    //
+    // ANTES solo intentábamos /pdf. Si el documento no tenía PDF renderizado
+    // (frecuente en datos demo o purchases del proveedor), devolvíamos
+    // `no_attachment` aunque el usuario hubiese subido manualmente el PDF
+    // del proveedor en la UI. El reviewer reportó este caso con P250001 en
+    // Nova Gestión.
+    //
+    // AHORA: intentamos /pdf primero. Si falla porque el body no es binario,
+    // hacemos fallback a /attachments/list + /attachments/get del primer
+    // archivo subido. Si tampoco hay attachments → notFoundResponse legible.
+    try {
+      const pdf = await holdedAdapter.getDocumentPdf(apiKey, docType, documentId);
+      return { pdf, source: 'rendered' };
+    } catch (renderedErr) {
+      const message = renderedErr instanceof Error ? renderedErr.message : '';
+      const looksLikeNoPdf = /non-binary response|no PDF|No attachments/i.test(message);
+      if (!looksLikeNoPdf) throw renderedErr;
+
+      // Fallback: PDF/file subido manualmente al documento.
+      try {
+        const attachments = await holdedAdapter.listDocumentAttachments(
+          apiKey,
+          docType,
+          documentId
+        );
+        if (attachments.length > 0) {
+          // V3.G.7 (2026-06-01): Holded devuelve `attachments` como array de
+          // STRINGS (nombres de archivo), NO array de objetos. En V3.G.5 lo
+          // trataba como objeto y leía `first.fileName` que daba undefined →
+          // fileName quedaba vacío → no se descargaba el adjunto.
+          //
+          // Verificado empíricamente contra P250001 en Nova Gestión:
+          //   `{"status":1,"attachments":["31PTaxInvoice299055226B001260000000235.pdf"]}`
+          //
+          // Aceptamos ambas formas (string o objeto con fileName/name/filename)
+          // por defensa — algunos endpoints Holded podrían devolver objetos
+          // (no documentado, mejor curarse en salud).
+          const first = attachments[0] as unknown;
+          let fileName = '';
+          if (typeof first === 'string') {
+            fileName = first.trim();
+          } else if (first && typeof first === 'object') {
+            const obj = first as Record<string, unknown>;
+            fileName = String(obj.fileName ?? obj.name ?? obj.filename ?? '').trim();
+          }
+          if (fileName) {
+            const file = await holdedAdapter.getDocumentAttachment(
+              apiKey,
+              docType,
+              documentId,
+              fileName
+            );
+            return { pdf: file, source: 'attachment', attachmentMeta: { fileName } };
+          }
+        }
+      } catch {
+        // Si attachments también falla, propagamos el error original.
+      }
+      throw renderedErr;
+    }
   },
 
   async holded_update_document_tracking(apiKey, input) {
@@ -1078,22 +1525,54 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
   },
 
   async holded_list_contacts(apiKey, input) {
+    const typeRaw = optionalString(input, 'type');
+    const type =
+      typeRaw === 'client' || typeRaw === 'supplier' || typeRaw === 'lead' ? typeRaw : undefined;
     const items = await holdedAdapter.listContacts(apiKey, {
       page: readPage(input),
       limit: readLimit(input),
       name: optionalString(input, 'name'),
+      type,
     });
     return { items };
   },
 
   async holded_get_contact(apiKey, input) {
     const contactId = requiredString(input, 'contactId');
+    // V3.F (auditoría 2026-06-01): los contact IDs que vienen embebidos en
+    // documentos (campo `contact` de /documents/{type}/{id}) NO siempre son
+    // resolubles vía /contacts/{id} — Holded mantiene IDs internos legacy
+    // de versiones históricas del contacto que difieren de los IDs vivos
+    // del CRM. El docNumber/contactName es estable; el ID no.
+    //
+    // Fallback en cadena cuando el lookup directo da 404:
+    //   1. Si el caller pasó `contactName` o `name` como hint, buscarlo vía
+    //      listContacts({name}) y devolver la primera coincidencia exacta.
+    //   2. Si no hay name, retornar un notFoundResponse explícito que
+    //      indique al modelo que llame holded_list_contacts y vuelva con
+    //      un contactId fresco.
     try {
       const item = await holdedAdapter.getContact(apiKey, contactId);
       return { item };
     } catch (err) {
-      if (isHoldedNotFound(err)) return notFoundResponse('contact', contactId);
-      throw err;
+      if (!isHoldedNotFound(err)) throw err;
+
+      const fallbackName =
+        optionalString(input, 'contactName') ?? optionalString(input, 'name');
+      if (fallbackName && fallbackName.trim().length > 0) {
+        const name = fallbackName.trim();
+        const matches = await holdedAdapter.listContacts(apiKey, { page: 1, name });
+        const items: Array<Record<string, unknown>> = Array.isArray(matches)
+          ? (matches as Array<Record<string, unknown>>)
+          : [];
+        const exact = items.find(
+          (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
+        );
+        const chosen = exact ?? items[0];
+        if (chosen) return { item: chosen };
+      }
+
+      return notFoundResponse('contact', contactId);
     }
   },
 
@@ -1682,11 +2161,29 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     // devolvía las 206 cuentas enteras dentro de structuredContent y ChatGPT
     // rechazaba el payload. Ahora paginamos SIEMPRE con defaults (page 1,
     // limit 25); el caller puede pedir más con page/limit explícitos.
+    //
+    // V3.G.2 (2026-06-01): acepta tambien ISO dates startDate/endDate, mas
+    // intuitivas para ChatGPT/Claude que los Unix timestamps. Necesarios
+    // para scopear el balance a un ejercicio fiscal especifico — sin esto
+    // Holded usa el rango default del tenant que casi nunca cuadra.
+    const starttmp =
+      resolveDateInput(input, {
+        timestampKey: 'startTimestamp',
+        dateKey: 'startDate',
+        required: false,
+      }) ?? undefined;
+    const endtmp =
+      resolveDateInput(input, {
+        timestampKey: 'endTimestamp',
+        dateKey: 'endDate',
+        required: false,
+        endOfDay: true,
+      }) ?? undefined;
     const items = await holdedAdapter.listAccounts(apiKey, {
       page: readPage(input),
       limit: readLimit(input),
-      starttmp: optionalUnixTimestamp(input, 'startTimestamp'),
-      endtmp: optionalUnixTimestamp(input, 'endTimestamp'),
+      starttmp,
+      endtmp,
       includeEmpty: optionalBoolean(input, 'includeEmpty', true),
     });
     return { items };
@@ -1801,6 +2298,7 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
         'dueDate',
         'lines',
         'products',
+        'items',
         'currency',
         'language',
         'notes',
@@ -1813,6 +2311,7 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
       if (
         !flat.lines &&
         !flat.products &&
+        !flat.items &&
         (input.desc !== undefined ||
           input.units !== undefined ||
           input.price !== undefined ||
@@ -1834,6 +2333,57 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     // id, try to find the contact via search. This makes ChatGPT's life much
     // easier — it can pass "Kappa Digital Zaragoza SL" instead of needing to
     // call holded_list_contacts first to grab an opaque mongo id.
+    //
+    // V3.G.9 (2026-06-01) — defensa contra MISMATCH:
+    // Si el modelo pasa BOTH contactId Y contactName y los dos NO coinciden
+    // (el id resuelve a un contacto cuyo nombre no contiene/no es el nombre
+    // dado), throw "contact_id_name_mismatch". Esto cubre casos donde
+    // ChatGPT contamina contexto desde conversaciones anteriores y manda
+    // un contactId de otro cliente con un contactName distinto.
+    //
+    // CASO QUE NO CUBRE: si el modelo manda contactId+contactName que SÍ
+    // coinciden entre sí (los dos son "Beta" en este ejemplo) pero el
+    // usuario pidió otro cliente ("Alfa"), no podemos detectarlo desde
+    // el backend porque no conocemos la intención del usuario. La
+    // mitigación de ese caso es la tarjeta de consent (el usuario ve
+    // "Beta" y deniega) + las descriptions explícitas que añadimos.
+    if (
+      typeof payload.contactId === 'string' &&
+      payload.contactId.trim() &&
+      typeof payload.contactName === 'string' &&
+      payload.contactName.trim()
+    ) {
+      const declaredName = payload.contactName.trim();
+      try {
+        const resolved = (await holdedAdapter.getContact(
+          apiKey,
+          payload.contactId.trim()
+        )) as Record<string, unknown> | null;
+        const canonicalName =
+          resolved && typeof resolved.name === 'string' ? resolved.name : '';
+        const matches =
+          canonicalName.toLowerCase() === declaredName.toLowerCase() ||
+          canonicalName.toLowerCase().includes(declaredName.toLowerCase()) ||
+          declaredName.toLowerCase().includes(canonicalName.toLowerCase());
+        if (canonicalName && !matches) {
+          throw new HoldedUserError(
+            'contact_id_name_mismatch',
+            `The provided contactId resolves to "${canonicalName}" but contactName was "${declaredName}". These look like different contacts — please verify which one you intended (the contactId may be stale from a previous conversation). To proceed, pass ONLY contactName="${declaredName}" and the connector will resolve it freshly, OR pass ONLY the contactId you trust.`
+          );
+        }
+        // Match confirmado — sobrescribimos contactName con el canónico para
+        // que el consent card muestre el nombre exacto que Holded tiene.
+        if (canonicalName) {
+          payload.contactName = canonicalName;
+        }
+      } catch (err) {
+        if (err instanceof HoldedUserError) throw err;
+        // getContact falló (404 u otro). Asumimos que el id es legacy y
+        // hacemos fallback a resolución por nombre.
+        payload.contactId = '';
+      }
+    }
+
     if (
       (typeof payload.contactId !== 'string' || !payload.contactId.trim()) &&
       typeof payload.contactName === 'string' &&
@@ -1844,25 +2394,178 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
       const items: Array<Record<string, unknown>> = Array.isArray(matches)
         ? (matches as Array<Record<string, unknown>>)
         : [];
+
+      // V3.G.4 (2026-06-01) — BUG CRÍTICO arreglado:
+      //
+      // ANTES: `const chosen = exact ?? items[0]` — si no había match exacto
+      // por nombre, cogíamos el primer contacto que Holded devolviese. Holded
+      // /contacts ordena por insertion order (no por relevancia al filtro),
+      // así que para el prompt "Alfa Retail Madrid SL" Holded podía devolver
+      // "Beta Eventos Barcelona SL" como items[0] y ese era el cliente al
+      // que se creaba la factura. EL USUARIO confirmó en producción contra
+      // Nova Gestion SL: factura del cliente equivocado creada en Holded.
+      //
+      // AHORA: solo aceptamos:
+      //   1) Match EXACTO por nombre (case-insensitive).
+      //   2) Match parcial UNICO: solo 1 contacto contiene el nombre.
+      //
+      // Cualquier otro caso (0 matches, múltiples partials no exactos) →
+      // HoldedUserError con un mensaje claro que el modelo puede mostrar al
+      // usuario para que confirme cuál es el contacto correcto antes de
+      // reintentar. Mejor "no encontré, ¿cuál?" que "creé para otro cliente".
       const exact = items.find(
         (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
       );
-      const chosen = exact ?? items[0];
+      let chosen: Record<string, unknown> | undefined = exact;
+      if (!chosen) {
+        const partialMatches = items.filter(
+          (c) =>
+            typeof c.name === 'string' &&
+            c.name.toLowerCase().includes(name.toLowerCase())
+        );
+        if (partialMatches.length === 1) {
+          chosen = partialMatches[0];
+        } else if (partialMatches.length > 1) {
+          const sample = partialMatches
+            .slice(0, 5)
+            .map((c) => `"${c.name}"`)
+            .join(', ');
+          throw new HoldedUserError(
+            'contact_ambiguous',
+            `Multiple Holded contacts match "${name}": ${sample}. Please specify the exact contact name or pass the contactId from holded_list_contacts to disambiguate.`
+          );
+        }
+      }
       const chosenId = chosen?.id ?? chosen?._id;
       if (typeof chosenId === 'string' && chosenId.trim()) {
         payload.contactId = chosenId.trim();
+        // V3.G.4: sobrescribimos contactName con el nombre canónico del
+        // contacto encontrado, para que el ChatGPT consent card muestre el
+        // nombre real al usuario (en vez del que escribió, que puede ser
+        // un alias o variante). Si el usuario ve "Beta Eventos Barcelona"
+        // en la card cuando escribió "Alfa Retail Madrid", sabe que algo
+        // no cuadra y deniega.
+        if (typeof chosen?.name === 'string') {
+          payload.contactName = chosen.name;
+        }
       } else {
-        throw new Error(
-          `No contact found for "${name}". Use holded_list_contacts to find the correct contact and pass contactId.`
+        throw new HoldedUserError(
+          'contact_not_found',
+          `No Holded contact found matching "${name}". Please verify the customer name (case-insensitive exact match is required when partial matches are ambiguous) or call holded_list_contacts first and pass the contactId explicitly.`
         );
       }
     }
 
     const normalizedPayload = normalizeDocumentCreatePayload(payload);
-    const created = await holdedAdapter.createDocument(apiKey, docType, {
+    const wireBody = {
       ...normalizedPayload,
       approveDoc: false,
-    });
+    };
+
+    // V3.G.13 diagnóstico (2026-06-03): log granular del body que vamos a
+    // mandar a Holded para diagnosticar por qué los drafts entran sin
+    // líneas pese a V3.G.12. Una línea por campo crítico — la vista
+    // tabular de Vercel Logs trunca, así esto sale legible.
+    console.info(
+      `[create_invoice_draft] wire body — keys=${Object.keys(wireBody).join(',')}`
+    );
+    console.info(
+      `[create_invoice_draft] wire body — contactId=${String(wireBody.contactId ?? '')}`
+    );
+    {
+      // V3.G.17: logging adaptado a items (la key correcta) en vez de lines.
+      const wb = wireBody as unknown as { items?: unknown[] };
+      const itemsArr = Array.isArray(wb.items) ? wb.items : [];
+      console.info(`[create_invoice_draft] wire body — items count=${itemsArr.length}`);
+      console.info(
+        `[create_invoice_draft] wire body — items[0]=${JSON.stringify(itemsArr[0] ?? null)}`
+      );
+    }
+
+    const createResponse = await holdedAdapter.createDocument(apiKey, docType, wireBody);
+
+    // Log de la respuesta del POST.
+    const createdShape = createResponse as {
+      id?: string;
+      products?: unknown[];
+      subtotal?: number;
+      total?: number;
+    };
+    console.info(
+      `[create_invoice_draft] holded POST — id=${String(createdShape.id ?? '')} products.length=${
+        Array.isArray(createdShape.products) ? createdShape.products.length : 'n/a'
+      } subtotal=${String(createdShape.subtotal ?? 'n/a')} total=${String(
+        createdShape.total ?? 'n/a'
+      )}`
+    );
+
+    // V3.G.17 (2026-06-03): los workarounds V3.G.14-16 (PUT update + products
+    // key + body completo) NO funcionaron porque la causa raíz era otra: V3.G.10
+    // cambió el shape al wire de `items` → `lines` asumiendo que Holded usaba
+    // `lines`. Es al revés: Holded usa `items` y descarta `lines` silenciosamente
+    // en drafts. Confirmado contra wrapper community vshopes/holded. El
+    // normalizer ya emite `items` correctamente, no hace falta PUT update.
+
+    // V3.G.18 (2026-06-03) — DEFENSA contra el bug de OpenAI consent UI:
+    //
+    // La consent card que ChatGPT muestra antes de ejecutar este tool pinta
+    // PII (Name/Emails/Phone/Address) del CONTEXTO de conversación, no de
+    // los args del tool call actual. Resultado verificado por usuario:
+    // consent para Zeta, draft real para Cliente X. El usuario aprueba una
+    // cosa, el connector ejecuta otra. Bug de OpenAI, no nuestro — pero la
+    // mitigación nuestra es:
+    //
+    // 1. Tras crear, resolver el contacto CANÓNICO desde Holded (no del
+    //    contexto del modelo) y devolverlo en la respuesta.
+    // 2. ChatGPT renderiza la respuesta tras la consent, así que el usuario
+    //    VE el contacto real inmediatamente — si no coincide con lo que
+    //    aprobó, lo detecta en segundos en vez de tener que abrir Holded UI.
+    // 3. Log de auditoría server-side con contactId/contactName/draftId para
+    //    review forense posterior.
+    //
+    // Mejor esfuerzo: si getContact falla, devolvemos el create response sin
+    // bloquear (la creación del draft ya se hizo).
+    const wireContactId = (wireBody as { contactId?: string }).contactId;
+    let contactCanonical: {
+      contactName?: string;
+      contactCode?: string;
+      contactCity?: string;
+    } = {};
+    if (typeof wireContactId === 'string' && wireContactId.trim()) {
+      try {
+        const resolved = (await holdedAdapter.getContact(
+          apiKey,
+          wireContactId.trim()
+        )) as Record<string, unknown> | null;
+        if (resolved && typeof resolved === 'object') {
+          const name = typeof resolved.name === 'string' ? resolved.name : '';
+          const code = typeof resolved.code === 'string' ? resolved.code : '';
+          const bill =
+            resolved.billAddress && typeof resolved.billAddress === 'object'
+              ? (resolved.billAddress as Record<string, unknown>)
+              : null;
+          const city = bill && typeof bill.city === 'string' ? bill.city : '';
+          if (name) contactCanonical.contactName = name;
+          if (code) contactCanonical.contactCode = code;
+          if (city) contactCanonical.contactCity = city;
+        }
+      } catch {
+        // best-effort: no bloquea
+      }
+    }
+
+    console.info(
+      `[create_invoice_draft] AUDIT — draftId=${String(createdShape.id ?? '')} contactId=${String(
+        wireContactId ?? ''
+      )} contactName=${contactCanonical.contactName ?? 'unresolved'} contactCode=${
+        contactCanonical.contactCode ?? '-'
+      }`
+    );
+
+    const created = {
+      ...(createResponse as Record<string, unknown>),
+      ...contactCanonical,
+    };
     return { created };
   },
 };
@@ -1871,7 +2574,10 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_invoices',
     'List invoices in Holded',
-    'List SALES invoice documents (issued invoices, Holded docType=invoice) for the currently authorized tenant. Use year or from/to when you need older history such as 2025. This tool does NOT list received supplier invoices: for purchases call holded_list_documents with docType set to purchase, purchaseorder or purchaserefund.',
+    'List SALES invoice documents (issued invoices, Holded docType=invoice) for the currently authorized tenant. ' +
+      'BEHAVIOR: if the default scope returns 0 invoices (tenant has restrictive default scope), the connector automatically retries against the current year and then the previous year via Holded history. So an empty result means the tenant truly has no invoices in recent history, not a connector failure. ' +
+      'Use `year` or explicit `from`/`to` ISO dates only when you need OLDER history (e.g. 2024). ' +
+      'This tool does NOT list received supplier invoices: for PURCHASES / SUPPLIER BILLS / EXPENSES call `holded_list_documents` with `docType: "purchase"`.',
     listSchema({
       status: stringProperty(
         'Optional Holded invoice status filter, if supported by the tenant account.'
@@ -1879,7 +2585,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
       year: yearProperty,
       from: isoDateProperty,
       to: isoDateProperty,
-    })
+    }),
+    listOutputSchema(holdedInvoiceItemSchema)
   ),
   readTool(
     'holded_get_invoice',
@@ -1896,33 +2603,42 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         ),
       },
       ['invoiceId']
-    )
+    ),
+    singleOutputSchema(holdedInvoiceItemSchema)
   ),
   readTool(
     'holded_list_documents',
     'List documents in Holded',
-    'List invoice, sales and supplier documents from Holded for the currently authorized tenant. Use docType purchase, purchaseorder or purchaserefund for purchases and supplier expenses, and use year or from/to when you need older history such as 2025.',
+    'List commercial documents (sales invoices/estimates by default, OR purchases when docType is specified) for the currently authorized Holded tenant. ' +
+      'PASS `docType: "purchase"` (or `"purchaseorder"`, `"purchaserefund"`) when the user asks for SUPPLIER documents, BILLS, EXPENSES or PURCHASES. Without docType, the tool returns sales invoices + estimates merged. ' +
+      'Use `year` (e.g. 2025) or explicit `from`/`to` ISO dates if you need older history; otherwise the default scope is recent.',
     listSchema({
       status: stringProperty('Optional Holded document status filter.'),
       docType: stringProperty(
-        'Optional Holded document type filter such as invoice, estimate, purchase, purchaseorder or purchaserefund.'
+        'Holded document type. For sales: "invoice" or "estimate" (default if omitted = invoices + estimates). For purchases / supplier bills: "purchase", "purchaseorder" or "purchaserefund".'
       ),
       year: yearProperty,
       from: isoDateProperty,
       to: isoDateProperty,
-    })
+    }),
+    listOutputSchema(holdedDocumentItemSchema)
   ),
   readTool(
     'holded_get_document',
     'Get one document from Holded',
-    'Retrieve a single Holded document by type and id.',
+    'Retrieve a single Holded document by type. Accepts EITHER the internal Holded document id (24-character hex cuid returned by previous listings) OR the visible document number such as "P0045" / "P-0045" / "F0030". When you receive a list of documents from holded_list_documents you can pass the `docNumber` field directly here — the connector resolves it to the internal id automatically (scanning the current page and recent historical years).',
     simpleSchema(
       {
-        docType: stringProperty('The Holded document type, for example invoice or estimate.'),
-        documentId: stringProperty('The Holded document identifier.'),
+        docType: stringProperty(
+          'The Holded document type. Sales: "invoice", "estimate". Purchases / supplier bills: "purchase", "purchaseorder", "purchaserefund".'
+        ),
+        documentId: stringProperty(
+          'The Holded document identifier — either the internal cuid (24 hex chars) OR the visible docNumber (e.g. "P0045"). The connector resolves docNumbers automatically.'
+        ),
       },
       ['docType', 'documentId']
-    )
+    ),
+    singleOutputSchema(holdedDocumentItemSchema)
   ),
   writeTool(
     'holded_create_document',
@@ -2017,14 +2733,16 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_get_document_pdf',
     'Get a document PDF from Holded',
-    'Retrieve a Holded document PDF as base64 together with filename and content type metadata.',
+    'Retrieve a Holded document PDF as base64 together with filename and content type metadata. ' +
+      'The connector validates the PDF magic bytes ("%PDF-") and content-type before returning so that a Holded JSON error body cannot be passed back as a fake PDF; if the document has no PDF attached, the call fails with a meaningful error instead of returning bogus base64.',
     simpleSchema(
       {
         docType: stringProperty('The Holded document type, for example invoice or estimate.'),
         documentId: stringProperty('The Holded document identifier.'),
       },
       ['docType', 'documentId']
-    )
+    ),
+    pdfOutputSchema
   ),
   writeTool(
     'holded_update_document_tracking',
@@ -2117,25 +2835,43 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_contacts',
     'List contacts in Holded',
-    'List customer or supplier contacts from Holded for the currently authorized tenant. Use the optional `name` filter when the user mentions a customer or supplier by name to avoid scanning every page.',
+    'List customer or supplier contacts from Holded for the currently authorized tenant. ' +
+      'Use `type: "client"` to list only CUSTOMERS with active sales records, `type: "supplier"` to list only SUPPLIERS with active purchase records, or omit `type` to list everyone. ' +
+      'The connector applies a client-side role filter after Holded\'s server-side filter to drop contacts whose role record is empty (Holded\'s server filter sometimes returns historical/inactive role assignments). ' +
+      'Use the optional `name` filter when the user mentions a customer or supplier by name to avoid scanning every page.',
     listSchema({
       name: stringProperty(
         'Optional case-insensitive substring search by contact name, trade name, code, tax id or email (e.g. "Garcia"). The connector also applies this filter locally when Holded returns an unfiltered page.'
       ),
-    })
+      type: stringProperty(
+        'Optional contact role filter. Valid values: "client" (customers only — clientRecord present), "supplier" (suppliers only — supplierRecord present), "lead" (sales leads). Omit to list all contacts regardless of role.'
+      ),
+    }),
+    listOutputSchema(holdedContactItemSchema)
   ),
   readTool(
     'holded_get_contact',
     'Get one contact from Holded',
-    'Retrieve a single Holded contact by id.',
+    'Retrieve a single Holded contact by id. ' +
+      'IMPORTANT: contact IDs embedded inside document responses (e.g. the `contact` field of an invoice) are NOT always resolvable here — Holded keeps legacy IDs for historical document versions that differ from live CRM IDs. ' +
+      'For best reliability ALSO pass `contactName` (when known from the prior document or list context). If the direct id lookup fails, the connector will retry by name match. If neither id nor name resolves, the response will indicate not_found and the caller should call holded_list_contacts to look up a fresh id. ' +
+      '⚠ FIELDS QUIRKS (verified empirically against Nova Gestión SL, V3.G.8 audit 2026-06-01):\n' +
+      '  • The Spanish tax ID (CIF/NIF/NIE — needed for modelo 347 reports) lives in the `code` field, NOT `vatnumber`. ' +
+      'The `vatnumber` field is intended for EU VIES VAT numbers (intracommunity) and is usually empty for domestic Spanish contacts.\n' +
+      '  • The `type` field is UNRELIABLE — Holded often returns it as an empty string even when the contact is clearly a supplier or client. ' +
+      'To determine role reliably, check whether `supplierRecord` is populated (supplier) or `clientRecord` is populated (client). Both can be present if the contact acts in both roles.',
     simpleSchema(
       {
         contactId: stringProperty(
-          'The Holded contact identifier returned by a previous contact listing.'
+          'The Holded contact identifier returned by a previous contact listing OR embedded in a document. May refer to a legacy/historical id; see contactName fallback.'
+        ),
+        contactName: stringProperty(
+          'Optional fallback contact name (e.g. "Kappa Digital Zaragoza SL"). Used to recover when the contactId is a legacy id that no longer resolves to a live contact.'
         ),
       },
       ['contactId']
-    )
+    ),
+    singleOutputSchema(holdedContactItemSchema)
   ),
   readTool(
     'holded_list_contact_attachments',
@@ -2696,10 +3432,19 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
   readTool(
     'holded_list_accounts',
     'List accounting accounts in Holded',
-    'List the Holded chart of accounts for the currently authorized tenant. Results are paginated (default 25 per page); pass page and limit to walk the full chart. By default the connector calls chartofaccounts with includeEmpty=1 so empty accounts are not silently omitted.',
+    'List the Holded chart of accounts (Spanish PGC) for the currently authorized tenant. Returns each account code plus the **pre-computed balance** from Holded for the selected fiscal range. ' +
+      'Results are paginated (default 25 per page); pass page and limit to walk the full chart. By default the connector calls chartofaccounts with includeEmpty=1 so empty accounts are not silently omitted. ' +
+      '⚠ KNOWN HOLDED LIMITATION (audit 2026-06-01): the balances returned by Holded\'s /chartofaccounts EXCLUDE manual closing/regularization journal entries by design (see https://help.holded.com/en/articles/6895943). If you need the **real balance** including manual entries (amortizations, year-end closings, capital contributions), re-aggregate from holded_list_daily_ledger across the full fiscal year. ' +
+      'PASS `startTimestamp` and `endTimestamp` (or the ISO `startDate`/`endDate`) to scope the balance to a specific fiscal year — otherwise Holded uses the tenant default (often current year only, missing prior-year closings).',
     simpleSchema({
       page: pageProperty,
       limit: limitProperty,
+      startDate: stringProperty(
+        'Start of the fiscal range as an ISO date YYYY-MM-DD (e.g. 2025-01-01). Preferred for ChatGPT and Claude. Either startDate OR startTimestamp may be provided; omit both to use Holded\'s tenant default.'
+      ),
+      endDate: stringProperty(
+        'End of the fiscal range as an ISO date YYYY-MM-DD (e.g. 2025-12-31). Preferred for ChatGPT and Claude.'
+      ),
       startTimestamp: unixTimestampProperty,
       endTimestamp: unixTimestampProperty,
       includeEmpty: {
@@ -2708,12 +3453,14 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         description:
           'Whether to include empty accounting accounts. Defaults to true to avoid partial chart-of-accounts views.',
       },
-    })
+    }),
+    listOutputSchema(holdedAccountItemSchema)
   ),
   readTool(
     'holded_list_daily_ledger',
     'List daily ledger entries in Holded',
-    'List daily ledger entries from Holded for a bounded accounting window. Provide the range as either ISO dates (startDate / endDate, format YYYY-MM-DD — preferred for assistants) or Unix seconds (startTimestamp / endTimestamp). Either pair is required because this endpoint rejects unbounded requests in production tenants.',
+    'List daily ledger entries from Holded for a bounded accounting window. Provide the range as either ISO dates (startDate / endDate, format YYYY-MM-DD — preferred for assistants) or Unix seconds (startTimestamp / endTimestamp). Either pair is required because this endpoint rejects unbounded requests in production tenants. ' +
+      'Entries are returned sorted by date ascending (oldest first) then by entry number ascending — a stable, reconciliation-friendly order. Holded\'s native response is in Mongo insertion order without guarantees; the connector reorders client-side before returning.',
     listSchemaWithRequired(
       {
         startDate: stringProperty(
@@ -2726,7 +3473,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         endTimestamp: unixTimestampProperty,
       },
       []
-    )
+    ),
+    listOutputSchema(holdedJournalEntrySchema)
   ),
   writeTool(
     'holded_create_daily_ledger_entry',
@@ -2888,7 +3636,8 @@ export const holdedMcpTools: HoldedMcpToolDefinition[] = [
         ),
       },
       []
-    )
+    ),
+    { outputSchema: createInvoiceDraftOutputSchema }
   ),
 ];
 

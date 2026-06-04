@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const isVercel = process.env.VERCEL === '1';
 const useStandalone = process.env.STANDALONE_BUILD === '1';
 
 const nextConfig = {
@@ -16,7 +15,7 @@ const nextConfig = {
       '**/node_modules/server-only/**',
     ],
   },
-  ...(useStandalone && !isVercel ? { output: 'standalone' } : {}),
+  ...(useStandalone ? { output: 'standalone' } : {}),
   eslint: { ignoreDuringBuilds: true },
   transpilePackages: ['@verifactu/ui', '@verifactu/utils', '@verifactu/db'],
   headers: async () => [

@@ -65,6 +65,10 @@ describe('buildReadOnlyToolsForContext', () => {
     expect(names).toContain('holded_list_documents');
     expect(names).toContain('holded_get_pnl');
     expect(names).toContain('holded_get_verifactu_status');
+    expect(names).toContain('holded_list_taxes');
+    expect(names).toContain('holded_list_numbering_series');
+    expect(names).toContain('holded_get_document_pdf');
+    expect(names).toContain('holded_get_daily_book');
   });
 
   it('excludes Holded write tools (create_invoice, register_payment, ...)', () => {
@@ -131,7 +135,7 @@ describe('buildReadOnlyToolsForContext', () => {
       microsoftConnected: true,
     });
     const subset = buildReadOnlyToolsForContext(fullCtx, { only: ['holded', 'banking'] });
-    expect(subset.length).toBe(13 + 6);
+    expect(subset.length).toBe(17 + 6);
   });
 
   it('empty options.only is treated as no filter', () => {
@@ -207,9 +211,9 @@ describe('buildReadOnlyToolsForContext', () => {
         sectorConnected: true,
       })
     );
-    // 13 Holded + 6 banking + 4 google + 4 microsoft + 11 ledger reads + 5 sector
-    // = 43 (writes excluded)
-    expect(tools.length).toBe(43);
+    // 17 Holded + 6 banking + 4 google + 4 microsoft + 11 ledger reads + 5 sector
+    // = 47 (writes excluded)
+    expect(tools.length).toBe(47);
     for (const t of tools) {
       expect(typeof t.name).toBe('string');
       expect(typeof t.input_schema).toBe('object');

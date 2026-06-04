@@ -21,11 +21,17 @@ import {
   isLegalToolName,
   type LegalToolName,
 } from './isaak-legal-tools';
+import {
+  MEMORY_CHAT_TOOLS,
+  executeMemoryTool,
+  isMemoryToolName,
+  type MemoryToolName,
+} from './isaak-memory-tools';
 import { emitWebhookEvent, type IsaakWebhookEventType } from './isaak-webhook-emitter';
 
 // Mapping: write tool name → webhook event type emitted on success.
 const WRITE_TOOL_WEBHOOK_MAP: Partial<Record<string, IsaakWebhookEventType>> = {
-  holded_create_invoice: 'invoice.created',
+  holded_create_invoice_draft: 'invoice.created',
   holded_send_document: 'invoice.sent',
   holded_register_payment: 'payment.registered',
   isaak_submit_303: 'tax_return.submitted',
@@ -93,6 +99,7 @@ const READ_ONLY_NAMES = new Set<string>([
   'holded_get_contact',
   'holded_get_chart_of_accounts',
   'holded_get_journal',
+  'holded_get_daily_book',
   'holded_list_treasury_accounts',
   'holded_list_products',
   'holded_list_projects',
@@ -100,6 +107,9 @@ const READ_ONLY_NAMES = new Set<string>([
   'holded_get_verifactu_status',
   'holded_get_pnl',
   'holded_list_payments',
+  'holded_list_taxes',
+  'holded_list_numbering_series',
+  'holded_get_document_pdf',
   // Banking
   'banking_check_connection',
   'banking_list_accounts',
@@ -140,6 +150,10 @@ const READ_ONLY_NAMES = new Set<string>([
   'sector_list_products',
   // V1.2 — Legal (sub-agente revisión de contratos, read-only)
   'isaak_review_contract',
+  // V1.2 — Memory (escritura sobre tabla privada del usuario, sin efecto
+  // en sistemas externos — no pasa por el judge).
+  'isaak_remember',
+  'isaak_forget',
 ]);
 
 type AnthropicToolDef = {
@@ -170,7 +184,8 @@ export type ToolCategoryFilter =
   | 'microsoft'
   | 'ledger'
   | 'sector'
-  | 'legal';
+  | 'legal'
+  | 'memory';
 
 export function buildReadOnlyToolsForContext(
   ctx: IsaakToolContext,
@@ -222,6 +237,13 @@ export function buildReadOnlyToolsForContext(
       if (isAllowed(t.name)) out.push(toAITool(t));
     }
   }
+  // V1.2: Memoria a largo plazo. Read (retrieve) ya se inyecta al system
+  // prompt; aquí exponemos write (remember) y delete (forget) al LLM.
+  if (include('memory')) {
+    for (const t of MEMORY_CHAT_TOOLS) {
+      if (isAllowed(t.name)) out.push(toAITool(t));
+    }
+  }
 
   return out;
 }
@@ -261,11 +283,17 @@ export async function executeIsaakTool(
 
   try {
     let result: unknown;
-    if (isLegalToolName(name)) {
+    if (isMemoryToolName(name)) {
+      result = await executeMemoryTool(
+        { tenantId: ctx.tenantId, userId: ctx.userId },
+        name as MemoryToolName,
+        toolUse.input
+      );
+    } else if (isLegalToolName(name)) {
       result = await executeLegalTool(
         { tenantId: ctx.tenantId, userId: ctx.userId },
         name as LegalToolName,
-        toolUse.input,
+        toolUse.input
       );
     } else if (isSectorToolName(name)) {
       result = await executeSectorTool(ctx.tenantId, name as SectorToolName, toolUse.input);
@@ -302,21 +330,51 @@ export async function executeIsaakTool(
       }
     }
 
+    const latencyMs = Date.now() - start;
+    // V1.4 — telemetría por tool individual (fire-and-forget).
+    try {
+      const { logEvent } = await import('./isaak-telemetry');
+      logEvent({
+        event: 'tool.exec',
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        toolName: name,
+        latencyMs,
+        ok: true,
+      });
+    } catch {
+      /* fail-silent — la observability nunca rompe ejecución */
+    }
     return {
       toolName: name,
       toolUseId: toolUse.id,
       content: JSON.stringify(result),
       isError: false,
-      latencyMs: Date.now() - start,
+      latencyMs,
     };
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
+    const latencyMs = Date.now() - start;
+    try {
+      const { logError } = await import('./isaak-telemetry');
+      logError({
+        event: 'tool.exec',
+        tenantId: ctx.tenantId,
+        userId: ctx.userId,
+        toolName: name,
+        latencyMs,
+        ok: false,
+        error: msg,
+      });
+    } catch {
+      /* fail-silent */
+    }
     return {
       toolName: name,
       toolUseId: toolUse.id,
       content: JSON.stringify({ error: 'tool_failed', message: msg }),
       isError: true,
-      latencyMs: Date.now() - start,
+      latencyMs,
     };
   }
 }

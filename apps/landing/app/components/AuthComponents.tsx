@@ -1,11 +1,10 @@
-"use client";
+'use client';
 
-import Image from "next/image";
-import React, { useState } from "react";
-import Link from "next/link";
-import { Eye, EyeOff } from "lucide-react";
-import BrandLogo from "./BrandLogo";
-import { getLandingUrl } from "../lib/urls";
+import Image from 'next/image';
+import Link from 'next/link';
+import React, { useState } from 'react';
+import { ArrowLeft, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { getLandingUrl } from '../lib/urls';
 
 interface PasswordInputProps {
   value: string;
@@ -17,7 +16,7 @@ interface PasswordInputProps {
 export function PasswordInput({
   value,
   onChange,
-  placeholder = "Contraseña",
+  placeholder = 'Contrasena',
   required = true,
 }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -25,20 +24,20 @@ export function PasswordInput({
   return (
     <div className="relative">
       <input
-        type={showPassword ? "text" : "password"}
+        type={showPassword ? 'text' : 'password'}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20"
+        className="h-12 w-full rounded-2xl border border-slate-200 bg-white px-4 pr-12 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/25"
       />
       <button
         type="button"
         onClick={() => setShowPassword(!showPassword)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 transition-colors hover:text-gray-700"
-        aria-label="Mostrar u ocultar contraseña"
+        className="absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 transition hover:text-slate-700"
+        aria-label={showPassword ? 'Ocultar contrasena' : 'Mostrar contrasena'}
       >
-        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
       </button>
     </div>
   );
@@ -56,7 +55,7 @@ interface FormInputProps {
 
 export function FormInput({
   label,
-  type = "text",
+  type = 'text',
   value,
   onChange,
   placeholder,
@@ -64,11 +63,11 @@ export function FormInput({
   error,
 }: FormInputProps) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-slate-700">
           {label}
-          {required && <span className="ml-1 text-red-500">*</span>}
+          {required && <span className="ml-1 text-rose-500">*</span>}
         </label>
       )}
       <input
@@ -77,11 +76,11 @@ export function FormInput({
         onChange={onChange}
         placeholder={placeholder}
         required={required}
-        className={`w-full rounded-lg border bg-white px-4 py-3 text-gray-900 placeholder-gray-500 transition-all focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/20 ${
-          error ? "border-red-500" : "border-gray-300"
+        className={`h-12 w-full rounded-2xl border bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 transition focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/25 ${
+          error ? 'border-rose-400' : 'border-slate-200'
         }`}
       />
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+      {error && <p className="mt-1 text-sm text-rose-600">{error}</p>}
     </div>
   );
 }
@@ -90,9 +89,9 @@ export function GoogleAuthButton() {
   return (
     <button
       type="button"
-      className="flex w-full items-center justify-center gap-3 rounded-full bg-[#2361d8] px-4 py-3 font-semibold text-white shadow-md transition hover:bg-[#1f55c0]"
+      className="inline-flex h-12 w-full items-center justify-center gap-3 rounded-2xl bg-[#2361d8] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#1f55c0]"
     >
-      <svg className="h-5 w-5" viewBox="0 0 24 24">
+      <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
         <path
           fill="#4285F4"
           d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -121,12 +120,39 @@ interface AuthLayoutProps {
   children: React.ReactNode;
   footerText?: string;
   footerLink?: { href: string; label: string };
-  brandMode?: "default" | "holded";
+  brandMode?: 'default' | 'holded';
   backHref?: string;
   backLabel?: string;
   compact?: boolean;
   showSecurityCard?: boolean;
 }
+
+const THEMES = {
+  default: {
+    shell: 'bg-[radial-gradient(circle_at_top_left,#eff6ff_0%,#f8fafc_46%,#ffffff_100%)]',
+    border: 'border-[#2361d8]/15',
+    accentText: 'text-[#2361d8]',
+    accentHover: 'hover:text-[#1f55c0]',
+    accentBg: 'bg-[#2361d8]',
+    softBg: 'bg-[#eef5ff]',
+    label: 'Isaak',
+    helper: 'Asistente fiscal',
+    logo: '/Isaak/isaak-avatar-verifactu.png',
+    logoAlt: 'Isaak',
+  },
+  holded: {
+    shell: 'bg-[radial-gradient(circle_at_top_left,#fff1f2_0%,#f8fafc_46%,#ffffff_100%)]',
+    border: 'border-[#ff5460]/20',
+    accentText: 'text-[#ff5460]',
+    accentHover: 'hover:text-[#ef4654]',
+    accentBg: 'bg-[#ff5460]',
+    softBg: 'bg-[#fff1f2]',
+    label: 'Isaak + Holded',
+    helper: 'Conexion segura',
+    logo: '/brand/holded/holded-diamond-logo.png',
+    logoAlt: 'Holded',
+  },
+} as const;
 
 export function AuthLayout({
   title,
@@ -134,124 +160,107 @@ export function AuthLayout({
   children,
   footerText,
   footerLink,
-  brandMode = "default",
+  brandMode = 'default',
   backHref,
   backLabel,
   compact = false,
   showSecurityCard = true,
 }: AuthLayoutProps) {
   const landingUrl = getLandingUrl();
-  const isHolded = brandMode === "holded";
+  const theme = THEMES[brandMode];
   const resolvedBackHref = backHref || landingUrl;
-  const resolvedBackLabel = backLabel || "Volver al inicio";
+  const resolvedBackLabel = backLabel || 'Volver al inicio';
 
   return (
-    <div
-      className={`min-h-screen px-4 py-10 ${
-        isHolded ? "bg-[linear-gradient(180deg,#ffffff_0%,#fff7f7_42%,#ffffff_100%)]" : "bg-[#2361d8]/5"
-      }`}
-    >
-      <div className={`mx-auto w-full ${compact ? 'max-w-sm' : 'max-w-md'}`}>
-        <div
-          className={`rounded-2xl border bg-white shadow-lg ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"} ${
-            compact ? 'p-5 sm:p-6' : 'p-8'
-          }`}
-        >
-          <div className={`${compact ? 'mb-5' : 'mb-8'} text-center`}>
-            <div className={`${compact ? 'mb-3' : 'mb-4'} flex justify-center`}>
-              {isHolded ? (
-                <div className="flex flex-col items-center gap-3">
-                  <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-200">
+    <main className={`min-h-screen px-4 py-6 text-slate-900 sm:px-6 ${theme.shell}`}>
+      <div className="mx-auto flex min-h-[calc(100svh-3rem)] w-full items-center justify-center">
+        <section className={`w-full ${compact ? 'max-w-[26rem]' : 'max-w-md'}`}>
+          <div
+            className={`overflow-hidden rounded-[2rem] border ${theme.border} bg-white shadow-[0_30px_90px_-56px_rgba(15,23,42,0.45)]`}
+          >
+            <div className={compact ? 'px-6 pb-7 pt-7' : 'px-8 pb-8 pt-8'}>
+              <div className="text-center">
+                <div className="inline-flex items-center gap-3 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full ${theme.softBg} ring-1 ring-slate-200`}
+                  >
                     <Image
-                      src="/brand/holded/holded-diamond-logo.png"
-                      alt="Isaak para Holded"
-                      width={52}
-                      height={52}
-                      className="h-[52px] w-[52px] object-contain"
+                      src={theme.logo}
+                      alt={theme.logoAlt}
+                      width={32}
+                      height={32}
+                      className="h-8 w-8 object-cover"
                       priority
                     />
                   </div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[#ff5460]">
-                    Isaak para Holded
+                  <div className="text-left">
+                    <div className="text-sm font-semibold text-slate-950">{theme.label}</div>
+                    <div className="text-xs text-slate-500">{theme.helper}</div>
                   </div>
                 </div>
-              ) : (
-                <BrandLogo variant="auth" />
-              )}
-            </div>
-            <div className={`${compact ? 'mb-3' : 'mb-4'}`}>
-              <a
-                href={resolvedBackHref}
-                className={`inline-flex items-center gap-2 text-sm font-semibold ${
-                  isHolded ? "text-[#ff5460] hover:text-[#ef4654]" : "text-[#2361d8] hover:text-[#2361d8]"
-                }`}
-              >
-                <span aria-hidden="true">&larr;</span> {resolvedBackLabel}
-              </a>
-            </div>
-            <h1 className={`mb-2 font-bold ${compact ? 'text-xl' : 'text-2xl'} ${isHolded ? "text-slate-950" : "text-[#011c67]"}`}>{title}</h1>
-            {subtitle && <p className="text-gray-600">{subtitle}</p>}
-          </div>
 
-          <div className="space-y-6">{children}</div>
-
-          {footerText && (
-            <div className="mt-8 text-center text-sm text-gray-600">
-              {footerText}
-              {footerLink && (
-                <>
-                  {" "}
-                  <a
-                    href={footerLink.href}
-                    className={`font-medium ${
-                      isHolded ? "text-[#ff5460] hover:text-[#ef4654]" : "text-[#2361d8] hover:text-[#2361d8]"
-                    }`}
-                  >
-                    {footerLink.label}
-                  </a>
-                </>
-              )}
-              <div className="mt-4 flex flex-col items-center gap-1 text-xs text-gray-500">
-                <Link
-                  href={resolvedBackHref}
-                  className={`underline ${isHolded ? "hover:text-[#ff5460]" : "hover:text-[#2361d8]"}`}
-                  aria-label="Volver al inicio"
-                >
-                  {resolvedBackLabel}
-                </Link>
-                <div className="flex gap-2">
+                <div className="mt-5">
                   <Link
-                    href="/legal/privacidad"
-                    className={`underline ${isHolded ? "hover:text-[#ff5460]" : "hover:text-[#2361d8]"}`}
-                    aria-label="Leer politica de privacidad"
+                    href={resolvedBackHref}
+                    className={`inline-flex items-center gap-1.5 text-xs font-medium ${theme.accentText} ${theme.accentHover} underline-offset-4 hover:underline`}
                   >
-                    Política de privacidad
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    {resolvedBackLabel}
                   </Link>
-                  <span>|</span>
-                  <Link
-                    href="/legal/terminos"
-                    className={`underline ${isHolded ? "hover:text-[#ff5460]" : "hover:text-[#2361d8]"}`}
-                    aria-label="Leer terminos y condiciones"
-                  >
-                    Términos y condiciones
+                </div>
+
+                <h1 className="mt-5 text-2xl font-bold tracking-tight text-slate-950">{title}</h1>
+                {subtitle ? (
+                  <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-600">
+                    {subtitle}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-6 space-y-5">{children}</div>
+
+              <div className="mt-7 text-center text-xs text-slate-500">
+                {footerText && footerLink ? (
+                  <p className="mb-4">
+                    {footerText}{' '}
+                    <Link
+                      href={footerLink.href}
+                      className={`font-semibold ${theme.accentText} ${theme.accentHover}`}
+                    >
+                      {footerLink.label}
+                    </Link>
+                  </p>
+                ) : null}
+                <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                  <Link href={resolvedBackHref} className="hover:text-slate-700 hover:underline">
+                    Salir
+                  </Link>
+                  <span className="text-slate-300">|</span>
+                  <Link href="/legal/privacidad" className="hover:text-slate-700 hover:underline">
+                    Privacidad
+                  </Link>
+                  <span className="text-slate-300">|</span>
+                  <Link href="/legal/terminos" className="hover:text-slate-700 hover:underline">
+                    Terminos
                   </Link>
                 </div>
               </div>
             </div>
-          )}
-        </div>
 
-        {showSecurityCard ? (
-          <div className={`mt-6 rounded-lg border bg-white p-4 text-center text-xs text-gray-600 ${isHolded ? "border-[#ff5460]/15" : "border-slate-200"}`}>
-            <p>
-              <strong>Tu información siempre está segura.</strong> Guardamos tus datos con cifrado y control de acceso.
-            </p>
+            {showSecurityCard ? (
+              <div className="border-t border-slate-200 bg-slate-50 px-6 py-4">
+                <div className="flex items-start gap-2 text-xs leading-5 text-slate-500">
+                  <ShieldCheck className={`mt-0.5 h-3.5 w-3.5 shrink-0 ${theme.accentText}`} />
+                  <span>
+                    Acceso protegido con Firebase, sesion firmada y cookies seguras entre dominios
+                    de Verifactu Business.
+                  </span>
+                </div>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
-
-
-

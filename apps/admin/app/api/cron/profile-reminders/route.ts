@@ -8,7 +8,7 @@
  *       OR admin session cookie               (llamada manual desde el panel)
  *
  * Se llama automáticamente por Vercel Cron (ver vercel.json).
- * También puede ejecutarse manualmente desde /admin-marketing.
+ * También puede ejecutarse manualmente desde /marketing/campaigns.
  */
 
 import { requireAdmin } from '@/lib/adminAuth';

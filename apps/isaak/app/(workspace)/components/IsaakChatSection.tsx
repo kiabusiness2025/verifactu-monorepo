@@ -426,8 +426,37 @@ export default function IsaakChatSection({
       recognitionRef.current?.stop();
       return;
     }
+
+    // V1.5.4 — idioma adaptativo: detecta el idioma del último mensaje
+    // del usuario para que el reconocimiento sea preciso. Default es-ES.
+    let lang = 'es-ES';
+    try {
+      const lastUser = [...messages].reverse().find((m) => m.role === 'user');
+      if (lastUser) {
+        const text = lastUser.content.toLowerCase();
+        if (/\b(aquest|també|però|m'agrada|voldria|què)\b/.test(text)) lang = 'ca-ES';
+        else if (/\b(teño|máis|aínda|ola|grazas|axuda)\b/.test(text)) lang = 'gl-ES';
+        else if (/\b(kaixo|eskerrik|nire|zure|nola)\b/.test(text)) lang = 'eu-ES';
+        else if (/\b(the|please|thanks|how much|what|can you)\b/.test(text))
+          lang = 'en-US';
+      }
+    } catch {
+      /* default es-ES */
+    }
+
+    // Comandos de voz para auto-enviar el mensaje. Después del trigger
+    // limpiamos el sufijo y disparamos onSubmit equivalente al click del
+    // botón Enviar.
+    const SEND_TRIGGERS = [
+      /\b(env[ií]a(?:lo|melo)?)\b\s*\.?$/i,
+      /\b(enviar(?:lo)?)\b\s*\.?$/i,
+      /\b(manda(?:lo)?)\b\s*\.?$/i,
+      /\b(send|send it)\b\s*\.?$/i,
+      /\b(envia)\b\s*\.?$/i,
+    ];
+
     const rec = new SpeechRec();
-    rec.lang = 'es-ES';
+    rec.lang = lang;
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     rec.onstart = () => setIsListening(true);
@@ -438,14 +467,34 @@ export default function IsaakChatSection({
       for (let i = 0; i < event.results.length; i++) {
         transcript += event.results[i][0].transcript;
       }
-      setInput(transcript);
-      if (event.results[event.results.length - 1].isFinal) {
+      const lastResult = event.results[event.results.length - 1];
+      // Detecta trigger solo en resultados finales para evitar falsos positivos.
+      if (lastResult.isFinal) {
+        let cleaned = transcript;
+        let shouldSend = false;
+        for (const re of SEND_TRIGGERS) {
+          if (re.test(cleaned)) {
+            cleaned = cleaned.replace(re, '').trim();
+            shouldSend = true;
+            break;
+          }
+        }
+        setInput(cleaned);
         rec.stop();
+        if (shouldSend && cleaned.length > 0) {
+          // Submit en próximo tick para que el setInput haya cuajado.
+          setTimeout(() => {
+            const form = inputRef.current?.closest('form');
+            form?.requestSubmit?.();
+          }, 30);
+        }
+      } else {
+        setInput(transcript);
       }
     };
     recognitionRef.current = rec;
     rec.start();
-  }, [isListening]);
+  }, [isListening, messages]);
 
   const speakMessage = useCallback(
     (id: string, text: string) => {

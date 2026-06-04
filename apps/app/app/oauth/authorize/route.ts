@@ -24,6 +24,7 @@ import {
   validateRedirectUri,
 } from '@/lib/oauth/mcp';
 import { getSessionPayload } from '@/lib/session';
+import { signConsentProof, verifyConsentProof } from '@verifactu/utils/consent-proof';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -214,9 +215,17 @@ export async function GET(request: NextRequest) {
   // B4 hardening (auditoría 2026-05-11): el flujo OAuth público requiere un
   // consent screen explícito antes de mintar el authorization code. La página
   // /oauth/consent muestra los scopes solicitados en lenguaje humano, los links
-  // legales (T&C / Privacy / DPA) y los botones Authorize / Cancel. Al pulsar
-  // Authorize, redirige de vuelta a /oauth/authorize con consent_confirmed=1.
-  const consentConfirmed = url.searchParams.get('consent_confirmed')?.trim() === '1';
+  // legales (T&C / Privacy / DPA) y los botones Authorize / Cancel.
+  //
+  // V3.E hardening (auditoría seguridad 2026-06-01): el flag suelto
+  // `consent_confirmed=1` permitía replay attack — cualquiera con cookie de
+  // sesión válida podía construir una URL que saltase el consent screen. Ahora
+  // exigimos `consent_proof = HMAC(SESSION_SECRET, uid|client_id|redirect_uri|
+  // scope|code_challenge)`. El proof se firma cuando redirigimos a /oauth/consent
+  // y se verifica cuando el usuario vuelve. Si los params cambian, el HMAC no
+  // coincide y rechazamos. El flag legacy se mantiene SOLO para que tests viejos
+  // documenten el comportamiento — el check real es el HMAC.
+  const consentProofRaw = url.searchParams.get('consent_proof')?.trim() || '';
   const isClaudeClient = isLikelyClaudeOAuthRequest({ clientId, redirectUri });
   const isChatgptClient = !isClaudeClient && isLikelyChatgptOAuthRequest({ clientId, redirectUri });
 
@@ -447,12 +456,27 @@ export async function GET(request: NextRequest) {
     // /oauth/consent con todos los parámetros necesarios. Esa página muestra el
     // scope solicitado en lenguaje humano, los links legales y los botones
     // Authorize/Cancel. Al autorizar redirige a /oauth/authorize con
-    // consent_confirmed=1 manteniendo el resto de params.
+    // consent_proof=<HMAC> manteniendo el resto de params.
     //
     // El consent screen se sirve bajo el dominio canónico público
     // (holded.verifactu.business) mediante un proxy ligero en apps/holded
     // para que el usuario no vea un cambio de dominio durante la auth flow.
-    if (!consentConfirmed) {
+    //
+    // V3.E: si consent_proof viene en la URL, verificamos su HMAC. Si no viene
+    // o no coincide, redirigimos a consent screen con un proof recién firmado.
+    const consentProofInput = {
+      uid: user.uid,
+      clientId,
+      redirectUri,
+      scope: normalizedScope,
+      codeChallenge: codeChallengeRaw,
+    };
+    const sessionSecret = process.env.SESSION_SECRET?.trim() || '';
+    const consentProofValid =
+      sessionSecret.length > 0 &&
+      verifyConsentProof(consentProofRaw, consentProofInput, sessionSecret);
+
+    if (!consentProofValid) {
       const holdedSiteUrl = resolveCanonicalHoldedSiteUrl();
       const consentUrl = new URL('/oauth/consent', holdedSiteUrl);
       consentUrl.searchParams.set('client_id', clientId);
@@ -464,6 +488,15 @@ export async function GET(request: NextRequest) {
       consentUrl.searchParams.set('response_type', 'code');
       consentUrl.searchParams.set('email', user.email ?? '');
       if (resource) consentUrl.searchParams.set('resource', resource);
+      // Firmamos el HMAC con los mismos 5 valores que verificaremos al volver.
+      // La página /oauth/consent NO necesita el secret — solo forwardea el
+      // proof intacto al link "Autorizar".
+      if (sessionSecret.length > 0) {
+        consentUrl.searchParams.set(
+          'consent_proof',
+          signConsentProof(consentProofInput, sessionSecret)
+        );
+      }
       return withConnectorRequestId(NextResponse.redirect(consentUrl), requestId);
     }
 

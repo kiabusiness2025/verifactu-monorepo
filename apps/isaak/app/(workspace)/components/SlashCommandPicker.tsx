@@ -106,7 +106,7 @@ export const SLASH_COMMANDS: SlashCommand[] = [
   {
     trigger: 'legal',
     label: '/legal',
-    description: 'Asesor Legal — revisar contrato',
+    description: 'Asesor Legal — pega aquí el texto del contrato (o sube PDF en /asesor-legal)',
     icon: Scale,
     expansion: 'Revísame este contrato:\n\n{cursor}',
   },
@@ -194,9 +194,46 @@ export default function SlashCommandPicker({
   registerKeyHandler,
 }: Props) {
   const query = input.startsWith('/') ? input.slice(1).split(/[\s\n]/)[0] : '';
+
+  // V1.7.2 — Custom slash commands del tenant. Se cargan una vez por
+  // sesión y se mezclan ANTES de los builtin para que el usuario los
+  // descubra primero. Si el trigger custom colisiona con uno builtin,
+  // el custom gana (puede sobreescribir el comportamiento por defecto).
+  const [customCommands, setCustomCommands] = useState<SlashCommand[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/isaak/slash-commands', { credentials: 'include' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data?.commands) return;
+        const parsed: SlashCommand[] = (data.commands as Array<Record<string, string>>).map(
+          (c) => ({
+            trigger: c.trigger,
+            label: c.label || `/${c.trigger}`,
+            description: c.description || 'Atajo personalizado',
+            icon: Sparkles, // fallback — custom no soporta icon por ahora
+            expansion: c.expansion,
+          }),
+        );
+        setCustomCommands(parsed);
+      })
+      .catch(() => {
+        /* fail-silent — picker funciona sin custom */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const allCommands = useMemo(() => {
+    const customTriggers = new Set(customCommands.map((c) => c.trigger));
+    const builtin = SLASH_COMMANDS.filter((c) => !customTriggers.has(c.trigger));
+    return [...customCommands, ...builtin];
+  }, [customCommands]);
+
   const filtered = useMemo(
-    () => SLASH_COMMANDS.filter((c) => matchesQuery(c, query)),
-    [query],
+    () => allCommands.filter((c) => matchesQuery(c, query)),
+    [query, allCommands],
   );
   const [activeIndex, setActiveIndex] = useState(0);
   const listRef = useRef<HTMLUListElement>(null);

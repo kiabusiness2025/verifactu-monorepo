@@ -22,8 +22,7 @@ describe('Compras / gastos / purchase documents API', () => {
   describe('GET', () => {
     it('requiere autenticación', async () => {
       (getHoldedSession as jest.Mock).mockResolvedValue(null);
-      // @ts-expect-error -- mock for testing
-      const req = { method: 'GET' };
+      const req = { method: 'GET' } as any;
       const res = await GET(req);
       expect(res.status).toBe(401);
     });
@@ -59,8 +58,7 @@ describe('Compras / gastos / purchase documents API', () => {
           },
         },
       ]);
-      // @ts-expect-error -- mock for testing
-      const req = { method: 'GET' };
+      const req = { method: 'GET' } as any;
       const res = await GET(req);
       const json = await res.json();
       expect(json.ok).toBe(true);
@@ -80,8 +78,7 @@ describe('Compras / gastos / purchase documents API', () => {
   describe('POST', () => {
     it('requiere autenticación', async () => {
       (getHoldedSession as jest.Mock).mockResolvedValue(null);
-      // @ts-expect-error -- mock for testing
-      const req = { method: 'POST', json: async () => ({}) };
+      const req = { method: 'POST', json: async () => ({}) } as any;
       const { POST } = await import('./route');
       const res = await POST(req);
       expect(res.status).toBe(401);
@@ -89,11 +86,11 @@ describe('Compras / gastos / purchase documents API', () => {
 
     it('valida datos y crea compra/gasto y proveedor', async () => {
       (getHoldedSession as jest.Mock).mockResolvedValue({ tenantId: 'tenant1' });
-      prisma.supplier = {
+      (prisma as any).supplier = {
         findFirst: jest.fn().mockResolvedValue(null),
         create: jest.fn().mockResolvedValue({ id: 'sup1', name: 'Proveedor Demo' }),
       };
-      prisma.expenseRecord = {
+      (prisma as any).expenseRecord = {
         create: jest.fn().mockResolvedValue({
           id: 'exp1',
           date: new Date('2024-01-01'),
@@ -123,7 +120,6 @@ describe('Compras / gastos / purchase documents API', () => {
         }),
       };
       const { POST } = await import('./route');
-      // @ts-expect-error -- mock for testing
       const req = {
         method: 'POST',
         json: async () => ({
@@ -132,7 +128,7 @@ describe('Compras / gastos / purchase documents API', () => {
           amount: 121,
           proveedor: { name: 'Proveedor Demo' },
         }),
-      };
+      } as any;
       const res = await POST(req);
       const json = await res.json();
       expect(json.ok).toBe(true);
@@ -147,8 +143,7 @@ describe('Compras / gastos / purchase documents API', () => {
     it('devuelve error si los datos son inválidos', async () => {
       (getHoldedSession as jest.Mock).mockResolvedValue({ tenantId: 'tenant1' });
       const { POST } = await import('./route');
-      // @ts-expect-error -- mock for testing
-      const req = { method: 'POST', json: async () => ({}) };
+      const req = { method: 'POST', json: async () => ({}) } as any;
       const res = await POST(req);
       const json = await res.json();
       expect(res.status).toBe(400);

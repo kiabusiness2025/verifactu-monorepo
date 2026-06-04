@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "node scripts/clean-next.mjs && next build && node scripts/fix-client-reference-manifests.mjs",
-    "start": "next start -p 8080",
+    "start": "node scripts/start-next.mjs",
     "lint": "next lint",
     "test": "jest",
     "test:watch": "jest --watch",

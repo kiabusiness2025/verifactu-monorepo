@@ -5,7 +5,7 @@
  * are Node.js globals that need no special setup.
  */
 
-import { holdedGetPnL, holdedGetVerifactuStatus } from '../holded-api';
+import { holdedGetDocumentPdf, holdedGetPnL, holdedGetVerifactuStatus } from '../holded-api';
 
 const API_KEY = 'test-api-key';
 
@@ -226,5 +226,51 @@ describe('holdedGetVerifactuStatus', () => {
     expect(result.uuid).toBe('retry-uuid');
 
     jest.useRealTimers();
+  });
+});
+
+// ── holdedGetDocumentPdf ──────────────────────────────────────────────────────
+describe('holdedGetDocumentPdf', () => {
+  it('returns base64 when Holded responds with real PDF magic bytes', async () => {
+    const pdfBytes = new Uint8Array(Buffer.from('%PDF-1.4 fake pdf body', 'utf8'));
+    const isolated = pdfBytes.buffer.slice(
+      pdfBytes.byteOffset,
+      pdfBytes.byteOffset + pdfBytes.byteLength
+    );
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: (h: string) => (h === 'content-type' ? 'application/pdf' : null) },
+      arrayBuffer: async () => isolated,
+    } as unknown as Response);
+
+    const result = await holdedGetDocumentPdf(API_KEY, 'invoice', 'doc-1');
+    expect(result.bytes).toBeGreaterThan(0);
+    expect(result.base64.length).toBeGreaterThan(0);
+    // Decoded base64 must start with %PDF-
+    expect(Buffer.from(result.base64, 'base64').toString('latin1').startsWith('%PDF-')).toBe(true);
+  });
+
+  it('V3.F.II: rejects fake PDF responses where Holded returns JSON error with HTTP 200', async () => {
+    // Mismo bug que ya cerramos en apps/app/lib/integrations/accounting.ts:
+    // Holded a veces devuelve 200 + JSON cuando el documento no tiene PDF.
+    // Antes Isaak encodeaba ese JSON como base64 y devolvía
+    // `mimeType: 'application/pdf'` mentiroso en el wrapper de holded-tools.ts.
+    const fakeBody = '{"status":0,"error":"Document has no PDF attachment"}';
+    const bytes = new Uint8Array(Buffer.from(fakeBody, 'utf8'));
+    const isolated = bytes.buffer.slice(
+      bytes.byteOffset,
+      bytes.byteOffset + bytes.byteLength
+    );
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      headers: { get: (h: string) => (h === 'content-type' ? 'application/json' : null) },
+      arrayBuffer: async () => isolated,
+    } as unknown as Response);
+
+    await expect(holdedGetDocumentPdf(API_KEY, 'invoice', 'doc-1')).rejects.toThrow(
+      /no PDF.*Document has no PDF attachment/
+    );
   });
 });

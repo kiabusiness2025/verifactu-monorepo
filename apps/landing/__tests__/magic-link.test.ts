@@ -83,7 +83,7 @@ function mockResendFail(status = 422, body = 'Unprocessable Entity') {
 // ---------------------------------------------------------------------------
 
 describe('POST /api/auth/magic-link', () => {
-  let POST: (req: Request) => Promise<Response>;
+  let POST: (req: NextRequest) => Promise<Response>;
 
   const VALID_BODY = {
     email: 'test@example.com',
@@ -161,6 +161,10 @@ describe('POST /api/auth/magic-link', () => {
     'https://verifactu.business/auth/isaak',
     'https://isaak.verifactu.business/auth/callback',
     'https://app.verifactu.business/dashboard',
+    'https://isaak.app/auth/isaak',
+    'https://www.isaak.app/auth/isaak',
+    'https://isaak.chat/auth/isaak',
+    'https://www.isaak.chat/auth/isaak',
     'http://localhost:3000/auth',
     'http://localhost:3001/auth',
     'http://localhost:3002/auth',
@@ -209,6 +213,25 @@ describe('POST /api/auth/magic-link', () => {
       url: VALID_BODY.continueUrl,
       handleCodeInApp: true,
     });
+  });
+
+  it('usa Firebase Admin de Isaak si /auth/isaak tiene vars propias', async () => {
+    process.env.ISAAK_FIREBASE_ADMIN_PROJECT_ID = 'isaak-project';
+    process.env.ISAAK_FIREBASE_ADMIN_CLIENT_EMAIL = 'isaak@test.iam.gserviceaccount.com';
+    process.env.ISAAK_FIREBASE_ADMIN_PRIVATE_KEY =
+      '-----BEGIN PRIVATE KEY-----\\nISAAK\\n-----END PRIVATE KEY-----\\n';
+    try {
+      mockResendOk();
+
+      const res = await POST(makeRequest(VALID_BODY));
+
+      expect(res.status).toBe(200);
+      expect(mockInitializeApp).toHaveBeenCalledWith(expect.any(Object), 'isaak-admin');
+    } finally {
+      delete process.env.ISAAK_FIREBASE_ADMIN_PROJECT_ID;
+      delete process.env.ISAAK_FIREBASE_ADMIN_CLIENT_EMAIL;
+      delete process.env.ISAAK_FIREBASE_ADMIN_PRIVATE_KEY;
+    }
   });
 
   // --- Resend ---

@@ -37,11 +37,7 @@ import {
   executeMicrosoftTool,
   isMicrosoftToolName,
 } from '@/app/lib/microsoft-tools';
-import {
-  BANKING_CHAT_TOOLS,
-  executeBankingTool,
-  isBankingToolName,
-} from '@/app/lib/banking-tools';
+import { BANKING_CHAT_TOOLS, executeBankingTool, isBankingToolName } from '@/app/lib/banking-tools';
 
 export const runtime = 'nodejs';
 
@@ -361,7 +357,8 @@ function buildLlmInstructions(input: {
       : 'Si desconoces el régimen fiscal, pregunta si es autónomo o sociedad antes de dar cifras concretas de impuestos.',
     'Si el usuario te pide un resumen, usa cifras concretas, concluye que significa para el negocio y remata con una recomendacion accionable.',
     'Si el usuario pide diagnostico, nombra al menos facturas, contactos y contabilidad aunque alguno falle.',
-    'Herramientas disponibles: puedes usar holded_get_verifactu_status para verificar si una factura tiene UUID Verifactu; holded_get_pnl para obtener el resultado contable actualizado del año; holded_list_payments para ver cobros y pagos; holded_send_document para enviar documentos por email (SIEMPRE pide confirmación explícita antes de enviar).',
+    'Herramientas disponibles: usa holded_get_verifactu_status para verificar UUID Verifactu; holded_get_pnl y holded_get_daily_book para resultado contable y libro diario; holded_list_payments para cobros y pagos; holded_list_taxes y holded_list_numbering_series antes de preparar facturas; holded_get_document_pdf para PDFs; holded_create_invoice_draft para crear SOLO borradores; holded_send_document para enviar documentos por email.',
+    'Para holded_create_invoice_draft: muestra primero cliente, líneas, impuestos e importe total, espera confirmación explícita y recuerda que queda como BORRADOR en Holded. El usuario debe aprobarlo allí antes de que tenga efectos legales.',
     'Para holded_send_document: muestra primero un resumen claro (destinatario, documento, asunto) y espera que el usuario responda "sí", "confirmar" o similar antes de ejecutar la tool con confirmed=true.',
     input.bankingLine
       ? `Banca abierta: ${input.bankingLine} Usa banking_list_accounts para ver saldos, banking_list_transactions para movimientos, banking_get_cash_summary para flujo de caja y banking_get_reconciliation_status para detectar movimientos sin emparejar con gastos de Holded. Prioriza estos datos sobre los de Holded cuando el usuario pregunte por saldo real o liquidez disponible.`
@@ -1123,8 +1120,7 @@ export async function POST(request: NextRequest) {
           contactName: supplierName,
           date: expenseDate,
           notes: invoiceNumber ? `${description} · Ref: ${invoiceNumber}` : description,
-          currency:
-            typeof pendingExpense.currency === 'string' ? pendingExpense.currency : 'EUR',
+          currency: typeof pendingExpense.currency === 'string' ? pendingExpense.currency : 'EUR',
           items: [
             {
               name: description,
@@ -1135,8 +1131,7 @@ export async function POST(request: NextRequest) {
           ],
         });
         const fmt = (n: number) =>
-          n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
-          ' €';
+          n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
         reply = [
           `✅ Gasto registrado en Holded correctamente.`,
           '',
@@ -1213,7 +1208,10 @@ export async function POST(request: NextRequest) {
         : Promise.resolve(null),
       getTenantFewShotExamples(session.tenantId).catch(() => []),
       prisma.seAccount
-        .findMany({ where: { tenantId: session.tenantId, status: 'active' }, select: { balance: true } })
+        .findMany({
+          where: { tenantId: session.tenantId, status: 'active' },
+          select: { balance: true },
+        })
         .catch(() => [] as { balance: import('@prisma/client').Prisma.Decimal }[]),
     ]);
 

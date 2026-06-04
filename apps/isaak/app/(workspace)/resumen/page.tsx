@@ -19,6 +19,7 @@ import {
   type IsaakVerifactuSignal,
 } from '@/app/lib/isaak-workspace-signals';
 import { isV1Launch } from '@/app/lib/feature-flags';
+import { getUpcomingDeadlines, type FiscalDeadline } from '@/app/lib/fiscal-calendar';
 import { prisma } from '@/app/lib/prisma';
 import ResumenChart, { type MonthlyPoint } from './components/ResumenChart';
 import CashFlowChart, { type CashFlowPoint } from './components/CashFlowChart';
@@ -78,6 +79,34 @@ type CashForecast = {
   recentOut: number;
 };
 
+function buildNextDeadlineCard(deadline: FiscalDeadline | null): KpiCard {
+  if (!deadline) {
+    return {
+      icon: Clock,
+      label: 'Próximo vencimiento',
+      value: '—',
+      sub: 'sin vencimientos próximos',
+      color: 'text-amber-600',
+      bg: 'bg-amber-50',
+    };
+  }
+
+  const daysUntil = Math.max(0, Math.ceil((deadline.date.getTime() - Date.now()) / 86_400_000));
+  const dateLabel = deadline.date.toLocaleDateString('es-ES', {
+    day: 'numeric',
+    month: 'short',
+  });
+
+  return {
+    icon: Clock,
+    label: 'Próximo vencimiento',
+    value: `Modelo ${deadline.modelo}`,
+    sub: daysUntil === 0 ? `${dateLabel} · hoy` : `${dateLabel} · en ${daysUntil} d`,
+    color: daysUntil <= 7 ? 'text-rose-600' : 'text-amber-600',
+    bg: daysUntil <= 7 ? 'bg-rose-50' : 'bg-amber-50',
+  };
+}
+
 async function loadCashFlowSeries(tenantId: string, weeks = 12): Promise<CashFlowPoint[]> {
   try {
     const now = new Date();
@@ -134,10 +163,7 @@ async function loadCashFlowSeries(tenantId: string, weeks = 12): Promise<CashFlo
     let i = 0;
     for (const [key, bucket] of buckets) {
       const d = new Date(key);
-      const label =
-        i === weeks - 1
-          ? 'Esta'
-          : `${d.getDate()}/${d.getMonth() + 1}`;
+      const label = i === weeks - 1 ? 'Esta' : `${d.getDate()}/${d.getMonth() + 1}`;
       points.push({
         label,
         inflow: Math.round(bucket.inflow * 100) / 100,
@@ -166,16 +192,19 @@ async function loadCashForecast(tenantId: string): Promise<CashForecast | null> 
       }),
     ]);
     if (accounts.length === 0) return null;
-    const currentBalance = Math.round(accounts.reduce((s, a) => s + Number(a.balance), 0) * 100) / 100;
-    let recentIn = 0, recentOut = 0;
+    const currentBalance =
+      Math.round(accounts.reduce((s, a) => s + Number(a.balance), 0) * 100) / 100;
+    let recentIn = 0,
+      recentOut = 0;
     for (const tx of txStats) {
       const amt = Number(tx.amount);
-      if (amt > 0) recentIn += amt; else recentOut += Math.abs(amt);
+      if (amt > 0) recentIn += amt;
+      else recentOut += Math.abs(amt);
     }
     return {
       currentBalance,
       accountCount: accounts.length,
-      pendingIn: 0,     // filled in after analytics load
+      pendingIn: 0, // filled in after analytics load
       forecastBalance: currentBalance,
       recentIn: Math.round(recentIn * 100) / 100,
       recentOut: Math.round(recentOut * 100) / 100,
@@ -186,6 +215,7 @@ async function loadCashForecast(tenantId: string): Promise<CashForecast | null> 
 }
 
 async function DashboardContent() {
+  const v1Launch = isV1Launch();
   let kpis: KpiCard[] = [];
   let chartData: MonthlyPoint[] = [];
   let verifactu: VerifactuStats | null = null;
@@ -193,6 +223,7 @@ async function DashboardContent() {
   let verifactuSignal: IsaakVerifactuSignal | null = null;
   let cashForecast: CashForecast | null = null;
   let cashFlow: CashFlowPoint[] = [];
+  const nextDeadline = getUpcomingDeadlines(120)[0] ?? null;
 
   try {
     const session = await getHoldedSession();
@@ -212,6 +243,18 @@ async function DashboardContent() {
 
       if (a) {
         const vatEstimate = a.quarterSales > 0 ? a.quarterSales * 0.21 : null;
+        const pendingCollectionsCard: KpiCard = {
+          icon: Clock,
+          label: 'Pendiente de cobro',
+          value: fmt(a.pendingCollectionsAmount),
+          sub:
+            a.pendingCollectionsCount > 0
+              ? `${a.pendingCollectionsCount} factura${a.pendingCollectionsCount > 1 ? 's' : ''} pendiente${a.pendingCollectionsCount > 1 ? 's' : ''}`
+              : 'todo cobrado',
+          color: 'text-amber-600',
+          bg: 'bg-amber-50',
+        };
+
         kpis = [
           {
             icon: TrendingUp,
@@ -229,17 +272,7 @@ async function DashboardContent() {
             color: 'text-slate-500',
             bg: 'bg-slate-100',
           },
-          {
-            icon: Clock,
-            label: 'Pendiente de cobro',
-            value: fmt(a.pendingCollectionsAmount),
-            sub:
-              a.pendingCollectionsCount > 0
-                ? `${a.pendingCollectionsCount} factura${a.pendingCollectionsCount > 1 ? 's' : ''} pendiente${a.pendingCollectionsCount > 1 ? 's' : ''}`
-                : 'todo cobrado',
-            color: 'text-amber-600',
-            bg: 'bg-amber-50',
-          },
+          v1Launch ? buildNextDeadlineCard(nextDeadline) : pendingCollectionsCard,
           {
             icon: BarChart3,
             label: 'IVA estimado trimestre',
@@ -314,14 +347,16 @@ async function DashboardContent() {
             color: 'text-slate-500',
             bg: 'bg-slate-100',
           },
-          {
-            icon: Clock,
-            label: 'Pendiente de cobro',
-            value: '—',
-            sub: 'Pregunta a Isaak →',
-            color: 'text-amber-600',
-            bg: 'bg-amber-50',
-          },
+          v1Launch
+            ? buildNextDeadlineCard(nextDeadline)
+            : {
+                icon: Clock,
+                label: 'Pendiente de cobro',
+                value: '—',
+                sub: 'Pregunta a Isaak →',
+                color: 'text-amber-600',
+                bg: 'bg-amber-50',
+              },
           {
             icon: BarChart3,
             label: 'IVA estimado trimestre',
@@ -342,9 +377,7 @@ async function DashboardContent() {
     <div className="grid grid-cols-2 gap-3 px-5 py-4 xl:grid-cols-4">
       {displayKpis.map(({ icon: Icon, label, value, sub, color, bg }) => (
         <div key={label} className="rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-          <div
-            className={`mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}
-          >
+          <div className={`mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg ${bg}`}>
             <Icon size={16} className={color} />
           </div>
           <p className="text-[11px] font-medium text-slate-500">{label}</p>
@@ -359,7 +392,7 @@ async function DashboardContent() {
     </div>
   );
 
-  if (isV1Launch()) {
+  if (v1Launch) {
     return kpiGrid;
   }
 
@@ -373,7 +406,9 @@ async function DashboardContent() {
           <div className="flex items-center gap-1.5 mb-2">
             <Landmark size={13} className="text-[#2361d8]" />
             <p className="text-[11px] font-semibold text-slate-500">
-              Tesorería real · {cashForecast.accountCount} cuenta{cashForecast.accountCount !== 1 ? 's' : ''} bancaria{cashForecast.accountCount !== 1 ? 's' : ''}
+              Tesorería real · {cashForecast.accountCount} cuenta
+              {cashForecast.accountCount !== 1 ? 's' : ''} bancaria
+              {cashForecast.accountCount !== 1 ? 's' : ''}
             </p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -385,7 +420,9 @@ async function DashboardContent() {
             </div>
             {cashForecast.pendingIn > 0 && (
               <div>
-                <p className="text-[10px] uppercase tracking-wide text-slate-400">Cobros pendientes</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-400">
+                  Cobros pendientes
+                </p>
                 <p className="text-[15px] font-bold text-emerald-600">
                   +{fmt(cashForecast.pendingIn)}
                 </p>
@@ -394,7 +431,9 @@ async function DashboardContent() {
             {cashForecast.pendingIn > 0 && (
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-slate-400">Previsión 30d</p>
-                <p className={`text-[15px] font-bold ${cashForecast.forecastBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                <p
+                  className={`text-[15px] font-bold ${cashForecast.forecastBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}
+                >
                   {fmt(cashForecast.forecastBalance)}
                 </p>
               </div>
@@ -402,8 +441,12 @@ async function DashboardContent() {
           </div>
           <div className="mt-2 flex flex-wrap gap-3 border-t border-slate-100 pt-2">
             <span className="text-[10px] text-slate-400">Últimos 30 días:</span>
-            <span className="text-[10px] text-emerald-600">↑ {fmt(cashForecast.recentIn)} entradas</span>
-            <span className="text-[10px] text-rose-500">↓ {fmt(cashForecast.recentOut)} salidas</span>
+            <span className="text-[10px] text-emerald-600">
+              ↑ {fmt(cashForecast.recentIn)} entradas
+            </span>
+            <span className="text-[10px] text-rose-500">
+              ↓ {fmt(cashForecast.recentOut)} salidas
+            </span>
           </div>
         </div>
       ) : (
@@ -421,16 +464,15 @@ async function DashboardContent() {
       )}
 
       {/* ── Cash Flow Chart (real banking data) ──────────────────────────── */}
-      {cashFlow.length > 0 &&
-        cashFlow.some((p) => p.inflow > 0 || p.outflow > 0) && (
-          <div className="mx-5 mb-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
-            <div className="mb-3 flex items-center justify-between">
-              <p className="text-[12px] font-semibold text-slate-500">Cash flow semanal</p>
-              <p className="text-[10px] text-slate-400">Últimas 12 semanas · datos bancarios</p>
-            </div>
-            <CashFlowChart data={cashFlow} />
+      {cashFlow.length > 0 && cashFlow.some((p) => p.inflow > 0 || p.outflow > 0) && (
+        <div className="mx-5 mb-4 rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-[12px] font-semibold text-slate-500">Cash flow semanal</p>
+            <p className="text-[10px] text-slate-400">Últimas 12 semanas · datos bancarios</p>
           </div>
-        )}
+          <CashFlowChart data={cashFlow} />
+        </div>
+      )}
 
       {verifactuSignal?.checked && verifactuSignal.invoicesWithoutUuid > 0 && (
         <div className="mx-5 mb-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">

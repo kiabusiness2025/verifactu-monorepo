@@ -24,7 +24,6 @@ describe('Contactos API (GET/POST)', () => {
 
   it('requiere autenticación', async () => {
     (getHoldedSession as jest.Mock).mockResolvedValueOnce(null);
-    // @ts-expect-error -- mock for testing
     const res = await GET();
     expect(res.status).toBe(401);
   });
@@ -40,7 +39,6 @@ describe('Contactos API (GET/POST)', () => {
         updatedAt: new Date(),
       },
     ]);
-    // @ts-expect-error -- mock for testing
     const res = await GET();
     const json = await res.json();
     expect(json.ok).toBe(true);

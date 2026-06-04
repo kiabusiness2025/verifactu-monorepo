@@ -59,7 +59,7 @@ describe('PUT /api/holded/purchases/[id]', () => {
   it('requiere autenticación', async () => {
     (getHoldedSession as jest.Mock).mockResolvedValueOnce(null);
     const req = { json: jest.fn() } as any;
-    const res = await PUT(req, { params: { id: 'expense-1' } });
+    const res = await PUT(req, { params: Promise.resolve({ id: 'expense-1' }) });
     expect(res.status).toBe(401);
   });
 
@@ -81,7 +81,7 @@ describe('PUT /api/holded/purchases/[id]', () => {
         notes: 'Sin observaciones',
       }),
     } as any;
-    const res = await PUT(req, { params: { id: 'expense-1' } });
+    const res = await PUT(req, { params: Promise.resolve({ id: 'expense-1' }) });
     const json = await res.json();
     expect(prisma.supplier.findFirst).toHaveBeenCalled();
     expect(prisma.expenseRecord.update).toHaveBeenCalledWith(
@@ -112,7 +112,7 @@ describe('PUT /api/holded/purchases/[id]', () => {
         proveedor: { name: 'Proveedor S.A.', nif: 'B12345678' },
       }),
     } as any;
-    const res = await PUT(req, { params: { id: 'expense-1' } });
+    const res = await PUT(req, { params: Promise.resolve({ id: 'expense-1' }) });
     expect(prisma.supplier.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ name: 'Proveedor S.A.' }),
@@ -123,7 +123,7 @@ describe('PUT /api/holded/purchases/[id]', () => {
 
   it('devuelve error si los datos son inválidos', async () => {
     const req = { json: async () => ({ proveedor: {} }) } as any;
-    const res = await PUT(req, { params: { id: 'expense-1' } });
+    const res = await PUT(req, { params: Promise.resolve({ id: 'expense-1' }) });
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.ok).toBe(false);
@@ -136,7 +136,7 @@ describe('PUT /api/holded/purchases/[id]', () => {
         throw new Error('bad json');
       },
     } as any;
-    const res = await PUT(req, { params: { id: 'expense-1' } });
+    const res = await PUT(req, { params: Promise.resolve({ id: 'expense-1' }) });
     expect(res.status).toBe(400);
     const json = await res.json();
     expect(json.ok).toBe(false);

@@ -68,12 +68,45 @@ export function toUnixSecondsString(input: string | number): string {
     return (n >= 1e12 ? Math.floor(n / 1000) : n).toString();
   }
 
+  // V3.G.5 (auditoría 2026-06-01): YYYY-MM-DD se interpreta como medianoche
+  // LOCAL Europe/Madrid, NO UTC. Holded almacena las fechas de documentos
+  // al timestamp de medianoche local del tenant. Si parseamos "2025-01-01"
+  // como UTC midnight (1735689600), filtros con starttmp=ese valor pierden
+  // silenciosamente los documentos fechados al 2025-01-01 (cuyo timestamp
+  // real es 1735686000 = 2025-01-01 00:00 Madrid). Daño en auditorías
+  // por ejercicio/trimestre. Repro: P250001 en Nova Gestión.
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return parseDateAsMadridMidnight(trimmed).toString();
+  }
+
   const ms = Date.parse(trimmed);
   if (!Number.isFinite(ms)) {
     throw new Error(`Invalid date: ${trimmed}. Use ISO 8601 or Unix timestamp.`);
   }
 
   return Math.floor(ms / 1000).toString();
+}
+
+/**
+ * "YYYY-MM-DD" → segundos epoch de las 00:00:00 LOCAL Europe/Madrid de ese día.
+ * Maneja DST automáticamente (CET +60 invierno / CEST +120 verano).
+ */
+function parseDateAsMadridMidnight(isoDate: string): number {
+  const utcMidnightMs = Date.parse(`${isoDate}T00:00:00Z`);
+  if (!Number.isFinite(utcMidnightMs)) return NaN;
+  const sample = new Date(utcMidnightMs);
+  const tzPart = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Madrid',
+    timeZoneName: 'shortOffset',
+  })
+    .formatToParts(sample)
+    .find((p) => p.type === 'timeZoneName')?.value;
+  const match = tzPart?.match(/GMT([+-])(\d+)(?::(\d+))?/);
+  const offsetMin = match
+    ? (match[1] === '-' ? -1 : 1) *
+      (Number(match[2]) * 60 + (match[3] ? Number(match[3]) : 0))
+    : 60;
+  return Math.floor(utcMidnightMs / 1000) - offsetMin * 60;
 }
 
 /**
@@ -111,16 +144,27 @@ export interface PaginationMeta {
 export function buildPaginationMeta(
   itemsInPage: number,
   page: number = 1,
-  pageSize: number = 500
+  pageSize: number = 250
 ): PaginationMeta {
-  // Holded /dailyledger devuelve por defecto hasta ~500 entradas por pagina
-  // (observado empiricamente; no documentado oficialmente). Si itemsInPage
-  // iguala o supera ese umbral, asumimos que hay mas paginas.
+  // V3.G.1 (auditoría 2026-06-01, segunda iteración): la heurística
+  // `itemsInPage >= pageSize` resultó frágil contra Holded /dailyledger
+  // en tenants grandes (Nova Gestion SL, 408 asientos reales). El reviewer
+  // observó: pagina 1 devolvió ~155 entries (menos que pageSize=250) con
+  // likelyHasMorePages: false, pero la pagina 2 traía 219 más. Holded NO
+  // garantiza que una pagina por debajo del pageSize sea la última — el
+  // pageSize observado varia por endpoint, segmentación interna y mongo
+  // cursor batching.
   //
-  // Bug arreglado (12-may-2026, task #107): antes el default era 100, lo que
-  // hacia que el smoke test reportara pageSize=100 cuando Holded devolvia 250.
-  // El modelo veia la discrepancia y se confundia.
-  const likelyHasMorePages = itemsInPage >= pageSize;
+  // Solución pragmática: cuando hay CUALQUIER resultado, asumimos que
+  // puede haber más y suggested next_page. El coste es UNA llamada extra
+  // al final (pagina vacía cierra el bucle). El beneficio: cero falsos
+  // negativos. Para datos fiscales (libro diario, cuentas) un agregado
+  // a la mitad sin avisar es peor que una llamada extra.
+  //
+  // pageSize se mantiene en la metadata como info diagnóstica del cliente
+  // (cuántas entries pidió por página) — ya NO se usa para decidir el
+  // flag.
+  const likelyHasMorePages = itemsInPage > 0;
   return {
     page,
     pageSize,
@@ -128,9 +172,66 @@ export function buildPaginationMeta(
     likelyHasMorePages,
     suggestedNextPage: likelyHasMorePages ? page + 1 : null,
     hint: likelyHasMorePages
-      ? `Holded returned ${itemsInPage} items in page ${page} (matches expected pageSize=${pageSize}, page is full). MORE PAGES LIKELY EXIST. Call again with page=${page + 1} to continue, and merge results client-side. Do NOT report aggregate values (totals, sums, counts) until you have fetched every page or you will return a partial answer.`
+      ? `Holded returned ${itemsInPage} items in page ${page}. The connector cannot reliably know whether more pages exist (Holded does not return a hasMore flag and its page size is not deterministic), so it ALWAYS suggests probing the next page until an empty page is returned. Call again with page=${page + 1}; an empty array means you have fetched everything. Do NOT report aggregate values (totals, sums, counts) until you have walked to an empty page.`
       : null,
   };
+}
+
+/**
+ * V3.G (auditoría 2026-06-01): orden estable client-side de asientos del
+ * libro diario y entradas similares. Holded `/dailyledger` devuelve los
+ * registros en el orden interno de Mongo (insertion order, sin garantías),
+ * lo que para una vista contable es inutilizable — el usuario reporto
+ * asientos saliendo en orden "122-129, luego 280, 356, 384..., 660-677,
+ * 137 al final", imposible de cuadrar.
+ *
+ * Ordenamos por `date` ASC (oldest first, como espera un libro diario)
+ * y rompemos empates por `number` (numero de asiento) ASC. Si alguno de
+ * estos campos falta, lo movemos al final manteniendo la posicion entre
+ * ellos (sort estable).
+ */
+export function sortJournalEntries<T extends Record<string, unknown>>(entries: T[]): T[] {
+  const withIndex = entries.map((entry, idx) => ({ entry, idx }));
+  withIndex.sort((a, b) => {
+    const dateA = toComparableNumber((a.entry as { date?: unknown }).date);
+    const dateB = toComparableNumber((b.entry as { date?: unknown }).date);
+    if (dateA !== dateB) {
+      // null/NaN al final
+      if (dateA === null) return 1;
+      if (dateB === null) return -1;
+      return dateA - dateB;
+    }
+    const numA = toComparableNumber(
+      (a.entry as { number?: unknown }).number ?? (a.entry as { docNumber?: unknown }).docNumber
+    );
+    const numB = toComparableNumber(
+      (b.entry as { number?: unknown }).number ?? (b.entry as { docNumber?: unknown }).docNumber
+    );
+    if (numA !== numB) {
+      if (numA === null) return 1;
+      if (numB === null) return -1;
+      return numA - numB;
+    }
+    return a.idx - b.idx;
+  });
+  return withIndex.map((w) => w.entry);
+}
+
+function toComparableNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const parsed = Number(trimmed);
+    if (Number.isFinite(parsed)) return parsed;
+    // Soporta formato "001", "A-002", etc. — extraemos solo los digitos.
+    const digits = trimmed.match(/\d+/);
+    if (digits) {
+      const parsedDigits = Number(digits[0]);
+      if (Number.isFinite(parsedDigits)) return parsedDigits;
+    }
+  }
+  return null;
 }
 
 /**

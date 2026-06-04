@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import IsaakChatSection from '../components/IsaakChatSection';
 import AdvisorModeBanner from '../components/AdvisorModeBanner';
+import OnboardingBanner from '../components/OnboardingBanner';
+import QuotaBanner from '../components/QuotaBanner';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { getHoldedConnection } from '@/app/lib/holded-integration';
 import { loadIsaakWorkspaceSignals } from '@/app/lib/isaak-workspace-signals';
@@ -54,6 +56,8 @@ export default async function ChatPage() {
           clientCompanyName={activeAdvisorClient.companyName}
         />
       )}
+      {!activeAdvisorClient && <OnboardingBanner />}
+      {!activeAdvisorClient && <QuotaBanner />}
       <div className="flex-1 overflow-hidden">
         <IsaakChatSection
           context="default"

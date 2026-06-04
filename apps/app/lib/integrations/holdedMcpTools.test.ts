@@ -263,6 +263,25 @@ describe('holdedMcpTools', () => {
     expect(toolNames).toHaveLength(10);
   });
 
+  it('V3.H: all 10 preset tools publish an outputSchema per MCP spec recommendation', () => {
+    // OpenAI App Review marca "Recommended: Add an outputSchema so models can
+    // better understand this tool's results". MCP spec draft (Tool section):
+    //   https://modelcontextprotocol.io/specification/draft/server/tools#tool
+    // Cada tool del preset openai_review_invoicing_v1 debe exponer outputSchema
+    // describiendo la forma de structuredContent (items[], item, pdf, created).
+    const presetNames = new Set(
+      getAllowedHoldedMcpToolNames(getHoldedMcpScopePreset('openai_review_invoicing_v1'))
+    );
+    const presetTools = holdedMcpTools.filter((t) => presetNames.has(t.name));
+
+    expect(presetTools).toHaveLength(10);
+    for (const tool of presetTools) {
+      expect(tool.outputSchema).toBeDefined();
+      expect(tool.outputSchema?.type).toBe('object');
+      expect(tool.outputSchema?.properties).toBeDefined();
+    }
+  });
+
   it('keeps the claude_parity preset stable at 29 tools (reserved for submission v3 post-approval)', () => {
     // claude_parity es el preset que usaremos como submission v3 cuando OpenAI
     // apruebe la submission v2 (openai_review_invoicing_v1). NO es el default
@@ -638,6 +657,8 @@ describe('holdedMcpTools', () => {
         fileName: 'invoice-doc-1.pdf',
         size: 4,
       },
+      // V3.G.5: discriminate rendered PDF vs user-uploaded attachment.
+      source: 'rendered',
     });
   });
 

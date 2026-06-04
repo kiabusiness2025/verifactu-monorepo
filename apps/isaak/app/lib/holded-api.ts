@@ -162,22 +162,55 @@ export async function holdedGetContact(apiKey: string, contactId: string) {
   return holdedFetch(apiKey, `/api/invoicing/v1/contacts/${contactId}`);
 }
 
-export async function holdedGetChartOfAccounts(apiKey: string) {
-  return holdedFetch(apiKey, '/api/accounting/v1/chartofaccounts?includeEmpty=1');
+/**
+ * V3.G.2 (2026-06-01): acepta starttmp/endtmp opcionales para escopear el
+ * balance a un ejercicio fiscal. Sin ellos Holded usa el rango default del
+ * tenant. Ver docs/engineering/connectors/HOLDED_API_QUIRKS.md Q6.1.
+ */
+export async function holdedGetChartOfAccounts(
+  apiKey: string,
+  params?: { starttmp?: string; endtmp?: string }
+) {
+  const qs = new URLSearchParams({ includeEmpty: '1' });
+  if (params?.starttmp) qs.set('starttmp', toUnix(params.starttmp) ?? '');
+  if (params?.endtmp) qs.set('endtmp', toUnix(params.endtmp) ?? '');
+  return holdedFetch(apiKey, `/api/accounting/v1/chartofaccounts?${qs}`);
 }
 
+/**
+ * V3.G.2 (2026-06-01): auto-paginar /dailyledger hasta agregar todas las
+ * páginas. Antes hacíamos una sola llamada → reviewer obtenía 155 de 408
+ * asientos. Ahora iteramos page=1,2,3,... hasta una página parcial o el
+ * cap HOLDED_LEDGER_MAX_PAGES.
+ */
 export async function holdedGetJournal(
   apiKey: string,
   params?: { starttmp?: string; endtmp?: string }
 ) {
   const range = defaultDocRange();
-  const qs = new URLSearchParams({
+  const baseParams = {
     starttmp: toUnix(params?.starttmp) ?? range.starttmp,
     endtmp: toUnix(params?.endtmp) ?? range.endtmp,
-  });
-  const raw = (await holdedFetch(apiKey, `/api/accounting/v1/dailyledger?${qs}`)) as unknown[];
-  const all = Array.isArray(raw) ? raw : [];
-  return { entries: all.slice(0, 100), total: all.length, truncated: all.length > 100 };
+  };
+
+  const pageSize = Number(process.env.HOLDED_LEDGER_PAGE_SIZE || '250');
+  const maxPages = Math.max(1, Number(process.env.HOLDED_LEDGER_MAX_PAGES || '10'));
+  const aggregated: unknown[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const qs = new URLSearchParams({ ...baseParams, page: String(page) });
+    const raw = (await holdedFetch(apiKey, `/api/accounting/v1/dailyledger?${qs}`)) as unknown[];
+    const pageItems = Array.isArray(raw) ? raw : [];
+    aggregated.push(...pageItems);
+    if (pageItems.length < pageSize) break;
+  }
+
+  return {
+    entries: aggregated.slice(0, 100),
+    total: aggregated.length,
+    truncated: aggregated.length > 100,
+    autoPaginatedByConnector: true,
+  };
 }
 
 export async function holdedListTreasuryAccounts(apiKey: string) {
@@ -580,6 +613,37 @@ export async function holdedGetDocumentPdf(
       throw new Error(`Holded API ${res.status} at /documents/${docType}/${documentId}/pdf`);
     }
     const buf = Buffer.from(await res.arrayBuffer());
+
+    // V3.F.II (auditoría 2026-06-01): mismo patrón que el bug ya cerrado en
+    // apps/app/lib/integrations/accounting.ts. Holded a veces devuelve 200 OK
+    // con body JSON `{"status":0,"error":"..."}` cuando el documento no tiene
+    // PDF — sin esta validación, encodeábamos ese JSON como base64 con
+    // mimeType: 'application/pdf' mentiroso (ver holded-tools.ts:539).
+    //
+    // Magic bytes de un PDF real: %PDF- (bytes 0x25 0x50 0x44 0x46 0x2D).
+    // Si los primeros 5 bytes NO coinciden Y el content-type devuelto por
+    // Holded no es application/pdf, propagamos el error real de Holded.
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    const magic = buf.subarray(0, 5).toString('latin1');
+    const isPdfMagic = magic.startsWith('%PDF-');
+    const isPdfContentType = contentType.startsWith('application/pdf');
+
+    if (!isPdfMagic && !isPdfContentType) {
+      const bodyText = buf.toString('utf8');
+      let parsedMessage: string | null = null;
+      try {
+        const parsed = JSON.parse(bodyText) as { error?: string; message?: string };
+        parsedMessage = parsed?.error ?? parsed?.message ?? null;
+      } catch {
+        // Body no es JSON parseable, dejamos parsedMessage null.
+      }
+      throw new Error(
+        parsedMessage
+          ? `Holded returned no PDF for ${docType}/${documentId}: ${parsedMessage}`
+          : `Holded returned no PDF for ${docType}/${documentId}. The document may not have an attached PDF or may not be in a printable state.`
+      );
+    }
+
     return { base64: buf.toString('base64'), bytes: buf.byteLength };
   } finally {
     clearTimeout(timer);

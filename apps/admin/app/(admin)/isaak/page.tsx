@@ -86,12 +86,20 @@ export default async function AdminIsaakPage() {
             Actividad global de conversaciones, planes y uso por tenant.
           </p>
         </div>
-        <Link
-          href="/isaak/alerts"
-          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
-        >
-          Cola de alertas →
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/isaak/copilot-audit"
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Acciones copilot →
+          </Link>
+          <Link
+            href="/isaak/alerts"
+            className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-700 transition hover:bg-amber-100"
+          >
+            Cola de alertas →
+          </Link>
+        </div>
       </header>
 
       {/* KPI row */}

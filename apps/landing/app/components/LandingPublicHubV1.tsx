@@ -46,7 +46,7 @@ function HeroMockup() {
           <div className="h-2.5 w-2.5 rounded-full bg-green-400" />
         </div>
         <div className="flex flex-1 items-center justify-center rounded border border-slate-200 bg-white px-2 py-0.5">
-          <span className="text-[10px] text-slate-400">app.isaak.app</span>
+          <span className="text-[10px] text-slate-400">isaak.app</span>
         </div>
         <div className="w-8" />
       </div>
@@ -150,7 +150,7 @@ function HeroMockup() {
   );
 }
 
-const ISAAK_URL = 'https://isaak.verifactu.business';
+const ISAAK_URL = 'https://isaak.app';
 const CLAUDE_CONNECTOR_URL = 'https://holded.verifactu.business/claude';
 const CHATGPT_CONNECTOR_URL = 'https://holded.verifactu.business/chatgpt';
 

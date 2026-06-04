@@ -46,6 +46,7 @@ export type SettingsIsaakData = {
   communicationStyle: string;
   likelyKnowledgeLevel: string;
   mainGoals: string[];
+  customInstructions?: string;
   resetUrl: string;
 };
 
@@ -76,6 +77,9 @@ export type SettingsBillingData = {
   portalAvailable: boolean;
   checkoutAvailable: boolean;
   cancelAvailable: boolean;
+  pauseAvailable: boolean;
+  isPaused: boolean;
+  pausedUntil: string | null;
   invoices: SettingsBillingInvoice[];
 };
 
@@ -275,6 +279,9 @@ export async function loadBillingData(input: {
     portalAvailable: Boolean(process.env.STRIPE_SECRET_KEY && customerId),
     checkoutAvailable: Boolean(process.env.STRIPE_SECRET_KEY && readDefaultPriceId()),
     cancelAvailable: Boolean(process.env.STRIPE_SECRET_KEY && subscriptionId),
+    pauseAvailable: Boolean(process.env.STRIPE_SECRET_KEY && subscriptionId),
+    isPaused: false,
+    pausedUntil: null,
     invoices: [],
   };
 
@@ -301,6 +308,19 @@ export async function loadBillingData(input: {
       billing.paymentMethodSummary = card
         ? `${formatCardBrand(card.brand)} terminada en ${card.last4}`
         : null;
+    }
+
+    // V1.8.1 — Estado de pausa de Stripe (pause_collection). Si está
+    // activa, exponemos pausedUntil para que el cliente muestre banner
+    // y botón "Reanudar". El flag pauseAvailable se calcula igual que
+    // cancelAvailable (requiere subscriptionId + Stripe configurado).
+    const pause = activeSubscription?.pause_collection;
+    if (pause) {
+      billing.pausedUntil =
+        typeof pause.resumes_at === 'number'
+          ? new Date(pause.resumes_at * 1000).toISOString()
+          : null;
+      billing.isPaused = true;
     }
 
     if (input.includeInvoices) {
@@ -428,6 +448,21 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
   const onboarding = onboardingState.profile;
   const instructions = onboardingState.instructions;
 
+  // V1.6.4 — Custom instructions del tenant (sub-key del whitelabelConfig)
+  let tenantCustomInstructions = '';
+  try {
+    const t = await prisma.tenant.findUnique({
+      where: { id: session.tenantId },
+      select: { whitelabelConfig: true },
+    });
+    const cfg = (t?.whitelabelConfig ?? null) as { aiCustomInstructions?: unknown } | null;
+    if (cfg && typeof cfg.aiCustomInstructions === 'string') {
+      tenantCustomInstructions = cfg.aiCustomInstructions;
+    }
+  } catch {
+    /* fail-silent */
+  }
+
   const planCode = subscription?.plan?.code ?? billing.code ?? 'free';
   const maxSeats = maxSeatsForPlan(planCode);
   const activeMembers = memberships.filter((m) => m.status === 'active').length;
@@ -516,6 +551,7 @@ export async function loadSettingsData(session: SettingsSession): Promise<Settin
       likelyKnowledgeLevel:
         instructions?.likelyKnowledgeLevel || onboarding?.likelyKnowledgeLevel || 'starter',
       mainGoals: onboarding?.mainGoals ?? [],
+      customInstructions: tenantCustomInstructions,
       resetUrl: buildHoldedProfileOnboardingUrl(
         'isaak_settings_repersonalize',
         `${ISAAK_PUBLIC_URL}/chat?source=isaak_settings`
@@ -602,6 +638,44 @@ export async function cancelBillingAtPeriodEnd(subscriptionId: string) {
       typeof subscription.current_period_end === 'number'
         ? new Date(subscription.current_period_end * 1000)
         : null,
+  };
+}
+
+// V1.7.3 — Pause / Resume.
+// Stripe permite "pause_collection" para detener el cobro manteniendo
+// la suscripción activa. Tres comportamientos:
+//   - 'mark_uncollectible' → no se cobra y las facturas quedan así (lo
+//     que usamos para pausa típica del usuario).
+//   - 'keep_as_draft' / 'void' → variantes administrativas, no las
+//     exponemos al usuario.
+// Pasamos `resumes_at` (epoch seconds) para que Stripe reanude el cobro
+// automáticamente. Si meses === null, pausa indefinida hasta que el
+// usuario resume manualmente.
+export async function pauseSubscription(subscriptionId: string, months: number | null) {
+  const resumesAt =
+    months && months > 0
+      ? Math.floor(Date.now() / 1000) + months * 30 * 24 * 60 * 60
+      : undefined;
+  const subscription = await stripeClient.subscriptions.update(subscriptionId, {
+    pause_collection: {
+      behavior: 'mark_uncollectible',
+      ...(resumesAt ? { resumes_at: resumesAt } : {}),
+    },
+  });
+  return {
+    id: subscription.id,
+    status: subscription.status,
+    pausedUntil: resumesAt ? new Date(resumesAt * 1000) : null,
+  };
+}
+
+export async function resumeSubscription(subscriptionId: string) {
+  const subscription = await stripeClient.subscriptions.update(subscriptionId, {
+    pause_collection: '',
+  } as unknown as Parameters<typeof stripeClient.subscriptions.update>[1]);
+  return {
+    id: subscription.id,
+    status: subscription.status,
   };
 }
 

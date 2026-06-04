@@ -7,10 +7,7 @@ import { prisma } from './prisma';
 
 // If the user has switched to a different workspace via UserPreference,
 // use that tenantId — but only if they still have an active membership there.
-async function resolveEffectiveTenantId(
-  userId: string,
-  cookieTenantId: string
-): Promise<string> {
+async function resolveEffectiveTenantId(userId: string, cookieTenantId: string): Promise<string> {
   const pref = await prisma.userPreference.findUnique({
     where: { userId },
     select: { preferredTenantId: true },
@@ -41,15 +38,12 @@ export async function getHoldedSession() {
   });
 
   if (session?.userId) {
-    const effectiveTenantId = await resolveEffectiveTenantId(
-      session.userId,
-      session.tenantId
-    );
+    const effectiveTenantId = await resolveEffectiveTenantId(session.userId, session.tenantId);
     return { ...session, tenantId: effectiveTenantId };
   }
 
   const payload = await getSharedSessionPayloadFromCookieStore(cookieStore);
-  if (!payload?.uid || !payload?.tenantId || typeof payload.email !== 'string' || !payload.email) {
+  if (!payload?.uid || typeof payload.email !== 'string' || !payload.email) {
     return session;
   }
 
@@ -90,6 +84,18 @@ export async function getHoldedSession() {
         },
         select: { id: true, email: true, name: true, isBlocked: true },
       });
+
+  // Usuario sin tenantId en el JWT (nuevo usuario, plan Free sin Holded).
+  // Devolvemos sesión parcial para que el workspace lo muestre en modo free.
+  if (!payload?.tenantId) {
+    return {
+      payload,
+      tenantId: null as unknown as string,
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+    };
+  }
 
   // SEC C1 (2026): NUNCA crear membership como side-effect de leer la
   // cookie. Anteriormente este path hacía `upsert` con role='owner' si

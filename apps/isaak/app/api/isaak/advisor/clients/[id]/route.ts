@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { encryptHoldedSecret, maskSecret } from '@/app/lib/holded-integration';
 import { prisma } from '@/app/lib/prisma';
+import { logAdvisorEvent } from '@/app/lib/isaak-advisor-audit';
 
 export const runtime = 'nodejs';
 
@@ -51,6 +52,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     },
   });
 
+  // Si la única clave del PATCH es "notes", lo discriminamos como
+  // edición ligera. El resto va como update genérico con la lista de
+  // campos modificados.
+  const fields = Object.keys(update);
+  const kind = fields.length === 1 && fields[0] === 'notes' ? 'client_notes_updated' : 'client_updated';
+  void logAdvisorEvent(session.tenantId, kind, {
+    clientId: client.id,
+    alias: client.alias,
+    fields,
+  });
+
   return NextResponse.json({ client });
 }
 
@@ -67,6 +79,11 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   await prisma.advisorClient.update({
     where: { id },
     data: { isActive: false },
+  });
+
+  void logAdvisorEvent(session.tenantId, 'client_deleted', {
+    clientId: id,
+    alias: existing.alias,
   });
 
   return NextResponse.json({ deleted: true });

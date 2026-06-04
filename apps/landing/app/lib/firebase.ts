@@ -15,6 +15,24 @@ const REQUIRED_CONFIG_FIELDS = [
   'appId',
 ] as const;
 
+const PUBLIC_ENV = {
+  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_API_KEY,
+  NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID:
+    process.env.NEXT_PUBLIC_HOLDED_FIREBASE_MESSAGING_SENDER_ID,
+  NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_HOLDED_FIREBASE_APP_ID,
+  NEXT_PUBLIC_USE_AUTH_EMULATOR: process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR,
+} as const;
+
 function cleanEnv(value: string | undefined): string | undefined {
   if (!value) return undefined;
   const trimmed = value.replace(/[\r\n]/g, '').trim();
@@ -26,11 +44,14 @@ function cleanEnv(value: string | undefined): string | undefined {
   return unquoted;
 }
 
-function readEnv(primary: string, fallback?: string): string | undefined {
-  const first = cleanEnv(process.env[primary]);
+function readEnv(
+  primary: keyof typeof PUBLIC_ENV,
+  fallback?: keyof typeof PUBLIC_ENV
+): string | undefined {
+  const first = cleanEnv(PUBLIC_ENV[primary]);
   if (first) return first;
   if (!fallback) return undefined;
-  return cleanEnv(process.env[fallback]);
+  return cleanEnv(PUBLIC_ENV[fallback]);
 }
 
 function normalizeAuthDomain(value: string | undefined): string | undefined {
@@ -101,7 +122,7 @@ if (typeof window !== 'undefined' && isConfigComplete) {
     });
 
     // Use emulator in development (optional)
-    if (process.env.NEXT_PUBLIC_USE_AUTH_EMULATOR === 'true') {
+    if (PUBLIC_ENV.NEXT_PUBLIC_USE_AUTH_EMULATOR === 'true') {
       try {
         connectAuthEmulator(auth, 'http://localhost:9099');
       } catch (error) {
@@ -124,4 +145,10 @@ if (typeof window !== 'undefined' && isConfigComplete) {
   );
 }
 
-export { app, auth, isConfigComplete as isFirebaseConfigComplete, isFirebaseReady };
+export {
+  app,
+  auth,
+  isConfigComplete as isFirebaseConfigComplete,
+  isFirebaseReady,
+  missingConfigFields,
+};

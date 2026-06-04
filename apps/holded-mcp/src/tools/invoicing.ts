@@ -181,6 +181,102 @@ export function registerInvoicingTools(
       ({ documentId }) => documentId,
       async ({ docType, documentId }) => {
         const buf = await getClient().getDocumentPdf(docType, documentId);
+
+        // V3.G.1 (auditoría 2026-06-01): valida magic bytes %PDF- antes de
+        // exponer el buffer como application/pdf. Holded devuelve 200 OK +
+        // body JSON ({"status":0,"info":"No attachments found"}) cuando el
+        // documento no tiene PDF — antes el handler retornaba 42 bytes con
+        // contentType: 'application/pdf' mentiroso y el consumidor recibía
+        // basura. Mismo patrón ya cerrado en apps/app y apps/isaak.
+        const magic = buf.subarray(0, 5).toString('latin1');
+        const isPdfMagic = magic.startsWith('%PDF-');
+
+        if (!isPdfMagic) {
+          // V3.G.5 (auditoría 2026-06-01): antes de devolver no_attachment,
+          // intentamos los archivos subidos manualmente al documento (Holded
+          // distingue PDF renderizado vs attachments del usuario). Cubre el
+          // caso real reportado con P250001 en Nova Gestión.
+          //
+          // V3.G.7 (2026-06-01): Holded devuelve attachments como array de
+          // STRINGS (nombres de archivo), NO array de objetos. Aceptamos
+          // ambas formas por defensa. Verificado empíricamente contra
+          // P250001: `{"status":1,"attachments":["31PTaxInvoice...pdf"]}`.
+          try {
+            const attachments = await getClient().listDocumentAttachments(docType, documentId);
+            if (Array.isArray(attachments) && attachments.length > 0) {
+              const first = attachments[0] as unknown;
+              let fileName = '';
+              if (typeof first === 'string') {
+                fileName = first.trim();
+              } else if (first && typeof first === 'object') {
+                const obj = first as Record<string, unknown>;
+                fileName = String(obj.fileName ?? obj.name ?? obj.filename ?? '').trim();
+              }
+              if (fileName) {
+                const attachBuf = await getClient().getDocumentAttachment(
+                  docType,
+                  documentId,
+                  fileName
+                );
+                return {
+                  content: [
+                    {
+                      type: 'text',
+                      text: JSON.stringify(
+                        {
+                          docType,
+                          documentId,
+                          source: 'attachment',
+                          fileName,
+                          contentType: 'application/pdf',
+                          base64: attachBuf.toString('base64'),
+                          bytes: attachBuf.length,
+                        },
+                        null,
+                        2
+                      ),
+                    },
+                  ],
+                };
+              }
+            }
+          } catch {
+            // Si /attachments también falla, caemos al mensaje genérico.
+          }
+
+          let parsedError: string | null = null;
+          try {
+            const body = buf.toString('utf8');
+            const parsed = JSON.parse(body) as {
+              info?: string;
+              error?: string;
+              message?: string;
+            };
+            parsedError = parsed?.info ?? parsed?.error ?? parsed?.message ?? null;
+          } catch {
+            // Cuerpo no es JSON parseable — dejamos parsedError null.
+          }
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    error: 'no_attachment',
+                    docType,
+                    documentId,
+                    message:
+                      parsedError ||
+                      `Holded returned no PDF for ${docType}/${documentId}. The document has no rendered PDF and no user-uploaded attachments.`,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             {
@@ -234,19 +330,135 @@ export function registerInvoicingTools(
         .array(
           z.object({
             productId: z.string().optional().describe('Optional existing Holded product ID.'),
-            name: z.string().describe('Line item name.'),
-            units: z.number().describe('Quantity.'),
-            subtotal: z.number().describe('Unit price before tax.'),
+            // V3.G.8 (2026-06-01): exigir name no vacío, units > 0, subtotal > 0.
+            // El reviewer creó drafts basura con name vacío, units 0 y subtotal
+            // negativo (-500€) porque Zod aceptaba cualquier número/string.
+            name: z
+              .string()
+              .min(1, 'Line item name cannot be empty.')
+              .describe('Line item name (must be non-empty).'),
+            units: z
+              .number()
+              .positive('Quantity must be greater than 0.')
+              .describe('Quantity (must be > 0).'),
+            subtotal: z
+              .number()
+              .positive('Unit price must be greater than 0. Refunds use credit notes, not negative invoices.')
+              .describe('Unit price before tax (must be > 0).'),
             tax: z.number().optional().describe('VAT percentage, for example 21.'),
           })
         )
-        .describe('Invoice draft line items.'),
+        .min(1, 'At least one line item is required to create a draft.')
+        .describe('Invoice draft line items (at least one required).'),
     },
     writeAnnotations('create_invoice_draft'),
     async ({ date, dueDate, contactId, contactName, ...rest }) => {
+      // V3.G.8 (2026-06-01): validación explícita de fechas. Antes confiábamos
+      // solo en toUnixSecondsNumber que throw para input inválido, pero el
+      // withControlledErrors wrapper podía enmascarar el error. Ahora lo
+      // capturamos y devolvemos respuesta controlada legible.
+      let dateUnix: number;
+      try {
+        dateUnix = toUnixSecondsNumber(date);
+        if (!Number.isFinite(dateUnix)) throw new Error('Invalid');
+      } catch {
+        return {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify(
+                {
+                  error: 'invalid_date',
+                  date,
+                  message: `Invoice date "${date}" is not a valid ISO 8601 date or Unix timestamp. Use a format like "2026-06-15" or "1750118400".`,
+                },
+                null,
+                2
+              ),
+            },
+          ],
+          isError: false,
+        };
+      }
+      let dueDateUnix: number | undefined;
+      if (dueDate !== undefined) {
+        try {
+          dueDateUnix = toUnixSecondsNumber(dueDate);
+          if (!Number.isFinite(dueDateUnix)) throw new Error('Invalid');
+        } catch {
+          return {
+            content: [
+              {
+                type: 'text',
+                text: JSON.stringify(
+                  {
+                    error: 'invalid_due_date',
+                    dueDate,
+                    message: `Due date "${dueDate}" is not a valid ISO 8601 date or Unix timestamp.`,
+                  },
+                  null,
+                  2
+                ),
+              },
+            ],
+            isError: false,
+          };
+        }
+      }
+
       // contactName -> contactId resolution. Mirror of F2a in the ChatGPT
       // adapter. Avoids forcing the caller to chain list_contacts first.
       let resolvedContactId = contactId?.trim();
+
+      // V3.G.9 (2026-06-01): si el modelo pasa contactId Y contactName,
+      // verificamos que coinciden. Cubre el caso de contaminación de
+      // contexto donde el modelo improvisa un id de conversaciones
+      // anteriores con un nombre distinto.
+      if (resolvedContactId && contactName?.trim()) {
+        const declaredName = contactName.trim();
+        try {
+          const resolved = (await getClient().getContact(resolvedContactId)) as Record<
+            string,
+            unknown
+          > | null;
+          const canonicalName =
+            resolved && typeof resolved.name === 'string' ? resolved.name : '';
+          const matches =
+            canonicalName.toLowerCase() === declaredName.toLowerCase() ||
+            canonicalName.toLowerCase().includes(declaredName.toLowerCase()) ||
+            declaredName.toLowerCase().includes(canonicalName.toLowerCase());
+          if (canonicalName && !matches) {
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      error: 'contact_id_name_mismatch',
+                      contactId: resolvedContactId,
+                      canonicalName,
+                      declaredName,
+                      message: `contactId ${resolvedContactId} resolves to "${canonicalName}" but you passed contactName="${declaredName}". These look like different contacts — the contactId may be stale. To proceed, pass ONLY contactName="${declaredName}" (we'll resolve it freshly) OR pass ONLY the contactId you trust.`,
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: false,
+            };
+          }
+          if (canonicalName) {
+            // Sobrescribimos contactName canónico para que la consent card de
+            // Claude muestre el nombre exacto que Holded tiene almacenado.
+            contactName = canonicalName;
+          }
+        } catch {
+          // getContact falló — caemos a resolver por contactName como fallback.
+          resolvedContactId = undefined;
+        }
+      }
+
       if (!resolvedContactId) {
         if (!contactName?.trim()) {
           // Input validation: ningún identificador de contacto.
@@ -273,14 +485,57 @@ export function registerInvoicingTools(
           Record<string, unknown>
         >;
         const items = Array.isArray(matches) ? matches : [];
+
+        // V3.G.8 (2026-06-01) — CRÍTICO. Antes: `const chosen = exact ?? items[0]`
+        // hacía que cuando NO había match exacto cogiéramos items[0] — el primer
+        // contacto que Holded devolviese, que puede ser cualquiera. El reviewer
+        // reportó "CLIENTE QUE NO EXISTE XYZ 99999" reasignándose a Beta Eventos
+        // silenciosamente. Riesgo real de factura al cliente equivocado.
+        //
+        // Cascada V3.G.8 (mismo patrón ya aplicado en apps/app V3.G.4):
+        //   1) Match EXACTO case-insensitive → acepta.
+        //   2) Match parcial ÚNICO (solo 1 contacto contiene el nombre) → acepta.
+        //   3) Multiple partials → error "ambiguous" con sample, NO elige por ti.
+        //   4) Cero matches → error "not_found".
         const exact = items.find(
           (c) => typeof c.name === 'string' && c.name.toLowerCase() === name.toLowerCase()
         );
-        const chosen = exact ?? items[0];
+        let chosen: Record<string, unknown> | undefined = exact;
+        if (!chosen) {
+          const partialMatches = items.filter(
+            (c) =>
+              typeof c.name === 'string' &&
+              c.name.toLowerCase().includes(name.toLowerCase())
+          );
+          if (partialMatches.length === 1) {
+            chosen = partialMatches[0];
+          } else if (partialMatches.length > 1) {
+            const sample = partialMatches
+              .slice(0, 5)
+              .map((c) => `"${c.name}"`)
+              .join(', ');
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify(
+                    {
+                      error: 'contact_ambiguous',
+                      contactName: name,
+                      matches: sample,
+                      message: `Multiple Holded contacts match "${name}": ${sample}. Please specify the exact contact name or call list_contacts and pass the contactId explicitly.`,
+                    },
+                    null,
+                    2
+                  ),
+                },
+              ],
+              isError: false,
+            };
+          }
+        }
         const chosenId = chosen?.id ?? chosen?._id;
         if (typeof chosenId !== 'string' || !chosenId.trim()) {
-          // Devolvemos respuesta controlada (no throw) para que el modelo pueda
-          // razonar sobre el resultado y reintentar con contactId resuelto.
           return {
             content: [
               {
@@ -289,7 +544,7 @@ export function registerInvoicingTools(
                   {
                     error: 'contact_not_found',
                     contactName: name,
-                    message: `No contact found for "${name}". Use list_contacts to find the correct contact and pass contactId.`,
+                    message: `No Holded contact matches "${name}" (exact or partial). Call list_contacts to find the right contact and pass its contactId.`,
                   },
                   null,
                   2
@@ -300,19 +555,94 @@ export function registerInvoicingTools(
           };
         }
         resolvedContactId = chosenId.trim();
+        // V3.G.8: sobrescribimos contactName con el nombre canónico para que la
+        // tarjeta de confirmación de Claude muestre el nombre real, no lo que
+        // escribió el usuario. Si el usuario ve un nombre distinto al que
+        // escribió, sabe que algo no cuadra y deniega.
+        if (typeof chosen?.name === 'string') {
+          contactName = chosen.name;
+        }
       }
 
+      // V3.G.10 (2026-06-02) — CRÍTICO. Holded API espera `lines: [{desc,
+      // units, price, tax}]` para create_invoice, NO `items: [{name, units,
+      // subtotal, tax}]`. Si enviamos `items`, Holded acepta el create
+      // (status 200) pero IGNORA esa key — el draft se crea con base 0,00€.
+      //
+      // Reviewer reportó: Claude muestra "Servicio profesional — 1 hora,
+      // 90 €, IVA 18,90 €, Total 108,90 €" pero en Holded UI sale
+      // Subtotal/IVA/Total 0,00€. Confirmado: el draft 6a1ea540ef05f92d220b5aef
+      // se creó vacío porque enviamos `items` en lugar de `lines`.
+      //
+      // El seed `scripts/seed-holded-demo.mjs` ya usa `lines/desc/price`
+      // correctamente y sus drafts SÍ tienen importes — confirma el mapeo.
+      //
+      // Aquí transformamos `items` (shape friendly al modelo) a `lines`
+      // (shape que Holded acepta) antes de enviar. Mantenemos `items` como
+      // input schema para no romper la API que el modelo ya conoce.
+      const { items: inputItems, ...restWithoutItems } = rest as {
+        items: Array<{
+          productId?: string;
+          name: string;
+          units: number;
+          subtotal: number;
+          tax?: number;
+        }>;
+        [k: string]: unknown;
+      };
+      const lines = (inputItems ?? []).map((item) => ({
+        desc: item.name,
+        units: item.units,
+        price: item.subtotal,
+        ...(item.tax !== undefined ? { tax: item.tax } : {}),
+        ...(item.productId !== undefined ? { productId: item.productId } : {}),
+      }));
+
+      // V3.G.17 (2026-06-03) — REVERT al shape ORIGINAL pre-V3.G.10.
+      //
+      // Comunidad wrapper vshopes/holded confirma que Holded usa `items: [{
+      // name, units, subtotal, tax }]` como input al crear documentos —
+      // NO `lines` (V3.G.10 mal-asumido). Esto explica por qué:
+      // - Pre-V3.G.10 (con items) Claude funcionaba
+      // - Post-V3.G.10 (con lines) Claude empezó a crear drafts vacíos
+      //
+      // V3.G.10 fue "fixing" un bug que no existía. El seed-holded-demo
+      // que decían "funciona con lines" probablemente nunca se verificó
+      // end-to-end. Holded acepta `lines` silenciosamente pero NO los
+      // persiste — exactamente el patrón empírico que estamos viendo.
+      //
+      // Reconstruimos `items` con el shape original {name, units, subtotal,
+      // tax, productId} que era el del schema Zod expuesto al modelo.
       // approveDoc se fuerza al final del spread para que ningun input pueda
       // anularlo. NO mover esta linea.
+      const itemsForHolded = (inputItems ?? []).map((item) => ({
+        name: item.name,
+        units: item.units,
+        subtotal: item.subtotal,
+        ...(item.tax !== undefined ? { tax: item.tax } : {}),
+        ...(item.productId !== undefined ? { productId: item.productId } : {}),
+      }));
       const body: Record<string, unknown> = {
-        ...rest,
+        ...restWithoutItems,
         contactId: resolvedContactId,
-        date: toUnixSecondsNumber(date),
-        ...(dueDate !== undefined ? { dueDate: toUnixSecondsNumber(dueDate) } : {}),
+        date: dateUnix,
+        ...(dueDateUnix !== undefined ? { dueDate: dueDateUnix } : {}),
+        items: itemsForHolded,
         approveDoc: false,
       };
 
       const data = await getClient().createDocument('invoice', body);
+
+      // V3.G.17 (2026-06-03): el PUT workaround V3.G.14/15 se retira porque
+      // (a) no funcionaba (PUT también descartaba líneas en drafts), (b) ya
+      // no hace falta si POST con `items` persiste correctamente.
+      // Si V3.G.17 también falla → el quirk es ortogonal a la key elegida y
+      // es bug puro de Holded; documentamos limitación.
+
+      // V3.G.14-15-16 workarounds retirados — POST con `items` (V3.G.17)
+      // es el shape correcto según wrapper comunidad vshopes/holded; el PUT
+      // update ya no es necesario porque Holded debería persistir las líneas
+      // directamente al recibir la key correcta.
 
       // F5.3: dispatch admin email "borrador de factura creado" via el endpoint
       // receptor en apps/holded. Best-effort: si falla la red, el draft ya esta
@@ -348,13 +678,67 @@ export function registerInvoicingTools(
         });
       }
 
+      // V3.G.18 (2026-06-03) — DEFENSA contra el bug de OpenAI/Claude consent UI:
+      //
+      // El modal de permisos pinta PII del CONTEXTO de conversación, no de
+      // los args del tool call actual. Resultado verificado: consent para un
+      // contacto, draft real para otro. Mitigación: resolver el contacto
+      // canónico desde Holded (no del contexto del modelo) y mostrarlo
+      // prominentemente en el texto post-acción para que el usuario detecte
+      // mismatches inmediatamente.
+      let contactCanonical: {
+        contactName?: string;
+        contactCode?: string;
+        contactCity?: string;
+      } = {};
+      try {
+        const resolved = (await getClient().getContact(resolvedContactId)) as Record<
+          string,
+          unknown
+        > | null;
+        if (resolved && typeof resolved === 'object') {
+          const name = typeof resolved.name === 'string' ? resolved.name : '';
+          const code = typeof resolved.code === 'string' ? resolved.code : '';
+          const bill =
+            resolved.billAddress && typeof resolved.billAddress === 'object'
+              ? (resolved.billAddress as Record<string, unknown>)
+              : null;
+          const city = bill && typeof bill.city === 'string' ? bill.city : '';
+          if (name) contactCanonical.contactName = name;
+          if (code) contactCanonical.contactCode = code;
+          if (city) contactCanonical.contactCity = city;
+        }
+      } catch {
+        // best-effort: no bloquea la respuesta
+      }
+
+      const dataObj = data as Record<string, unknown>;
+      const responseId = typeof dataObj.id === 'string' ? dataObj.id : '(unknown)';
+      // eslint-disable-next-line no-console
+      console.info(
+        `[create_invoice_draft] AUDIT — draftId=${responseId} contactId=${resolvedContactId} contactName=${
+          contactCanonical.contactName ?? 'unresolved'
+        } contactCode=${contactCanonical.contactCode ?? '-'}`
+      );
+
+      const contactSuffix = [contactCanonical.contactCode, contactCanonical.contactCity]
+        .filter(Boolean)
+        .join(', ');
+      const headline = contactCanonical.contactName
+        ? `Draft invoice created for **${contactCanonical.contactName}**${
+            contactSuffix ? ` (${contactSuffix})` : ''
+          }. approveDoc=false enforced server-side.\n\n` +
+          `IMPORTANT: verify the contact above is the one you intended — if not, discard the draft from Holded UI.`
+        : 'Draft invoice created (approveDoc=false enforced server-side). The document is in draft state in Holded.';
+
       return {
         content: [
           {
             type: 'text',
             text:
-              'Draft invoice created (approveDoc=false enforced server-side). The document is in draft state in Holded.\n\n' +
-              JSON.stringify(data, null, 2),
+              headline +
+              '\n\n' +
+              JSON.stringify({ ...dataObj, ...contactCanonical }, null, 2),
           },
         ],
       };

@@ -1,6 +1,6 @@
 'use client';
 
-import { adminDelete, adminPatch } from '@/lib/adminApi';
+import { adminDelete, adminPatch, adminPost } from '@/lib/adminApi';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -9,6 +9,8 @@ type Props = {
   email: string;
   isBlocked: boolean;
 };
+
+const ISAAK_URL = process.env.NEXT_PUBLIC_ISAAK_URL ?? 'https://isaak.verifactu.business';
 
 export function UserActions({ userId, email, isBlocked }: Props) {
   const router = useRouter();
@@ -41,8 +43,34 @@ export function UserActions({ userId, email, isBlocked }: Props) {
     }
   }
 
+  async function impersonate() {
+    if (
+      !confirm(
+        `Vas a abrir Isaak suplantando a ${email}. La sesión de impersonación queda registrada. ¿Continuar?`,
+      )
+    )
+      return;
+    setBusy(true);
+    setError(null);
+    try {
+      await adminPost(`/api/admin/users/${userId}/impersonate`, {});
+      window.open(`${ISAAK_URL}/chat`, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-2">
+      <button
+        onClick={impersonate}
+        disabled={busy}
+        className="w-full rounded-xl border border-[#2361d8]/30 bg-[#2361d8]/5 px-3 py-2 text-sm font-semibold text-[#2361d8] transition hover:bg-[#2361d8]/10 disabled:opacity-50"
+      >
+        Abrir Isaak suplantando al usuario
+      </button>
       <button
         onClick={toggleBlock}
         disabled={busy}

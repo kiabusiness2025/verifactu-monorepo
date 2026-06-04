@@ -1152,63 +1152,53 @@ export async function fetchHoldedSnapshot(apiKey: string) {
     return [] as T[];
   };
 
-  const loadInvoices = async (query?: Record<string, unknown>) =>
+  // V3.G.3 (2026-06-01): Holded /documents requiere `docType` como PATH
+  // parameter (`/documents/{docType}`), NO como query string. La versión
+  // anterior llamaba a `/documents` sin tipo y aplicaba fallbacks via
+  // ?docType= que Holded ignora — resultado: invoices vacío incluso en
+  // tenants ricos. El reviewer reportó "Nova Gestión tiene facturas de
+  // compra en /expenses/list pero el snapshot las ignora", confirmado en
+  // el research agent contra spec OpenAPI oficial + community wrappers.
+  //
+  // Fix: iterar en paralelo por los 4 docTypes principales y devolverlos
+  // tageados. Mantenemos `invoices` con docType=invoice por backward compat
+  // (el campo se usa en chat/route.ts y business-context.ts para contar
+  // documentos). Añadimos `purchases`, `creditnotes`, `purchaserefunds` y
+  // un campo `documents` agregado con docType para consumers nuevos.
+  const loadDocumentsByType = async (docType: string) =>
     holdedRequestAllPages<Record<string, unknown>>({
       apiKey,
-      path: '/api/invoicing/v1/documents',
+      path: `/api/invoicing/v1/documents/${docType}`,
       limit: HOLDED_SNAPSHOT_DOCUMENT_LIMIT,
       maxPages: HOLDED_SNAPSHOT_DOCUMENT_PAGES,
-      query,
-    }).catch(() => []);
-
-  let invoices = await loadInvoices();
-
-  if (invoices.length === 0) {
-    const invoiceQueryFallbacks: Array<Record<string, unknown>> = [
-      { docType: 'invoice' },
-      { doctype: 'invoice' },
-      { type: 'invoice' },
-      { documentType: 'invoice' },
-    ];
-
-    for (const query of invoiceQueryFallbacks) {
-      const batch = await loadInvoices(query);
-      if (batch.length > 0) {
-        invoices = batch;
-        break;
-      }
-    }
-  }
-
-  const [contacts, accounts] = await Promise.all([
-    holdedRequest<unknown>(apiKey, '/api/invoicing/v1/contacts', {
-      limit: HOLDED_SNAPSHOT_CONTACT_LIMIT,
-      page: 1,
     })
-      .then((payload) => toCollection<Record<string, unknown>>(payload))
-      .catch(() => []),
-    holdedRequest<unknown>(apiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, {
-      limit: HOLDED_SNAPSHOT_ACCOUNT_LIMIT,
-      page: 1,
-    })
-      .then((payload) => toCollection<Record<string, unknown>>(payload))
-      .catch(() => []),
-  ]);
+      .then((items) => items.map((item) => ({ ...item, docType })))
+      .catch(() => [] as Record<string, unknown>[]);
 
-  if (invoices.length === 0) {
-    const samplePayload = await holdedRequest<unknown>(apiKey, '/api/invoicing/v1/documents', {
-      limit: 1,
-      page: 1,
-    }).catch(() => null);
+  const [invoices, purchases, creditnotes, purchaserefunds, contacts, accounts] =
+    await Promise.all([
+      loadDocumentsByType('invoice'),
+      loadDocumentsByType('purchase'),
+      loadDocumentsByType('creditnote'),
+      loadDocumentsByType('purchaserefund'),
+      holdedRequest<unknown>(apiKey, '/api/invoicing/v1/contacts', {
+        limit: HOLDED_SNAPSHOT_CONTACT_LIMIT,
+        page: 1,
+      })
+        .then((payload) => toCollection<Record<string, unknown>>(payload))
+        .catch(() => []),
+      holdedRequest<unknown>(apiKey, HOLDED_CHART_OF_ACCOUNTS_PATH, {
+        limit: HOLDED_SNAPSHOT_ACCOUNT_LIMIT,
+        page: 1,
+      })
+        .then((payload) => toCollection<Record<string, unknown>>(payload))
+        .catch(() => []),
+    ]);
 
-    const payloadShape = Array.isArray(samplePayload)
-      ? 'array'
-      : samplePayload && typeof samplePayload === 'object'
-        ? `object:${Object.keys(samplePayload as Record<string, unknown>).join(',')}`
-        : typeof samplePayload;
+  const documents = [...invoices, ...purchases, ...creditnotes, ...purchaserefunds];
 
-    console.warn('[holded integration] invoice snapshot empty after fallbacks', {
-      payloadShape,
+  if (documents.length === 0) {
+    console.warn('[holded integration] snapshot empty across all docTypes', {
       contacts: contacts.length,
       accounts: accounts.length,
     });
@@ -1216,6 +1206,10 @@ export async function fetchHoldedSnapshot(apiKey: string) {
 
   return {
     invoices,
+    purchases,
+    creditnotes,
+    purchaserefunds,
+    documents,
     contacts,
     accounts,
   };

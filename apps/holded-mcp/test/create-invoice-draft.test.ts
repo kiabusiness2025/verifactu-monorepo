@@ -118,3 +118,70 @@ test('create_invoice_draft cannot be tricked into approving by passing approveDo
     await runtime.close();
   }
 });
+
+/**
+ * V3.G.10 regression — Holded API espera `lines: [{desc, units, price, tax}]`
+ * para create_invoice, NO `items: [{name, units, subtotal, tax}]`.
+ *
+ * El input schema del modelo expone `items` (más natural) pero el handler
+ * DEBE transformarlo a `lines` antes de enviar a Holded. Si no, Holded
+ * acepta el create (HTTP 200) pero IGNORA la key `items` → el draft se
+ * crea con Subtotal/IVA/Total 0,00 € — comportamiento reportado por el
+ * reviewer 2026-06-02 con el draft 6a1ea540ef05f92d220b5aef.
+ */
+test('V3.G.10: create_invoice_draft transforms items[] to lines[] with desc/price on the wire', async () => {
+  const runtime = await startTestServer();
+  const recorder = withHoldedFetchRecorder({
+    responseBody: { status: 1, id: 'doc-with-lines' },
+  });
+
+  try {
+    const { createTokenPair } = await import('../src/auth.ts');
+    const tokenPair = await createTokenPair({
+      holdedApiKey: 'holded-api-key-test',
+      clientId: 'test-client',
+      scope: 'holded:read holded:write',
+    });
+
+    const transport = new StreamableHTTPClientTransport(new URL(`${runtime.baseUrl}/mcp`), {
+      requestInit: {
+        headers: { Authorization: `Bearer ${tokenPair.accessToken}` },
+      },
+    });
+
+    const client = new Client({ name: 'holded-mcp-test', version: '1.0.0' });
+    await client.connect(transport);
+
+    await client.callTool({
+      name: 'create_invoice_draft',
+      arguments: {
+        contactId: 'contact-xyz',
+        date: '2024-01-01T00:00:00Z',
+        items: [{ name: 'Servicio profesional', units: 1, subtotal: 90, tax: 21 }],
+      },
+    });
+
+    await transport.close();
+
+    const createCalls = recorder.calls.filter(
+      (c) => c.method === 'POST' && c.url.includes('/documents/invoice')
+    );
+    assert.equal(createCalls.length, 1, 'expected exactly one POST to /documents/invoice');
+
+    const body = JSON.parse(createCalls[0].body ?? '{}');
+
+    // El body NO debe contener `items` — solo `lines`.
+    assert.equal(body.items, undefined, 'body must NOT contain items[]; Holded ignores it');
+    assert.ok(Array.isArray(body.lines), 'body must contain lines[]');
+    assert.equal(body.lines.length, 1);
+
+    const line = body.lines[0];
+    assert.equal(line.desc, 'Servicio profesional', 'items.name → lines.desc');
+    assert.equal(line.units, 1);
+    assert.equal(line.price, 90, 'items.subtotal → lines.price');
+    assert.equal(line.tax, 21);
+  } finally {
+    recorder.restore();
+    await runtime.close();
+  }
+});

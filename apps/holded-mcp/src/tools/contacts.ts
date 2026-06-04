@@ -73,11 +73,33 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
       const raw = await getClient().listContacts(filtered);
       const all = Array.isArray(raw) ? raw : [];
 
+      // V3.G.1 (auditoría 2026-06-01): el server-side filter de Holded
+      // `type=supplier` devuelve también contactos con supplierRecord:0
+      // (rol histórico, ya no activo). Para que list_contacts respete el
+      // rol pedido, aplicamos un filtro client-side adicional:
+      //   - type=supplier → exigimos supplierRecord truthy (>0 o objeto)
+      //   - type=client → exigimos clientRecord truthy
+      //   - type=debtor/creditor → respetamos el filtro server-side
+      // Mismo patrón ya aplicado en apps/app/lib/integrations/accounting.ts.
+      const filteredByRole = (() => {
+        if (type !== 'supplier' && type !== 'client') return all;
+        return all.filter((c) => {
+          const record =
+            type === 'supplier'
+              ? (c as { supplierRecord?: unknown }).supplierRecord
+              : (c as { clientRecord?: unknown }).clientRecord;
+          if (record === undefined || record === null) return true;
+          if (typeof record === 'number') return record > 0;
+          if (typeof record === 'object') return Object.keys(record).length > 0;
+          return Boolean(record);
+        });
+      })();
+
       // Holded no garantiza orden en /contacts (regresion documentada en demo
       // 12-may-2026, task #102): dos clientes pidieron "los 5 mas recientes" y
       // recibieron conjuntos completamente disjuntos. Ordenamos client-side por
       // createdAt antes de paginar para que el modelo reciba un orden predecible.
-      const sorted = [...all].sort((a, b) => {
+      const sorted = [...filteredByRole].sort((a, b) => {
         const ca = readCreatedAt(a);
         const cb = readCreatedAt(b);
         return sort === 'oldest' ? ca - cb : cb - ca;
@@ -102,7 +124,15 @@ export function registerContactsTools(server: McpServer, getClient: () => Holded
     'get_contact',
     'Returns the full details of a specific Holded contact by its ID. Read-only. ' +
       'Si el contactId no existe o está malformado, devuelve `{ "error": "not_found" }` ' +
-      'con un mensaje legible en vez de propagar un error genérico.',
+      'con un mensaje legible en vez de propagar un error genérico. ' +
+      '⚠ FIELDS QUIRKS (verified empirically against Nova Gestión SL, V3.G.8 audit 2026-06-01):\n' +
+      '  • The Spanish tax ID (CIF/NIF/NIE — needed for modelo 347 reports) lives in the `code` field, NOT `vatnumber`. ' +
+      'The `vatnumber` field is intended for EU VIES VAT numbers (intracommunity) and is usually empty for domestic Spanish contacts.\n' +
+      '  • The `type` field is UNRELIABLE — Holded often returns it as an empty string even when the contact is clearly a supplier or client. ' +
+      'To determine role reliably, check whether `supplierRecord` is populated (supplier) or `clientRecord` is populated (client). ' +
+      'Both can be present if the contact acts in both roles.\n' +
+      '  • Document-embedded contact IDs (the `contact` field inside an invoice/purchase document) may refer to legacy contact versions that no longer resolve here — Holded keeps separate historical and live IDs. ' +
+      'If the lookup fails for an ID extracted from a document, search by name via list_contacts instead.',
     {
       contactId: z.string().describe('Holded contact ID.'),
     },

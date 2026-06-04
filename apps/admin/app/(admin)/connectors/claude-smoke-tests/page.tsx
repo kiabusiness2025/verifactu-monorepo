@@ -98,7 +98,7 @@ export default function ClaudeSmokeTestsPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/admin/connectors/overview" className="hover:text-slate-700">
+            <Link href="/connectors/overview" className="hover:text-slate-700">
               Conectores
             </Link>
             <span>/</span>
@@ -116,7 +116,7 @@ export default function ClaudeSmokeTestsPage() {
 
         <div className="flex shrink-0 items-center gap-3">
           <Link
-            href="/admin/connectors/smoke-tests"
+            href="/connectors/smoke-tests"
             className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-soft hover:bg-slate-50"
           >
             Tests ChatGPT →

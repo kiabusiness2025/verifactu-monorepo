@@ -11,21 +11,28 @@ import {
   signOut,
   User,
 } from 'firebase/auth';
-import { auth, isFirebaseConfigComplete, isFirebaseReady } from './firebase';
+import { auth, isFirebaseConfigComplete, isFirebaseReady, missingConfigFields } from './firebase';
 import { clearSessionCookie, mintSessionCookie } from './serverSession';
 
 type SignInOptions = {
   rememberDevice?: boolean;
 };
 
-const authUnavailable = () => ({
-  user: null as any,
-  error: {
-    code: 'auth/config-unavailable',
-    message: 'Auth not initialized',
-    userMessage: 'Autenticación no disponible. Revisa la configuración de Firebase (entorno).',
-  },
-});
+const authUnavailable = () => {
+  // Public Firebase vars are safe to name in the error; this makes deploy
+  // misconfiguration visible for the active auth profile.
+  const missing = missingConfigFields.length
+    ? ` Faltan campos Firebase: ${missingConfigFields.join(', ')}.`
+    : '';
+  return {
+    user: null as any,
+    error: {
+      code: 'auth/config-unavailable',
+      message: 'Auth not initialized',
+      userMessage: `Autenticación no disponible. Revisa la configuración de Firebase (entorno).${missing}`,
+    },
+  };
+};
 
 // Type for auth errors with custom messages
 export interface AuthErrorMessage {
@@ -186,16 +193,20 @@ export const signInWithEmail = async (
  */
 export const signInWithGoogle = async (
   options: SignInOptions = {}
-): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
+): Promise<
+  { user: User; error: null; token?: string } | { user: null; error: AuthErrorMessage }
+> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
 
+    let token: string | undefined;
     try {
-      await mintSessionCookie(userCredential.user, {
+      const mintResult = await mintSessionCookie(userCredential.user, {
         rememberDevice: options.rememberDevice,
       });
+      token = mintResult?.token;
     } catch (cookieError) {
       console.error('Failed to mint session cookie after Google login:', cookieError);
       return {
@@ -208,7 +219,7 @@ export const signInWithGoogle = async (
       };
     }
 
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, token };
   } catch (error) {
     console.error('Google sign-in error:', error);
     return {
@@ -223,16 +234,20 @@ export const signInWithGoogle = async (
  */
 export const signInWithMicrosoft = async (
   options: SignInOptions = {}
-): Promise<{ user: User; error: null } | { user: null; error: AuthErrorMessage }> => {
+): Promise<
+  { user: User; error: null; token?: string } | { user: null; error: AuthErrorMessage }
+> => {
   if (!isFirebaseConfigComplete || !isFirebaseReady || !auth) return authUnavailable();
   try {
     const provider = new OAuthProvider('microsoft.com');
     const userCredential = await signInWithPopup(auth, provider);
 
+    let token: string | undefined;
     try {
-      await mintSessionCookie(userCredential.user, {
+      const mintResult = await mintSessionCookie(userCredential.user, {
         rememberDevice: options.rememberDevice,
       });
+      token = mintResult?.token;
     } catch (cookieError) {
       console.error('Failed to mint session cookie after Microsoft login:', cookieError);
       return {
@@ -240,12 +255,12 @@ export const signInWithMicrosoft = async (
         error: {
           code: 'auth/session-mint-failed',
           message: 'Session mint failed',
-          userMessage: 'Error al crear tu sesiИn. Por favor, intenta de nuevo o contacta soporte.',
+          userMessage: 'Error al crear tu sesión. Por favor, intenta de nuevo o contacta soporte.',
         },
       };
     }
 
-    return { user: userCredential.user, error: null };
+    return { user: userCredential.user, error: null, token };
   } catch (error) {
     console.error('Microsoft sign-in error:', error);
     return {

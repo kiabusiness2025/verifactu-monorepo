@@ -189,9 +189,60 @@ export class HoldedClient {
     });
   }
 
+  /**
+   * V3.G.14 (2026-06-03) — PUT update de un documento existente. Necesario
+   * para el workaround del quirk de Holded donde POST con `approveDoc:false`
+   * NO persiste las líneas: creamos el shell vacío, luego hacemos PUT con
+   * los products para que entren. Verificado empíricamente que toda factura
+   * draft creada por nuestro connector entre marzo y junio 2026 sale con
+   * products:[] pese a mandar lines en el POST. La únicas que tienen
+   * products poblados son las aprobadas (seed con approveDoc:true).
+   */
+  async updateDocument(
+    docType: HoldedDocType,
+    documentId: string,
+    body: Record<string, unknown>
+  ) {
+    return this.request<unknown>(`/api/invoicing/v1/documents/${docType}/${documentId}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+  }
+
   async getDocumentPdf(docType: HoldedDocType, documentId: string): Promise<Buffer> {
     return this.request<Buffer>(
       `/api/invoicing/v1/documents/${docType}/${documentId}/pdf`,
+      {},
+      { expectBinary: true }
+    );
+  }
+
+  /**
+   * V3.G.5 (auditoría 2026-06-01): cobertura de attachments subidos
+   * manualmente al documento. Holded distingue /pdf (renderizado) de
+   * /attachments (archivos subidos por el usuario). Ver
+   * docs/engineering/connectors/HOLDED_API_QUIRKS.md.
+   */
+  async listDocumentAttachments(docType: HoldedDocType, documentId: string) {
+    const raw = await this.request<unknown>(
+      `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/list`
+    );
+    if (Array.isArray(raw)) return raw as unknown[];
+    if (raw && typeof raw === 'object') {
+      const obj = raw as { attachments?: unknown[] };
+      return obj.attachments ?? [];
+    }
+    return [];
+  }
+
+  async getDocumentAttachment(
+    docType: HoldedDocType,
+    documentId: string,
+    fileName: string
+  ): Promise<Buffer> {
+    const qs = '?' + new URLSearchParams({ filename: fileName }).toString();
+    return this.request<Buffer>(
+      `/api/invoicing/v1/documents/${docType}/${documentId}/attachments/get${qs}`,
       {},
       { expectBinary: true }
     );
@@ -282,14 +333,26 @@ export class HoldedClient {
 
   // ── Contabilidad ─────────────────────────────────────────────────────────
 
-  async getChartOfAccounts() {
-    return this.request<unknown[]>('/api/accounting/v1/chartofaccounts?includeEmpty=1');
+  /**
+   * V3.G.2 (2026-06-01): acepta `starttmp` y `endtmp` para escopear el balance
+   * a un ejercicio fiscal. Sin esto Holded usa el rango default del tenant
+   * (casi siempre solo año en curso, sin cierres anteriores). Ver
+   * docs/engineering/connectors/HOLDED_API_QUIRKS.md Q6.1.
+   */
+  async getChartOfAccounts(params?: Record<string, string>) {
+    const merged = new URLSearchParams({ includeEmpty: '1', ...(params ?? {}) });
+    return this.request<unknown[]>(`/api/accounting/v1/chartofaccounts?${merged.toString()}`);
   }
 
   /**
    * El libro diario de Holded vive en /dailyledger. Anteriormente este
    * cliente usaba /journal y /dailybook, que no son endpoints documentados.
    * Fuente: https://developers.holded.com/reference/listdailyledger
+   *
+   * V3.G.2 (2026-06-01): este método devuelve UNA sola página (compat con
+   * la API antigua que iteraba manualmente). Para auto-paginación que
+   * agregue TODAS las páginas hasta el cap configurado, ver
+   * `getDailyLedgerAllPages` en este mismo cliente.
    */
   async getDailyLedger(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
@@ -303,6 +366,31 @@ export class HoldedClient {
       );
     }
     return data as unknown[];
+  }
+
+  /**
+   * V3.G.2 (2026-06-01): auto-paginación server-side de /dailyledger. Itera
+   * `page=1, 2, 3, ...` hasta recibir una página parcial (< HOLDED_LEDGER_PAGE_SIZE
+   * entries) o llegar al cap HOLDED_LEDGER_MAX_PAGES. Devuelve el array
+   * agregado de TODAS las páginas para que el caller pueda computar
+   * aggregates fiscales correctamente sin tener que iterar manualmente.
+   *
+   * Ver docs/engineering/connectors/HOLDED_API_QUIRKS.md Q6.2 para el
+   * contexto del bug que cerramos (reviewer 2026-06-01: 155 de 408 entries
+   * reportados por no paginar).
+   */
+  async getDailyLedgerAllPages(params?: Record<string, string>): Promise<unknown[]> {
+    const pageSize = Number(process.env.HOLDED_LEDGER_PAGE_SIZE || '250');
+    const maxPages = Math.max(1, Number(process.env.HOLDED_LEDGER_MAX_PAGES || '10'));
+    const aggregated: unknown[] = [];
+    const baseParams = { ...(params ?? {}) };
+    for (let page = 1; page <= maxPages; page++) {
+      const pageParams = { ...baseParams, page: String(page) };
+      const pageItems = await this.getDailyLedger(pageParams);
+      aggregated.push(...pageItems);
+      if (pageItems.length < pageSize) break;
+    }
+    return aggregated;
   }
 
   // ── Equipo / Empleados ───────────────────────────────────────────────────

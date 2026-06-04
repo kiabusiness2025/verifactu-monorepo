@@ -9,7 +9,7 @@ function getOrigin(value: string | undefined, fallback: string) {
 
 export const ISAAK_PUBLIC_URL = getOrigin(
   process.env.NEXT_PUBLIC_ISAAK_SITE_URL,
-  'https://isaak.chat'
+  'https://isaak.app'
 );
 
 export const APP_URL = getOrigin(process.env.NEXT_PUBLIC_APP_URL, ISAAK_PUBLIC_URL);

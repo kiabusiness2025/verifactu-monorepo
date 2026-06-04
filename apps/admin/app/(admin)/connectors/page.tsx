@@ -182,6 +182,12 @@ export default async function ConnectorsPage({ searchParams }: PageProps) {
             Exportar CSV
           </a>
           <Link
+            href="/connectors/sessions"
+            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+          >
+            Sesiones activas →
+          </Link>
+          <Link
             href="/connectors/overview"
             className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
           >

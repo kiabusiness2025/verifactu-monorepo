@@ -19,21 +19,25 @@ export const dynamic = 'force-dynamic';
 export default async function WorkspaceLayout({ children }: { children: React.ReactNode }) {
   const session = await getHoldedSession();
 
-  if (!session?.tenantId || !session.userId) {
+  if (!session?.userId) {
     redirect('/auth');
   }
 
-  const [conversations, billing, holdedConn, tenantWl] = await Promise.all([
-    listHoldedConversations({
-      tenantId: session.tenantId,
-      userId: session.userId,
-    }).catch(() => []),
-    loadBillingData({ tenantId: session.tenantId }).catch(() => null),
-    getHoldedConnection(session.tenantId).catch(() => null),
-    prisma.tenant
-      .findUnique({ where: { id: session.tenantId }, select: { whitelabelConfig: true } })
-      .catch(() => null),
-  ]);
+  const tenantId = session.tenantId ?? null;
+
+  const [conversations, billing, holdedConn, tenantWl] = tenantId
+    ? await Promise.all([
+        listHoldedConversations({
+          tenantId,
+          userId: session.userId,
+        }).catch(() => []),
+        loadBillingData({ tenantId }).catch(() => null),
+        getHoldedConnection(tenantId).catch(() => null),
+        prisma.tenant
+          .findUnique({ where: { id: tenantId }, select: { whitelabelConfig: true } })
+          .catch(() => null),
+      ])
+    : ([[], null, null, null] as [never[], null, null, null]);
 
   type WhitelabelConfig = {
     enabled?: boolean;

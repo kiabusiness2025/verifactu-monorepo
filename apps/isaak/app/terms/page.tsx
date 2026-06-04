@@ -59,6 +59,36 @@ export default function IsaakTermsPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
+              <BadgeCheck className="h-4 w-4" />
+              Prestador del servicio
+            </div>
+            <p className="mt-2 text-sm text-slate-600">
+              Isaak es operado por <strong>Expert Estudios Profesionales, SLU</strong>{' '}
+              (Verifactu Business), constituida como{' '}
+              <a
+                href="https://www.holded.com/es/directorio-solution-partners/expert"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
+                Holded Solution Partner
+              </a>{' '}
+              oficial. La integración con{' '}
+              <a
+                href="https://www.holded.com/es"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-[#2361d8] underline underline-offset-4"
+              >
+                Holded
+              </a>{' '}
+              se gestiona con esa habilitación, pero la suscripción a Holded se contrata
+              directamente con Holded (no incluida en el precio de Isaak).
+            </p>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[#2361d8]">
               <UserCheck className="h-4 w-4" />
               Cuenta y acceso
             </div>

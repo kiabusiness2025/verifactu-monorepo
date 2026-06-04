@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "installCommand": "cd ../.. && npx -y pnpm@10.27.0 install --no-frozen-lockfile",
+  "installCommand": "cd ../.. && npx -y pnpm@10.27.0 install --frozen-lockfile",
   "buildCommand": "cd ../.. && npx -y pnpm@10.27.0 --filter @verifactu/db run db:migrate:deploy && npx -y pnpm@10.27.0 turbo run build --filter=verifactu-isaak",
   "outputDirectory": ".next",
   "crons": [
@@ -60,6 +60,10 @@
     {
       "path": "/api/cron/aeat-auto-submit-303",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/borme-ingest",
+      "schedule": "0 7 * * 2-6"
     }
   ]
 }

@@ -252,3 +252,35 @@ export async function retryPendingWebhooks(): Promise<RetryWebhooksResult> {
 
   return { processed: due.length, delivered, dead, errors };
 }
+
+// ─── Public test delivery (V1.9.1) ────────────────────────────────────────────
+//
+// Permite enviar un payload sintético a un endpoint para verificar
+// que responde correctamente. No persiste registro en
+// IsaakWebhookDelivery — es solo verificación.
+
+export type TestDeliveryResult = {
+  ok: boolean;
+  statusCode?: number;
+  error?: string;
+  durationMs: number;
+};
+
+export async function testDeliverWebhook(
+  url: string,
+  secret: string,
+  eventType: string,
+  data: unknown,
+  timeoutMs = 5_000,
+): Promise<TestDeliveryResult> {
+  const payload = {
+    id: `test_${Date.now()}`,
+    event: eventType,
+    timestamp: new Date().toISOString(),
+    test: true,
+    data,
+  };
+  const start = Date.now();
+  const res = await attemptDelivery(url, secret, eventType, payload, timeoutMs);
+  return { ...res, durationMs: Date.now() - start };
+}
