@@ -33,7 +33,7 @@ export async function getHoldedSession() {
     findUserByAuthSubject: (authSubject) =>
       prisma.user.findFirst({
         where: { authSubject },
-        select: { id: true, email: true, name: true, isBlocked: true },
+        select: { id: true, email: true, name: true, isBlocked: true, image: true },
       }),
   });
 
@@ -51,7 +51,7 @@ export async function getHoldedSession() {
     where: {
       OR: [{ authSubject: payload.uid }, { email: payload.email }],
     },
-    select: { id: true, email: true, name: true, isBlocked: true },
+    select: { id: true, email: true, name: true, isBlocked: true, image: true },
   });
 
   if (existingUser?.isBlocked) {
@@ -73,7 +73,7 @@ export async function getHoldedSession() {
           authProvider: 'FIREBASE',
           authSubject: payload.uid,
         },
-        select: { id: true, email: true, name: true, isBlocked: true },
+        select: { id: true, email: true, name: true, isBlocked: true, image: true },
       })
     : await prisma.user.create({
         data: {
@@ -82,7 +82,7 @@ export async function getHoldedSession() {
           authProvider: 'FIREBASE',
           authSubject: payload.uid,
         },
-        select: { id: true, email: true, name: true, isBlocked: true },
+        select: { id: true, email: true, name: true, isBlocked: true, image: true },
       });
 
   // Usuario sin tenantId en el JWT (nuevo usuario, plan Free sin Holded).
@@ -94,6 +94,7 @@ export async function getHoldedSession() {
       userId: user.id,
       email: user.email,
       name: user.name,
+      image: user.image ?? null,
     };
   }
 
@@ -149,5 +150,6 @@ export async function getHoldedSession() {
     userId: user.id,
     email: user.email,
     name: user.name,
+    image: user.image ?? null,
   };
 }

@@ -56,6 +56,7 @@ export default async function WorkspaceLayout({ children }: { children: React.Re
     name: session.name ?? 'Usuario',
     email: session.email ?? '',
     initials: getInitials(session.name),
+    image: (session as any).image ?? null,
   };
 
   const adminDomain = process.env.ADMIN_ALLOWED_DOMAIN ?? 'verifactu.business';

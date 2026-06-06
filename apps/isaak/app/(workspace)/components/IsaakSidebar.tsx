@@ -50,6 +50,7 @@ type UserInfo = {
   name: string;
   email: string;
   initials: string;
+  image?: string | null;
 };
 
 type PlanInfo = {
@@ -543,13 +544,39 @@ export default function IsaakSidebar({
           >
             {/* User header */}
             <div className="flex items-center gap-3 border-b border-white/5 px-4 py-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--brand-color)] text-[13px] font-bold text-white">
-                {user.initials}
+              <div className="relative h-9 w-9 shrink-0">
+                {user.image ? (
+                  <img
+                    src={user.image}
+                    alt={user.name}
+                    className="h-9 w-9 rounded-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--brand-color)] text-[13px] font-bold text-white">
+                    {user.initials}
+                  </div>
+                )}
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="truncate text-[13px] font-semibold text-white">{user.name}</div>
                 <div className="truncate text-[11px] text-slate-400">{user.email}</div>
               </div>
+              <Link
+                href="/settings?section=profile"
+                onClick={() => setProfileOpen(false)}
+                title="Cambiar foto"
+                className="shrink-0 rounded-lg p-1 text-slate-500 transition hover:bg-white/10 hover:text-slate-300"
+              >
+                <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                  />
+                </svg>
+              </Link>
             </div>
 
             {/* Plan */}
@@ -642,8 +669,19 @@ export default function IsaakSidebar({
             collapsed ? 'justify-center' : 'gap-2.5'
           }`}
         >
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--brand-color)] text-[11px] font-bold text-white">
-            {user.initials}
+          <div className="relative h-7 w-7 shrink-0">
+            {user.image ? (
+              <img
+                src={user.image}
+                alt={user.name}
+                className="h-7 w-7 rounded-full object-cover"
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-color)] text-[11px] font-bold text-white">
+                {user.initials}
+              </div>
+            )}
           </div>
           {!collapsed && (
             <div className="min-w-0 flex-1 text-left">

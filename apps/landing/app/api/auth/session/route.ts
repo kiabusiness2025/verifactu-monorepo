@@ -88,7 +88,12 @@ async function verifyIdTokenAcrossProjects(idToken: string) {
   throw lastError || new Error('Unable to verify Firebase ID token');
 }
 
-async function getTenantForUser(uid: string, email: string, displayName?: string) {
+async function getTenantForUser(
+  uid: string,
+  email: string,
+  displayName?: string,
+  photoURL?: string | null
+) {
   // Usar el nombre de Firebase si está disponible, sino el email
   const userName = displayName || email.split('@')[0];
 
@@ -110,6 +115,8 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
         name: userName,
         authProvider: 'FIREBASE',
         authSubject: uid,
+        // Only update image from Google if user hasn't set a custom one
+        ...(photoURL && !user.image ? { image: photoURL } : {}),
       },
     });
   } else {
@@ -119,6 +126,7 @@ async function getTenantForUser(uid: string, email: string, displayName?: string
         name: userName,
         authProvider: 'FIREBASE',
         authSubject: uid,
+        image: photoURL ?? null,
       },
     });
   }
@@ -151,12 +159,13 @@ export async function POST(req: Request) {
     // Obtener información del usuario de Firebase
     const userRecord = await app.auth().getUser(decoded.uid);
     const displayName = userRecord.displayName || decoded.name || undefined;
+    const photoURL = userRecord.photoURL || null;
 
     if (!decoded.email) {
       return NextResponse.json({ error: 'Missing email' }, { status: 400 });
     }
 
-    const tenantId = await getTenantForUser(decoded.uid, decoded.email, displayName);
+    const tenantId = await getTenantForUser(decoded.uid, decoded.email, displayName, photoURL);
 
     const rolesRaw = (decoded as any).roles ?? (decoded as any).role ?? [];
     const tenantsRaw = (decoded as any).tenants ?? (decoded as any).tenant ?? [];
