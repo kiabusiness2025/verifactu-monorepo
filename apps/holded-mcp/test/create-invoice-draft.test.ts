@@ -120,19 +120,18 @@ test('create_invoice_draft cannot be tricked into approving by passing approveDo
 });
 
 /**
- * V3.G.10 regression — Holded API espera `lines: [{desc, units, price, tax}]`
- * para create_invoice, NO `items: [{name, units, subtotal, tax}]`.
+ * V3.G.17 regression — Holded API accepts `items: [{name, units, subtotal, tax}]`
+ * directamente para create_invoice. V3.G.10 había diagnosticado erróneamente que
+ * Holded esperaba `lines` y transformaba items→lines en el handler, pero el draft
+ * se creaba con 0,00 € porque Holded NO acepta `lines` aquí — solo `items`.
  *
- * El input schema del modelo expone `items` (más natural) pero el handler
- * DEBE transformarlo a `lines` antes de enviar a Holded. Si no, Holded
- * acepta el create (HTTP 200) pero IGNORA la key `items` → el draft se
- * crea con Subtotal/IVA/Total 0,00 € — comportamiento reportado por el
- * reviewer 2026-06-02 con el draft 6a1ea540ef05f92d220b5aef.
+ * V3.G.17 revirtió a items[]: el handler envía el body tal cual el input shape
+ * (con `items`), y Holded lo acepta correctamente.
  */
-test('V3.G.10: create_invoice_draft transforms items[] to lines[] with desc/price on the wire', async () => {
+test('V3.G.17: create_invoice_draft sends items[] on the wire (no lines transform)', async () => {
   const runtime = await startTestServer();
   const recorder = withHoldedFetchRecorder({
-    responseBody: { status: 1, id: 'doc-with-lines' },
+    responseBody: { status: 1, id: 'doc-with-items' },
   });
 
   try {
@@ -170,16 +169,17 @@ test('V3.G.10: create_invoice_draft transforms items[] to lines[] with desc/pric
 
     const body = JSON.parse(createCalls[0].body ?? '{}');
 
-    // El body NO debe contener `items` — solo `lines`.
-    assert.equal(body.items, undefined, 'body must NOT contain items[]; Holded ignores it');
-    assert.ok(Array.isArray(body.lines), 'body must contain lines[]');
-    assert.equal(body.lines.length, 1);
+    // V3.G.17: el body DEBE contener `items` con el shape original; NO debe
+    // contener `lines` (V3.G.10 fue mal-diagnóstico).
+    assert.equal(body.lines, undefined, 'body must NOT contain lines[]; V3.G.10 was wrong');
+    assert.ok(Array.isArray(body.items), 'body must contain items[]');
+    assert.equal(body.items.length, 1);
 
-    const line = body.lines[0];
-    assert.equal(line.desc, 'Servicio profesional', 'items.name → lines.desc');
-    assert.equal(line.units, 1);
-    assert.equal(line.price, 90, 'items.subtotal → lines.price');
-    assert.equal(line.tax, 21);
+    const item = body.items[0];
+    assert.equal(item.name, 'Servicio profesional');
+    assert.equal(item.units, 1);
+    assert.equal(item.subtotal, 90);
+    assert.equal(item.tax, 21);
   } finally {
     recorder.restore();
     await runtime.close();

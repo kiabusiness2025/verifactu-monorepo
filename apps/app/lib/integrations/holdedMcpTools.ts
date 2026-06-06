@@ -2526,7 +2526,7 @@ const toolHandlers: Record<string, HoldedMcpToolHandler> = {
     // Mejor esfuerzo: si getContact falla, devolvemos el create response sin
     // bloquear (la creación del draft ya se hizo).
     const wireContactId = (wireBody as { contactId?: string }).contactId;
-    let contactCanonical: {
+    const contactCanonical: {
       contactName?: string;
       contactCode?: string;
       contactCity?: string;
