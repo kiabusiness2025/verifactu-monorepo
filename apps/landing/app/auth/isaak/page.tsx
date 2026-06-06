@@ -201,15 +201,18 @@ export default function IsaakAuthPage() {
   };
 
   const handleGoogle = async () => {
-    setIsLoading(true);
+    if (isLoading) return;
     setError('');
     try {
+      // No loading state here — popup opens immediately, user selects account first
       const result = await signInWithGoogle({ rememberDevice: true });
       if (result.error) {
         setError(result.error.userMessage);
         return;
       }
       if (result.user) {
+        // Only show "connecting" state AFTER user selected their Google account
+        setIsLoading(true);
         await handleSessionAndRedirect(result.user, result.token);
       }
     } catch {
@@ -220,7 +223,7 @@ export default function IsaakAuthPage() {
   };
 
   const handleMicrosoft = async () => {
-    setIsLoading(true);
+    if (isLoading) return;
     setError('');
     try {
       const result = await signInWithMicrosoft({ rememberDevice: true });
@@ -229,6 +232,7 @@ export default function IsaakAuthPage() {
         return;
       }
       if (result.user) {
+        setIsLoading(true);
         await handleSessionAndRedirect(result.user, result.token);
       }
     } catch {
