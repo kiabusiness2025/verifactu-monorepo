@@ -9,10 +9,13 @@ function isSafeImageUrl(value: string) {
   if (/^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/i.test(value)) {
     return value.length <= 2_800_000;
   }
-
   try {
-    const parsed = new URL(value);
-    return ['https:', 'http:'].includes(parsed.protocol);
+    const { protocol, hostname } = new URL(value);
+    if (protocol !== 'https:') return false;
+    if (hostname === 'localhost' || hostname === '::1' || hostname === '[::1]') return false;
+    if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(hostname))
+      return false;
+    return true;
   } catch {
     return false;
   }

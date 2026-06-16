@@ -192,9 +192,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('[Isaak Export PDF] failed', err);
-    return NextResponse.json(
-      { error: 'export_failed', message: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'export_failed' }, { status: 500 });
   }
 }

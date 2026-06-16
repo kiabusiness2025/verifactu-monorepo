@@ -132,17 +132,13 @@ export async function GET(req: NextRequest) {
     return new NextResponse(buf as unknown as BodyInit, {
       status: 200,
       headers: {
-        'Content-Type':
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="${filename}"`,
         'Cache-Control': 'no-store',
       },
     });
   } catch (err) {
     console.error('[Isaak Export] failed', err);
-    return NextResponse.json(
-      { error: 'export_failed', message: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'export_failed' }, { status: 500 });
   }
 }

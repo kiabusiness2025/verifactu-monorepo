@@ -66,8 +66,7 @@ export async function POST(request: NextRequest) {
       requisition_id: requisition.id,
       connect_url: requisition.link,
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Error desconocido';
-    return NextResponse.json({ error: message }, { status: 502 });
+  } catch {
+    return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
   }
 }

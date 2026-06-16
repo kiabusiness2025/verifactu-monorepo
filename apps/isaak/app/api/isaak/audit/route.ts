@@ -13,12 +13,7 @@ import { loadAuditInputsForTenant } from '@/app/lib/isaak-audit-loader';
 import { runAudit } from '@/app/lib/inspector-aeat-audit';
 
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const VALID_SCOPES = new Set([
-  'monthly_close',
-  'quarterly_close',
-  'annual_close',
-  'on_demand',
-]);
+const VALID_SCOPES = new Set(['monthly_close', 'quarterly_close', 'annual_close', 'on_demand']);
 
 type Scope = 'monthly_close' | 'quarterly_close' | 'annual_close' | 'on_demand';
 
@@ -73,9 +68,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ snapshot, profile, report });
   } catch (err) {
     console.error('[Isaak Audit] failed', err);
-    return NextResponse.json(
-      { error: 'audit_failed', message: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'audit_failed' }, { status: 500 });
   }
 }

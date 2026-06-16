@@ -21,8 +21,7 @@ export async function GET(request: NextRequest) {
   try {
     const aspsps = await listAspsps(country);
     return NextResponse.json({ aspsps });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Error desconocido';
-    return NextResponse.json({ error: message }, { status: 502 });
+  } catch {
+    return NextResponse.json({ error: 'upstream_error' }, { status: 502 });
   }
 }

@@ -62,8 +62,7 @@ export async function GET(): Promise<NextResponse<ScanResult | ErrorResult>> {
       scannedAt,
       hasGmailScope: true,
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ ok: false, error: 'scan_failed' }, { status: 500 });
   }
 }

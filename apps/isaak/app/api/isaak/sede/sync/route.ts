@@ -17,9 +17,6 @@ export async function POST() {
     const result = await syncAeatSedeForTenant(session.tenantId);
     return NextResponse.json(result);
   } catch (err) {
-    return NextResponse.json(
-      { error: 'sync_failed', message: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'sync_failed' }, { status: 500 });
   }
 }
