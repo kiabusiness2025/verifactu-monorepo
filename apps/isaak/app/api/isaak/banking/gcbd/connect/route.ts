@@ -9,10 +9,7 @@
  */
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
-import {
-  createAgreement,
-  createRequisition,
-} from '@verifactu/integrations/gocardless-bank-data';
+import { createAgreement, createRequisition } from '@verifactu/integrations/gocardless-bank-data';
 import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -37,8 +34,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Build redirect URL pointing back to our callback
-    const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
-    const redirectUrl = `${origin}/api/isaak/banking/gcbd/callback`;
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
+    const redirectUrl = `${appUrl}/api/isaak/banking/gcbd/callback`;
 
     // Create requisition — returns a link to redirect the user to
     const requisition = await createRequisition({

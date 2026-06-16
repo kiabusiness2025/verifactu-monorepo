@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Crear connect session
-    const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
-    const returnTo = `${origin}/api/isaak/banking/saltedge/callback`;
+    const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
+    const returnTo = `${appUrl}/api/isaak/banking/saltedge/callback`;
 
     const connectSession = await createConnectSession({
       customerId: seCustomer.id, // v6: customerId (era customerSecret en v5)

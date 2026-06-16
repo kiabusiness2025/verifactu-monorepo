@@ -19,11 +19,16 @@ function generateSecret(): string {
   return `whsec_${randomBytes(SECRET_BYTES).toString('hex')}`;
 }
 
+// Blocks private/loopback IPs to prevent SSRF via registered webhook endpoints.
 function isHttpsUrl(value: string): boolean {
   try {
     const u = new URL(value);
     if (u.protocol !== 'https:' && u.protocol !== 'http:') return false;
     if (u.protocol === 'http:' && !u.hostname.match(/^(localhost|127\.0\.0\.1)$/)) return false;
+    // Block private/loopback/link-local ranges (RFC-1918, APIPA, metadata IMDS)
+    if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(u.hostname))
+      return false;
+    if (u.hostname === '::1' || u.hostname === '[::1]') return false;
     return true;
   } catch {
     return false;
@@ -64,7 +69,7 @@ export async function GET() {
         }),
       ]);
       return { id: e.id, delivered, failed, pending };
-    }),
+    })
   );
   const countsMap = new Map(counts.map((c) => [c.id, c]));
 
@@ -102,8 +107,11 @@ export async function POST(req: NextRequest) {
   const url = typeof body.url === 'string' ? body.url.trim() : '';
   if (!isHttpsUrl(url)) {
     return NextResponse.json(
-      { error: 'invalid_url', message: 'La URL debe empezar por https:// (o http://localhost para test).' },
-      { status: 400 },
+      {
+        error: 'invalid_url',
+        message: 'La URL debe empezar por https:// (o http://localhost para test).',
+      },
+      { status: 400 }
     );
   }
 
@@ -117,7 +125,7 @@ export async function POST(req: NextRequest) {
         error: 'invalid_events',
         message: `Suscribe al menos un evento válido. Disponibles: ${ISAAK_WEBHOOK_EVENTS.join(', ')}.`,
       },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
@@ -130,7 +138,7 @@ export async function POST(req: NextRequest) {
         error: 'too_many_endpoints',
         message: `Máx ${MAX_ENDPOINTS_PER_TENANT} endpoints por tenant. Borra alguno antes de crear más.`,
       },
-      { status: 409 },
+      { status: 409 }
     );
   }
 

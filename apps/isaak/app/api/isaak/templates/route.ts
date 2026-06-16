@@ -105,7 +105,8 @@ export async function POST(req: NextRequest) {
       secondaryColor: body.secondaryColor ?? null,
       accentColor: body.accentColor ?? null,
       fontFamily: body.fontFamily ?? null,
-      logoUrl: body.logoUrl ?? null,
+      logoUrl:
+        typeof body.logoUrl === 'string' && /^https:\/\//i.test(body.logoUrl) ? body.logoUrl : null,
       layoutConfig: (body.layoutConfig ?? undefined) as
         | import('@prisma/client').Prisma.InputJsonValue
         | undefined,

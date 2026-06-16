@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Se requiere email.' }, { status: 400 });
   }
 
-  const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const redirect_uri = `${origin}/settings?section=banking&gc_callback=1`;
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
+  const redirect_uri = `${appUrl}/settings?section=banking&gc_callback=1`;
 
   try {
     const result = await createMandateSetupLink({

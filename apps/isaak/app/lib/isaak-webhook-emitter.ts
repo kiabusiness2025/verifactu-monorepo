@@ -21,6 +21,21 @@ import { createHmac, randomUUID } from 'crypto';
 import { Prisma } from '@prisma/client';
 import { prisma } from './prisma';
 
+// Second-line SSRF guard at fetch time (defends against DNS rebinding even if
+// the URL passed registration-time validation).
+function isSafeWebhookUrl(url: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(url);
+    if (protocol !== 'https:' && protocol !== 'http:') return false;
+    if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(hostname))
+      return false;
+    if (hostname === '::1' || hostname === '[::1]') return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Event catalogue ──────────────────────────────────────────────────────────
 
 export const ISAAK_WEBHOOK_EVENTS = [
@@ -76,6 +91,10 @@ async function attemptDelivery(
   const timestamp = Math.floor(Date.now() / 1000);
   const body = JSON.stringify(payload);
   const sig = signPayload(secret, timestamp, body);
+
+  if (!isSafeWebhookUrl(url)) {
+    return { ok: false, error: 'blocked_url' };
+  }
 
   try {
     const res = await fetch(url, {
@@ -271,7 +290,7 @@ export async function testDeliverWebhook(
   secret: string,
   eventType: string,
   data: unknown,
-  timeoutMs = 5_000,
+  timeoutMs = 5_000
 ): Promise<TestDeliveryResult> {
   const payload = {
     id: `test_${Date.now()}`,

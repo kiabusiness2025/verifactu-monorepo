@@ -33,8 +33,8 @@ export async function POST(request: NextRequest) {
 
   const country = body.country ?? 'ES';
   const state = randomUUID();
-  const origin = request.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
-  const redirectUrl = `${origin}/api/isaak/banking/eb/callback`;
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? '').replace(/\/$/, '');
+  const redirectUrl = `${appUrl}/api/isaak/banking/eb/callback`;
 
   try {
     const auth = await startEbAuth({

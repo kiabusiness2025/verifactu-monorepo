@@ -5,6 +5,7 @@
  * POST — mensajes entrantes → lógica interactiva → LLM → respuesta
  */
 
+import { timingSafeEqual } from 'node:crypto';
 import { NextRequest } from 'next/server';
 import { callLLM } from '@verifactu/utils';
 import { loadIsaakBusinessContext } from '@/app/lib/isaak-business-context';
@@ -164,7 +165,13 @@ export function GET(req: NextRequest) {
   const token = searchParams.get('hub.verify_token');
   const challenge = searchParams.get('hub.challenge');
 
-  if (mode === 'subscribe' && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+  const expected = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN ?? '';
+  const tokenSafe =
+    token !== null &&
+    token.length === expected.length &&
+    expected.length > 0 &&
+    timingSafeEqual(Buffer.from(token), Buffer.from(expected));
+  if (mode === 'subscribe' && tokenSafe) {
     return new Response(challenge ?? '', { status: 200 });
   }
   return new Response('Forbidden', { status: 403 });
