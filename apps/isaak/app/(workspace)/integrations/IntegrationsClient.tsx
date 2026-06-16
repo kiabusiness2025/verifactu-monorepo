@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { IsaakConnecting } from '@/app/components/IsaakConnecting';
 import {
   AlertCircle,
   Book,
@@ -2061,9 +2062,8 @@ export default function IntegrationsClient() {
 
             {/* Loading */}
             {loading && (
-              <div className="flex items-center gap-2 py-8 text-[13px] text-slate-400">
-                <Loader2 size={16} className="animate-spin" />
-                Cargando conectores…
+              <div className="flex items-center justify-center py-6">
+                <IsaakConnecting />
               </div>
             )}
 

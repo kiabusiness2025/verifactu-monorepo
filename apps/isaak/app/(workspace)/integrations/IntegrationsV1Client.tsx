@@ -8,15 +8,8 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import {
-  AlertCircle,
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Loader2,
-  Plug,
-  ShieldCheck,
-} from 'lucide-react';
+import { AlertCircle, ArrowRight, CheckCircle2, Clock, Plug, ShieldCheck } from 'lucide-react';
+import { IsaakConnecting } from '@/app/components/IsaakConnecting';
 
 type HoldedStatus = {
   connected: boolean;
@@ -44,8 +37,8 @@ export default function IntegrationsV1Client() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <Loader2 className="h-6 w-6 animate-spin text-[#2361d8]" />
+      <div className="flex items-center justify-center py-10">
+        <IsaakConnecting />
       </div>
     );
   }

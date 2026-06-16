@@ -21,18 +21,18 @@ El cliente paga una suscripción única (29 €/mes). No necesita Claude / ChatG
 
 ## 2. Decisiones de scope (cerradas)
 
-| #   | Decisión               | Detalle                                                                                                                                         |
-| --- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Producto V1**        | App web `isaak.verifactu.business`. Conectores Claude / ChatGPT son canales paralelos, **no se tocan** (siguen en revisión Anthropic / OpenAI). |
-| 2   | **Marca**              | "Isaak" se mantiene. Tagline: _"Tu asistente fiscal para Holded. Sin licencias IA."_                                                            |
-| 3   | **Motor IA interno**   | Claude Sonnet (Anthropic) primario + GPT-4o (OpenAI) fallback. Transparente al usuario.                                                         |
-| 4   | **Free**               | Chat **ilimitado** con corpus AEAT. Sin Holded. Estrategia: funnel de aprendizaje para entrenar Isaak.                                          |
-| 5   | **Pro**                | 29 €/mes · 290 €/año (-20%). Holded conectado + tools + alertas.                                                                                |
-| 6   | **Trial**              | 14 días Pro sin tarjeta. Conversión automática al final si paga.                                                                                |
-| 7   | **Funcionalidad core** | Chat con tools Holded · Corpus AEAT en system prompt · Alertas D-15/7/3/1 de vencimientos 303/130.                                              |
-| 8   | **Verifactu emisión**  | **Escondida**. Holded ya lo tiene. Isaak genera **borradores** via tools API Holded.                                                            |
-| 9   | **Tools Holded**       | Cobertura máxima en **invoicing + contabilidad**. CRM / stock / warehouses / time-records fuera de V1.                                          |
-| 10  | **Landing**            | `verifactu.business` rediseñada **como Hub** de los 3 productos. `isaak.verifactu.business` como landing dedicada del producto Isaak.           |
+| #   | Decisión               | Detalle                                                                                                                                                              |
+| --- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Producto V1**        | App web `isaak.chat` (antes `isaak.verifactu.business`). Conectores Claude / ChatGPT son canales paralelos, **no se tocan** (siguen en revisión Anthropic / OpenAI). |
+| 2   | **Marca**              | "Isaak" se mantiene. Tagline: _"Tu asistente fiscal para Holded. Sin licencias IA."_                                                                                 |
+| 3   | **Motor IA interno**   | Claude Sonnet (Anthropic) primario + GPT-4o (OpenAI) fallback. Transparente al usuario.                                                                              |
+| 4   | **Free**               | Chat **ilimitado** con corpus AEAT. Sin Holded. Estrategia: funnel de aprendizaje para entrenar Isaak.                                                               |
+| 5   | **Pro**                | 29 €/mes · 290 €/año (-20%). Holded conectado + tools + alertas.                                                                                                     |
+| 6   | **Trial**              | 14 días Pro sin tarjeta. Conversión automática al final si paga.                                                                                                     |
+| 7   | **Funcionalidad core** | Chat con tools Holded · Corpus AEAT en system prompt · Alertas D-15/7/3/1 de vencimientos 303/130.                                                                   |
+| 8   | **Verifactu emisión**  | **Escondida**. Holded ya lo tiene. Isaak genera **borradores** via tools API Holded.                                                                                 |
+| 9   | **Tools Holded**       | Cobertura máxima en **invoicing + contabilidad**. CRM / stock / warehouses / time-records fuera de V1.                                                               |
+| 10  | **Landing**            | `verifactu.business` rediseñada **como Hub** de los 3 productos. `isaak.app` como landing dedicada del producto Isaak (antes `isaak.verifactu.business`).            |
 
 ---
 
@@ -134,7 +134,7 @@ Sin gráficos complejos en V1. Si el cliente quiere más, abre el chat y pregunt
 
 ```
 verifactu.business (Hub)
-  └─ Card "Isaak" → isaak.verifactu.business
+  └─ Card "Isaak" → isaak.app
      │
      ├─ Visitante explora landing producto
      │   └─ CTA: "Probar 14 días gratis"
@@ -164,7 +164,7 @@ Estructura propuesta:
 3. **Sección "¿Por qué Verifactu?"**: 4 value props comunes
 4. **Footer**: legal, contacto, prensa, GitHub
 
-### `isaak.verifactu.business` (landing producto)
+### `isaak.app` (landing producto — antes `isaak.verifactu.business`)
 
 Estructura:
 
