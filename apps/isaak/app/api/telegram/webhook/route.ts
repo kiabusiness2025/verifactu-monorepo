@@ -63,6 +63,26 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+// ── Rate limit para usuarios no vinculados ────────────────────────────────────
+// Protege contra spam de LLM desde cuentas Telegram no vinculadas a ningún tenant.
+// WARN: in-memory — ver nota en api/chat/route.ts sobre entornos serverless.
+const UNLINKED_RATE_LIMIT = 10; // mensajes por ventana
+const UNLINKED_RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hora
+type TgRateEntry = { count: number; resetAt: number };
+const tgRateStore = new Map<number, TgRateEntry>();
+
+function isTgRateLimited(chatId: number): boolean {
+  const now = Date.now();
+  const entry = tgRateStore.get(chatId);
+  if (!entry || entry.resetAt <= now) {
+    tgRateStore.set(chatId, { count: 1, resetAt: now + UNLINKED_RATE_WINDOW_MS });
+    return false;
+  }
+  if (entry.count >= UNLINKED_RATE_LIMIT) return true;
+  entry.count += 1;
+  return false;
+}
+
 // ── Tipos locales ─────────────────────────────────────────────────────────────
 
 type ModelConfig = { provider: AIProvider; model: string };
@@ -253,8 +273,7 @@ async function processUpdate(rawBody: string): Promise<void> {
     }
 
     if (data === 'menu_vincular') {
-      const appUrl =
-        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.chat';
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, '') || 'https://isaak.chat';
       await sendTelegramText(
         tgChatId,
         `🔗 Para vincular tu cuenta de Isaak, ve a:\n\n<b>${appUrl}/settings/telegram</b>\n\nGenerarás un enlace de vinculación que abrirás aquí en Telegram.`
@@ -599,6 +618,15 @@ async function runIsaakPipeline(input: {
         [{ text: '💳 Ver planes Pro', callback_data: 'menu_planes' }],
       ]);
       await saveOutbound(chatDbId, tenantId, reply);
+      return;
+    }
+  } else {
+    // Usuario no vinculado: rate limit por chatId para evitar spam LLM.
+    if (isTgRateLimited(tgChatId)) {
+      const reply =
+        '⏳ Has enviado demasiados mensajes en poco tiempo. Espera un momento o vincula tu cuenta de Isaak para límites ampliados.';
+      await sendTelegramText(tgChatId, reply);
+      await saveOutbound(chatDbId, null, reply);
       return;
     }
   }

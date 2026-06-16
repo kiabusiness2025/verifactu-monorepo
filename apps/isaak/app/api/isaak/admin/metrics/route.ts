@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
              percentile_cont(0.95) WITHIN GROUP (ORDER BY latency_ms) AS p95
            FROM isaak_chat_metrics
            WHERE created_at >= $1`,
-          since,
+          since
         ),
         prisma.$queryRawUnsafe<DayRow[]>(
           `SELECT
@@ -98,7 +98,7 @@ export async function GET(req: NextRequest) {
            WHERE created_at >= $1
            GROUP BY 1
            ORDER BY 1 ASC`,
-          since,
+          since
         ),
         prisma.$queryRawUnsafe<CountRow[]>(
           `SELECT model_used AS value, count(*)::bigint AS count
@@ -107,7 +107,7 @@ export async function GET(req: NextRequest) {
            GROUP BY 1
            ORDER BY count DESC
            LIMIT 15`,
-          since,
+          since
         ),
         prisma.$queryRawUnsafe<CountRow[]>(
           `SELECT COALESCE(routed_to, 'unknown') AS value, count(*)::bigint AS count
@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
            WHERE created_at >= $1
            GROUP BY 1
            ORDER BY count DESC`,
-          since,
+          since
         ),
         // unnest tool_names para contar tools individuales
         prisma.$queryRawUnsafe<CountRow[]>(
@@ -125,7 +125,7 @@ export async function GET(req: NextRequest) {
            GROUP BY t
            ORDER BY count DESC
            LIMIT 20`,
-          since,
+          since
         ),
         prisma.$queryRawUnsafe<{ fallbacks: bigint; clarifications: bigint }[]>(
           `SELECT
@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
              sum(CASE WHEN is_clarification THEN 1 ELSE 0 END)::bigint AS clarifications
            FROM isaak_chat_metrics
            WHERE created_at >= $1`,
-          since,
+          since
         ),
         // V1.8.4 — Top referrers desde el QR/link compartido
         prisma.$queryRawUnsafe<CountRow[]>(
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
            GROUP BY 1
            ORDER BY count DESC
            LIMIT 20`,
-          since,
+          since
         ),
       ]);
 
@@ -186,9 +186,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error('[admin/metrics] failed', err);
-    return NextResponse.json(
-      { error: 'metrics_failed', message: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: 'metrics_failed' }, { status: 500 });
   }
 }

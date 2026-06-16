@@ -2,6 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getHoldedSession } from '@/app/lib/holded-session';
 import { prisma } from '@/app/lib/prisma';
 
+function isSafeHttpsUrl(value: unknown): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
 export const runtime = 'nodejs';
 
 // PATCH — update (including set as default)
@@ -33,7 +43,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       secondaryColor: typeof body.secondaryColor === 'string' ? body.secondaryColor : undefined,
       accentColor: typeof body.accentColor === 'string' ? body.accentColor : undefined,
       fontFamily: typeof body.fontFamily === 'string' ? body.fontFamily : undefined,
-      logoUrl: typeof body.logoUrl === 'string' ? body.logoUrl : undefined,
+      logoUrl: isSafeHttpsUrl(body.logoUrl) ? body.logoUrl : undefined,
       layoutConfig:
         body.layoutConfig && typeof body.layoutConfig === 'object'
           ? (body.layoutConfig as import('@prisma/client').Prisma.InputJsonValue)

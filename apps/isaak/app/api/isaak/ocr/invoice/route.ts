@@ -14,13 +14,24 @@ import { extractInvoiceFromImage } from '@/app/lib/isaak-ocr-invoice';
 // model cost makes this unsafe to leave open).
 
 const MAX_BASE64_BYTES = 8 * 1024 * 1024; // 8 MB cap
-const ACCEPTED_MIMES = new Set([
-  'image/jpeg',
-  'image/jpg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-]);
+const ACCEPTED_MIMES = new Set(['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif']);
+
+// Blocks private/loopback IPs to prevent SSRF.
+function isSafeImageUrl(raw: string): boolean {
+  if (!raw.startsWith('https://')) return false;
+  try {
+    const { hostname } = new URL(raw);
+    if (hostname === 'localhost') return false;
+    // IPv4 private / loopback / link-local ranges
+    if (/^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(hostname))
+      return false;
+    // IPv6 loopback
+    if (hostname === '::1' || hostname === '[::1]') return false;
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(req: NextRequest) {
   const session = await getHoldedSession().catch(() => null);
@@ -49,8 +60,8 @@ export async function POST(req: NextRequest) {
 
   if (typeof input.imageUrl === 'string' && input.imageUrl.trim()) {
     const url = input.imageUrl.trim();
-    if (!/^https?:\/\//i.test(url) && !url.startsWith('data:image/')) {
-      return NextResponse.json({ error: 'imageUrl_must_be_http_or_data_image' }, { status: 400 });
+    if (!isSafeImageUrl(url)) {
+      return NextResponse.json({ error: 'imageUrl_must_be_public_https' }, { status: 400 });
     }
     resolvedImageUrl = url;
   } else if (typeof input.imageBase64 === 'string' && input.imageBase64.trim()) {

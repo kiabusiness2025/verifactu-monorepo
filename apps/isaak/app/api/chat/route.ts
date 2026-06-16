@@ -41,6 +41,9 @@ type RateEntry = {
 
 const RATE_LIMIT = 20;
 const RATE_WINDOW_MS = 60_000;
+// WARN: in-memory — effective per warm serverless instance only.
+// For multi-instance hardening use @upstash/ratelimit backed by Redis.
+// Authenticated users are protected by the DB quota check below (cross-instance).
 const rateStore = new Map<string, RateEntry>();
 
 function getRequestIp(request: NextRequest) {

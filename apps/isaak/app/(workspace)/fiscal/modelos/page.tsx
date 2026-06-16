@@ -297,7 +297,6 @@ function Modelo303LegacyPanel({
   apiError,
   setApiError,
 }: Modelo303PanelProps) {
-
   async function calcular() {
     setLoading(true);
     setApiError(null);
@@ -713,10 +712,7 @@ function ModelLink({ href, titulo, sub }: { href: string; titulo: string; sub: s
       className="rounded-lg border border-slate-200 bg-white p-3 hover:border-blue-300 hover:bg-blue-50/40 block"
     >
       <p className="text-sm font-semibold text-slate-800">{titulo}</p>
-      <p
-        className="text-xs text-slate-500 mt-0.5"
-        dangerouslySetInnerHTML={{ __html: sub }}
-      />
+      <p className="text-xs text-slate-500 mt-0.5">{sub}</p>
     </Link>
   );
 }
@@ -769,8 +765,16 @@ export default function ModelosPage() {
             Más modelos trimestrales (Robot Contable)
           </p>
           <div className="grid sm:grid-cols-3 gap-3">
-            <ModelLink href="/fiscal/modelos/111" titulo="Mod. 111" sub="Retenciones IRPF trab./prof." />
-            <ModelLink href="/fiscal/modelos/115" titulo="Mod. 115" sub="Retenciones arrendamientos" />
+            <ModelLink
+              href="/fiscal/modelos/111"
+              titulo="Mod. 111"
+              sub="Retenciones IRPF trab./prof."
+            />
+            <ModelLink
+              href="/fiscal/modelos/115"
+              titulo="Mod. 115"
+              sub="Retenciones arrendamientos"
+            />
             <ModelLink href="/fiscal/modelos/349" titulo="Mod. 349" sub="Operaciones intracom UE" />
           </div>
         </div>
@@ -779,7 +783,11 @@ export default function ModelosPage() {
             Resúmenes anuales (Robot Contable)
           </p>
           <div className="grid sm:grid-cols-3 gap-3">
-            <ModelLink href="/fiscal/modelos/347" titulo="Mod. 347" sub="Anual operaciones &gt; €3.005,06" />
+            <ModelLink
+              href="/fiscal/modelos/347"
+              titulo="Mod. 347"
+              sub="Anual operaciones > €3.005,06"
+            />
             <ModelLink href="/fiscal/modelos/180" titulo="Mod. 180" sub="Resumen anual 115" />
             <ModelLink href="/fiscal/modelos/190" titulo="Mod. 190" sub="Resumen anual 111" />
           </div>
