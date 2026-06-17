@@ -2472,6 +2472,28 @@ model DemoRequest {
   @@map("demo_requests")
 }
 
+// ==================== INVESTOR LEADS ====================
+
+model InvestorLead {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @map("created_at")
+
+  name        String
+  email       String
+  company     String
+  role        String?
+  message     String?
+  type        String  @default("investor") // "investor" | "partner"
+  consent     Boolean @default(false)
+
+  downloadedAt DateTime? @map("downloaded_at")
+  ipAddress    String?   @map("ip_address")
+
+  @@index([email])
+  @@index([createdAt])
+  @@map("investor_leads")
+}
+
 // ==================== ISAAK PLATFORM ====================
 
 model IsaakProposedAction {
