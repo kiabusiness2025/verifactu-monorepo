@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
     const emailContent = renderCorporateBrandedEmail({
       variant: 'soporte',
       title: `Nuevo ticket de soporte: ${subject}`,
-      intro: 'Se ha generado un nuevo ticket de soporte desde la landing de verifactu.business.',
+      intro: 'Se ha generado un nuevo ticket de soporte desde la landing de isaak.app.',
       bodyHtml: supportDetailsHtml,
       footerNote: 'Notificacion automatica del flujo de soporte.',
     });
@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
     const emailTextContent = renderCorporatePlainTextEmail({
       variant: 'soporte',
       title: `Nuevo ticket de soporte: ${subject}`,
-      intro: 'Se ha generado un nuevo ticket de soporte desde la landing de verifactu.business.',
+      intro: 'Se ha generado un nuevo ticket de soporte desde la landing de isaak.app.',
       lines: [
         `Ticket: ${ticket.id}`,
         `Nombre: ${name}`,
@@ -255,7 +255,10 @@ export async function POST(request: NextRequest) {
       const resend = new Resend(resendApiKey);
       try {
         await resend.emails.send({
-          from: process.env.FROM_EMAIL || 'soporte@verifactu.business',
+          from:
+            process.env.RESEND_FROM_ISAAK?.trim() ||
+            process.env.RESEND_FROM?.trim() ||
+            'Isaak <noreply@isaak.app>',
           to: supportRecipients,
           bcc: adminRecipients.length > 0 ? adminRecipients : undefined,
           subject: `Ticket soporte: ${escapeHtml(subject)}`,
