@@ -1,7 +1,7 @@
 'use client';
 
 import type { User } from 'firebase/auth';
-import { isSignInWithEmailLink, signInWithEmailLink } from 'firebase/auth';
+import { isSignInWithEmailLink, signInWithCustomToken, signInWithEmailLink } from 'firebase/auth';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -56,6 +56,10 @@ export default function IsaakAuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [magicSent, setMagicSent] = useState(false);
+  const [otpToken, setOtpToken] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpError, setOtpError] = useState('');
   const [verifyingLink, setVerifyingLink] = useState(false);
   const redirectedRef = useRef(false);
 
@@ -170,12 +174,43 @@ export default function IsaakAuthPage() {
         return;
       }
 
+      const data = await res.json().catch(() => ({}));
       window.localStorage.setItem('vf_isaak_magic_email', email);
+      if (data.otpToken) setOtpToken(data.otpToken);
       setMagicSent(true);
     } catch {
       setError('Error de red. Intentalo de nuevo.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setOtpLoading(true);
+    setOtpError('');
+    try {
+      const res = await fetch('/api/auth/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: otpToken, otp }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setOtpError(data.error || 'Código incorrecto. Inténtalo de nuevo.');
+        return;
+      }
+      if (!auth) {
+        setOtpError('Servicio de autenticación no disponible.');
+        return;
+      }
+      const cred = await signInWithCustomToken(auth, data.customToken);
+      window.localStorage.removeItem('vf_isaak_magic_email');
+      await handleSessionAndRedirect(cred.user as User);
+    } catch {
+      setOtpError('Error al verificar el código. Inténtalo de nuevo.');
+    } finally {
+      setOtpLoading(false);
     }
   };
 
@@ -305,23 +340,70 @@ export default function IsaakAuthPage() {
               </div>
 
               {magicSent ? (
-                <div className="mt-7 text-center">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-                    <Mail className="h-5 w-5 text-emerald-600" />
+                <div className="mt-7">
+                  <div className="text-center">
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+                      <Mail className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <h2 className="mt-4 text-lg font-semibold text-slate-950">Revisa tu correo</h2>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">
+                      Hemos enviado un enlace de acceso a{' '}
+                      <span className="font-semibold text-slate-950">{email}</span>. Caduca en 10
+                      minutos.
+                    </p>
                   </div>
-                  <h2 className="mt-4 text-lg font-semibold text-slate-950">Revisa tu correo</h2>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Hemos enviado un enlace de acceso a{' '}
-                    <span className="font-semibold text-slate-950">{email}</span>. Caduca en 10
-                    minutos y solo puede usarse una vez.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setMagicSent(false)}
-                    className="mt-5 text-sm font-semibold text-[#2361d8] underline-offset-4 hover:underline"
-                  >
-                    Usar otro correo
-                  </button>
+
+                  {otpToken ? (
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                      <p className="mb-3 text-center text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        ¿Abriste el correo en otro dispositivo?
+                      </p>
+                      <p className="mb-4 text-center text-xs text-slate-500">
+                        Introduce el código de 6 dígitos que aparece en el email
+                      </p>
+                      <form onSubmit={handleOtp} className="space-y-3">
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={6}
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          placeholder="000000"
+                          className="h-14 w-full rounded-2xl border border-slate-200 bg-white text-center text-3xl font-bold tracking-[0.5em] text-slate-900 placeholder:text-slate-300 placeholder:tracking-normal focus:border-[#2361d8] focus:outline-none focus:ring-2 focus:ring-[#2361d8]/25"
+                          autoComplete="one-time-code"
+                        />
+                        {otpError ? (
+                          <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-center text-xs text-rose-700">
+                            {otpError}
+                          </p>
+                        ) : null}
+                        <button
+                          type="submit"
+                          disabled={otpLoading || otp.length !== 6}
+                          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-[#2361d8] px-4 text-sm font-semibold text-white transition hover:bg-[#1f55c0] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {otpLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                          {otpLoading ? 'Verificando...' : 'Entrar con código'}
+                        </button>
+                      </form>
+                    </div>
+                  ) : null}
+
+                  <div className="mt-4 text-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMagicSent(false);
+                        setOtpToken('');
+                        setOtp('');
+                        setOtpError('');
+                      }}
+                      className="text-sm font-semibold text-[#2361d8] underline-offset-4 hover:underline"
+                    >
+                      Usar otro correo
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="mt-6 space-y-5">

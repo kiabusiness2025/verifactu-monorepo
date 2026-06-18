@@ -1,4 +1,6 @@
+import crypto from 'node:crypto';
 import admin from 'firebase-admin';
+import { SignJWT } from 'jose';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -32,12 +34,10 @@ function getClientIp(req: Request): string {
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = RATE_LIMIT_MAP.get(ip);
-
   if (!entry || now > entry.resetAt) {
-    RATE_LIMIT_MAP.set(ip, { count: 1, resetAt: now + 3600_000 });
+    RATE_LIMIT_MAP.set(ip, { count: 1, resetAt: now + 3_600_000 });
     return true;
   }
-
   if (entry.count >= MAX_PER_HOUR) return false;
   entry.count++;
   return true;
@@ -68,6 +68,22 @@ function getFirebaseApp() {
   });
 }
 
+function generateOtp(): string {
+  return String(crypto.randomInt(0, 1_000_000)).padStart(6, '0');
+}
+
+function computeOtpHmac(secret: string, email: string, otp: string): string {
+  return crypto.createHmac('sha256', secret).update(`${email}:${otp}`).digest('hex');
+}
+
+async function signOtpToken(secret: string, email: string, otpHmac: string): Promise<string> {
+  return new SignJWT({ email, h: otpHmac })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('10m')
+    .sign(new TextEncoder().encode(secret));
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -77,10 +93,9 @@ function escapeHtml(value: string): string {
     .replace(/'/g, '&#039;');
 }
 
-function buildIsaakMagicLinkEmail(link: string): { html: string; text: string } {
+function buildIsaakMagicLinkEmail(link: string, otpCode?: string): { html: string; text: string } {
   const safeLink = escapeHtml(link);
-  const landingUrl = process.env.NEXT_PUBLIC_LANDING_URL || 'https://isaak.app';
-  const avatarUrl = `${landingUrl.replace(/\/$/, '')}/Isaak/isaak-avatar-verifactu.png`;
+  const avatarUrl = 'https://isaak.app/Isaak/isaak-avatar-verifactu.png';
 
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -88,40 +103,56 @@ function buildIsaakMagicLinkEmail(link: string): { html: string; text: string } 
 <body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;color:#0f172a;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 20px;">
     <tr><td align="center">
-      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;">
-        <tr><td style="padding-bottom:20px;text-align:center;">
-          <span style="display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:999px;background:#ffffff;border:1px solid #dbe7ff;box-shadow:0 8px 24px rgba(15,23,42,0.06);">
-            <img src="${avatarUrl}" alt="Isaak" width="34" height="34" style="display:block;border-radius:999px;border:0;object-fit:cover;" />
-            <span style="text-align:left;">
-              <span style="display:block;font-size:15px;font-weight:800;color:#0f172a;line-height:1.1;">Isaak</span>
-              <span style="display:block;font-size:12px;color:#64748b;line-height:1.2;">Asistente fiscal</span>
-            </span>
-          </span>
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;">
+
+        <tr><td style="padding-bottom:24px;text-align:center;">
+          <img src="${avatarUrl}" alt="Isaak" width="56" height="56"
+            style="display:inline-block;border-radius:999px;border:3px solid #dbe7ff;box-shadow:0 4px 16px rgba(35,97,216,0.15);" />
+          <div style="margin-top:10px;font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-0.02em;">Isaak</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">Asistente fiscal inteligente</div>
         </td></tr>
+
         <tr><td style="background:#ffffff;border-radius:24px;border:1px solid #dbe7ff;padding:36px;box-shadow:0 18px 44px rgba(15,23,42,0.08);">
-          <p style="margin:0 0 10px;font-size:12px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#2361d8;">Acceso seguro</p>
-          <h1 style="margin:0 0 12px;font-size:26px;line-height:1.15;font-weight:800;color:#0f172a;">Tu enlace para entrar en Isaak</h1>
-          <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.7;">
-            Pulsa el boton para iniciar sesion. El enlace caduca en <strong>10 minutos</strong> y solo puede usarse una vez.
+          <p style="margin:0 0 6px;font-size:11px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#2361d8;">Acceso seguro</p>
+          <h1 style="margin:0 0 12px;font-size:24px;line-height:1.2;font-weight:800;color:#0f172a;">Tu enlace para entrar en Isaak</h1>
+          <p style="margin:0 0 28px;font-size:14px;color:#475569;line-height:1.7;">
+            Pulsa el botón para iniciar sesión. El enlace caduca en <strong>10 minutos</strong> y solo puede usarse una vez.
           </p>
-          <a href="${safeLink}" style="display:block;text-align:center;background:#2361d8;color:#ffffff;font-weight:800;font-size:15px;padding:14px 24px;border-radius:16px;text-decoration:none;margin-bottom:22px;">
+
+          <a href="${safeLink}" style="display:block;text-align:center;background:#2361d8;color:#ffffff;font-weight:800;font-size:15px;padding:16px 24px;border-radius:16px;text-decoration:none;margin-bottom:24px;letter-spacing:-0.01em;">
             Acceder a Isaak &rarr;
           </a>
-          <div style="padding:14px 16px;border-radius:16px;background:#f8fafc;border:1px solid #e2e8f0;">
+
+          ${
+            otpCode
+              ? `<div style="margin:0 0 24px;padding:20px 24px;background:#f8faff;border-radius:16px;text-align:center;border:1px solid #dbe7ff;">
+            <p style="margin:0 0 12px;font-size:12px;color:#64748b;line-height:1.5;">
+              ¿Abriste el correo en otro dispositivo?<br/>Introduce este código en la pantalla de acceso:
+            </p>
+            <div style="font-size:42px;font-weight:900;letter-spacing:14px;color:#0f172a;font-family:'Courier New',monospace;padding:6px 0 2px;">${otpCode}</div>
+            <p style="margin:10px 0 0;font-size:11px;color:#94a3b8;">Caduca en 10 minutos</p>
+          </div>`
+              : ''
+          }
+
+          <div style="padding:14px 16px;border-radius:12px;background:#f8fafc;border:1px solid #e2e8f0;">
             <p style="margin:0;font-size:12px;color:#64748b;line-height:1.6;">
-              Si el boton no abre, copia este enlace en tu navegador:<br />
-              <a href="${safeLink}" style="color:#2361d8;word-break:break-all;">${safeLink}</a>
+              Si el botón no abre, copia este enlace en tu navegador:<br />
+              <a href="${safeLink}" style="color:#2361d8;word-break:break-all;font-size:11px;">${safeLink}</a>
             </p>
           </div>
-          <p style="margin:18px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;">
-            Si no solicitaste este acceso, puedes ignorar este correo.
+
+          <p style="margin:18px 0 0;font-size:12px;color:#94a3b8;line-height:1.5;text-align:center;">
+            Si no solicitaste este acceso, puedes ignorar este correo con total seguridad.
           </p>
         </td></tr>
+
         <tr><td style="padding-top:20px;text-align:center;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
             Isaak &middot; <a href="https://isaak.app" style="color:#94a3b8;">isaak.app</a>
           </p>
         </td></tr>
+
       </table>
     </td></tr>
   </table>
@@ -132,9 +163,13 @@ function buildIsaakMagicLinkEmail(link: string): { html: string; text: string } 
     'Tu enlace para entrar en Isaak:',
     link,
     '',
+    otpCode ? `O introduce este código en la pantalla de acceso: ${otpCode}` : '',
+    otpCode ? '' : '',
     'El enlace caduca en 10 minutos y solo puede usarse una vez.',
     'Si no lo solicitaste, ignora este correo.',
-  ].join('\n');
+  ]
+    .filter((line, i, arr) => !(line === '' && arr[i - 1] === ''))
+    .join('\n');
 
   return { html, text };
 }
@@ -186,15 +221,24 @@ export async function POST(req: Request) {
       );
     }
 
+    const resendApiKey = process.env.RESEND_API_KEY?.trim();
+    if (!resendApiKey) {
+      console.error('[magic-link] RESEND_API_KEY not set');
+      return NextResponse.json({ error: 'Servicio de correo no disponible.' }, { status: 503 });
+    }
+
     const link = await admin.auth(app).generateSignInWithEmailLink(email, {
       url: continueUrl,
       handleCodeInApp: true,
     });
 
-    const resendApiKey = process.env.RESEND_API_KEY?.trim();
-    if (!resendApiKey) {
-      console.error('[magic-link] RESEND_API_KEY not set');
-      return NextResponse.json({ error: 'Servicio de correo no disponible.' }, { status: 503 });
+    const sessionSecret = process.env.SESSION_SECRET?.trim();
+    let otpToken: string | undefined;
+    let otpCode: string | undefined;
+    if (sessionSecret) {
+      otpCode = generateOtp();
+      const otpHmac = computeOtpHmac(sessionSecret, email, otpCode);
+      otpToken = await signOtpToken(sessionSecret, email, otpHmac);
     }
 
     const fromEmail =
@@ -204,7 +248,7 @@ export async function POST(req: Request) {
         process.env.RESEND_FROM
       )?.trim() || 'Isaak <noreply@isaak.app>';
 
-    const { html, text } = buildIsaakMagicLinkEmail(link);
+    const { html, text } = buildIsaakMagicLinkEmail(link, otpCode);
 
     const sendRes = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -223,52 +267,14 @@ export async function POST(req: Request) {
 
     if (!sendRes.ok) {
       const errText = await sendRes.text();
-      console.error('[magic-link] Resend rejected email', {
-        status: sendRes.status,
-        from: fromEmail,
-        to: email,
-        body: errText.slice(0, 500),
-      });
-
-      let userError = 'No pudimos enviar el correo. Intentalo de nuevo en unos minutos.';
-      let httpStatus = 502;
-
-      if (sendRes.status === 401 || sendRes.status === 403) {
-        userError =
-          'El servicio de correo no esta configurado correctamente. Contacta con soporte (soporte@verifactu.business).';
-        httpStatus = 503;
-        if (/not verified|domain|sender/i.test(errText)) {
-          console.error(
-            `[magic-link] RESEND DOMAIN NOT VERIFIED: sender domain for "${fromEmail}" must be verified in the Resend dashboard (resend.com/domains). ` +
-              `Current RESEND_FROM_ISAAK=${process.env.RESEND_FROM_ISAAK ?? '(unset)'} ` +
-              `RESEND_FROM=${process.env.RESEND_FROM ?? '(unset)'}`
-          );
-        }
-      } else if (sendRes.status === 422) {
-        console.error(
-          `[magic-link] RESEND 422 — likely unverified sending domain for "${fromEmail}". ` +
-            `Verify domain in Resend dashboard or set RESEND_FROM_ISAAK to a verified sender.`
-        );
-        userError =
-          'El servicio de correo no esta configurado correctamente. Contacta con soporte (soporte@verifactu.business).';
-        httpStatus = 503;
-      } else if (sendRes.status === 429) {
-        userError = 'Demasiados envios. Espera unos minutos e intentalo de nuevo.';
-        httpStatus = 429;
-      }
-
-      return NextResponse.json({ error: userError }, { status: httpStatus });
+      console.error('[magic-link] Resend error', { status: sendRes.status, body: errText });
+      return NextResponse.json(
+        { error: 'No pudimos enviar el correo. Intentalo de nuevo en unos minutos.' },
+        { status: 502 }
+      );
     }
 
-    // Log Resend email ID for delivery tracking (check resend.com/emails if not received)
-    const sendData = (await sendRes.json().catch(() => ({}))) as { id?: string };
-    console.info('[magic-link] Resend accepted', {
-      resendId: sendData.id,
-      from: fromEmail,
-      to: email,
-    });
-
-    return NextResponse.json({ ok: true });
+    return NextResponse.json({ ok: true, ...(otpToken ? { otpToken } : {}) });
   } catch (err) {
     console.error('[magic-link] Unexpected error', err);
     return NextResponse.json({ error: 'Error interno. Intentalo de nuevo.' }, { status: 500 });
