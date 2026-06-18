@@ -237,11 +237,21 @@ export async function POST(req: Request) {
         userError =
           'El servicio de correo no esta configurado correctamente. Contacta con soporte (soporte@verifactu.business).';
         httpStatus = 503;
-        if (/not verified|domain/i.test(errText)) {
+        if (/not verified|domain|sender/i.test(errText)) {
           console.error(
-            `[magic-link] Hint: sender domain for ${fromEmail} is not verified in Resend.`
+            `[magic-link] RESEND DOMAIN NOT VERIFIED: sender domain for "${fromEmail}" must be verified in the Resend dashboard (resend.com/domains). ` +
+              `Current RESEND_FROM_ISAAK=${process.env.RESEND_FROM_ISAAK ?? '(unset)'} ` +
+              `RESEND_FROM=${process.env.RESEND_FROM ?? '(unset)'}`
           );
         }
+      } else if (sendRes.status === 422) {
+        console.error(
+          `[magic-link] RESEND 422 — likely unverified sending domain for "${fromEmail}". ` +
+            `Verify domain in Resend dashboard or set RESEND_FROM_ISAAK to a verified sender.`
+        );
+        userError =
+          'El servicio de correo no esta configurado correctamente. Contacta con soporte (soporte@verifactu.business).';
+        httpStatus = 503;
       } else if (sendRes.status === 429) {
         userError = 'Demasiados envios. Espera unos minutos e intentalo de nuevo.';
         httpStatus = 429;
@@ -249,6 +259,14 @@ export async function POST(req: Request) {
 
       return NextResponse.json({ error: userError }, { status: httpStatus });
     }
+
+    // Log Resend email ID for delivery tracking (check resend.com/emails if not received)
+    const sendData = (await sendRes.json().catch(() => ({}))) as { id?: string };
+    console.info('[magic-link] Resend accepted', {
+      resendId: sendData.id,
+      from: fromEmail,
+      to: email,
+    });
 
     return NextResponse.json({ ok: true });
   } catch (err) {
