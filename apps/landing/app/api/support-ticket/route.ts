@@ -42,7 +42,7 @@ function resolveReplyToEmail(): string {
   return (
     process.env.LANDING_REPLY_TO_EMAIL?.trim() ||
     process.env.SUPPORT_EMAIL?.trim() ||
-    'soporte@verifactu.business'
+    'soporte@isaak.app'
   );
 }
 

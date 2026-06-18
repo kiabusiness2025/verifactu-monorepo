@@ -75,10 +75,18 @@ function resolveReplyToEmail() {
   const candidates = parseEmailList(
     process.env.LANDING_REPLY_TO_EMAIL,
     process.env.SUPPORT_EMAIL,
-    'soporte@verifactu.business'
+    'soporte@isaak.app'
   );
 
-  return candidates[0] || 'soporte@verifactu.business';
+  return candidates[0] || 'soporte@isaak.app';
+}
+
+function resolveSenderEmail() {
+  const raw =
+    process.env.RESEND_FROM_ISAAK?.trim() ||
+    process.env.RESEND_FROM?.trim() ||
+    process.env.FROM_EMAIL?.trim();
+  return raw || 'Isaak <noreply@isaak.app>';
 }
 
 function looksLikeGeneratedTenantName(value: string | null | undefined) {
@@ -396,13 +404,13 @@ export async function notifyLandingLead(result: PersistedLeadResult) {
 
   const adminHtml = renderCorporateBrandedEmail({
     variant: isInvestorLead ? 'inversores' : 'comercial',
-    title: isInvestorLead ? 'Nuevo contacto de inversores' : 'Nuevo lead desde verifactu.business',
+    title: isInvestorLead ? 'Nuevo contacto de inversores' : 'Nuevo lead desde isaak.app',
     intro:
       result.flow === 'holded_trial'
         ? 'Se ha registrado una nueva solicitud de prueba de Holded en la landing.'
-        : 'Se ha registrado un nuevo contacto en la landing de verifactu.business.',
+        : 'Se ha registrado un nuevo contacto en la landing de isaak.app.',
     bodyHtml: detailsHtml,
-    footerNote: 'Notificacion automatica del flujo de formularios de verifactu.business.',
+    footerNote: 'Notificacion automatica del flujo de formularios de isaak.app.',
   });
 
   const adminTextLines =
@@ -432,18 +440,20 @@ export async function notifyLandingLead(result: PersistedLeadResult) {
 
   const adminText = renderCorporatePlainTextEmail({
     variant: isInvestorLead ? 'inversores' : 'comercial',
-    title: isInvestorLead ? 'Nuevo contacto de inversores' : 'Nuevo lead desde verifactu.business',
+    title: isInvestorLead ? 'Nuevo contacto de inversores' : 'Nuevo lead desde isaak.app',
     intro:
       result.flow === 'holded_trial'
         ? 'Se ha registrado una nueva solicitud de prueba de Holded en la landing.'
-        : 'Se ha registrado un nuevo contacto en la landing de verifactu.business.',
+        : 'Se ha registrado un nuevo contacto en la landing de isaak.app.',
     lines: adminTextLines,
-    footerNote: 'Notificacion automatica del flujo de formularios de verifactu.business.',
+    footerNote: 'Notificacion automatica del flujo de formularios de isaak.app.',
   });
+
+  const senderEmail = resolveSenderEmail();
 
   try {
     await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'info@verifactu.business',
+      from: senderEmail,
       to: recipients,
       subject,
       reply_to: result.email,
@@ -461,7 +471,7 @@ export async function notifyLandingLead(result: PersistedLeadResult) {
       ? 'Hemos recibido tu solicitud para inversores'
       : 'Hemos recibido tu solicitud',
     intro:
-      'Gracias por contactar con verifactu.business. El equipo revisara tu solicitud y respondera lo antes posible.',
+      'Gracias por contactar con Isaak. El equipo revisara tu solicitud y respondera lo antes posible.',
     bodyHtml: `
       <p style="margin:0 0 8px 0;"><strong>Nombre:</strong> ${escapeHtml(result.fullName)}</p>
       <p style="margin:0 0 8px 0;"><strong>Email:</strong> ${escapeHtml(result.email)}</p>
@@ -469,7 +479,7 @@ export async function notifyLandingLead(result: PersistedLeadResult) {
       ${isInvestorLead ? '<p style="margin:0;">Tu solicitud ha sido enviada al equipo fundador.</p>' : '<p style="margin:0;">Tu solicitud ha sido enviada al equipo correspondiente.</p>'}
     `,
     footerNote:
-      'Si necesitas ampliar informacion, responde a este correo o escribe a soporte@verifactu.business.',
+      'Si necesitas ampliar informacion, responde a este correo o escribe a soporte@isaak.app.',
   });
 
   const acknowledgementText = renderCorporatePlainTextEmail({
@@ -478,7 +488,7 @@ export async function notifyLandingLead(result: PersistedLeadResult) {
       ? 'Hemos recibido tu solicitud para inversores'
       : 'Hemos recibido tu solicitud',
     intro:
-      'Gracias por contactar con verifactu.business. El equipo revisara tu solicitud y respondera lo antes posible.',
+      'Gracias por contactar con Isaak. El equipo revisara tu solicitud y respondera lo antes posible.',
     lines: [
       `Nombre: ${result.fullName}`,
       `Email: ${result.email}`,
@@ -488,16 +498,16 @@ export async function notifyLandingLead(result: PersistedLeadResult) {
         : 'Tu solicitud ha sido enviada al equipo correspondiente.',
     ],
     footerNote:
-      'Si necesitas ampliar informacion, responde a este correo o escribe a soporte@verifactu.business.',
+      'Si necesitas ampliar informacion, responde a este correo o escribe a soporte@isaak.app.',
   });
 
   try {
     await resend.emails.send({
-      from: process.env.FROM_EMAIL || 'info@verifactu.business',
+      from: senderEmail,
       to: result.email,
       subject: isInvestorLead
-        ? 'Solicitud recibida · verifactu.business'
-        : 'Hemos recibido tu solicitud · verifactu.business',
+        ? 'Solicitud recibida · isaak.app'
+        : 'Hemos recibido tu solicitud · isaak.app',
       reply_to: operationalReplyTo,
       html: acknowledgementHtml,
       text: acknowledgementText,

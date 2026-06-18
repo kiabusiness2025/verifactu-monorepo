@@ -59,15 +59,15 @@ export function renderCorporateBrandedEmail(input: CorporateTemplateInput): stri
               <tr>
                 <td style="vertical-align:middle;">
                   <span style="display:inline-flex;align-items:center;gap:10px;">
-                    <img src="https://verifactu.business/Isaak/isaak-avatar-verifactu.png" alt="Isaak" style="display:block;height:34px;width:34px;border-radius:999px;" />
+                    <img src="https://isaak.app/Isaak/isaak-avatar-verifactu.png" alt="Isaak" style="display:block;height:34px;width:34px;border-radius:999px;" />
                     <span>
                       <span style="display:block;font-size:16px;font-weight:800;color:#0f172a;line-height:1.1;">Isaak</span>
-                      <span style="display:block;font-size:12px;color:#64748b;line-height:1.2;">verifactu.business</span>
+                      <span style="display:block;font-size:12px;color:#64748b;line-height:1.2;">isaak.app</span>
                     </span>
                   </span>
                 </td>
                 <td align="right" style="vertical-align:middle;">
-                  <img src="https://verifactu.business/brand/logo-horizontal-dark.png" alt="verifactu.business" style="display:block;height:24px;width:auto;margin-left:auto;" />
+                  <span style="font-size:13px;font-weight:700;color:#2361d8;letter-spacing:-0.3px;">isaak.app</span>
                 </td>
               </tr>
             </table>
@@ -98,7 +98,7 @@ export function renderCorporatePlainTextEmail(input: CorporatePlainTextInput): s
   const badge = VARIANT_META[variant].badge;
 
   const sections = [
-    `verifactu.business - ${badge}`,
+    `isaak.app - ${badge}`,
     '',
     title,
     '',
