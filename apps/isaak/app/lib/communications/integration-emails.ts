@@ -114,9 +114,9 @@ function buildHtml(t: TemplateInput): string {
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td style="font-size:12px;color:#94a3b8;">
-                © 2026 Verifactu Business ·
+                © 2026 Isaak ·
                 <a href="${ISAAK_PUBLIC_URL}/integrations" style="color:#2361d8;text-decoration:none;">Gestionar integraciones</a> ·
-                <a href="https://verifactu.business/privacy" style="color:#2361d8;text-decoration:none;">Privacidad</a>
+                <a href="https://isaak.app/privacy" style="color:#2361d8;text-decoration:none;">Privacidad</a>
               </td>
             </tr>
           </table>

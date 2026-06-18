@@ -18,7 +18,7 @@ function getResend() {
 
 export async function sendEmail({
   to,
-  from = 'noreply@verifactu.business',
+  from = 'noreply@isaak.app',
   subject,
   html,
   replyTo,

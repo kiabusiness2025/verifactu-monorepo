@@ -7,8 +7,7 @@ import { sendEmail as sendEmailWithResend } from '@verifactu/integrations/resend
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-const EMAIL_FROM_NOREPLY =
-  process.env.RESEND_FROM_NOREPLY || 'Verifactu Business <notificaciones@verifactu.business>';
+const EMAIL_FROM_NOREPLY = process.env.RESEND_FROM_NOREPLY || 'Isaak <noreply@isaak.app>';
 
 export interface SendEmailParams {
   to: string;
@@ -66,7 +65,7 @@ export async function sendVerificationEmail({
 
   return sendEmail({
     to: email,
-    subject: '✨ Verifica tu correo en Verifactu Business',
+    subject: '✨ Verifica tu correo en Isaak',
     html,
   });
 }
@@ -91,7 +90,7 @@ export async function sendWelcomeEmail({
 
   return sendEmail({
     to: email,
-    subject: '🎉 ¡Bienvenido a Verifactu Business!',
+    subject: '🎉 ¡Bienvenido a Isaak!',
     html,
   });
 }
@@ -118,7 +117,7 @@ export async function sendResetPasswordEmail({
 
   return sendEmail({
     to: email,
-    subject: '🔐 Restablecer tu contraseña en Verifactu Business',
+    subject: '🔐 Restablecer tu contraseña en Isaak',
     html,
   });
 }
@@ -202,13 +201,13 @@ function generateEmailHeader(): string {
     <table cellpadding="0" cellspacing="0" border="0" style="font-family: Arial, sans-serif; color:#1b2a3a; margin-bottom: 32px; border-bottom: 1px solid #e0e6eb; padding-bottom: 24px;">
       <tr>
         <td style="padding-right:16px; vertical-align:middle;">
-          <img src="https://verifactu.business/brand/logo-horizontal-light.png" width="140" alt="Verifactu Business" style="display:block; border:0; outline:none;">
+          <img src="https://isaak.app/Isaak/isaak-avatar-verifactu.png" width="40" height="40" alt="Isaak" style="display:block; border:0; outline:none; border-radius:999px;">
         </td>
         <td style="vertical-align:middle;">
-          <div style="font-size:14px; font-weight:bold; color:#0d2b4a;">Soporte | Verifactu Business</div>
-          <div style="font-size:13px; color:#1b2a3a; margin-top:4px;">info@verifactu.business</div>
-          <div style="font-size:13px; color:#1b2a3a; margin-top:2px;">verifactu.business</div>
-          <div style="font-size:11px; color:#6b7c8a; margin-top:8px;">Registro de usuarios y comunicaciones generales</div>
+          <div style="font-size:14px; font-weight:bold; color:#0d2b4a;">Isaak</div>
+          <div style="font-size:13px; color:#1b2a3a; margin-top:4px;">noreply@isaak.app</div>
+          <div style="font-size:13px; color:#1b2a3a; margin-top:2px;">isaak.app</div>
+          <div style="font-size:11px; color:#6b7c8a; margin-top:8px;">Asistente fiscal inteligente</div>
         </td>
       </tr>
     </table>
@@ -219,11 +218,11 @@ function generateEmailFooter(): string {
   const currentYear = new Date().getFullYear();
   return `
     <div style="margin-top: 48px; padding-top: 24px; border-top: 1px solid #e0e6eb; font-size: 12px; color: #6b7c8a; text-align: center;">
-      <p style="margin: 0 0 8px 0;">© ${currentYear} Verifactu Business. Todos los derechos reservados.</p>
-      <p style="margin: 0 0 12px 0; line-height: 1.6;">Si tienes preguntas, contáctanos en <a href="mailto:info@verifactu.business" style="color: #0060F0; text-decoration: none;">info@verifactu.business</a></p>
+      <p style="margin: 0 0 8px 0;">© ${currentYear} Isaak. Todos los derechos reservados.</p>
+      <p style="margin: 0 0 12px 0; line-height: 1.6;">Si tienes preguntas, contáctanos en <a href="mailto:soporte@verifactu.business" style="color: #0060F0; text-decoration: none;">soporte@verifactu.business</a></p>
       <p style="margin: 0; font-size: 11px; color: #9ca8b3;">
-        <a href="https://verifactu.business/privacy" style="color: #6b7c8a; text-decoration: none; margin-right: 16px;">Política de privacidad</a>
-        <a href="https://verifactu.business/terms" style="color: #6b7c8a; text-decoration: none;">Términos de servicio</a>
+        <a href="https://isaak.app/privacy" style="color: #6b7c8a; text-decoration: none; margin-right: 16px;">Política de privacidad</a>
+        <a href="https://isaak.app/terms" style="color: #6b7c8a; text-decoration: none;">Términos de servicio</a>
       </p>
     </div>
   `;
@@ -268,7 +267,7 @@ function generateVerificationEmailHtml({
       ✨ ¡Casi listo, ${userName}!
     </h1>
     <p style="font-size: 16px; color: #1b2a3a; margin: 0 0 24px 0; line-height: 1.6;">
-      Bienvenido a <strong>Verifactu Business</strong>. Solo necesitamos verificar tu correo electrónico para completar tu registro.
+      Bienvenido a <strong>Isaak</strong>. Solo necesitamos verificar tu correo electrónico para completar tu registro.
     </p>
 
     <div style="background-color: #f0f3f7; border-left: 4px solid #0060F0; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
@@ -307,7 +306,7 @@ function generateVerificationEmailHtml({
     </div>
 
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6; text-align: center;">
-      ¿Problemas para verificar tu correo? <a href="mailto:info@verifactu.business?subject=Problemas%20con%20verificaci%C3%B3n%20de%20correo" style="color: #0060F0; text-decoration: none;">Contáctanos</a>
+      ¿Problemas para verificar tu correo? <a href="mailto:soporte@verifactu.business?subject=Problemas%20con%20verificaci%C3%B3n%20de%20correo" style="color: #0060F0; text-decoration: none;">Contáctanos</a>
     </p>
   `;
 
@@ -328,7 +327,7 @@ function generateWelcomeEmailHtml({
       🎉 ¡Bienvenido, ${userName}!
     </h1>
     <p style="font-size: 16px; color: #1b2a3a; margin: 0 0 24px 0; line-height: 1.6;">
-      Tu cuenta en <strong>Verifactu Business</strong> está lista. A partir de ahora, puedes gestionar tu contabilidad con total confianza.
+      Tu cuenta en <strong>Isaak</strong> está lista. A partir de ahora, puedes gestionar tu contabilidad con total confianza.
     </p>
 
     <div style="background-color: #e8f4ff; border-left: 4px solid #0060F0; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
@@ -386,7 +385,7 @@ function generateWelcomeEmailHtml({
     </div>
 
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6; text-align: center;">
-      ¿Necesitas ayuda? <a href="mailto:info@verifactu.business" style="color: #0060F0; text-decoration: none;">Nuestro equipo está aquí</a>. Respondemos en menos de 2 horas.
+      ¿Necesitas ayuda? <a href="mailto:soporte@verifactu.business" style="color: #0060F0; text-decoration: none;">Nuestro equipo está aquí</a>. Respondemos en menos de 2 horas.
     </p>
   `;
 
@@ -407,7 +406,7 @@ function generateResetPasswordEmailHtml({
       🔐 Restablecer tu contraseña
     </h1>
     <p style="font-size: 16px; color: #1b2a3a; margin: 0 0 24px 0; line-height: 1.6;">
-      Recibimos una solicitud para restablecer la contraseña de tu cuenta en Verifactu Business. No te preocupes, esto es seguro y solo tú puedes completar este proceso.
+      Recibimos una solicitud para restablecer la contraseña de tu cuenta en Isaak. No te preocupes, esto es seguro y solo tú puedes completar este proceso.
     </p>
 
     <div style="background-color: #fff3cd; border-left: 4px solid #ff9800; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
@@ -455,7 +454,7 @@ function generateResetPasswordEmailHtml({
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6;">
       <strong>¿Problemas para restablecer tu contraseña?</strong>
       <br>
-      Si el enlace no funciona o necesitas ayuda, escribe a <a href="mailto:info@verifactu.business?subject=Problemas%20con%20recuperaci%C3%B3n%20de%20contrase%C3%B1a" style="color: #0060F0; text-decoration: none;">info@verifactu.business</a>
+      Si el enlace no funciona o necesitas ayuda, escribe a <a href="mailto:soporte@verifactu.business?subject=Problemas%20con%20recuperaci%C3%B3n%20de%20contrase%C3%B1a" style="color: #0060F0; text-decoration: none;">soporte@verifactu.business</a>
     </p>
   `;
 
@@ -474,7 +473,7 @@ function generatePasswordChangedEmailHtml({
       ✅ Contraseña actualizada
     </h1>
     <p style="font-size: 16px; color: #1b2a3a; margin: 0 0 24px 0; line-height: 1.6;">
-      Tu contraseña en Verifactu Business ha sido cambiada exitosamente. Tu cuenta está segura.
+      Tu contraseña en Isaak ha sido cambiada exitosamente. Tu cuenta está segura.
     </p>
 
     <div style="background-color: #e8f5e9; border-left: 4px solid #4caf50; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
@@ -515,7 +514,7 @@ function generatePasswordChangedEmailHtml({
         <strong>⚠️ Si no fuiste tú quien realizó este cambio:</strong>
       </p>
       <p style="font-size: 13px; color: #0d2b4a; margin: 0; line-height: 1.5;">
-        Contacta inmediatamente a <a href="mailto:info@verifactu.business?subject=URGENTE:%20Cambio%20de%20contrase%C3%B1a%20no%20autorizado" style="color: #ff9800; font-weight: bold; text-decoration: none;">info@verifactu.business</a>. Tomaremos acción inmediata para proteger tu cuenta.
+        Contacta inmediatamente a <a href="mailto:soporte@verifactu.business?subject=URGENTE:%20Cambio%20de%20contrase%C3%B1a%20no%20autorizado" style="color: #ff9800; font-weight: bold; text-decoration: none;">soporte@verifactu.business</a>. Tomaremos acción inmediata para proteger tu cuenta.
       </p>
     </div>
 
@@ -545,7 +544,7 @@ function generateTeamInviteEmailHtml({
       👋 ¡Te han invitado a colaborar!
     </h1>
     <p style="font-size: 16px; color: #1b2a3a; margin: 0 0 24px 0; line-height: 1.6;">
-      <strong>${inviterName}</strong> te ha invitado a unirte a <strong>${companyName}</strong> en Verifactu Business como <strong>${role}</strong>.
+      <strong>${inviterName}</strong> te ha invitado a unirte a <strong>${companyName}</strong> en Isaak como <strong>${role}</strong>.
     </p>
 
     <div style="background-color: #e8f4ff; border-left: 4px solid #0060F0; padding: 16px; margin-bottom: 24px; border-radius: 4px;">
@@ -599,7 +598,7 @@ function generateTeamInviteEmailHtml({
     <p style="font-size: 13px; color: #6b7c8a; margin: 24px 0 0 0; line-height: 1.6;">
       <strong>¿Dudas sobre esta invitación?</strong>
       <br>
-      Contacta directamente a ${inviterName} o escribe a <a href="mailto:info@verifactu.business" style="color: #0060F0; text-decoration: none;">info@verifactu.business</a>
+      Contacta directamente a ${inviterName} o escribe a <a href="mailto:soporte@verifactu.business" style="color: #0060F0; text-decoration: none;">soporte@verifactu.business</a>
     </p>
   `;
 

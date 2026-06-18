@@ -78,7 +78,7 @@ function buildEmail(opts: {
         <!-- Footer -->
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <span style="font-size:12px;color:#94a3b8;">
-            © 2026 Verifactu Business ·
+            © 2026 Isaak ·
             <a href="${ISAAK_PUBLIC_URL}/integrations" style="color:#2361d8;text-decoration:none;">Integraciones</a> ·
             <a href="${ISAAK_PUBLIC_URL}/settings" style="color:#2361d8;text-decoration:none;">Configuración</a>
           </span>

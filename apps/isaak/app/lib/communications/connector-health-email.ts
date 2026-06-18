@@ -57,9 +57,9 @@ function buildHtml(input: ConnectorHealthAlertInput): string {
         </td></tr>
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
-            © 2026 Verifactu Business ·
+            © 2026 Isaak ·
             <a href="https://isaak.chat/settings?section=integraciones" style="color:#94a3b8;">Gestionar integraciones</a> ·
-            <a href="https://isaak.chat" style="color:#94a3b8;">isaak.chat</a>
+            <a href="https://isaak.app" style="color:#94a3b8;">isaak.app</a>
           </p>
         </td></tr>
       </table>
@@ -91,7 +91,7 @@ export async function sendConnectorHealthAlert(input: ConnectorHealthAlertInput)
   const from =
     cleanEnv(process.env.RESEND_FROM_ISAAK) ||
     cleanEnv(process.env.RESEND_FROM) ||
-    'Isaak <hola@verifactu.business>';
+    'Isaak <noreply@isaak.app>';
 
   await resend.emails.send({
     from,

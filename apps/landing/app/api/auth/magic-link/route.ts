@@ -79,7 +79,7 @@ function escapeHtml(value: string): string {
 
 function buildIsaakMagicLinkEmail(link: string): { html: string; text: string } {
   const safeLink = escapeHtml(link);
-  const landingUrl = process.env.NEXT_PUBLIC_LANDING_URL || 'https://verifactu.business';
+  const landingUrl = process.env.NEXT_PUBLIC_LANDING_URL || 'https://isaak.app';
   const avatarUrl = `${landingUrl.replace(/\/$/, '')}/Isaak/isaak-avatar-verifactu.png`;
 
   const html = `<!DOCTYPE html>
@@ -119,7 +119,7 @@ function buildIsaakMagicLinkEmail(link: string): { html: string; text: string } 
         </td></tr>
         <tr><td style="padding-top:20px;text-align:center;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
-            Verifactu Business &middot; <a href="${landingUrl}" style="color:#94a3b8;">verifactu.business</a>
+            Isaak &middot; <a href="https://isaak.app" style="color:#94a3b8;">isaak.app</a>
           </p>
         </td></tr>
       </table>
@@ -202,7 +202,7 @@ export async function POST(req: Request) {
         process.env.RESEND_FROM_ISAAK ||
         process.env.RESEND_FROM_EMAIL ||
         process.env.RESEND_FROM
-      )?.trim() || 'Isaak <noreply@verifactu.business>';
+      )?.trim() || 'Isaak <noreply@isaak.app>';
 
     const { html, text } = buildIsaakMagicLinkEmail(link);
 

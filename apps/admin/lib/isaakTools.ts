@@ -446,7 +446,10 @@ export const TOOLS = [
         user_id: { type: 'string', description: 'UUID del usuario (preferido)' },
         email: { type: 'string', description: 'Email destino si no hay user_id' },
         subject: { type: 'string', description: 'Asunto del email' },
-        body: { type: 'string', description: 'Cuerpo en texto plano (se renderiza en HTML simple)' },
+        body: {
+          type: 'string',
+          description: 'Cuerpo en texto plano (se renderiza en HTML simple)',
+        },
         confirm: { type: 'boolean', description: 'true para enviar; false/omitir para preview' },
       },
       required: ['subject', 'body'],
@@ -462,11 +465,15 @@ export const TOOLS = [
         segment: {
           type: 'string',
           enum: ['all_users', 'holded_connected', 'holded_error'],
-          description: 'Segmento destino: todos los usuarios | usuarios con Holded conectada | usuarios con Holded en error',
+          description:
+            'Segmento destino: todos los usuarios | usuarios con Holded conectada | usuarios con Holded en error',
         },
         subject: { type: 'string', description: 'Asunto del email' },
         body: { type: 'string', description: 'Cuerpo en texto plano (renderizado HTML simple)' },
-        confirm: { type: 'boolean', description: 'true para enviar; false/omitir para preview con count' },
+        confirm: {
+          type: 'boolean',
+          description: 'true para enviar; false/omitir para preview con count',
+        },
       },
       required: ['segment', 'subject', 'body'],
     },
@@ -504,7 +511,9 @@ export const TOOLS = [
       'Busca un tenant por NIF exacto y devuelve su perfil + suscripción + estado Holded. Usa esto cuando el admin pregunte por una empresa concreta y mencione un NIF.',
     input_schema: {
       type: 'object',
-      properties: { nif: { type: 'string', description: 'NIF o CIF (con/sin letras al principio)' } },
+      properties: {
+        nif: { type: 'string', description: 'NIF o CIF (con/sin letras al principio)' },
+      },
       required: ['nif'],
     },
   },
@@ -555,7 +564,7 @@ export const TOOLS = [
 export async function runTool(
   name: string,
   input: ToolInput,
-  context?: RunToolContext,
+  context?: RunToolContext
 ): Promise<string> {
   if (name === 'get_activity_stats') {
     const [activityRows, statusRows] = await Promise.all([
@@ -1795,7 +1804,7 @@ export async function runTool(
   }
   if (name === 'admin_send_marketing_campaign') {
     return withAudit(name, input, context, () =>
-      runSendMarketingCampaign(input, context?.adminEmail ?? 'unknown'),
+      runSendMarketingCampaign(input, context?.adminEmail ?? 'unknown')
     );
   }
   if (name === 'admin_revoke_connector') {
@@ -1818,14 +1827,12 @@ async function withAudit(
   toolName: string,
   input: ToolInput,
   context: RunToolContext | undefined,
-  exec: () => Promise<string>,
+  exec: () => Promise<string>
 ): Promise<string> {
   const result = await exec();
   if (input.confirm === true && context?.adminEmail) {
     const tenantId =
-      typeof input.tenant_id === 'string'
-        ? input.tenant_id
-        : context.tenantId ?? null;
+      typeof input.tenant_id === 'string' ? input.tenant_id : (context.tenantId ?? null);
     void logCopilotAction({
       tool: toolName,
       args: input,
@@ -1857,8 +1864,7 @@ async function runExtendTrial(input: ToolInput): Promise<string> {
     return JSON.stringify({ error: 'El tenant no tiene suscripción activa' });
   }
 
-  const base =
-    sub.trialEndsAt && sub.trialEndsAt > new Date() ? sub.trialEndsAt : new Date();
+  const base = sub.trialEndsAt && sub.trialEndsAt > new Date() ? sub.trialEndsAt : new Date();
   const newTrialEndsAt = new Date(base.getTime() + days * 86_400_000);
 
   if (!confirm) {
@@ -1962,9 +1968,7 @@ async function runCancelSubscription(input: ToolInput): Promise<string> {
         cancelAtPeriodEnd: sub.cancelAtPeriodEnd ?? false,
       },
       message: `Esto cancelaría la suscripción de "${sub.tenant.name}" (${sub.plan.name}) al final del período actual${
-        sub.currentPeriodEnd
-          ? ` (${sub.currentPeriodEnd.toLocaleDateString('es-ES')})`
-          : ''
+        sub.currentPeriodEnd ? ` (${sub.currentPeriodEnd.toLocaleDateString('es-ES')})` : ''
       }. No es un hard-delete: el acceso se mantiene hasta esa fecha.`,
     });
   }
@@ -2017,14 +2021,11 @@ async function runImpersonateUser(input: ToolInput): Promise<string> {
 
 // ── V3.1.b — Marketing / conectores ─────────────────────────────────────────
 
-const RESEND_FROM = 'Verifactu Business <soporte@verifactu.business>';
+const RESEND_FROM = 'Isaak <noreply@isaak.app>';
 
 function renderEmailHtml(body: string): string {
   // Convierte saltos dobles en <p> y simples en <br>. Defensivo, sin libs.
-  const safe = body
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const safe = body.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const paragraphs = safe
     .split(/\n{2,}/)
     .map((p) => `<p style="margin: 0 0 14px 0; line-height: 1.5;">${p.replace(/\n/g, '<br>')}</p>`)
@@ -2129,10 +2130,7 @@ const SEGMENT_QUERY: Record<Segment, string> = {
   `,
 };
 
-async function runSendMarketingCampaign(
-  input: ToolInput,
-  adminEmail: string,
-): Promise<string> {
+async function runSendMarketingCampaign(input: ToolInput, adminEmail: string): Promise<string> {
   const segment = (input.segment as Segment) ?? '';
   const subject = typeof input.subject === 'string' ? input.subject.trim() : '';
   const body = typeof input.body === 'string' ? input.body : '';
@@ -2147,7 +2145,7 @@ async function runSendMarketingCampaign(
   // Contar destinatarios
   const recipients = await query<{ email: string; name: string | null }>(
     SEGMENT_QUERY[segment],
-    [],
+    []
   );
   const total = recipients.length;
 
@@ -2205,7 +2203,7 @@ async function runSendMarketingCampaign(
         } catch {
           failCount += 1;
         }
-      }),
+      })
     );
   }
 
@@ -2353,9 +2351,7 @@ async function runFindTenantByNif(input: ToolInput): Promise<string> {
 
 async function runTopTenantsByMrr(input: ToolInput): Promise<string> {
   const limit =
-    typeof input.limit === 'number'
-      ? Math.max(1, Math.min(50, Math.floor(input.limit)))
-      : 10;
+    typeof input.limit === 'number' ? Math.max(1, Math.min(50, Math.floor(input.limit))) : 10;
 
   const subs = await prisma.tenantSubscription.findMany({
     where: { status: 'active' },
@@ -2499,7 +2495,8 @@ async function runGetMarketingFunnel(input: ToolInput): Promise<string> {
   const ratios = {
     lead_to_demo: leads > 0 ? Math.round((demos / leads) * 1000) / 10 : null,
     demo_to_trial: demos > 0 ? Math.round((trialStarted / demos) * 1000) / 10 : null,
-    trial_to_active: trialStarted > 0 ? Math.round((activePaying / trialStarted) * 1000) / 10 : null,
+    trial_to_active:
+      trialStarted > 0 ? Math.round((activePaying / trialStarted) * 1000) / 10 : null,
   };
 
   return JSON.stringify({
@@ -2512,9 +2509,16 @@ async function runGetMarketingFunnel(input: ToolInput): Promise<string> {
     },
     ratios_pct: ratios,
     interpretation: {
-      lead_to_demo: ratios.lead_to_demo !== null ? `${ratios.lead_to_demo}% leads piden demo` : 'sin datos',
-      demo_to_trial: ratios.demo_to_trial !== null ? `${ratios.demo_to_trial}% demos arrancan trial` : 'sin datos',
-      trial_to_active: ratios.trial_to_active !== null ? `${ratios.trial_to_active}% trials convierten a plan pago` : 'sin datos',
+      lead_to_demo:
+        ratios.lead_to_demo !== null ? `${ratios.lead_to_demo}% leads piden demo` : 'sin datos',
+      demo_to_trial:
+        ratios.demo_to_trial !== null
+          ? `${ratios.demo_to_trial}% demos arrancan trial`
+          : 'sin datos',
+      trial_to_active:
+        ratios.trial_to_active !== null
+          ? `${ratios.trial_to_active}% trials convierten a plan pago`
+          : 'sin datos',
     },
   });
 }

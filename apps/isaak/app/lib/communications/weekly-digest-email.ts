@@ -231,7 +231,7 @@ export async function sendWeeklyDigest(input: WeeklyDigestInput) {
   const from =
     cleanEnv(process.env.RESEND_FROM_ISAAK) ||
     cleanEnv(process.env.RESEND_FROM) ||
-    'Isaak <hola@verifactu.business>';
+    'Isaak <noreply@isaak.app>';
 
   await resend.emails.send({
     from,

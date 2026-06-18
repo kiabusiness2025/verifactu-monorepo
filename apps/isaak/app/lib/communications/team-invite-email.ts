@@ -29,9 +29,9 @@ function escapeHtml(v: string) {
 function legalFooter() {
   return `
     <p style="margin:18px 0 0;color:#64748b;font-size:12px;">
-      Powered by <a href="https://verifactu.business" style="color:#2361d8;">verifactu.business</a> ·
-      <a href="https://app.verifactu.business/privacy" style="color:#2361d8;">Privacidad</a> ·
-      <a href="https://app.verifactu.business/terms" style="color:#2361d8;">Términos</a>
+      <a href="https://isaak.app" style="color:#2361d8;">isaak.app</a> ·
+      <a href="https://isaak.app/privacy" style="color:#2361d8;">Privacidad</a> ·
+      <a href="https://isaak.app/terms" style="color:#2361d8;">Términos</a>
     </p>`.trim();
 }
 

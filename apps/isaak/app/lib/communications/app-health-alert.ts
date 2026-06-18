@@ -48,7 +48,7 @@ export async function sendAppHealthAlert(input: AppHealthAlertInput): Promise<vo
   const from =
     cleanEnv(process.env.RESEND_FROM_ISAAK) ||
     cleanEnv(process.env.RESEND_FROM) ||
-    'Isaak <hola@verifactu.business>';
+    'Isaak <noreply@isaak.app>';
   const to = cleanEnv(process.env.ADMIN_ALERT_EMAIL) || 'kiabusiness2025@gmail.com';
 
   await resend.emails.send({
