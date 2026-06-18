@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/adminAuth';
 
 export const runtime = 'nodejs';
 
-const ISAAK_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.verifactu.business';
+const ISAAK_URL = process.env.NEXT_PUBLIC_ISAAK_SITE_URL || 'https://isaak.app';
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 function buildBetaInviteHtml(params: {
@@ -63,7 +63,7 @@ function buildBetaInviteHtml(params: {
 
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;line-height:1.6;">
-            © 2026 Verifactu Business ·
+            © 2026 Isaak ·
             <a href="${ISAAK_URL}" style="color:#94a3b8;">${new URL(ISAAK_URL).hostname}</a> ·
             Esta invitación fue enviada por ${inviterName} desde el panel de administración.
           </p>
@@ -100,7 +100,10 @@ export async function POST(req: NextRequest) {
   }
 
   const { error } = await resend.emails.send({
-    from: 'Isaak de Verifactu Business <no-reply@verifactu.business>',
+    from:
+      process.env.RESEND_FROM_ISAAK?.trim() ||
+      process.env.RESEND_FROM?.trim() ||
+      'Isaak <noreply@isaak.app>',
     to: [email],
     subject: `${firstName}, tienes acceso al programa beta de Isaak`,
     html: buildBetaInviteHtml({

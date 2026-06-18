@@ -61,7 +61,7 @@ function fiscalAlertHtml(title: string, body: string, daysLeft: number) {
         </td></tr>
         <tr><td style="background:#f8faff;padding:16px 32px;border-top:1px solid #e2e8f0;">
           <p style="margin:0;font-size:12px;color:#94a3b8;">
-            © 2026 Verifactu Business · <a href="${ISAAK_PUBLIC_URL}" style="color:#94a3b8;">${new URL(ISAAK_PUBLIC_URL).hostname}</a>
+            © 2026 Isaak · <a href="${ISAAK_PUBLIC_URL}" style="color:#94a3b8;">${new URL(ISAAK_PUBLIC_URL).hostname}</a>
           </p>
         </td></tr>
       </table>
@@ -87,7 +87,10 @@ export async function fanOutAlert(
   if (alert.channel === 'email') {
     await sendEmail({
       to: recipientEmail,
-      from: 'Isaak <hola@verifactu.business>',
+      from:
+        process.env.RESEND_FROM_ISAAK?.trim() ||
+        process.env.RESEND_FROM?.trim() ||
+        'Isaak <noreply@isaak.app>',
       subject: alert.title,
       html: fiscalAlertHtml(alert.title, alert.body, daysLeft),
     });
