@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { getHoldedSession } from '@/app/lib/holded-session';
-import { checkDemoQuota, DEMO_COMPANY_NAME } from '@/app/lib/isaak-demo-context';
+import { checkDemoQuota } from '@/app/lib/isaak-demo-context';
+import { DEMO_COMPANY_NAME } from '@/app/lib/isaak-demo-constants';
 import DemoShell from './DemoShell';
 
 export const metadata: Metadata = {
